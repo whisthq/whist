@@ -1,10 +1,9 @@
 FROM python
 
-# COPY ./requirements.txt /monorepo-config/requirements.txt
+COPY ./requirements.txt /root/monorepo-config/requirements.txt
 
-# RUN pip install -r /monorepo-config/requirements.txt
+RUN pip install -r /root/monorepo-config/requirements.txt
 
-# COPY . /monorepo-config
+COPY . /root/monorepo-config
 
-ENTRYPOINT ["python", ".github/actions/monorepo-config/main.py", "config"]
-ENTRYPOINT cd /root && ls -a
+ENTRYPOINT ["python", "/root/monorepo-config/main.py", "config"]

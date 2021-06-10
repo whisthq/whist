@@ -69,13 +69,19 @@ def create_cli(main_fn):
     @click.command()
     @click.argument("path", type=click.Path(exists=True))
     @click.option(
-        "-o", "--out", multiple=True, type=click.File("w"), envvar="INPUT_OUT"
+        "-o",
+        "--out",
+        multiple=True,
+        type=click.File("w"),
+        envvar="INPUT_OUT",
+        help="A target file path to write output JSON.",
     )
     @click.option(
         "-p",
         "--profile",
         multiple=True,
         envvar="INPUT_PROFILE",
+        help="A single profile from the list in profiles.yml.",
     )
     @click.option(
         "-s",
@@ -83,8 +89,28 @@ def create_cli(main_fn):
         multiple=True,
         callback=_coerce_json,
         envvar="INPUT_SECRETS",
+        help="A JSON string containing a dictionary.",
     )
     def cli(path, secrets=(), profile=(), out=()):
+        """Parse configuration and secrets, merging all values into a single
+        output JSON file.
+
+        PATH is the path to the config folder, which should contain a file
+        called "profiles.yml", and a folder called "schema".
+
+        The output JSON map should be flat with no nested objects. You can
+        control the flattening process by passing --profile arguments. In a
+        nested config map, the key that matches a passed profile will
+        be the one chosen.
+
+        All CLI flags can also be passed through environment variables by
+        capitalizing the name and prefixing with INPUT, e.g. INPUT_PROFILE.
+        Pass multiple arguments in a variable by separating with a space.
+
+        ALl CLI flags can be passed multiple times, and the arguments will
+        be merged into the final JSON object. Multiple --out files can be
+        given, and all will be written to.
+        """
         result = main_fn(path, secrets=secrets, profiles=profile)
         result_json = json.dumps(result, indent=4)
 
