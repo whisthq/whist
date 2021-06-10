@@ -7,7 +7,7 @@ import (
 
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via Sentry. Instead, use the
-	// fractallogger package imported below as `logger`
+	// fractallogger package imported below as `logger`.
 	"context"
 	"io"
 	"math/rand"
@@ -19,8 +19,8 @@ import (
 	"time"
 
 	// We use this package instead of the standard library log so that we never
-	// forget to send a message via Sentry.  For the same reason, we make sure
-	// not to import the fmt package either, instead separating required
+	// forget to send a message via Sentry. For the same reason, we make sure not
+	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
