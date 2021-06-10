@@ -3,6 +3,7 @@
  */
 
 import { app } from "electron"
+import events from "events"
 import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
@@ -13,6 +14,7 @@ import config, {
 import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 export let childProcess: ChildProcess | undefined
+export const protocolEmitter = new events.EventEmitter()
 
 const { protocolName, protocolFolder } = config
 
@@ -92,6 +94,7 @@ export const protocolLaunch = async () => {
   })
 
   childProcess = protocol
+  return protocol
 }
 
 // Stream the rest of the info that the protocol needs

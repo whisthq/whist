@@ -15,7 +15,7 @@ import {
   createUpdateWindow,
   createSignoutWindow,
   createProtocolWindow,
-  getNumberWindows,
+  closeAllWindows,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
@@ -24,6 +24,21 @@ import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
 import { email } from "@app/main/observables/user"
+import { protocolStreamKill } from "@app/utils/protocol"
+import { fromSignal } from "@app/utils/observables"
+
+const exitSequence = (email: string) => {
+  destroyTray()
+  protocolStreamKill()
+  uploadToS3(email)
+    .then(() => {
+      app.quit()
+    })
+    .catch((err) => {
+      console.error(err)
+      app.quit()
+    })
+}
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -76,39 +91,26 @@ fromTrigger("notPersisted").subscribe(() => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
-  createProtocolWindow()
+  createProtocolWindow().catch((err) => console.error(err))
   createTray(x.email)
 })
 
-fromTrigger("beforeQuit")
+fromSignal(
+  fromTrigger("windowsAllClosed"),
+  fromTrigger("updateNotAvailable")
+).subscribe((evt: IpcMainEvent) => {
+  evt?.preventDefault()
+})
+
+fromTrigger("numberWindows")
   .pipe(withLatestFrom(email))
-  .subscribe(([evt, email_]: [IpcMainEvent, string]) => {
-    if (getNumberWindows() > 0) {
-      evt?.preventDefault()
-    } else {
-      destroyTray()
-      uploadToS3(email_)
-        .then(() => {
-          app.quit()
-        })
-        .catch(() => {
-          app.quit()
-        })
-    }
+  .subscribe(([numWindows, email_]: [number, string]) => {
+    if (numWindows === 0) exitSequence(email_)
   })
 
-fromTrigger("trayQuitAction")
-  .pipe(withLatestFrom(email))
-  .subscribe(([, email_]: [any, string]) => {
-    destroyTray()
-    uploadToS3(email_)
-      .then(() => {
-        app.quit()
-      })
-      .catch(() => {
-        app.quit()
-      })
-  })
+fromTrigger("trayQuitAction").subscribe(() => {
+  closeAllWindows()
+})
 
 // If the update is downloaded, quit the app and install the update
 fromTrigger("updateDownloaded").subscribe(() => {

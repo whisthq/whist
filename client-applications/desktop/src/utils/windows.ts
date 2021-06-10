@@ -2,6 +2,7 @@
 // main process, and passes all the configuration needed to load files into
 // Electron renderer windows.
 import path from "path"
+import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
@@ -18,6 +19,8 @@ import {
 } from "@app/utils/protocol"
 
 const { buildRoot } = config
+
+export const windowMonitor = new events.EventEmitter()
 
 export const base = {
   webPreferences: {
@@ -123,6 +126,12 @@ export const createWindow = (args: {
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
     win.show()
+    windowMonitor.emit("number-windows", getNumberWindows())
+  })
+
+  win.on("closed", () => {
+    console.log("CLOSED")
+    windowMonitor.emit("number-windows", getNumberWindows())
   })
 
   if (args.closeOtherWindows ?? false) closeAllWindows(currentElectronWindows)
@@ -194,12 +203,19 @@ export const createSignoutWindow = () => {
   })
 }
 
-export const createProtocolWindow = () => {
+export const createProtocolWindow = async () => {
   const currentElectronWindows = getElectronWindows()
 
-  protocolLaunch()
-    .then(() => {
-      closeElectronWindows(currentElectronWindows)
-    })
-    .catch((err) => console.error(err))
+  const protocol = await protocolLaunch()
+
+  protocol.on("spawn", () => {
+    windowMonitor.emit("number-windows", getNumberWindows())
+  })
+
+  protocol.on("close", (code) => {
+    windowMonitor.emit("number-windows", getNumberWindows())
+    windowMonitor.emit("protocol-exit-code", code)
+  })
+
+  closeElectronWindows(currentElectronWindows)
 }
