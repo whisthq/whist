@@ -220,3 +220,9 @@ export const createProtocolWindow = async () => {
 
   closeElectronWindows(currentElectronWindows)
 }
+
+export const relaunch = (options?: { args: string[] }) => {
+  protocolStreamKill()
+  options === undefined ? app.relaunch() : app.relaunch(options)
+  app.exit()
+}

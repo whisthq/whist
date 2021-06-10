@@ -16,6 +16,7 @@ import {
   createSignoutWindow,
   createProtocolWindow,
   closeAllWindows,
+  relaunch,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
@@ -95,7 +96,7 @@ fromTrigger("numberWindows")
     if (numWindows === 0) {
       destroyTray()
       protocolStreamKill()
-      uploadToS3(email)
+      uploadToS3(email_)
         .then(() => {
           app.quit()
         })
@@ -131,22 +132,18 @@ fromTrigger("clearCacheAction").subscribe(() => {
     .fromPartition("auth0")
     .clearStorageData()
     .catch((err) => console.error(err))
-  // These two commands restart the app
-  app.relaunch()
-  app.exit()
+  // Restart the app
+  relaunch()
 })
 
 // If an admin selects a region, relaunch the app with the selected region passed
 // into argv so it can be read by flows/index.ts
 fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
-  app.relaunch({ args: process.argv.slice(1).concat([region]) })
-  app.exit()
+  relaunch({ args: process.argv.slice(1).concat([region]) })
 })
 
 fromTrigger("relaunchAction").subscribe(() => {
-  protocolStreamKill()
-  app.relaunch()
-  app.exit()
+  relaunch()
 })
 
 fromTrigger("showSignoutWindow").subscribe(() => {
