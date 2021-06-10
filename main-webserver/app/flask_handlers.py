@@ -28,7 +28,7 @@ def set_web_requests_status(enabled: bool) -> bool:
     Args:
         enabled: Desired state of _WEB_REQUESTS_ENABLED.
     Returns:
-        True iff _WEB_REQUESTS_ENABLED was properly set to the given parameter `enabled`.
+        True if and only if _WEB_REQUESTS_ENABLED was properly set to the given parameter `enabled`.
     """
     global _WEB_REQUESTS_ENABLED  # pylint: disable=global-statement
     has_lock = _WEB_REQUESTS_LOCK.acquire(  # pylint: disable=consider-using-with
@@ -51,7 +51,7 @@ def can_process_requests() -> bool:
     Get state of _WEB_REQUESTS_ENABLED in thread-safe manner.
 
     Returns:
-        True iff _WEB_REQUESTS_ENABLED is True. False if _WEB_REQUESTS_ENABLED is False
+        True if and only if _WEB_REQUESTS_ENABLED is True. False if _WEB_REQUESTS_ENABLED is False
         or acquiring lock failed.
     """
     has_lock = _WEB_REQUESTS_LOCK.acquire(  # pylint: disable=consider-using-with

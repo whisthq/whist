@@ -38,7 +38,7 @@ def has_scope(scope: str) -> bool:
         scope: A string containing the name of an OAuth 2.0 scope.
 
     Returns:
-        True iff the specified scope appears in the JWT's scope claim.
+        True if and only if the specified scope appears in the JWT's scope claim.
     """
 
     verify_jwt_in_request(optional=True)
