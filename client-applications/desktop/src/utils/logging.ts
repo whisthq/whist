@@ -94,7 +94,7 @@ export const logBase = async (
   localLog(title, data, level, userID)
 }
 
-export const uploadToS3 = async (email: string) => {
+export const uploadToS3 = async (email?: string) => {
   /*
   Description:
       Uploads a local file to S3
@@ -103,13 +103,15 @@ export const uploadToS3 = async (email: string) => {
   Returns:
       Response from the s3 upload
   */
-  const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
+  if ((email ?? "") === "") return
+
+  const s3FileName = `CLIENT_${email ?? ""}_${new Date().getTime()}.txt`
 
   await logBase(
     "Logs upload to S3",
     { s3FileName: s3FileName },
     LogLevel.DEBUG,
-    email
+    email ?? ""
   )
 
   const uploadHelper = async (localFilePath: string) => {

@@ -10,6 +10,9 @@ import config, {
   getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
+import { showAppDock, hideAppDock } from "@app/utils/dock"
+
+export let childProcess: ChildProcess | undefined
 
 const { protocolName, protocolFolder } = config
 
@@ -79,30 +82,37 @@ export const protocolLaunch = async () => {
       }),
   })
 
+  // On MacOS, hide the app dock
+  hideAppDock()
+
+  // When the protocol closes, reset the childProcess to undefined and show the app dock on MacOS
+  protocol.on("close", () => {
+    childProcess = undefined
+    showAppDock()
+  })
+
+  childProcess = protocol
   return protocol
 }
 
 // Stream the rest of the info that the protocol needs
-export const protocolStreamInfo = (
-  protocol: ChildProcess,
-  info: {
-    mandelboxIP: string
-    mandelboxSecret: string
-    mandelboxPorts: {
-      port_32262: number
-      port_32263: number
-      port_32273: number
-    }
+export const protocolStreamInfo = (info: {
+  mandelboxIP: string
+  mandelboxSecret: string
+  mandelboxPorts: {
+    port_32262: number
+    port_32263: number
+    port_32273: number
   }
-) => {
-  writeStream(protocol, `ports?${serializePorts(info.mandelboxPorts)}`)
-  writeStream(protocol, `private-key?${info.mandelboxSecret}`)
-  writeStream(protocol, `ip?${info.mandelboxIP}`)
-  writeStream(protocol, "finished?0")
+}) => {
+  writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
+  writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
+  writeStream(childProcess, `ip?${info.mandelboxIP}`)
+  writeStream(childProcess, "finished?0")
 }
 
-export const protocolStreamKill = (protocol: ChildProcess | undefined) => {
-  writeStream(protocol, "kill?0")
+export const protocolStreamKill = () => {
+  writeStream(childProcess, "kill?0")
   // We send SIGINT just in case
-  protocol?.kill?.("SIGINT")
+  childProcess?.kill?.("SIGINT")
 }

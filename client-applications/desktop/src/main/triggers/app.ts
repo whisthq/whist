@@ -9,12 +9,15 @@ import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
+import { windowMonitor } from "@app/utils/windows"
 import TRIGGER from "@app/utils/triggers"
 
 // Fires when Electron starts; this is the first event to fire
 createTrigger(TRIGGER.appReady, fromEvent(app as EventEmitter, "ready"))
-// Fires whenever a BrowserWindow is created
+// Fires whenever the number of windows changes, including the protocol window
+createTrigger(TRIGGER.numberWindows, fromEvent(windowMonitor, "number-windows"))
+// Fires when all Electron windows have been closed
 createTrigger(
-  TRIGGER.windowCreated,
-  fromEvent(app as EventEmitter, "browser-window-created")
+  TRIGGER.windowsAllClosed,
+  fromEvent(app as EventEmitter, "window-all-closed")
 )
