@@ -170,6 +170,9 @@ if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
     rm -rf "$FFMPEG_DIR"
     mkdir -p "$FFMPEG_DIR"
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$FFMPEG_DIR"
+
+    mv "$FFMPEG_DIR/include/"/* "$FFMPEG_DIR"
+    rmdir "$FFMPEG_DIR/include"
 fi
 
 ###############################
@@ -191,6 +194,9 @@ if has_updated "$FFMPEG_LIB"; then
     rm -rf "$FFMPEG_LIB_DIR"
     mkdir -p "$FFMPEG_LIB_DIR"
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$FFMPEG_LIB" - | tar -xz -C "$FFMPEG_LIB_DIR"
+
+    mv "$FFMPEG_LIB_DIR/$OS"/* "$FFMPEG_LIB_DIR"
+    rmdir "$FFMPEG_LIB_DIR/$OS"
 fi
 
 ###############################
