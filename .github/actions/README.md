@@ -25,8 +25,8 @@ jobs:
 
 When writing custom Actions, please adhere to the style guidelines described in `.github/workflows/README.md`.
 
-
 You should `COPY` your Action to the `/root` folder in the Docker container, and then refer to it by absolute path. For example, here's the `monorepo-config` Dockerfile:
+
 ```Dockerfile
 COPY ./requirements.txt /root/monorepo-config/requirements.txt
 RUN pip install -r /root/monorepo-config/requirements.txt
@@ -43,7 +43,7 @@ Because of this inconsistency, it's easiest to deal with absolute paths in the c
 
 There's still one more thing to worry about. In the example above, the `ENTRYPOINT` runs the `main.py` script, and passes it an argument: `config`. That's referring to the `config` folder in the root of the monorepo, and you'll notice that we're referencing it as a relative path. So we haven't completely forgetten about GitHub's directory swap, as we're relying on the working directory for `ENTRYPOINT` to be the monorepo root, and not the `monorepo-config` Action folder.
 
-This will cause you some confusion while developing and testing locally. You're probably used to setting your working directory to the same folder of the project you're working on, and it would be tempting to try and `cd` in to the `monorepo-config` folder if you need to make some changes. However, that's going to break a command like the one above, which is has a relative reference to `config`. 
+This will cause you some confusion while developing and testing locally. You're probably used to setting your working directory to the same folder of the project you're working on, and it would be tempting to try and `cd` in to the `monorepo-config` folder if you need to make some changes. However, that's going to break a command like the one above, which is has a relative reference to `config`.
 
 That brings us to the last piece of the puzzle... when building/running/testing your Docker container locally, keep your working directory as the monorepo root (`fractal` folder). That will ensure that your context is completely consistent with what will happen on the GitHub deploy. Your build command might look like this:
 
@@ -54,7 +54,8 @@ That brings us to the last piece of the puzzle... when building/running/testing 
 By the way, don't try and get around this by setting `WORKDIR` in your Dockerfile. GitHub explicitly warns against that [in their docs](https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#workdir). If you need to reference the full path of the `ENTRYPOINT` working directory, GitHub makes that available in the `GITHUB_WORKSPACE` environment variable.
 
 That was a lot of context, so here's a recap. There's only two steps you need to take to ensure a consistent development environment for GitHub Actions:
+
 1. Use absolute paths everywhere in the Dockerfile, except for arguments to the `ENTRYPOINT` command.
-2. When building and running your container locally, keep your working directory at the top-level `fractal` folder. 
+2. When building and running your container locally, keep your working directory at the top-level `fractal` folder.
 
 That's all! Keep to this practice, and you won't need a special runner like `nektos/act` for developing an Action.
