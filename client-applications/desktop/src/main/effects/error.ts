@@ -7,6 +7,7 @@
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
+  mandelboxCreateErrorMaintenance,
 } from "@app/utils/mandelbox"
 import { createErrorWindow } from "@app/utils/windows"
 import {
@@ -14,6 +15,7 @@ import {
   UNAUTHORIZED_ERROR,
   MANDELBOX_INTERNAL_ERROR,
   AUTH_ERROR,
+  MAINTENANCE_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
 
@@ -23,6 +25,8 @@ fromTrigger("mandelboxFlowFailure").subscribe((x: any) => {
     createErrorWindow(NO_PAYMENT_ERROR)
   } else if (mandelboxCreateErrorUnauthorized(x)) {
     createErrorWindow(UNAUTHORIZED_ERROR)
+  } else if (mandelboxCreateErrorMaintenance(x)) {
+    createErrorWindow(MAINTENANCE_ERROR)
   } else {
     createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }

@@ -4,6 +4,7 @@ export const PROTOCOL_ERROR = "PROTOCOL_ERROR"
 export const MANDELBOX_INTERNAL_ERROR = "MANDELBOX_INTERNAL_ERROR"
 export const AUTH_ERROR = "AUTH_ERROR"
 export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
+export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
 
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
@@ -29,6 +30,10 @@ export const fractalError = {
   [NAVIGATION_ERROR]: {
     title: "There was an error loading the Fractal window.",
     text: "Please try logging in again or contact support@fractal.co for help.",
+  },
+  [MAINTENANCE_ERROR]: {
+    title: "Fractal is currently pushing out an update.",
+    text: "We apologize for the inconvenience. Please check back in a few minutes!",
   },
 } as {
   [key: string]: { title: string; text: string }
