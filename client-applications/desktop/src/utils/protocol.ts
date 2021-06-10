@@ -14,7 +14,6 @@ import config, {
 import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 export let childProcess: ChildProcess | undefined
-export const protocolEmitter = new events.EventEmitter()
 
 const { protocolName, protocolFolder } = config
 
