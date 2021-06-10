@@ -1,8 +1,8 @@
 # Monorepo Config Action
 
-This folder contains the code for the GitHub Action for the monorepo configuration builder. The program is written in Python, and deployed to GitHub Actions as Docker container.
+This folder contains the code for the GitHub Action for the monorepo configuration builder. The program is written in Python, and deployed to GitHub Actions as a Docker container.
 
-The program has a CLI build with the `click` library. All options are documented with the `--help` flag. `main.py` is the entrypoint to the program. After `pip install -r requirements.txt`, you can `python main.py --help` to see how run the program.
+The program has a CLI built with the `click` library. All options are documented with the `--help` flag. `main.py` is the entrypoint to the program. After `pip install -r requirements.txt`, you can `python main.py --help` to see how run the program.
 
 ## How config works
 
@@ -19,13 +19,13 @@ The processing of the configuration YAML is described below.
 3. The schema dictionaries are merged by top-level key into a single dictionary. The merging is shallow.
 4. The merged schema dictionary is flattened using the profiles passed as arguments to select nested keys.
 5. The flattened schema dictionary is merged with the secrets passed as arguements. Secrets keys will override schema keys.
-6. The final dictionary is written to a file, passed in as an argument, or to stdout if no file is passed.
+6. The final dictionary is written to a file or to stdout if no file argyment is passed.
 
 The output JSON object, if processed correctly, should have no nesting. Nested configuration will remain in the output if no profile is found that matches a key. This is purposefully done so that the mistake is easy to spot.
 
 # Example program run
 
-For GitHub Actions reasons, it's good to get in the habit of running this program (and any Actions program) from the root folder of the monorepo. We'll run it like this:
+For GitHub Actions reasons, it's good to get in the habit of running this program (and any Actions program) from the root folder of the monorepo. We'll run from the `fractal` folder like this:
 
 ```sh
 python .github/actions/monorepo-config/main.py \
