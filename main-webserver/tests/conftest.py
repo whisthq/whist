@@ -277,7 +277,7 @@ def bulk_instance():
             ip=kwargs.get("ip", "123.456.789"),
             aws_ami_id=kwargs.get("aws_ami_id", "test"),
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
-            last_pinged=kwargs.get("last_pinged", 10),
+            last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
             status=kwargs.get("status", "ACTIVE"),
         )
 
@@ -286,7 +286,7 @@ def bulk_instance():
         for _ in range(associated_containers):
             new_container = ContainerInfo(
                 container_id=str(randint(0, 10000000)),
-                instance_id=new_instance.instance_name,
+                instance_name=new_instance.instance_name,
                 user_id="test-user",
                 status="Running",
             )

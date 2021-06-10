@@ -160,12 +160,12 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                 # don't double-scale.
                 new_instance = InstanceInfo(
                     location=region,
-                    ami_id=ami,
-                    instance_id=base_name + f"-{index}",
-                    instance_type="g3.4xlarge",
-                    maxContainers=base_number_free_containers,
-                    last_pinged=-1,
-                    created_at=int(time.time()),
+                    aws_ami_id=ami,
+                    instance_name=base_name + f"-{index}",
+                    aws_instance_type="g3.4xlarge",
+                    container_capacity=base_number_free_containers,
+                    last_updated_utc_unix_ms=-1,
+                    creation_time_utc_unix_ms=int(time.time()),
                     status="PRE-CONNECTION",
                 )
                 db.session.add(new_instance)

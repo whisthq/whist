@@ -162,7 +162,7 @@ class InstanceInfo(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
-    created_at = db.Column(db.Integer)
+    creation_time_utc_unix_ms = db.Column(db.Integer)
     aws_instance_type = db.Column(db.String(250), nullable=False)
     auth_token = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
@@ -188,9 +188,9 @@ class InstanceSorted(db.Model):
 
     __tablename__ = "instance_allocation"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
-    ami_id = db.Column(db.String(250), nullable=False)
+    aws_ami_id = db.Column(db.String(250), nullable=False)
 
 
 class InstancesWithRoomForContainers(db.Model):
@@ -209,7 +209,7 @@ class InstancesWithRoomForContainers(db.Model):
 
     __tablename__ = "instance_sorted"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
     ami_id = db.Column(db.String(250), nullable=False)
     max_containers = db.Column(db.Integer)
@@ -231,7 +231,7 @@ class ContainerInfo(db.Model):
     __tablename__ = "container_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     container_id = db.Column(db.String(250), primary_key=True)
-    instance_id = db.Column(db.String(250), nullable=False)
+    instance_name = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
 
