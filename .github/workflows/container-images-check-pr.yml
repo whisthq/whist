@@ -74,7 +74,7 @@ jobs:
                   # want to do in this way in the long term.
                   # TODO here: https://github.com/fractal/fractal/issues/2111
                   ln -sf ../../main-webserver/pylintrc ./pylintrc
-                  pylint -j 0 helper_scripts testing_scripts # Returns -1 iff code is linted
+                  pylint -j 0 helper_scripts testing_scripts # Returns -1 if and only if code is linted
 
     # Docker images building
     # Checks that the Docker images build successfully.

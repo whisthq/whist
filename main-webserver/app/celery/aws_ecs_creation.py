@@ -240,7 +240,7 @@ def _poll(container_id: str) -> bool:
         container_id: The container ID of the container whose state to poll.
 
     Returns:
-        True iff the container's starts with RUNNING_ by the end of the polling period.
+        True if and only if the container's starts with RUNNING_ by the end of the polling period.
     """
 
     container = UserContainer.query.get(container_id)

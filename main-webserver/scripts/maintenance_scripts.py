@@ -78,7 +78,7 @@ def update_region(web_url: str, admin_token: str, region_name: str, ami: str):
     1. Call `update_region` endpoint
     2. Poll for success
     3. Poll subtasks (`update_cluster`) for success
-    4. Return nothing iff nothing went wrong. Otherwise errors out.
+    4. Return nothing if and only if nothing went wrong. Otherwise errors out.
 
     Args:
         web_url: URL of webserver instance to run operation on
@@ -117,7 +117,7 @@ def update_taskdefs(
     Run update_taskdefs on webserver. Steps:
     1. Call `update_taskdefs` endpoint
     2. Poll for success
-    3. Return nothing iff nothing went wrong. Otherwise errors out.
+    3. Return nothing if and only if nothing went wrong. Otherwise errors out.
 
     Args:
         web_url: URL of webserver instance to run operation on
