@@ -130,7 +130,6 @@ export const createWindow = (args: {
   })
 
   win.on("closed", () => {
-    console.log("CLOSED")
     windowMonitor.emit("number-windows", getNumberWindows())
   })
 
@@ -148,6 +147,7 @@ export const createAuthWindow = () => {
       height: 16 * 37,
     } as BrowserWindowConstructorOptions,
     customURL: authenticationURL,
+    closeOtherWindows: true,
   })
 
   // Authentication
@@ -199,6 +199,7 @@ export const createSignoutWindow = () => {
       ...base,
       ...width.md,
       ...height.xs,
+      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
   })
 }

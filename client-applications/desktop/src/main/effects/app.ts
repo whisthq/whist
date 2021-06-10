@@ -144,6 +144,7 @@ fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
 })
 
 fromTrigger("relaunchAction").subscribe(() => {
+  protocolStreamKill()
   app.relaunch()
   app.exit()
 })
