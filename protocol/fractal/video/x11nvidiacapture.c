@@ -9,6 +9,9 @@
 #include "x11nvidiacapture.h"
 #include <GL/glx.h>
 
+// NOTE: Using Nvidia Capture SDK 8.0.4
+// Please bump this comment if a newer Nvidia Capture SDK is going to be used
+
 #define APP_VERSION 4
 
 #define PRINT_STATUS false
