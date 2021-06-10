@@ -8,6 +8,7 @@
 typedef struct NvidiaCaptureDevice {
     NVFBC_SESSION_HANDLE fbc_handle;
     NVFBC_API_FUNCTION_LIST p_fbc_fn;
+    NV_ENC_REGISTERED_PTR registered_resources[NVFBC_TOGL_TEXTURES_MAX];
     void* frame;
     unsigned int size;
     bool is_iframe;

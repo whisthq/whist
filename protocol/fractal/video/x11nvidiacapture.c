@@ -16,85 +16,73 @@
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
-GLXContext glxCtx       = None;
-GLXFBConfig glxFBConfig = None;
-NV_ENC_REGISTERED_PTR registered_resources[NVFBC_TOGL_TEXTURES_MAX] = { NULL };
-
 /**
- * Creates an OpenGL context.
+ * @brief                          Creates an OpenGL context for use in NvFBC
  *
- * This context will then be passed to NvFBC for its internal use.
+ * @param glx_ctx                  Pointer to the glx context to fill in
  *
- * \param [out] *glxCtx
- *   The created OpenGL context.
- * \param [out] *glxFbConfig
- *   The used framebuffer configuration.
+ * @param glx_fb_config            Pointer to the framebuffer config to fill in
  *
- * \return
- *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
+ * @returns                        NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-static NVFBC_BOOL gl_init(void)
-{
-    Display *dpy        = None;
-    Pixmap pixmap       = None;
-    GLXPixmap glxPixmap = None;
-    GLXFBConfig *fbConfigs;
-    Bool res;
-    int n;
+static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
+    int attribs[] = {GLX_DRAWABLE_TYPE,
+                     GLX_PIXMAP_BIT | GLX_WINDOW_BIT,
+                     GLX_BIND_TO_TEXTURE_RGBA_EXT,
+                     1,
+                     GLX_BIND_TO_TEXTURE_TARGETS_EXT,
+                     GLX_TEXTURE_2D_BIT_EXT,
+                     None};
 
-    int attribs[] = {
-        GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT | GLX_WINDOW_BIT,
-        GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
-        GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
-        None
-    };
-
-    dpy = XOpenDisplay(NULL);
+    Display* dpy = XOpenDisplay(NULL);
     if (dpy == None) {
         fprintf(stderr, "Unable to open display\n");
         return NVFBC_FALSE;
     }
 
-    fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy), attribs, &n);
-    if (!fbConfigs) {
+    int n;
+    GLXFBConfig* fb_configs = glXChooseFBConfig(dpy, DefaultScreen(dpy), attribs, &n);
+    if (!fb_configs) {
         fprintf(stderr, "Unable to find FB configs\n");
         return NVFBC_FALSE;
     }
 
-    glxCtx = glXCreateNewContext(dpy, fbConfigs[0], GLX_RGBA_TYPE, None, True);
-    if (glxCtx == None) {
+    *glx_ctx = glXCreateNewContext(dpy, fb_configs[0], GLX_RGBA_TYPE, None, True);
+    if (*glx_ctx == None) {
         fprintf(stderr, "Unable to create GL context\n");
         return NVFBC_FALSE;
     }
 
-    pixmap = XCreatePixmap(dpy, XDefaultRootWindow(dpy), 1, 1, DisplayPlanes(dpy, XDefaultScreen(dpy)));
+    Pixmap pixmap =
+        XCreatePixmap(dpy, XDefaultRootWindow(dpy), 1, 1, DisplayPlanes(dpy, XDefaultScreen(dpy)));
     if (pixmap == None) {
         fprintf(stderr, "Unable to create pixmap\n");
         return NVFBC_FALSE;
     }
 
-    glxPixmap = glXCreatePixmap(dpy, fbConfigs[0], pixmap, NULL);
-    if (glxPixmap == None) {
+    GLXPixmap glx_pixmap = glXCreatePixmap(dpy, fb_configs[0], pixmap, NULL);
+    if (glx_pixmap == None) {
         fprintf(stderr, "Unable to create GLX pixmap\n");
         return NVFBC_FALSE;
     }
 
-    res = glXMakeCurrent(dpy, glxPixmap, glxCtx);
+    Bool res = glXMakeCurrent(dpy, glx_pixmap, *glx_ctx);
     if (!res) {
         fprintf(stderr, "Unable to make context current\n");
         return NVFBC_FALSE;
     }
 
-    glxFBConfig = fbConfigs[0];
+    *glx_fb_config = fb_configs[0];
 
-    XFree(fbConfigs);
+    XFree(fb_configs);
 
     return NVFBC_TRUE;
 }
 
-typedef NVENCSTATUS (NVENCAPI *p_fbc_fnNVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST *);
+typedef NVENCSTATUS(NVENCAPI* NVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST*);
 
-int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec, NVFBC_TOGL_SETUP_PARAMS* p_setup_params) {
+int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec,
+                          NVFBC_TOGL_SETUP_PARAMS* p_setup_params) {
     NVENCSTATUS status;
 
     /*
@@ -110,8 +98,8 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
      * Resolve the 'NvEncodeAPICreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
-    p_fbc_fnNVENCODEAPICREATEINSTANCEPROC nv_encode_api_create_instance_ptr = 
-        (p_fbc_fnNVENCODEAPICREATEINSTANCEPROC) dlsym(lib_enc, "NvEncodeAPICreateInstance");
+    NVENCODEAPICREATEINSTANCEPROC nv_encode_api_create_instance_ptr =
+        (NVENCODEAPICREATEINSTANCEPROC)dlsym(lib_enc, "NvEncodeAPICreateInstance");
     if (nv_encode_api_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvEncodeAPICreateInstance'");
         return -1;
@@ -128,8 +116,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
 
     status = nv_encode_api_create_instance_ptr(&device->p_enc_fn);
     if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Unable to create NvEncodeAPI instance (status: %d)",
-                status);
+        LOG_ERROR("Unable to create NvEncodeAPI instance (status: %d)", status);
         return -1;
     }
 
@@ -159,7 +146,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
         device->codec_type = CODEC_TYPE_H264;
         codec_guid = NV_ENC_CODEC_H264_GUID;
     }
-    //status = validateEncodeGUID(encoder, codec_guid);
+    // status = validateEncodeGUID(encoder, codec_guid);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to validate codec GUID");
         return -1;
@@ -170,13 +157,13 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
 
     preset_config.version = NV_ENC_PRESET_CONFIG_VER;
     preset_config.presetCfg.version = NV_ENC_CONFIG_VER;
-    status = device->p_enc_fn.nvEncGetEncodePresetConfig(device->encoder,
-                                                  codec_guid,
-                                                  NV_ENC_PRESET_LOW_LATENCY_HP_GUID,
-                                                  &preset_config);
+    status = device->p_enc_fn.nvEncGetEncodePresetConfig(
+        device->encoder, codec_guid, NV_ENC_PRESET_LOW_LATENCY_HP_GUID, &preset_config);
     if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to obtain preset settings, "
-                        "status = %d", status);
+        LOG_ERROR(
+            "Failed to obtain preset settings, "
+            "status = %d",
+            status);
         return -1;
     }
 
@@ -239,7 +226,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
             return -1;
         }
 
-        registered_resources[i] = register_params.registeredResource;
+        device->registered_resources[i] = register_params.registeredResource;
     }
 
     /*
@@ -283,7 +270,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
      * Resolve the 'NvFBCCreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
-    PNVFBCCREATEINSTANCE nv_fbc_create_instance_ptr = (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
+    PNVFBCCREATEINSTANCE nv_fbc_create_instance_ptr =
+        (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
     if (nv_fbc_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvFBCCreateInstance'");
         return -1;
@@ -292,7 +280,9 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
     /*
      * Initialize OpenGL.
      */
-    NVFBC_BOOL fbc_bool = gl_init();
+    GLXContext glx_ctx;
+    GLXFBConfig glx_fb_config;
+    NVFBC_BOOL fbc_bool = gl_init(&glx_ctx, &glx_fb_config);
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialized OpenGL!");
         return -1;
@@ -318,8 +308,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
     NVFBC_CREATE_HANDLE_PARAMS create_handle_params = {0};
     create_handle_params.dwVersion = NVFBC_CREATE_HANDLE_PARAMS_VER;
     create_handle_params.bExternallyManagedContext = NVFBC_TRUE;
-    create_handle_params.glxCtx = glxCtx;
-    create_handle_params.glxFBConfig = glxFBConfig;
+    create_handle_params.glxCtx = glx_ctx;
+    create_handle_params.glxFBConfig = glx_fb_config;
 
     fbc_status = device->p_fbc_fn.nvFBCCreateHandle(&device->fbc_handle, &create_handle_params);
     if (fbc_status != NVFBC_SUCCESS) {
@@ -375,8 +365,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
     create_capture_params.eTrackingType = NVFBC_TRACKING_DEFAULT;
     create_capture_params.bDisableAutoModesetRecovery = NVFBC_FALSE;
 
-
-    fbc_status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
+    fbc_status =
+        device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (fbc_status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
@@ -385,7 +375,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
      * Set up the capture session.
      */
     NVFBC_TOGL_SETUP_PARAMS setup_params = {0};
-    setup_params.dwVersion     = NVFBC_TOGL_SETUP_PARAMS_VER;
+    setup_params.dwVersion = NVFBC_TOGL_SETUP_PARAMS_VER;
     setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
 
     fbc_status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &setup_params);
@@ -431,7 +421,8 @@ void try_free_frame(NvidiaCaptureDevice* device) {
         /*
          * Unmap the input buffer
          */
-        enc_status = device->p_enc_fn.nvEncUnmapInputResource(device->encoder, device->input_buffer);
+        enc_status =
+            device->p_enc_fn.nvEncUnmapInputResource(device->encoder, device->input_buffer);
         if (enc_status != NV_ENC_SUCCESS) {
             // FATAL is chosen over ERROR here to prevent
             // out-of-control runaway memory usage
@@ -474,12 +465,12 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      * This structure will contain information about the encoding of
      * the captured frame.
      */
-    //grab_params.pEncFrameInfo = &enc_frame_info;
+    // grab_params.pEncFrameInfo = &enc_frame_info;
 
     /*
      * Specify per-frame encoding configuration.  Here, keep the defaults.
      */
-    //grab_params.pEncodeParams = NULL;
+    // grab_params.pEncodeParams = NULL;
 
     /*
      * This pointer is allocated by the NvFBC library and will
@@ -488,7 +479,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      * Make sure this pointer stays the same during the capture session
      * to prevent memory leaks.
      */
-    //grab_params.ppBitStreamBuffer = (void**)&device->frame;
+    // grab_params.ppBitStreamBuffer = (void**)&device->frame;
 
     /*
      * Capture a new frame.
@@ -514,11 +505,11 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     device->height = frame_info.dwHeight;
 
     /*
-    * Map the frame for use by the encoder.
-    */
+     * Map the frame for use by the encoder.
+     */
     NV_ENC_MAP_INPUT_RESOURCE map_params = {0};
     map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
-    map_params.registeredResource = registered_resources[grab_params.dwTextureIndex];
+    map_params.registeredResource = device->registered_resources[grab_params.dwTextureIndex];
     enc_status = device->p_enc_fn.nvEncMapInputResource(device->encoder, &map_params);
     if (enc_status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to map the resource, status = %d\n", enc_status);
@@ -598,7 +589,8 @@ void destroy_nvidia_encoder(NvidiaCaptureDevice* device) {
     }
 
     if (device->output_buffer) {
-        enc_status = device->p_enc_fn.nvEncDestroyBitstreamBuffer(device->encoder, device->output_buffer);
+        enc_status =
+            device->p_enc_fn.nvEncDestroyBitstreamBuffer(device->encoder, device->output_buffer);
         if (enc_status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to destroy buffer, status = %d", enc_status);
         }
@@ -610,12 +602,13 @@ void destroy_nvidia_encoder(NvidiaCaptureDevice* device) {
      * encoder.
      */
     for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
-        if (registered_resources[i]) {
-            enc_status = device->p_enc_fn.nvEncUnregisterResource(device->encoder, registered_resources[i]);
+        if (device->registered_resources[i]) {
+            enc_status = device->p_enc_fn.nvEncUnregisterResource(device->encoder,
+                                                                  device->registered_resources[i]);
             if (enc_status != NV_ENC_SUCCESS) {
                 LOG_ERROR("Failed to unregister resource, status = %d", enc_status);
             }
-            registered_resources[i] = NULL;
+            device->registered_resources[i] = NULL;
         }
     }
 
@@ -643,7 +636,8 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroy_capture_params = {0};
     destroy_capture_params.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
 
-    fbc_status = device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
+    fbc_status =
+        device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
     if (fbc_status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return;
