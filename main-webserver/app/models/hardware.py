@@ -211,8 +211,8 @@ class InstancesWithRoomForContainers(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
-    ami_id = db.Column(db.String(250), nullable=False)
-    max_containers = db.Column(db.Integer)
+    aws_ami_id = db.Column(db.String(250), nullable=False)
+    container_capacity = db.Column(db.Integer)
     num_running_containers = db.Column(db.Integer)
 
 

@@ -58,7 +58,7 @@ def find_instance(region: str) -> Optional[str]:
                 break
     if avail_instance is None:
         return avail_instance
-    return avail_instance.instance_id
+    return avail_instance.instance_name
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
@@ -91,18 +91,19 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         return -maxsize
     # Now, we want to get the average number of containers per instance in that region
     # and the number of free containers
-    all_instances = list(InstanceInfo.query.filter_by(location=region, ami_id=ami_id).all())
+    all_instances = list(InstanceInfo.query.filter_by(location=region, aws_ami_id=ami_id).all())
 
     if len(all_instances) == 0:
         # If there are no instances running, we want one.
         return 1
     all_free_instances = list(
-        InstancesWithRoomForContainers.query.filter_by(location=region, ami_id=ami_id).all()
+        InstancesWithRoomForContainers.query.filter_by(location=region, aws_ami_id=ami_id).all()
     )
     num_free_containers = sum(
-        instance.max_containers - instance.num_running_containers for instance in all_free_instances
+        instance.container_capacity - instance.num_running_containers
+        for instance in all_free_instances
     )
-    avg_max_containers = sum(instance.maxContainers for instance in all_instances) / len(
+    avg_max_containers = sum(instance.container_capacity for instance in all_instances) / len(
         all_instances
     )
 
@@ -191,7 +192,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             # we only want to scale down unused instances
             available_empty_instances = list(
                 InstancesWithRoomForContainers.query.filter_by(
-                    location=region, ami_id=ami, num_running_containers=0
+                    location=region, aws_ami_id=ami, num_running_containers=0
                 )
                 .limit(abs(num_new))
                 .all()
@@ -215,7 +216,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     requests.post(f"{base_url}/drain_and_shutdown")
                 except requests.exceptions.RequestException:
                     client = EC2Client(region_name=region)
-                    client.stop_instances([instance.instance_id])
+                    client.stop_instances([instance.instance_name])
                 db.session.commit()
 
 
@@ -225,8 +226,10 @@ def try_scale_down_if_necessary_all_regions() -> None:
 
     """
     region_and_ami_list = [
-        (region.location, region.ami_id)
-        for region in InstanceInfo.query.distinct(InstanceInfo.location, InstanceInfo.ami_id).all()
+        (region.location, region.aws_ami_id)
+        for region in InstanceInfo.query.distinct(
+            InstanceInfo.location, InstanceInfo.aws_ami_id
+        ).all()
     ]
     for region, ami in region_and_ami_list:
         try_scale_down_if_necessary(region, ami)
