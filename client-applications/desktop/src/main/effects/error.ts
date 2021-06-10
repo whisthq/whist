@@ -16,6 +16,7 @@ import {
   MANDELBOX_INTERNAL_ERROR,
   AUTH_ERROR,
   MAINTENANCE_ERROR,
+  PROTOCOL_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
 
@@ -34,4 +35,8 @@ fromTrigger("mandelboxFlowFailure").subscribe((x: any) => {
 
 fromTrigger("authFlowFailure").subscribe(() => {
   createErrorWindow(AUTH_ERROR)
+})
+
+fromTrigger("windowInfo").subscribe((args: { crashed: boolean }) => {
+  if (args.crashed) createErrorWindow(PROTOCOL_ERROR)
 })

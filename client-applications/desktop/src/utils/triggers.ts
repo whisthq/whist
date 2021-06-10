@@ -1,7 +1,7 @@
 export default {
   // App triggers
   appReady: "appReady",
-  numberWindows: "numberWindows",
+  windowInfo: "windowInfo",
   windowsAllClosed: "windowsAllClosed",
 
   // Auth triggers
@@ -25,9 +25,6 @@ export default {
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
-
-  // Protocol triggers
-  protocolClose: "protocolClose",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",
