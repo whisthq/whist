@@ -6,6 +6,10 @@ from pathlib import Path
 
 
 def merge(*dicts):
+    """Combine dictionaries into a single dictionary. This is a "shallow"
+    merge function, so only the top-level keys will be merged.
+
+    Conflicting keys will be overriden by the "right-most" dictionary."""
     result = {}
     for d in dicts:
         result.update(d)
