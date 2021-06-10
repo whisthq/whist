@@ -27,19 +27,6 @@ import { email } from "@app/main/observables/user"
 import { protocolStreamKill } from "@app/utils/protocol"
 import { fromSignal } from "@app/utils/observables"
 
-const exitSequence = (email: string) => {
-  destroyTray()
-  protocolStreamKill()
-  uploadToS3(email)
-    .then(() => {
-      app.quit()
-    })
-    .catch((err) => {
-      console.error(err)
-      app.quit()
-    })
-}
-
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
   const { deployEnv } = config
@@ -105,7 +92,18 @@ fromSignal(
 fromTrigger("numberWindows")
   .pipe(withLatestFrom(email))
   .subscribe(([numWindows, email_]: [number, string]) => {
-    if (numWindows === 0) exitSequence(email_)
+    if (numWindows === 0) {
+      destroyTray()
+      protocolStreamKill()
+      uploadToS3(email)
+        .then(() => {
+          app.quit()
+        })
+        .catch((err) => {
+          console.error(err)
+          app.quit()
+        })
+    }
   })
 
 fromTrigger("trayQuitAction").subscribe(() => {
