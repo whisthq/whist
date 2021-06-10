@@ -6,4 +6,4 @@ RUN pip install -r requirements.txt
 
 # commenting
 
-ENTRYPOINT ["python", ".github/actions/monorepo-config/main.py"]
+ENTRYPOINT ["python", ".github/actions/monorepo-config/main.py", "config"]
