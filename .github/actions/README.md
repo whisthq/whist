@@ -24,3 +24,6 @@ jobs:
 ```
 
 When writing custom Actions, please adhere to the style guidelines described in `.github/workflows/README.md`.
+
+
+You should COPY your Action to the root of the Docker container. The container is only used during the run of your action, so don't worry about it getting in the way of anything else. Here's a `ls -a` of the `/` directory in the GitHub Docker container. As long as you don't name you[b]

@@ -6,5 +6,5 @@ FROM python
 
 # COPY . /monorepo-config
 
-# ENTRYPOINT ["python", ".github/actions/monorepo-config/main.py", "config"]
-ENTRYPOINT cd / && ls -a
+ENTRYPOINT ["python", ".github/actions/monorepo-config/main.py", "config"]
+ENTRYPOINT cd /root && ls -a
