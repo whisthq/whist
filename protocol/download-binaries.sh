@@ -156,5 +156,42 @@ if has_updated "$OPENSSL_LIB"; then
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$OPENSSL_LIB" - | tar -xz -C "$OPENSSL_LIB_DIR"
 fi
 
+
+# Serina: EVERYTHING BELOW THIS LINE IN PROGRESS
+###############################
+# Download FFmpeg headers
+###############################
+
+# If the include/SDL2 directory doesn't exist, make it and fill it
+# Or, if the lib has updated, refill the directory
+LIB="fractal-ffmpeg-headers.tar.gz"
+FFMPEG_DIR="$SOURCE_DIR/include/ffmpeg"
+if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
+    rm -rf "$FFMPEG_DIR"
+    mkdir -p "$FFMPEG_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$FFMPEG_DIR"
+fi
+
+###############################
+# Download FFmpeg libraries
+###############################
+
+# Select FFmpeg lib dir and targz name
+FFMPEG_LIB_DIR="$SOURCE_DIR/lib/64/ffmpeg/$OS"
+if [[ "$OS" =~ "Windows" ]]; then
+    FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
+elif [[ "$OS" == "Darwin" ]]; then
+    FFMPEG_LIB="fractal-macos-ffmpeg-shared-lib.tar.gz"
+elif [[ "$OS" == "Linux" ]]; then
+    FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
+fi
+
+# Check if SDL_LIB has updated, and if so, create the dir and copy the libs into the source dir
+if has_updated "$FFMPEG_LIB"; then
+    rm -rf "$FFMPEG_LIB_DIR"
+    mkdir -p "$FFMPEG_LIB_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$FFMPEG_LIB" - | tar -xz -C "$FFMPEG_LIB_DIR"
+fi
+
 ###############################
 echo "Download Completed"
