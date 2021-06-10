@@ -36,7 +36,7 @@ python .github/actions/monorepo-config/main.py \
 ```
 
 
-This will output the JSON below. Excuse the null values for now, the configuration is still being populated.
+This will output the JSON below. Excuse the null values for now, the configuration is still being populated. Note the `dev` specific URLs in keys like `AUTH_DOMAIN`, and `mac` specific URLS in keys like `CLIENT_DOWNLOAD`. These would be replaced with `win`, `lnx`, `local`, `staging`, or `production` URLS with different profiles.
 ```json
 {
     "APPLE_API_KEY_ID": "a-really-secret-value",
@@ -97,8 +97,3 @@ This will output the JSON below. Excuse the null values for now, the configurati
     "WEBSERVER_LOGZIO_SHIPPING_TOKEN": null
 }
 ```
-
-
-
-
-
