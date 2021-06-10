@@ -67,7 +67,7 @@ class Stack(_Stack):
         This is also not a particularly well-error-handled method.
 
         Returns:
-            True iff the teardown process has at least begun for every member of the stack.
+            True if and only if the teardown process has at least begun for every member of the stack.
         """
 
         autoscaling_client = boto3.client("autoscaling", region_name=self.region)

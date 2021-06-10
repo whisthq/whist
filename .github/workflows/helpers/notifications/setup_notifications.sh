@@ -4,7 +4,7 @@
 # Note that installed dependencies will be reset if you call the configure Python action
 # after running this script.
 # Arguments
-# ${1}: true iff the script should install the requirements for the package. Default false.
+# ${1}: true if and only if the script should install the requirements for the package. Default false.
 
 set -Eeuo pipefail
 

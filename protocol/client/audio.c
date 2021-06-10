@@ -78,12 +78,12 @@ typedef struct RenderContext {
 static AudioContext volatile audio_context;
 // holds the current audio frame to play
 static RenderContext volatile audio_render_context;
-// true iff the audio packet in audio_render_context should be played
+// true if and only if the audio packet in audio_render_context should be played
 static bool volatile rendering_audio = false;
 
 // sample rate of audio signal
 static int volatile audio_frequency = -1;
-// true iff we should connect to a new audio device when playing audio
+// true if and only if we should connect to a new audio device when playing audio
 static bool volatile audio_refresh = false;
 
 // when the last nack was sent

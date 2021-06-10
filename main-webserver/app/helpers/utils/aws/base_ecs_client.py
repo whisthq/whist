@@ -924,7 +924,7 @@ class ECSClient:
             max_polls: maximum number of times to poll AWS
 
         Return:
-            True iff a networking binding was returned by AWS.
+            True if and only if a networking binding was returned by AWS.
         """
         for _ in range(max_polls):
             if self.get_task_ip_ports(offset=offset):

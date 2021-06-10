@@ -66,7 +66,7 @@ def check_if_maintenance() -> bool:
     Check if webserver is in maintenance mode.
 
     Returns:
-        True iff the web server is currently in maintenance mode.
+        True if and only if the web server is currently in maintenance mode.
     """
     # we don't need a lock because we are just checking if the key exists,
     # not modifying data. it is posisble for maintenance to start right after
@@ -86,7 +86,7 @@ def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
         should_sleep: True if method should sleep between attempts to grab lock
 
     Returns:
-        True iff the lock is acquired.
+        True if and only if the lock is acquired.
     """
     for _ in range(max_tries):
         got_lock = _REDIS_CONN.setnx(_REDIS_LOCK_KEY, 1)
@@ -140,7 +140,7 @@ def try_start_maintenance() -> Tuple[bool, str]:
     if tasks is None or not tasks:
         # no tasks, we can start maintenance
         success = True
-        # use an atomic setnx operation to start maintenance. The return is True iff this thread
+        # use an atomic setnx operation to start maintenance. The return is True if and only if this thread
         # created the maintenance key. This reduces log cluttering as only the thread that
         # starts maintenance ends up printing.
         maintenance_started = _REDIS_CONN.setnx(_REDIS_MAINTENANCE_KEY, 1)
@@ -178,7 +178,7 @@ def try_end_maintenance() -> Tuple[bool, str]:
         3. Release lock
 
     Returns:
-        True iff there is no maintenance mode. This can be because there already was no maintenance
+        True if and only if there is no maintenance mode. This can be because there already was no maintenance
         mode, or because it was ended by this function. This helps with github workflows
         because two workflows might both end maintenance. Until we solve our concurrent
         workflows problem, it's best to implement it this way.
