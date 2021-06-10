@@ -3,7 +3,6 @@
  */
 
 import { app } from "electron"
-import events from "events"
 import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
