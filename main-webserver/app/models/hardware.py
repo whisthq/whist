@@ -34,7 +34,7 @@ class UserContainer(db.Model):
             port 32263 on the container
         port_32273 (int): port number on the ECS container instance host that is forwraded to
             port 32273 on the container
-        last_pinged (int): timestamp representing when the container was last pinged
+        last_updated_utc_unix_ms (int): timestamp representing when the container was last pinged
         cluster (string): foreign key for the cluster the container is hosted on
         parent_cluster (ClusterInfo): reference to hardware.cluster_info object of the parent
         dpi (int): pixel density of the stream
@@ -57,7 +57,7 @@ class UserContainer(db.Model):
     port_32262 = db.Column(db.Integer, nullable=False)
     port_32263 = db.Column(db.Integer, nullable=False)
     port_32273 = db.Column(db.Integer, nullable=False)
-    last_pinged = db.Column(db.Integer)
+    last_updated_utc_unix_ms = db.Column(db.Integer)
     cluster = db.Column(db.ForeignKey("hardware.cluster_info.cluster"))
     parent_cluster = relationship("ClusterInfo", back_populates="containers")
     dpi = db.Column(db.Integer)
@@ -153,25 +153,25 @@ class InstanceInfo(db.Model):
         GPURemainingPerInstance (float): GPU that isn't in use
         memoryRemainingPerInstance (float): RAM not in use
         maxContainers (int): how many containers can run at once?
-        last_pinged (int): when did this instance last tell us it existed?
+        last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         created_at (int):  When was this instance created?
         ami_id (str): what image is this machine based on?
         is_active (boolean):  is this instance active or inactive?"""
 
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
-    instance_type = db.Column(db.String(250), nullable=False)
-    auth_token = db.Column(db.String(250))
-    ip = db.Column(db.String(250))
-    CPURemainingInInstance = db.Column(db.Float, nullable=False, server_default="1024.0")
-    GPURemainingInInstance = db.Column(db.Float, nullable=False, server_default="1024.0")
-    memoryRemainingInInstanceInMb = db.Column(db.Float, nullable=False, server_default="2000.0")
-    maxContainers = db.Column(db.Integer, nullable=False, default=0)
-    last_pinged = db.Column(db.Integer)
     created_at = db.Column(db.Integer)
-    ami_id = db.Column(db.String(250), nullable=False)
+    aws_instance_type = db.Column(db.String(250), nullable=False)
+    auth_token = db.Column(db.String(250), nullable=False)
+    ip = db.Column(db.String(250), nullable=False)
+    nanocpus_remaining = db.Column(db.Float, nullable=False, server_default="1024.0")
+    gpu_vram_remaining_kb = db.Column(db.Float, nullable=False, server_default="1024.0")
+    memory_remaining_kb = db.Column(db.Float, nullable=False, server_default="2000.0")
+    container_capacity = db.Column(db.Integer, nullable=False, default=0)
+    last_updated_utc_unix_ms = db.Column(db.Integer)
+    aws_ami_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
 
 

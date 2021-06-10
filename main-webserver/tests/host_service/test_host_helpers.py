@@ -49,7 +49,7 @@ def test_heartbeat_no_update(bulk_instance):
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
     inst = InstanceInfo.query.get("test_instance_id")
-    assert time.time() - inst.last_pinged <= 2
+    assert time.time() - inst.last_updated_utc_unix_ms <= 2
 
 
 def test_heartbeat_wrong_key(bulk_instance):
@@ -63,7 +63,7 @@ def test_heartbeat_wrong_key(bulk_instance):
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
     inst = InstanceInfo.query.get("test_instance_id")
-    assert inst.last_pinged is None
+    assert inst.last_updated_utc_unix_ms is None
 
 
 def test_heartbeat_no_exist(bulk_instance):
@@ -77,7 +77,7 @@ def test_heartbeat_no_exist(bulk_instance):
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
     inst = InstanceInfo.query.get("test_instance_id")
-    assert inst.last_pinged is None
+    assert inst.last_updated_utc_unix_ms is None
 
 
 def test_heartbeat_dying(bulk_instance):
@@ -101,5 +101,5 @@ def test_heartbeat_updates(bulk_instance):
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
     inst = InstanceInfo.query.get("test_instance_id")
-    assert inst.memoryRemainingInInstanceInMb == 1025
-    assert time.time() - inst.last_pinged <= 2
+    assert inst.memory_remaining_kb == 1025
+    assert time.time() - inst.last_updated_utc_unix_ms <= 2

@@ -246,18 +246,18 @@ ALTER TABLE ONLY hardware.container_info
 
 CREATE TABLE hardware.instance_info (
     instance_id character varying NOT NULL,
-    auth_token character varying,
-    created_at bigint,
-    "memoryRemainingInInstanceInMb" double precision NOT NULL default 2000,
-    "CPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
-    "GPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
-    "maxContainers" bigint NOT NULL DEFAULT 0,
-    last_pinged bigint,
-    ip character varying,
-    ami_id character varying NOT NULL,
+    auth_token character varying NOT NULL,
+    "lastHeartbeated" bigint,
+    "memory_remaining_kb" double precision NOT NULL default 2000,
+    "nanocpus_remaining" double precision NOT NULL DEFAULT 1024,
+    "gpu_vram_remaining_kb" double precision NOT NULL DEFAULT 1024,
+    "container_capacity" bigint NOT NULL DEFAULT 0,
+    last_updated_utc_unix_ms bigint,
+    ip character varying NOT NULL,
+    aws_ami_id character varying NOT NULL,
     location character varying NOT NULL,
-    instance_type character varying NOT NULL,
     status character varying NOT NULL
+    aws_instance_type character varying NOT NULL
 );
 
 
@@ -277,23 +277,23 @@ CREATE VIEW hardware.instance_sorted AS
   SELECT sub_with_running.instance_id,
     sub_with_running.ami_id,
     sub_with_running.location,
-    sub_with_running."maxContainers" AS max_containers,
-    sub_with_running.num_running_containers
+    sub_with_running."container_capacity" AS container_capacity,
+    sub_with_running.running_containers as num_running_containers
    FROM ( SELECT base_table.instance_id,
             base_table.ami_id,
             base_table.location,
-            base_table."maxContainers",
+            base_table."container_capacity",
             COALESCE(base_table.count, 0::bigint) AS num_running_containers
            FROM (( SELECT instance_info.instance_id,
                     instance_info.ami_id,
                     instance_info.location,
-                    instance_info."maxContainers"
+                    instance_info."container_capacity"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
                     container_info.instance_id AS cont_inst
                    FROM hardware.container_info
                   GROUP BY container_info.instance_id) containers ON instances.instance_id::text = containers.cont_inst::text) base_table) sub_with_running
-  WHERE sub_with_running.num_running_containers < sub_with_running."maxContainers"
+  WHERE sub_with_running.num_running_containers < sub_with_running."container_capacity"
   ORDER BY sub_with_running.location, sub_with_running.num_running_containers DESC;
 
 
@@ -386,7 +386,7 @@ CREATE TABLE hardware.user_containers (
     state character varying NOT NULL,
     user_id character varying,
     port_32262 bigint DEFAULT '-1'::integer NOT NULL,
-    last_pinged bigint,
+    last_updated_utc_unix_ms bigint,
     cluster character varying,
     port_32263 bigint DEFAULT '-1'::integer NOT NULL,
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,

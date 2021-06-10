@@ -40,6 +40,7 @@
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
     "logzio-nodejs": "^2.0.2",
+    "node": "^16.1.0",
     "path": "^0.12.7",
     "ping": "^0.4.1",
     "prop-types": "^15.7.2",

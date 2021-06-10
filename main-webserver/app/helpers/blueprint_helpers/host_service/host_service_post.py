@@ -17,14 +17,14 @@ from app.models import db, InstanceInfo
 
 
 def initial_instance_auth_helper(
-    ip: str, instance_id: str, instance_type: str, location: str, ami_id: str
+    ip: str, instance_id: str, aws_instance_type: str, location: str, ami_id: str
 ) -> Tuple[Response, int]:
     """
 
     Args:
         ip: the IP address of the instance to be authenticated
         instance_id: the instance ID of the instance to be authenticated
-        instance_type: what type of hardware the instance is on
+        aws_instance_type: what type of hardware the instance is on
         location: which region the instance is in
         ami_id: what AMI the instance is running
 
@@ -43,7 +43,7 @@ def initial_instance_auth_helper(
         instance_id=instance_id,
         ip=ip,
         auth_token=auth_token,
-        instance_type=instance_type,
+        aws_instance_type=aws_instance_type,
         ami_id=ami_id,
         location=location,
         status="ACTIVE",
@@ -79,7 +79,7 @@ def instance_heartbeat_helper(
     if is_dying:
         db.session.delete(instance)
     else:
-        instance.last_pinged = int(time())
-        instance.memoryRemainingInInstanceInMb = int(free_ram_kb / 1000)
+        instance.last_updated_utc_unix_ms = int(time())
+        instance.memory_remaining_kb = int(free_ram_kb / 1000)
     db.session.commit()
     return jsonify({"status": SUCCESS}), SUCCESS
