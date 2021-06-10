@@ -40,11 +40,11 @@ def initial_instance_auth_helper(
 
     # Then create a row for the instance in the DB
     new_instance = InstanceInfo(
-        instance_id=instance_id,
+        instance_name=instance_id,
         ip=ip,
         auth_token=auth_token,
         aws_instance_type=aws_instance_type,
-        ami_id=ami_id,
+        aws_ami_id=ami_id,
         location=location,
         status="ACTIVE",
     )

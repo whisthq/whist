@@ -20,7 +20,7 @@ def test_initial_auth_good(app):
     resp_dict = resp.get_json()
     assert "AuthToken" in resp_dict.keys()
     assert resp_code == SUCCESS
-    attempted_inst = InstanceInfo.query.filter_by(instance_id="test_instance_id").one_or_none()
+    attempted_inst = InstanceInfo.query.filter_by(instance_name="test_instance_id").one_or_none()
 
     assert attempted_inst is not None
     db.session.delete(attempted_inst)
@@ -57,7 +57,9 @@ def test_heartbeat_wrong_key(bulk_instance):
     Tests that a heartbeat with the wrong auth token fails
     and that it fails with NOT_FOUND
     """
-    bulk_instance(instance_name="test_instance_id", auth_token="test_auth", last_pinged=None)
+    bulk_instance(
+        instance_name="test_instance_id", auth_token="test_auth", last_updated_utc_unix_ms=None
+    )
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper("bad_token", "test_instance_id", 1024000, False)
     resp_dict = resp.get_json()
@@ -71,7 +73,9 @@ def test_heartbeat_no_exist(bulk_instance):
     Tests that a heartbeat for a nonexistent instance fails
     and that it fails with NOT_FOUND
     """
-    bulk_instance(instance_name="test_instance_id", auth_token="test_auth", last_pinged=None)
+    bulk_instance(
+        instance_name="test_instance_id", auth_token="test_auth", last_updated_utc_unix_ms=None
+    )
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper("test_auth", "test_instance_id2", 1024, False)
     resp_dict = resp.get_json()
@@ -88,7 +92,7 @@ def test_heartbeat_dying(bulk_instance):
     resp, resp_code = instance_heartbeat_helper("test_auth", "test_instance_id", 1024000, True)
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
-    assert InstanceInfo.query.filter_by(instance_id="test_instance_id").one_or_none() is None
+    assert InstanceInfo.query.filter_by(instance_name="test_instance_id").one_or_none() is None
 
 
 def test_heartbeat_updates(bulk_instance):
