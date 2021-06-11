@@ -35,17 +35,17 @@ In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-act
 
 Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively.
 
-Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the actuall CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
+Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
 
-Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and strictly only run one process at a time. When creating an Action, you choose from three environments to run your work.
+Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and only run one process at a time. When creating an Action, you choose from three environments to run your work.
 
 1. Node.js
 2. Docker
 3. "Composite"
 
-The simplest of these to work with is Docker, and that's what we'll spend the rest of this document focusing on. Both Node.js and "Composite" start to bring in the complexity of Workflows, adding jobs and steps and lots of GitHub context that becomes impossible to reproduce locally. By selecting a Docker environment, GitHub effectively "hands off" all execution to your Docker container. You have full control over your environment and dependencies. This allows your to work with a familiar toolset while you're developing and testing, with the expectation that the environment will be (almost) entirely the same when you deploy to GitHub.
+The simplest of these to work with is Docker, and that's what we'll focus on for the rest of this document. Both Node.js and "Composite" start to bring in the complexity of Workflows by adding jobs and steps and lots of GitHub context that becomes impossible to reproduce locally. By selecting a Docker environment, GitHub effectively "hands off" all execution to your Docker container. You have full control over your environment and dependencies. This allows your to work with a familiar toolset while you're developing and testing, with the expectation that the environment will be (almost) entirely the same when you deploy to GitHub.
 
-Our goal here is to be able to comfortably write a program that can be decoupled from GitHub Actions. We want to be able to do the bulk of our work in a familiar environment, and write code that accepts data and returns data. Ideally, our program doesn't need to know it's running in GitHub Actions. In the next sections, we'll configure our Action and Docker container as a GitHub-focused "wrapper" that can host any general-purpose program.
+Our goal here is to be able to comfortably write a program that can be decoupled from GitHub Actions. We want to be able to do the bulk of our work in a familiar environment, writing code that simply accepts data and returns data. Ideally, our program doesn't need to know that it's running in GitHub Actions. In the next sections, we'll configure our Action and Docker container as a GitHub-focused "wrapper" that can host any general-purpose program.
 
 ## Setting up a GitHub Action
 
