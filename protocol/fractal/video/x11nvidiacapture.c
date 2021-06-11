@@ -20,7 +20,9 @@
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
 /**
- * @brief                          Creates an OpenGL context for use in NvFBC
+ * @brief                          Creates an OpenGL context for use in NvFBC.
+ *                                 NvFBC needs an OpenGL context to work with,
+ *                                 since it will capture frames into an OpenGL Texture.
  *
  * @param glx_ctx                  Pointer to the glx context to fill in
  *
@@ -37,6 +39,7 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
                      GLX_TEXTURE_2D_BIT_EXT,
                      None};
 
+    // Get the X11 Display that the OpenGL Context will refer to
     Display* dpy = XOpenDisplay(NULL);
     if (dpy == None) {
         fprintf(stderr, "Unable to open display\n");
@@ -82,8 +85,6 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
-typedef NVENCSTATUS(NVENCAPI* NVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST*);
-
 int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec,
                           NVFBC_TOGL_SETUP_PARAMS* p_setup_params) {
     NVENCSTATUS status;
@@ -101,6 +102,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
      * Resolve the 'NvEncodeAPICreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
+    typedef NVENCSTATUS(NVENCAPI* NVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST*);
     NVENCODEAPICREATEINSTANCEPROC nv_encode_api_create_instance_ptr =
         (NVENCODEAPICREATEINSTANCEPROC)dlsym(lib_enc, "NvEncodeAPICreateInstance");
     if (nv_encode_api_create_instance_ptr == NULL) {
