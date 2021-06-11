@@ -478,6 +478,7 @@ int render_video() {
             safe_SDL_LockMutex(render_mutex);
             update_cursor(frame);
 
+        // determine if we should be rendering at all or not
             bool render_this_frame = can_render && !skip_render;
 
             if (render_this_frame) {
@@ -680,7 +681,8 @@ void update_sws_context() {
 
 void update_sws_pixel_format() {
     /*
-        Update the pixel format for the SWS context
+        Update the pixel format for the SWS context if the decoder format and our render format
+       (yuv420p) differ.
     */
 
     if (sws_input_fmt != video_context.decoder->sw_frame->format || pending_sws_update) {
