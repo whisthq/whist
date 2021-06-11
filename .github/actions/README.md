@@ -25,7 +25,7 @@ jobs:
 
 When writing custom Actions, please adhere to the style guidelines described in `.github/workflows/README.md`.
 
-# Tips for Actions environment setup.
+# Tips for Actions environment setup
 
 You should `COPY` your Action to the `/root` folder in the Docker container, and then refer to it by absolute path. For example, here's the `monorepo-config` Dockerfile:
 
