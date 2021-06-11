@@ -169,7 +169,7 @@ if (DOWNLOAD_BINARIES)
     endif()
 endif()
 
-# FFmpeg: using our provided libs on mac and windows and system on linux.
+# FFmpeg: Use the ffmpeg libs in /lib/${arch}/ffmpeg
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.3.dylib;libavcodec.58.dylib;libavdevice.58.dylib;libavfilter.7.dylib;
                     libavformat.58.dylib;libswscale.5.dylib;libavutil.56.dylib;libpostproc.55.dylib)
@@ -178,42 +178,23 @@ else()
 endif()
 
 set(FFMPEG_LIBS_PATHS "")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    FOREACH(LIB ${FFMPEG_LIBS})
-        message(VERBOSE "Looking for lib ${LIB}")
-        set(LIB_VAR "LIB_${LIB}")
-        find_library(${LIB_VAR} NAMES ${LIB})
-        message(VERBOSE "found lib ${LIB_VAR}")
-        LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
-    endforeach(LIB)
-    message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    find_path(FFMPEG_AVCODEC_INCLUDE_DIR
-            NAMES libavcodec/avcodec.h
-            PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS} /usr/include /usr/local/include /opt/local/include /sw/include
-            PATH_SUFFIXES ffmpeg libav
-            )
-    message(VERBOSE "FFmpeg include dir: ${FFMPEG_AVCODEC_INCLUDE_DIR}")
-    include_directories(${FFMPEG_AVCODEC_INCLUDE_DIR})
-else()
-    FOREACH(LIB ${FFMPEG_LIBS})
-        message(STATUS "Looking for lib ${LIB}")
-        set(LIB_VAR "LIB_${LIB}")
-        find_library(${LIB_VAR}
-                NAMES ${LIB}
-                PATHS lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
-                NO_DEFAULT_PATH
-                NO_CMAKE_ENVIRONMENT PATH
-                NO_CMAKE_PATH
-                NO_SYSTEM_ENVIRONMENT_PATH
-                NO_CMAKE_SYSTEM_PATH
-                NO_CMAKE_FIND_ROOT_PATH)
-        message(VERBOSE "found lib ${LIB_VAR}")
-        LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
-    endforeach(LIB)
-    message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    include_directories(include/ffmpeg)
-endif ()
+FOREACH(LIB ${FFMPEG_LIBS})
+    message(STATUS "Looking for lib ${LIB}")
+    set(LIB_VAR "LIB_${LIB}")
+    find_library(${LIB_VAR}
+            NAMES ${LIB}
+            PATHS lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH
+            NO_CMAKE_FIND_ROOT_PATH)
+    message(VERBOSE "found lib ${LIB_VAR}")
+    LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
+endforeach(LIB)
+message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
+include_directories(include/ffmpeg)
 
 
 #[[

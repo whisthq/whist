@@ -6,9 +6,9 @@ set -Eeuo pipefail
 # This script installs the required dependencies to build the Fractal protocol on Linux Ubuntu.
 
 sudo apt-get install -y \
+    libmfx-dev \
+    libvo-amrwbenc-dev \
     libssl-dev \
-    libavcodec-dev \
-    libavdevice-dev \
     libx11-dev \
     libxtst-dev \
     xclip \
