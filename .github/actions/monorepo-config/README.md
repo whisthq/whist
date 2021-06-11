@@ -23,7 +23,7 @@ The processing of the configuration YAML is described below.
 
 The output JSON object, if processed correctly, should have no nesting. Nested configuration will remain in the output if no profile is found that matches a key. This is purposefully done so that the mistake is easy to spot.
 
-# Example program run
+## Example program run
 
 For GitHub Actions reasons, it's good to get in the habit of running this program (and any Actions program) from the root folder of the monorepo. We'll run from the `fractal` folder like this:
 
