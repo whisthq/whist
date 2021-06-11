@@ -162,7 +162,7 @@ fi
 # Download FFmpeg headers
 ###############################
 
-# If the include/SDL2 directory doesn't exist, make it and fill it
+# If the include/ffmpeg directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
 LIB="fractal-ffmpeg-headers.tar.gz"
 FFMPEG_DIR="$SOURCE_DIR/include/ffmpeg"
@@ -189,7 +189,7 @@ elif [[ "$OS" == "Linux" ]]; then
     FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
 fi
 
-# Check if SDL_LIB has updated, and if so, create the dir and copy the libs into the source dir
+# Check if FFMPEG_LIB has updated, and if so, create the dir and copy the libs into the source dir
 if has_updated "$FFMPEG_LIB"; then
     rm -rf "$FFMPEG_LIB_DIR"
     mkdir -p "$FFMPEG_LIB_DIR"
