@@ -172,16 +172,66 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index);
 void video_nack(int id, int index);
 bool request_iframe();
 void update_sws_context();
-void update_pixel_format();
-void update_texture();
+void update_sws_pixel_format();
+void replace_texture();
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
 void clear_sdl(SDL_Renderer* renderer);
+SDL_Rect new_SDL_Rect(int x, int y, int w, int h);
+int get_next_video_frame(Frame* frame);
+void finalize_video_context_data();
+void update_window_titlebar_color();
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
+
+int get_next_video_frame(Frame* frame) {
+    clock decode_timer;
+    start_timer(&decode_timer);
+    if (!video_decoder_decode(video_context.decoder, get_frame_videodata(frame),
+                              frame->videodata_length)) {
+        LOG_WARNING("Failed to video_decoder_decode!");
+        // Since we're done, we free the frame buffer
+        free_block(frame_buffer_allocator, render_context.frame_buffer);
+        // rendering = false is set to false last,
+        // since that can trigger the next frame render
+        rendering = false;
+        return -1;
+    } else {
+#if LOG_VIDEO
+        LOG_INFO("Decode time: %f", get_timer(decode_timer));
+#endif
+        return 0;
+    }
+}
+SDL_Rect new_SDL_Rect(int x, int y, int w, int h) {
+    SDL_Rect new_rect;
+    new_rect.x = x;
+    new_rect.y = y;
+    new_rect.w = w;
+    new_rect.h = h;
+    return new_rect;
+}
+
+void update_window_titlebar_color() {
+    FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
+                                     video_context.data[2][0]};
+
+    FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
+
+    if ((FractalRGBColor*)native_window_color != NULL) {
+        FractalRGBColor* old_native_window_color = (FractalRGBColor*)native_window_color;
+        free(old_native_window_color);
+    }
+
+    FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+    *new_native_window_color = new_rgb_color;
+    native_window_color = new_native_window_color;
+    native_window_color_update = true;
+}
+}
 
 int32_t multithreaded_destroy_decoder(void* opaque) {
     VideoDecoder* decoder = (VideoDecoder*)opaque;
@@ -244,16 +294,13 @@ int render_video() {
         // Stop loading animation once rendering occurs
         video_data.loading_index = -1;
 
+        // retain server width/height if user is resizing the window
         safe_SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
             // User is in the middle of resizing the window
-            SDL_Rect output_rect;
-            output_rect.x = 0;
-            output_rect.y = 0;
-            output_rect.w = server_width;
-            output_rect.h = server_height;
-            SDL_RenderCopy(video_context.renderer, video_context.texture, &output_rect, NULL);
-            SDL_RenderPresent(video_context.renderer);
+            SDL_Rect output_rect = new_SDL_Rect(0, 0, server_width, server_height);
+            SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
+            SDL_RenderPresent(renderer);
         }
         safe_SDL_UnlockMutex(render_mutex);
 
@@ -262,6 +309,9 @@ int render_video() {
         PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
+        // log how long it took us to begin rendering the frame from when we received its first
+        // packet
+        // TODO: figure out if this should go in a separate function
         if (get_timer(render_context.frame_creation_timer) > 25.0 / 1000.0) {
             LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
                      get_timer(render_context.frame_creation_timer), render_context.num_packets,
@@ -322,47 +372,22 @@ int render_video() {
             bool render_this_frame = can_render && !skip_render;
 
             if (render_this_frame) {
+                // first "finalize" the texture: use make sure the texture is in YUV
+                // and recreate the texture if the windows has been resized
                 clock sws_timer;
                 start_timer(&sws_timer);
 
-                update_texture();
+                if (pending_texture_update) {
+                    replace_texture();
+                    pending_texture_update = false;
+                }
                 pending_resize_render = false;
 
-                if (video_context.sws) {
-                    sws_scale(video_context.sws,
-                              (uint8_t const* const*)video_context.decoder->sw_frame->data,
-                              video_context.decoder->sw_frame->linesize, 0,
-                              video_context.decoder->height, video_context.data,
-                              video_context.linesize);
-                } else {
-                    memcpy(video_context.data, video_context.decoder->sw_frame->data,
-                           sizeof(video_context.data));
-                    memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
-                           sizeof(video_context.linesize));
-                }
+                finalize_video_context_data();
 
+                // then, update the window titlebar color if we can
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-                FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
-                                                 video_context.data[2][0]};
 
-                FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
-
-                if ((FractalRGBColor*)native_window_color == NULL) {
-                    // no window color has been set; create it!
-                    FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
-                    *new_native_window_color = new_rgb_color;
-                    native_window_color = new_native_window_color;
-                    native_window_color_update = true;
-                } else if (rgb_compare(new_rgb_color, *(FractalRGBColor*)native_window_color)) {
-                    // window color has changed; update it!
-                    FractalRGBColor* old_native_window_color =
-                        (FractalRGBColor*)native_window_color;
-                    FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
-                    *new_native_window_color = new_rgb_color;
-                    native_window_color = new_native_window_color;
-                    free(old_native_window_color);
-                    native_window_color_update = true;
-                }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
                 // The texture object we allocate is larger than the frame (unless
@@ -631,7 +656,7 @@ void update_sws_context() {
                        decoder->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 }
 
-void update_pixel_format() {
+void update_sws_pixel_format() {
     /*
         Update the pixel format for the SWS context
     */
@@ -643,28 +668,46 @@ void update_pixel_format() {
     }
 }
 
-void update_texture() {
+void finalize_video_context_data() {
     /*
-        Update the SDL video texture
+  Update the pixel format if necessary by applying sws_scale; otherwise, just memcpy the software
+  frame into videocontext.data for processing.
     */
 
-    if (pending_texture_update) {
-        // Destroy the old texture
-        if (video_context.texture) {
-            SDL_DestroyTexture(video_context.texture);
-        }
-        // Create a new texture
-        SDL_Texture* texture =
-            SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12,
-                              SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-        if (!texture) {
-            LOG_FATAL("SDL: could not create texture - exiting");
-        }
-        // Save the new texture over the old one
-        video_context.texture = texture;
-
-        pending_texture_update = false;
+    // first check if we need to change the pixel format of the decoded frame to yuv
+    // This automatically updates the SWS context to prepare for the transform as well
+    update_sws_pixel_format();
+    if (video_context.sws) {
+        sws_scale(video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
+                  video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
+                  video_context.data, video_context.linesize);
+    } else {
+        memcpy(video_context.data, video_context.decoder->sw_frame->data,
+               sizeof(video_context.data));
+        memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
+               sizeof(video_context.linesize));
     }
+}
+
+void replace_texture() {
+    /*
+        Destroy the old texture and create a new texture. This function is called during renderer
+       initialization and if the user has finished resizing the window.
+    */
+
+    // Destroy the old texture
+    if (video_context.texture) {
+        SDL_DestroyTexture(video_context.texture);
+    }
+    // Create a new texture
+    SDL_Texture* texture =
+        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING,
+                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+    if (!texture) {
+        LOG_FATAL("SDL: could not create texture - exiting");
+    }
+    // Save the new texture over the old one
+    video_context.texture = texture;
 }
 
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
@@ -770,7 +813,7 @@ int init_video_renderer() {
     // Rather than allocating a new texture every time the dimensions change, we instead allocate
     // the texture once and render sub-rectangles of it.
     pending_texture_update = true;
-    update_texture();
+    replace_texture();
 
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
