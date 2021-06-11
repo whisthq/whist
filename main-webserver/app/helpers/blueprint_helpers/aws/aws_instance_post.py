@@ -200,7 +200,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 instance_info = InstanceInfo.query.with_for_update().get(instance.instance_id)
                 instance_containers = InstancesWithRoomForContainers.query.filter_by(
                     instance_id=instance.instance_id
-                )
+                ).one_or_none()
                 if instance_containers.num_running_containers != 0:
                     db.session.commit()
                     continue
