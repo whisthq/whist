@@ -263,7 +263,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── __init__.py --> initialization code/global preprocessors for the app
 │   ├── blueprints -->  our API endpoints are described here
 │   │   ├── admin --> API endpoints relating to manipulating user and logs info
-│   │   │   ├── hasura_blueprint.py --> endpoint we use to authenticate GQL queries
 │   │   │   └── logs_blueprint.py --> endpoint we use to upload logs
 │   │   ├── aws
 │   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
@@ -298,8 +297,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── factory.py -->  general application setup scripts
 │   ├── helpers --> helper utils we use throughout the codebase
 │   │   ├── blueprint_helpers --> any complex synchronous computation that's part of our endpoints
-│   │   │   ├── admin
-│   │   │   │   └── hasura_get.py --> helpers for GQL token get requests
 │   │   │   ├── aws
 │   │   │   │   ├── aws_container_post.py --> helpers for AWS post reqs that _don't_ require celery tasks -- e.g protocol info
 │   │   │   │   └── container_state.py --> helpers that retrieve the current state of user containers (for client-app)
@@ -394,8 +391,6 @@ Note that all conftest files contain test fixtures for their respective director
     │   └── test_serialize.py --> tests for serialization of container objects from DB 
     ├── constants --> useful constants for testing
     │   └── settings.py --> pytest settings
-    ├── hasura
-    │   └── test_hasura_auth.py
     ├── helpers
     │   └── general
     │       └── progress.py
