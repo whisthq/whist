@@ -63,9 +63,7 @@ def must(test_fn, msg=None):
 
         tstr = error if error else f"<{type(value).__name__}>"
 
-        val_string = "got: " + truncated(
-            PRINT_LIMIT, f"{truncated_children(value)}: {tstr}"
-        )
+        val_string = "got: " + truncated(PRINT_LIMIT, f"{truncated_children(value)}: {tstr}")
 
         msg_present = f"{msg}... {val_string}."
         msg_default = f"{test_fn.__name__} returns {result}... {val_string}"
