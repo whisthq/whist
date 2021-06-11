@@ -203,7 +203,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 instance_containers = InstancesWithRoomForContainers.query.filter_by(
                     instance_id=instance.instance_id
                 ).one_or_none()
-                if instance_containers.num_running_containers != 0:
+                if instance_containers is None or instance_containers.num_running_containers != 0:
                     db.session.commit()
                     continue
                 instance_info.status = "DRAINING"
@@ -231,7 +231,7 @@ def try_scale_down_if_necessary_all_regions() -> None:
         try_scale_down_if_necessary(region, ami)
 
 
-def repeated_scale_down_harness(time_delay: int) -> None:
+def repeated_scale_down_harness(time_delay: int, flask_app=current_app) -> None:
     """
     checks scaling every time_delay seconds.
     NOTE:  this function keeps looping and will
@@ -240,7 +240,9 @@ def repeated_scale_down_harness(time_delay: int) -> None:
 
     Args:
         time_delay (int):  how often to run the scaling, in seconds
+        flask_app (Flask.application):  app context, needed for DB operations
     """
-    while True:
-        try_scale_down_if_necessary_all_regions()
-        time.sleep(time_delay)
+    with flask_app.app_context():
+        while True:
+            try_scale_down_if_necessary_all_regions()
+            time.sleep(time_delay)
