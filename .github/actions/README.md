@@ -41,11 +41,11 @@ Here's the tricky part about GitHub... they pull a fast one on you right before 
 
 This is unusual behavior if you're used to working with your own Dockerfiles. It's also not behavior that you'll see if you build and run your Dockerfile locally. This can make local testing painful if you're using relative paths.
 
-Because of this inconsistency, it's easiest to deal with absolute paths in the container. By copying the Action folder (`monorepo-config`) to an absolute path, we can defend against GitHub's little bait-and-switch.
+Because of this inconsistency, it's easiest to deal with *absolute* paths in the container. By copying the Action folder (`monorepo-config`) to an absolute path, we can defend against GitHub's little bait-and-switch.
 
 There's still one more thing to worry about. In the example above, the `ENTRYPOINT` runs the `main.py` script, and passes it an argument: `config`. That's referring to the `config` folder in the root of the monorepo, and you'll notice that we're referencing it as a relative path. So we haven't completely forgetten about GitHub's directory swap, as we're relying on the working directory for `ENTRYPOINT` to be the monorepo root, and not the `monorepo-config` Action folder.
 
-This will cause you some confusion while developing and testing locally. You're probably used to setting your working directory to the same folder of the project you're working on, and it would be tempting to try and `cd` in to the `monorepo-config` folder if you need to make some changes. However, that's going to break a command like the one above, which is has a relative reference to `config`.
+This will cause you some confusion while developing and testing locally. You're probably used to setting your working directory to the same folder of the project you're working on, and it would be tempting to try and `cd` in to the `monorepo-config` folder if you need to make some changes. However, that's going to break a command like the one above, which has a relative reference to `config`.
 
 That brings us to the last piece of the puzzle... when building/running/testing your Docker container locally, keep your working directory as the monorepo root (`fractal` folder). That will ensure that your context is completely consistent with what will happen on the GitHub deploy. Your build command might look like this:
 
