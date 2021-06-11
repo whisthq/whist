@@ -37,7 +37,7 @@ Actions and Workflows are both defined as YAML files stored in `.github/actions`
 
 Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
 
-Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and only run one process at a time. When creating an Action, you choose from three environments to run your work.
+Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and only run one process at a time. When creating an Action, you choose from three environments to run your work:
 
 1. Node.js
 2. Docker
