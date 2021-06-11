@@ -29,15 +29,16 @@ When writing custom Actions, please adhere to the style guidelines described in 
 
 In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions) are distinct from [Workflows](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions). Their docs do not quite make this distinction clear, so here's a quick overview.
 
-"Actions" are single units of work. They are distinct environments with a single set of inputs and an output. They are stateless and do not have access to GitHub context, like repository information or secrets. They must be passed any data they'll use as an input. 
+"Actions" are single units of work. They are distinct environments with a single set of inputs and an output. They are stateless and do not have access to GitHub context, like repository information or secrets. They must be passed any data they'll use as an input.
 
 "Workflows" are multi-step process made up of jobs and steps. Often, a workflow will empty an Action as one of these jobs. A well-formed workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between steps. They have access to GitHub context, like repository information and secrets, and can pass data from that context to their jobs.
 
-Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively. 
+Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively.
 
 Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the actuall CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the workflow YAML, so at least some part of it can be tested locally.
 
 Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and strictly only run one process at a time. When creating an Action, you choose from three environments to run your work.
+
 1. Node.js
 2. Docker
 3. "Composite"
@@ -54,9 +55,9 @@ New Actions should be developed in a new subdirection under `.github/actions`. W
 
 ├── .github
 │   ├── actions
-│   │   ├── monorepo-config 
-│   │   │   ├── action.yml 
-│   │   │   └── Dockerfile 
+│   │   ├── monorepo-config
+│   │   │   ├── action.yml
+│   │   │   └── Dockerfile
 
 ```
 
@@ -78,13 +79,13 @@ runs: # this is where we select the environment for the action.
 ```
 
 The Action setup can be kept very minimal. We're really just defining the inputs and outputs, and letting GitHub know we're using Docker. There are just two slighty odd GitHub Actions rules to know:
+
 1. `inputs` can only be made available to your Docker process as environment variables. They'll be capitalized and prefixed with `INPUT_`. In this example, our process will need to accept `secrets` through the variable `INPUT_SECRETS`.
 2. `outputs` receives data from your Docker process through stdout, and the data must be printed in this format: `::set-output name=<output name>::<value>`. When we call our process in the next section, we'll `echo` our output into this string, like so: `echo "::set-output name=config::$(<run-process-command>)".`
 
 ## Setting up a Dockerfile
 
-Our `Dockerfile` is going to setup all the resources that our program needs to run. While `action.yml` is only relevant for GitHub's Actions runner during deployment, our `Dockerfile` needs to do double duty. We want to write a single `Dockerfile` that we can deploy to GitHub Actions, as well as build and run locally. This will give us a consistent environment to develop in, so we can write a program that runs in the container and needs no knowledge of GitHub's context, or its strange `input` and `output` needs. 
-
+Our `Dockerfile` is going to setup all the resources that our program needs to run. While `action.yml` is only relevant for GitHub's Actions runner during deployment, our `Dockerfile` needs to do double duty. We want to write a single `Dockerfile` that we can deploy to GitHub Actions, as well as build and run locally. This will give us a consistent environment to develop in, so we can write a program that runs in the container and needs no knowledge of GitHub's context, or its strange `input` and `output` needs.
 
 ## Tips for Actions environment setup
 
