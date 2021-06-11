@@ -4,6 +4,8 @@ import time
 from collections import defaultdict
 from sys import maxsize
 from typing import Optional
+import requests
+from flask import current_app
 from app.models.hardware import (
     db,
     InstanceSorted,
@@ -205,8 +207,14 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     db.session.commit()
                     continue
                 instance_info.status = "DRAINING"
-                client = EC2Client(region_name=region)
-                client.stop_instances(list(instance.instance_id for instance in free_instances))
+                try:
+                    requests.post(
+                        f"http://{instance_info.ip}/{current_app.config['HOST_SERVICE_PORT']}\
+                        /drain_and_shutdown"
+                    )
+                except requests.exceptions.RequestException:
+                    client = EC2Client(region_name=region)
+                    client.stop_instances(list(instance.instance_id for instance in free_instances))
                 db.session.commit()
 
 
