@@ -274,7 +274,7 @@ def bulk_instance():
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
             maxContainers=max_containers if max_containers is not None else 10,
-            ip="1.1.1.1",
+            ip=kwargs.get("ip", "123.456.789"),
             ami_id=kwargs.get("ami_id", "test"),
             instance_type=kwargs.get("instance_type", "test_type"),
             last_pinged=kwargs.get("last_pinged", 10),
