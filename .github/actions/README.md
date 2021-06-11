@@ -25,7 +25,7 @@ jobs:
 
 When writing custom Actions, please adhere to the style guidelines described in `.github/workflows/README.md`.
 
-# What's a GitHub Action?
+## What's a GitHub Action?
 
 In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions) are distinct from [Workflows](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions). Their docs do not quite make this distinction clear, so here's a quick overview.
 
