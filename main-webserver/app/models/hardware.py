@@ -155,7 +155,8 @@ class InstanceInfo(db.Model):
         maxContainers (int): how many containers can run at once?
         last_pinged (int): when did this instance last tell us it existed?
         created_at (int):  When was this instance created?
-        ami_id (str): what image is this machine based on?"""
+        ami_id (str): what image is this machine based on?
+        is_active (boolean):  is this instance active or inactive?"""
 
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
@@ -171,6 +172,7 @@ class InstanceInfo(db.Model):
     last_pinged = db.Column(db.Integer)
     created_at = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
+    status = db.Column(db.String(250), nullable=False)
 
 
 class InstanceSorted(db.Model):

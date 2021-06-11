@@ -278,6 +278,7 @@ def bulk_instance():
             ami_id=kwargs.get("ami_id", "test"),
             instance_type=kwargs.get("instance_type", "test_type"),
             last_pinged=kwargs.get("last_pinged", 10),
+            status=kwargs.get("status", "ACTIVE"),
         )
 
         db.session.add(new_instance)

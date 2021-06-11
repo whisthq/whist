@@ -164,6 +164,7 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                     maxContainers=base_number_free_containers,
                     last_pinged=-1,
                     created_at=int(time.time()),
+                    status="PRE-CONNECTION",
                 )
                 db.session.add(new_instance)
                 db.session.commit()
@@ -194,8 +195,19 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             )
             if len(free_instances) == 0:
                 return
-            client = EC2Client(region_name=region)
-            client.stop_instances(list(instance.instance_id for instance in free_instances))
+            for instance in free_instances:
+                # grab a lock on the instance to ensure nothing new's being assigned to it
+                instance_info = InstanceInfo.query.with_for_update().get(instance.instance_id)
+                instance_containers = InstancesWithRoomForContainers.query.filter_by(
+                    instance_id=instance.instance_id
+                )
+                if instance_containers.num_running_containers != 0:
+                    db.session.commit()
+                    continue
+                instance_info.status = "DRAINING"
+                client = EC2Client(region_name=region)
+                client.stop_instances(list(instance.instance_id for instance in free_instances))
+                db.session.commit()
 
 
 def try_scale_down_if_necessary_all_regions() -> None:

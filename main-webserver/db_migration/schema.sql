@@ -256,7 +256,8 @@ CREATE TABLE hardware.instance_info (
     ip character varying,
     ami_id character varying NOT NULL,
     location character varying NOT NULL,
-    instance_type character varying NOT NULL
+    instance_type character varying NOT NULL,
+    status character varying NOT NULL
 );
 
 
@@ -300,7 +301,7 @@ CREATE VIEW hardware.instance_sorted AS
  CREATE VIEW hardware.instance_allocation AS
     SELECT instance_id, ami_id, location from hardware.instance_info
     WHERE instance_id IN (select instance_id from hardware.instance_sorted)
-    AND last_pinged != -1;
+    AND last_pinged != -1 AND status = 'ACTIVE';
 
 
 
