@@ -59,8 +59,16 @@ func keyFunc(token *jwt.Token) (interface{}, error) {
 
 func validateClaims(claims jwt.MapClaims) error {
 	// Verify audience
-	audSlice := claims["aud"].([]interface{})
-	audValid := utils.SliceContains(audSlice, aud)
+	audSlice := claims["aud"]
+	var audValid bool
+	switch audSlice.(type) {
+	case string:
+		audValid = audSlice == aud
+	default:
+		// If not a string, must be an array.
+		audSlice := audSlice.([]interface{})
+		audValid = utils.SliceContains(audSlice, aud)
+	}
 	if !audValid {
 		return errors.New("invalid audience")
 	}
