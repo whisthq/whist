@@ -33,12 +33,16 @@ build-*/
 # includes
 include/openssl
 include/SDL2
+include/ffmpeg
 
 # libs
 lib/64/openssl
 lib/64/SDL2/Darwin
 lib/64/SDL2/Linux
 lib/64/SDL2/Windows
+lib/64/ffmpeg/Darwin
+lib/64/ffmpeg/Linux
+lib/64/ffmpeg/Windows
 lib/64/**
 
 # Docs
