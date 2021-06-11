@@ -49,7 +49,7 @@ Our goal here is to be able to comfortably write a program that can be decoupled
 
 ## Setting up a GitHub Action
 
-New Actions should be developed in a new subdirection under `.github/actions`. We'll use a simplified setup for the `monorepo-config` Action as a demonstration. At minimum, a Docker GitHub Action requires two files, one to one to set up the Action and one to setup your Docker container. You must use `action.yml` and `Dockerfile` as the names.
+New Actions should be developed in a new subdirectory under `.github/actions`. We'll use a simplified setup for the `monorepo-config` Action as a demonstration. At minimum, a Docker GitHub Action requires two files, one to one to set up the Action and one to setup your Docker container. You must use `action.yml` and `Dockerfile` as the names.
 
 ```
 
@@ -78,14 +78,14 @@ runs: # this is where we select the environment for the action.
   image: Dockerfile # looks for a Dockerfile in the same folder.
 ```
 
-The Action setup can be kept very minimal. We're really just defining the inputs and outputs, and letting GitHub know we're using Docker. There are just two slighty odd GitHub Actions rules to know:
+The Action setup doesn't need to be any complex than this. We're really just defining inputs and outputs, and letting GitHub know we're using Docker. There are just two slighty odd GitHub Actions rules to know:
 
-1. `inputs` can only be made available to your Docker process as environment variables. They'll be capitalized and prefixed with `INPUT_`. In this example, our process will need to accept `secrets` through the variable `INPUT_SECRETS`.
+1. `inputs` are only be made available to your Docker process as environment variables. They'll be capitalized and prefixed with `INPUT_`. In this example, we'll be handed our `secrets` input through the environment variable `INPUT_SECRETS`.
 2. `outputs` receives data from your Docker process through stdout, and the data must be printed in this format: `::set-output name=<output name>::<value>`. When we call our process in the next section, we'll `echo` our output into this string, like so: `echo "::set-output name=config::$(<run-process-command>)".`
 
 ## Setting up a Dockerfile
 
-Our `Dockerfile` is going to setup all the resources that our program needs to run. While `action.yml` is only relevant for GitHub's Actions runner during deployment, our `Dockerfile` needs to do double duty. We want to write a single `Dockerfile` that we can deploy to GitHub Actions, as well as build and run locally. This will give us a consistent environment to develop in, so we can write a program that runs in the container and needs no knowledge of GitHub's context, or its strange `input` and `output` needs.
+Our `Dockerfile` is going to setup all the resources that our program needs to run. While `action.yml` is only relevant for GitHub's Actions runner during deployment, our `Dockerfile` needs to do double duty. We want to write a single `Dockerfile` that we can deploy to GitHub Actions, as well as build and run locally. This will give us a consistent environment to develop in. We can write a program that runs in the container and needs no knowledge of GitHub's context, or its strange `input` and `output` needs.
 
 ## Tips for Actions environment setup
 
