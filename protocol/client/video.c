@@ -177,17 +177,113 @@ void replace_texture();
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
 void clear_sdl(SDL_Renderer* renderer);
 SDL_Rect new_SDL_Rect(int x, int y, int w, int h);
-int get_next_video_frame(Frame* frame);
+int get_next_video_frame();
 void finalize_video_context_data();
+void update_cursor(Frame* frame);
+SDL_Rect get_true_render_rect();
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 void update_window_titlebar_color();
-
+#endif
 /*
 ============================
 Private Function Implementations
 ============================
 */
 
-int get_next_video_frame(Frame* frame) {
+SDL_Rect get_true_render_rect() {
+    /*
+          Since RenderCopy scales the texture to the size of the window by default, we use this to
+  truncate the frame to the size of the window to avoid scaling artifacts (blurriness). The frame
+  may be larger than the window because the video encoder rounds the width up to a multiple of 8,
+  and the height to a multiple of 2.
+
+  Returns:
+  (SDL_Rect): the subsection of the texture we should actually render to the screen
+     */
+    int render_width, render_height;
+    if (output_width <= server_width && server_width <= output_width + 8 &&
+        output_height <= server_height && server_height <= output_height + 2) {
+        render_width = output_width;
+        render_height = output_height;
+        if (server_width > output_width || server_height > output_height) {
+            // We failed to force the window dimensions to be multiples of 8, 2 in
+            // `handle_window_size_changed`
+            static bool already_sent_message = false;
+            static long long last_server_dims = -1;
+            static long long last_output_dims = -1;
+            if (server_width * 100000LL + server_height != last_server_dims ||
+                output_width * 100000LL + output_height != last_output_dims) {
+                // If truncation to/from dimensions have changed, then we should resend
+                // Truncating message
+                already_sent_message = false;
+            }
+            last_server_dims = server_width * 100000LL + server_height;
+            last_output_dims = output_width * 100000LL + output_height;
+            if (!already_sent_message) {
+                LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width, server_height,
+                            output_width, output_height);
+                already_sent_message = true;
+            }
+        }
+    } else {
+        // If the condition is false, most likely that means the server has not yet updated
+        // to use the new dimensions, so we render the entire frame. This makes resizing
+        // look more consistent.
+        render_width = server_width;
+        render_height = server_height;
+    }
+    return new_SDL_Rect(0, 0, render_width, render_height);
+}
+
+void update_cursor(Frame* frame) {
+    /*
+  Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
+  received, we don't do anything. Otherwise, we either use the provided bitmap or  update the cursor
+  ID to tell SDL which cursor to render.
+     */
+    // Set cursor to frame's desired cursor type
+    FractalCursorImage* cursor = get_frame_cursor_image(frame);
+    // Only update the cursor, if a cursor image is even embedded in the frame at all.
+    if (cursor) {
+        if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
+            if (sdl_cursor) {
+                SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
+            }
+            if (cursor->using_bmp) {
+                // use bitmap data to set cursor
+
+                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                    cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
+                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
+                    CURSORIMAGE_B, CURSORIMAGE_A);
+                // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
+                // pre-alpha multplied
+                sdl_cursor =
+                    SDL_CreateColorCursor(cursor_surface, cursor->bmp_hot_x, cursor->bmp_hot_y);
+                SDL_FreeSurface(cursor_surface);
+            } else {
+                // use cursor id to set cursor
+                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
+            }
+            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
+
+            last_cursor = (FractalCursorID)cursor->cursor_id;
+        }
+
+        if (cursor->cursor_state != cursor_state) {
+            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+            } else {
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+            }
+
+            cursor_state = cursor->cursor_state;
+        }
+    }
+}
+
+int get_next_video_frame() {
+    Frame* frame = (Frame*)render_context.frame_buffer;
     clock decode_timer;
     start_timer(&decode_timer);
     if (!video_decoder_decode(video_context.decoder, get_frame_videodata(frame),
@@ -206,7 +302,14 @@ int get_next_video_frame(Frame* frame) {
         return 0;
     }
 }
+
 SDL_Rect new_SDL_Rect(int x, int y, int w, int h) {
+    /*
+  Wrapper to create a new SDL rectangle.
+
+  Returns:
+  (SDL_Rect): SDL_Rect with the given dimensions
+     */
     SDL_Rect new_rect;
     new_rect.x = x;
     new_rect.y = y;
@@ -215,23 +318,29 @@ SDL_Rect new_SDL_Rect(int x, int y, int w, int h) {
     return new_rect;
 }
 
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 void update_window_titlebar_color() {
+    /*
+  Update window titlebar color using the colors of the new frame
+     */
     FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
                                      video_context.data[2][0]};
 
     FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
+    // delete the old color we were using
     if ((FractalRGBColor*)native_window_color != NULL) {
         FractalRGBColor* old_native_window_color = (FractalRGBColor*)native_window_color;
         free(old_native_window_color);
     }
 
+    // make the new color and signal that we're ready to update
     FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
     *new_native_window_color = new_rgb_color;
     native_window_color = new_native_window_color;
     native_window_color_update = true;
 }
-}
+#endif
 
 int32_t multithreaded_destroy_decoder(void* opaque) {
     VideoDecoder* decoder = (VideoDecoder*)opaque;
@@ -294,10 +403,10 @@ int render_video() {
         // Stop loading animation once rendering occurs
         video_data.loading_index = -1;
 
-        // retain server width/height if user is resizing the window
         safe_SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
             // User is in the middle of resizing the window
+            // retain server width/height if user is resizing the window
             SDL_Rect output_rect = new_SDL_Rect(0, 0, server_width, server_height);
             SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
             SDL_RenderPresent(renderer);
@@ -367,37 +476,32 @@ int render_video() {
             // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
 
             safe_SDL_LockMutex(render_mutex);
-            update_pixel_format();
+            update_cursor(frame);
 
             bool render_this_frame = can_render && !skip_render;
 
             if (render_this_frame) {
-                // first "finalize" the texture: use make sure the texture is in YUV
-                // and recreate the texture if the windows has been resized
                 clock sws_timer;
                 start_timer(&sws_timer);
+                // recreate the texture if the video has been resized
+                replace_texture();
 
-                if (pending_texture_update) {
-                    replace_texture();
-                    pending_texture_update = false;
-                }
                 pending_resize_render = false;
 
+                // appropriately convert the frame and move it into video_context.data
                 finalize_video_context_data();
 
                 // then, update the window titlebar color if we can
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-
+                update_window_titlebar_color();
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
                 // frame into the texture.
-                SDL_Rect texture_rect;
-                texture_rect.x = 0;
-                texture_rect.y = 0;
-                texture_rect.w = video_context.decoder->width;
-                texture_rect.h = video_context.decoder->height;
+                SDL_Rect texture_rect =
+                    new_SDL_Rect(0, 0, video_context.decoder->width, video_context.decoder->height);
+                // TODO: wrap this in Fractal update texture
                 int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
                                                video_context.data[0], video_context.linesize[0],
                                                video_context.data[1], video_context.linesize[1],
@@ -410,92 +514,9 @@ int render_video() {
                     // Clear out bits that aren't used from av_alloc_frame
                     memset(video_context.data, 0, sizeof(video_context.data));
                 }
-            }
 
-            // Set cursor to frame's desired cursor type
-            FractalCursorImage* cursor = get_frame_cursor_image(frame);
-            // Only update the cursor, if a cursor image is even embedded in the frame at all.
-            if (cursor) {
-                if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
-                    if (sdl_cursor) {
-                        SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
-                    }
-                    if (cursor->using_bmp) {
-                        // use bitmap data to set cursor
-
-                        SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                            cursor->bmp, cursor->bmp_width, cursor->bmp_height,
-                            sizeof(uint32_t) * 8, sizeof(uint32_t) * cursor->bmp_width,
-                            CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
-                        // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
-                        // pre-alpha multplied
-                        sdl_cursor = SDL_CreateColorCursor(cursor_surface, cursor->bmp_hot_x,
-                                                           cursor->bmp_hot_y);
-                        SDL_FreeSurface(cursor_surface);
-                    } else {
-                        // use cursor id to set cursor
-                        sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-                    }
-                    SDL_SetCursor((SDL_Cursor*)sdl_cursor);
-
-                    last_cursor = (FractalCursorID)cursor->cursor_id;
-                }
-
-                if (cursor->cursor_state != cursor_state) {
-                    if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                        SDL_SetRelativeMouseMode(SDL_TRUE);
-                    } else {
-                        SDL_SetRelativeMouseMode(SDL_FALSE);
-                    }
-
-                    cursor_state = cursor->cursor_state;
-                }
-            }
-
-            // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
-            // get_timer(renderContext.client_frame_timer));
-
-            if (render_this_frame) {
                 // Subsection of texture that should be rendered to screen.
-                SDL_Rect output_rect;
-                output_rect.x = 0;
-                output_rect.y = 0;
-                if (output_width <= server_width && server_width <= output_width + 8 &&
-                    output_height <= server_height && server_height <= output_height + 2) {
-                    // Since RenderCopy scales the texture to the size of the window by default, we
-                    // use this to truncate the frame to the size of the window to avoid scaling
-                    // artifacts (blurriness). The frame may be larger than the window because the
-                    // video encoder rounds the width up to a multiple of 8, and the height to a
-                    // multiple of 2.
-                    output_rect.w = output_width;
-                    output_rect.h = output_height;
-                    if (server_width > output_width || server_height > output_height) {
-                        // We failed to force the window dimensions to be multiples of 8, 2 in
-                        // `handle_window_size_changed`
-                        static bool already_sent_message = false;
-                        static long long last_server_dims = -1;
-                        static long long last_output_dims = -1;
-                        if (server_width * 100000LL + server_height != last_server_dims ||
-                            output_width * 100000LL + output_height != last_output_dims) {
-                            // If truncation to/from dimensions have changed, then we should resend
-                            // Truncating message
-                            already_sent_message = false;
-                        }
-                        last_server_dims = server_width * 100000LL + server_height;
-                        last_output_dims = output_width * 100000LL + output_height;
-                        if (!already_sent_message) {
-                            LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width,
-                                        server_height, output_width, output_height);
-                            already_sent_message = true;
-                        }
-                    }
-                } else {
-                    // If the condition is false, most likely that means the server has not yet
-                    // updated to use the new dimensions, so we render the entire frame. This makes
-                    // resizing look more consistent.
-                    output_rect.w = server_width;
-                    output_rect.h = server_height;
-                }
+                SDL_Rect output_rect = get_true_render_rect();
                 SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
 
                 if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
@@ -512,6 +533,7 @@ int render_video() {
                       render_context.frame_size, get_timer(render_context.frame_creation_timer));
 #endif
 
+            // Clean up: set global variables and free the frame buffer
             if (frame->is_iframe) {
                 video_data.is_waiting_for_iframe = false;
             }
@@ -670,18 +692,18 @@ void update_sws_pixel_format() {
 
 void finalize_video_context_data() {
     /*
-  Update the pixel format if necessary by applying sws_scale; otherwise, just memcpy the software
-  frame into videocontext.data for processing.
+  Update the pixel format if necessary by applying sws_scale; otherwise, just memcpy the
+  software frame into videocontext.data for processing. At the end of this function, the
+  ready-to-render frame is in videocontext.data.
     */
-
-    // first check if we need to change the pixel format of the decoded frame to yuv
-    // This automatically updates the SWS context to prepare for the transform as well
+    // if we need to change pixel formats, use sws_scale to do so
     update_sws_pixel_format();
     if (video_context.sws) {
         sws_scale(video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
                   video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
                   video_context.data, video_context.linesize);
     } else {
+        // we can directly copy the data
         memcpy(video_context.data, video_context.decoder->sw_frame->data,
                sizeof(video_context.data));
         memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
@@ -691,23 +713,27 @@ void finalize_video_context_data() {
 
 void replace_texture() {
     /*
-        Destroy the old texture and create a new texture. This function is called during renderer
-       initialization and if the user has finished resizing the window.
+        Destroy the old texture and create a new texture. This function is called during
+       renderer initialization and if the user has finished resizing the window.
     */
 
-    // Destroy the old texture
-    if (video_context.texture) {
-        SDL_DestroyTexture(video_context.texture);
+    if (pending_texture_update) {
+        // Destroy the old texture
+        if (video_context.texture) {
+            SDL_DestroyTexture(video_context.texture);
+        }
+        // Create a new texture
+        SDL_Texture* texture =
+            SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12,
+                              SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        if (!texture) {
+            LOG_FATAL("SDL: could not create texture - exiting");
+        }
+
+        // Save the new texture over the old one
+        video_context.texture = texture;
+        pending_texture_update = false;
     }
-    // Create a new texture
-    SDL_Texture* texture =
-        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (!texture) {
-        LOG_FATAL("SDL: could not create texture - exiting");
-    }
-    // Save the new texture over the old one
-    video_context.texture = texture;
 }
 
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
@@ -810,8 +836,8 @@ int init_video_renderer() {
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen.
-    // Rather than allocating a new texture every time the dimensions change, we instead allocate
-    // the texture once and render sub-rectangles of it.
+    // Rather than allocating a new texture every time the dimensions change, we instead
+    // allocate the texture once and render sub-rectangles of it.
     pending_texture_update = true;
     replace_texture();
 
@@ -950,8 +976,8 @@ void update_video() {
         if (video_data.most_recent_iframe - 1 > video_data.last_rendered_id) {
             LOG_INFO("Skipping from %d to i-frame %d!", video_data.last_rendered_id,
                      video_data.most_recent_iframe);
-            // If `last_rendered_id` is further back than the first frame received, start from the
-            // first frame received
+            // If `last_rendered_id` is further back than the first frame received, start from
+            // the first frame received
             for (int i =
                      max(video_data.last_rendered_id + 1,
                          video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
@@ -976,8 +1002,8 @@ void update_video() {
         int next_render_id = video_data.last_rendered_id + 1;
         FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
 
-        // When we receive a packet that is a part of the next_render_id, and we have received every
-        // packet for that frame, we set rendering=true
+        // When we receive a packet that is a part of the next_render_id, and we have received
+        // every packet for that frame, we set rendering=true
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 // LOG_INFO( "Packets: %d %s", ctx->num_packets,
@@ -994,10 +1020,11 @@ void update_video() {
                 FrameData* next_frame_ctx =
                     get_frame_at_id(video_ring_buffer, next_frame_render_id);
 
-                // If the next frame has been received, let's skip the rendering so we can render
-                // the next frame faster. We do this because rendering is synced with screen
-                // refresh, so rendering the backlogged frames requires the client to wait until the
-                // screen refreshes N more times, causing it to fall behind the server.
+                // If the next frame has been received, let's skip the rendering so we can
+                // render the next frame faster. We do this because rendering is synced with
+                // screen refresh, so rendering the backlogged frames requires the client to
+                // wait until the screen refreshes N more times, causing it to fall behind the
+                // server.
                 if (next_frame_ctx->id == next_frame_render_id &&
                     next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
@@ -1047,13 +1074,16 @@ void update_video() {
             // If we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
 
             if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
-                // old condition, which only checked if we hadn't received any packets in a while:
+                // old condition, which only checked if we hadn't received any packets in a
+                // while:
                 // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
                 // cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is %d frames ahead of the most recent rendered frame, "
-                        "and there is no available frame to render. I-Frame is now being requested "
+                        "The most recent ID is %d frames ahead of the most recent rendered "
+                        "frame, "
+                        "and there is no available frame to render. I-Frame is now being "
+                        "requested "
                         "to catch-up.",
                         MAX_UNSYNCED_FRAMES);
                 }
@@ -1094,7 +1124,8 @@ void update_video() {
                 video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is %d frames ahead of the most recent rendered frame. "
+                        "The most recent ID is %d frames ahead of the most recent rendered "
+                        "frame. "
                         "I-Frame is now being requested to catch-up.",
                         MAX_UNSYNCED_FRAMES_RENDER);
                 }
