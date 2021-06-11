@@ -11,35 +11,6 @@ from app.constants.http_codes import (
 stripe.api_key = current_app.config["STRIPE_SECRET"]
 
 
-def get_checkout_id(success_url: str, cancel_url: str, customer_id: str) -> Tuple[str, int]:
-    """
-    Returns checkout session id from Stripe.
-
-    The id is based on the customer_id and return urls, and is used by stripe.js
-    for displaying the portal on the front-end.
-
-    Args:
-        customer_id (str): the stripe id of the user
-        success_url (str): url to redirect to upon completion success
-        cancel_url (str): url to redirect to upon cancelation
-
-    Returns:
-        json, int: JSON containing session id and status code
-    """
-    try:
-        checkout_session = stripe.checkout.Session.create(
-            success_url=success_url,
-            cancel_url=cancel_url,
-            customer=customer_id,
-            payment_method_types=["card"],
-            mode="subscription",
-            line_items=[{"price": current_app.config["STRIPE_PRICE_ID"], "quantity": 1}],
-        )
-        return jsonify({"session_id": checkout_session["id"]}), SUCCESS
-    except Exception as e:
-        return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
-
-
 def get_billing_portal_url(customer_id: str, return_url: str) -> Tuple[str, int]:
     """
     Returns the url to a customer's billing portal.

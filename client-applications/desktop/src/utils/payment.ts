@@ -22,4 +22,5 @@ const stripeBillingPortalCreate = (accessToken: any) =>
   })
 
 const accessToken = store.get("accessToken") ?? ""
-export const billingPortalURL = stripeBillingPortalCreate(accessToken)?.json?.url
+export const billingPortalURL =
+  stripeBillingPortalCreate(accessToken)?.json?.url

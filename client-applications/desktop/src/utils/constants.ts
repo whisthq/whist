@@ -12,7 +12,6 @@ export const mandelboxPollingTimeout = 30000
 export const WindowHashAuth = "AUTH"
 export const WindowHashUpdate = "UPDATE"
 export const WindowHashSignout = "SIGNOUT"
-
 export const WindowHashPayment = "PAYMENT"
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
