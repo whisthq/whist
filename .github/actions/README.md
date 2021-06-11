@@ -47,7 +47,7 @@ The simplest of these to work with is Docker, and that's what we'll focus on for
 
 Our goal here is to be able to comfortably write a program that can be decoupled from GitHub Actions. We want to be able to do the bulk of our work in a familiar environment, writing code that simply accepts data and returns data. Ideally, our program doesn't need to know that it's running in GitHub Actions. In the next sections, we'll configure our Action and Docker container as a GitHub-focused "wrapper" that can host any general-purpose program.
 
-## Setting up a GitHub Action
+## Setting up a Docker Action
 
 New Actions should be developed in a new subdirectory under `.github/actions`. Note that this folder isn't run automatically by the GitHub Actions runner like the files in `.github/workflows`. When you want to use one of your custom `.github/actions`, you refer to it a Workflow with the `uses:` syntax. Note that `uses:` should refer to folder _containing_ an `action.yml` file, which we'll create below.
 
