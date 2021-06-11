@@ -120,7 +120,6 @@ def register_blueprints(app):
     """
 
     from .blueprints.admin.logs_blueprint import logs_bp
-    from .blueprints.admin.hasura_blueprint import hasura_bp
 
     from .blueprints.celery.celery_status_blueprint import celery_status_bp
 
@@ -133,7 +132,6 @@ def register_blueprints(app):
 
     app.register_blueprint(celery_status_bp)
     app.register_blueprint(aws_container_bp)
-    app.register_blueprint(hasura_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
     app.register_blueprint(logs_bp)
