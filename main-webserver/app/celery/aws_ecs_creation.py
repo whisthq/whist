@@ -18,6 +18,7 @@ from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
+from app.helpers.utils.m2m.m2m import M2MClient
 
 from app.models import (
     db,
@@ -136,6 +137,12 @@ def _pass_start_values_to_instance(
     """
 
     try:
+        m2m_client = M2MClient(
+            current_app.config["AUTH0_DOMAIN"],
+            current_app.config["AUTH0_CLIENT_ID"],
+            current_app.config["AUTH0_CLIENT_SECRET"]
+        )
+        auth_token = m2m_client.token()
         response = requests.put(
             (
                 f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
@@ -147,7 +154,7 @@ def _pass_start_values_to_instance(
                 "dpi": container.dpi,
                 "user_id": container.user_id,
                 "client_app_auth_secret": client_app_auth_secret,
-                "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
+                "auth_secret": auth_token,
             },
             verify=False,
         )
