@@ -31,7 +31,7 @@ In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-act
 
 "Actions" are single units of work. They are distinct environments with a single set of inputs and an output. They are stateless and do not have access to GitHub context, like repository information or secrets. They must be passed any data they'll use as an input.
 
-"Workflows" are multi-step processes made up of jobs and steps. Often, a Workflow will employ an Action as one of these jobs. A well-formed Workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between steps. They have access to GitHub context, like repository information and secrets, and can pass data from that context to their jobs.
+"Workflows" are multi-step processes made up of jobs and steps. Often, a Workflow will employ an Action as one of these jobs. A well-formed Workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between them. Workflows have access to GitHub context, like repository information and secrets, and can pass data from that context to their jobs and steps.
 
 Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively.
 
