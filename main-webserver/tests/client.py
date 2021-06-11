@@ -7,7 +7,7 @@ from flask_jwt_extended import create_access_token
 class FractalAPITestClient(FlaskClient):
     """A custom test client class that makes it easy to authenticate requests."""
 
-    def login(self, username, *, admin=False):
+    def login(self, username, *, admin=False, **additional_claims):
         """Authenticate all future requests as the user with the specified username.
 
         Args:
@@ -19,7 +19,9 @@ class FractalAPITestClient(FlaskClient):
             None
         """
 
-        additional_claims = {"scope": "admin"} if admin else {}
+        if admin:
+            additional_claims["scope"] = "admin"
+
         access_token = create_access_token(
             identity=username, additional_claims=additional_claims, expires_delta=False
         )
