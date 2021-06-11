@@ -39,6 +39,12 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
                      GLX_TEXTURE_2D_BIT_EXT,
                      None};
 
+    // I don't really know what's going on in this function,
+    // ideally Nvidia should've put this in their NvFBCUtils.c file,
+    // but they didn't so I just copied this function from their examples.
+    // All that matters is that this opens the X11 Display,
+    // and makes an OpenGL Context out of it
+
     // Get the X11 Display that the OpenGL Context will refer to
     Display* dpy = XOpenDisplay(NULL);
     if (dpy == None) {
