@@ -29,9 +29,9 @@ When writing custom Actions, please adhere to the style guidelines described in 
 
 In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions) are distinct from [Workflows](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions). Their docs do not quite make this distinction clear, so here's a quick overview.
 
-"Actions" are single units of work. They are distinct environments with a single set of inputs and an output. They are stateless and do not have access to GitHub context, like repository information or secrets. They must be passed any data they'll use as an input.
+**Actions** are single units of work. They are distinct environments with a single set of inputs and an output. They are stateless and do not have access to GitHub context, like repository information or secrets. They must be passed any data they'll use as an input.
 
-"Workflows" are multi-step processes made up of jobs and steps. Often, a Workflow will employ an Action as one of these jobs. A well-formed Workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between them. Workflows have access to GitHub context, like repository information and secrets, and can pass data from that context to jobs, steps, and Actions.
+**Workflows** are multi-step processes made up of jobs and steps. Often, a Workflow will employ an Action as one of these jobs. A well-formed Workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between them. Workflows have access to GitHub context, like repository information and secrets, and can pass data from that context to jobs, steps, and Actions.
 
 Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively. The section above shows how a workflow can call Actions, giving both the example of a offcial GitHub Action (`actions/checkout@v2`) as well as a custom, local action.
 
