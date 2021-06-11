@@ -1,6 +1,6 @@
 # Custom GitHub Actions
 
-This directory contains custom GitHub Actions that have been written in order to reduce the length of and code duplication in our GitHub workflows. Each Action is represented by its own directory containing at least a file called `action.yml`.
+This directory contains custom GitHub Actions that have been written in order to reduce the length of and code duplication in our GitHub Workflows. Each Action is represented by its own directory containing at least a file called `action.yml`.
 
 The syntax of the `action.yml` file is documented [here](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions).
 
@@ -31,11 +31,11 @@ In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-act
 
 "Actions" are single units of work. They are distinct environments with a single set of inputs and an output. They are stateless and do not have access to GitHub context, like repository information or secrets. They must be passed any data they'll use as an input.
 
-"Workflows" are multi-step process made up of jobs and steps. Often, a workflow will empty an Action as one of these jobs. A well-formed workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between steps. They have access to GitHub context, like repository information and secrets, and can pass data from that context to their jobs.
+"Workflows" are multi-step processes made up of jobs and steps. Often, a Workflow will employ an Action as one of these jobs. A well-formed Workflow is mostly a composition of Actions, with the purpose of wiring up inputs and outputs between steps. They have access to GitHub context, like repository information and secrets, and can pass data from that context to their jobs.
 
 Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively.
 
-Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the actuall CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the workflow YAML, so at least some part of it can be tested locally.
+Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the actuall CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
 
 Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and strictly only run one process at a time. When creating an Action, you choose from three environments to run your work.
 
