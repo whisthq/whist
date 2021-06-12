@@ -194,7 +194,6 @@ FOREACH(LIB ${FFMPEG_LIBS})
     LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
 endforeach(LIB)
 message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-include_directories(include/ffmpeg)
 
 
 #[[
@@ -306,10 +305,12 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 # Tell CMake where to look for includes
-include_directories(include)
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_BINARY_DIR}/include)
-include_directories(sentry-native/include)
+# Use SYSTEM flag to not get warnings from their files
+include_directories(${CMAKE_SOURCE_DIR}) # For #include <fractal/**> semantics
+include_directories(SYSTEM include)
+include_directories(SYSTEM include/ffmpeg)
+include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
+include_directories(SYSTEM sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
