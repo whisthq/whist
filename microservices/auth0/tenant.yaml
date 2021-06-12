@@ -10,19 +10,7 @@ rules:
     enabled: true
     order: 1
 rulesConfigs: []
-hooks:
-  - name: pre-user-registration-hook
-    script: ./hooks/pre-user-registration-hook.js
-    dependencies:
-      stripe: 8.145.0
-      lodash: 4.17.21
-      node-fetch: 2.6.1
-      browser-or-node: 1.3.0
-    enabled: false
-    secrets:
-      STRIPE_PRICE_ID: _VALUE_NOT_SHOWN_
-      STRIPE_KEY: _VALUE_NOT_SHOWN_
-    triggerId: pre-user-registration
+hooks: []
 pages:
   - name: login
     enabled: true
