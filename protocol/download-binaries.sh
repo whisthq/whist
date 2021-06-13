@@ -70,15 +70,6 @@ if [[ "$OS" =~ (Windows|Linux) ]]; then
 fi
 
 ###############################
-# Copy repo shared libs (TODO: Move these dylibs to S3)
-###############################
-
-# Copy macOS files
-if [[ "$OS" == "Darwin" ]]; then
-    cp "$SOURCE_DIR/lib/64/ffmpeg/Darwin"/* "$CLIENT_DIR"
-fi
-
-###############################
 # Download SDL2 headers
 ###############################
 
