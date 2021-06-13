@@ -38,7 +38,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 endif()
 
-#set default compiler flags
+# Special work-around for getting include_directories(SYSTEM path) to work on MSVC
+# Found from https://www.reddit.com/r/cpp/comments/elewps/msvc_isystem/
+# Waiting on https://gitlab.kitware.com/cmake/cmake/-/issues/17904 to be merged into master cmake branch
+set_property(DIRECTORY PROPERTY COMPILE_OPTIONS
+    "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/external:W0;/experimental:external>")
+
+if(MSVC)
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_C "/external:I ")
+endif()
+
+# Add our compiler flags
 include(cmake/CompilerOptions.cmake)
 
 # Add rpath to look for shared libraries on linux
