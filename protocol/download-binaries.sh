@@ -180,7 +180,7 @@ fi
 ###############################
 
 # Select FFmpeg lib dir and targz name
-FFMPEG_LIB_DIR="$SOURCE_DIR/lib/64/ffmpeg/$OS"
+FFMPEG_LIB_DIR="$SOURCE_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
     FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
@@ -194,9 +194,6 @@ if has_updated "$FFMPEG_LIB"; then
     rm -rf "$FFMPEG_LIB_DIR"
     mkdir -p "$FFMPEG_LIB_DIR"
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$FFMPEG_LIB" - | tar -xz -C "$FFMPEG_LIB_DIR"
-
-    mv "$FFMPEG_LIB_DIR/$OS"/* "$FFMPEG_LIB_DIR"
-    rmdir "$FFMPEG_LIB_DIR/$OS"
 fi
 
 ###############################
