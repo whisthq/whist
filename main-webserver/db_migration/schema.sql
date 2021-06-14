@@ -246,6 +246,7 @@ ALTER TABLE ONLY hardware.container_info
 
 CREATE TABLE hardware.instance_info (
     instance_name character varying NOT NULL,
+    cloud_provider_id character varying NOT NULL,
     auth_token character varying NOT NULL,
     "lastHeartbeated" bigint,
     creation_time_utc_unix_ms bigint,

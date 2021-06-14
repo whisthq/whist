@@ -150,7 +150,7 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
             # TODO: Move this value to top-level config when more fleshed out
             base_number_free_containers = 16
             for index in range(num_new):
-                client.start_instances(
+                instance_ids = client.start_instances(
                     image_id=ami,
                     instance_name=base_name + f"-{index}",
                     num_instances=1,
@@ -162,6 +162,7 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                 new_instance = InstanceInfo(
                     location=region,
                     aws_ami_id=ami,
+                    cloud_provider_id=f"aws-{instance_ids[0]}",
                     instance_name=base_name + f"-{index}",
                     aws_instance_type="g3.4xlarge",
                     container_capacity=base_number_free_containers,

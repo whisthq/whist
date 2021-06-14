@@ -41,6 +41,7 @@ def initial_instance_auth_helper(
     # Then create a row for the instance in the DB
     new_instance = InstanceInfo(
         instance_name=instance_id,
+        cloud_provider_id=f"aws-{instance_id}",
         ip=ip,
         auth_token=auth_token,
         aws_instance_type=aws_instance_type,
