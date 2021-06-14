@@ -1,6 +1,10 @@
 from random import randint
 from sys import maxsize
 
+import requests
+
+from flask import current_app
+from app.models import db
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
 
@@ -29,14 +33,31 @@ def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_
     assert all(elem["kwargs"]["image_id"] == "test-AMI" for elem in call_list)
 
 
-def test_scale_down_single_available(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
+def test_scale_down_single_available(
+    monkeypatch, hijack_ec2_calls, mock_get_num_new_instances, bulk_instance
+):
     """
     Tests that we scale down an instance when desired
+    tests the requests, db, and ec2 calls are made.
     """
     call_list = hijack_ec2_calls
-    bulk_instance(instance_name="test_instance", ami_id="test-AMI")
+    post_list = []
+
+    def _helper(*args, **kwargs):
+        nonlocal post_list
+        post_list.append({"args": args, "kwargs": kwargs})
+        raise requests.exceptions.RequestException()
+
+    monkeypatch.setattr(requests, "post", _helper)
+    instance = bulk_instance(instance_name="test_instance", ami_id="test-AMI")
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
+    assert (
+        post_list[0]["args"][0]
+        == f"http://{instance.ip}/{current_app.config['HOST_SERVICE_PORT']}/drain_and_shutdown"
+    )
+    db.session.refresh()
+    assert instance.status == "DRAINING"
     assert len(call_list) == 1
     assert call_list[0]["args"][1] == ["test_instance"]
 
