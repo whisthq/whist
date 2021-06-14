@@ -10,6 +10,7 @@ import config, {
   getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
+import { persistGet } from "@app/utils/persist"
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 const sessionID = new Date().getTime()
@@ -55,32 +56,27 @@ const localLog = (
   title: string,
   data: object,
   level: LogLevel,
-  userID: string
+  email: string
 ) => {
-  const logs = formatLogs(`${title} -- ${userID}`, data, level)
+  const logs = formatLogs(`${title} -- ${email}`, data, level)
 
   if (!app.isPackaged) console.log(logs)
 
   logFile.write(logs)
 }
 
-const amplitudeLog = async (title: string, data: object, userID: string) => {
-  if (userID !== "") {
+const amplitudeLog = async (title: string, data: object, email: string) => {
+  if (email !== "") {
     await amplitude.logEvent({
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
-      user_id: userID,
+      user_id: email,
       event_properties: { data: util.inspect(data) },
     })
   }
 }
 
-export const logBase = async (
-  title: string,
-  data: object,
-  level: LogLevel,
-  userID: string
-) => {
+export const logBase = async (title: string, data: object, level: LogLevel) => {
   /*
   Description:
       Sends a log to console, client.log file, and/or logz.io depending on if the app is packaged
@@ -89,12 +85,13 @@ export const logBase = async (
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
+  const email = persistGet("email") ?? ""
 
-  await amplitudeLog(title, data, userID)
-  localLog(title, data, level, userID)
+  await amplitudeLog(title, data, email)
+  localLog(title, data, level, email)
 }
 
-export const uploadToS3 = async (email?: string) => {
+export const uploadToS3 = async () => {
   /*
   Description:
       Uploads a local file to S3
@@ -103,16 +100,13 @@ export const uploadToS3 = async (email?: string) => {
   Returns:
       Response from the s3 upload
   */
-  if ((email ?? "") === "") return
+  const email = persistGet("email") ?? ""
 
-  const s3FileName = `CLIENT_${email ?? ""}_${new Date().getTime()}.txt`
+  if (email === "") return
 
-  await logBase(
-    "Logs upload to S3",
-    { s3FileName: s3FileName },
-    LogLevel.DEBUG,
-    email ?? ""
-  )
+  const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
+
+  await logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY

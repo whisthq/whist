@@ -15,7 +15,7 @@ import TRIGGER from "@app/utils/triggers"
 // Fires when Electron starts; this is the first event to fire
 createTrigger(TRIGGER.appReady, fromEvent(app as EventEmitter, "ready"))
 // Fires whenever the number of windows changes, including the protocol window
-createTrigger(TRIGGER.numberWindows, fromEvent(windowMonitor, "number-windows"))
+createTrigger(TRIGGER.windowInfo, fromEvent(windowMonitor, "window-info"))
 // Fires when all Electron windows have been closed
 createTrigger(
   TRIGGER.windowsAllClosed,

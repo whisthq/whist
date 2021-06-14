@@ -312,15 +312,19 @@ int get_fmsg_size(FractalClientMessage* fmsg) {
     }
 }
 
-void terminate_protocol() {
+void terminate_protocol(FractalExitCode exit_code) {
     /*
         Terminates the protocol
     */
 
     LOG_INFO("Terminating Protocol");
     destroy_logger();
-    print_stacktrace();
-    exit(-1);
+
+    if (exit_code != FRACTAL_EXIT_SUCCESS) {
+        print_stacktrace();
+    }
+
+    exit(exit_code);
 }
 
 bool safe_strncpy(char* destination, const char* source, size_t num) {

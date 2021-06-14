@@ -792,7 +792,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Fractal client revision %s", fractal_git_revision());
 
     exiting = false;
-    bool failed = false;
+    FractalExitCode exit_code = FRACTAL_EXIT_SUCCESS;
 
     // While showing the SDL loading screen, read in any piped arguments
     //    If the arguments are bad, then skip to the destruction phase
@@ -801,7 +801,7 @@ int main(int argc, char* argv[]) {
     SDL_Thread* pipe_arg_thread =
         SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
-        failed = true;
+        exit_code = FRACTAL_EXIT_CLI;
     } else {
         SDL_Event event;
         while (continue_pumping) {
@@ -813,7 +813,7 @@ int main(int argc, char* argv[]) {
         int pipe_arg_ret;
         SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
         if (pipe_arg_ret != 0) {
-            failed = true;
+            exit_code = FRACTAL_EXIT_CLI;
         }
     }
 
@@ -821,7 +821,8 @@ int main(int argc, char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
-    for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
+    for (try_amount = 0;
+         try_amount < max_connection_attempts && !exiting && exit_code == FRACTAL_EXIT_SUCCESS;
          try_amount++) {
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
             exiting = true;
@@ -880,7 +881,7 @@ int main(int argc, char* argv[]) {
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
-        while (connected && !exiting && !failed) {
+        while (connected && !exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
             // Check if window title should be updated
             // SDL_SetWindowTitle must be called in the main thread for
             // some clients (e.g. all Macs), hence why we update the title here
@@ -907,7 +908,7 @@ int main(int argc, char* argv[]) {
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
-                    failed = true;
+                    exit_code = FRACTAL_EXIT_FAILURE;
                     break;
                 }
                 start_timer(&keyboard_sync_timer);
@@ -933,7 +934,7 @@ int main(int argc, char* argv[]) {
             // window)
             if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
                 // unable to handle event
-                failed = true;
+                exit_code = FRACTAL_EXIT_FAILURE;
                 break;
             }
 
@@ -941,7 +942,7 @@ int main(int argc, char* argv[]) {
             // We throttle it down to only update once every 0.5ms
             if (get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
                 if (update_mouse_motion()) {
-                    failed = true;
+                    exit_code = FRACTAL_EXIT_FAILURE;
                     break;
                 }
                 start_timer(&mouse_motion_timer);
@@ -949,7 +950,8 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (exiting || failed || try_amount + 1 == max_connection_attempts)
+        if (exiting || exit_code != FRACTAL_EXIT_SUCCESS ||
+            try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
         run_send_clipboard_packets = false;
         SDL_WaitThread(send_clipboard_thread, NULL);
@@ -960,7 +962,7 @@ int main(int argc, char* argv[]) {
         connected = false;
     }
 
-    if (failed) {
+    if (exit_code != FRACTAL_EXIT_SUCCESS) {
         LOG_ERROR("Failure in main loop!");
     }
 
@@ -983,10 +985,10 @@ int main(int argc, char* argv[]) {
     // before we close the error monitor.
     error_monitor_shutdown();
 
-    if (try_amount >= 3 || failed) {
+    if (try_amount >= 3) {
         // We failed, so return a non-zero error code
-        return -1;
+        terminate_protocol(FRACTAL_EXIT_FAILURE);
     }
 
-    return 0;
+    terminate_protocol(exit_code);
 }

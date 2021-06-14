@@ -20,7 +20,18 @@ import {
 
 const { buildRoot } = config
 
+// Because the protocol window is a window that's not recognized by Electron's BrowserWindow
+// module, we create our own event emitter to handle things like keeping track of how many
+// windows we have open. This is used in effects/app.ts to decide when to close the application.
 export const windowMonitor = new events.EventEmitter()
+
+const emitCloseInfo = (args: { crashed: boolean; event: string }) => {
+  windowMonitor.emit("window-info", {
+    numberWindowsRemaining: getNumberWindows(),
+    crashed: args.crashed,
+    event: args.event,
+  })
+}
 
 export const base = {
   webPreferences: {
@@ -126,11 +137,11 @@ export const createWindow = (args: {
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
     win.show()
-    windowMonitor.emit("number-windows", getNumberWindows())
+    emitCloseInfo({ crashed: false, event: "open" })
   })
 
   win.on("closed", () => {
-    windowMonitor.emit("number-windows", getNumberWindows())
+    emitCloseInfo({ crashed: false, event: "close" })
   })
 
   if (args.closeOtherWindows ?? false) closeAllWindows(currentElectronWindows)
@@ -210,12 +221,14 @@ export const createProtocolWindow = async () => {
   const protocol = await protocolLaunch()
 
   protocol.on("spawn", () => {
-    windowMonitor.emit("number-windows", getNumberWindows())
+    emitCloseInfo({ crashed: false, event: "open" })
   })
 
-  protocol.on("close", (code) => {
-    windowMonitor.emit("number-windows", getNumberWindows())
-    windowMonitor.emit("protocol-exit-code", code)
+  protocol.on("close", (code: number) => {
+    // Javascript's EventEmitter is synchronous, so we emit the number of windows and
+    // crash status in a single event to so that the listener can consume both pieces of
+    // information simultaneously
+    emitCloseInfo({ crashed: (code ?? 0) === 1, event: "close" })
   })
 
   closeElectronWindows(currentElectronWindows)
