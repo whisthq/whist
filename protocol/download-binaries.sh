@@ -147,8 +147,6 @@ if has_updated "$OPENSSL_LIB"; then
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$OPENSSL_LIB" - | tar -xz -C "$OPENSSL_LIB_DIR"
 fi
 
-
-# Serina: EVERYTHING BELOW THIS LINE IN PROGRESS
 ###############################
 # Download FFmpeg headers
 ###############################
