@@ -267,10 +267,12 @@ def bulk_instance():
         Yields:
             An instance of the InstanceInfo model.
         """
+        inst_name = (
+            instance_name if instance_name is not None else f"instance-{os.urandom(16).hex()}"
+        )
         new_instance = InstanceInfo(
-            instance_name=instance_name
-            if instance_name is not None
-            else f"instance-{os.urandom(16).hex()}",
+            instance_name=inst_name,
+            cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
             container_capacity=container_capacity if container_capacity is not None else 10,
