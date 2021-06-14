@@ -41,3 +41,12 @@ createTrigger(
     TRIGGER.showSignoutWindow
   )
 )
+
+// Fires when "Open Payment Information" button is clicked on error window popup
+createTrigger(
+  TRIGGER.showPaymentWindow,
+  filterByName(
+    fromTrigger("eventIPC").pipe(pluck("trigger")),
+    TRIGGER.showPaymentWindow
+  )
+)

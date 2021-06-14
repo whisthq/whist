@@ -10,7 +10,7 @@ export const INTERNET_ERROR = "INTERNET_ERROR"
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
     title: "Your free trial has expired.",
-    text: "To continue receiving access to Fractal, please contact support@fractal.co for help.",
+    text: "To continue receiving access to Fractal, please update your payment information or contact support@fractal.co for help.",
   },
   [UNAUTHORIZED_ERROR]: {
     title: "There was an error authenticating you with Fractal.",
