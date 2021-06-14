@@ -38,7 +38,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 endif()
 
-#set default compiler flags
+# Special work-around for getting include_directories(SYSTEM path) to work on MSVC
+# Found from https://www.reddit.com/r/cpp/comments/elewps/msvc_isystem/
+# Waiting on https://gitlab.kitware.com/cmake/cmake/-/issues/17904 to be merged into master cmake branch
+set_property(DIRECTORY PROPERTY COMPILE_OPTIONS
+    "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/external:W0;/experimental:external>")
+
+if(MSVC)
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_C "/external:I ")
+endif()
+
+# Add our compiler flags
 include(cmake/CompilerOptions.cmake)
 
 # Add rpath to look for shared libraries on linux
@@ -169,7 +179,7 @@ if (DOWNLOAD_BINARIES)
     endif()
 endif()
 
-# FFmpeg: using our provided libs on mac and windows and system on linux.
+# FFmpeg: Use the ffmpeg libs in /lib/${arch}/ffmpeg
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.3.dylib;libavcodec.58.dylib;libavdevice.58.dylib;libavfilter.7.dylib;
                     libavformat.58.dylib;libswscale.5.dylib;libavutil.56.dylib;libpostproc.55.dylib)
@@ -178,42 +188,22 @@ else()
 endif()
 
 set(FFMPEG_LIBS_PATHS "")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    FOREACH(LIB ${FFMPEG_LIBS})
-        message(VERBOSE "Looking for lib ${LIB}")
-        set(LIB_VAR "LIB_${LIB}")
-        find_library(${LIB_VAR} NAMES ${LIB})
-        message(VERBOSE "found lib ${LIB_VAR}")
-        LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
-    endforeach(LIB)
-    message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    find_path(FFMPEG_AVCODEC_INCLUDE_DIR
-            NAMES libavcodec/avcodec.h
-            PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS} /usr/include /usr/local/include /opt/local/include /sw/include
-            PATH_SUFFIXES ffmpeg libav
-            )
-    message(VERBOSE "FFmpeg include dir: ${FFMPEG_AVCODEC_INCLUDE_DIR}")
-    include_directories(${FFMPEG_AVCODEC_INCLUDE_DIR})
-else()
-    FOREACH(LIB ${FFMPEG_LIBS})
-        message(STATUS "Looking for lib ${LIB}")
-        set(LIB_VAR "LIB_${LIB}")
-        find_library(${LIB_VAR}
-                NAMES ${LIB}
-                PATHS lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
-                NO_DEFAULT_PATH
-                NO_CMAKE_ENVIRONMENT PATH
-                NO_CMAKE_PATH
-                NO_SYSTEM_ENVIRONMENT_PATH
-                NO_CMAKE_SYSTEM_PATH
-                NO_CMAKE_FIND_ROOT_PATH)
-        message(VERBOSE "found lib ${LIB_VAR}")
-        LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
-    endforeach(LIB)
-    message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
-    include_directories(include/ffmpeg)
-endif ()
+FOREACH(LIB ${FFMPEG_LIBS})
+    message(STATUS "Looking for lib ${LIB}")
+    set(LIB_VAR "LIB_${LIB}")
+    find_library(${LIB_VAR}
+            NAMES ${LIB}
+            PATHS lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH
+            NO_CMAKE_FIND_ROOT_PATH)
+    message(VERBOSE "found lib ${LIB_VAR}")
+    LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
+endforeach(LIB)
+message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 
 
 #[[
@@ -325,10 +315,12 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 # Tell CMake where to look for includes
-include_directories(include)
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_BINARY_DIR}/include)
-include_directories(sentry-native/include)
+# Use SYSTEM flag to not get warnings from their files
+include_directories(${CMAKE_SOURCE_DIR}) # For #include <fractal/**> semantics
+include_directories(SYSTEM include)
+include_directories(SYSTEM include/ffmpeg)
+include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
+include_directories(SYSTEM sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)

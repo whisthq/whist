@@ -45,40 +45,6 @@ function has_updated {
 }
 
 ###############################
-# Download S3 Shared Libs
-###############################
-
-if [[ "$OS" =~ (Windows|Linux) ]]; then
-    LIB="shared-libs.tar.gz"
-    if has_updated "$LIB"; then
-        SHARED_LIBS_DIR="$CACHE_DIR/shared-libs"
-        rm -rf "$SHARED_LIBS_DIR"
-        mkdir -p "$SHARED_LIBS_DIR"
-        aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SHARED_LIBS_DIR"
-
-        # Copy Windows files
-        if [[ "$OS" =~ "Windows" ]]; then
-            cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$CLIENT_DIR"
-            cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$SERVER_DIR"
-        elif [[ "$OS" =~ "Linux" ]]; then
-            cp "$SHARED_LIBS_DIR/share/64/Linux"/* "$CLIENT_DIR"
-            cp "$SHARED_LIBS_DIR/share/64/Linux"/* "$SERVER_DIR"
-        fi
-
-        rm -r "$SHARED_LIBS_DIR"
-    fi
-fi
-
-###############################
-# Copy repo shared libs (TODO: Move these dylibs to S3)
-###############################
-
-# Copy macOS files
-if [[ "$OS" == "Darwin" ]]; then
-    cp "$SOURCE_DIR/lib/64/ffmpeg/Darwin"/* "$CLIENT_DIR"
-fi
-
-###############################
 # Download SDL2 headers
 ###############################
 
@@ -154,6 +120,44 @@ if has_updated "$OPENSSL_LIB"; then
     rm -rf "$OPENSSL_LIB_DIR"
     mkdir -p "$OPENSSL_LIB_DIR"
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$OPENSSL_LIB" - | tar -xz -C "$OPENSSL_LIB_DIR"
+fi
+
+###############################
+# Download FFmpeg headers
+###############################
+
+# If the include/ffmpeg directory doesn't exist, make it and fill it
+# Or, if the lib has updated, refill the directory
+LIB="fractal-ffmpeg-headers.tar.gz"
+FFMPEG_DIR="$SOURCE_DIR/include/ffmpeg"
+if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
+    rm -rf "$FFMPEG_DIR"
+    mkdir -p "$FFMPEG_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$FFMPEG_DIR"
+
+    mv "$FFMPEG_DIR/include/"/* "$FFMPEG_DIR"
+    rmdir "$FFMPEG_DIR/include"
+fi
+
+###############################
+# Download FFmpeg libraries
+###############################
+
+# Select FFmpeg lib dir and targz name
+FFMPEG_LIB_DIR="$SOURCE_DIR/lib/64/ffmpeg"
+if [[ "$OS" =~ "Windows" ]]; then
+    FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
+elif [[ "$OS" == "Darwin" ]]; then
+    FFMPEG_LIB="fractal-macos-ffmpeg-shared-lib.tar.gz"
+elif [[ "$OS" == "Linux" ]]; then
+    FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
+fi
+
+# Check if FFMPEG_LIB has updated, and if so, create the dir and copy the libs into the source dir
+if has_updated "$FFMPEG_LIB"; then
+    rm -rf "$FFMPEG_LIB_DIR"
+    mkdir -p "$FFMPEG_LIB_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$FFMPEG_LIB" - | tar -xz -C "$FFMPEG_LIB_DIR"
 fi
 
 ###############################
