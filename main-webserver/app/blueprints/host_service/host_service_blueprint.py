@@ -49,7 +49,7 @@ def host_service_auth(**kwargs):
 
     Args:
         instance_id (str): the cloud ID of the instance
-        instance_type (str): what type of hardware is the instance on?
+        aws_instance_type (str): what type of hardware is the instance on?
         region (str): where is the instance?
         ami (str): what image is the instance running?
 
@@ -61,13 +61,13 @@ def host_service_auth(**kwargs):
 
     try:
         instance_id: str = body.pop("InstanceID")
-        instance_type: str = body.pop("InstanceType")
+        aws_instance_type: str = body.pop("InstanceType")
         region: str = body.pop("Region")
         ami: str = body.pop("AWSAmiID")
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    return initial_instance_auth_helper(address, instance_id, instance_type, region, ami)
+    return initial_instance_auth_helper(address, instance_id, aws_instance_type, region, ami)
 
 
 @host_service_bp.route("/host_service/heartbeat", methods=("POST",))
