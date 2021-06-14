@@ -141,7 +141,7 @@ class SortedClusters(db.Model):
 
 class InstanceInfo(db.Model):
     """
-    compute instance information
+    General information about our EC2 instances
 
     Attributes:
         instance_id (string): instance id from AWS console
@@ -154,41 +154,72 @@ class InstanceInfo(db.Model):
         memoryRemainingPerInstance (float): RAM not in use
         maxContainers (int): how many containers can run at once?
         last_pinged (int): when did this instance last tell us it existed?
-        ami_id (str): what image is this machine based on?"""
+        created_at (int):  When was this instance created?
+        ami_id (str): what image is this machine based on?
+        is_active (boolean):  is this instance active or inactive?"""
 
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
     instance_type = db.Column(db.String(250), nullable=False)
-    auth_token = db.Column(db.String(250), nullable=False)
-    ip = db.Column(db.String(250), nullable=False)
+    auth_token = db.Column(db.String(250))
+    ip = db.Column(db.String(250))
     CPURemainingInInstance = db.Column(db.Float, nullable=False, server_default="1024.0")
     GPURemainingInInstance = db.Column(db.Float, nullable=False, server_default="1024.0")
     memoryRemainingInInstanceInMb = db.Column(db.Float, nullable=False, server_default="2000.0")
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     last_pinged = db.Column(db.Integer)
+    created_at = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
+    status = db.Column(db.String(250), nullable=False)
 
 
 class InstanceSorted(db.Model):
     """
-    compute instance information
+    A sorted list of instance IDs and info, for selecting where
+    we deploy incoming tasks to.
 
     Attributes:
         instance_id (string): instance id from AWS console
         location (string): where is the instance?
+        ami_id (string): What image is the instance running?
     """
 
     __tablename__ = "instance_allocation"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
+    ami_id = db.Column(db.String(250), nullable=False)
+
+
+class InstancesWithRoomForContainers(db.Model):
+    """
+    A map linking instance information to general container information
+    i.e. 'how many containers are running on this instance',
+    'how many can be', etc.
+
+    Attributes:
+        instance_id (string): instance id from AWS console
+        location (string): where is the instance?
+        ami_id (string):  What image is the instance running?
+        max_containers (int): How many containers can the instance have?
+        num_running_containers (int): and how many does it have?
+    """
+
+    __tablename__ = "instance_sorted"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    location = db.Column(db.String(250), nullable=False)
+    ami_id = db.Column(db.String(250), nullable=False)
+    max_containers = db.Column(db.Integer)
+    num_running_containers = db.Column(db.Integer)
 
 
 class ContainerInfo(db.Model):
     """
-    compute instance information
+    Information about individual containers, namely
+    who's running them and where they're running.
 
     Attributes:
         container_id (int):  which container is this?
