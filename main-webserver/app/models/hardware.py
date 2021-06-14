@@ -156,7 +156,8 @@ class InstanceInfo(db.Model):
         container_capacity (int): how many containers can run at once?
         last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         creation_time_utc_unix_ms (int):  When was this instance created?
-        aws_ami_id (str): what image is this machine based on?"""
+        aws_ami_id (str): what image is this machine based on?
+        commit_hash (str): what commit hash is this machine running?"""
 
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
@@ -174,6 +175,7 @@ class InstanceInfo(db.Model):
     last_updated_utc_unix_ms = db.Column(db.Integer)
     aws_ami_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
+    commit_hash = db.Column(db.String(250), nullable=False)
 
 
 class InstanceSorted(db.Model):

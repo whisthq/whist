@@ -169,6 +169,7 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
                     status="PRE-CONNECTION",
+                    commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
                 )
                 db.session.add(new_instance)
                 db.session.commit()

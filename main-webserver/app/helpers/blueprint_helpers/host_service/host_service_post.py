@@ -1,7 +1,7 @@
 import os
 from time import time
 from typing import Tuple
-from flask import Response
+from flask import Response, current_app
 from flask.json import jsonify
 
 from app.constants.http_codes import (
@@ -48,6 +48,7 @@ def initial_instance_auth_helper(
         aws_ami_id=ami_id,
         location=location,
         status="ACTIVE",
+        commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
     )
     instance_sql = fractal_sql_commit(db, lambda database, x: database.session.add(x), new_instance)
     if instance_sql:

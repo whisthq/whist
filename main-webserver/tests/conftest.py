@@ -11,6 +11,7 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 
 import pytest
 
+from flask import current_app
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
@@ -281,6 +282,7 @@ def bulk_instance():
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
             last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
             status=kwargs.get("status", "ACTIVE"),
+            commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
         )
 
         db.session.add(new_instance)
