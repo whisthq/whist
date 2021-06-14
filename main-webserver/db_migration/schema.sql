@@ -258,7 +258,7 @@ CREATE TABLE hardware.instance_info (
     ip character varying NOT NULL,
     aws_ami_id character varying NOT NULL,
     location character varying NOT NULL,
-    status character varying NOT NULL
+    status character varying NOT NULL,
     aws_instance_type character varying NOT NULL
 );
 
