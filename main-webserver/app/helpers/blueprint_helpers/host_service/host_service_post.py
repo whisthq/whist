@@ -46,6 +46,7 @@ def initial_instance_auth_helper(
         instance_type=instance_type,
         ami_id=ami_id,
         location=location,
+        status="ACTIVE",
     )
     instance_sql = fractal_sql_commit(db, lambda database, x: database.session.add(x), new_instance)
     if instance_sql:

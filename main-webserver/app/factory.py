@@ -1,4 +1,5 @@
 import os
+import threading
 
 from http import HTTPStatus
 from urllib.parse import urlunsplit
@@ -17,6 +18,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
+from app.helpers.blueprint_helpers.aws.aws_instance_post import repeated_scale_down_harness
 import app.constants.env_names as env_names
 
 from auth0 import ScopeError
@@ -95,6 +97,13 @@ def create_app(testing=False):
 
     register_handlers(app)
     register_blueprints(app)
+
+    if not app.testing:
+        # If we're running in production start the scaling thread in the background
+        scale_down_bg_thread = threading.Thread(
+            target=repeated_scale_down_harness, args=(300,), kwargs={"flask_app": app}
+        )
+        scale_down_bg_thread.start()
 
     return app
 
