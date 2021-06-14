@@ -19,7 +19,7 @@ import {
   childProcess,
   protocolStreamKill,
 } from "@app/utils/protocol"
-import { billingPortalURL } from "@app/utils/payment"
+import { stripeBillingPortalCreate } from "@app/utils/payment"
 
 const { buildRoot } = config
 
@@ -171,7 +171,8 @@ export const createAuthWindow = () => {
   return win
 }
 
-export const createPaymentWindow = () => {
+export const createPaymentWindow = async () => {
+  const billingPortalURL = await stripeBillingPortalCreate()
   const win = createWindow({
     show: WindowHashPayment,
     options: {

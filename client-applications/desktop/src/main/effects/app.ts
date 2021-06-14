@@ -151,4 +151,7 @@ fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
 })
 
-fromTrigger("trayPaymentAction").subscribe(() => createPaymentWindow())
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+fromTrigger("trayPaymentAction").subscribe(async () => {
+  await createPaymentWindow()
+})

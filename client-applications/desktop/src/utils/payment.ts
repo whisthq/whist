@@ -2,25 +2,25 @@ import { post } from "@app/utils/api"
 import { FractalCallbackUrls } from "@app/config/urls"
 import { store } from "@app/utils/persist"
 
-const stripeBillingPortalCreate = (accessToken: any) =>
+export const stripeBillingPortalCreate = async () => {
   /*
     Description: 
       Makes a webserver call to get a stripe customer portal url 
     
     Arguments: 
-      accessToken (str): access token for the user
+      None
     
     Returns: 
-      JSON response containing stripe customer portal url 
+      the stripe customer portal url 
   */
-  post({
+
+  const accessToken = store.get("accessToken") ?? ""
+  const response = await post({
     endpoint: "/stripe/customer_portal",
     accessToken,
     body: {
-      return_url: FractalCallbackUrls,
+      return_url: FractalCallbackUrls.paymentCallBack,
     },
   })
-
-const accessToken = store.get("accessToken") ?? ""
-export const billingPortalURL =
-  stripeBillingPortalCreate(accessToken)?.json?.url
+  return response?.json?.url
+}
