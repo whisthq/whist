@@ -1,5 +1,5 @@
 from typing import Tuple
-from flask import current_app, jsonify
+from flask import jsonify
 
 import stripe
 
