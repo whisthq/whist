@@ -35,13 +35,13 @@ In GitHub terminology, [Actions](https://docs.github.com/en/actions/creating-act
 
 Actions and Workflows are both defined as YAML files stored in `.github/actions` and `.github/workflows`, respectively. The YAML example above shows how a workflow can call Actions with the `uses:` syntax, giving both the example of a offcial GitHub Action (`actions/checkout@v2`) as well as a custom, local action.
 
-Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available when running in the CI step. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
+Workflows are very hard to run and test locally. They're parsed and evaluated based on a complex domain-specific language using names of nested YAML keys, string templating, and a GitHub-flavored subset of JavaScript. To supply data to their jobs, they rely on the GitHub-specific context that's only available in the GitHub Actions runner. If you've worked with them before, you've probably gone through the clunky commit-push-deploy-wait loop that's necessary to test your work. The awkwardness of this process has led many of us to write complex Bash or Python scripts directly inside the Workflow YAML, so at least some part of it can be tested locally.
 
 Fortunately, Actions put a lot more control in the hands of the developer. They have a much smaller set of configuration options, and only run one process at a time. When creating an Action, you choose from three environments to run your work:
 
 1. Node.js
 2. Docker
-3. "Composite"
+3. Composite
 
 The simplest of these to work with is Docker, and that's what we'll focus on for the rest of this document. Both Node.js and "Composite" start to bring in the complexity of Workflows by adding jobs and steps and lots of GitHub context that becomes impossible to reproduce locally. By selecting a Docker environment, GitHub effectively "hands off" all execution to your Docker container. You have full control over your environment and dependencies. This allows you to work with a familiar toolset while you're developing and testing, with the expectation that the environment will be the same when you deploy to GitHub.
 
@@ -82,14 +82,14 @@ runs: # this is where we select the environment for the action.
 
 The Action setup doesn't need to be any complex than this. We're really just defining inputs and outputs, and letting GitHub know we're using Docker. There are just two slighty odd GitHub Actions rules to know:
 
-1. `inputs` are only be made available to your Docker process as environment variables. They'll be capitalized and prefixed with `INPUT_`. In this example, we'll be handed our `secrets` input through the environment variable `INPUT_SECRETS`.
+1. `inputs` are only made available to your Docker process as environment variables. They'll be capitalized and prefixed with `INPUT_`. In this example, our Docker container will be handed our `secrets` input through the environment variable `INPUT_SECRETS`.
 2. `outputs` receives data from your Docker process through stdout, and the data must be printed in this format: `::set-output name=<output name>::<value>`. When we call our process in the next section, we'll `echo` our output into this string, like so: `echo "::set-output name=config::$(<run-process-command>)".`
 
 ## Setting up a Dockerfile
 
 Our `Dockerfile` is going to setup all the resources that our program needs to run. While `action.yml` is only relevant for GitHub's Actions runner during deployment, our `Dockerfile` needs to do double duty. We want to write a single `Dockerfile` that we can deploy to GitHub Actions, as well as build and run locally. This will give us a consistent environment to develop in. We can write a program that runs in the container and needs no knowledge of GitHub's context, or its strange `input` and `output` needs.
 
-Think of this `Dockerfile` as a "wrapper" that will provide your program with everything it needs. It's job will be to fetch dependencies, make sure files are in the right place. It will also translate the Action `input` into generic arguments that your program will expect, and it will transform your program's result into the `output` syntax that GitHub Actions expects. If this is done correctly, you'll have a completely reproducible environment in which you can run any program at all, without having to modify that program to work with GitHub.
+Think of this `Dockerfile` as a "wrapper" that will provide your program with everything it needs. Its job will be to fetch dependencies, make sure files are in the right place. It will also translate the Action `input` into generic arguments that your program will expect, and it will transform your program's result into the `output` syntax that GitHub Actions expects. If this is done correctly, you'll have a completely reproducible environment in which you can run any program at all, without having to modify that program to work with GitHub.
 
 ### Our general-purpose Python program
 
@@ -107,12 +107,12 @@ Let's add the remaining files for our `monorepo-config` Action. It's a Python pr
 
 ```
 
-In this example, `main.py` is a basic Python program that does the actual work for our Action. It has a couple dependencies in `requirements.txt` that you need to `pip install` before running. The important thing to recogize here is that `main.py` is a entirely standard Python file. It reads its arguments from the command line, and prints its results to stdout. It has no knowledge of GitHub Action implementation details, it doesn't need any environment variables, and you can run it locally with `python main.py`. These are all characteristics of a general-purpose command line program, and this is what we want to be able to write.
+In this example, `main.py` is a basic Python program that does the actual work for our Action. It has a couple dependencies in `requirements.txt` that you need to `pip install` before running. The important thing to recogize here is that `main.py` is an entirely standard Python file. It reads its arguments from the command line, and prints its results to stdout. It has no knowledge of GitHub Action implementation details, it doesn't need any environment variables, and you can run it locally with `python main.py`. These are all characteristics of a general-purpose command line program, and this is what we want to be able to write.
 
 An important part of this job is managing how arguments get passed to our Python program. Here, `main.py` takes two arguments:
 
 1. The path to the `config` folder.
-2. A object of "secrets", which is passed through the `--secrets` flag. In the `actions.yml` file above, this is the `secrets` object that our Action receives as one of its `inputs`.
+2. An object of "secrets", which is passed through the `--secrets` flag. In the `actions.yml` file above, this is the `secrets` object that our Action receives as one of its `inputs`.
 
 With a working directory of `fractal`, we might call this:
 
@@ -194,7 +194,9 @@ docker run \
        --env      INPUT_SECRETS='{"test": "secret"}' \
        fractal/actions/monorepo-config
 
-# It's often useful to run the container with a different entrypoint, like a bash shell. Sometimes you need to have a look around and see what's going on with the file system.
+# It's often useful to run the container with a different entrypoint, like
+# a bash shell. Sometimes you need to have a look around and see what's going
+# on with the file system.
 docker run \
        --rm \
        --tty \
