@@ -11,8 +11,11 @@ cd "$DIR/.."
 mkdir -p "base/build-temp/protocol"
 
 # Copy protocol build into build-temp
+SOURCE_DIR="../protocol"
 BUILD_DIR="../protocol/build-docker/server/build64"
 # Verify that the FractalServer is there
 cp "$BUILD_DIR"/FractalServer base/build-temp/protocol
 # Copy all of the accompanying files
 cp "$BUILD_DIR"/* base/build-temp/protocol
+# Copy dependencies script
+cp "$SOURCE_DIR/setup-linux-build-environment.sh" base/build-temp
