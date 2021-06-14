@@ -1,7 +1,4 @@
 import os
-import platform
-import signal
-import subprocess
 import uuid
 
 from contextlib import contextmanager
@@ -21,7 +18,7 @@ from flask_jwt_extended.default_callbacks import default_decode_key_callback
 from app.celery_utils import CELERY_CONFIG, celery_params
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
-from app.models import ClusterInfo, ContainerInfo, db, InstanceInfo, UserContainer
+from app.models import ClusterInfo, ContainerInfo, db, InstanceInfo, UserContainer, RegionToAmi
 import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
@@ -277,10 +274,11 @@ def bulk_instance():
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
             maxContainers=max_containers if max_containers is not None else 10,
-            ip="1.1.1.1",
+            ip=kwargs.get("ip", "123.456.789"),
             ami_id=kwargs.get("ami_id", "test"),
             instance_type=kwargs.get("instance_type", "test_type"),
-            **kwargs,
+            last_pinged=kwargs.get("last_pinged", 10),
+            status=kwargs.get("status", "ACTIVE"),
         )
 
         db.session.add(new_instance)
@@ -309,6 +307,13 @@ def bulk_instance():
         db.session.delete(instance)
 
     db.session.commit()
+
+
+@pytest.fixture
+def region_to_ami_map(app):
+    all_regions = RegionToAmi.query.all()
+    region_map = {region.region_name: region.ami_id for region in all_regions}
+    return region_map
 
 
 @pytest.fixture
