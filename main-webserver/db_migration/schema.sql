@@ -248,7 +248,6 @@ CREATE TABLE hardware.instance_info (
     instance_name character varying NOT NULL,
     cloud_provider_id character varying NOT NULL,
     auth_token character varying NOT NULL,
-    "lastHeartbeated" bigint,
     creation_time_utc_unix_ms bigint,
     "memory_remaining_kb" double precision NOT NULL default 2000,
     "nanocpus_remaining" double precision NOT NULL DEFAULT 1024,
