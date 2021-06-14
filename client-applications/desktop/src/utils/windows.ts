@@ -107,8 +107,8 @@ export const createWindow = (args: {
   const win = new BrowserWindow({ ...args.options, show: false, title })
 
   let ua = win.webContents.userAgent
-  ua = ua.replace(/Electron\/*/,'')
-  ua = ua.replace(/Chrome\/*/,'')
+  ua = ua.replace(/Electron\/*/, "")
+  ua = ua.replace(/Chrome\/*/, "")
   win.webContents.userAgent = ua
 
   // Electron doesn't have a API for passing data to renderer windows. We need
