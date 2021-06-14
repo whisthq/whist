@@ -231,7 +231,7 @@ CREATE TABLE hardware.cluster_info (
 CREATE TABLE hardware.container_info (
     container_id character varying NOT NULL,
     user_id character varying NOT NULL,
-    instance_id character varying NOT NULL,
+    instance_name character varying NOT NULL,
     status character varying NOT NULL
 );
 
@@ -245,28 +245,30 @@ ALTER TABLE ONLY hardware.container_info
 --
 
 CREATE TABLE hardware.instance_info (
-    instance_id character varying NOT NULL,
-    auth_token character varying,
-    created_at bigint,
-    "memoryRemainingInInstanceInMb" double precision NOT NULL default 2000,
-    "CPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
-    "GPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
-    "maxContainers" bigint NOT NULL DEFAULT 0,
-    last_pinged bigint,
-    ip character varying,
-    ami_id character varying NOT NULL,
+    instance_name character varying NOT NULL,
+    cloud_provider_id character varying NOT NULL,
+    auth_token character varying NOT NULL,
+    creation_time_utc_unix_ms bigint,
+    "memory_remaining_kb" double precision NOT NULL default 2000,
+    "nanocpus_remaining" double precision NOT NULL DEFAULT 1024,
+    "gpu_vram_remaining_kb" double precision NOT NULL DEFAULT 1024,
+    "container_capacity" bigint NOT NULL DEFAULT 0,
+    last_updated_utc_unix_ms bigint,
+    ip character varying NOT NULL,
+    aws_ami_id character varying NOT NULL,
     location character varying NOT NULL,
-    instance_type character varying NOT NULL,
-    status character varying NOT NULL
+    status character varying NOT NULL,
+    commit_hash character varying NOT NULL,
+    aws_instance_type character varying NOT NULL
 );
 
 
 ALTER TABLE ONLY hardware.instance_info
-    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_id);
+    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_name);
 
 
 ALTER TABLE ONLY hardware.container_info
-    ADD CONSTRAINT instance_id_fk FOREIGN KEY (instance_id) REFERENCES hardware.instance_info(instance_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES hardware.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 --
 -- TOC entry 249 (class 1259 OID 16800)
@@ -274,34 +276,34 @@ ALTER TABLE ONLY hardware.container_info
 --
 
 CREATE VIEW hardware.instance_sorted AS
-  SELECT sub_with_running.instance_id,
-    sub_with_running.ami_id,
+  SELECT sub_with_running.instance_name,
+    sub_with_running.aws_ami_id,
     sub_with_running.location,
-    sub_with_running."maxContainers" AS max_containers,
+    sub_with_running."container_capacity" AS container_capacity,
     sub_with_running.num_running_containers
-   FROM ( SELECT base_table.instance_id,
-            base_table.ami_id,
+   FROM ( SELECT base_table.instance_name,
+            base_table.aws_ami_id,
             base_table.location,
-            base_table."maxContainers",
+            base_table."container_capacity",
             COALESCE(base_table.count, 0::bigint) AS num_running_containers
-           FROM (( SELECT instance_info.instance_id,
-                    instance_info.ami_id,
+           FROM (( SELECT instance_info.instance_name,
+                    instance_info.aws_ami_id,
                     instance_info.location,
-                    instance_info."maxContainers"
+                    instance_info."container_capacity"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
-                    container_info.instance_id AS cont_inst
+                    container_info.instance_name AS cont_inst
                    FROM hardware.container_info
-                  GROUP BY container_info.instance_id) containers ON instances.instance_id::text = containers.cont_inst::text) base_table) sub_with_running
-  WHERE sub_with_running.num_running_containers < sub_with_running."maxContainers"
+                  GROUP BY container_info.instance_name) containers ON instances.instance_name::text = containers.cont_inst::text) base_table) sub_with_running
+  WHERE sub_with_running.num_running_containers < sub_with_running."container_capacity"
   ORDER BY sub_with_running.location, sub_with_running.num_running_containers DESC;
 
 
 
  CREATE VIEW hardware.instance_allocation AS
-    SELECT instance_id, ami_id, location from hardware.instance_info
-    WHERE instance_id IN (select instance_id from hardware.instance_sorted)
-    AND last_pinged != -1 AND status = 'ACTIVE';
+    SELECT instance_name, aws_ami_id, location from hardware.instance_info
+    WHERE instance_name IN (select instance_name from hardware.instance_sorted)
+    AND last_updated_utc_unix_ms != -1 AND status = 'ACTIVE';
 
 
 
@@ -386,7 +388,7 @@ CREATE TABLE hardware.user_containers (
     state character varying NOT NULL,
     user_id character varying,
     port_32262 bigint DEFAULT '-1'::integer NOT NULL,
-    last_pinged bigint,
+    last_updated_utc_unix_ms bigint,
     cluster character varying,
     port_32263 bigint DEFAULT '-1'::integer NOT NULL,
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,
