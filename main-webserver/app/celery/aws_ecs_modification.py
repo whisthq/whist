@@ -361,7 +361,7 @@ def check_and_cleanup_outdated_tasks(cluster: str, region_name: str):
     cutoff_time = date_to_unix(get_today() + datetime.timedelta(seconds=-cutoff_sec))
     bad_containers = (
         UserContainer.query.filter_by(cluster=cluster, location=region_name)
-        .filter(UserContainer.last_pinged < cutoff_time)
+        .filter(UserContainer.last_updated_utc_unix_ms < cutoff_time)
         .all()
     )
     for container in bad_containers:

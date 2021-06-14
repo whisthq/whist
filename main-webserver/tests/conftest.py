@@ -12,6 +12,7 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 import pytest
 import stripe
 
+from flask import current_app
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
@@ -247,7 +248,7 @@ def bulk_instance():
         instance_name=None,
         location=None,
         auth_token=None,
-        max_containers=None,
+        container_capacity=None,
         **kwargs,
     ):
         """Create a dummy instance for testing.
@@ -261,24 +262,27 @@ def bulk_instance():
                     defaults to us-east-1
             auth_token (Optional[str]): what the instance's auth token with the webserver
                 should be, defaults to 'test-auth'
-            max_containers (Optional[int]): how many containers can the instance hold?
+            container_capacity (Optional[int]): how many containers can the instance hold?
                 defaults to 10
 
         Yields:
             An instance of the InstanceInfo model.
         """
+        inst_name = (
+            instance_name if instance_name is not None else f"instance-{os.urandom(16).hex()}"
+        )
         new_instance = InstanceInfo(
-            instance_id=instance_name
-            if instance_name is not None
-            else f"instance-{os.urandom(16).hex()}",
+            instance_name=inst_name,
+            cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
-            maxContainers=max_containers if max_containers is not None else 10,
+            container_capacity=container_capacity if container_capacity is not None else 10,
             ip=kwargs.get("ip", "123.456.789"),
-            ami_id=kwargs.get("ami_id", "test"),
-            instance_type=kwargs.get("instance_type", "test_type"),
-            last_pinged=kwargs.get("last_pinged", 10),
+            aws_ami_id=kwargs.get("aws_ami_id", "test"),
+            aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
+            last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
             status=kwargs.get("status", "ACTIVE"),
+            commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
         )
 
         db.session.add(new_instance)
@@ -286,7 +290,7 @@ def bulk_instance():
         for _ in range(associated_containers):
             new_container = ContainerInfo(
                 container_id=str(randint(0, 10000000)),
-                instance_id=new_instance.instance_id,
+                instance_name=new_instance.instance_name,
                 user_id="test-user",
                 status="Running",
             )
