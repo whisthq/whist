@@ -508,6 +508,14 @@ RUN chown root:root /run/user
 COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
+# Install Protocol Dependencies
+COPY build-temp/setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
+RUN /usr/share/fractal/setup-linux-build-environment.sh \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+RUN rm /usr/share/fractal/setup-linux-build-environment.sh
+
 # Install the Nvidia GRID Driver
 RUN apt-get install --no-install-recommends -y \
     libglvnd0 \
@@ -606,14 +614,6 @@ RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 
 # Install Fractal Protocol binaries and helper files
 COPY build-temp/protocol/* /usr/share/fractal/bin
-
-# Install Protocol Dependencies
-COPY build-temp/setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
-RUN /usr/share/fractal/setup-linux-build-environment.sh \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-RUN rm /usr/share/fractal/setup-linux-build-environment.sh
 
 # Copy config reference to container
 COPY config/app-config-map.json /usr/share/fractal/app-config-map.json
