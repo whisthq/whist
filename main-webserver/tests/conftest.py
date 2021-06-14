@@ -10,6 +10,7 @@ from random import getrandbits as randbits
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 
 import pytest
+import stripe
 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
@@ -72,7 +73,16 @@ def app():
 
 
 @pytest.fixture
-def authorized(client, user, monkeypatch):
+def customer():
+    """Creates a Stripe customer"""
+    stripe_customer = stripe.Customer.create(
+        description="Test Customer",
+    )
+    return stripe_customer
+
+
+@pytest.fixture
+def authorized(client, user, monkeypatch, customer):
     """Bypass authorization decorators.
 
     Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
@@ -81,8 +91,13 @@ def authorized(client, user, monkeypatch):
     Returns:
         A string representing the authorized user's identity.
     """
-
-    access_token = create_access_token(identity=user, additional_claims={"scope": "admin"})
+    access_token = create_access_token(
+        identity=user,
+        additional_claims={
+            "scope": "admin",
+            "https://api.fractal.co/stripe_customer_id": customer["id"],
+        },
+    )
 
     # environ_base contains base data that is used to construct every request that the client
     # sends. Here, we are injecting a value into the field that contains the base HTTP
