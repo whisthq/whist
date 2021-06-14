@@ -17,6 +17,7 @@ def hijack_ec2_calls(monkeypatch):
 
     def _helper(*args, **kwargs):
         call_list.append({"args": args, "kwargs": kwargs})
+        return ["test_id"]
 
     monkeypatch.setattr(EC2Client, "start_instances", _helper)
     monkeypatch.setattr(EC2Client, "stop_instances", _helper)

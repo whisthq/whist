@@ -43,7 +43,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     instance = bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
 
     def patched_find(*args, **kwargs):
-        return instance.instance_id
+        return instance.instance_name
 
     monkeypatch.setattr(
         "app.blueprints.aws.aws_container_blueprint.find_instance",

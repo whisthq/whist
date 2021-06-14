@@ -48,7 +48,10 @@ def ping_helper(
     username = container_info.user_id
 
     fractal_sql_commit(
-        db, fractal_sql_update, container_info, {"last_pinged": date_to_unix(get_today())}
+        db,
+        fractal_sql_update,
+        container_info,
+        {"last_updated_utc_unix_ms": date_to_unix(get_today())},
     )
 
     # Update container_info version
