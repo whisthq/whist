@@ -63,10 +63,10 @@ endif()
 
 # Copy over FFmpeg shared libs (on all OSes) into the FractalClient dir
 add_custom_command(
-TARGET FractalClient POST_BUILD
-COMMAND ${CMAKE_COMMAND} -E copy_directory
-${CMAKE_SOURCE_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-$<TARGET_FILE_DIR:FractalClient>)
+	TARGET FractalClient POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	${CMAKE_SOURCE_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+	$<TARGET_FILE_DIR:FractalClient>)
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
