@@ -15,13 +15,17 @@ import { isEmpty, pickBy, keys } from "lodash"
 export const store = new Store({ watch: true })
 export const persisted = new events.EventEmitter()
 
+interface Cache {
+  [k: string]: string
+}
+
 const cache = {
   accessToken: store.get("accessToken") ?? "",
   configToken: store.get("configToken") ?? "",
   refreshToken: store.get("refreshToken") ?? "",
   email: store.get("email") ?? "",
   sub: store.get("sub") ?? "",
-}
+} as Cache
 
 export const emitCache = () => {
   if (isEmpty(pickBy(cache, (x) => x === ""))) {
@@ -44,3 +48,5 @@ export const persistClear = (args?: { exclude?: string[] }) => {
     }
   })
 }
+
+export const persistGet = (key: keyof Cache) => cache[key]

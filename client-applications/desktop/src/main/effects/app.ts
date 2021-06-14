@@ -6,7 +6,7 @@
 
 import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
-import { take, withLatestFrom } from "rxjs/operators"
+import { take } from "rxjs/operators"
 import path from "path"
 
 import { AWSRegion } from "@app/@types/aws"
@@ -24,7 +24,6 @@ import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
-import { email } from "@app/main/observables/user"
 import { protocolStreamKill } from "@app/utils/protocol"
 import { fromSignal } from "@app/utils/observables"
 
@@ -90,22 +89,22 @@ fromSignal(
   evt?.preventDefault()
 })
 
-fromTrigger("numberWindows")
-  .pipe(withLatestFrom(email))
-  .subscribe(([numWindows, email_]: [number, string]) => {
-    if (numWindows === 0) {
+fromTrigger("windowInfo").subscribe(
+  (args: { numberWindowsRemaining: number; crashed: boolean }) => {
+    if (args.numberWindowsRemaining === 0) {
       destroyTray()
       protocolStreamKill()
-      uploadToS3(email_)
+      uploadToS3()
         .then(() => {
-          app.quit()
+          if (!args.crashed) app.quit()
         })
         .catch((err) => {
           console.error(err)
-          app.quit()
+          if (!args.crashed) app.quit()
         })
     }
-  })
+  }
+)
 
 fromTrigger("trayQuitAction").subscribe(() => {
   closeAllWindows()

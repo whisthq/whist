@@ -112,7 +112,7 @@ extern const char *debug_tag, *info_tag, *warning_tag, *error_tag, *fatal_error_
 #define LOG_FATAL(message, ...)                                                                  \
     internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), \
                             ##__VA_ARGS__);                                                      \
-    terminate_protocol()
+    terminate_protocol(FRACTAL_EXIT_FAILURE)
 
 /*
 ============================

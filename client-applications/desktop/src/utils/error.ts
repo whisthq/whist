@@ -5,6 +5,7 @@ export const MANDELBOX_INTERNAL_ERROR = "MANDELBOX_INTERNAL_ERROR"
 export const AUTH_ERROR = "AUTH_ERROR"
 export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
+export const INTERNET_ERROR = "INTERNET_ERROR"
 
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
@@ -16,8 +17,8 @@ export const fractalError = {
     text: "Please try logging in again or contact support@fractal.co for help.",
   },
   [PROTOCOL_ERROR]: {
-    title: "The Fractal browser encountered an unexpected error.",
-    text: "Please try again in a few minutes or contact support@fractal.co for help.",
+    title: "The Fractal browser lost connection.",
+    text: "This could be due to inactivity or weak Internet. Please try again or contact support@fractal.co for help.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "There was an error connecting to the Fractal servers.",
@@ -34,6 +35,10 @@ export const fractalError = {
   [MAINTENANCE_ERROR]: {
     title: "Fractal is currently pushing out an update.",
     text: "We apologize for the inconvenience. Please check back in a few minutes!",
+  },
+  [INTERNET_ERROR]: {
+    title: "Please check your Internet connection.",
+    text: "We were unable to ping our servers, which is likely a result of weak Internet.",
   },
 } as {
   [key: string]: { title: string; text: string }
