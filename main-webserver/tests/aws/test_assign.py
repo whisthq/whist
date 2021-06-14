@@ -40,10 +40,10 @@ def test_no_region(client):
 
 @pytest.mark.usefixtures("authorized")
 def test_assign(client, bulk_instance, monkeypatch):
-    bulk_instance(instance_name="mock_instance_id")
+    instance = bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
 
     def patched_find(*args, **kwargs):
-        return SimpleNamespace(instance_id="mock_instance_id", ip="123.456.789")
+        return instance.instance_id
 
     monkeypatch.setattr(
         "app.blueprints.aws.aws_container_blueprint.find_instance",
@@ -53,7 +53,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     args = {"region": "us-east-1", "username": "neil@fractal.co", "dpi": 96}
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.json["IP"] == patched_find().ip
+    assert response.json["IP"] == instance.ip
 
 
 def test_get_num_extra_empty(task_def_env):
