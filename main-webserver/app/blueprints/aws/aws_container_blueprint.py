@@ -1,5 +1,6 @@
+from threading import Thread
 import uuid
-from flask import abort, Blueprint
+from flask import abort, Blueprint, current_app
 from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.orm.exc import NoResultFound
@@ -29,6 +30,7 @@ from app.constants.http_codes import (
     ACCEPTED,
     BAD_REQUEST,
     NOT_FOUND,
+    RESOURCE_UNAVAILABLE,
     SUCCESS,
     WEBSERVER_MAINTENANCE,
 )
@@ -36,12 +38,13 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     ping_helper,
     protocol_info,
 )
+from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.utils.general.auth import developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import ClusterInfo, RegionToAmi, db
-from app.models.hardware import ContainerInfo
+from app.models.hardware import InstanceInfo, ContainerInfo
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -367,8 +370,20 @@ def aws_container_ping(**kwargs):
 @payment_required
 @validate()
 def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
-    instance = find_instance(body.region)
+    instance_id = find_instance(body.region)
+    if instance_id is None:
 
+        if not current_app.testing:
+            # If we're not testing, we want to scale up a new instance to handle this load
+            # and we know what instance type we're missing from the request
+            scaling_thread = Thread(
+                target=do_scale_up_if_necessary,
+                args=(body.region, RegionToAmi.query.get(body.region).ami_id),
+            )
+            scaling_thread.start()
+        return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
+
+    instance = InstanceInfo.query.get(instance_id)
     obj = ContainerInfo(
         container_id=str(uuid.uuid4()),
         instance_id=instance.instance_id,
@@ -377,5 +392,14 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     )
     db.session.add(obj)
     db.session.commit()
+    if not current_app.testing:
+        # If we're not testing, we want to scale new instances in the background.
+        # Specifically, we want to scale in the region/AMI pair where we know
+        # there's usage -- so we call do_scale_up with the location and AMI of the instance
+
+        scaling_thread = Thread(
+            target=do_scale_up_if_necessary, args=(instance.location, instance.ami_id)
+        )
+        scaling_thread.start()
 
     return jsonify({"IP": instance.ip}), ACCEPTED
