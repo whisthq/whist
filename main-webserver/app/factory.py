@@ -135,10 +135,7 @@ def register_blueprints(app):
     from .blueprints.mail.mail_blueprint import mail_bp
     from .blueprints.mail.newsletter_blueprint import newsletter_bp
 
-    from .blueprints.host_service.host_service_blueprint import host_service_bp
-
     app.register_blueprint(aws_container_bp)
     app.register_blueprint(hasura_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
-    app.register_blueprint(host_service_bp)
