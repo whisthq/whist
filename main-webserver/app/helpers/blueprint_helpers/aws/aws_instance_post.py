@@ -58,7 +58,7 @@ def find_instance(region: str) -> Optional[str]:
                 break
     if avail_instance is None:
         return avail_instance
-    return avail_instance.instance_id
+    return avail_instance.instance_name
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
@@ -91,18 +91,19 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         return -maxsize
     # Now, we want to get the average number of containers per instance in that region
     # and the number of free containers
-    all_instances = list(InstanceInfo.query.filter_by(location=region, ami_id=ami_id).all())
+    all_instances = list(InstanceInfo.query.filter_by(location=region, aws_ami_id=ami_id).all())
 
     if len(all_instances) == 0:
         # If there are no instances running, we want one.
         return 1
     all_free_instances = list(
-        InstancesWithRoomForContainers.query.filter_by(location=region, ami_id=ami_id).all()
+        InstancesWithRoomForContainers.query.filter_by(location=region, aws_ami_id=ami_id).all()
     )
     num_free_containers = sum(
-        instance.max_containers - instance.num_running_containers for instance in all_free_instances
+        instance.container_capacity - instance.num_running_containers
+        for instance in all_free_instances
     )
-    avg_max_containers = sum(instance.maxContainers for instance in all_instances) / len(
+    avg_max_containers = sum(instance.container_capacity for instance in all_instances) / len(
         all_instances
     )
 
@@ -149,7 +150,7 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
             # TODO: Move this value to top-level config when more fleshed out
             base_number_free_containers = 16
             for index in range(num_new):
-                client.start_instances(
+                instance_ids = client.start_instances(
                     image_id=ami,
                     instance_name=base_name + f"-{index}",
                     num_instances=1,
@@ -160,13 +161,15 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                 # don't double-scale.
                 new_instance = InstanceInfo(
                     location=region,
-                    ami_id=ami,
-                    instance_id=base_name + f"-{index}",
-                    instance_type="g3.4xlarge",
-                    maxContainers=base_number_free_containers,
-                    last_pinged=-1,
-                    created_at=int(time.time()),
+                    aws_ami_id=ami,
+                    cloud_provider_id=f"aws-{instance_ids[0]}",
+                    instance_name=base_name + f"-{index}",
+                    aws_instance_type="g3.4xlarge",
+                    container_capacity=base_number_free_containers,
+                    last_updated_utc_unix_ms=-1,
+                    creation_time_utc_unix_ms=int(time.time()),
                     status="PRE-CONNECTION",
+                    commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
                 )
                 db.session.add(new_instance)
                 db.session.commit()
@@ -191,7 +194,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             # we only want to scale down unused instances
             available_empty_instances = list(
                 InstancesWithRoomForContainers.query.filter_by(
-                    location=region, ami_id=ami, num_running_containers=0
+                    location=region, aws_ami_id=ami, num_running_containers=0
                 )
                 .limit(abs(num_new))
                 .all()
@@ -200,9 +203,9 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 return
             for instance in available_empty_instances:
                 # grab a lock on the instance to ensure nothing new's being assigned to it
-                instance_info = InstanceInfo.query.with_for_update().get(instance.instance_id)
+                instance_info = InstanceInfo.query.with_for_update().get(instance.instance_name)
                 instance_containers = InstancesWithRoomForContainers.query.filter_by(
-                    instance_id=instance.instance_id
+                    instance_name=instance.instance_name
                 ).one_or_none()
                 if instance_containers is None or instance_containers.num_running_containers != 0:
                     db.session.commit()
@@ -215,7 +218,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     requests.post(f"{base_url}/drain_and_shutdown")
                 except requests.exceptions.RequestException:
                     client = EC2Client(region_name=region)
-                    client.stop_instances([instance.instance_id])
+                    client.stop_instances([instance_info.cloud_provider_id[4:]])
                 db.session.commit()
 
 
@@ -225,8 +228,10 @@ def try_scale_down_if_necessary_all_regions() -> None:
 
     """
     region_and_ami_list = [
-        (region.location, region.ami_id)
-        for region in InstanceInfo.query.distinct(InstanceInfo.location, InstanceInfo.ami_id).all()
+        (region.location, region.aws_ami_id)
+        for region in InstanceInfo.query.distinct(
+            InstanceInfo.location, InstanceInfo.aws_ami_id
+        ).all()
     ]
     for region, ami in region_and_ami_list:
         try_scale_down_if_necessary(region, ami)

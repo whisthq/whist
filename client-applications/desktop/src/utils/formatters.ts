@@ -9,7 +9,7 @@ import { omit, pick, truncate, fromPairs, toPairs, isFunction } from "lodash"
 import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 
-/* 
+/*
    Contains general fields of a typical JSON response that are usually
    unecessary, such as 'status' and 'response'
 */
@@ -18,16 +18,16 @@ const omitJson = ["status", "statusText", "response"]
 
 export const formatObservable = (
     /*
-    Description: 
-      General purpose formatter observable that applies a formatter function 
-      to the emitted output of a given observable 
-    
-    Arguments: 
-      obs: An observable whos emissions are desired to be formatted 
+    Description:
+      General purpose formatter observable that applies a formatter function
+      to the emitted output of a given observable
+
+    Arguments:
+      obs: An observable whos emissions are desired to be formatted
       formatter: a function that applies formatting to the output emitted from obs
 
-    Returns: 
-      An observable that emits the formatted output from obs 
+    Returns:
+      An observable that emits the formatted output from obs
   */
     obs: Observable<any>,
     formatter: (res: any) => void
@@ -35,15 +35,15 @@ export const formatObservable = (
 
 export const formatChildProcess = (
     /*
-    Description: 
-      formats debug output from protocol observables 
-    
-    Arguments: 
-      process: Child process, in this case the process launching the protocol 
-    
-    Returns: 
-      function omitting unecessary fields such as 'stdin' and 'stdio' 
-      using lodash's 'omit' function, 
+    Description:
+      formats debug output from protocol observables
+
+    Arguments:
+      process: Child process, in this case the process launching the protocol
+
+    Returns:
+      function omitting unecessary fields such as 'stdin' and 'stdio'
+      using lodash's 'omit' function,
   */
     process: ChildProcess
 ) =>
@@ -64,15 +64,15 @@ const pickMap = <
     K extends { [P in keyof T]?: ((v: T[P]) => any) | K }
 >(
     /*
-    Description: 
-      Recursively flattens json objects into a single level of key-value pairs 
-    
-    Arguments: 
-      obj: A Record of type String, any to be spreaded to a new object 
-      fmap: Map of functions to apply to key value pairs in obj 
-    
-    Returns: 
-      JSON object from flattend obj and fmap 
+    Description:
+      Recursively flattens json objects into a single level of key-value pairs
+
+    Arguments:
+      obj: A Record of type String, any to be spreaded to a new object
+      fmap: Map of functions to apply to key value pairs in obj
+
+    Returns:
+      JSON object from flattend obj and fmap
   */
     obj: T,
     fmap: K
@@ -88,14 +88,14 @@ const pickMap = <
 
 export const formatLogin = (
     /*
-    Description: 
-      Formats login json response using pickMap, applies truncate() to 
-      user hash tokens 
-    
-    Arguments: 
+    Description:
+      Formats login json response using pickMap, applies truncate() to
+      user hash tokens
+
+    Arguments:
       res: JSON api response from login
-    
-    Returns: 
+
+    Returns:
       Function that formats given JSON object
   */
     res: any
@@ -111,16 +111,16 @@ export const formatLogin = (
 
 export const formatMandelbox = (
     /*
-    Description: 
+    Description:
       Formats output from mandelbox observables. Only returns full output if state is
       something other than polling, aside from the usual unecessary JSON values in omitJson
-    
-    Args: 
+
+    Args:
       res: JSON object emitted from mandelbox observable
-    
-    Returns: 
-      Function that formats given json object, for the polling state will omit 
-      all unecessary values, for everything else will only omit unecessary json values 
+
+    Returns:
+      Function that formats given json object, for the polling state will omit
+      all unecessary values, for everything else will only omit unecessary json values
       from omitJson
   */
 
@@ -143,7 +143,7 @@ export const formatMandelbox = (
             "json.output.task_definition",
             "json.output.task_version",
             "json.output.user_id",
-            "json.output.last_pinged",
+            "json.output.last_updated_utc_unix_ms",
         ])
     }
 }
