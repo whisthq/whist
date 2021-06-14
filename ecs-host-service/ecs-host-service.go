@@ -22,6 +22,7 @@ import (
 	// forget to send a message via Sentry. For the same reason, we make sure not
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
+	"github.com/fractal/fractal/ecs-host-service/auth"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
@@ -315,6 +316,13 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetConfigEncryptionTokenRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := logger.MakeError("handleSetConfigEncryptionTokenRequest(): "+fmt, v...)
+		logger.Error(err)
+		req.ReturnResult("", err)
+	}
+
+	// Verify that the request access token is valid for the given userID.
+	_, err := auth.VerifyWithUserID(req.ClientAppAccessToken, req.UserID)
+	if err != nil {
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
