@@ -57,7 +57,7 @@ def test_heartbeat_wrong_key(bulk_instance):
     Tests that a heartbeat with the wrong auth token fails
     and that it fails with NOT_FOUND
     """
-    bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
+    bulk_instance(instance_name="test_instance_id", auth_token="test_auth", last_pinged=None)
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper("bad_token", "test_instance_id", 1024000, False)
     resp_dict = resp.get_json()
@@ -71,7 +71,7 @@ def test_heartbeat_no_exist(bulk_instance):
     Tests that a heartbeat for a nonexistent instance fails
     and that it fails with NOT_FOUND
     """
-    bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
+    bulk_instance(instance_name="test_instance_id", auth_token="test_auth", last_pinged=None)
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper("test_auth", "test_instance_id2", 1024, False)
     resp_dict = resp.get_json()
