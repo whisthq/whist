@@ -45,31 +45,6 @@ function has_updated {
 }
 
 ###############################
-# Download S3 Shared Libs
-###############################
-
-if [[ "$OS" =~ (Windows|Linux) ]]; then
-    LIB="shared-libs.tar.gz"
-    if has_updated "$LIB"; then
-        SHARED_LIBS_DIR="$CACHE_DIR/shared-libs"
-        rm -rf "$SHARED_LIBS_DIR"
-        mkdir -p "$SHARED_LIBS_DIR"
-        aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SHARED_LIBS_DIR"
-
-        # Copy Windows files
-        if [[ "$OS" =~ "Windows" ]]; then
-            cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$CLIENT_DIR"
-            cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$SERVER_DIR"
-        elif [[ "$OS" =~ "Linux" ]]; then
-            cp "$SHARED_LIBS_DIR/share/64/Linux"/* "$CLIENT_DIR"
-            cp "$SHARED_LIBS_DIR/share/64/Linux"/* "$SERVER_DIR"
-        fi
-
-        rm -r "$SHARED_LIBS_DIR"
-    fi
-fi
-
-###############################
 # Download SDL2 headers
 ###############################
 
