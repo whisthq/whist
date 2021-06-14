@@ -14,7 +14,7 @@ def test_find_initial_instance(bulk_instance):
     Confirms that we find an empty instance
     """
     instance = bulk_instance(location="us-east-1")
-    assert find_instance("us-east-1") == instance.instance_id
+    assert find_instance("us-east-1") == instance.instance_name
 
 
 def test_find_part_full_instance(bulk_instance):
@@ -22,7 +22,7 @@ def test_find_part_full_instance(bulk_instance):
     Confirms that we find an in-use instance
     """
     instance = bulk_instance(location="us-east-1", associated_containers=3)
-    assert find_instance("us-east-1") == instance.instance_id
+    assert find_instance("us-east-1") == instance.instance_name
 
 
 def test_find_part_full_instance_order(bulk_instance):
@@ -31,7 +31,7 @@ def test_find_part_full_instance_order(bulk_instance):
     """
     instance = bulk_instance(location="us-east-1", associated_containers=3)
     _ = bulk_instance(location="us-east-1", associated_containers=2)
-    assert find_instance("us-east-1") == instance.instance_id
+    assert find_instance("us-east-1") == instance.instance_name
 
 
 def test_no_find_full_instance(bulk_instance):
@@ -46,7 +46,7 @@ def test_no_find_full_small_instance(bulk_instance):
     """
     Confirms that we don't find a full instance with <10 max
     """
-    _ = bulk_instance(location="us-east-1", max_containers=5, associated_containers=5)
+    _ = bulk_instance(location="us-east-1", container_capacity=5, associated_containers=5)
     assert find_instance("us-east-1") is None
 
 
