@@ -18,7 +18,7 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
-var config AuthConfig = getAuthConfig()
+var config authConfig = getAuthConfig()
 
 func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pubPEM))

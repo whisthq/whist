@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type AuthConfig struct {
+type authConfig struct {
 	// JWT audience. Identifies the serivce that accepts the token.
 	Aud string
 	// JWT issuer. The issuing server.
@@ -14,7 +14,7 @@ type AuthConfig struct {
 	VerifyKey string
 }
 
-var AuthConfigDev = AuthConfig{
+var authConfigDev = authConfig{
 	Aud: "https://api.fractal.co",
 	Iss: "https://fractal-dev.us.auth0.com/",
 	VerifyKey: `-----BEGIN PUBLIC KEY-----
@@ -29,7 +29,7 @@ DM2uoZfTzKYVj5PJn3KbUS7oRhsA2u+ZArChmmgymzKgOFeTeBoCzwFF2Xf8pj4S
 `,
 }
 
-var AuthConfigStaging = AuthConfig{
+var authConfigStaging = authConfig{
 	Aud: "https://api.fractal.co",
 	Iss: "https://fractal-staging.us.auth0.com/",
 	VerifyKey: `-----BEGIN PUBLIC KEY-----
@@ -43,7 +43,7 @@ bwIDAQAB
 -----END PUBLIC KEY-----`,
 }
 
-var AuthConfigProd = AuthConfig{
+var authConfigProd = authConfig{
 	Aud: "https://api.fractal.co",
 	Iss: "https://fractal-prod.us.auth0.com/",
 	VerifyKey: `-----BEGIN PUBLIC KEY-----
@@ -58,16 +58,16 @@ CQIDAQAB
 `,
 }
 
-func getAuthConfig() AuthConfig {
+func getAuthConfig() authConfig {
 	env := strings.ToLower(os.Getenv("APP_ENV"))
 	switch env {
 	case "development", "dev":
-		return AuthConfigDev
+		return authConfigDev
 	case "staging":
-		return AuthConfigStaging
+		return authConfigStaging
 	case "production", "prod":
-		return AuthConfigProd
+		return authConfigProd
 	default:
-		return AuthConfigDev
+		return authConfigDev
 	}
 }
