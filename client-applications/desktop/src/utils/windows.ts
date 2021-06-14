@@ -106,6 +106,11 @@ export const createWindow = (args: {
   // show the window after it has finished loading.
   const win = new BrowserWindow({ ...args.options, show: false, title })
 
+  let ua = win.webContents.userAgent
+  ua = ua.replace(/Electron\/*/,'')
+  ua = ua.replace(/Chrome\/*/,'')
+  win.webContents.userAgent = ua
+
   // Electron doesn't have a API for passing data to renderer windows. We need
   // to pass "init" data for a variety of reasons, but mainly so we can decide
   // which React component to render into the window. We're forced to do this
@@ -122,11 +127,7 @@ export const createWindow = (args: {
       .loadURL(
         args.customURL !== undefined
           ? args.customURL
-          : `http://localhost:8080${params}`,
-        {
-          userAgent:
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-        }
+          : `http://localhost:8080${params}`
       )
       .catch((err) => console.error(err))
   }
