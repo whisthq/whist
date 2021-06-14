@@ -386,7 +386,7 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     instance = InstanceInfo.query.get(instance_id)
     obj = ContainerInfo(
         container_id=str(uuid.uuid4()),
-        instance_id=instance.instance_id,
+        instance_name=instance.instance_name,
         user_id=body.username,
         status="ALLOCATED",
     )
