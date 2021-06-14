@@ -18,14 +18,7 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
-// JWT audience. Identifies the serivce that accepts the token.
-var aud string
-
-// JWT issuer. The issuing server.
-var iss string
-
-// PEM-formatted public key used to verify JWT signer.
-var verifyKey string
+var config AuthConfig = getAuthConfig()
 
 func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pubPEM))
@@ -50,7 +43,7 @@ func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 // This should not be used except as an argument to jwt's parse methods.
 func keyFunc(token *jwt.Token) (interface{}, error) {
 	// Our Auth0 configuration uses RS256, so we return an rsa public key
-	key, err := parsePubPEM(verifyKey)
+	key, err := parsePubPEM(config.VerifyKey)
 	if err != nil {
 		fmt.Printf("key err %v", err)
 	}
@@ -63,18 +56,18 @@ func validateClaims(claims jwt.MapClaims) error {
 	var audValid bool
 	switch audSlice.(type) {
 	case string:
-		audValid = audSlice == aud
+		audValid = audSlice == config.Aud
 	default:
 		// If not a string, must be an array.
 		audSlice := audSlice.([]interface{})
-		audValid = utils.SliceContains(audSlice, aud)
+		audValid = utils.SliceContains(audSlice, config.Aud)
 	}
 	if !audValid {
 		return errors.New("invalid audience")
 	}
 
 	// Verify issuer
-	issValid := claims["iss"] == iss
+	issValid := claims["iss"] == config.Iss
 	if !issValid {
 		return errors.New("invalid issuer")
 	}
