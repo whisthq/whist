@@ -204,7 +204,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 # grab a lock on the instance to ensure nothing new's being assigned to it
                 instance_info = InstanceInfo.query.with_for_update().get(instance.instance_name)
                 instance_containers = InstancesWithRoomForContainers.query.filter_by(
-                    instance_id=instance.instance_name
+                    instance_name=instance.instance_name
                 ).one_or_none()
                 if instance_containers is None or instance_containers.num_running_containers != 0:
                     db.session.commit()
