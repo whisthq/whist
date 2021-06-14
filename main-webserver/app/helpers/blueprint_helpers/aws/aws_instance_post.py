@@ -188,16 +188,17 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
     with scale_mutex[f"{region}-{ami}"]:
         num_new = _get_num_new_instances(region, ami)
         if num_new < 0:
-            free_instances = list(
+            # we only want to scale down unused instances
+            available_empty_instances = list(
                 InstancesWithRoomForContainers.query.filter_by(
                     location=region, ami_id=ami, num_running_containers=0
                 )
                 .limit(abs(num_new))
                 .all()
             )
-            if len(free_instances) == 0:
+            if len(available_empty_instances) == 0:
                 return
-            for instance in free_instances:
+            for instance in available_empty_instances:
                 # grab a lock on the instance to ensure nothing new's being assigned to it
                 instance_info = InstanceInfo.query.with_for_update().get(instance.instance_id)
                 instance_containers = InstancesWithRoomForContainers.query.filter_by(
@@ -214,7 +215,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     requests.post(f"{base_url}/drain_and_shutdown")
                 except requests.exceptions.RequestException:
                     client = EC2Client(region_name=region)
-                    client.stop_instances(list(instance.instance_id for instance in free_instances))
+                    client.stop_instances([instance.instance_id])
                 db.session.commit()
 
 

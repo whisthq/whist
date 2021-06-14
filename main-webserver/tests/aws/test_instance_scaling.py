@@ -120,8 +120,8 @@ def test_scale_down_multiple_available(hijack_ec2_calls, mock_get_num_new_instan
         instance_list.append(f"test_instance_{instance}")
     mock_get_num_new_instances(-desired_num)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert len(call_list[0]["args"][1]) == desired_num
-    assert set(call_list[0]["args"][1]) == set(instance_list)
+    assert len(call_list) == desired_num
+    assert set(item["args"][1][0] for item in call_list) == set(instance_list)
 
 
 def test_scale_down_multiple_partial_available(
@@ -146,8 +146,8 @@ def test_scale_down_multiple_partial_available(
         )
     mock_get_num_new_instances(-desired_num)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert len(call_list[0]["args"][1]) == num_inactive
-    assert set(call_list[0]["args"][1]) == set(instance_list)
+    assert len(call_list) == num_inactive
+    assert set(item["args"][1][0] for item in call_list) == set(instance_list)
 
 
 def test_buffer_wrong_region():
