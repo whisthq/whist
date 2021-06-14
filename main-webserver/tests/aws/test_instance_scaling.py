@@ -38,7 +38,7 @@ def test_scale_down_single_available(
 ):
     """
     Tests that we scale down an instance when desired
-    tests the requests, db, and ec2 calls are made.
+    tests the correct requests, db, and ec2 calls are made.
     """
     call_list = hijack_ec2_calls
     post_list = []
@@ -50,13 +50,14 @@ def test_scale_down_single_available(
 
     monkeypatch.setattr(requests, "post", _helper)
     instance = bulk_instance(instance_name="test_instance", ami_id="test-AMI")
+    assert instance.status != "DRAINING"
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert (
         post_list[0]["args"][0]
         == f"http://{instance.ip}/{current_app.config['HOST_SERVICE_PORT']}/drain_and_shutdown"
     )
-    db.session.refresh()
+    db.session.refresh(instance)
     assert instance.status == "DRAINING"
     assert len(call_list) == 1
     assert call_list[0]["args"][1] == ["test_instance"]
