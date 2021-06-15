@@ -48,6 +48,12 @@ echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
 
+# Install pip and python dependencies
+sudo apt install python3-pip
+cd ..
+find ./container-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
+cd ecs-host-setup
+
 # We don't need to configure the AWS CLI (only install it) because this script runs
 # on an AWS EC2 instance, which have awscli automatically configured
 sudo apt install -y awscli
