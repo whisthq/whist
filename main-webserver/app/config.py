@@ -196,6 +196,7 @@ class DeploymentConfig:
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SILENCED_ENDPOINTS = ("/status", "/ping")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    STRIPE_CUSTOMER_ID_CLAIM = "https://api.fractal.co/stripe_customer_id"
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
