@@ -35,7 +35,7 @@ typedef struct AudioPacket {
 #define LOG_AUDIO false
 
 // system audio queue + our buffer limits, in decompressed bytes
-#define AUDIO_QUEUE_LOWER_LIMIT 18000
+#define AUDIO_QUEUE_LOWER_LIMIT 0
 #define AUDIO_QUEUE_UPPER_LIMIT 59000
 #define TARGET_AUDIO_QUEUE_LIMIT 28000
 
@@ -300,6 +300,7 @@ bool buffer_audio(int audio_device_queue) {
      */
 
     static bool buffering_audio = false;
+    LOG_DEBUG("max %d, last %d", max_received_id, last_played_id);
     int bytes_until_no_more_audio =
         (int)((max_received_id - last_played_id) * decoded_bytes_per_packet) + audio_device_queue;
 
@@ -384,7 +385,7 @@ void update_render_context() {
     }
     // increment to indicate that we've processed these packets
     last_played_id += MAX_NUM_AUDIO_INDICES;
-}
+};
 
 bool is_valid_audio_frequency() {
     /*
@@ -523,7 +524,11 @@ void update_audio() {
     if (audio_context.dev) {
         // If we have a device, get the queue size
         audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context.dev);
-    }  // Otherwise, the queue size is 0
+	LOG_INFO("we have a device, queue size is %d", audio_device_queue);
+    } else {
+      // Otherwise, the queue size is 0
+      LOG_WARNING("No device found!");
+    }
 
 #if LOG_AUDIO
     LOG_DEBUG("Queue: %d", audio_device_queue);
@@ -573,7 +578,7 @@ int32_t receive_audio(FractalPacket* packet) {
             ret (int): 0 on success, -1 on failure
     */
     // make sure that we do not handle packets that construct frames that are bigger than we expect
-    if (packet->num_indices >= MAX_NUM_AUDIO_INDICES) {
+    if (packet->num_indices > MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;
     }
@@ -659,7 +664,6 @@ int32_t receive_audio(FractalPacket* packet) {
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
                 max_received_id = max(max_received_id, i);
-                LOG_INFO("filled in index %d with size 0", i);
             }
         }
     }
