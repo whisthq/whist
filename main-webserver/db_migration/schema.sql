@@ -204,22 +204,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.cluster_info (
-    cluster character varying NOT NULL,
-    "maxCPURemainingPerInstance" double precision,
-    "maxMemoryRemainingPerInstance" double precision,
-    "pendingTasksCount" bigint,
-    "runningTasksCount" bigint,
-    "registeredContainerInstancesCount" bigint,
-    "minContainers" bigint,
-    "maxContainers" bigint,
-    status character varying,
-    location character varying
-);
 
 
 
@@ -307,30 +291,6 @@ CREATE VIEW hardware.instance_sorted AS
 
 
 
---
--- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
--- NOTE:  the complex OR condition is to handle both clusters that are
--- underloaded and clusters that have just been created
--- since AWS default returns 0 for max memory for clusters
--- early in their lifecycle
---
-
-
-CREATE VIEW hardware.cluster_sorted AS
- SELECT cluster_info.cluster,
-    cluster_info."maxCPURemainingPerInstance",
-    cluster_info."maxMemoryRemainingPerInstance",
-    cluster_info."pendingTasksCount",
-    cluster_info."runningTasksCount",
-    cluster_info."registeredContainerInstancesCount",
-    cluster_info."minContainers",
-    cluster_info."maxContainers",
-    cluster_info.status,
-    cluster_info.location
-   FROM hardware.cluster_info
-  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance"::double precision = 0::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
-  ORDER BY cluster_info."registeredContainerInstancesCount" DESC, COALESCE(cluster_info."runningTasksCount", (0)::bigint) DESC, cluster_info."maxCPURemainingPerInstance" DESC, cluster_info."maxMemoryRemainingPerInstance" DESC;
-
 
 --
 -- Name: region_to_ami; Type: TABLE; Schema: hardware; Owner: -
@@ -376,27 +336,6 @@ CREATE TABLE hardware.user_app_state (
     state character varying(255)
 );
 
-
---
--- Name: user_containers; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.user_containers (
-    container_id character varying NOT NULL,
-    ip character varying NOT NULL,
-    location character varying NOT NULL,
-    state character varying NOT NULL,
-    user_id character varying,
-    port_32262 bigint DEFAULT '-1'::integer NOT NULL,
-    last_updated_utc_unix_ms bigint,
-    cluster character varying,
-    port_32263 bigint DEFAULT '-1'::integer NOT NULL,
-    port_32273 bigint DEFAULT '-1'::integer NOT NULL,
-    secret_key text NOT NULL,
-    task_definition character varying,
-    task_version integer DEFAULT NULL,
-    dpi integer DEFAULT 96
-);
 
 
 --
@@ -1099,13 +1038,6 @@ CREATE TABLE sales.email_templates (
 ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval('hdb_catalog.remote_schemas_id_seq'::regclass);
 
 
---
--- Name: cluster_info cluster_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.cluster_info
-    ADD CONSTRAINT cluster_info_pkey PRIMARY KEY (cluster);
-
 
 --
 -- Name: region_to_ami region_to_ami_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
@@ -1137,14 +1069,6 @@ ALTER TABLE ONLY hardware.supported_app_images
 
 ALTER TABLE ONLY hardware.user_app_state
     ADD CONSTRAINT user_app_state_pkey PRIMARY KEY (task_id);
-
-
---
--- Name: user_containers user_containers_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_containers_pkey PRIMARY KEY (container_id);
 
 
 --
@@ -1364,32 +1288,7 @@ ALTER TABLE ONLY sales.email_templates
     ADD CONSTRAINT email_templates_pkey PRIMARY KEY (id);
 
 
---
--- Name: fki_app_id_fk; Type: INDEX; Schema: hardware; Owner: -
---
 
-CREATE INDEX fki_app_id_fk ON hardware.user_containers USING btree (task_definition);
-
-
---
--- Name: fki_cluster_name_fk; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX fki_cluster_name_fk ON hardware.user_containers USING btree (cluster);
-
-
---
--- Name: ip_and_port; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX ip_and_port ON hardware.user_containers USING btree (ip, port_32262);
-
-
---
--- Name: loc_taskdef_uid; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX loc_taskdef_uid ON hardware.user_containers USING btree (location, task_definition, user_id);
 
 
 --
@@ -1469,20 +1368,6 @@ CREATE TRIGGER event_trigger_table_name_update_trigger AFTER UPDATE ON hdb_catal
 CREATE TRIGGER hdb_schema_update_event_notifier AFTER INSERT OR UPDATE ON hdb_catalog.hdb_schema_update_event FOR EACH ROW EXECUTE FUNCTION hdb_catalog.hdb_schema_update_event_notifier();
 
 
---
--- Name: user_containers task_definition_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT task_definition_fk FOREIGN KEY (task_definition) REFERENCES hardware.supported_app_images(task_definition);
-
-
---
--- Name: user_containers user_containers_cluster_fkey; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_containers_cluster_fkey FOREIGN KEY (cluster) REFERENCES hardware.cluster_info(cluster) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
