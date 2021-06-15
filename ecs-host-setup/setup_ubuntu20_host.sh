@@ -45,7 +45,7 @@ sudo groupadd docker ||:
 sudo gpasswd -a "$USER" docker
 
 echo "================================================"
-echo "Installing AWS CLI..."
+echo "Installing Python dependencies..."
 echo "================================================"
 
 # Install pip and python dependencies
@@ -53,6 +53,10 @@ sudo apt install python3-pip
 cd ..
 find ./container-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
 cd ecs-host-setup
+
+echo "================================================"
+echo "Installing AWS CLI..."
+echo "================================================"
 
 # We don't need to configure the AWS CLI (only install it) because this script runs
 # on an AWS EC2 instance, which have awscli automatically configured
