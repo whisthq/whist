@@ -22,10 +22,6 @@ def setup_review_app(app_name: str):
         None, errors if anything goes wrong.
     """
 
-    # enable the celery dyno, which is disabled by default
-    ret = subprocess.run(f"heroku ps:scale celery=1:Hobby --app {app_name}", shell=True)
-    assert ret.returncode == 0
-
     # capture stdout of this process so we get the eph db url
     print(f"Getting DATABASE_URL from review app {app_name}...")
     ret = subprocess.run(
