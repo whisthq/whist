@@ -44,9 +44,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /app
 
 # Creates a non-root user and adds permission to access the /app folder.
-# Besides privilage escalation mitigation benefits, using a non-root user
-# keeps celery from complaining about being run as root when it starts up.
+# This provides privilage escalation mitigation benefits.
 RUN useradd appuser && chown -R appuser /app
 USER appuser
 
-ENTRYPOINT ["./stem-cell.sh"]
+ENTRYPOINT ["./run-web.sh"]

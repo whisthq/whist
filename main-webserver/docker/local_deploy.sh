@@ -45,7 +45,7 @@ if [ $USE_DEV_DB == true ]; then
     export DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
 
     # launch all images but dev db
-    APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up --build -d redis web celery # don't spin up postgres_db
+    APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up --build -d web # don't spin up postgres_db
 
 else
     bash ../ephemeral_db_setup/fetch_db.sh
@@ -55,7 +55,7 @@ else
     export POSTGRES_PORT="9999"
 
     # POSTGRES_USER and POSTGRES_DB will be created in the db a few steps down with ../ephemeral_db_setup/db_setup.sh
-    # since this is run in a docker container, the @postgres_db allows our web/celery containers
+    # since this is run in a docker container, the @postgres_db allows our web container
     # to talk to the postgres_db container. Our docker-compose sets up this container networking.
     export DATABASE_URL=postgres://${POSTGRES_USER}@postgres_db/${POSTGRES_DB}
 
