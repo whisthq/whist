@@ -138,23 +138,13 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .blueprints.admin.logs_blueprint import logs_bp
-
-    from .blueprints.celery.celery_status_blueprint import celery_status_bp
-
     from .blueprints.aws.aws_container_blueprint import aws_container_bp
 
     from .blueprints.mail.mail_blueprint import mail_bp
     from .blueprints.mail.newsletter_blueprint import newsletter_bp
-
-    from .blueprints.host_service.host_service_blueprint import host_service_bp
-
     from payments.stripe_blueprint import stripe_bp
 
-    app.register_blueprint(celery_status_bp)
     app.register_blueprint(aws_container_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
-    app.register_blueprint(logs_bp)
-    app.register_blueprint(host_service_bp)
     app.register_blueprint(stripe_bp)
