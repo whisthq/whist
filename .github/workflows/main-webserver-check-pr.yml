@@ -90,7 +90,8 @@ jobs:
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
-            - name: Start Local Deploy
+            - name: Start Local Deploy And Confirm Webserver Runs #ensures we don't crash on startup
+              id: local-deploy
               if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
               shell: bash -e {0}
@@ -103,29 +104,9 @@ jobs:
                   # Wait for the web server to finish deploying
                   sleep 5
 
-            - name: Ensure Containers Launch and Exit Properly
-              id: ensure-containers-work
-              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  import sys; sys.path.append(".")
-                  from scripts.utils import make_get_request
-                  from scripts.celery_scripts import poll_celery_task
-
-                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
-                  WEBSERVER_URL = "http://localhost:7730" # local webserver available here
-
-                  resp = make_get_request(WEBSERVER_URL, "/dummy", admin_token=TOKEN)
-                  assert resp.status_code == 202, f"Expected 202, got code {resp.status_code} with content {resp.content}"
-                  task_id = resp.json()["ID"]
-
-                  # errors out on failure
-                  poll_celery_task(WEBSERVER_URL, task_id, TOKEN)
-
             - name: Print debug info on failure
               working-directory: main-webserver
-              if: always() && steps.ensure-containers-work.outcome == 'failure'
+              if: always() && steps.local-deploy.outcome == 'failure'
               shell: bash -e {0}
               run: |
                   # print logs for us to see what happened
