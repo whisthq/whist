@@ -11,76 +11,12 @@ import (
 	"time"
 )
 
-// initializeMetadata() pre-computes and caches the results for GetAppEnvironment()
-// and UseProdLogging(). It is called in an init function in
-// `fractallogger.go`.
-func initializeMetadata() {
-	cachedEnvironment = func() EnvironmentType {
-		env := strings.ToLower(os.Getenv("APP_ENV"))
-		switch env {
-		case "development", "dev":
-			return EnvDev
-		case "staging":
-			return EnvStaging
-		case "production", "prod":
-			return EnvProd
-		case "localdevwithdb", "localdev_with_db", "localdev_with_database":
-			return EnvLocalDevWithDB
-		default:
-			return EnvLocalDev
-		}
-	}()
-
-	// Honor `USE_PROD_LOGGING` variable if it is set to a valid value. Else,
-	// check that the app environment is dev, staging, or prod.
-	cachedUseProdLogging = func() bool {
-		strProd := strings.ToLower(os.Getenv("USE_PROD_LOGGING"))
-		switch strProd {
-		case "1", "yes", "true":
-			return true
-		case "0", "no", "false":
-			return false
-		default:
-			return (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging) || (GetAppEnvironment() == EnvDev)
-		}
-	}()
-}
-
 // Variable for hash of last Git commit --- filled in by linker
 var gitCommit string
 
 // GetGitCommit returns the git commit hash of this build.
 func GetGitCommit() string {
 	return gitCommit
-}
-
-// An EnvironmentType represents either localdev (i.e. a dev instance), dev
-// (i.e. talking to the dev websever), staging, or prod
-type EnvironmentType string
-
-// Constants for whether we are running in localdev (i.e. a dev instance), dev
-// (i.e. talking to the dev webserver), staging, or prod
-const (
-	EnvLocalDevWithDB EnvironmentType = "LOCALDEVWITHDB"
-	EnvLocalDev       EnvironmentType = "LOCALDEV"
-	EnvDev            EnvironmentType = "DEV"
-	EnvStaging        EnvironmentType = "STAGING"
-	EnvProd           EnvironmentType = "PROD"
-)
-
-// We compute the environment type once, at program startup, and cache it in `cachedEnvironment`
-var cachedEnvironment EnvironmentType
-var cachedUseProdLogging bool
-
-// GetAppEnvironment returns the EnvironmentType of the current instance
-func GetAppEnvironment() EnvironmentType {
-	return cachedEnvironment
-}
-
-// usingProdLogging implements the logic for us to decide whether to use
-// production-logging (i.e. with Sentry and logz.io configured).
-func usingProdLogging() bool {
-	return cachedUseProdLogging
 }
 
 // The following functions are useful for getting system information that we

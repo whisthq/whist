@@ -8,9 +8,7 @@ import (
 )
 
 func init() {
-	initializeMetadata()
-
-	// We declare error separately to avoid shadowing logzioSender.
+	// We declare error separately to avoid shadowing logzioTransport.
 	var err error
 	logzioTransport, err = initializeLogzIO()
 	if err != nil {
