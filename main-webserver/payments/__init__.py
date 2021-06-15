@@ -32,8 +32,10 @@ Example usage:
 """
 
 import functools
+from typing import Optional
 
 import stripe
+from flask import current_app
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
 
 from auth0 import has_scope
@@ -43,14 +45,11 @@ class PaymentRequired(Exception):
     """Raised by ensure_subscribed() when a user does not have an active subscription."""
 
 
-def check_payment(customer_id: str) -> None:
-    """Make sure the specified user has an active Fractal subscription.
+def check_payment() -> None:
+    """Make sure the authenticated user has an active Fractal subscription.
 
     The user's subscription is considered valid if and only if it is paid or it is still in the
     trial period.
-
-    Args:
-        customer_id: The Stripe customer ID of the customer whose subscription should be checked.
 
     Returns:
         None
@@ -59,16 +58,29 @@ def check_payment(customer_id: str) -> None:
         PaymentRequired: The customer has no active subscriptions.
     """
 
-    if not customer_id:
+    stripe_customer_id = get_stripe_customer_id()
+
+    if not stripe_customer_id:
         raise PaymentRequired
 
-    customer = stripe.Customer.retrieve(customer_id, expand=("subscriptions",))
+    customer = stripe.Customer.retrieve(stripe_customer_id, expand=("subscriptions",))
 
     if not any(
         subscription["status"] in ("active", "trialing")
         for subscription in customer["subscriptions"]
     ):
         raise PaymentRequired
+
+
+def get_stripe_customer_id() -> Optional[str]:
+    """Read the authenticated user's Stripe customer ID from their access token.
+
+    Returns:
+        The user's Stripe customer ID as a string or None if no Stripe customer ID can be found in
+        the access token.
+    """
+
+    return get_jwt().get(current_app.config["STRIPE_CUSTOMER_ID_CLAIM"])
 
 
 def payment_required(view_func):
@@ -84,9 +96,10 @@ def payment_required(view_func):
 
     @functools.wraps(view_func)
     def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+
         if not has_scope("admin"):
-            verify_jwt_in_request()
-            check_payment(get_jwt().get("https://api.fractal.co/stripe_customer_id"))
+            check_payment()
 
         return view_func(*args, **kwargs)
 
