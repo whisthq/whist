@@ -613,7 +613,7 @@ RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 
 # Install Fractal Protocol binaries and helper files
-COPY build-temp/protocol/* /usr/share/fractal/bin
+COPY build-temp/protocol/* /usr/share/fractal/bin/
 
 # Copy config reference to container
 COPY config/app-config-map.json /usr/share/fractal/app-config-map.json
