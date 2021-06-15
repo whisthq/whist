@@ -1,27 +1,21 @@
 """Tests for miscellaneous helper functions."""
 
-import re
 import time
 import concurrent.futures
 import platform
 import os
 import signal
-import uuid
 
 import pytest
 from sqlalchemy.exc import OperationalError
 
 from flask import current_app, g
-from flask_jwt_extended import create_access_token, verify_jwt_in_request
-
 from app.config import _callback_webserver_hostname
+from app.models import RegionToAmi
 from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from app.models import ClusterInfo, db, RegionToAmi, SortedClusters
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
-from app.celery.dummy import dummy_task
 
 
 def test_callback_webserver_hostname_localhost():
@@ -81,118 +75,6 @@ def test_webserver_sigterm(client):
     assert resp.status_code == SUCCESS
 
 
-# this test cannot be run on windows, as it uses POSIX signals.
-@pytest.mark.skipif(
-    "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
-)
-@pytest.mark.usefixtures("authorized")
-def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
-    """
-    Make sure SIGTERM is properly handled by celery worker (and supervisord). After a SIGTERM, the
-    worker will no longer pick up new tasks and mark all existing tasks as REVOKED. For more info,
-    see app/signals.py.
-    """
-    # start the dummy task and get the id
-    task_id = dummy_task.delay().id
-
-    # let this task start, then we SIGTERM the celery worker
-    started = False
-    for _ in range(30):  # try 30 times because process needs to start which has some delay
-        task_result = fractal_celery_app.AsyncResult(task_id)
-        if task_result.state == "STARTED":
-            started = True
-            break
-        time.sleep(1)  # wait for task to become available
-    assert started is True, f"Got unexpected task state {task_result.state}."
-
-    # send SIGTERM to the process group
-    os.kill(fractal_celery_proc, signal.SIGTERM)
-
-    # make sure the task gets revoked
-    revoked = False
-    for _ in range(10):
-        task_result = fractal_celery_app.AsyncResult(task_id)
-        if task_result.state == "REVOKED":
-            revoked = True
-            break
-        time.sleep(1)  # wait for task to become available
-    assert revoked is True, f"Got unexpected task state {task_result.state}."
-
-    # see supervisor.conf in main-webserver root (specifically stopwaitsecs).
-    # At most 30 seconds are given before the process is SIGKILL'd, so we wait 30 seconds.
-    time.sleep(30)
-
-    # new tasks should never start
-    task_id = dummy_task.delay().id
-    started = False
-    for _ in range(30):  # try 30 times to make sure nobody picks up this task
-        task_result = fractal_celery_app.AsyncResult(task_id)
-        if task_result.state != "PENDING":
-            started = True
-            break
-        time.sleep(1)  # wait for task to become available
-    assert started is False, f"Got unexpected task state {task_result.state}."
-
-    # stop anyone from running the task that was just created. this stops side-affects in future
-    # tests that start a celery worker which then runs the above task before the tasks it is
-    # supposed to run in the test
-    fractal_celery_app.control.purge()
-
-
-def test_retry():
-    """Retry a function that fails the first two times it is called and succeeds the third time."""
-
-    counter = {"count": 0}  # Keep track of the number of times the function is called.
-
-    @retry_with_backoff(min_wait=1, wait_delta=0, max_wait=1, max_retries=2)
-    def retry_me(counter):
-        counter["count"] += 1
-
-        try:
-            assert counter["count"] > 2  # Fail the first two times the function is called.
-        except AssertionError as error:
-            raise Retry from error
-
-        return counter["count"]
-
-    start = time.time()
-    count = retry_me(counter)
-    end = time.time()
-
-    assert count == 3  # The function was called three times in total.
-    assert int(end - start) == 2  # There was a one second wait in between each call attempt.
-
-
-def test_retry_timeout():
-    """Retry a function that never returns successfully.
-
-    This test should take five seconds to complete because the @retry_with_backoff() decorator will
-    wait for one second after its first attempt to call the function, two seconds after the second
-    attempt, and two seconds after its third attempt.
-    """
-
-    counter = {"count": 0}  # Keep track of the number of times the function is called.
-
-    @retry_with_backoff(min_wait=1, wait_delta=1, max_wait=2, max_retries=3)
-    def timeout(counter):
-        counter["count"] += 1
-
-        try:
-            raise Exception("Hello, world!")
-        except Exception as exc:
-            raise Retry from exc
-
-    start = time.time()
-
-    with pytest.raises(Exception, match=r"Hello, world!"):
-        timeout(counter)
-
-    end = time.time()
-
-    assert counter["count"] == 4  # The function is called four times in total.
-    assert int(end - start) == 5
-
-
 def test_rate_limiter(client):
     """
     Test the rate limiter decorator. The first 10 requests should succeed,
@@ -221,26 +103,26 @@ def test_local_lock_timeout(app):
                 fractal_logger.info("Got lock and data")
                 time.sleep(hold_time)
             return True
-        except OperationalError as oe:
-            if "lock timeout" in str(oe):
+        except OperationalError as op_err:
+            if "lock timeout" in str(op_err):
                 return False
             else:
                 # if we get an unexpected error, this test will fail
-                raise oe
+                raise op_err
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         fractal_logger.info("Starting threads...")
-        t1 = executor.submit(acquire_lock, 5, 10)
-        t2 = executor.submit(acquire_lock, 5, 10)
+        thread_one = executor.submit(acquire_lock, 5, 10)
+        thread_two = executor.submit(acquire_lock, 5, 10)
 
         fractal_logger.info("Getting thread results...")
-        t1_result = t1.result()
-        t2_result = t2.result()
+        thread_one_result = thread_one.result()
+        thread_two_result = thread_two.result()
 
-        if t1_result is True and t2_result is True:
+        if thread_one_result is True and thread_two_result is True:
             fractal_logger.error("Both threads got the lock! Locking failed.")
             assert False
-        elif t1_result is False and t2_result is False:
+        elif thread_one_result is False and thread_two_result is False:
             fractal_logger.error("Neither thread got the lock! Invesigate..")
             assert False
         # here, only one thread got the lock so this test succeeds
@@ -254,32 +136,3 @@ def test_regions(client):
     region_set = ["us-east-1", "us-west-1", "us-west-2", "ca-central-1", "us-east-2"]
 
     assert any(item in region_set for item in response.json)
-
-
-@pytest.mark.usefixtures("authorized")
-def test_host_service(client):
-    """Ensure that regions are returned by the /regions endpoint if they are allowed regions."""
-
-    response = client.get("/host_service")
-
-    expected_keys = ["ip", "port", "client_app_auth_secret"]
-
-    assert all(item in expected_keys for item in response.json)
-
-
-def test_sorted_clusters(request):
-    """Ensure that SortedClusters instances have a containers attribute."""
-
-    cluster = ClusterInfo(cluster=str(uuid.uuid4()), location="us-east-1", maxContainers=1)
-
-    def finalizer():
-        db.session.delete(cluster)
-        db.session.commit()
-
-    request.addfinalizer(finalizer)
-    db.session.add(cluster)
-    db.session.commit()
-
-    cluster_view = SortedClusters.query.filter_by(cluster=cluster.cluster).one()
-
-    assert cluster_view.containers.count() == 0
