@@ -31,8 +31,11 @@ To set up your Fractal development instance:
 git clone git@github.com:fractal/fractal.git # via SSH
 git clone https://github.com/fractal/fractal.git # via HTTPS
 
-# set up the EC2 host for development
+# set up dev environment dependencies
 cd ~/fractal/ecs-host-setup
+./setup_localdev_dependencies.sh
+
+# set up the EC2 host for development
 ./setup_ubuntu20_host.sh
 sudo reboot
 
