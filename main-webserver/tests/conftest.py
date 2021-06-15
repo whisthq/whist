@@ -1,13 +1,8 @@
 import os
 import uuid
 
-from contextlib import contextmanager
-from random import getrandbits as randbits, randint
+from random import randint
 import platform
-import subprocess
-import signal
-
-from app.helpers.utils.aws.base_ecs_client import ECSClient
 
 import pytest
 import stripe
@@ -16,16 +11,14 @@ from flask import current_app
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
-from app.celery_utils import CELERY_CONFIG, celery_params
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
-from app.models import ClusterInfo, ContainerInfo, db, InstanceInfo, UserContainer, RegionToAmi
+from app.models import ContainerInfo, db, InstanceInfo, RegionToAmi
 import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
-from app.celery_utils import make_celery
 from tests.client import FractalAPITestClient
 
 
@@ -91,145 +84,6 @@ def authorized(client, user, monkeypatch):
     monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
     return user
-
-
-@pytest.fixture(scope="session")
-def celery_config():
-    """Set celery configuration variables.
-
-    https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
-
-    Returns:
-        A dictionary whose keys are celery configuration variables.
-    """
-
-    return CELERY_CONFIG
-
-
-@pytest.fixture(scope="session")
-def celery_parameters(app):
-    """Generate celery keyword arguments.
-
-    https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
-
-    Returns:
-        A dictionary whose keys are keyword arguments that will be passed to the Celery
-        constructor.
-    """
-    return celery_params(app)
-
-
-@pytest.fixture(scope="session")
-def celery_enable_logging():
-    return True
-
-
-@pytest.fixture
-def cluster():
-    """Add a row to the cluster_info of the database for testing.
-
-    Returns:
-        An instance of the ClusterInfo model.
-    """
-    cluster_name = ECSClient.generate_name(starter_name="cluster", test_prefix=True)
-    c = ClusterInfo(cluster=cluster_name, location="us-east-1")
-
-    db.session.add(c)
-    db.session.commit()
-
-    yield c
-
-    db.session.delete(c)
-    db.session.commit()
-
-
-@pytest.fixture
-def container(cluster, user, task_def_env):
-    """Add a row to the user_containers table for testing.
-
-    Returns:
-        A context manager that populates the user_containers table with a test
-        row whose state column is set to initial_state.
-    """
-
-    @contextmanager
-    def _container(initial_state="CREATING"):
-        """Create a dummy container for testing.
-
-        Arguments:
-            initial_state: The initial value with which the new row's state
-                column should be populated.
-
-        Yields:
-            An instance of the UserContainer model.
-        """
-        c = UserContainer(
-            container_id=f"{os.urandom(16).hex()}",
-            ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
-            location="us-east-1",
-            task_definition=f"fractal-{task_def_env}-browsers-chrome",
-            task_version=None,
-            state=initial_state,
-            user_id=user,
-            port_32262=randbits(16),
-            port_32263=randbits(16),
-            port_32273=randbits(16),
-            cluster=cluster.cluster,
-            secret_key=os.urandom(16).hex(),
-        )
-
-        db.session.add(c)
-        db.session.commit()
-
-        yield c
-
-        db.session.delete(c)
-        db.session.commit()
-
-    yield _container
-
-
-@pytest.fixture
-def bulk_cluster():
-    """Add 1+ rows to the clusters table for testing.
-
-    Returns:
-        A function that populates the clusterInfo table with a test
-        row whose columns are set as arguments to the function.
-    """
-    clusters = []
-
-    def _cluster(cluster_name=None, location=None, **kwargs):
-        """Create a dummy cluster for testing.
-
-        Arguments:
-            cluster_name (Optional[str]): what to call the cluster
-                    defaults to random name
-            location (Optional[str]): what region to put the cluster in
-                    defaults to us-east-1
-
-        Yields:
-            An instance of the ClusterInfo model.
-        """
-        c = ClusterInfo(
-            cluster=cluster_name if cluster_name is not None else f"cluster-{os.urandom(16).hex()}",
-            location=location if location is not None else "us-east-1",
-            status="CREATED",
-            **kwargs,
-        )
-
-        db.session.add(c)
-        db.session.commit()
-        clusters.append(c)
-
-        return c
-
-    yield _cluster
-
-    for cluster in clusters:
-        db.session.delete(cluster)
-
-    db.session.commit()
 
 
 @pytest.fixture
@@ -320,68 +174,6 @@ def region_to_ami_map(app):
     return region_map
 
 
-@pytest.fixture
-def bulk_container(bulk_cluster, make_user, task_def_env):
-    """Add 1+ rows to the user_containers table for testing.
-
-    In the absence of this fixture's explicit dependence on the make_user fixture (i.e. when
-    make_user is not present in this fixture's argument list), the make_user teardown code is run
-    before this fixture's teardown code, causing all containers assigned to users created with
-    make_user() to be CASCADE deleted. In order to prevent the user who owns a container created by
-    bulk_container() from being CASCADE deleted before this fixture's teardown code is run,
-    make_user has been added to this fixture's argument list.
-
-    Returns:
-        A function that populates the user_containers table with a test
-        row whose state column is set to initial_state.
-    """
-    containers = []
-
-    def _container(*, assigned_to=None, cluster_name=None, location="us-east-1", container_id=None):
-        """Create a dummy container for testing.
-
-        Arguments:
-            assigned_to: A string representing the user ID of the user to whom the container should
-                be assigned. Dummy prewarmed containers may be created with
-                bulk_container(assigned_to=None)
-            cluster_name: name of cluster that container is in
-            location:  which region to create the container in
-            container_id:  the specific name we want the container to have
-                           useful for testing which container object is retrieved
-        Yields:
-            An instance of the UserContainer model.
-        """
-        if cluster_name is None:
-            cluster_name = bulk_cluster(location=location).cluster
-        c = UserContainer(
-            container_id=container_id if container_id is not None else f"{os.urandom(16).hex()}",
-            ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
-            location=location,
-            task_definition=f"fractal-{task_def_env}-browsers-chrome",
-            task_version=None,
-            state="CREATING",
-            user_id=assigned_to,
-            port_32262=randbits(16),
-            port_32263=randbits(16),
-            port_32273=randbits(16),
-            cluster=cluster_name,
-            secret_key=os.urandom(16).hex(),
-        )
-
-        db.session.add(c)
-        db.session.commit()
-        containers.append(c)
-
-        return c
-
-    yield _container
-
-    for container in containers:
-        db.session.delete(container)
-
-    db.session.commit()
-
-
 @pytest.fixture(scope="session")
 def task_def_env(app):
     """Determine what the environment portion of the task_definition IDs should be set to.
@@ -431,54 +223,6 @@ def make_authorized_user(client, make_user, monkeypatch):
         return username
 
     return _authorized_user
-
-
-@pytest.fixture
-def fractal_celery_app(app):
-    """
-    Initialize celery like we do in entry_web.py. This is different than the built-in
-    celery_app fixture and works hand-in-hand with fractal_celery_proc.
-    """
-    celery_app = make_celery(app)
-    celery_app.set_default()
-    yield celery_app
-
-
-@pytest.fixture
-def fractal_celery_proc(app):
-    """
-    Run a celery worker like we do in Procfile/stem-cell.sh
-    No monkeypatched code will apply to this worker.
-    """
-    # this gets the webserver root no matter where this file is called from.
-    webserver_root = os.path.join(os.getcwd(), os.path.dirname(__file__), "..")
-
-    # these are used by supervisord
-    os.environ["NUM_WORKERS"] = "2"
-    os.environ["WORKER_CONCURRENCY"] = "10"
-
-    # stdout is shared but the process is run separately. Signals sent to the current process
-    # are also sent to this process. This is the exact command run by Procfile/stem-cell.sh
-    # for celery workers.
-    proc = subprocess.Popen(
-        ["supervisord", "-c", "supervisor.conf"],
-        shell=False,
-    )
-
-    fractal_logger.info(f"Started celery process with pid {proc.pid}")
-
-    # this is the pid of the shell that launches celery. See:
-    # https://stackoverflow.com/questions/31039972/python-subprocess-popen-pid-return-the-pid-of-the-parent-script
-    yield proc.pid
-
-    # we need to kill the process group because a new shell was launched which then launched celery
-    fractal_logger.info(f"Killing celery process with pid {proc.pid}")
-    try:
-        os.kill(proc.pid, signal.SIGKILL)
-    except (PermissionError, ProcessLookupError):
-        # some tests kill this process themselves; in this case us trying to kill an already killed
-        # process results in a PermissionError. We cleanly catch that specific error.
-        pass
 
 
 @pytest.fixture(autouse=True)
