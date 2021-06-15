@@ -88,7 +88,7 @@ jobs:
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
-            - name: Start Local Deploy
+            - name: Start Local Deploy And Confirm Webserver Runs #ensures we don't crash on startup
               id: local-deploy
               if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
