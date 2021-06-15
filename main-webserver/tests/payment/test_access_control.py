@@ -38,6 +38,9 @@ def app():
 
 
 def test_get_missing_stripe_customer_id():
+    """Ensure that get_stripe_customer_id() doesn't return a customer ID when the jwt token
+    given isn't associated with a stripe customer"
+    """
     token = create_access_token("test")
 
     with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
@@ -46,6 +49,9 @@ def test_get_missing_stripe_customer_id():
 
 
 def test_get_stripe_customer_id():
+    """Ensure that get_stripe_customer_id() returns the correct customer ID when the jwt token
+    given is associated with a stripe customer"
+    """
     customer_id = f"cus_{os.urandom(8).hex()}"
     token = create_access_token(
         "test", additional_claims={current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: customer_id}
