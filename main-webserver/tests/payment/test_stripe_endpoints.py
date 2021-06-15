@@ -1,21 +1,27 @@
 """Tests for stripe endpoints."""
 
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+import os
 
 import pytest
 import stripe
 
-from app.helpers.utils.general.time import date_to_unix
 from app.constants.http_codes import SUCCESS, BAD_REQUEST, UNAUTHORIZED
+from tests.patches import function, Object
 
 """Here are the tests for the /stripe/customer_portal endpoint.
 """
 
 
 @pytest.mark.usefixtures("authorized")
-def test_create_billing_portal_authorized(client):
+def test_create_billing_portal_authorized(client, monkeypatch):
     """Test the /stripe/customer_portal endpoint"""
+
+    session = Object()
+    session_url = f"http://localhost/{os.urandom(8).hex()}"
+    monkeypatch.setattr(session, "url", session_url)
+    monkeypatch.setattr(stripe.billing_portal.Session, "create", function(returns=session))
+    monkeypatch.setattr("payments.get_stripe_customer_id", function(returns="cus_test"))
+
     response = client.post(
         "/stripe/customer_portal",
         json=dict(),
@@ -26,8 +32,9 @@ def test_create_billing_portal_authorized(client):
         "/stripe/customer_portal",
         json=dict(return_url="https://fractal.co"),
     )
+    print(response.json)
     assert response.status_code == SUCCESS
-    assert response.json["url"]
+    assert response.json["url"] == session_url
 
 
 def test_create_billing_portal_unauthorized(client):

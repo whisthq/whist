@@ -91,13 +91,7 @@ def authorized(client, user, monkeypatch, customer):
     Returns:
         A string representing the authorized user's identity.
     """
-    access_token = create_access_token(
-        identity=user,
-        additional_claims={
-            "scope": "admin",
-            "https://api.fractal.co/stripe_customer_id": customer["id"],
-        },
-    )
+    access_token = create_access_token(identity=user, additional_claims={"scope": "admin"})
 
     # environ_base contains base data that is used to construct every request that the client
     # sends. Here, we are injecting a value into the field that contains the base HTTP
