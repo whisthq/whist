@@ -48,26 +48,31 @@ const RootComponent = () => {
 
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={clearCache} />
-  if (keys(fractalError).includes(show)) {
-    const buttonText =
-      show === NO_PAYMENT_ERROR ? "Edit Payment Information" : "Try Again"
-    const errorContinue =
-      show === NO_PAYMENT_ERROR ? showPaymentWindow : relaunch
+  if (show === NO_PAYMENT_ERROR)
     return (
       <Error
         title={fractalError[show].title}
         text={fractalError[show].text}
-        buttonText={buttonText}
-        onContinue={errorContinue}
+        buttonText="Edit Payment Information"
+        onContinue={showPaymentWindow}
         onSignout={showSignoutWindow}
       />
     )
-  }
+  if (keys(fractalError).includes(show))
+    return (
+      <Error
+        title={fractalError[show].title}
+        text={fractalError[show].text}
+        buttonText="Try Again"
+        onContinue={relaunch}
+        onSignout={showSignoutWindow}
+      />
+    )
   return (
     <Error
       title={fractalError.NAVIGATION_ERROR.title}
       text={fractalError.NAVIGATION_ERROR.text}
-      buttonText={"Try Again"}
+      buttonText="Try Again"
       onContinue={relaunch}
       onSignout={clearCache}
     />
