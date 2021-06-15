@@ -7,12 +7,14 @@ This folder in the webserver repo contains all the server-side code involving us
 ```
 .
 ├── README.md
-├── __init__.py
+├── __init__.py <- Fractal's Stripe utility library
 ├── stripe_blueprint.py <- contains HTTP endpoints for the payments interface
 └── stripe_helpers.py <- helper functions that help process the information coming through the HTTP endpoints
 ```
 
 Note that each file has a very specific role:
+
+`__init__.py` is responsible for authenticating HTTP requests that come through. It looks for and retrieves the user's customer id from the jwt token's metadata, and confirms that the Stripe customer associated with the customer id has or does not have access to our payments API.
 
 `stripe_blueprint.py` is responsible for processing HTTP requests that come through, and returns `400 BAD REQUEST` is the body is incorrectly formed.
 
