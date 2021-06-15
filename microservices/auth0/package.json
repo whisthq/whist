@@ -5,19 +5,13 @@
   "repository": "https://github.com/fractal/fractal.git",
   "license": "UNLICENSED",
   "private": true,
-  "dependencies": {
-    "@esbuild-plugins/node-resolve": "^0.1.4",
-    "@fractal/core-ts": "file:../../core-ts",
-    "esbuild": "^0.11.19"
-  },
+  "dependencies": {},
   "scripts": {
-    "build": "node ./scripts/build.js",
     "list-dependencies": "node ./scripts/list-dependencies.js",
     "update-tenant": "node ./scripts/update-tenant.js dev",
     "deploy:dev": "node ./scripts/deploy.js dev",
     "deploy:staging": "node ./scripts/deploy.js staging",
-    "deploy:prod": "node ./scripts/deploy.js prod",
-    "postinstall": "node ./scripts/postinstall.js"
+    "deploy:prod": "node ./scripts/deploy.js prod"
   },
   "devDependencies": {
     "lodash": "^4.17.21",
