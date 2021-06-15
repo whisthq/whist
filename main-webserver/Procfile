@@ -1,3 +1,1 @@
 web: waitress-serve --url-scheme=https --port=$PORT entry_web:app
-# see supervisor.conf for configuration
-celery: supervisord -c supervisor.conf
