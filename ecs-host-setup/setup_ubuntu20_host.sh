@@ -50,9 +50,9 @@ echo "================================================"
 
 # Install pip and python dependencies
 sudo apt install python3-pip
-cd ..
+cd ~/fractal
 find ./container-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
-cd ecs-host-setup
+cd ~/fractal/ecs-host-setup
 
 echo "================================================"
 echo "Installing AWS CLI..."
