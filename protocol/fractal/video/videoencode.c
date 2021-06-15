@@ -99,8 +99,10 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     encoder->pCodecCtx->pix_fmt = hw_format;
 
     set_opt(encoder, "nonref_p", "1");
-    set_opt(encoder, "preset", "llhp");
-    set_opt(encoder, "rc", "cbr_ld_hq");
+    // set_opt(encoder, "preset", "llhp");
+    set_opt(encoder, "preset", "p7");
+    set_opt(encoder, "tune", "ull");
+    set_opt(encoder, "rc", "cbr");
     set_opt(encoder, "zerolatency", "1");
     set_opt(encoder, "delay", "0");
 
