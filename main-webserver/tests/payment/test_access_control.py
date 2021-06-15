@@ -121,6 +121,6 @@ def test_payment_required_token(client, login_kwargs, make_user, status_code):
 
     user = make_user()
 
-    client.login(user, **login_kwargs)
+    client.login(user, subscribed=False, **login_kwargs)
 
     assert client.get("/").status_code == status_code

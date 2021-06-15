@@ -26,6 +26,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from app.celery_utils import make_celery
 from tests.client import FractalAPITestClient
+from tests.patches import function
 
 
 @pytest.fixture(scope="session")
@@ -73,16 +74,13 @@ def app():
 
 
 @pytest.fixture
-def customer():
-    """Creates a Stripe customer"""
-    stripe_customer = stripe.Customer.create(
-        description="Test Customer",
-    )
-    return stripe_customer
+def client(app, request):
+    with app.test_client(request=request) as _client:
+        yield _client
 
 
 @pytest.fixture
-def authorized(client, user, monkeypatch, customer):
+def authorized(client, user, monkeypatch):
     """Bypass authorization decorators.
 
     Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
@@ -93,16 +91,14 @@ def authorized(client, user, monkeypatch, customer):
     """
     access_token = create_access_token(
         identity=user,
-        additional_claims={
-            "scope": "admin",
-            "https://api.fractal.co/stripe_customer_id": customer["id"],
-        },
+        additional_claims={"scope": "admin"},
     )
 
     # environ_base contains base data that is used to construct every request that the client
     # sends. Here, we are injecting a value into the field that contains the base HTTP
     # Authorization header data.
     monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
+    monkeypatch.setattr("payments.check_payment", function())
 
     return user
 
