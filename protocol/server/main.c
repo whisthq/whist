@@ -395,6 +395,13 @@ int32_t send_video(void* opaque) {
             }
         }
 
+        // SENDING LOGIC:
+        // first, we call capture_screen, which returns how many frames have passed since the last
+        // call to capture_screen If we are using NVidia, the captured frame is also
+        // hardware-encoded. Otherwise, we pass the most recent frame to our encoder and call
+        // video_encoder_encode_frame on it. Then, we send encoded frames to the client. The frames
+        // we encode + send are a subset of the frames we capture.
+
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
@@ -434,7 +441,7 @@ int32_t send_video(void* opaque) {
                 // LOG_INFO("Resending current frame!");
             }
 
-            // transfer the capture from the device to the encoder
+            // transfer the capture of the latest frame from the device to the encoder
             // This function will DXGI CUDA optimize if possible,
             // Or do nothing if the device already encoded the capture
             // with nvidia capture SDK
