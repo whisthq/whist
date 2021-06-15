@@ -1,8 +1,5 @@
 import logging
 
-from celery._state import get_current_task
-from celery.signals import task_prerun
-
 
 class _ExtraHandler(logging.StreamHandler):
     """
@@ -31,29 +28,6 @@ class _ExtraHandler(logging.StreamHandler):
         record.msg = full_msg
 
 
-class _CeleryHandler(logging.StreamHandler):
-    def __init__(self):
-        super().__init__()
-        self.message_format = "{task_id} | {message}"
-
-    def emit(self, record: logging.LogRecord):
-        """
-        This is called prior to any logging. We try to parse the task_id using celery built-ins.
-
-        Args:
-            record: provided by logging library, contains info for a specific logging invocation
-        """
-        task = get_current_task()
-        task_id = None
-        if task and task.request:
-            task_id = task.request.id
-
-        # only reformat the message if these are provided
-        if task_id is not None:
-            full_msg = self.message_format.format(task_id=task_id, message=record.msg)
-            record.msg = full_msg
-
-
 def _create_fractal_logger():
     """
     Create and configure a logger for fractal's purposes.
@@ -66,10 +40,6 @@ def _create_fractal_logger():
     # add extra handler
     extra_handler = _ExtraHandler()
     logger.addHandler(extra_handler)
-
-    # add celery handler
-    celery_handler = _CeleryHandler()
-    logger.addHandler(celery_handler)
     return logger
 
 
@@ -90,15 +60,3 @@ fractal_logger.error("oh no")
 fractal_logger.error("oh no", extra={"label": "you done goofed"})
 """
 fractal_logger = _create_fractal_logger()
-
-
-@task_prerun.connect
-def fractal_task_prerun(task_id, task, **kwargs):  # pylint: disable=unused-argument
-    """
-    See https://docs.celeryproject.org/en/stable/userguide/signals.html#task-prerun.
-    This is run before any celery task is executed. We use this to print out the args
-    and kwargs of every celery task so its input state is clear.
-    """
-    task_args = kwargs["args"]
-    task_kwargs = kwargs["kwargs"]
-    fractal_logger.info(f"args: {task_args}, kwargs: {task_kwargs}")
