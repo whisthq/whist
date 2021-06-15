@@ -60,6 +60,8 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
         return NULL;
     }
 
+    // if we are using libfdk_aac, the codec has no sample_fmts
+    // the context's sample_fmt is set during decoder initialization
     if (!decoder->pCodec->sample_fmts) {
         LOG_INFO(
             "No sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
@@ -67,6 +69,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     } else {
         decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
     }
+
     decoder->pCodecCtx->sample_rate = sample_rate;
     decoder->pCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
     decoder->pCodecCtx->channels =
@@ -197,6 +200,11 @@ int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet)
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // decoder needs more data or there's nothing left
         LOG_INFO("packet wants more things");
+        if (res == AVERROR(EAGAIN)) {
+          LOG_DEBUG("averror eagain");
+        } else {
+          LOG_DEBUG("averror eof");
+        }
         return 1;
     } else if (res < 0) {
         // real error

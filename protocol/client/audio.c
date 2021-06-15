@@ -95,7 +95,7 @@ static int max_received_id = -1;
 // the last ID we've processed for rendering
 static int last_played_id = -1;
 
-static double decoded_bytes_per_packet = 8192.0 / MAX_NUM_AUDIO_INDICES;
+static double decoded_bytes_per_packet = 4096.0 / MAX_NUM_AUDIO_INDICES;
 
 // END AUDIO VARIABLES
 
@@ -153,7 +153,7 @@ void reinit_audio_device() {
     SDL_zero(audio_spec);
     wanted_spec.channels = 2;
     wanted_spec.freq = audio_context.decoder_frequency;
-    wanted_spec.format = AUDIO_F32SYS;
+    wanted_spec.format = AUDIO_S16SYS;
     wanted_spec.silence = 0;
     wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
 
@@ -659,6 +659,7 @@ int32_t receive_audio(FractalPacket* packet) {
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
                 max_received_id = max(max_received_id, i);
+                LOG_INFO("filled in index %d with size 0", i);
             }
         }
     }
