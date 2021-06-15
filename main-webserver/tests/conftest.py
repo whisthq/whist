@@ -73,16 +73,7 @@ def app():
 
 
 @pytest.fixture
-def customer():
-    """Creates a Stripe customer"""
-    stripe_customer = stripe.Customer.create(
-        description="Test Customer",
-    )
-    return stripe_customer
-
-
-@pytest.fixture
-def authorized(client, user, monkeypatch, customer):
+def authorized(client, user, monkeypatch):
     """Bypass authorization decorators.
 
     Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
