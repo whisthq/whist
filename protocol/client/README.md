@@ -25,8 +25,11 @@ The option flags are as follows:
   --version  output version information and exit;
 ```
 
-For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window on Linux, call:
+To test if a build of the client runs, call:
 
 ```
 ./fclient 0.0.0.0 --width 800 --height 600
 ```
+A window should appear and show an animated Fractal logo before closing after a couple seconds.
+
+To run the client to connect to a server, first start a host server instance. In a terminal window on the client machine, follow the instruction listed in the printout in the _host_ terminal that's running the docker container (which will involve running `fclient` followed by an IP address along with some additional flags). Add `--width` and `--height` flags to the printed command if desired.
