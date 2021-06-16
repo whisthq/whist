@@ -47,7 +47,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     avcodec_register_all();
 #endif
 
-    decoder->pCodec = avcodec_find_decoder_by_name("libfdk_aac");
+    decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
     if (!decoder->pCodec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_decoder(decoder);
@@ -61,11 +61,12 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     }
 
     if (!decoder->pCodec->sample_fmts) {
-      LOG_WARNING("No supported sample formats.");
-      destroy_audio_decoder(decoder);
-      return NULL;
+        LOG_WARNING(
+            "No supported sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
+            "set automatically during initialization.");
+    } else {
+        decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
     }
-    decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
     decoder->pCodecCtx->sample_rate = sample_rate;
     decoder->pCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
     decoder->pCodecCtx->channels =
