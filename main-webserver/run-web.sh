@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Used as the entrypoint by Dockerfile 
+# Used as the entrypoint by Dockerfile
 
 # TODO use this as the entrypoint for the Procfile as well, e.g.
 # Procfile
