@@ -23,7 +23,6 @@ from scripts.load_testing.load_test_utils import (
 )
 
 from scripts.utils import make_post_request, make_get_request, make_put_request
-from scripts.celery_scripts import poll_celery_task
 
 
 def get_num_users_and_host():
@@ -125,9 +124,6 @@ class LoadTestUser(locust.HttpUser):
         # send app config token; errors out on failure
         resp = self.send_app_config_token(ip, host_port, client_app_auth_secret)
         assert resp.ok, f"Got status code {resp.status_code} with content {resp.content}"
-
-        # wait for container to be available; this will error out if anything fails
-        poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=60, sleep_time=1.0)
 
     def try_assign_request(self):
         """
