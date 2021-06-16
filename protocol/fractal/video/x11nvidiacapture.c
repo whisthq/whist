@@ -501,10 +501,11 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         return -1;
     }
 
+    // TODO: Make this work by factoring out encoder
     // If the frame isn't new, just return 0
-    if (!frame_info.bIsNewFrame) {
-        return 0;
-    }
+    // if (!frame_info.bIsNewFrame) {
+    //    return 0;
+    //}
 
     // If the frame is new, then free the old frame and capture+encode the new frame
 
