@@ -52,7 +52,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
  *
  * @param device                   The device used to capture the screen
  *
- * @returns                        0 if succeeded, else -1
+ * @returns                        Number of frames since last capture if succeeded, else -1
  */
 int capture_screen(CaptureDevice* device);
 
