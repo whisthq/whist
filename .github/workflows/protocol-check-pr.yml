@@ -120,7 +120,8 @@ jobs:
                       # we will install the overaggressive recent version, and
                       # we need to symlink it to be able to call it as
                       # "clang-tidy".
-                      sudo apt-get install -y clang-tidy-6.0
+                      # Also install the default clang-format (clang-format-10), so that it matches what gets installed locally
+                      sudo apt-get install -y clang-tidy-6.0 clang-format
                       sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
 
                       # install coreutils for realpath, and perl
