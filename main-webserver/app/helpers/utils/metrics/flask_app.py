@@ -47,6 +47,7 @@ def app_record_metrics(
 
     Example:
 
+    TODO: Update the example to show metrics for web
     * at the end of a celery task:
         app_record_metrics(metrics={
             "celery.task_duration.success.ms": task_duration,
