@@ -397,10 +397,11 @@ int32_t send_video(void* opaque) {
 
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
-        // call to capture_screen If we are using NVidia, the captured frame is also
+        // call to capture_screen, If we are using Nvidia, the captured frame is also
         // hardware-encoded. Otherwise, we pass the most recent frame to our encoder and call
-        // video_encoder_encode_frame on it. Then, we send encoded frames to the client. The frames
-        // we encode + send are a subset of the frames we capture.
+        // video_encoder_encode_frame on it. Then, we send encoded frames to the client. If the frames
+        // we encode + send are a subset of the frames we capture, that means we are dropping frames, which
+        // is suboptimal and should be investigated.
 
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
