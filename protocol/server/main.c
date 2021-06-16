@@ -166,6 +166,108 @@ void sig_handler(int sig_num) {
 }
 #endif
 
+void handle_fractal_client_message(FractalClientMessage* fmsg, int id) {
+    // HANDLE FRACTAL CLIENT MESSAGE
+    fractal_lock_mutex(state_lock);
+    bool is_controlling = clients[id].is_controlling;
+    fractal_unlock_mutex(state_lock);
+    if (handle_client_message(fmsg, id, is_controlling) != 0) {
+        LOG_ERROR(
+            "Failed to handle message from client. "
+            "(ID: %d)",
+            id);
+    }
+}
+
+void get_fractal_client_messages(bool get_tcp, bool get_udp) {
+    read_lock(&is_active_rwlock);
+    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
+        if (!clients[id].is_active) continue;
+
+        // Get packet(s)!
+        if (get_udp) {
+            FractalClientMessage* fmsg = NULL;
+            FractalClientMessage local_fcmsg;
+            size_t fcmsg_size;
+
+            // If received a UDP message
+            if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
+                fmsg = &local_fcmsg;
+                handle_fractal_client_message(fmsg, id);
+            }
+        }
+
+        if (get_tcp) {
+            FractalPacket* tcp_packet = NULL;
+            // If received a TCP message
+            if (try_get_next_message_tcp(id, &tcp_packet) == 0 && tcp_packet != NULL) {
+                FractalClientMessage* fmsg = (FractalClientMessage*)tcp_packet->data;
+                handle_fractal_client_message(fmsg, id);
+            }
+            // Free the tcp packet if we received one
+            if (tcp_packet) {
+                free_tcp_packet(tcp_packet);
+            }
+        }
+    }
+    read_unlock(&is_active_rwlock);
+}
+
+int multithreaded_send_receive_tcp_packets(void* opaque) {
+    /*
+        Thread to send and receive all TCP packets (clipboard and file)
+
+        Arguments:
+            opaque (void*): any arg to be passed to thread
+
+        Return:
+            (int): 0 on success
+    */
+
+    UNUSED(opaque);
+    LOG_INFO("multithreaded_send_receive_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
+
+    // TODO: compartmentalize each part into its own function
+    clock clipboard_time;
+    while (!exiting) {
+        // RECEIVE TCP PACKET HANDLER
+        get_fractal_client_messages(true, false);
+
+        // SEND TCP PACKET HANDLERS:
+
+        // GET CLIPBOARD HANDLER
+        // If the clipboard has a new available chunk, we should send it over to the
+        // client
+        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_new_clipboard();
+        if (clipboard_chunk) {
+            LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
+            // Alloc fmsg
+            FractalServerMessage* fmsg_response =
+                allocate_region(sizeof(FractalServerMessage) + clipboard_chunk->size);
+            // Build fmsg
+            memset(fmsg_response, 0, sizeof(*fmsg_response));
+            fmsg_response->type = SMESSAGE_CLIPBOARD;
+            memcpy(&fmsg_response->clipboard, clipboard_chunk,
+                   sizeof(ClipboardData) + clipboard_chunk->size);
+            // Send fmsg
+            read_lock(&is_active_rwlock);
+            if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                                     sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
+                LOG_WARNING("Failed to broadcast clipboard message.");
+            }
+            read_unlock(&is_active_rwlock);
+            // Free fmsg
+            deallocate_region(fmsg_response);
+            // Free clipboard chunk
+            deallocate_region(clipboard_chunk);
+        }
+
+        // TODO: add file send handler
+    }
+
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     fractal_init_multithreading();
     init_logger();
@@ -242,6 +344,8 @@ int main(int argc, char* argv[]) {
         fractal_create_thread(multithreaded_send_video, "multithreaded_send_video", NULL);
     FractalThread send_audio_thread =
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
+    FractalThread send_receive_tcp_packets_thread = fractal_create_thread(
+        multithreaded_send_receive_tcp_packets, "multithreaded_send_receive_tcp_packets", NULL);
     LOG_INFO("Sending video and audio...");
 
     clock totaltime;
@@ -277,36 +381,6 @@ int main(int argc, char* argv[]) {
             update_server_status(num_controlling_clients > 0, webserver_url, identifier,
                                  hex_aes_private_key);
             start_timer(&ack_timer);
-        }
-
-        // If they clipboard as updated, we should send it over to the
-        // client
-        // ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
-        ClipboardData* clipboard_chunk;
-        // if (clipboard) {
-        // TODO: this shouldn't exactly be a while loop here because we want to allow a file
-        // to be transferred while a clipboard is being transferred as well
-        // also, this DEFINITELY shouldn't be in the hotpath
-        while ((clipboard_chunk = clipboard_synchronizer_get_new_clipboard())) {
-            LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
-            // Alloc fmsg
-            FractalServerMessage* fmsg_response =
-                allocate_region(sizeof(FractalServerMessage) + clipboard_chunk->size);
-            // Build fmsg
-            memset(fmsg_response, 0, sizeof(*fmsg_response));
-            fmsg_response->type = SMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_response->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
-            // Send fmsg
-            read_lock(&is_active_rwlock);
-            if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                     sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
-                LOG_WARNING("Failed to broadcast clipboard message.");
-            }
-            read_unlock(&is_active_rwlock);
-            // Free fmsg
-            deallocate_region(fmsg_response);
-            // // Free clipboard
-            // free_clipboard(clipboard);
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
@@ -358,51 +432,8 @@ int main(int argc, char* argv[]) {
             start_timer(&last_ping_check);
         }
 
-        read_lock(&is_active_rwlock);
-
-        for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-            if (!clients[id].is_active) continue;
-
-            // Get packet!
-            FractalPacket* tcp_packet = NULL;
-            FractalClientMessage* fmsg = NULL;
-            FractalClientMessage local_fcmsg;
-            size_t fcmsg_size;
-            if (try_get_next_message_tcp(id, &tcp_packet) != 0 || tcp_packet == NULL) {
-                // On no TCP
-                if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) != 0 ||
-                    fcmsg_size == 0) {
-                    // On no UDP
-                    continue;
-                }
-                // On UDP
-                fmsg = &local_fcmsg;
-            } else {
-                // On TCP
-                fmsg = (FractalClientMessage*)tcp_packet->data;
-            }
-
-            // HANDLE FRACTAL CLIENT MESSAGE
-            fractal_lock_mutex(state_lock);
-            bool is_controlling = clients[id].is_controlling;
-            fractal_unlock_mutex(state_lock);
-            if (handle_client_message(fmsg, id, is_controlling) != 0) {
-                LOG_ERROR(
-                    "Failed to handle message from client. "
-                    "(ID: %d)",
-                    id);
-            } else {
-                // if (handleSpectatorMessage(fmsg, id) != 0) {
-                //     LOG_ERROR("Failed to handle message from spectator");
-                // }
-            }
-
-            // Free the tcp packet if we received one
-            if (tcp_packet) {
-                free_tcp_packet(tcp_packet);
-            }
-        }
-        read_unlock(&is_active_rwlock);
+        // Get UDP messages
+        get_fractal_client_messages(false, true);
     }
 
     destroy_input_device(input_device);
@@ -411,6 +442,7 @@ int main(int argc, char* argv[]) {
 
     fractal_wait_thread(send_video_thread, NULL);
     fractal_wait_thread(send_audio_thread, NULL);
+    fractal_wait_thread(send_receive_tcp_packets_thread, NULL);
     fractal_wait_thread(manage_clients_thread, NULL);
 
     fractal_destroy_mutex(packet_mutex);

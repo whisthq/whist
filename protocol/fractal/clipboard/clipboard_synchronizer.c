@@ -61,7 +61,7 @@ volatile bool abort_active_clipboard_action; // set to true when a new get/set a
 clock last_clipboard_update;
 FractalSemaphore clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
 ClipboardData* clipboard;
-int clipboard_written_bytes; // number of bytes of clipboard already transmitted
+int clipboard_written_bytes = 0; // number of bytes of clipboard already transmitted
 FractalThread clipboard_synchronizer_thread;
 static bool connected = false;
 
@@ -170,6 +170,7 @@ void clipboard_synchronizer_abort_active_clipboard_action() {
     updating_set_clipboard = false;
     updating_get_clipboard = false;
     pending_clipboard_push = false;
+    clipboard_written_bytes = 0;
 }
 
 bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
@@ -205,16 +206,19 @@ bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
 
     // clipboard->chunk_type is unused, but cb->chunk_type is important
     if (cb->chunk_type == CLIPBOARD_START) {
+        LOG_INFO("First clipboard chunk of size %d: %s", cb->size, cb->data);
         clipboard = allocate_region(sizeof(ClipboardData) + cb->size);
         memcpy(clipboard, cb, sizeof(ClipboardData) + cb->size);
     } else {
         // if not the first clipboard chunk, then add onto the end of the buffer
         //     and update clipboard size
+        LOG_INFO("Subsequent clipboard chunk of size %d onto existing %d", cb->size, clipboard->size);
         clipboard = realloc_region(clipboard, sizeof(ClipboardData) + clipboard->size + cb->size);
         memcpy(clipboard->data + clipboard->size, cb->data, cb->size);
         clipboard->size += cb->size;
 
         if (cb->chunk_type == CLIPBOARD_FINAL) {
+            LOG_INFO("Finished clipboard");
             // ready to set OS clipboard
             fractal_post_semaphore(clipboard_semaphore);
         }
@@ -286,6 +290,7 @@ ClipboardData* clipboard_synchronizer_get_new_clipboard() {
             pending_clipboard_push = false;
             // Free clipboard
             free_clipboard(clipboard);
+            clipboard_written_bytes = 0;
         }
 
         // update written bytes
