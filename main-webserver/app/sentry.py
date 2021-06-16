@@ -2,15 +2,13 @@ import os
 
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
 
 from app.exceptions import SentryInitializationError
 
 
 def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     """
-    Initialized sentry with Flask and Celery integrations as well as the default
+    Initialized sentry with Flask integration as well as the default
     integrations. Also makes sure initialization succeeds. We do this by logging
     a test message at the least serious level (debug). According to the docs and
     manual experimentation, the return is None if and only if something went wrong. Otherwise,
@@ -25,7 +23,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     """
     sentry_sdk.init(
         dsn=sentry_dsn,
-        integrations=[FlaskIntegration(), CeleryIntegration(), RedisIntegration()],
+        integrations=[FlaskIntegration()],
         environment=env,
         release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),  # FIXME no env usage
     )
