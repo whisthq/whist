@@ -13,18 +13,13 @@ import os
 import platform
 
 from app.factory import create_app
-from app.celery_utils import make_celery
 from app.flask_handlers import set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
 from app.signals import WebSignalHandler
-from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 
 # if testing, TESTING env var should be set. Default is False
 is_testing = os.environ.get("TESTING", "False") in ("True", "true")
 app = create_app(testing=is_testing)
-celery = make_celery(app)
-
-celery.set_default()
 
 # enable web requests
 if not set_web_requests_status(True):
@@ -36,6 +31,3 @@ if "windows" in platform.platform().lower():
     fractal_logger.warning("signal handler is not supported on windows. skipping enabling them.")
 else:
     WebSignalHandler()
-
-# initialize redis connection for maintenance package
-maintenance_init_redis_conn(app.config["REDIS_URL"])
