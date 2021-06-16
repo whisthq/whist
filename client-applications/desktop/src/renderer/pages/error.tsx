@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
 import classNames from "classnames"
@@ -22,6 +22,13 @@ const Error = (props: {
             onSignout (() => void): Function to execute when signout link is pressed
     */
 
+  const [processing, setProcessing] = useState(false)
+
+  const onClick = () => {
+    setProcessing(true)
+    props.onContinue()
+  }
+
   return (
     <div
       className={classNames(
@@ -35,8 +42,12 @@ const Error = (props: {
         <FractalButton
           contents={props.buttonText}
           className="mt-4 px-12 mx-auto py-3"
-          state={FractalButtonState.DEFAULT}
-          onClick={props.onContinue}
+          state={
+            processing
+              ? FractalButtonState.PROCESSING
+              : FractalButtonState.DEFAULT
+          }
+          onClick={onClick}
         />
       </div>
       <button

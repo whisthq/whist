@@ -2,6 +2,8 @@ import { post } from "@app/utils/api"
 import { FractalCallbackUrls } from "@app/config/urls"
 import { store } from "@app/utils/persist"
 
+export const allowPayments = false
+
 export const stripeBillingPortalCreate = async () => {
   /*
     Description: 
