@@ -11,7 +11,7 @@ export const AboutLink = (props: { className: string }) => (
 )
 
 export const SupportLink = (props: { className: string }) => (
-  <a className={props.className} href="mailto: support@fractal.co" id="support">
+  <a className={props.className} href="mailto:support@fractal.co" id="support">
     Support
   </a>
 )
@@ -61,13 +61,13 @@ export const HomeLink = (props: { className?: string, onClick?: Function }) => (
 )
 
 export const SalesLink = (props: any) => (
-  <a {...props} href="mailto: sales@fractal.co">
+  <a {...props} href="mailto:sales@fractal.co">
     Sales
   </a>
 )
 
 export const SecurityLink = (props: any) => (
-    <a {...props} href="mailto: security@fractal.co">
+    <a {...props} href="mailto:security@fractal.co">
         Security
     </a>
 )
@@ -92,7 +92,7 @@ export const DiscordLink = (props: any) => (
   /* eslint-disable react/jsx-no-target-blank */
   <a
     {...props}
-    href="https://medium.com/@fractal"
+    href="https://discord.gg/HjPpDGvEeA"
     target="_blank"
     rel="noopener noreferror"
   >
