@@ -800,7 +800,7 @@ const TermsOfService = () => {
                         Fractal Computers, Inc. <br />
                         Six Landmark Square, 4th Floor <br />
                         Stamford, CT 06901 <br />
-                        <a href="mailto: support@fractal.co">
+                        <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>{' '}
                         <br />
@@ -916,7 +916,7 @@ const TermsOfService = () => {
                         To that effect, before filing a claim against us, you
                         agree to try to resolve the dispute informally by
                         opening a support ticket via email to{' '}
-                        <a href="mailto: support@fractal.co">
+                        <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>
                         . We will try to resolve the dispute informally. If a
@@ -954,7 +954,7 @@ const TermsOfService = () => {
                     <p>
                         You can opt-out of the requirement to arbitrate by
                         emailing{' '}
-                        <a href="mailto: support@fractal.co">
+                        <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>{' '}
                         with the subject line “Arbitration Opt-Out” within 30

@@ -50,7 +50,7 @@ const Privacy = () => {
                     questions or concerns about our policy, or our practices
                     with regards to your personal information, please contact us
                     at{' '}
-                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
+                    <a href="mailto:support@fractal.co">support@fractal.co</a>.
                     We encourage you to read through this important information.
                     If there are any terms in this privacy policy that you
                     disagree with, please discontinue the use of our Sites and
@@ -268,7 +268,7 @@ const Privacy = () => {
                         posting a testimonial, we will seek your consent to use
                         your name and testimonial. If you wish to update or
                         delete your testimonial, please contact us at{' '}
-                        <a href="mailto: support@fractal.co">
+                        <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>{' '}
                         and be sure to include your name, testimonial location,
@@ -517,7 +517,7 @@ const Privacy = () => {
                     promptly delete such data from our records. If you become
                     aware of any data we have collected from children under age
                     18, please contact us at{' '}
-                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
+                    <a href="mailto:support@fractal.co">support@fractal.co</a>.
                 </p>
                 <p style={{ fontWeight: 'bold', fontSize: 20 }}>
                     9. Advertising And Analytics Services Provided By Others
@@ -576,7 +576,7 @@ const Privacy = () => {
                     </a>
                     . If you have questions or comments about your privacy
                     rights, you may email us at{' '}
-                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
+                    <a href="mailto:support@fractal.co">support@fractal.co</a>.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: 'bold' }}>Account Information</p>
@@ -587,7 +587,7 @@ const Privacy = () => {
                     <p>
                         Log into your account settings and update your user
                         account, or contact us at{' '}
-                        <a href="mailto: support@fractal.co">
+                        <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>
                         .
@@ -646,7 +646,7 @@ const Privacy = () => {
                         Note your preferences when you register an account with
                         the site, access your account settings and update
                         preferences, or contact us by email at{' '}
-                        <a href="mailto: support@fractal.co">
+                        <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>
                         .
@@ -732,7 +732,7 @@ const Privacy = () => {
                 <p>
                     If you have questions or comments about this policy, you may
                     email us at{' '}
-                    <a href="mailto: support@fractal.co">support@fractal.co</a>{' '}
+                    <a href="mailto:support@fractal.co">support@fractal.co</a>{' '}
                     or by post to:
                 </p>
                 <p>
