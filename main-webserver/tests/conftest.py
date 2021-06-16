@@ -11,7 +11,6 @@ from flask import current_app
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
-from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
 from app.models import ContainerInfo, db, InstanceInfo, RegionToAmi
 import app.constants.env_names as env_names
@@ -27,6 +26,8 @@ def app():
     """Flask application test fixture required by pytest-flask.
 
     https://pytest-flask.readthedocs.io/en/latest/tutorial.html#step-2-configure.
+
+    TODO: Check if anymore cleanup here is needed since we removed celery.
 
     For now, This test fixture must have session scope because the session-
     scoped celery_parameters test fixture depends on it and session-scoped
@@ -59,9 +60,6 @@ def app():
         )
     else:
         WebSignalHandler()
-
-    # initialize redis connection for maintenance package
-    maintenance_init_redis_conn(_app.config["REDIS_URL"])
 
     return _app
 
