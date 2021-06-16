@@ -47,6 +47,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             ${CMAKE_BINARY_DIR})
 endif()
 
+add_custom_command(
+	TARGET FractalServer POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	${CMAKE_SOURCE_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+	$<TARGET_FILE_DIR:FractalServer>)
+
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

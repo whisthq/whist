@@ -337,49 +337,6 @@ RUN apt-get install --no-install-recommends -y \
 
 # Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
 
-# Install FFmpeg and Libav dependencies explicitly
-# These packages need to be installed before installing/updating Python
-RUN apt-get install --no-install-recommends -y \
-    libavcodec58 \
-    libavdevice58 \
-    libavfilter7 \
-    libavformat58 \
-    libavresample4 \
-    libavutil56 \
-    libpostproc55 \
-    libswresample3 \
-    libswscale5 \
-    libmp3lame0 \
-    libopus0 \
-    libsnappy1v5 \
-    libspeex1 \
-    libtheora0 \
-    libtwolame0 \
-    libwebp6 \
-    libwebpmux3 \
-    libavc1394-0 \
-    libcaca0 \
-    libcdio-cdda2 \
-    libcdio-paranoia2 \
-    libdc1394-22 \
-    libiec61883-0 \
-    libraw1394-11 \
-    libxv1 \
-    librubberband2 \
-    libtesseract4 \
-    libzmq5 \
-    libopenmpt0 \
-    libvdpau1 \
-    libvpx6 \
-    libwavpack1 \
-    libx265-179 \
-    libxcb-shape0 \
-    libxcb-xfixes0 \
-    ocl-icd-libopencl1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
 # Install Pulse Audio & XDummy dependencies explicitly
 # These packages need to be installed before installing/updating Python
 RUN apt-get install --no-install-recommends -y \
@@ -527,18 +484,6 @@ RUN chgrp root -R /usr/share/fractal
 RUN chown root:root /usr/share/fractal/
 RUN chmod 600 -R /usr/share/fractal/
 
-
-# Install system FFmpeg
-RUN apt-get install --no-install-recommends -y \
-    ffmpeg \
-    libavcodec-dev \
-    libavdevice-dev \
-    libx11-dev \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-
 # Install FractalServer scripts
 COPY scripts/entry.sh /usr/share/fractal
 RUN chmod +x /usr/share/fractal/entry.sh
@@ -562,6 +507,14 @@ RUN chown root:root /run/user
 # Set up the entrypoint for the Docker container
 COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
+
+# Install Protocol Dependencies
+COPY build-temp/setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
+RUN /usr/share/fractal/setup-linux-build-environment.sh \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+RUN rm /usr/share/fractal/setup-linux-build-environment.sh
 
 # Install the Nvidia GRID Driver
 RUN apt-get install --no-install-recommends -y \
@@ -659,10 +612,8 @@ RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 # Setup Fractal application symlink (xterm by default)
 RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 
-# Grab pre-compiled Fractal Protocol
-COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
-COPY build-temp/protocol/crashpad_handler /usr/share/fractal/bin/crashpad_handler
-COPY build-temp/protocol/FractalServer /usr/share/fractal/bin/FractalServer
+# Install Fractal Protocol binaries and helper files
+COPY build-temp/protocol/* /usr/share/fractal/bin/
 
 # Copy config reference to container
 COPY config/app-config-map.json /usr/share/fractal/app-config-map.json
