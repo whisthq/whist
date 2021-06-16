@@ -168,7 +168,7 @@ class DeploymentConfig:
     """Flask application configuration for deployed applications.
 
     "Deployed applications" are those running on deployment platforms such as Heroku. They must be
-    started with CONFIG_DB_URL, DATABASE_URL, and REDIS_URL or REDIS_TLS_URL set in the process's
+    started with CONFIG_DB_URL, DATABASE_URL set in the process's
     execution environment.
     """
 
@@ -327,19 +327,6 @@ class DeploymentConfig:
             return test_dyno
 
         return "heroku-" + os.environ["HEROKU_DYNO_ID"]
-
-    @property
-    def REDIS_URL(self):  # pylint: disable=invalid-name
-        """Select the most secure Redis connection URI from the program's environment.
-
-        Heroku dynos contain up to two environment variables containing Redis connection strings.
-        REDIS_URL should always be present, and REDIS_TLS_URL will sometimes be present as well.
-
-        Returns:
-            A Redis connection URI as a string.
-        """
-
-        return os.environ.get("REDIS_TLS_URL") or os.environ["REDIS_URL"]
 
     @property
     def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
