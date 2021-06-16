@@ -208,7 +208,7 @@ const Cookies = () => {
                 <p>
                     If you are looking for more information, you can contact us
                     via email at{' '}
-                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
+                    <a href="mailto:support@fractal.co">support@fractal.co</a>.
                 </p>
             </div>
         </div>
