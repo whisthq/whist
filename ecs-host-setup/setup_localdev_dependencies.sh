@@ -4,6 +4,11 @@
 
 set -Eeuo pipefail
 
+# Retrieve source directory of this script
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
 # This part installs things that are ONLY necessary for engineer dev instances, NOT for production instances
 sudo apt-get install -y python3-pip
 cd ..
