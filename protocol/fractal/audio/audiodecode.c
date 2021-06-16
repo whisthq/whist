@@ -60,7 +60,13 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
         return NULL;
     }
 
-    decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
+    if (!decoder->pCodec->sample_fmts) {
+        LOG_INFO(
+            "No sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
+            "set automatically during initialization to FDK AAC's AV_SAMPLE_FMT_S16.");
+    } else {
+        decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
+    }
     decoder->pCodecCtx->sample_rate = sample_rate;
     decoder->pCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
     decoder->pCodecCtx->channels =
