@@ -23,3 +23,4 @@ docker exec -it "$docker_id" /bin/bash || true
 
 # Kill the container once we're done
 docker kill "$docker_id" > /dev/null
+docker rm "$docker_id" > /dev/null
