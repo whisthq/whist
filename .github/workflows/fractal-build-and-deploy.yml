@@ -277,7 +277,7 @@ jobs:
 
             - name: Build container images
               working-directory: container-images
-              run: ./build_container_image.sh --all
+              run: ./build_container_image.sh -o --all
 
             - name: Push container images
               working-directory: container-images
