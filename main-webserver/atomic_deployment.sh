@@ -64,7 +64,6 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
     # stop webserver. TODO: parse how many dynos exist currently and
     # restore that many as opposed to just restoring to 1 dyno
     heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
-    heroku ps:scale celery=0 --app "${HEROKU_APP_NAME}"
 
     # apply diff safely, knowing nothing is happening on webserver
     psql --single-transaction --file "${OUT_DIFF}" "${DB_URL}"
@@ -75,7 +74,6 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
 
     # bring webserver back online
     heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
-    heroku ps:scale celery=1 --app "${HEROKU_APP_NAME}"
 
     echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
 
