@@ -10,6 +10,7 @@ import { WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
 import { fractalError, NO_PAYMENT_ERROR } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
+import { allowPayments } from "@app/utils/payment"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -48,12 +49,12 @@ const RootComponent = () => {
 
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={clearCache} />
-  if (show === NO_PAYMENT_ERROR)
+  if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <Error
         title={fractalError[show].title}
         text={fractalError[show].text}
-        buttonText="Edit Payment Information"
+        buttonText="Update Payment"
         onContinue={showPaymentWindow}
         onSignout={showSignoutWindow}
       />

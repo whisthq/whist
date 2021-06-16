@@ -1,3 +1,5 @@
+import { allowPayments } from "@app/utils/payment"
+
 export const NO_PAYMENT_ERROR = "NO_PAYMENT_ERROR"
 export const UNAUTHORIZED_ERROR = "UNAUTHORIZED_ERROR"
 export const PROTOCOL_ERROR = "PROTOCOL_ERROR"
@@ -9,8 +11,10 @@ export const INTERNET_ERROR = "INTERNET_ERROR"
 
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
-    title: "Your free trial has expired.",
-    text: "To continue receiving access to Fractal, please update your payment information or contact support@fractal.co for help.",
+    title: "Your free trial has expired!",
+    text: allowPayments
+      ? "To continue receiving access to Fractal, please sign up for a paid plan."
+      : "To continue receiving access to Fractal, please contact support@fractal.co",
   },
   [UNAUTHORIZED_ERROR]: {
     title: "There was an error authenticating you with Fractal.",
