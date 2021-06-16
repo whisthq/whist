@@ -1,25 +1,6 @@
 """Helpful patch utilities."""
 
 
-def apply_async(*args, **kwargs):
-    """Return an instance of a mock version of celery.result.AsyncResult.
-
-    Implement more attributes on the mock AsyncResult class to make it more closely match the real
-    celery.result.AsyncResult class.
-
-    Args:
-        Ignored.
-
-    Returns:
-        An instance of a mock version of celery.result.AsyncResult.
-    """
-
-    class AsyncResult:
-        id = "garbage-task-id"
-
-    return AsyncResult
-
-
 def function(**kwargs):
     """Create a function that either raises or returns the specified value.
 
