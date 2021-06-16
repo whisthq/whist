@@ -16,15 +16,14 @@ Before contributing to this project, please read our in-depth coding philosophy 
 
 #### Local Setup
 
-Right now, in order to be _sure_ that changes you make to the web stack won't break anything when deployed, we strongly advise locally building any changes you make -- particularly to the app startup section of the code (create_app, register_blueprints, and init_celery). Our CI covers the rest of the pipeline (so you can be relatively confident changes elsewhere won't set everything on fire) but even then the best way to test code is still with a local build. Instructions for that build can be found below.
+Right now, in order to be _sure_ that changes you make to the web stack won't break anything when deployed, we strongly advise locally building any changes you make -- particularly to the app startup section of the code (create_app, register_blueprints). Our CI covers the rest of the pipeline (so you can be relatively confident changes elsewhere won't set everything on fire) but even then the best way to test code is still with a local build. Instructions for that build can be found below.
 
-The web application stack is comprised of three main components:
+The web application stack is comprised of two main components:
 
 - The web server itself, which is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework.
-- An asynchronous task queue, which is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes, and a Redis store.
 - A database. The database is a Postgres instance that is shared by multiple developers.
 
-We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally. None of these commands are run directly, and are instead wrapped by bash scripts that do a bit of preparation (namely `docker/local_deploy.sh` and `tests/setup/setup_tests.sh`).
+We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server. There is also a `pytest` test suite that developers may run locally. None of these commands are run directly, and are instead wrapped by bash scripts that do a bit of preparation (namely `docker/local_deploy.sh` and `tests/setup/setup_tests.sh`).
 
 The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them).
 
@@ -71,7 +70,7 @@ bash docker/local_deploy.sh
 
 If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer or opening the Docker desktop app; if the app opens successfully, then the issue should go away. You can optionally pass the argument `--use-dev-db`. Only do this if you absolutely need the dev db. Generally speaking, you should be able to recreate any resource on dev dbs in your ephemeral db. If you do this, please explain in `#webserver` why the ephemeral db did not meet your needs so we can improve it.
 
-Review `docker/docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running. When you're done, end the containers with `bash docker/local_deploy.sh --down`.
+Review `docker/docker-compose.yml` to see which ports the various services are hosted on.For example, `"9999:5432"` means that the Postgres service, running on port 5432 internally, will be available on `localhost:9999` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running. When you're done, end the containers with `bash docker/local_deploy.sh --down`.
 
 ### Flask CLI
 
@@ -218,33 +217,6 @@ It is possible for maintenance mode to hang, even though we've taken several pre
 
 # FAQ
 
-### How do the Flask and Celery applications know where Redis is running?
-
-It depends.
-
-For Heroku deployments (i.e. Heroku apps including review apps and CI apps), both applications try to read the value of the `REDIS_TLS_URL` environment variable, falling back on the value of the `REDIS_URL` environment variable if `REDIS_TLS_URL` is not set and failing if `REDIS_URL` is not set.
-
-For local deployments, including local test deployments, both applications may try to generate a Redis connection string from the environment variables `REDIS_DB`, `REDIS_HOST`, `REDIS_PASSWORD`, `REDIS_PORT`, `REDIS_SCHEME`, and `REDIS_USER`. The connection string is constructed as follows:
-
-```bash
-REDIS_URL="$REDIS_SCHEME://$REDIS_USER:$REDIS_PASSWORD@$REDIS_HOST:$REDIS_PORT/$REDIS_DB"
-```
-
-If not set, the environment variables assume the following default values:
-
-- `REDIS_SCHEME`: `rediss://`
-- `REDIS_USER`: the empty string
-- `REDIS_PASSWORD`: the empty string
-- `REDIS_HOST`: `localhost`
-- `REDIS_PORT`: `6379`
-- `REDIS_DB`: `0`
-
-**However,** the presence of the environment variable `REDIS_URL` will prevent a connection string from being generated from these six environment variables. Instead, the value of the `REDIS_URL` environment variable will be read.
-
-In case the Redis connection string identifies an invalid Redis instance (e.g. the connection string is `rediss://`, but there is either no Redis instance running on `localhost:6379` or it is running, but without TLS), any attempts to connect to the instance identified by the connection string will immediately cause an exception.
-
-In most cases, you should not have to worry about setting any of these environment variables manually, as `REDIS_URL` will be set automatically in `docker-compose.yml` files.
-
 ### What is the general structure of our codebase and the purpose of specific files?
 
 A tree structure is provided below:
@@ -254,7 +226,7 @@ Note that all conftest files contain test fixtures for their respective director
 ```
 .
 ├── Procfile --> the file that tells Heroku what workers we need
-(web and celery)
+(web)
 ├── analytics --> a directory for webserver-related load testing/analytics
 │   └── profiler
 │       ├── profiler.py --> load testing code
@@ -266,22 +238,11 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   └── logs_blueprint.py --> endpoint we use to upload logs
 │   │   ├── aws
 │   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
-│   │   ├── celery
-│   │   │   └── celery_status_blueprint.py -->  endpoint to check the status and results of celery tasks
 │   │   ├── host_service
 │   │   │   └── host_service_blueprint.py --> endpoints that handle host service handshakes
 │   │   ├── mail
 │   │   │   ├── mail_blueprint.py --> endpoints for generating and sending emails
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
-│   ├── celery
-│   │   ├── aws_celery_exceptions.py --> Exceptions that are unique to AWS tasks
-│   │   ├── aws_ecs_creation.py --> Celery tasks related to creating AWS containers and clusters
-│   │   ├── aws_ecs_deletion.py --> Celery tasks related to deleting AWS containers and clusters
-│   │   ├── aws_ecs_modification.py --> Celery tasks related to AMI updates and scaling
-│   │   ├── aws_s3_deletion.py --> Celery tasks related to deleting S3 logs
-│   │   ├── aws_s3_modification.py --> Celery tasks related to modifying and uploading S3 logs
-│   │   └── dummy.py --> Sample celery task, used for testing
-│   ├── celery_utils.py --> Celery config and setup scripts
 │   ├── config.py --> General app config and setup utils
 │   ├── constants --> Constants used throughout our program
 │   │   ├── bad_words_hashed.py --> hashes of inappropriate usernames
@@ -298,7 +259,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── helpers --> helper utils we use throughout the codebase
 │   │   ├── blueprint_helpers --> any complex synchronous computation that's part of our endpoints
 │   │   │   ├── aws
-│   │   │   │   ├── aws_container_post.py --> helpers for AWS post reqs that _don't_ require celery tasks -- e.g protocol info
 │   │   │   │   └── container_state.py --> helpers that retrieve the current state of user containers (for client-app)
 │   │   │   ├── mail
 │   │   │   │   └── mail_post.py --> helpers that generate emails to send to users
@@ -375,7 +335,7 @@ Note that all conftest files contain test fixtures for their respective director
 ├── runtime.txt --> desired python version
 ├── scripts
 │   └── poll_maintenance.sh --> script to check on webserver maintenance status
-├── stem-cell.sh --> the generator of our web and celery workers
+├── run-web.sh --> script to spawn the web process.
 └── tests --> tests for our assorted endpoints.  All files without docs
     should be assumed to unit test the endpoints/bps they name.
     ├── admin
