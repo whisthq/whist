@@ -1300,9 +1300,9 @@ jobs:
               working-directory: microservices/auth0
               run: npm install -g auth0-deploy-cli
 
-            - name: Build Auth0 hooks
+            - name: Install development dependencies
               working-directory: microservices/auth0
-              run: yarn install && yarn build
+              run: yarn install
 
             - name: Deploy changes to the Auth0 tenant
               working-directory: microservices/auth0
