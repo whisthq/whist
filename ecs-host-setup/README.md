@@ -33,7 +33,7 @@ git clone https://github.com/fractal/fractal.git # via HTTPS
 
 # set up the EC2 host for development
 cd ~/fractal/ecs-host-setup
-./setup_ubuntu20_host.sh
+./setup_localdev_dependencies.sh
 sudo reboot
 
 # build the Fractal protocol server
