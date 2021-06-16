@@ -1298,7 +1298,7 @@ jobs:
 
             - name: Install the auth0-deploy-cli
               working-directory: microservices/auth0
-              run: npm install -g auth0-deploy-cli
+              run: npm install -g auth0-deploy-cli@5.6.0
 
             - name: Install development dependencies
               working-directory: microservices/auth0
