@@ -1,5 +1,6 @@
 """Helpful patch utilities."""
 
+
 def function(**kwargs):
     """Create a function that either raises or returns the specified value.
 
