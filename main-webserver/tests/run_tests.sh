@@ -39,8 +39,6 @@ else
     # but of course, host and port are local
     export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 
-    # provide the redis URL
-    export REDIS_URL="redis://localhost:6379/0"
 fi
 
 # regardless of in CI or local tests, we set this variable
