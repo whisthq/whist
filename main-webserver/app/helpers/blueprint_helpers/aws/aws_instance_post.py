@@ -25,7 +25,7 @@ bundled_region = {
 }
 
 
-def find_instance(region: str) -> Optional[str]:
+def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
     Given a region, finds (if it can) an instance in that region or a neighboring region with space
     If it succeeds, returns the instance ID.  Else, returns None
@@ -38,7 +38,7 @@ def find_instance(region: str) -> Optional[str]:
     # 5sec arbitrarily decided as sufficient timeout when using with_for_update
     set_local_lock_timeout(5)
     avail_instance: Optional[InstanceSorted] = (
-        InstanceSorted.query.filter_by(location=region)
+        InstanceSorted.query.filter_by(location=region, client_commit_hash=client_commit_hash)
         .limit(1)
         .with_for_update(skip_locked=True)
         .one_or_none()
@@ -49,7 +49,9 @@ def find_instance(region: str) -> Optional[str]:
             # 5sec arbitrarily decided as sufficient timeout when using with_for_update
             set_local_lock_timeout(5)
             avail_instance = (
-                InstanceSorted.query.filter_by(location=bundlable_region)
+                InstanceSorted.query.filter_by(
+                    location=bundlable_region, client_commit_hash=client_commit_hash
+                )
                 .limit(1)
                 .with_for_update(skip_locked=True)
                 .one_or_none()
@@ -87,7 +89,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     # If the region is invalid or the AMI is not current, we want no buffer
     if region not in {x.region_name for x in RegionToAmi.query.all()}:
         return -maxsize
-    if ami_id != RegionToAmi.query.filter_by(region_name=region).one_or_none().ami_id:
+    if ami_id != RegionToAmi.query.filter_by(region_name=region, enabled=True).one_or_none().ami_id:
         return -maxsize
     # Now, we want to get the average number of containers per instance in that region
     # and the number of free containers

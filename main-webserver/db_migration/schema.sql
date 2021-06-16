@@ -263,6 +263,7 @@ ALTER TABLE ONLY hardware.container_info
 CREATE VIEW hardware.instance_sorted AS
   SELECT sub_with_running.instance_name,
     sub_with_running.aws_ami_id,
+    sub_with_running.client_commit_hash,
     sub_with_running.location,
     sub_with_running."container_capacity" AS container_capacity,
     sub_with_running.num_running_containers
@@ -274,6 +275,7 @@ CREATE VIEW hardware.instance_sorted AS
            FROM (( SELECT instance_info.instance_name,
                     instance_info.aws_ami_id,
                     instance_info.location,
+                    instance_info.client_commit_hash,
                     instance_info."container_capacity"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
@@ -301,7 +303,8 @@ CREATE TABLE hardware.region_to_ami (
     region_name character varying NOT NULL,
     ami_id character varying NOT NULL,
     allowed boolean DEFAULT true NOT NULL,
-    region_being_updated boolean DEFAULT false NOT NULL
+    client_commit_hash character varying NOT NULL,
+    enabled boolean DEFAULT false NOT NULL
 );
 
 

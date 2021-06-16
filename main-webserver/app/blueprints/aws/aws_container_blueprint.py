@@ -48,7 +48,7 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a container running, don't start up a new one
         return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
-    instance_id = find_instance(body.region)
+    instance_id = find_instance(body.region, body.client_commit_hash)
     if instance_id is None:
 
         if not current_app.testing:
@@ -56,7 +56,10 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
             # and we know what instance type we're missing from the request
             scaling_thread = Thread(
                 target=do_scale_up_if_necessary,
-                args=(body.region, RegionToAmi.query.get(body.region).ami_id),
+                args=(
+                    body.region,
+                    RegionToAmi.query.get(body.region, body.client_commit_hash).ami_id,
+                ),
             )
             scaling_thread.start()
         return jsonify({"ip": "None", "mandelbox_id": "None"}), RESOURCE_UNAVAILABLE
