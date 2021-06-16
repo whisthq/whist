@@ -22,7 +22,6 @@ import (
 	// forget to send a message via Sentry. For the same reason, we make sure not
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
-	"github.com/fractal/fractal/ecs-host-service/auth"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
@@ -320,12 +319,7 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 		req.ReturnResult("", err)
 	}
 
-	// Verify that the request access token is valid for the given userID.
-	_, err := auth.VerifyWithUserID(req.ClientAppAccessToken, req.UserID)
-	if err != nil {
-		logger.Error(err)
-		req.ReturnResult("", err)
-	}
+	// TODO: Verify that the request access token is valid for the given userID.
 
 	// Verify that the requested host port is valid
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
