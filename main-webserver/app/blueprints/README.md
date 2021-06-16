@@ -1,6 +1,6 @@
 # Module Structure
 
-At the module level, the code is separated between AWS, mail, admin, payment, auth, and celery blueprints (post and get request handlers)
+At the module level, the code is separated between AWS, mail, admin, payment, and auth (post and get request handlers).
 
 ## Admin
 
@@ -21,7 +21,3 @@ This folder contains our email generation and send endpoints
 ## Payment
 
 This folder contains our stripe handling/payment endpoints
-
-## Celery
-
-This folder contains our celery task status getter endpoints.
