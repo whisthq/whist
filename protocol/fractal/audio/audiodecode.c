@@ -61,9 +61,9 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     }
 
     if (!decoder->pCodec->sample_fmts) {
-        LOG_WARNING(
-            "No supported sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
-            "set automatically during initialization.");
+        LOG_INFO(
+            "No sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
+            "set automatically during initialization to AV_SAMPLE_FMT_S16.");
     } else {
         decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
     }
