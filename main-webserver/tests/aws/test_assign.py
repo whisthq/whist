@@ -59,8 +59,6 @@ def test_assign(client, bulk_instance, monkeypatch):
         (False, False, HTTPStatus.PAYMENT_REQUIRED),
     ),
 )
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
 def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
     user = make_user()
     response = client.post(
