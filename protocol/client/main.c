@@ -72,7 +72,7 @@ volatile SDL_Window* window;
 volatile char* window_title;
 volatile bool should_update_window_title;
 volatile bool run_receive_packets;
-volatile bool run_send_tcp_packets;
+volatile bool run_send_receive_tcp_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile double latency;
@@ -122,7 +122,6 @@ volatile bool pending_resize_message =
 // Function Declarations
 
 int receive_packets(void* opaque);
-int send_clipboard_packets(void* opaque);
 
 SocketContext packet_send_context = {0};
 SocketContext packet_receive_context = {0};
@@ -204,30 +203,6 @@ void update() {
 
     FractalClientMessage fmsg = {0};
 
-    // Check for a new clipboard update from the server, if it's been 25ms since
-    // the last time we checked the TCP socket, and the clipboard isn't actively
-    // busy
-    if (get_timer(update_data.last_tcp_check_timer) > 25.0 / MS_IN_SECOND &&
-        !is_clipboard_synchronizing()) {
-        // Check if TCP connction is active
-        int result = ack(&packet_tcp_context);
-        if (result < 0) {
-            LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
-            // TODO: Should exit or recover protocol if TCP connection is lost
-        }
-
-        // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
-        if (tcp_packet) {
-            handle_server_message((FractalServerMessage*)tcp_packet->data,
-                                  (size_t)tcp_packet->payload_size);
-            free_tcp_packet(tcp_packet);
-        }
-
-        // Update the last tcp check timer
-        start_timer((clock*)&update_data.last_tcp_check_timer);
-    }
-
     // If we haven't yet tried to update the dimension, and the dimensions don't
     // line up, then request the proper dimension
     if (!update_data.tried_to_update_dimension &&
@@ -298,10 +273,9 @@ void update() {
     // End Ping
 }
 
-int send_clipboard_packets(void* opaque) {
+int send_receive_tcp_packets(void* opaque) {
     /*
-        Obtain updated clipboard and send clipboard TCP packet to server.
-        This is used as a thread function.
+        Thread to send and receive all TCP packets (clipboard and file)
 
         Arguments:
             opaque (void*): any arg to be passed to thread
@@ -311,22 +285,33 @@ int send_clipboard_packets(void* opaque) {
     */
 
     UNUSED(opaque);
-    LOG_INFO("send_clipboard_packets running on Thread %p", SDL_GetThreadID(NULL));
+    LOG_INFO("send_receive_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
-    // Wait for the updater to be initialized before trying to update clipboard
-    while (!updater_initialized) {
-        SDL_Delay(16);
-    }
-
+    // TODO: compartmentalize each part into its own function
     clock clipboard_time;
-    while (run_send_tcp_packets) {
-        start_timer(&clipboard_time);
-        // ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
-        ClipboardData* clipboard_chunk;
-        // if (clipboard) {
-        // TODO: this shouldn't exactly be a while loop here because we want to allow a file
-        // to be transferred while a clipboard is being transferred as well
-        while ((clipboard_chunk = clipboard_synchronizer_get_new_clipboard())) {
+    while (run_send_receive_tcp_packets) {
+        // RECEIVE TCP PACKET HANDLER
+        // Check if TCP connection is active
+        int result = ack(&packet_tcp_context);
+        if (result < 0) {
+            LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+            // TODO: Should exit or recover protocol if TCP connection is lost
+        }
+
+        // Receive tcp buffer, if a full packet has been received
+        FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
+        if (tcp_packet) {
+            handle_server_message((FractalServerMessage*)tcp_packet->data,
+                                  (size_t)tcp_packet->payload_size);
+            free_tcp_packet(tcp_packet);
+        }
+
+        // SEND TCP PACKET HANDLERS:
+
+        // GET CLIPBOARD HANDLER
+        // start_timer(&clipboard_time);
+        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_new_clipboard();
+        if (clipboard_chunk) {
             // Alloc an fmsg
             FractalClientMessage* fmsg_clipboard = allocate_region(
                 sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
@@ -339,20 +324,21 @@ int send_clipboard_packets(void* opaque) {
             send_fmsg(fmsg_clipboard);
             // Free the fmsg
             deallocate_region(fmsg_clipboard);
-            // // Free the clipboard
-            // free_clipboard(clipboard);
+            // Free the clipboard chunk
             deallocate_region(clipboard_chunk);
         }
 
+        // TODO: update this based on overall spam time
         // delay to avoid clipboard checking spam
-        const int spam_time_ms = 500;
-        if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-            SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
-        }
+        // const int spam_time_ms = 500;
+        // if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
+        //     SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
+        // }
     }
 
     return 0;
 }
+
 // END UPDATER CODE
 
 // This function polls for UDP packets from the server
@@ -873,9 +859,9 @@ int main(int argc, char* argv[]) {
             SDL_CreateThread(receive_packets, "ReceivePackets", &packet_receive_context);
 
         // Create thread to send TCP packets
-        run_send_tcp_packets = true;
-        SDL_Thread* send_tcp_packets_thread =
-            SDL_CreateThread(send_tcp_packets, "SendTCPPackets", NULL);
+        run_send_receive_tcp_packets = true;
+        SDL_Thread* send_receive_tcp_packets_thread =
+            SDL_CreateThread(send_receive_tcp_packets, "SendTCPPackets", NULL);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
@@ -959,9 +945,8 @@ int main(int argc, char* argv[]) {
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 
-        run_send_tcp_packets = false;
-        SDL_WaitThread(send_tcp_packets_thread, NULL);
-
+        run_send_receive_tcp_packets = false;
+        SDL_WaitThread(send_receive_tcp_packets_thread, NULL);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
         destroy_audio();
