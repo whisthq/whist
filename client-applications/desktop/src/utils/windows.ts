@@ -191,6 +191,7 @@ export const createPaymentWindow = async () => {
       ...base,
       ...width.lg,
       ...height.md,
+      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     customURL: billingPortalURL,
   })
