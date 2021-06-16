@@ -108,7 +108,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
      * Resolve the 'NvEncodeAPICreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
-    typedef NVENCSTATUS(NVENCAPI* NVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST*);
+    typedef NVENCSTATUS(NVENCAPI * NVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST*);
     NVENCODEAPICREATEINSTANCEPROC nv_encode_api_create_instance_ptr =
         (NVENCODEAPICREATEINSTANCEPROC)dlsym(lib_enc, "NvEncodeAPICreateInstance");
     if (nv_encode_api_create_instance_ptr == NULL) {
