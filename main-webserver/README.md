@@ -238,8 +238,6 @@ Note that all conftest files contain test fixtures for their respective director
 ├── app
 │   ├── __init__.py --> initialization code/global preprocessors for the app
 │   ├── blueprints -->  our API endpoints are described here
-│   │   ├── admin --> API endpoints relating to manipulating user and logs info
-│   │   │   └── logs_blueprint.py --> endpoint we use to upload logs
 │   │   ├── aws
 │   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
 │   │   ├── host_service
@@ -249,14 +247,8 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
 │   ├── config.py --> General app config and setup utils
 │   ├── constants --> Constants used throughout our program
-│   │   ├── bad_words_hashed.py --> hashes of inappropriate usernames
 │   │   ├── container_state_values.py --> all possible AWS container states
-│   │   ├── ec2_userdata_template.py --> exposes ec2_userdata_template.sh as a string
-│   │   ├── ec2_userdata_template.sh --> a template for the code executed on new EC2 instances at startup
-│   │   ├── generate_subsequences_for_words.py --> substring testing to find inappropriate usernames
-│   │   ├── hash_bad_words.py --> what we use to generate bad_words_hashed
 │   │   ├── http_codes.py -->  HTTP response codes we return in our app
-│   │   ├── regions.py --> list of region/state abbreviations (e.g. CT for Connecticut)
 │   │   └── time.py --> useful constants about time (like 60 seconds per minute)
 │   ├── exceptions.py --> exceptions we use throughout the app
 │   ├── factory.py -->  general application setup scripts
@@ -288,10 +280,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── limiter.py --> our rate limiter config
 │   │       │   ├── logs.py --> our webserver logging config
 │   │       │   ├── sql_commands.py --> helpers for SQL commit, update, and deletion
-│   │       │   ├── time.py --> useful scripts for working with time/date
 │   │       │   └── tokens.py --> utils for generating JWTs
-│   │       ├── locations
-│   │       │   └── location_helper.py --> script to find client app location from IP address
 │   │       ├── mail
 │   │       │   └── mail_client.py --> helpers for mail generation
 │   ├── maintenance
