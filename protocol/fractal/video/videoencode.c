@@ -824,7 +824,7 @@ int video_encoder_send_frame(VideoEncoder *encoder) {
 int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
     int res_encoder;
 
-    av_init_packet(packet);
+    // receive_packet already calls av_packet_unref, no need to reinitialize packet
     res_encoder = avcodec_receive_packet(encoder->pCodecCtx, packet);
     if (res_encoder == AVERROR(EAGAIN) || res_encoder == AVERROR(EOF)) {
         return 1;

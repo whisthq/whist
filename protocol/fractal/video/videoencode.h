@@ -32,7 +32,7 @@ Custom Types
 #define MAX_ENCODER_PACKETS 20
 
 typedef struct VideoEncoder {
-    AVCodec* pCodec;
+    const AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
     AVFilterGraph* pFilterGraph;
     AVFilterContext* pFilterGraphSource;
