@@ -108,16 +108,6 @@ Defines
 
 #endif
 
-#ifdef __APPLE__
-
-#define CAN_UPDATE_WINDOW_TITLEBAR_COLOR true
-
-#else
-
-#define CAN_UPDATE_WINDOW_TITLEBAR_COLOR false
-
-#endif  // __APPLE__
-
 // Milliseconds between sending resize events from client to server
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200

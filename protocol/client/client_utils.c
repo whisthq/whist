@@ -28,6 +28,7 @@ Includes
 
 #include "client_utils.h"
 #include "network.h"
+#include "native_window_utils.h"
 #include <fractal/logging/logging.h>
 #include <fractal/logging/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
@@ -723,11 +724,8 @@ void send_message_dimensions() {
     fmsg.dimensions.width = output_width;
     fmsg.dimensions.height = output_height;
     fmsg.dimensions.codec_type = output_codec_type;
-    int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
-    float dpi;
-    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
-    fmsg.dimensions.dpi = (int)dpi;
-    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", output_width,
-             output_height, (int)dpi, output_codec_type);
+    fmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
+    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", fmsg.dimensions.width,
+             fmsg.dimensions.height, fmsg.dimensions.dpi, fmsg.dimensions.codec_type);
     send_fmsg(&fmsg);
 }

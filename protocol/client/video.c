@@ -24,12 +24,13 @@ Includes
 
 #include <stdio.h>
 
-#include "peercursor.h"
-#include "sdlscreeninfo.h"
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
 #include <fractal/logging/log_statistic.h>
+#include "peercursor.h"
+#include "sdlscreeninfo.h"
+#include "native_window_utils.h"
 #include "network.h"
 
 #define USE_HARDWARE true
@@ -53,10 +54,8 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
@@ -338,16 +337,33 @@ void update_cursor(VideoFrame* frame) {
             }
             if (cursor->using_bmp) {
                 // use bitmap data to set cursor
-
                 SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
                     cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
                     sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
                     CURSORIMAGE_B, CURSORIMAGE_A);
-                // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
-                // pre-alpha multplied
+
+                // Use BLENDMODE_NONE to allow for proper cursor blit-resize
+                SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
+
+                int dpi = get_native_window_dpi((SDL_Window*)window);
+
+                // Create the scaled cursor surface which takes DPI into account
+                SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
+                    0, cursor->bmp_width * 96 / dpi, cursor->bmp_height * 96 / dpi,
+                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
+                    cursor_surface->format->Gmask, cursor_surface->format->Bmask,
+                    cursor_surface->format->Amask);
+
+                // Copy the original cursor into the scaled surface
+                SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
+
+                // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
+                // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
                 sdl_cursor =
-                    SDL_CreateColorCursor(cursor_surface, cursor->bmp_hot_x, cursor->bmp_hot_y);
+                    SDL_CreateColorCursor(scaled_cursor_surface, cursor->bmp_hot_x * 96 / dpi,
+                                          cursor->bmp_hot_y * 96 / dpi);
                 SDL_FreeSurface(cursor_surface);
+                SDL_FreeSurface(scaled_cursor_surface);
             } else {
                 // use cursor id to set cursor
                 sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
@@ -384,7 +400,6 @@ SDL_Rect new_sdl_rect(int x, int y, int w, int h) {
     return new_rect;
 }
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 void update_window_titlebar_color() {
     /*
       Update window titlebar color using the colors of the new frame
@@ -406,7 +421,6 @@ void update_window_titlebar_color() {
     native_window_color = new_native_window_color;
     native_window_color_update = true;
 }
-#endif
 
 int32_t multithreaded_destroy_decoder(void* opaque) {
     /*
@@ -1145,10 +1159,8 @@ int render_video() {
                 // appropriately convert the frame and move it into video_context.data
                 finalize_video_context_data();
 
-                // then, update the window titlebar color if we can
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+                // then, update the window titlebar color
                 update_window_titlebar_color();
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
@@ -1234,11 +1246,9 @@ void destroy_video() {
     } else {
         SDL_DestroyRenderer((SDL_Renderer*)video_context.renderer);
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
         if (native_window_color) {
             free((FractalRGBColor*)native_window_color);
         }
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
         // SDL_DestroyTexture(videoContext.texture); is not needed,
         // the renderer destroys it

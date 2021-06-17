@@ -46,11 +46,8 @@ Includes
 #include "handle_server_message.h"
 #include "video.h"
 #include <SDL2/SDL_syswm.h>
-
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include <fractal/utils/color.h>
 #include "native_window_utils.h"
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -80,10 +77,8 @@ volatile double latency;
 volatile int ping_id;
 volatile int ping_failures;
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 volatile FractalRGBColor* native_window_color = NULL;
 volatile bool native_window_color_update = false;
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 volatile int output_width;
 volatile int output_height;
@@ -873,9 +868,10 @@ int main(int argc, char* argv[]) {
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
 
-        clock keyboard_sync_timer, mouse_motion_timer;
+        clock keyboard_sync_timer, mouse_motion_timer, monitor_change_timer;
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
+        start_timer(&monitor_change_timer);
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
@@ -896,13 +892,11 @@ int main(int argc, char* argv[]) {
                 should_update_window_title = false;
             }
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
             if (native_window_color_update && native_window_color) {
                 set_native_window_color((SDL_Window*)window,
                                         *(FractalRGBColor*)native_window_color);
                 native_window_color_update = false;
             }
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
@@ -926,6 +920,21 @@ int main(int argc, char* argv[]) {
                     start_timer(&window_resize_timer);
                 }
                 safe_SDL_UnlockMutex(window_resize_mutex);
+            }
+
+            if (get_timer(monitor_change_timer) * MS_IN_SECOND > 10) {
+                static int current_display = -1;
+                int sdl_display = SDL_GetWindowDisplayIndex((SDL_Window*)window);
+
+                if (current_display != sdl_display) {
+                    if (current_display) {
+                        // Update DPI to new monitor
+                        send_message_dimensions();
+                    }
+                    current_display = sdl_display;
+                }
+
+                start_timer(&monitor_change_timer);
             }
 
             // Timeout after 50ms (On Windows, will hang when user is dragging or resizing the
