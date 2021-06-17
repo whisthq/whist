@@ -394,20 +394,19 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     start_timer(&t);
 
     // copy the received packet back into the decoder AVPacket
+    // memcpy(&decoder->packet.data, &buffer, buffer_size);
     int* int_buffer = buffer;
     int num_packets = *int_buffer;
     int_buffer++;
 
     int computed_size = 4;
 
-    // make an array of AVPacket*s and alloc each one
-    AVPacket* packets[num_packets];
+    AVPacket* packets = safe_malloc(num_packets * sizeof(AVPacket));
 
     for (int i = 0; i < num_packets; i++) {
-        // allocate packet and set size
-        packets[i] = av_packet_alloc();
-        packets[i]->size = *int_buffer;
-        computed_size += 4 + packets[i]->size;
+        av_init_packet(&packets[i]);
+        packets[i].size = *int_buffer;
+        computed_size += 4 + packets[i].size;
         int_buffer++;
     }
 
@@ -421,20 +420,19 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
     char* char_buffer = (void*)int_buffer;
     for (int i = 0; i < num_packets; i++) {
-        // set packet data
-        packets[i]->data = (void*)char_buffer;
-        char_buffer += packets[i]->size;
+        packets[i].data = (void*)char_buffer;
+        char_buffer += packets[i].size;
     }
 
     for (int i = 0; i < num_packets; i++) {
         // decode the frame
-        while (avcodec_send_packet(decoder->context, packets[i]) < 0) {
+        while (avcodec_send_packet(decoder->context, &packets[i]) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!");
             // Try next decoder
             if (!try_next_decoder(decoder)) {
                 destroy_video_decoder(decoder);
                 for (int j = 0; j < num_packets; j++) {
-                    av_packet_unref(packets[j]);
+                    av_packet_unref(&packets[j]);
                 }
                 free(packets);
                 return false;
@@ -443,7 +441,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     }
 
     for (int i = 0; i < num_packets; i++) {
-        av_packet_free(&packets[i]);
+        av_packet_unref(&packets[i]);
     }
     free(packets);
 
