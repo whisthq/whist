@@ -402,7 +402,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     int computed_size = 4;
 
     // make an array of AVPacket*s and alloc each one
-    AVPacket* packets[num_packets];
+    AVPacket** packets = safe_malloc(num_packets * sizeof(AVPacket*));
 
     for (int i = 0; i < num_packets; i++) {
         // allocate packet and set size
@@ -440,6 +440,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
                 for (int j = 0; j < num_packets; j++) {
                     av_packet_free(&packets[j]);
                 }
+                free(packets);
                 return false;
             }
         }
@@ -448,6 +449,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     for (int i = 0; i < num_packets; i++) {
         av_packet_free(&packets[i]);
     }
+    free(packets);
 
     // If frame was computed on the CPU
     if (decoder->context->hw_frames_ctx) {
