@@ -88,60 +88,55 @@ void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t heigh
             height (uint32_t): desired height
             dpi (uint32_t): desired DPI
     */
-    // TODO: Implement DPI changes
+
+    char cmd[1024];
 
     // Update the device's width/height
     device->width = width;
     device->height = height;
-    // If the device's width/height is already correct, just return
-    if (is_same_wh(device)) {
-        return;
+
+    // If the device's width/height must be updated
+    if (!is_same_wh(device)) {
+        char modename[128];
+
+        snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
+
+        char* display_name;
+        runcmd("xrandr --current | grep \" connected\"", &display_name);
+        *strchr(display_name, ' ') = '\0';
+
+        snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd),
+                 "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
+                 "cut -d' ' -f3-)",
+                 modename, width, height);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
+        runcmd(cmd, NULL);
+        snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
+        runcmd(cmd, NULL);
+
+        free(display_name);
+
+        // If it's still not the correct dimensions
+        if (!is_same_wh(device)) {
+            LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d");
+            // Get the width/height that the device actually is though
+            get_wh(device, &device->width, &device->height);
+        }
     }
 
-    char modename[128];
-    char cmd[1024];
-
-    snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
-
-    char* display_name;
-    runcmd("xrandr --current | grep \" connected\"", &display_name);
-    *strchr(display_name, ' ') = '\0';
-
-    snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
-    runcmd(cmd, NULL);
-    snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
-    runcmd(cmd, NULL);
-    snprintf(cmd, sizeof(cmd),
-             "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
-             "cut -d' ' -f3-)",
-             modename, width, height);
-    runcmd(cmd, NULL);
-    snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
-    runcmd(cmd, NULL);
-    snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
-    runcmd(cmd, NULL);
-
-    // For the single-monitor case, we no longer need to do the below; we instead
-    // assume the display server has been created with the correct DPI. The below
-    // approach does not handle this case well because Linux does not yet support
-    // changing DPI on the fly. For getting seamless performance on multi-monitor
-    // setups, we may eventually need to instead get already-running X11
-    // applications to respect DPI changes to the X server.
-
-    // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
-    // snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
-    // runcmd(cmd, NULL);
-    // while this command sets the font DPI setting
-    // snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
-    // runcmd(cmd, NULL);
-
-    free(display_name);
-
-    // If it's still not the correct dimensions
-    if (!is_same_wh(device)) {
-        LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d");
-        // Get the width/height that the device actually is though
-        get_wh(device, &device->width, &device->height);
+    // This script must be built in to the Mandelbox. It writes new DPI for X11 and
+    // AwesomeWM, and uses SIGHUP to XSettingsd to trigger application and window
+    // manager refreshes to use the new DPI.
+    static uint32_t last_set_dpi = 96;
+    if (dpi != last_set_dpi) {
+        snprintf(cmd, sizeof(cmd), "/usr/share/fractal/update-fractal-dpi.sh %d", dpi);
+        runcmd(cmd, NULL);
+        last_set_dpi = dpi;
     }
 }
 
