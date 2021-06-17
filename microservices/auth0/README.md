@@ -39,6 +39,46 @@ This ensures that the `tenant.yaml` in source control is the definite source-of-
 
 Note that `yarn update-tenant` may make undesirable changes to `tenant.yaml` or add unnecessary files to your git working tree. Be sure to review all changes made by `yarn update-tenant` in order to ensure that you only commit the changes you intend to commit.
 
+### Clients
+
+`tenants.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop app) or trusted "machine-to-machine" clients such as Github actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn update-tenant`
+
+Here's an example cient configuration:
+
+```yaml
+  - name: Webserver
+    app_type: non_interactive
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+```
+
+Many of these fields are self-explanatoy, but some require more explanation:
+
+- `app_type` indiates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Fractal desktop app, etc.
+- `jwt_configuration.alg` is the algorithm used to sign access tokens for this client. This should be 'RS256' (asymmetric signing algorithm, can be verified with a public key) unless there's a very good reason otherwise.
+- `jwt_configuration.lifetime_in_seconds` is the lifetime (in seconds) of an *access* token. By default, this is 1 day 
+- `refresh_token.token_lifetime` is the *maximum* lifetime (in seconds) of a *refresh* token
+- `refresh_token.idle_token_lifetime` is the length of time (in seconds) that a refresh token may be not used before the token gets invalidated.
+
 ## Adding a new social provider
 
 Auth0 supports the addition of new social providers. For a comprehensive list and specific instructions, you can visit [this page](https://auth0.com/docs/connections/identity-providers-social).
