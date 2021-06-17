@@ -412,19 +412,24 @@ int get_next_audio_frame(uint8_t* data) {
           decoded_data (uint8_t*): Data buffer to receive the decoded audio data
     */
     // setup the frame
-    AVPacket encoded_packet;
-    av_init_packet(&encoded_packet);
-    encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
-    encoded_packet.size = 0;
+    AVPacket encoded_packet = *av_packet_alloc();
+    // allocate packet payload
+    int res = av_new_packet(&encoded_packet, 0);
+    if (res != 0) {
+      return res;
+    }
     // reconstruct the audio frame from the indices.
     for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
         AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
+        res = av_grow_packet(&encoded_packet, packet->size);
+        if (res != 0) {
+          return res;
+        }
         memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
-        encoded_packet.size += packet->size;
     }
 
     // Decode encoded audio
-    int res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
+    res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
     av_free(encoded_packet.data);
     av_packet_unref(&encoded_packet);
 
