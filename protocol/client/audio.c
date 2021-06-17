@@ -416,14 +416,14 @@ int get_next_audio_frame(uint8_t* data) {
     // allocate packet payload
     int res = av_new_packet(&encoded_packet, 0);
     if (res != 0) {
-      return res;
+        return res;
     }
     // reconstruct the audio frame from the indices.
     for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
         AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
         res = av_grow_packet(&encoded_packet, packet->size);
         if (res != 0) {
-          return res;
+            return res;
         }
         memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
     }
