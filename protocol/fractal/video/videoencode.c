@@ -104,7 +104,7 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     // p1: fastest, but lowest quality -- p7: slowest, best quality
     // only constqp/cbr/vbr are supported now with these presets
     // tune: high quality, low latency, ultra low latency, or lossless; we use ultra low latency
-    set_opt(encoder, "preset", "p4");
+    set_opt(encoder, "preset", "p1");
     set_opt(encoder, "tune", "ull");
     set_opt(encoder, "rc", "cbr");
     // zerolatency: no reordering delay
