@@ -73,7 +73,7 @@ parser.add_argument(
     "--dpi",
     type=int,
     default=96,
-    help="DPI to use for the X server inside the mandelbox. Defaults to 96.",
+    help="Deprecated. We no longer set the DPI via the host service.",
 )
 parser.add_argument(
     "--user-id",
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         f"""Successfully started mandelbox with identifying hostPort {host_ports.host_port_32262tcp}.
 To connect to this mandelbox using the client protocol, run one of the following commands, depending on your platform:
 
-    windows:        .\\build\\fclient.bat {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
+    windows:        .\\fclient.bat {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
     linux/macos:    ./fclient {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
 """
     )
