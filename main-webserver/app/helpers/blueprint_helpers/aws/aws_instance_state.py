@@ -7,8 +7,8 @@ from app.models import (
 
 from app.helpers.utils.general.logs import fractal_logger
 
-MAX_POLL_ITERATIONS = 90
-POLL_SLEEP_INTERVAL = 1
+MAX_POLL_ITERATIONS = 600
+POLL_SLEEP_INTERVAL = 10
 
 
 def _poll(instance_id: str) -> bool:

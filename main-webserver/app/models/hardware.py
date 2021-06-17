@@ -1,3 +1,4 @@
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.sql.expression import true
 from ._meta import db
 
@@ -115,13 +116,20 @@ class RegionToAmi(db.Model):
         ami_id: A string representing the AMI ID of the latest AMI provisioned in the region
             corresponding to this row.
         client_commit_hash: A string representing the commit hash for the client.
-        enabled: A boolean that will be marked true if it is the latest AMI.
+        enabled: A boolean that will be marked true if this AMI corresponds to active versions of the client app'.
         allowed: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
+    
+    Constraints:
+        Unique: 
+            _region_name_ami_id_unique_constaraint: AMIs are expected to be unique per region and most likely global too. But didn't find any reference to back that up, so including a constraint.
     """
 
     __tablename__ = "region_to_ami"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    __table_args__ = (
+        UniqueConstraint("region_name", "ami_id", name="_region_name_ami_id_unique_constaraint"),
+        {"extend_existing": True, "schema": "hardware"},
+    )
     region_name = db.Column(db.String(250), nullable=False, primary_key=True)
     ami_id = db.Column(db.String(250), nullable=False)
     client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)

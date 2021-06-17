@@ -16,6 +16,7 @@ from app.models.hardware import (
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
+from app.constants.instance_state_values import PRE_CONNECTION, DRAINING
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -153,6 +154,10 @@ def do_scale_up_if_necessary(
         else:
             num_new = _get_num_new_instances(region, ami)
 
+        ami_obj = RegionToAmi.query.filter_by(
+            region=region, ami=ami
+        ).one_or_none()
+
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
@@ -179,8 +184,8 @@ def do_scale_up_if_necessary(
                     container_capacity=base_number_free_containers,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
-                    status="PRE-CONNECTION",
-                    commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
+                    status=PRE_CONNECTION,
+                    commit_hash=ami_obj.client_commit_hash,
                 )
                 new_instances.append(new_instance)
                 db.session.add(new_instance)
@@ -223,7 +228,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 if instance_containers is None or instance_containers.num_running_containers != 0:
                     db.session.commit()
                     continue
-                instance_info.status = "DRAINING"
+                instance_info.status = DRAINING
                 try:
                     base_url = (
                         f"http://{instance_info.ip}/{current_app.config['HOST_SERVICE_PORT']}"
