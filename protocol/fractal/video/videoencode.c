@@ -28,20 +28,6 @@ void set_opt(VideoEncoder *encoder, char *option, char *value) {
     }
 }
 
-AVCodec* find_encoder_by_name(const char* name) {
-    /*
-       Wrapper around find_encoder_by_name that casts the output from const AVCodec* to
-  AVCodec*.
-
-       Arguments:
-           name (const char*): name of the encoder to find
-
-       Returns:
-           (AVCodec*): the output of find_encoder_by_name(name), cast to AVCodec*.
-       */
-    return (AVCodec*)find_encoder_by_name(name);
-}
-
 typedef VideoEncoder *(*VideoEncoderCreator)(int, int, int, int, int, CodecType);
 
 VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
@@ -95,9 +81,9 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     // init encoder format in pCodecCtx
 
     if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->pCodec = find_encoder_by_name("h264_nvenc");
+        encoder->pCodec = avcodec_find_encoder_by_name("h264_nvenc");
     } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->pCodec = find_encoder_by_name("hevc_nvenc");
+        encoder->pCodec = avcodec_find_encoder_by_name("hevc_nvenc");
     }
 
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
@@ -328,9 +314,9 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
     // init encoder format in pCodecCtx
 
     if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->pCodec = find_encoder_by_name("h264_qsv");
+        encoder->pCodec = avcodec_find_encoder_by_name("h264_qsv");
     } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->pCodec = find_encoder_by_name("hevc_qsv");
+        encoder->pCodec = avcodec_find_encoder_by_name("hevc_qsv");
     }
 
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
@@ -597,9 +583,9 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     // init encoder format in pCodecCtx
 
     if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->pCodec = find_encoder_by_name("libx264");
+        encoder->pCodec = avcodec_find_encoder_by_name("libx264");
     } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->pCodec = find_encoder_by_name("libx265");
+        encoder->pCodec = avcodec_find_encoder_by_name("libx265");
     }
 
     encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);

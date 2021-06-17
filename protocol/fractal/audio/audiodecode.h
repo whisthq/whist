@@ -48,7 +48,7 @@ Custom Types
  * @brief                          Audio decoder features
  */
 typedef struct AudioDecoder {
-    AVCodec* pCodec;
+    const AVCodec* pCodec;
     AVCodecContext* pCodecCtx;
     AVFrame* pFrame;
     SwrContext* pSwrContext;

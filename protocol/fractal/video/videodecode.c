@@ -38,20 +38,6 @@ void set_decoder_opts(VideoDecoder* decoder) {
     set_opt(decoder, "async_depth", "1");
 }
 
-AVCodec* find_decoder_by_name(const char* name) {
-    /*
-       Wrapper around avcodec_find_decoder_by_name that casts the output from const AVCodec* to
-  AVCodec*.
-
-       Arguments:
-           name (const char*): name of the decoder to find
-
-       Returns:
-           (AVCodec*): the output of avcodec_find_decoder_by_name(name), cast to AVCodec*.
-       */
-    return (AVCodec*)avcodec_find_decoder_by_name(name);
-}
-
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     int err = 0;
 
@@ -158,9 +144,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         LOG_INFO("Trying software decoder");
 
         if (decoder->codec_type == CODEC_TYPE_H264) {
-            decoder->codec = find_decoder_by_name("h264");
+            decoder->codec = avcodec_find_decoder_by_name("h264");
         } else if (decoder->codec_type == CODEC_TYPE_H265) {
-            decoder->codec = find_decoder_by_name("hevc");
+            decoder->codec = avcodec_find_decoder_by_name("hevc");
         }
 
         if (!decoder->codec) {
@@ -188,9 +174,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         // BEGIN QSV DECODER
         LOG_INFO("Trying QSV decoder");
         if (decoder->codec_type == CODEC_TYPE_H264) {
-            decoder->codec = find_decoder_by_name("h264_qsv");
+            decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
         } else if (decoder->codec_type == CODEC_TYPE_H265) {
-            decoder->codec = find_decoder_by_name("hevc_qsv");
+            decoder->codec = avcodec_find_decoder_by_name("hevc_qsv");
         }
 
         decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -248,9 +234,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         }
 
         if (decoder->codec_type == CODEC_TYPE_H264) {
-            decoder->codec = find_decoder_by_name("h264");
+            decoder->codec = avcodec_find_decoder_by_name("h264");
         } else if (decoder->codec_type == CODEC_TYPE_H265) {
-            decoder->codec = find_decoder_by_name("hevc");
+            decoder->codec = avcodec_find_decoder_by_name("hevc");
         }
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
