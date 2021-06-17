@@ -383,12 +383,6 @@ InputDevice* create_input_device() {
     input_device->num_lock = false;
     input_device->mouse_has_moved = false;
 
-    // Get DPI
-    char* dpi_string;
-    runcmd("xrdb -display :10 -query dpi", &dpi_string);
-    input_device->dpi = atoi(strchr(dpi_string, '\t'));
-    free(dpi_string);
-
     return input_device;
 }
 

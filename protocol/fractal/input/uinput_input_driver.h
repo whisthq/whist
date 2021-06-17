@@ -32,7 +32,6 @@ typedef struct InputDevice {
     bool num_lock;
     // Internal
     bool mouse_has_moved;
-    int dpi;
 } InputDevice;
 
 #endif  // UINPUT_INPUT_DRIVER_H
