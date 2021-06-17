@@ -282,7 +282,8 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OL
 #elif __APPLE__
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
-DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
+// TODO: Fix QSV
+DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
 #endif
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
