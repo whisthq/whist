@@ -6,6 +6,8 @@
 //
 
 const helpers = require("./build-package-helpers")
+const { isEmpty } = require("lodash")
+const path = require("path")
 
 const args = process.argv.slice(2)
 
@@ -13,6 +15,12 @@ const schemaNames = args.reduce((result, value) => {
   if (result.length === 0) return `${value}`
   return `${result}, ${value}`
 }, "")
+
+if (isEmpty(schemaNames)) {
+  const file = path.basename(process.argv[1])
+  const message =  `Schema names must be passed as arguments to ${file}`
+  throw new Error(message)
+}
 
 helpers.buildAndCopyProtocol()
 helpers.buildTailwind()
