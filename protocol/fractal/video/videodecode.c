@@ -38,6 +38,20 @@ void set_decoder_opts(VideoDecoder* decoder) {
     set_opt(decoder, "async_depth", "1");
 }
 
+AVCodec* find_decoder_by_name(const char* name) {
+    /*
+       Wrapper around avcodec_find_decoder_by_name that casts the output from const AVCodec* to
+  AVCodec*.
+
+       Arguments:
+           name (const char*): name of the decoder to find
+
+       Returns:
+           (AVCodec*): the output of avcodec_find_decoder_by_name(name), cast to AVCodec*.
+       */
+    return (AVCodec*)avcodec_find_decoder_by_name(name);
+}
+
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     int err = 0;
 
@@ -144,9 +158,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         LOG_INFO("Trying software decoder");
 
         if (decoder->codec_type == CODEC_TYPE_H264) {
-            decoder->codec = avcodec_find_decoder_by_name("h264");
+            decoder->codec = find_decoder_by_name("h264");
         } else if (decoder->codec_type == CODEC_TYPE_H265) {
-            decoder->codec = avcodec_find_decoder_by_name("hevc");
+            decoder->codec = find_decoder_by_name("hevc");
         }
 
         if (!decoder->codec) {
@@ -174,9 +188,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         // BEGIN QSV DECODER
         LOG_INFO("Trying QSV decoder");
         if (decoder->codec_type == CODEC_TYPE_H264) {
-            decoder->codec = avcodec_find_decoder_by_name("h264_qsv");
+            decoder->codec = find_decoder_by_name("h264_qsv");
         } else if (decoder->codec_type == CODEC_TYPE_H265) {
-            decoder->codec = avcodec_find_decoder_by_name("hevc_qsv");
+            decoder->codec = find_decoder_by_name("hevc_qsv");
         }
 
         decoder->context = avcodec_alloc_context3(decoder->codec);
@@ -234,9 +248,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         }
 
         if (decoder->codec_type == CODEC_TYPE_H264) {
-            decoder->codec = avcodec_find_decoder_by_name("h264");
+            decoder->codec = find_decoder_by_name("h264");
         } else if (decoder->codec_type == CODEC_TYPE_H265) {
-            decoder->codec = avcodec_find_decoder_by_name("hevc");
+            decoder->codec = find_decoder_by_name("hevc");
         }
 
         if (!(decoder->context = avcodec_alloc_context3(decoder->codec))) {
@@ -394,19 +408,20 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     start_timer(&t);
 
     // copy the received packet back into the decoder AVPacket
-    // memcpy(&decoder->packet.data, &buffer, buffer_size);
     int* int_buffer = buffer;
     int num_packets = *int_buffer;
     int_buffer++;
 
     int computed_size = 4;
 
-    AVPacket* packets = safe_malloc(num_packets * sizeof(AVPacket));
+    // make an array of AVPacket*s and alloc each one
+    AVPacket* packets[num_packets];
 
     for (int i = 0; i < num_packets; i++) {
-        av_init_packet(&packets[i]);
-        packets[i].size = *int_buffer;
-        computed_size += 4 + packets[i].size;
+        // allocate packet and set size
+        packets[i] = av_packet_alloc();
+        packets[i]->size = *int_buffer;
+        computed_size += 4 + packets[i]->size;
         int_buffer++;
     }
 
@@ -420,19 +435,20 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
     char* char_buffer = (void*)int_buffer;
     for (int i = 0; i < num_packets; i++) {
-        packets[i].data = (void*)char_buffer;
-        char_buffer += packets[i].size;
+        // set packet data
+        packets[i]->data = (void*)char_buffer;
+        char_buffer += packets[i]->size;
     }
 
     for (int i = 0; i < num_packets; i++) {
         // decode the frame
-        while (avcodec_send_packet(decoder->context, &packets[i]) < 0) {
+        while (avcodec_send_packet(decoder->context, packets[i]) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!");
             // Try next decoder
             if (!try_next_decoder(decoder)) {
                 destroy_video_decoder(decoder);
                 for (int j = 0; j < num_packets; j++) {
-                    av_packet_unref(&packets[j]);
+                    av_packet_unref(packets[j]);
                 }
                 free(packets);
                 return false;
@@ -441,7 +457,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     }
 
     for (int i = 0; i < num_packets; i++) {
-        av_packet_unref(&packets[i]);
+        av_packet_free(&packets[i]);
     }
     free(packets);
 
