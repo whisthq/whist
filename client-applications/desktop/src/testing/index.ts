@@ -1,5 +1,5 @@
 import { Observable, EMPTY } from "rxjs"
-import { get, set, keys } from "lodash"
+import { get, set, keys, isEmpty, negate } from "lodash"
 import * as schemas from "@app/testing/schemas"
 
 // This test should check for an enviroment variable, or some indicator
@@ -8,7 +8,11 @@ const isMockingEnabled = () => process.env.MANUAL_TEST === "true"
 
 // Arguments are passed through environment varialbes as positional arguments
 // separated by commas processed in scripts/testManual.js
-const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
+const schemaArguments = (process.env.TEST_MANUAL_SCHEMAS ?? "")
+  .split(",")
+  .filter(negate(isEmpty))
+
+const testingEnabled = isEmpty(schemaArguments)
 
 // The form of this map will be something like:
 // {
@@ -26,8 +30,7 @@ const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 // such as only calling the mocks once instead of every time in withMocking()
 // when a flow is created.
 const getMocks = () => {
-  const args = getMockArgs()
-  return args.reduce((result, value) => {
+  return schemaArguments.reduce((result, value) => {
     const schema = get(schemas, value) ?? undefined
     if (schema !== undefined) return { ...result, ...schema }
     return result
@@ -58,7 +61,7 @@ export const withMocking = <
   channels: U
 ): { [P in keyof U]: Observable<any> } => {
   // Return early if we're not in testing mode.
-  if (!isMockingEnabled()) return channels
+  if (!testingEnabled) return channels
 
   // Search the map of mockFns for the name of this flow
   // Return channels unchanged if not found
