@@ -5,7 +5,7 @@ import { pick } from "lodash"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import mandelboxPollingFlow from "@app/main/flows/mandelbox/polling"
 import hostServiceFlow from "@app/main/flows/mandelbox/host"
-import { flow, createTrigger } from "@app/utils/flows"
+import { flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
 
 export default flow(
@@ -38,14 +38,8 @@ export default flow(
     )
 
     return {
-      success: createTrigger(
-        "mandelboxFlowSuccess",
-        zip(polling.success, host.success)
-      ),
-      failure: createTrigger(
-        "mandelboxFlowFailure",
-        merge(create.failure, polling.failure, host.failure)
-      ),
+      success: zip(polling.success, host.success),
+      failure: merge(create.failure, polling.failure, host.failure),
     }
   }
 )

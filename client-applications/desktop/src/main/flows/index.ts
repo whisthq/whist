@@ -4,27 +4,28 @@ import { map, take } from "rxjs/operators"
 import authFlow from "@app/main/flows/auth"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
-import { fromTrigger } from "@app/utils/flows"
+import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
 import { AWSRegion } from "@app/@types/aws"
+import TRIGGER from "@app/utils/triggers"
 
 // Autoupdate flow
-autoUpdateFlow(fromTrigger("updateAvailable"))
+const update = autoUpdateFlow(fromTrigger("updateAvailable"))
 
 // Auth flow
-authFlow(
+const auth = authFlow(
   fromSignal(
     merge(
-      fromSignal(fromTrigger("authInfo"), fromTrigger("notPersisted")),
-      fromTrigger("persisted")
+      fromSignal(fromTrigger("authInfo"), fromTrigger(TRIGGER.notPersisted)),
+      fromTrigger(TRIGGER.persisted)
     ),
-    fromTrigger("updateNotAvailable")
+    fromTrigger(TRIGGER.updateNotAvailable)
   )
 )
 
 // Observable that fires when Fractal is ready to be launched
-const launchTrigger = fromTrigger("authFlowSuccess").pipe(
+const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
   map((x: object) => ({
     ...x, // { sub, accessToken, configToken }
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
@@ -38,4 +39,13 @@ const launchTrigger = fromTrigger("authFlowSuccess").pipe(
 }>
 
 // Mandelbox creation flow
-mandelboxFlow(launchTrigger)
+const mandelbox = mandelboxFlow(launchTrigger)
+
+createTrigger(TRIGGER.updateDownloaded, update.downloaded)
+createTrigger(TRIGGER.downloadProgress, update.progress)
+
+createTrigger(TRIGGER.authFlowSuccess, auth.success)
+createTrigger(TRIGGER.authFlowFailure, auth.failure)
+
+createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
+createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
