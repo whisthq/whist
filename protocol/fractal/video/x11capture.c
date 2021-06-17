@@ -48,6 +48,7 @@ int handler(Display* d, XErrorEvent* a) {
         Returns:
             (int): always 0
     */
+
     LOG_ERROR("X11 Error: %d", a->error_code);
     return 0;
 }
