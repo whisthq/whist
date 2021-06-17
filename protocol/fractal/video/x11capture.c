@@ -119,7 +119,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 #if USING_GPU_CAPTURE
     if (create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec) < 0) {
         device->using_nvidia = false;
-        LOG_WARNING("USING_GPU_CAPTURE defined but not using Nvidia Capture SDK!");
+        LOG_ERROR("USING_GPU_CAPTURE defined but unable to use Nvidia Capture SDK!");
     } else {
         device->using_nvidia = true;
         device->image = NULL;
@@ -180,6 +180,8 @@ int capture_screen(CaptureDevice* device) {
             return ret;
         } else {
             device->frame_data = device->nvidia_capture_device.frame;
+            device->width = device->nvidia_capture_device.width;
+            device->height = device->nvidia_capture_device.height;
             device->pitch = device->width * 4;
             device->capture_is_on_nvidia = true;
             return ret;
