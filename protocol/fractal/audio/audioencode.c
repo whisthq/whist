@@ -47,6 +47,9 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     avcodec_register_all();
 #endif
 
+    // initialize the packet
+    encoder->packet = *av_packet_alloc();
+
     encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!encoder->pCodec) {
         LOG_WARNING("AVCodec not found.");
@@ -200,9 +203,6 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
         return -1;
     }
 
-    // initialize packet
-    av_init_packet(&encoder->packet);
-
     // set frame timestamp
     encoder->pFrame->pts = encoder->frame_count;
 
@@ -210,7 +210,6 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     int res = avcodec_send_frame(encoder->pCodecCtx, encoder->pFrame);
     if (res == AVERROR_EOF) {
         // end of file
-        av_packet_unref(&encoder->packet);
         return -1;
     } else if (res < 0) {
         // real error
@@ -219,6 +218,8 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     }
 
     // get encoded packet
+    // because this always calls av_packet_unref before doing anything,
+    // our previous calls to av_packet_unref are unnecessary.
     res = avcodec_receive_packet(encoder->pCodecCtx, &encoder->packet);
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // encoder needs more data or there's nothing left
