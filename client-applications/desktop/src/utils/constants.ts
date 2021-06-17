@@ -1,6 +1,8 @@
 // TODO: This is getting a bit unwieldy. Let's create a way to group related errors, e.g.
 // a "mandelbox error" object.
 
+export const allowPayments = false
+
 export const HostServicePort = 4678
 
 // poll for a mandelbox for 30 seconds max

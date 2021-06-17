@@ -38,7 +38,10 @@ export default flow(
     )
 
     return {
-      success: createTrigger("mandelboxFlowSuccess", polling.success),
+      success: createTrigger(
+        "mandelboxFlowSuccess",
+        zip(polling.success, host.success)
+      ),
       failure: createTrigger(
         "mandelboxFlowFailure",
         merge(create.failure, polling.failure, host.failure)
