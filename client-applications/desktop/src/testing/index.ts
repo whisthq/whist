@@ -2,10 +2,6 @@ import { Observable, NEVER } from "rxjs"
 import { get, set, keys, isEmpty, negate } from "lodash"
 import * as schemas from "@app/testing/schemas"
 
-// This test should check for an enviroment variable, or some indicator
-// that we're in "testing mode". We'll just set to true for now.
-const isMockingEnabled = () => process.env.MANUAL_TEST === "true"
-
 // Arguments are passed through environment varialbes as positional arguments
 // separated by commas processed in scripts/testManual.js
 const schemaArguments = (process.env.TEST_MANUAL_SCHEMAS ?? "")
@@ -33,7 +29,7 @@ if (testingEnabled) {
   console.log("TESTING MODE: Available schemas:", keys(schemas).join(", "))
   console.log("TESTING MODE: Selected schemas:", schemaArguments.join(", "))
 
-  let available = new Set(keys(schemas))
+  const available = new Set(keys(schemas))
   schemaArguments.forEach((arg) => {
     if (!available.has(arg))
       console.log("TESTING MODE: Received unknown schema argument:", arg)
