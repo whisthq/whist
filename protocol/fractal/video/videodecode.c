@@ -401,12 +401,11 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
     int computed_size = 4;
 
-
     // make an array of AVPacket*s and alloc each one
     AVPacket* packets[num_packets] = {NULL};
 
     for (int i = 0; i < num_packets; i++) {
-      // allocate packet and set size
+        // allocate packet and set size
         packets[i] = av_packet_alloc();
         packets[i]->size = *int_buffer;
         computed_size += 4 + packets[i].size;
@@ -423,7 +422,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
     char* char_buffer = (void*)int_buffer;
     for (int i = 0; i < num_packets; i++) {
-      // set packet data 
+        // set packet data
         packets[i]->data = (void*)char_buffer;
         char_buffer += packets[i]->size;
     }
