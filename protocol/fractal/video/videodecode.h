@@ -36,7 +36,7 @@ typedef struct VideoDecoder {
     int width;
     int height;
     bool can_use_hardware;
-    AVCodec* codec;
+    const AVCodec* codec;
     AVCodecContext* context;
     AVFrame* sw_frame;
     AVFrame* hw_frame;
