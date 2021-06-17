@@ -324,6 +324,7 @@ RUN apt-get install --no-install-recommends -y \
     dkms \
     awesome \
     awesome-extra \
+    xsettingsd \
     lxappearance \
     xinit \
     xdotool \
@@ -580,6 +581,9 @@ RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
 
 COPY scripts/run-fractal-application.sh /usr/bin/run-fractal-application.sh
 RUN chmod +x /usr/bin/run-fractal-application.sh
+
+COPY scripts/update-fractal-dpi.sh /usr/share/fractal/update-fractal-dpi.sh
+RUN chmod +x /usr/share/fractal/update-fractal-dpi.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 
