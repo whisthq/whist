@@ -127,6 +127,9 @@ target_link_libraries(FractalClient
 ################## LINUX ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+    target_sources(FractalClient PRIVATE native_window_utils_x11.c)
+
     find_package(X11 REQUIRED
             Xfixes)
     find_package(ALSA REQUIRED)
@@ -171,6 +174,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
+
+    target_sources(FractalClient PRIVATE native_window_utils_windows.c)
 
     target_link_libraries(FractalClient fractalInput ${LIBMFX})
 

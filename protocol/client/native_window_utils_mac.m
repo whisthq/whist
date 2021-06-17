@@ -20,8 +20,8 @@ Includes
 */
 
 #include "native_window_utils.h"
+#include <SDL2/SDL_syswm.h>
 #include <Cocoa/Cocoa.h>
-#include "SDL2/SDL_syswm.h"
 
 /*
 ============================
@@ -44,6 +44,12 @@ void hide_native_window_taskbar() {
     [NSMenu setMenuBarVisible:YES];
 }
 
+NSWindow *get_native_window(SDL_Window *window) {
+    SDL_SysWMinfo sys_info = {0};
+    SDL_GetWindowWMInfo(window, &sys_info);
+    return sys_info.info.cocoa.window;
+}
+
 int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
     /*
         Set the color of the titlebar of the native macOS window, and the corresponding
@@ -57,9 +63,7 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
             (int): 0 on success, -1 on failure.
     */
 
-    SDL_SysWMinfo sys_info = {0};
-    SDL_GetWindowWMInfo(window, &sys_info);
-    NSWindow *native_window = sys_info.info.cocoa.window;
+    NSWindow *native_window = get_native_window(window);
 
     if (color_requires_dark_text(color)) {
         // dark font color for titlebar
@@ -82,4 +86,21 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
                                              components:&components[0]
                                                   count:4]];
     return 0;
+}
+
+int get_native_window_dpi(SDL_Window *window) {
+    /*
+        Get the DPI for the display of the provided window.
+
+        Arguments:
+            window (SDL_Window*):       SDL window whose DPI to retrieve.
+
+        Returns:
+            (int): The DPI as an int, with 96 as a base.
+    */
+
+    NSWindow *native_window = get_native_window(window);
+
+    const CGFloat scale_factor = [[native_window screen] backingScaleFactor];
+    return (int)(96 * scale_factor);
 }

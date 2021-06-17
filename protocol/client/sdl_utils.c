@@ -21,10 +21,8 @@ Includes
 #include <fractal/utils/png.h>
 #include <fractal/utils/lodepng.h>
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include <fractal/utils/color.h>
 #include "native_window_utils.h"
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -160,12 +158,9 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     SDL_Window* sdl_window;
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-    // only implemented on macOS so far
     if (skip_taskbar) {
         hide_native_window_taskbar();
     }
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
     const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
@@ -197,10 +192,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         set_window_icon_from_png(sdl_window, icon_filename);
     }
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
     const FractalRGBColor white = {255, 255, 255};
     set_native_window_color(sdl_window, white);
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {

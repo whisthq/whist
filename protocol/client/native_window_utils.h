@@ -22,7 +22,7 @@ Includes
 ============================
 */
 
-#include "SDL2/SDL.h"
+#include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 
 /*
@@ -49,5 +49,14 @@ void hide_native_window_taskbar();
  * @returns                        Returns -1 on failure, 0 on success.
  */
 int set_native_window_color(SDL_Window *window, FractalRGBColor color);
+
+/**
+ * @brief                          Get the DPI for the display of the provided window.
+ *
+ * @param window                   The SDL window handle whose DPI to retrieve.
+ *
+ * @returns                        The DPI as an int, with 96 as a base.
+ */
+int get_native_window_dpi(SDL_Window *window);
 
 #endif  // NATIVE_WINDOW_UTILS_H
