@@ -6,11 +6,14 @@ import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 
-import { WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
+import {
+  WindowHashUpdate,
+  WindowHashSignout,
+  allowPayments,
+} from "@app/utils/constants"
 import { fractalError, NO_PAYMENT_ERROR } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
-import { allowPayments } from "@app/utils/payment"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
