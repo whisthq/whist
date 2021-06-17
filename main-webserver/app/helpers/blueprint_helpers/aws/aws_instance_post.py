@@ -3,7 +3,7 @@ import time
 
 from collections import defaultdict
 from sys import maxsize
-from typing import Optional
+from typing import List, Optional
 import requests
 from flask import current_app
 from app.models.hardware import (
@@ -129,7 +129,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 scale_mutex = defaultdict(threading.Lock)
 
 
-def do_scale_up_if_necessary(region: str, ami: str) -> None:
+def do_scale_up_if_necessary(
+    region: str, ami: str, force_buffer: Optional[int] = 0
+) -> List[InstanceInfo]:
     """
     Scales up new instances as needed, given a region and AMI to check
     Specifically, if we want to add X instances (_get_num_new_instances
@@ -139,11 +141,18 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
         region: which region to check for scaling
         ami: which AMI to scale with
 
-    Returns: None
+    Returns: List of database objects representing the instances created.
 
     """
+    new_instances = []
     with scale_mutex[f"{region}-{ami}"]:
-        num_new = _get_num_new_instances(region, ami)
+
+        num_new = 0
+        if force_buffer > 0:
+            num_new = force_buffer
+        else:
+            num_new = _get_num_new_instances(region, ami)
+
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
@@ -173,8 +182,10 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                     status="PRE-CONNECTION",
                     commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
                 )
+                new_instances.append(new_instance)
                 db.session.add(new_instance)
                 db.session.commit()
+    return new_instances
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:

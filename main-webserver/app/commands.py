@@ -8,6 +8,7 @@ import click
 
 from app.models import db, RegionToAmi, InstanceInfo
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 
 command_bp = Blueprint("command", __name__)
@@ -42,8 +43,14 @@ def ami_upgrade(
 
     new_disabled_amis = _insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping)
 
+    new_instances = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
-        do_scale_up_if_necessary(region_name, ami_id)
+        # TODO: right now buffer seems to be 1 instance if it is the first of its kind(AMI), Probably move this to a config.
+        FORCE_BUFFER = 1
+        new_instances = do_scale_up_if_necessary(region_name, ami_id, FORCE_BUFFER)
+
+    for new_instance in new_instances:
+        _poll(new_instance.cloud_provider_id)
 
     active_instances = (
         db.session.query(InstanceInfo)
