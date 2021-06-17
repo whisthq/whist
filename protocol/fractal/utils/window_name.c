@@ -59,6 +59,11 @@ int get_focused_window_name(char* name_return) {
     int revert;
     XGetInputFocus(display, &w, &revert);
 
+    if (!w) {
+        // No window is active.
+        return 1;
+    }
+
     // https://gist.github.com/kui/2622504
     XTextProperty prop;
     Status s;
