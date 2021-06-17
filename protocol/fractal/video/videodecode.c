@@ -423,6 +423,9 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     char* char_buffer = (void*)int_buffer;
     for (int i = 0; i < num_packets; i++) {
         // set packet data
+        // we don't use av_grow_packet or av_packet_from_data:
+        // the former involves allocating a new buffer and memcpying all of buffer
+        // the latter needs data to be av_malloced, which is not the case for us.
         packets[i]->data = (void*)char_buffer;
         char_buffer += packets[i]->size;
     }
