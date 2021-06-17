@@ -1,12 +1,10 @@
 # Note that we can't set "o" or "pipefail" since xinitrc is run as a non-compatible shell script.
 set -Eeu
 
-# This script starts the AwesomeWM window manager inside the mandelbox, retrieves
-# the DPI, and starts the mandelbox's application (i.e. Google Chrome)
+# This script starts the AwesomeWM window manager inside the mandelbox
+# and starts the mandelbox's application (i.e. Google Chrome)
 
-# Set resource paths
-FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
-DPI_FILENAME=$FRACTAL_MAPPINGS_DIR/DPI
+RUN_AS_FRACTAL=/usr/share/fractal/run-as-fractal-user.sh
 
 # Install keymappings
 xmodmap /root/.Xmodmap
@@ -15,29 +13,30 @@ xmodmap /root/.Xmodmap
 
 # Start playerctl to respond to media keys
 echo "Starting 'playerctl daemon' in the background..."
-/usr/share/fractal/run-as-fractal-user.sh "playerctl daemon" &
+$RUN_AS_FRACTAL "playerctl daemon" &
 
 # Start the AwesomeWM window manager
 echo "Starting AwesomeWM in the background..."
-/usr/share/fractal/run-as-fractal-user.sh "awesome" &
+$RUN_AS_FRACTAL "awesome" &
 
 # Gets the PID of the backgrounded AwesomeWM process
 awesome_pid=$!
 
 echo "AwesomeWM started as PID $awesome_pid..."
 
-# Send DPI to X Server, if DPI is set 
-if [ -f "$DPI_FILENAME" ]; then
-    export FRACTAL_DPI=$(cat $DPI_FILENAME)
-    echo "Xft.dpi: $FRACTAL_DPI" | xrdb -merge
-fi
+# Set the DPI to a default value of 96 and initialize the relevant files
+/usr/share/fractal/update-fractal-dpi.sh
+
+# Start the XSettings daemon to make DPI changes responsive
+echo "Starting 'xsettingsd' in the background..."
+$RUN_AS_FRACTAL "xsettingsd" &
 
 # Indicate that the display is ready and consider the service started
 systemd-notify --ready --status="X11 Display and AwesomeWM started"
 
 echo "Notified that fractal-display service is ready"
 
-# Wait for AwesomeWM process to finish
-# Note: this never finishes, but leaves the X server open
+# Wait for AwesomeWM process
+# Note: this never finishes, but leaves the X server open indefinitely
 wait $awesome_pid
 

@@ -20,7 +20,7 @@ The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-a
 
 1. `docker-entrypoint.sh` starts up and calls `exec` to become systemd (with pid 1)
 
-2. systemd runs `fractal-entrypoint.service`, which waits until a `.ready` file is written -- this is configured as a oneshot, meaning that `fractal-display.service` only starts after `fractal-entrypoint.service` finishes. This means that everything waits for `.ready` file to be written. The directory with the `.ready` file also contains files with the parameters necessary to for the mandelbox to start properly (DPI, user ID, etc.).
+2. systemd runs `fractal-entrypoint.service`, which waits until a `.ready` file is written -- this is configured as a oneshot, meaning that `fractal-display.service` only starts after `fractal-entrypoint.service` finishes. This means that everything waits for `.ready` file to be written. The directory with the `.ready` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.).
 
 3. Once `fractal-entrypoint.service` finishes, `fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our mandelboxes can only be run on GPU-powered hosts.
 
