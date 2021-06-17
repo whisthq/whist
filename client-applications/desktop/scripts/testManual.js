@@ -18,7 +18,7 @@ const schemaNames = args.reduce((result, value) => {
 
 if (isEmpty(schemaNames)) {
   const file = path.basename(process.argv[1])
-  const message =  `Schema names must be passed as arguments to ${file}`
+  const message = `Schema names must be passed as arguments to ${file}`
   throw new Error(message)
 }
 
