@@ -1,4 +1,4 @@
-import { allowPayments } from "@app/utils/payment"
+import { allowPayments } from "@app/utils/constants"
 
 export const NO_PAYMENT_ERROR = "NO_PAYMENT_ERROR"
 export const UNAUTHORIZED_ERROR = "UNAUTHORIZED_ERROR"
