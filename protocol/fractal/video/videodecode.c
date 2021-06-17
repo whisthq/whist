@@ -408,7 +408,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
         // allocate packet and set size
         packets[i] = av_packet_alloc();
         packets[i]->size = *int_buffer;
-        computed_size += 4 + packets[i].size;
+        computed_size += 4 + packets[i]->size;
         int_buffer++;
     }
 
@@ -444,7 +444,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     }
 
     for (int i = 0; i < num_packets; i++) {
-        av_packet_free(packets[i]);
+        av_packet_free(&packets[i]);
     }
     free(packets);
 
