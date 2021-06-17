@@ -402,7 +402,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     int computed_size = 4;
 
     // make an array of AVPacket*s and alloc each one
-    AVPacket* packets[num_packets] = {NULL};
+    AVPacket* packets[num_packets];
 
     for (int i = 0; i < num_packets; i++) {
         // allocate packet and set size
