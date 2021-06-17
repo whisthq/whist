@@ -27,7 +27,7 @@ In order to fulfill all of its responsibilites, Fractal's Webserver communicates
 
 * user agents (e.g. the desktop application, browsers, developer tools such as Postman and cURL),
 * the ECS host service,
-* Fractal protocol server instances,
+* instances of the Fractal protocol server running in ECS containers,
 * GitHub Actions (GHA) workflows, and
 * HireFire.
 

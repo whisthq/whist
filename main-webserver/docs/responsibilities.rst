@@ -1,32 +1,38 @@
 .. responsibilities.rst
    An description of each of the Fractal web server's main responsibilities.
 
-Web server responsibilities
+Webserver responsibilities
 ===========================
 
-The Fractal appears to have many different responsibilities because it does so much, but none of its responsibilities are particularly well-defined. In fact, we can think about the web server having just three main responsibilities:
+The Fractal Webserver performs four main functions. It
 
-* user management,
-* access control, and
-* and streaming session management.
-
-
-User management
----------------
-
-The user management responsibilities of the web server are pretty much limited to account registration. The web server is responsible for creating rows for new users in Fractal's database.
+* implements access control,
+* handles compute scaling, and
+* allows users to initiate application streams.
 
 
 Access control
 --------------
 
-For each user that the web server has registered, the web server must be able to control that user's access to resources that are available via the web server. For example, the web server has to ensure that only users with an active Fractal subscription receive service.
+For each access token that the web server receives, it must verify that the authenticated user is authorized to access the resources to which they are requesting access. For example, some Webserver resources are only accessible to Fractal subscribers, while others are only access to Fractal administrators.
+
+Access tokens are JWTs issued by an Auth0 tenant that takes care of user management and authentication. Each time the Webserver receives one of these access tokens, it uses the Auth0 tenant's public signing key to validate the token's signature. Validating the signature allows the Webserver to trust that the token was really issued by the Auth0 tenant. Once the signature has been validated, the Webserver can use the data contained in the token's payload to determine whether or not the authenticated is authorized to access the resource to which they are requesting access.
+
+In order to enforce access control for resources that are only accessible to Fractal subscribers, the Webserver reads the the authenticated user's Stripe-issued customer ID from the token's payload and uses it to query Stripe's API for the authenticated user's Fractal subscription status. If the subscription is in one of the "active" or "trialing" states, they are granted access to the resource.
+
+In order to enforce access control for resources that are only accessible to Fractal administrators, the Webserver reads from the token's payload the API scopes that the user is authorized to access. If one of those scopes is "admin", then the user is allowed to access the resource.
 
 
-Streaming session management
-----------------------------
+Compute scaling
+---------------
 
-By far the most significant and complicated of the web server's responsibilities is that of allocating application streams to users. Upon receipt of a request to start streaming an application, the web server must quickly procure connection information for a running instance of the protocol server and return it to the the desktop application that requested the streaming session. In order to fulfill this responsibility, the web server consumes information from Fractal's database and AWS account.
+TODO
+
+
+Application streaming
+---------------------
+
+By far the most significant and complicated of the web server's responsibilities is that of allocating containers to users. When the Webserver receives a request to start streaming an application, the web server must quickly procure connection information for a running instance of the protocol server and return it to the the desktop application that requested the streaming session.
 
 
 Starting streams
@@ -46,4 +52,4 @@ Another reason why it is useful, if not necessarily necessary, to cache some inf
 Ending streams
 ^^^^^^^^^^^^^^
 
-When a user closes a streamed application at the end of their streaming session, the application container notifies the web server that the user has disconnected. At this point, the web server instructs AWS to delete the container. All data except for any application-specific configuration vanishes. Application-specific configuration is encrypted with a user-specific encryption key that is never stored in plaintext on Fractal's servers.
+When a user closes a streamed application at the end of their streaming session, the application container notifies the web server that the user has disconnected. At this point, the web server instructs AWS to delete the container. All data except for any application-specific configuration vanishes. In other words, every streamed application (i.e. ECS container) has an ephemeral hard drive. All data that is persisted between streaming sessions is encrypted with a user-specific encryption key and uploaded in its encrypted to in S3 before the ECS container destroys itself. The encryption key is known only to the end-user, so neither AWS nor Fractal employees are able to decrypt and read the users' data.

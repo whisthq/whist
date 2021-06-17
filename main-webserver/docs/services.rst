@@ -9,7 +9,7 @@ Other services
 User agents
 -----------
 
-* The desktop application allows customers to register and log into user accounts. Once the desktop application is authenticated, it can request that the web server allocate it a streaming session.
+* The Fractal desktop application allows customers to register and log into user accounts. Once the desktop application is authenticated, it can request that the web server allocate it a streaming session.
 * Developers use tools such as web browsers, Postman, and cURL to perform manual tests against instances of the web server and also to perform administrative actions like creating and deleting cloud resources.
 
 
@@ -21,7 +21,7 @@ The ECS host service
 * The ECS host service also sends periodic heartbeats back to the web server to let it know that it is alive.
 
 
-Fractal protocol server instances
+The Fractal protocol server
 ---------------------------------
 
 * The Fractal protocol server notifies the web server when connected clients disconnect so the web server knows when to tell AWS to delete containers that are no longer needed.
@@ -30,7 +30,7 @@ Fractal protocol server instances
 GHA workflows
 -------------
 
-* Each time a new release is deployed, a GitHub Actions workflow places the web server in maintenance mode so the deployment can happen atomically.
+* Each time a new release is deployed, a GitHub Actions workflow places the web server in maintenance mode so the deployment can happen atomically. It is necessary to suspend normal Webserver operation temporarily when deploying new releases to give us time to update all of our cloud infrastructure.
 
 
 HireFire
@@ -43,8 +43,8 @@ HireFire
 Databases
 ---------
 
-* On startup, the web server reads from a centralized database of Flask configuration variables that may be overridden by Heroku environment variables.
-* The web server is also attached to an all purpose PostgreSQL database that it uses at runtime.
+* On startup, the web server reads from a centralized database of Flask configuration variables that may be overridden by Heroku environment variables. We call this database the configuration database and it is shared by all Fractal Webserver deployments.
+* Each Webserver deployment is also attached to an all-purpose PostgreSQL database that it uses at runtime. This database keeps track of streaming sessions that have been initiated by API requests to the associated Webserver.
 
 
 AWS services
