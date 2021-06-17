@@ -32,10 +32,7 @@ def _insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping):
             allowed=True,
         )
         new_disabled_amis.append(new_ami)
-    sql = fractal_sql_commit(db, lambda db, x: db.session.add_all(x), new_disabled_amis)
-
-    if not sql:
-        raise Exception("Failed to commit new app state info.")
+    db.session.commit()
     return new_disabled_amis
 
 
@@ -79,8 +76,4 @@ def ami_upgrade(
     for new_disabled_ami in new_disabled_amis:
         new_disabled_ami.enabled = True
 
-    # Atomically commit marking the running instances as Draining and new AMIs as active.
-    sql = fractal_sql_commit(db)
-
-    if not sql:
-        raise Exception("Failed to commit new app state info.")
+    db.session.commit()
