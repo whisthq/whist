@@ -21,7 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #define _POSIX_C_SOURCE 199309L
-#include <fractal/core/fractal.h>  // For logging
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,53 +31,64 @@
 #include <sys/time.h>
 
 #include "NvFBCUtils.h"
+#include <fractal/core/fractal.h>
 
 #define BITMAP_ROW_SIZE(width) (((width * Bpp) + 3) & ~3)
 #define BITMAP_INDEX(x, y, rowSize) ((y * rowSize) + (x * Bpp))
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint8_t blue;
     uint8_t green;
     uint8_t red;
 } BitmapPixel;
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint8_t alpha;
     uint8_t red;
     uint8_t green;
     uint8_t blue;
 } ARGBPixel;
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint8_t red;
     uint8_t green;
     uint8_t blue;
     uint8_t alpha;
 } RGBAPixel;
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint8_t blue;
     uint8_t green;
     uint8_t red;
     uint8_t alpha;
 } BGRAPixel;
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint8_t red;
     uint8_t green;
     uint8_t blue;
 } RGBPixel;
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint8_t red;
 } RPixel;
 
 // Bytes per pixel
 static int Bpp = sizeof(BitmapPixel);
 
-static int NvFBCUtilsSaveBitmap(const char *filename, const unsigned char *data, const int width,
-                                const int height) {
-    struct __attribute__((packed)) {
+static int NvFBCUtilsSaveBitmap(const char *filename,
+                                const unsigned char *data,
+                                const int width,
+                                const int height)
+{
+    struct __attribute__((packed))
+    {
         uint16_t type;
         uint32_t size;
         uint16_t reserved1;
@@ -86,16 +96,17 @@ static int NvFBCUtilsSaveBitmap(const char *filename, const unsigned char *data,
         uint32_t off_bits;
     } fileHeader;
 
-    struct __attribute__((packed)) {
+    struct __attribute__((packed))
+    {
         uint32_t size;
-        int32_t width;
-        int32_t height;
+        int32_t  width;
+        int32_t  height;
         uint16_t planes;
         uint16_t bit_count;
         uint32_t compression;
         uint32_t size_image;
-        int32_t x_pels_per_meter;
-        int32_t y_pels_per_meter;
+        int32_t  x_pels_per_meter;
+        int32_t  y_pels_per_meter;
         uint32_t clr_used;
         uint32_t clr_important;
     } infoHeader;
@@ -104,36 +115,36 @@ static int NvFBCUtilsSaveBitmap(const char *filename, const unsigned char *data,
     FILE *fd = NULL;
 
     if (data == NULL) {
-        LOG_ERROR("%s: There is no data to write\n", __FUNCTION__);
+        LOG_ERROR("%s: There is no data to write", __FUNCTION__);
         return 1;
     }
 
     fd = fopen(filename, "wb");
     if (fd == NULL) {
-        LOG_ERROR("%s: Unable to open file '%s'\n", __FUNCTION__, filename);
+        LOG_ERROR("%s: Unable to open file '%s'", __FUNCTION__, filename);
         return 1;
     }
 
     size = BITMAP_ROW_SIZE(width) * height;
 
-    fileHeader.type = 0x4D42;
-    fileHeader.size = sizeof(fileHeader) + sizeof(infoHeader) + size;
+    fileHeader.type     = 0x4D42;
+    fileHeader.size     = sizeof(fileHeader) + sizeof(infoHeader) + size;
     fileHeader.off_bits = sizeof(fileHeader) + sizeof(infoHeader);
 
-    infoHeader.size = sizeof(infoHeader);
-    infoHeader.width = width;
-    infoHeader.height = height;
-    infoHeader.planes = 1;
-    infoHeader.bit_count = Bpp * 8;
-    infoHeader.compression = 0;
-    infoHeader.size_image = 0;
+    infoHeader.size             = sizeof(infoHeader);
+    infoHeader.width            = width;
+    infoHeader.height           = height;
+    infoHeader.planes           = 1;
+    infoHeader.bit_count        = Bpp * 8;
+    infoHeader.compression      = 0;
+    infoHeader.size_image       = 0;
     infoHeader.x_pels_per_meter = 0;
     infoHeader.y_pels_per_meter = 0;
-    infoHeader.clr_used = 0;
-    infoHeader.clr_important = 0;
+    infoHeader.clr_used         = 0;
+    infoHeader.clr_important    = 0;
 
-    fwrite((unsigned char *)&fileHeader, sizeof(fileHeader), 1, fd);
-    fwrite((unsigned char *)&infoHeader, sizeof(infoHeader), 1, fd);
+    fwrite((unsigned char *) &fileHeader, sizeof(fileHeader), 1, fd);
+    fwrite((unsigned char *) &infoHeader, sizeof(infoHeader), 1, fd);
     fwrite(data, size, 1, fd);
 
     fclose(fd);
@@ -141,8 +152,12 @@ static int NvFBCUtilsSaveBitmap(const char *filename, const unsigned char *data,
     return 0;
 }
 
-static int NvFBCUtilsSaveRGBFormats(NVFBC_BUFFER_FORMAT format, const char *filename,
-                                    unsigned char *data, const int width, const int height) {
+static int NvFBCUtilsSaveRGBFormats(NVFBC_BUFFER_FORMAT format,
+                                    const char *filename,
+                                    unsigned char *data,
+                                    const int width,
+                                    const int height)
+{
     int result = 1;
 
     int row, col;
@@ -194,9 +209,9 @@ static int NvFBCUtilsSaveRGBFormats(NVFBC_BUFFER_FORMAT format, const char *file
             }
 
             BitmapPixel *pixelOut = (BitmapPixel *)&output[outputIdx];
-            pixelOut->red = r;
+            pixelOut->red   = r;
             pixelOut->green = g;
-            pixelOut->blue = b;
+            pixelOut->blue  = b;
         }
     }
 
@@ -207,8 +222,11 @@ static int NvFBCUtilsSaveRGBFormats(NVFBC_BUFFER_FORMAT format, const char *file
     return result;
 }
 
-int NvFBCUtilsSaveDiffMap(const char *filename, unsigned char *data, const int width,
-                          const int height) {
+int NvFBCUtilsSaveDiffMap(const char *filename,
+                          unsigned char *data,
+                          const int width,
+                          const int height)
+{
     int result = 1;
 
     int row, col;
@@ -223,16 +241,18 @@ int NvFBCUtilsSaveDiffMap(const char *filename, unsigned char *data, const int w
     // Pad bytes need to be set to zero, it's easier to just set the entire chunk of memory
     memset(output, 0, size);
 
-    for (row = 0; row < height; ++row) {
-        for (col = 0; col < width; ++col) {
+    for (row = 0; row < height; ++row)
+    {
+        for (col = 0; col < width; ++col)
+        {
             // In a bitmap (0,0) is at the bottom left, in the frame buffer it is the top left.
             int outputIdx = BITMAP_INDEX(col, row, rowSize);
             int inputIdx = ((height - row - 1) * width) + col;
 
             BitmapPixel *pixelOut = (BitmapPixel *)&output[outputIdx];
-            pixelOut->red = input[inputIdx].red;
+            pixelOut->red   = input[inputIdx].red;
             pixelOut->green = input[inputIdx].red;
-            pixelOut->blue = input[inputIdx].red;
+            pixelOut->blue  = input[inputIdx].red;
         }
     }
 
@@ -243,8 +263,12 @@ int NvFBCUtilsSaveDiffMap(const char *filename, unsigned char *data, const int w
     return result;
 }
 
-static int NvFBCUtilsSaveYUVPlanar(NVFBC_BUFFER_FORMAT format, const char *fileName,
-                                   unsigned char *data, const int width, const int height) {
+static int NvFBCUtilsSaveYUVPlanar(NVFBC_BUFFER_FORMAT format,
+                                   const char *fileName,
+                                   unsigned char *data,
+                                   const int width,
+                                   const int height)
+{
     int result = 1;
 
     int row, col;
@@ -346,8 +370,12 @@ done:
     return result;
 }
 
-int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format, const char *filename, unsigned char *data,
-                        const int width, const int height) {
+int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format,
+                        const char *filename,
+                        unsigned char *data,
+                        const int width,
+                        const int height)
+{
     switch (format) {
         case NVFBC_BUFFER_FORMAT_ARGB:
         case NVFBC_BUFFER_FORMAT_RGBA:
@@ -363,7 +391,8 @@ int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format, const char *filename, unsign
     }
 }
 
-uint64_t NvFBCUtilsGetTimeInMicros() {
+uint64_t NvFBCUtilsGetTimeInMicros()
+{
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
@@ -371,41 +400,55 @@ uint64_t NvFBCUtilsGetTimeInMicros() {
     return (uint64_t)tv.tv_sec * 1000000ULL + (uint64_t)tv.tv_usec;
 }
 
-uint64_t NvFBCUtilsGetTimeInMillis() { return NvFBCUtilsGetTimeInMicros() / 1000; }
+uint64_t NvFBCUtilsGetTimeInMillis()
+{
+    return NvFBCUtilsGetTimeInMicros() / 1000;
+}
 
-void NvFBCUtilsPrintStatus(NVFBC_GET_STATUS_PARAMS *status) {
+void NvFBCUtilsPrintStatus(NVFBC_GET_STATUS_PARAMS *status)
+{
     if (status == NULL) {
         return;
     }
 
     LOG_INFO("Status:");
-    LOG_INFO("- NvFBC library API version: %u.%u", status->dwNvFBCVersion >> 8 & 0xf,
-             status->dwNvFBCVersion & 0xf);
-    LOG_INFO("- This system supports FBC: %s", status->bIsCapturePossible ? "Yes" : "No");
-    LOG_INFO("- Curently capturing: %s", status->bCurrentlyCapturing ? "Yes" : "No");
-    LOG_INFO("- Can create an FBC instance: %s", status->bCanCreateNow ? "Yes" : "No");
-    LOG_INFO("- X screen (framebuffer) size: %ux%u", status->screenSize.w, status->screenSize.h);
-    LOG_INFO("- XrandR extension available: %s", status->bXRandRAvailable ? "Yes" : "No");
+    LOG_INFO("- NvFBC library API version: %u.%u",
+           status->dwNvFBCVersion >> 8 & 0xf,
+           status->dwNvFBCVersion & 0xf);
+    LOG_INFO("- This system supports FBC: %s",
+           status->bIsCapturePossible ? "Yes" : "No");
+    LOG_INFO("- Curently capturing: %s",
+           status->bCurrentlyCapturing ? "Yes" : "No");
+    LOG_INFO("- Can create an FBC instance: %s",
+           status->bCanCreateNow ? "Yes" : "No");
+    LOG_INFO("- X screen (framebuffer) size: %ux%u",
+           status->screenSize.w, status->screenSize.h);
+    LOG_INFO("- XrandR extension available: %s",
+           status->bXRandRAvailable ? "Yes" : "No");
 
     if (status->bXRandRAvailable) {
-        size_t i;
+        int i;
 
         LOG_INFO("- Connected RandR outputs with CRTC:");
 
-        for (i = 0; i < status->dwOutputNum; i++) {
+        for (i = 0; i < (int)status->dwOutputNum; i++) {
             NVFBC_RANDR_OUTPUT_INFO output;
 
             output = status->outputs[i];
 
-            LOG_INFO("  * '%s' (id: 0x%x), CRTC: %ux%u+%u+%u", output.name, output.dwId,
-                     output.trackedBox.w, output.trackedBox.h, output.trackedBox.x,
-                     output.trackedBox.y);
+            LOG_INFO("  * '%s' (id: 0x%x), CRTC: %ux%u+%u+%u",
+                   output.name, output.dwId,
+                   output.trackedBox.w, output.trackedBox.h,
+                   output.trackedBox.x, output.trackedBox.y);
         }
+
     }
 }
 
-void NvFBCUtilsParseTrackingType(const char *optarg, NVFBC_TRACKING_TYPE *trackingType,
-                                 char *outputName) {
+void NvFBCUtilsParseTrackingType(const char* optarg,
+                                 NVFBC_TRACKING_TYPE *trackingType,
+                                 char* outputName)
+{
     if ((trackingType == NULL) || (outputName == NULL)) {
         return;
     }
@@ -420,16 +463,18 @@ void NvFBCUtilsParseTrackingType(const char *optarg, NVFBC_TRACKING_TYPE *tracki
     }
 }
 
-uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs, uint32_t outputNum,
-                               const char *outputName) {
-    size_t i;
+uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs,
+                               uint32_t outputNum,
+                               const char* outputName)
+{
+    int i;
     uint32_t outputId = 0;
 
     if ((outputs == NULL) || (outputName == NULL)) {
         return 0;
     }
 
-    for (i = 0; i < outputNum; i++) {
+    for (i = 0; i < (int)outputNum; i++) {
         if (!strcasecmp(outputs[i].name, outputName)) {
             outputId = outputs[i].dwId;
             break;
@@ -439,7 +484,9 @@ uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs, uint32_t output
     return outputId;
 }
 
-void NvFBCUtilsPrintVersions(const unsigned int appVersion) {
+void NvFBCUtilsPrintVersions(const unsigned int appVersion)
+{
     LOG_INFO("Application version: %u", appVersion);
     LOG_INFO("NvFBC API version: %u.%u", NVFBC_VERSION_MAJOR, NVFBC_VERSION_MINOR);
+    LOG_INFO("");
 }

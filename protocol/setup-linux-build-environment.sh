@@ -18,6 +18,9 @@ sudo apt-get install --no-install-recommends -y \
 # Install Fractal dependencies
 sudo apt-get install --no-install-recommends -y \
     libssl-dev \
+    libgl1-mesa-dev \
+    libavcodec-dev \
+    libavdevice-dev \
     libx11-dev \
     libxtst-dev \
     xclip \

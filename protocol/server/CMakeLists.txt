@@ -132,6 +132,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ${X11_Xdamage_LIB}
             ${X11_Xext_LIB}
             ${X11_Xtst_LIB}
+            GL
             asound
             m
             OpenSSL::Crypto
