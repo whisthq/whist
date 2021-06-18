@@ -37,7 +37,7 @@ typedef struct AudioPacket {
 // system audio queue + our buffer limits, in decompressed bytes
 #define AUDIO_QUEUE_LOWER_LIMIT 18000
 #define AUDIO_QUEUE_UPPER_LIMIT 59000
-#define TARGET_AUDIO_QUEUE_LIMIT 29000
+#define TARGET_AUDIO_QUEUE_LIMIT 28000
 
 #define MAX_NUM_AUDIO_FRAMES 25
 // this is the maximum number of packets an encoded audio frame can be
