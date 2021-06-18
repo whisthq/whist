@@ -698,7 +698,7 @@ int32_t send_audio(void* opaque) {
                         break;
                     }
                     static int audio_frame_number = 0;
-                    static float audio_total_encode_time = 0.0;
+                    static double audio_total_encode_time = 0.0;
                     audio_total_encode_time += get_timer(t);
                     audio_frame_number++;
 
