@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
 from json import loads
 
 
@@ -8,9 +8,9 @@ from sqlalchemy import or_
 import click
 
 from app.models import db, RegionToAmi, InstanceInfo
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
-from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.constants.instance_state_values import (
     ACTIVE,
     PRE_CONNECTION,
@@ -32,17 +32,23 @@ def _insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping):
             allowed=True,
         )
         new_disabled_amis.append(new_ami)
+    db.session.add_all(new_disabled_amis)
     db.session.commit()
     return new_disabled_amis
 
 
-def upgrade_region(region_name, ami_id):
-    # TODO: Right now buffer seems to be 1 instance if it is the first of its kind(AMI),
-    #       Probably move this to a config.
-    force_buffer = 1
-    new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
-    for new_instance in new_instances:
-        _poll(new_instance.instance_name)
+def upgrade_region(region_name, ami_id, flask_app):
+    fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
+    with flask_app.app_context():
+        # TODO: Right now buffer seems to be 1 instance if it is the first of its kind(AMI),
+        #       Probably move this to a config.
+        force_buffer = 1
+        new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
+        for new_instance in new_instances:
+            fractal_logger.debug(
+                f"Waiting for instance with name: {new_instance.instance_name} to be marked online"
+            )
+            _poll(new_instance.instance_name)
 
 
 @command_bp.cli.command("ami_upgrade")
@@ -56,8 +62,23 @@ def ami_upgrade(
 
     new_disabled_amis = _insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping)
 
-    with ThreadPoolExecutor(max_workers=10) as thread_pool_executor:
-        thread_pool_executor.map(upgrade_region, region_to_ami_id_mapping.items())
+    region_wise_upgrade_threads = []
+    for region_name, ami_id in region_to_ami_id_mapping.items():
+        region_wise_upgrade_thread = Thread(
+            target=upgrade_region,
+            args=(
+                region_name,
+                ami_id,
+            ),
+            # current_app is a proxy for app object, so `_get_current_object` method 
+            # should be used to fetch the application object to be passed to the thread.
+            kwargs={"flask_app": current_app._get_current_object()},
+        )
+        region_wise_upgrade_threads.append(region_wise_upgrade_thread)
+        region_wise_upgrade_thread.start()
+
+    for region_wise_upgrade_thread in region_wise_upgrade_threads:
+        region_wise_upgrade_thread.join()
 
     active_instances = (
         db.session.query(InstanceInfo)

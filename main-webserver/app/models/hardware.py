@@ -122,12 +122,12 @@ class RegionToAmi(db.Model):
     
     Constraints:
         Unique: 
-            _region_name_ami_id_unique_constaraint: AMIs are expected to be unique per region and most likely global too. But didn't find any reference to back that up, so including a constraint.
+            _region_name_ami_id_unique_constraint: AMIs are expected to be unique per region and most likely global too. But didn't find any reference to back that up, so including a constraint.
     """
 
     __tablename__ = "region_to_ami"
     __table_args__ = (
-        UniqueConstraint("region_name", "ami_id", name="_region_name_ami_id_unique_constaraint"),
+        UniqueConstraint("region_name", "ami_id", name="_region_name_ami_id_unique_constraint"),
         {"extend_existing": True, "schema": "hardware"},
     )
     region_name = db.Column(db.String(250), nullable=False, primary_key=True)

@@ -263,19 +263,20 @@ ALTER TABLE ONLY hardware.container_info
 CREATE VIEW hardware.instance_sorted AS
   SELECT sub_with_running.instance_name,
     sub_with_running.aws_ami_id,
-    sub_with_running.client_commit_hash,
+    sub_with_running.commit_hash,
     sub_with_running.location,
     sub_with_running."container_capacity" AS container_capacity,
     sub_with_running.num_running_containers
    FROM ( SELECT base_table.instance_name,
             base_table.aws_ami_id,
             base_table.location,
+            base_table.commit_hash,
             base_table."container_capacity",
             COALESCE(base_table.count, 0::bigint) AS num_running_containers
            FROM (( SELECT instance_info.instance_name,
                     instance_info.aws_ami_id,
                     instance_info.location,
-                    instance_info.client_commit_hash,
+                    instance_info.commit_hash,
                     instance_info."container_capacity"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
@@ -1035,7 +1036,7 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY hardware.region_to_ami
-    ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name);
+    ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
 
 
 --
