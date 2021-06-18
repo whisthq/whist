@@ -93,8 +93,13 @@ fromTrigger("windowsAllClosed")
     evt?.preventDefault()
   })
 
-fromTrigger("windowInfo").subscribe(
-  (args: { numberWindowsRemaining: number; crashed: boolean }) => {
+fromTrigger("windowInfo")
+  .pipe(
+    takeUntil(
+      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
+    )
+  )
+  .subscribe((args: { numberWindowsRemaining: number; crashed: boolean }) => {
     if (args.numberWindowsRemaining === 0) {
       destroyTray()
       protocolStreamKill()
@@ -107,8 +112,7 @@ fromTrigger("windowInfo").subscribe(
           if (!args.crashed) app.quit()
         })
     }
-  }
-)
+  })
 
 fromTrigger("trayQuitAction").subscribe(() => {
   closeAllWindows()
