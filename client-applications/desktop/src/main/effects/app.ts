@@ -6,7 +6,8 @@
 
 import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
-import { take } from "rxjs/operators"
+import { take, takeUntil } from "rxjs/operators"
+import { merge } from "rxjs"
 import path from "path"
 
 import { AWSRegion } from "@app/@types/aws"
@@ -26,7 +27,6 @@ import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
 import { protocolStreamKill } from "@app/utils/protocol"
-import { fromSignal } from "@app/utils/observables"
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -38,7 +38,7 @@ fromTrigger("appReady").subscribe(() => {
 
 // Apply autoupdate config
 fromTrigger("appReady")
-  .pipe(take(1))
+  .pipe(take(1), takeUntil(fromTrigger("updateChecking")))
   .subscribe(() => {
     // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
     // so we need to set autoDownload = false
@@ -83,12 +83,15 @@ fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
   createTray(x.email)
 })
 
-fromSignal(
-  fromTrigger("windowsAllClosed"),
-  fromTrigger("updateNotAvailable")
-).subscribe((evt: IpcMainEvent) => {
-  evt?.preventDefault()
-})
+fromTrigger("windowsAllClosed")
+  .pipe(
+    takeUntil(
+      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
+    )
+  )
+  .subscribe((evt: IpcMainEvent) => {
+    evt?.preventDefault()
+  })
 
 fromTrigger("windowInfo").subscribe(
   (args: { numberWindowsRemaining: number; crashed: boolean }) => {
@@ -112,15 +115,19 @@ fromTrigger("trayQuitAction").subscribe(() => {
 })
 
 // If the update is downloaded, quit the app and install the update
-fromTrigger("updateDownloaded").subscribe(() => {
-  autoUpdater.quitAndInstall()
-})
+fromTrigger("updateDownloaded")
+  .pipe(take(1))
+  .subscribe(() => {
+    autoUpdater.quitAndInstall()
+  })
 
 // If an update is available, show the update window and download the update
-fromTrigger("updateAvailable").subscribe(() => {
-  createUpdateWindow()
-  autoUpdater.downloadUpdate().catch((err) => console.error(err))
-})
+fromTrigger("updateAvailable")
+  .pipe(take(1))
+  .subscribe(() => {
+    createUpdateWindow()
+    autoUpdater.downloadUpdate().catch((err) => console.error(err))
+  })
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
