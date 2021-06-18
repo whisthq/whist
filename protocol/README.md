@@ -8,21 +8,9 @@ This repository contains the source code for the Fractal Protocol, which is a lo
 
 This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for server-specific development details.
 
-### Desktop
+### Client
 
 This folder builds a client to receive a server stream via Fractal. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
-
-### Android
-
-This folder builds a client to receive a server stream via Fractal on Android-based devices, including Chromebooks. See the folder's README for build and development details.
-
-### iOS
-
-TBD
-
-### Web
-
-TBD
 
 ## High-Level Overview
 
