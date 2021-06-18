@@ -17,7 +17,16 @@ createTrigger(
   TRIGGER.updateNotAvailable,
   merge(
     of(null).pipe(takeWhile(() => !app.isPackaged)),
-    fromEvent(autoUpdater as EventEmitter, "error"),
     fromEvent(autoUpdater as EventEmitter, "update-not-available")
   )
+)
+// Fires if there is an autoupdate error
+createTrigger(
+  TRIGGER.updateError,
+  fromEvent(autoUpdater as EventEmitter, "error")
+)
+// Fires when checking for update
+createTrigger(
+  TRIGGER.updateChecking,
+  fromEvent(autoUpdater as EventEmitter, "checking-for-update")
 )
