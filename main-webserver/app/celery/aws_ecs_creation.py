@@ -139,8 +139,8 @@ def _pass_start_values_to_instance(
     try:
         auth0_client = Auth0Client(
             current_app.config["AUTH0_DOMAIN"],
-            current_app.config["AUTH0_CLIENT_ID"],
-            current_app.config["AUTH0_CLIENT_SECRET"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
         )
         auth_token = auth0_client.token()
         response = requests.put(
