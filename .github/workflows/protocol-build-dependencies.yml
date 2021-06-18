@@ -47,6 +47,8 @@ jobs:
             s3-bucket-region: us-east-1
 
         steps:
+            ################################# CONFIG STEPS START ###############################
+
             - name: Checkout OpenSSL Git Repository
               uses: actions/checkout@v2
               with:
@@ -60,6 +62,9 @@ jobs:
                   aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.s3-bucket-region }}
+
+            ###################################################################################
+            ################################ WINDOWS STEPS START ##############################
 
             - name: On Windows, Set up Visual Studio Developer Command Prompt (for nmake)
               if: runner.os == 'Windows'
@@ -77,11 +82,14 @@ jobs:
                   perl Configure VC-WIN64A --release
                   nmake
 
+            ###################################################################################
+            ################################# MACOS STEPS START ###############################
+
             - name: Build Fractal OpenSSL on macOS
               if: runner.os == 'macOS'
+              shell: bash
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
-              shell: bash
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
@@ -97,6 +105,9 @@ jobs:
                   ./config --release
                   make
 
+            ###################################################################################
+            ############################# LINUX UBUNTU STEPS START ############################
+
             - name: Build Fractal OpenSSL on Linux Ubuntu
               if: runner.os == 'Linux'
               shell: bash
@@ -105,7 +116,12 @@ jobs:
                   ./config --release
                   make
 
+            ###################################################################################
+            ################################# PUBLISH STEPS START #############################
+
+            # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
             - name: Tar libcrypto and Upload to AWS S3
+              if: ${{ github.event_name == 'push' }}
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
@@ -119,8 +135,9 @@ jobs:
                       aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
                   fi
 
+            # Only run once, as headers are identical on every OS
             - name: Tar OpenSSL headers and Upload to AWS S3
-              if: runner.os == 'Linux' # Only run once, as headers are identical on every OS
+              if: ${{ github.event_name == 'push' && runner.os == 'Linux'}}
               shell: bash
               run: |
                   # remove all .h.in unnecessary files
@@ -133,6 +150,16 @@ jobs:
                   # tar and upload the OpenSSL headers only
                   tar -zcvf ${{ env.headers-tar-name }} include
                   aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
+
+            ###################################################################################
+
+            - name: Notify Slack on Workflow Error (Only on Push Events)
+              if: ${{ github.event_name == 'push' && failure() }}
+              shell: bash
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \":rotating_light: Failed to deploy OpenSSL \`libcrypto\` library to AWS S3, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     notify-slack-openssl:
         name: Notify Slack
