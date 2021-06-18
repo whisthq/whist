@@ -1,3 +1,15 @@
+// This file implements a wrapper that enables mocking the return values
+// for flows. It checks an environment variable named TEST_MANUAL_SCHEMAS
+// for the names of schemas that describe the new retun values.
+//
+// Mocking is enabled automatically on flows whose names exist in the
+// selected schemas. Mocked flows will be triggered as they would in
+// normal use of the application, but their return values will be the
+// value described in the schema.
+//
+// Schemas are stored in src/testing/schemas as default-exported objects.
+// Here, we import from src/testing/schemas/index.ts, so don't forget to
+// first import your schema file there when add new schema files.
 import { Observable, NEVER } from "rxjs"
 import { get, set, keys, isEmpty, negate } from "lodash"
 import * as schemas from "@app/testing/schemas"

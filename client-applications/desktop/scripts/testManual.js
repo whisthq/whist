@@ -4,6 +4,13 @@
 //
 // Ex: yarn test:manual loginError mandelboxPollingError
 //
+// The positional arguments, e.g. loginError mandelboxPollingError, are the names
+// of "schemas" defined in src/testing/schemas. These schemas describe "mock"
+// behavior for flows in the main process. By passing the names of schemas to
+// yarn test:manual, we force certain return values in client app flows so we
+// can monitor how the application reacts.
+//
+// The implementation for this mocking is in src/testing/index.ts.
 
 const helpers = require("./build-package-helpers")
 const { isEmpty } = require("lodash")
