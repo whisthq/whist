@@ -12,6 +12,8 @@ export default {
   updateNotAvailable: "updateNotAvailable",
   downloadProgress: "downloadProgress",
   updateDownloaded: "updateDownloaded",
+  updateError: "updateError",
+  updateChecking: "updateChecking",
 
   // IPC triggers
   eventIPC: "eventIPC",
