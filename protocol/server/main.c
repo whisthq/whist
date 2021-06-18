@@ -701,10 +701,10 @@ int32_t send_audio(void* opaque) {
                     static float audio_total_encode_time = 0.0;
                     audio_total_encode_time += get_timer(t);
                     audio_frame_number++;
-                    
+
                     if (audio_frame_number % 30 == 0) {
                         LOG_INFO("Average Audio Encode Time: %f", audio_total_encode_time / 30);
-			audio_total_encode_time = 0.0;
+                        audio_total_encode_time = 0.0;
                     }
 
                     // LOG_INFO("we got a packet of size %d",
