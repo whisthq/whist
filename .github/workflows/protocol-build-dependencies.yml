@@ -10,6 +10,11 @@ name: "Protocol: Build Dependencies"
 # We deploy new dependencies on modifications to this file (i.e. building a new version) or
 # manual dispatch on our default repository branch, which is `dev`
 on:
+    pull_request:
+        branches:
+            - dev
+        paths:
+            - ".github/workflows/protocol-build-dependencies.yml"
     push:
         branches:
             - dev
@@ -68,8 +73,8 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd
               run: |
-                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version
-                  perl Configure VC-WIN64A
+                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with O3 flag
+                  perl Configure VC-WIN64A --release
                   nmake
 
             - name: Build Fractal OpenSSL on macOS
@@ -88,16 +93,16 @@ jobs:
                   # Move it to the right folder for building SDL
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
-                  # configure and build OpenSSL
-                  ./config
+                  # configure and build OpenSSL with O3 flag
+                  ./config --release
                   make
 
             - name: Build Fractal OpenSSL on Linux Ubuntu
               if: runner.os == 'Linux'
               shell: bash
               run: |
-                  # configure and build OpenSSL
-                  ./config
+                  # configure and build OpenSSL with O3 flag
+                  ./config --release
                   make
 
             - name: Tar libcrypto and Upload to AWS S3
