@@ -35,9 +35,9 @@ typedef struct AudioPacket {
 #define LOG_AUDIO false
 
 // system audio queue + our buffer limits, in decompressed bytes
-#define AUDIO_QUEUE_LOWER_LIMIT 0
+#define AUDIO_QUEUE_LOWER_LIMIT 18000
 #define AUDIO_QUEUE_UPPER_LIMIT 59000
-#define TARGET_AUDIO_QUEUE_LIMIT 28000
+#define TARGET_AUDIO_QUEUE_LIMIT 18000
 
 #define MAX_NUM_AUDIO_FRAMES 25
 // this is the maximum number of packets an encoded audio frame can be
@@ -46,7 +46,7 @@ typedef struct AudioPacket {
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
 AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
-#define SDL_AUDIO_BUFFER_SIZE 1024
+#define SDL_AUDIO_BUFFER_SIZE 2048
 
 #define MAX_FREQ 128000  // in Hertz
 
@@ -525,10 +525,8 @@ void update_audio() {
         // If we have a device, get the queue size
         audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context.dev);
 	LOG_INFO("we have a device, queue size is %d", audio_device_queue);
-    } else {
-      // Otherwise, the queue size is 0
-      LOG_WARNING("No device found!");
     }
+      // Otherwise, the queue size is 0
 
 #if LOG_AUDIO
     LOG_DEBUG("Queue: %d", audio_device_queue);

@@ -68,7 +68,7 @@ AudioDevice *create_audio_device() {
 
     // set sample format
     // we should do format cascading selection here and similarly below
-    audio_device->sample_format = SND_PCM_FORMAT_S16_LE;
+    audio_device->sample_format = SND_PCM_FORMAT_FLOAT_LE;
     res = snd_pcm_hw_params_set_format(audio_device->handle, params, audio_device->sample_format);
 
     if (res < 0) {
