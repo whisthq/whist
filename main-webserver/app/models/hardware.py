@@ -116,13 +116,16 @@ class RegionToAmi(db.Model):
         ami_id: A string representing the AMI ID of the latest AMI provisioned in the region
             corresponding to this row.
         client_commit_hash: A string representing the commit hash for the client.
-        enabled: A boolean that will be marked true if this AMI corresponds to active versions of the client app'.
+        enabled: A boolean that will be marked true if this AMI corresponds to 
+            an active versions of the client app'.
         allowed: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
 
     Constraints:
         Unique:
-            _region_name_ami_id_unique_constraint: AMIs are expected to be unique per region and most likely global too. But didn't find any reference to back that up, so including a constraint.
+            _region_name_ami_id_unique_constraint: AMIs are expected to be unique per region  
+            and most likely global too. 
+            But didn't find any reference to back that up, so including a constraint.
     """
 
     __tablename__ = "region_to_ami"
