@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fractal/fractal/ecs-host-service/auth"
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry. For the same reason, we make sure not
 	// to import the fmt package either, instead separating required
@@ -319,7 +320,12 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 		req.ReturnResult("", err)
 	}
 
-	// TODO: Verify that the request access token is valid for the given userID.
+	// Verify that the request access token is valid for the given userID.
+	_, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID)
+	if err != nil {
+		logAndReturnError("Invalid JWT access token")
+		return
+	}
 
 	// Verify that the requested host port is valid
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
