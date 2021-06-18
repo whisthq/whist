@@ -197,14 +197,11 @@ int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet)
 
     // get decoded frame
     res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
-    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
-        // decoder needs more data or there's nothing left
-        LOG_INFO("packet wants more things");
-        if (res == AVERROR(EAGAIN)) {
-          LOG_DEBUG("averror eagain");
-        } else {
-          LOG_DEBUG("averror eof");
-        }
+    if (res == AVERROR(EAGAIN)) {
+        LOG_DEBUG("EAGAIN: Send new input to decoder!");
+        return 1;
+    } else if (res == AVERROR_EOF) {
+        LOG_DEBUG("EOF: Decoder has been fully flushed!");
         return 1;
     } else if (res < 0) {
         // real error

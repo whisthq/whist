@@ -46,7 +46,7 @@ typedef struct AudioPacket {
 #define RECV_AUDIO_BUFFER_SIZE (MAX_NUM_AUDIO_FRAMES * MAX_NUM_AUDIO_INDICES)
 AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
-#define SDL_AUDIO_BUFFER_SIZE 256
+#define SDL_AUDIO_BUFFER_SIZE 1024
 
 #define MAX_FREQ 128000  // in Hertz
 
@@ -95,7 +95,7 @@ static int max_received_id = -1;
 // the last ID we've processed for rendering
 static int last_played_id = -1;
 
-static double decoded_bytes_per_packet = 4096.0 / MAX_NUM_AUDIO_INDICES;
+static double decoded_bytes_per_packet = 8192.0 / MAX_NUM_AUDIO_INDICES;
 
 // END AUDIO VARIABLES
 
@@ -300,7 +300,6 @@ bool buffer_audio(int audio_device_queue) {
      */
 
     static bool buffering_audio = false;
-    LOG_DEBUG("max %d, last %d", max_received_id, last_played_id);
     int bytes_until_no_more_audio =
         (int)((max_received_id - last_played_id) * decoded_bytes_per_packet) + audio_device_queue;
 
@@ -525,7 +524,7 @@ void update_audio() {
         // If we have a device, get the queue size
         audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context.dev);
     }
-      // Otherwise, the queue size is 0
+    // Otherwise, the queue size is 0
 
 #if LOG_AUDIO
     LOG_DEBUG("Queue: %d", audio_device_queue);
