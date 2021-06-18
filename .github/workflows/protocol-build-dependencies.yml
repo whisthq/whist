@@ -164,7 +164,7 @@ jobs:
     notify-slack-openssl:
         name: Notify Slack
         needs: [build-and-publish-openssl]
-        if: success()
+        if: ${{ github.event_name == 'push' && success() }}
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
