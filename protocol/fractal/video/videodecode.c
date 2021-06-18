@@ -391,6 +391,18 @@ void destroy_video_decoder_members(VideoDecoder* decoder) {
 /// @brief decode a frame using the decoder decoder
 /// @details decode an encoded frame under YUV color format into RGB frame
 bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) {
+    /*
+        Decode a frame, whose encoded data lies in buffer, using decoder, into decoder->sw_frame.
+
+        Arguments:
+            decoder (VideoDecoder*): the decoder which will decode the frame
+            buffer (void*): buffer containing AVPackets and their metadata. Specifically the buffer
+       contains: (n = number of packets)(s1 = size of packet 1)...(sn = size of packet n)(packet 1
+       data)...(packet n data) buffer_size (int): the size of buffer, in bytes
+
+        Returns:
+            (bool): true if decode succeeded, false if failed
+            */
     clock t;
     start_timer(&t);
 
@@ -399,7 +411,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
     int num_packets = *int_buffer;
     int_buffer++;
 
-    int computed_size = 4;
+    int computed_size = sizeof(int);
 
     // make an array of AVPacket*s and alloc each one
     AVPacket** packets = safe_malloc(num_packets * sizeof(AVPacket*));
@@ -408,7 +420,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
         // allocate packet and set size
         packets[i] = av_packet_alloc();
         packets[i]->size = *int_buffer;
-        computed_size += 4 + packets[i]->size;
+        computed_size += sizeof(int) + packets[i]->size;
         int_buffer++;
     }
 
