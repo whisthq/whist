@@ -169,6 +169,57 @@ int audio_decoder_get_frame_data_size(AudioDecoder *decoder) {
            av_get_channel_layout_nb_channels(decoder->pFrame->channel_layout);
 }
 
+int audio_decoder_send_packet(AudioDecoder *decoder, AVPacket *encoded_packet) {
+    /*
+        Send an encoded packet to the decoder. To access decoded frames from that packet, call
+       audio_decoder_get_
+
+        Arguments:
+            decoder (AudioDecoder*): The audio decoder which will decode the packet
+            encoded_packet (AVPacket*): the encoded audio data
+
+        Returns:
+            (int): 0 on success, -1 on failure
+            */
+    if (!decoder) {
+        return -1;
+    }
+
+    // send packet for decoding
+    int res = avcodec_send_packet(decoder->pCodecCtx, encoded_packet);
+    if (res < 0) {
+        LOG_WARNING("Could not send AVPacket for decoding: error '%s'.", av_err2str(res));
+        return -1;
+    }
+    return 0;
+}
+
+int audio_decoder_get_frame(AudioDecoder *decoder) {
+    /*
+        Get up to one frame from the decoder, which will be stored in decoder->pFrame.
+
+        Arguments:
+            decoder (AudioDecoder*): Audio decoder containing encoded data
+
+        Returns:
+            (int): 0 if 1 frame was retrieved (success), 1 if the decoder requires more data, and -1
+       if the decoder failed to decode a frame
+            */
+    // get decoded frame
+    int res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
+    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+        // decoder needs more data or there's nothing left
+        LOG_INFO("Packet has no more frames");
+        return 1;
+    } else if (res < 0) {
+        // real error
+        LOG_ERROR("Could not decode frame: error '%s'.", av_err2str(res));
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
 int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet) {
     /*
         Decode an AAC encoded audio packet

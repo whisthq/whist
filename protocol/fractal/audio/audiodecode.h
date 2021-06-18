@@ -125,4 +125,23 @@ int audio_decoder_decode_packet(AudioDecoder* decoder, AVPacket* encoded_packet)
  */
 void destroy_audio_decoder(AudioDecoder* decoder);
 
+/**
+ * @brief                           Send an encoded packet for decoding to an audio decoder
+ *
+ * @param decoder                   The audio decoder to use for decoding
+ *
+ * @param encoded_packet            Packet containing encoded data.
+ *
+ * @returns                         0 on success, -1 on failure
+ */
+int audio_decoder_send_packet(AudioDecoder* decoder, AVPacket* encoded_packet);
+
+/**
+ * @brief                           Retrieve the next decoded frame from the decoder
+ *
+ * @param decoder                   The audio decoder holding decoded data
+ *
+ * @returns                         0 on success, 1 if the decoder needs more data, -1 on failure
+ */
+int audio_decoder_get_frame(AudioDecoder* decoder);
 #endif  // DECODE_H

@@ -64,6 +64,7 @@ typedef struct AudioContext {
     SDL_AudioDeviceID dev;
     AudioDecoder* audio_decoder;
     int decoder_frequency;
+    AVPacket* encoded_packet;
 } AudioContext;
 
 // Audio Rendering
@@ -124,7 +125,7 @@ Private Function Implementations
 
 void destroy_audio_device() {
     /*
-        Destroys the audio device
+        Destroys the audio device by correctly destroying or freeing its members.
     */
     if (audio_context.dev) {
         SDL_CloseAudioDevice(audio_context.dev);
@@ -133,6 +134,10 @@ void destroy_audio_device() {
     if (audio_context.audio_decoder) {
         destroy_audio_decoder(audio_context.audio_decoder);
         audio_context.audio_decoder = NULL;
+    }
+    if (audio_context.encoded_packet) {
+        av_packet_free((AVPacket**)&audio_context.encoded_packet);
+        audio_context.encoded_packet = NULL;
     }
 }
 
@@ -144,11 +149,13 @@ void reinit_audio_device() {
     LOG_INFO("Reinitializing audio device");
     destroy_audio_device();
 
-    // cast socket and SDL variables back to their data type for usage
-    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
+    // Recreate ffmpeg-related data: decoder and packet
     audio_context.decoder_frequency = audio_frequency;
     audio_context.audio_decoder = create_audio_decoder(audio_context.decoder_frequency);
+    audio_context.encoded_packet = av_packet_alloc();
 
+    // Recreate the SDL Audio Spec
+    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
     SDL_zero(wanted_spec);
     SDL_zero(audio_spec);
     wanted_spec.channels = 2;
@@ -157,6 +164,7 @@ void reinit_audio_device() {
     wanted_spec.silence = 0;
     wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
 
+    // Recreate SDL Device
     audio_context.dev =
         SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (wanted_spec.freq != audio_spec.freq) {
@@ -404,6 +412,44 @@ bool is_valid_audio_frequency() {
     }
 }
 
+int reconstruct_next_packet() {
+    /*
+        Copy the data of the next MAX_NUM_AUDIO_INDICES UDP packets into a single AVPacket for
+       encoding
+
+        Returns:
+            (int): 0 on success, -1 on failure
+            */
+    // clear the current packet
+    av_packet_unref(audio_context.encoded_packet);
+    // reconstruct the audio frame from the indices.
+    for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+        AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
+        int old_size = audio_context.encoded_packet->size;
+        int res = av_grow_packet(audio_context.encoded_packet, packet->size);
+        if (res != 0) {
+            return res;
+        }
+        memcpy(audio_context.encoded_packet->data + old_size, packet->data, packet->size);
+    }
+    return 0;
+}
+
+int send_next_packet_to_decoder() {
+    /*
+        Feed the next encoded audio packet into the decoder
+
+        Returns:
+            (int): 0 on success, -1 on failure
+        */
+    int res = reconstruct_next_packet();
+    if (res == 0) {
+        return audio_decoder_send_packet(audio_context.audio_decoder, audio_context.encoded_packet);
+    } else {
+        return -1;
+    }
+}
+
 int get_next_audio_frame(uint8_t* data) {
     /*
       Get the next (encoded) audio frame from the render context and decode it into the data buffer
@@ -411,23 +457,7 @@ int get_next_audio_frame(uint8_t* data) {
       Arguments:
           decoded_data (uint8_t*): Data buffer to receive the decoded audio data
     */
-    // setup the frame
-    AVPacket* encoded_packet = av_packet_alloc();
-    // reconstruct the audio frame from the indices.
-    for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-        AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
-        int old_size = encoded_packet->size;
-        int res = av_grow_packet(encoded_packet, packet->size);
-        if (res != 0) {
-            return res;
-        }
-        memcpy(encoded_packet->data + old_size, packet->data, packet->size);
-    }
-
-    // Decode encoded audio
-    int res = audio_decoder_decode_packet(audio_context.audio_decoder, encoded_packet);
-    av_packet_free(&encoded_packet);
-
+    int res = audio_decoder_get_frame(audio_context.audio_decoder);
     if (res == 0) {
         // Get decoded data
         audio_decoder_packet_readout(audio_context.audio_decoder, data);
@@ -487,18 +517,26 @@ void render_audio() {
 
         sync_audio_device();
 
-        // this buffer will always hold the decoded data
-        static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-        // decode the frame into the buffer
-        int res = get_next_audio_frame(decoded_data);
-        if (res == 0) {
-            // play the audio
-            res = SDL_QueueAudio(audio_context.dev, decoded_data,
-                                 audio_decoder_get_frame_data_size(audio_context.audio_decoder));
-
-            if (res < 0) {
-                LOG_ERROR("Could not play audio!");
+        int res = send_next_packet_to_decoder();
+        if (res < 0) {
+            LOG_ERROR("Decoder could not receive packet");
+        } else {
+            // this buffer will always hold the decoded data
+            static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+            static int num_frames = 0;
+            // decode the frame into the buffer
+            while ((res = get_next_audio_frame(decoded_data)) == 0) {
+                num_frames++;
+                // play audio
+                res =
+                    SDL_QueueAudio(audio_context.dev, decoded_data,
+                                   audio_decoder_get_frame_data_size(audio_context.audio_decoder));
+                if (res < 0) {
+                    LOG_ERROR("Could not play audio!");
+                }
             }
+            LOG_INFO("Packet decoded into %d frames", num_frames);
+            num_frames = 0;
         }
         // No longer rendering audio
         rendering_audio = false;
