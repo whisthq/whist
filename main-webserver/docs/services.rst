@@ -50,7 +50,11 @@ Databases
 AWS services
 ------------
 
-* The web server is responsible for scaling cloud resources. In particular, it interacts heavily with AWS ECS, EC2, and AutoScaling.
+* NOTE:  This segment describes the state of the system *post* refactor -- pre-refactor the system is similarly structured but interacts more heavily with several more AWS abstractions
+* The web server is responsible for scaling cloud resources. In particular, it interacts heavily with AWS EC2
+* Specifically, the webserver has a utility library interface over the AWS EC2 API that allows us to provision and deprovision cloud resources from python code easily
+* We use this utility library when scaling up (adding more) or scaling down (shutting off) ec2 instances due to periods of lower or higher load.
+* Once active, these instances are interfaced with via the ECS Host Service (see above) rather than directly via the EC2 API whenever possible. This invariant is only violated when the host service is malfunctioning, at which point the utility library is used to directly shut down instances.
 
 
 Stripe
