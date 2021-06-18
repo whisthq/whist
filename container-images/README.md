@@ -71,13 +71,7 @@ Contributions should be made via pull requests to the `dev` branch, which is the
 After cloning the repo, set up your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository:
 
 ```shell
-./setup_ubuntu20_host.sh
-```
-
-Finally, install the Python dependencies needed by the helper scripts, by running:
-
-```shell
-pip install -r helper_scripts/requirements.txt
+./setup_localdev_dependencies.sh
 ```
 
 This will begin installing all dependencies and configurations required to run our container images on an AWS EC2 host. It will also ask if you want to connect your EC2 instance to an ECS cluster, which is optional for development. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
