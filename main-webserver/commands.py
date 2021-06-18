@@ -70,7 +70,7 @@ def ami_upgrade(
                 region_name,
                 ami_id,
             ),
-            # current_app is a proxy for app object, so `_get_current_object` method 
+            # current_app is a proxy for app object, so `_get_current_object` method
             # should be used to fetch the application object to be passed to the thread.
             kwargs={"flask_app": current_app._get_current_object()},
         )

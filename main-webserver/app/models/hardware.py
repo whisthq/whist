@@ -119,9 +119,9 @@ class RegionToAmi(db.Model):
         enabled: A boolean that will be marked true if this AMI corresponds to active versions of the client app'.
         allowed: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
-    
+
     Constraints:
-        Unique: 
+        Unique:
             _region_name_ami_id_unique_constraint: AMIs are expected to be unique per region and most likely global too. But didn't find any reference to back that up, so including a constraint.
     """
 

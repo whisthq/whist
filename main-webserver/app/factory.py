@@ -134,7 +134,6 @@ def register_handlers(app: Flask):
 def register_commands(app):
     from commands import command_bp
 
-    
     app.register_blueprint(command_bp)
 
 
