@@ -223,6 +223,7 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     res = avcodec_receive_packet(encoder->pCodecCtx, &encoder->packet);
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // encoder needs more data or there's nothing left
+        LOG_INFO("Audio encoder wants more input data");
         av_packet_unref(&encoder->packet);
         return 1;
     } else if (res < 0) {
