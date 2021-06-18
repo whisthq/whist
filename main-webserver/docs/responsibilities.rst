@@ -6,9 +6,9 @@ Webserver responsibilities
 
 The Fractal Webserver performs four main functions. It
 
-* implements access control,
-* handles compute scaling, and
-* allows users to initiate application streams.
+* Controls which users have access to which compute resources
+* makes sure we have enough compute for the user load we're seeing, by starting and stopping cloud instances
+* allows users to initiate application streams -- i.e. to start using the product.
 
 
 Access control
@@ -26,7 +26,7 @@ In order to enforce access control for resources that are only accessible to Fra
 Compute scaling
 ---------------
 
-TODO
+The webserver continuously keeps track of the amount of load on our system, both in terms of the number of active users and their actual activity level.  Based on this, it starts and stops instances dynamically in order to make sure everyone who wants a session can have one, ideally without any wait.
 
 
 Application streaming
