@@ -221,21 +221,24 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     // because this always calls av_packet_unref before doing anything,
     // our previous calls to av_packet_unref are unnecessary.
     res = avcodec_receive_packet(encoder->pCodecCtx, &encoder->packet);
-    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
-        // encoder needs more data or there's nothing left
-        LOG_INFO("Audio encoder wants more input data");
-        av_packet_unref(&encoder->packet);
-        return 1;
-    } else if (res < 0) {
-        // real error
-        LOG_ERROR("Could not encode audio frame: error '%s'.\n", av_err2str(res));
-        return -1;
-    } else {
+    while (!(res == AVERROR(EAGAIN) && res == AVERROR_EOF)) {
+        if (res < 0) {
+            LOG_ERROR("Could not encode audio frame: error '%s'.\n", av_err2str(res));
+            return -1;
+        } else {
         // we did it!
         encoder->frame_count += encoder->pFrame->nb_samples;
 
         encoder->encoded_frame_size = encoder->packet.size;
         encoder->encoded_frame_data = encoder->packet.data;
+
+        // get the next packet
+        res = avcodec_receive_packet(encoder->pCodecCtx, &encoder->packet);
+    }
+    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+        // encoder needs more data - we have gotten all packets we need
+        LOG_INFO("Audio encoder wants more input data");
+        av_packet_unref(&encoder->packet);
         return 0;
     }
 }
