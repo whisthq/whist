@@ -1,4 +1,4 @@
-package fractallogger // import "github.com/fractal/fractal/ecs-host-service/fractallogger"
+package heartbeats // import "github.com/fractal/fractal/ecs-host-service/heartbeats"
 
 import (
 	"bytes"
@@ -7,9 +7,24 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
+
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
+	"github.com/fractal/fractal/ecs-host-service/metrics"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
-// We implement
+func init() {
+	// Initialize the heartbeat goroutine
+	err := initializeHeartbeat()
+	if err != nil {
+		// We can do a "real" panic here because it's in an init function, so we
+		// haven't even entered the host service main() yet.
+		logger.Panicf(nil, "Failed to initialize heartbeat goroutine! Error: %s", err)
+	}
+}
 
 // Fractal webserver URLs and relevant webserver endpoints
 const localdevFractalWebserver = "https://127.0.0.1:7730"
@@ -25,10 +40,10 @@ const fractalWebserverHeartbeatEndpoint = "/host_service/heartbeat"
 
 // We send the webserver the webserver the host instance ID when handshaking.
 type handshakeRequest struct {
-	InstanceID   string
-	InstanceType string // EC2 instance type
-	Region       string // AWS region
-	AWSAmiID     string // AWS AMI ID
+	InstanceID   aws.InstanceID
+	InstanceType aws.InstanceType    // EC2 instance type
+	Region       aws.PlacementRegion // AWS region
+	AWSAmiID     aws.AmiID           // AWS AMI ID
 }
 
 // We receive an auth token from the webserver if handshaking succeeded, which
@@ -39,28 +54,28 @@ type handshakeResponse struct {
 
 // We periodically send heartbeats to the webserver to notify it of this EC2 host's state
 type heartbeatRequest struct {
-	AuthToken        string // Handshake-response auth token to authenticate with webserver
-	Timestamp        string // Current timestamp
-	HeartbeatNumber  uint64 // Index of heartbeat since host service started
-	InstanceID       string // EC2 instance ID
-	TotalRAMinKB     string // Total amount of RAM on the host, in kilobytes
-	FreeRAMinKB      string // Lower bound on RAM available on the host (not consumed by running containers), in kilobytes
-	AvailRAMinKB     string // Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
-	IsDyingHeartbeat bool   // Whether this heartbeat is sent by the host service during its death
+	AuthToken        string         // Handshake-response auth token to authenticate with webserver
+	Timestamp        string         // Current timestamp
+	HeartbeatNumber  uint64         // Index of heartbeat since host service started
+	InstanceID       aws.InstanceID // EC2 instance ID
+	TotalRAMinKB     uint64         // Total amount of RAM on the host, in kilobytes
+	FreeRAMinKB      uint64         // Lower bound on RAM available on the host (not consumed by running containers), in kilobytes
+	AvailRAMinKB     uint64         // Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
+	IsDyingHeartbeat bool           // Whether this heartbeat is sent by the host service during its death
 }
 
 // GetFractalWebserver returns the appropriate webserver URL based on whether
 // we're running in production, staging or development. Since
 // `GetAppEnvironment()` caches its result, we don't need to cache this.
 func GetFractalWebserver() string {
-	switch GetAppEnvironment() {
-	case EnvStaging:
+	switch metadata.GetAppEnvironment() {
+	case metadata.EnvStaging:
 		return stagingFractalWebserver
-	case EnvProd:
+	case metadata.EnvProd:
 		return prodFractalWebserver
-	case EnvDev:
+	case metadata.EnvDev:
 		return devFractalWebserver
-	case EnvLocalDev, EnvLocalDevWithDB:
+	case metadata.EnvLocalDev, metadata.EnvLocalDevWithDB:
 		return localdevFractalWebserver
 	default:
 		return localdevFractalWebserver
@@ -80,16 +95,16 @@ var heartbeatKeepAlive = make(chan interface{}, 1)
 
 // initializeHeartbeat starts the heartbeat goroutine
 func initializeHeartbeat() error {
-	if GetAppEnvironment() == EnvLocalDev || GetAppEnvironment() == EnvLocalDevWithDB {
-		Infof("Skipping initializing webserver heartbeats since running in %s environment.", GetAppEnvironment())
+	if metadata.GetAppEnvironment() == metadata.EnvLocalDev || metadata.GetAppEnvironment() == metadata.EnvLocalDevWithDB {
+		logger.Infof("Skipping initializing webserver heartbeats since running in %s environment.", metadata.GetAppEnvironment())
 		return nil
 	}
 
-	Infof("Initializing webserver heartbeats, communicating with webserver at %s", GetFractalWebserver())
+	logger.Infof("Initializing webserver heartbeats, communicating with webserver at %s", GetFractalWebserver())
 
 	resp, err := handshake()
 	if err != nil {
-		return MakeError("Error handshaking with webserver: %v", err)
+		return utils.MakeError("Error handshaking with webserver: %v", err)
 	}
 
 	authToken = resp.AuthToken
@@ -104,12 +119,18 @@ func initializeHeartbeat() error {
 	return nil
 }
 
+// Close sends the final, dying heartbeat to the fractal webserver.
+func Close() {
+	logger.Info("Sending final heartbeat...")
+	stopHeartbeats()
+}
+
 // Instead of running exactly every minute, we choose a random time in the
 // range [55, 65] seconds to prevent waves of hosts repeatedly crowding the
 // webserver. Note also that we don't have to do any error handling here
 // because sendHeartbeat() does not return or panic.
 func heartbeatGoroutine() {
-	defer Infof("Finished heartbeat goroutine.")
+	defer logger.Infof("Finished heartbeat goroutine.")
 	timerChan := make(chan interface{})
 
 	// Send initial heartbeat right away
@@ -117,7 +138,7 @@ func heartbeatGoroutine() {
 
 	for {
 		sleepTime := 65000 - rand.Intn(10001)
-		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- nil })
+		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
 
 		select {
 		case _, _ = <-heartbeatKeepAlive:
@@ -151,24 +172,24 @@ func stopHeartbeats() {
 func handshake() (handshakeResponse, error) {
 	var resp handshakeResponse
 
-	instanceID, err := GetAwsInstanceID()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return resp, MakeError("handshake(): Couldn't get AWS instanceID. Error: %v", err)
+		return resp, utils.MakeError("handshake(): Couldn't get AWS instanceID. Error: %v", err)
 	}
 
-	instanceType, err := GetAwsInstanceType()
+	instanceType, err := aws.GetInstanceType()
 	if err != nil {
-		return resp, MakeError("handshake(): Couldn't get AWS instanceType. Error: %v", err)
+		return resp, utils.MakeError("handshake(): Couldn't get AWS instanceType. Error: %v", err)
 	}
 
-	region, err := GetAwsPlacementRegion()
+	region, err := aws.GetPlacementRegion()
 	if err != nil {
-		return resp, MakeError("handshake(): Couldn't get AWS placementRegion. Error: %v", err)
+		return resp, utils.MakeError("handshake(): Couldn't get AWS placementRegion. Error: %v", err)
 	}
 
-	amiID, err := GetAwsAmiID()
+	amiID, err := aws.GetAmiID()
 	if err != nil {
-		return resp, MakeError("handshake(): Couldn't get AWS amiID. Error: %v", err)
+		return resp, utils.MakeError("handshake(): Couldn't get AWS amiID. Error: %v", err)
 	}
 
 	requestURL := GetFractalWebserver() + fractalWebserverAuthEndpoint
@@ -179,13 +200,13 @@ func handshake() (handshakeResponse, error) {
 		AWSAmiID:     amiID,
 	})
 	if err != nil {
-		return resp, MakeError("handshake(): Could not marshal the handshakeRequest object. Error: %v", err)
+		return resp, utils.MakeError("handshake(): Could not marshal the handshakeRequest object. Error: %v", err)
 	}
 
-	Infof("handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
+	logger.Infof("handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
 	httpResp, err := heartbeatHTTPClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
-		return resp, MakeError("handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
+		return resp, utils.MakeError("handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
 	}
 
 	// We would normally just read in body, err := iotuil.ReadAll(httpResp.body),
@@ -195,15 +216,15 @@ func handshake() (handshakeResponse, error) {
 	var body []byte
 	body, err = ioutil.ReadAll(httpResp.Body)
 	if err != nil {
-		return resp, MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
+		return resp, utils.MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
 	}
 
-	Infof("handshake(): got response code: %v", httpResp.StatusCode)
-	Infof("handshake(): got response: %s", body)
+	logger.Infof("handshake(): got response code: %v", httpResp.StatusCode)
+	logger.Infof("handshake(): got response: %s", body)
 
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		return resp, MakeError("handshake():: Unable to unmarshal JSON response from the webserver!. Response: %s Error: %s", body, err)
+		return resp, utils.MakeError("handshake():: Unable to unmarshal JSON response from the webserver!. Response: %s Error: %s", body, err)
 	}
 	return resp, nil
 }
@@ -221,15 +242,18 @@ func sendHeartbeat(isDying bool) {
 	// passed on as an empty string or nil. It's not worth terminating the
 	// instance over a malformed heartbeat --- we can let the webserver decide if
 	// we want to mark the instance as draining.
-	instanceID, _ := GetAwsInstanceID()
-	totalRAM, _ := GetTotalMemoryInKB()
-	freeRAM, _ := GetFreeMemoryInKB()
-	availRAM, _ := GetAvailableMemoryInKB()
+	instanceID, _ := aws.GetInstanceID()
+
+	latestMetrics, _ := metrics.GetLatest()
+
+	totalRAM := latestMetrics.TotalMemoryKB
+	freeRAM := latestMetrics.FreeMemoryKB
+	availRAM := latestMetrics.AvailableMemoryKB
 
 	requestURL := GetFractalWebserver() + fractalWebserverHeartbeatEndpoint
 	requestBody, err := json.Marshal(heartbeatRequest{
 		AuthToken:        authToken,
-		Timestamp:        Sprintf("%s", time.Now()),
+		Timestamp:        utils.Sprintf("%s", time.Now()),
 		HeartbeatNumber:  numBeats,
 		InstanceID:       instanceID,
 		TotalRAMinKB:     totalRAM,
@@ -238,13 +262,13 @@ func sendHeartbeat(isDying bool) {
 		IsDyingHeartbeat: isDying,
 	})
 	if err != nil {
-		Errorf("Couldn't marshal requestBody into JSON. Error: %v", err)
+		logger.Errorf("Couldn't marshal requestBody into JSON. Error: %v", err)
 	}
 
-	Infof("Sending a heartbeat with body %s to URL %s", requestBody, requestURL)
+	logger.Infof("Sending a heartbeat with body %s to URL %s", requestBody, requestURL)
 	_, err = heartbeatHTTPClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
-		Errorf("Error sending heartbeat: %s", err)
+		logger.Errorf("Error sending heartbeat: %s", err)
 	}
 
 	numBeats++

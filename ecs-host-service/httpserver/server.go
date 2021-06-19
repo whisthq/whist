@@ -13,6 +13,8 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	utils "github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 // Variables for the auth_secret used to communicate between the webserver and
@@ -23,11 +25,11 @@ var webserverAuthSecret string
 
 // Constants for use in setting up the HTTPS server
 const (
-	// We listen on the port "HOST" converted to a telephone number
-	PortToListen       = 4678
-	FractalPrivatePath = "/fractalprivate/"
-	certPath           = FractalPrivatePath + "cert.pem"
-	privatekeyPath     = FractalPrivatePath + "key.pem"
+	// Our HTTPS server listens on the port "HOST" converted to a telephone
+	// number.
+	PortToListen   uint16 = 4678
+	certPath       string = utils.FractalPrivateDir + "cert.pem"
+	privatekeyPath string = utils.FractalPrivateDir + "key.pem"
 )
 
 func init() {
@@ -278,10 +280,10 @@ func processDrainAndShutdownRequest(w http.ResponseWriter, r *http.Request, queu
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
-		err := logger.MakeError("Received a request from %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
+		err := utils.MakeError("Received a request from %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
 		logger.Error(err)
 
-		http.Error(w, logger.Sprintf("Bad request type. Expected %s, got %s", method, r.Method), http.StatusBadRequest)
+		http.Error(w, utils.Sprintf("Bad request type. Expected %s, got %s", method, r.Method), http.StatusBadRequest)
 
 		return err
 	}
@@ -308,7 +310,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return logger.MakeError("Error getting body from request from %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Error getting body from request from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Extract only the auth_secret field from a raw JSON unmarshalling that
@@ -317,7 +319,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = json.Unmarshal(body, &rawmap)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return logger.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	if authenticate {
@@ -326,11 +328,11 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 			if value, ok := rawmap["auth_secret"]; ok {
 				return json.Unmarshal(*value, &requestAuthSecret)
 			}
-			return logger.MakeError("Request body had no \"auth_secret\" field.")
+			return utils.MakeError("Request body had no \"auth_secret\" field.")
 		}()
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return logger.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
+			return utils.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 		}
 
 		// Actually verify authentication. Note that we check the length of the token
@@ -344,7 +346,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 				[]byte(requestAuthSecret),
 			) == 0 {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return logger.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
+			return utils.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
 		}
 	}
 
@@ -352,7 +354,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return logger.MakeError("Could not fully unmarshal the body of a request sent from %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Could not fully unmarshal the body of a request sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Set up the result channel
@@ -366,20 +368,20 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	logger.Info("Setting up HTTP server.")
 
 	// Select the correct environment (dev, staging, prod)
-	switch logger.GetAppEnvironment() {
-	case logger.EnvLocalDev, logger.EnvLocalDevWithDB:
+	switch metadata.GetAppEnvironment() {
+	case metadata.EnvLocalDev, metadata.EnvLocalDevWithDB:
 		fallthrough
-	case logger.EnvDev:
+	case metadata.EnvDev:
 		webserverAuthSecret = webserverAuthSecretDev
-	case logger.EnvStaging:
+	case metadata.EnvStaging:
 		webserverAuthSecret = webserverAuthSecretStaging
-	case logger.EnvProd:
+	case metadata.EnvProd:
 		webserverAuthSecret = webserverAuthSecretProd
 	}
 
 	err := initializeTLS()
 	if err != nil {
-		return nil, logger.MakeError("Error starting HTTP Server: %v", err)
+		return nil, utils.MakeError("Error starting HTTP Server: %v", err)
 	}
 
 	// Buffer up to 100 events so we don't block. This should be mostly
@@ -402,7 +404,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 
 	// Create the server itself
 	server := &http.Server{
-		Addr:    logger.Sprintf("0.0.0.0:%v", PortToListen),
+		Addr:    utils.Sprintf("0.0.0.0:%v", PortToListen),
 		Handler: mux,
 	}
 
@@ -465,7 +467,7 @@ func initializeTLS() error {
 	logger.Infof("Openssl command: %s", cmd.String())
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
+		return utils.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
 	}
 
 	logger.Info("Successfully created TLS certificate/private key pair.")

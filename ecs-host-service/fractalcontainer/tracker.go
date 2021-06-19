@@ -3,7 +3,7 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 import (
 	"sync"
 
-	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 // This file contains the code to track all FractalContainers. We _need to_ do
@@ -44,7 +44,7 @@ func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, 
 			return v, nil
 		}
 	}
-	return nil, logger.MakeError("Couldn't find FractalContainer with IdentifyingHostPort %v", IdentifyingHostPort)
+	return nil, utils.MakeError("Couldn't find FractalContainer with IdentifyingHostPort %v", IdentifyingHostPort)
 }
 
 // LookUpByDockerID finds a container by its Docker ID. Note that this function
@@ -59,5 +59,5 @@ func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
 			return v, nil
 		}
 	}
-	return nil, logger.MakeError("Couldn't find FractalContainer with DockerID %s", DockerID)
+	return nil, utils.MakeError("Couldn't find FractalContainer with DockerID %s", DockerID)
 }

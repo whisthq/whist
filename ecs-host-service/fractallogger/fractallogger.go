@@ -5,13 +5,20 @@ import (
 	"fmt"
 	"log"
 	"runtime/debug"
+
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 func init() {
+	// The first thing we want to do is to initialize logzio and Sentry so that
+	// we can catch any errors that might occur, or logs if we print them.
+
 	// We declare error separately to avoid shadowing logzioTransport.
 	var err error
 	logzioTransport, err = initializeLogzIO()
 	if err != nil {
+		// Error, don't Panic, since a logzio outage should not bring down our
+		// entire service.
 		Errorf("Failed to initialize LogzIO! Error: %s", err)
 	}
 
@@ -28,24 +35,14 @@ func init() {
 	// able to use sentry.WithScope(), but that is future work.
 	sentryTransport, err = initializeSentry()
 	if err != nil {
+		// Error, don't Panic, since a Sentry outage should not bring down our
+		// entire service.
 		Errorf("Failed to initialize Sentry! Error: %s", err)
-	}
-
-	// Initialize the heartbeat goroutine
-	err = initializeHeartbeat()
-	if err != nil {
-		// We can do a "real" panic here because it's in an init function, so we
-		// haven't even entered the host service main() yet.
-		Panicf(nil, "Failed to initialize heartbeat goroutine! Error: %s", err)
 	}
 }
 
-// Close flushes all production logging (i.e. Sentry and Logzio) and sends the
-// final, dying heartbeat to the fractal webserver.
+// Close flushes all production logging (i.e. Sentry and Logzio).
 func Close() {
-	Info("Sending final heartbeat...")
-	stopHeartbeats()
-
 	// Flush buffered logging events before the program terminates.
 	Info("Flushing Sentry...")
 	FlushSentry()
@@ -53,20 +50,10 @@ func Close() {
 	stopAndDrainLogzio()
 }
 
-// MakeError creates an error from format string and args.
-func MakeError(format string, v ...interface{}) error {
-	return fmt.Errorf(format, v...)
-}
-
-// Sprintf creates a string from format string and args.
-func Sprintf(format string, v ...interface{}) string {
-	return fmt.Sprintf(format, v...)
-}
-
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %s", err)
-	log.Printf(ColorRed(errstr))
+	log.Printf(utils.ColorRed(errstr))
 	if logzioTransport != nil {
 		logzioTransport.send(errstr, logzioTypeError)
 	}
@@ -97,7 +84,11 @@ func Panic(globalCancel context.CancelFunc, err error) {
 		Error(err)
 		globalCancel()
 	} else {
-		log.Panicf(errstr)
+		// If we're truly trying to panic, let's at least flush our logging queues
+		// first so this error actually gets sent.
+		FlushLogzio()
+		FlushSentry()
+		log.Panicf(utils.ColorRed(errstr))
 	}
 }
 
@@ -113,13 +104,13 @@ func Info(format string, v ...interface{}) {
 // Errorf is like Error, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
 func Errorf(format string, v ...interface{}) {
-	Error(MakeError(format, v...))
+	Error(utils.MakeError(format, v...))
 }
 
 // Panicf is like Panic, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
 func Panicf(globalCancel context.CancelFunc, format string, v ...interface{}) {
-	Panic(globalCancel, MakeError(format, v...))
+	Panic(globalCancel, utils.MakeError(format, v...))
 }
 
 // Infof is identical to Info, since Info already respects printf syntax. We
@@ -132,15 +123,4 @@ func Infof(format string, v ...interface{}) {
 func PrintStackTrace() {
 	Info("Printing stack trace: ")
 	debug.PrintStack()
-}
-
-// ColorRed returns the input string surrounded by the ANSI escape codes to
-// color the text red. Text color is reset at the end of the returned string.
-func ColorRed(s string) string {
-	const (
-		codeReset = "\033[0m"
-		codeRed   = "\033[31m"
-	)
-
-	return Sprintf("%s%s%s", codeRed, s, codeReset)
 }
