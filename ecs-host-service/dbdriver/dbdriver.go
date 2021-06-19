@@ -132,7 +132,7 @@ func registerInstance(ctx context.Context) error {
 	// Since the `instance_id` is the primary key of `hardware.instance_info`, we
 	// know that `rows` will contain either 0 or 1 results.
 	if !rows.Next() {
-		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistingRow` set to `true`.")
+		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
