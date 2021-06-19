@@ -30,6 +30,10 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/metrics"
 
 	"github.com/fractal/fractal/ecs-host-service/dbdriver"
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
+	"github.com/fractal/fractal/ecs-host-service/metrics"
+
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
