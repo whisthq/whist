@@ -27,21 +27,21 @@ var dbpool *pgxpool.Pool
 
 // Initialize creates and tests a connection to the database, and registers the
 // instance in the database.
-func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) error {
 	if !enabled {
-		return
+		logger.Infof("Running in app environment %s so not enabling database code.", metadata.GetAppEnvironment())
+		return nil
 	}
 
 	// Ensure this function is not called multiple times
 	if dbpool != nil {
-		logger.Panicf(globalCancel, "dbdriver.Initialize() called multiple times!")
+		return utils.MakeError("dbdriver.Initialize() called multiple times!")
 	}
 
 	connStr := getFractalDBConnString()
 	pgxConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
-		logger.Panicf(globalCancel, "Unable to parse database connection string! Error: %s", err)
-		return
+		return utils.MakeError("Unable to parse database connection string! Error: %s", err)
 	}
 
 	// TODO: investigate and optimize the pgxConfig settings
@@ -54,13 +54,14 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 	dbpool, err = pgxpool.ConnectConfig(globalCtx, pgxConfig)
 	if err != nil {
-		logger.Panicf(globalCancel, "Unable to connect to the database: %s", err)
-		return
+		return utils.MakeError("Unable to connect to the database: %s", err)
 	}
 	logger.Infof("Successfully connected to the database.")
 
 	// Register the instance with the database
-	registerInstance(globalCtx)
+	if err = registerInstance(globalCtx); err != nil {
+		return utils.MakeError("Unable to register instance in the database: %s", err)
+	}
 
 	// Start goroutine that closes the connection pool if the global context is cancelled
 	goroutineTracker.Add(1)
@@ -73,6 +74,8 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 			dbpool.Close()
 		}
 	}()
+
+	return nil
 }
 
 // registerInstance looks for and "takes over" the relevant row in the
@@ -108,8 +111,8 @@ func registerInstance(ctx context.Context) error {
 	}
 
 	latestMetrics, errs := metrics.GetLatest()
-	if errs != nil {
-		return utils.MakeError("Couldn't register container instance: errors getting metrics: %s", err)
+	if len(errs) != 0 {
+		return utils.MakeError("Couldn't register container instance: errors getting metrics: %+v", errs)
 	}
 	cpus := latestMetrics.LogicalCPUs
 	memoryRemaining := latestMetrics.AvailableMemoryKB

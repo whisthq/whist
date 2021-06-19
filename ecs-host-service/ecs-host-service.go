@@ -578,7 +578,9 @@ func main() {
 
 	// Initialize the database driver, if necessary (the `dbdriver`) package
 	// takes care of the "if necessary" part.
-	dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker)
+	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+		logger.Panic(globalCancel, err)
+	}
 
 	// Now we start all the goroutines that actually do work.
 
