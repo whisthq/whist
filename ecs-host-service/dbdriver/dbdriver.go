@@ -2,13 +2,15 @@ package dbdriver // import "github.com/fractal/fractal/ecs-host-service/dbdriver
 
 import (
 	"context"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
+	"github.com/fractal/fractal/ecs-host-service/metrics"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
@@ -17,7 +19,7 @@ import (
 // operations to be meaningful in environments where we can expect the database
 // guarantees to hold (i.e. `logger.EnvLocalDevWithDB` for now) but no-ops in
 // other environments.
-var enabled = (logger.GetAppEnvironment() == logger.EnvLocalDevWithDB)
+var enabled = (metadata.GetAppEnvironment() == metadata.EnvLocalDevWithDB)
 
 // This is the connection pool for the database. It is an error for `dbpool` to
 // be non-nil if `enabled` is true.
@@ -81,41 +83,36 @@ func registerInstance(ctx context.Context) error {
 	}
 
 	if dbpool == nil {
-		return logger.MakeError("registerInstance() called but dbdriver is not initialized!")
+		return utils.MakeError("registerInstance() called but dbdriver is not initialized!")
 	}
 
-	instanceName, err := logger.GetInstanceName()
+	instanceName, err := aws.GetInstanceName(ctx)
 	if err != nil {
-		return logger.MakeError("Couldn't register instance: couldn't get instance name: %s", err)
+		return utils.MakeError("Couldn't register instance: couldn't get instance name: %s", err)
 	}
-	publicIP4, err := logger.GetAwsPublicIpv4()
+	publicIP4, err := aws.GetPublicIpv4()
 	if err != nil {
-		return logger.MakeError("Couldn't register instance: couldn't get public IPv4: %s", err)
+		return utils.MakeError("Couldn't register instance: couldn't get public IPv4: %s", err)
 	}
-	amiID, err := logger.GetAwsAmiID()
+	amiID, err := aws.GetAmiID()
 	if err != nil {
-		return logger.MakeError("Couldn't register instance: couldn't get AMI ID: %s", err)
+		return utils.MakeError("Couldn't register instance: couldn't get AMI ID: %s", err)
 	}
-	region, err := logger.GetAwsPlacementRegion()
+	region, err := aws.GetPlacementRegion()
 	if err != nil {
-		return logger.MakeError("Couldn't register instance: couldn't get AWS Placement Region: %s", err)
+		return utils.MakeError("Couldn't register instance: couldn't get AWS Placement Region: %s", err)
 	}
-	instanceType, err := logger.GetAwsInstanceType()
+	instanceType, err := aws.GetInstanceType()
 	if err != nil {
-		return logger.MakeError("Couldn't register container instance: couldn't get AWS Instance type: %s", err)
+		return utils.MakeError("Couldn't register container instance: couldn't get AWS Instance type: %s", err)
 	}
-	cpustr, err := logger.GetNumLogicalCPUs()
-	if err != nil {
-		return logger.MakeError("Couldn't register container instance: couldn't get number of logical CPUs: %s", err)
+
+	latestMetrics, errs := metrics.GetLatest()
+	if errs != nil {
+		return utils.MakeError("Couldn't register container instance: errors getting metrics: %s", err)
 	}
-	cpus, err := strconv.Atoi(cpustr)
-	if err != nil {
-		return logger.MakeError("Couldn't register container instance: couldn't get number of logical CPUs: %s", err)
-	}
-	memoryRemaining, err := logger.GetAvailableMemoryInKB()
-	if err != nil {
-		return logger.MakeError("Couldn't register container instance: couldn't get amount of memory remaining: %s", err)
-	}
+	cpus := latestMetrics.LogicalCPUs
+	memoryRemaining := latestMetrics.AvailableMemoryKB
 
 	// Check if there's a row for us in the database already
 	// TODO: factor our `hardware.instance_info` into a variable
@@ -125,14 +122,14 @@ func registerInstance(ctx context.Context) error {
 		instanceName,
 	)
 	if err != nil {
-		return logger.MakeError("RegisterInstance(): Error running query: %s", err)
+		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
 	defer rows.Close()
 
 	// Since the `instance_id` is the primary key of `hardware.instance_info`, we
 	// know that `rows` will contain either 0 or 1 results.
 	if !rows.Next() {
-		return logger.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistingRow` set to `true`.")
+		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistingRow` set to `true`.")
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
@@ -145,7 +142,7 @@ func registerInstance(ctx context.Context) error {
 		instanceName, utils.RandHex(10), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
 	)
 	if err != nil {
-		return logger.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
+		return utils.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
 	logger.Infof("Result of updating existing row in table `hardware.instance_info`: %v", result)
 	return nil
@@ -173,12 +170,12 @@ func MarkDraining() {
 // `hardware.instance_info` table.
 func UnregisterInstance(ctx context.Context) error {
 	if dbpool == nil {
-		return logger.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
+		return utils.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
 	}
 
-	instanceName, err := logger.GetInstanceName()
+	instanceName, err := aws.GetInstanceName(ctx)
 	if err != nil {
-		return logger.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
+		return utils.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
 	}
 
 	result, err := dbpool.Exec(ctx,
@@ -187,7 +184,7 @@ func UnregisterInstance(ctx context.Context) error {
 		instanceName,
 	)
 	if err != nil {
-		return logger.MakeError("UnregisterInstance(): Error running delete command: %s", err)
+		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
 	}
 	logger.Infof("UnregisterInstance(): Output from delete command: %s", result)
 	return nil
