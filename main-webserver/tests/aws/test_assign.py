@@ -40,7 +40,12 @@ def test_assign(client, bulk_instance, monkeypatch):
         patched_find,
     )
 
-    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96, "client_commit_hash": "dummy_client_hash"}
+    args = {
+        "region": "us-east-1",
+        "username": "test@fractal.co",
+        "dpi": 96,
+        "client_commit_hash": "dummy_client_hash",
+    }
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.json["ip"] == instance.ip

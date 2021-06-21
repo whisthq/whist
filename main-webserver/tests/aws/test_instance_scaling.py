@@ -15,7 +15,9 @@ def test_scale_up_single(hijack_ec2_calls, mock_get_num_new_instances, hijack_db
     """
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(1)
-    us_east_1_image_obj = RegionToAmi.query.filter_by(region_name="us-east-1", enabled=True).one_or_none()
+    us_east_1_image_obj = RegionToAmi.query.filter_by(
+        region_name="us-east-1", enabled=True
+    ).one_or_none()
     aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id)
     assert len(call_list) == 1
     assert call_list[0]["kwargs"]["image_id"] == us_east_1_image_obj.ami_id
@@ -29,7 +31,9 @@ def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_
     desired_num = randint(1, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
-    us_east_1_image_obj = RegionToAmi.query.filter_by(region_name="us-east-1", enabled=True).one_or_none()
+    us_east_1_image_obj = RegionToAmi.query.filter_by(
+        region_name="us-east-1", enabled=True
+    ).one_or_none()
     aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id)
     assert len(call_list) == desired_num
     assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.ami_id for elem in call_list)
