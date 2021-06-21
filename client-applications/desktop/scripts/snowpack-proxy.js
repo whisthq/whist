@@ -4,6 +4,9 @@
 // Electron expects file path imports relative to the project root.
 // This script keeps them both happy. It should be called from the "plugins"
 // section of snowpack.config.js.
+//
+// As snowpack.config.js needs to control how this file is loaded, it doesn't
+// conform to the (env, ...args) => {} signature used by the rest of the scripts.
 const path = require("path")
 const { promisify } = require("util")
 const fs = require("fs")
