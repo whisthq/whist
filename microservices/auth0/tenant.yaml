@@ -23,6 +23,8 @@ resourceServers:
     scopes:
       - value: admin
         description: Administrative resources
+      - value: backend
+        description: Granted to trusted backends
     signing_alg: RS256
     skip_consent_for_verifiable_first_party_clients: true
     token_dialect: access_token
@@ -135,12 +137,36 @@ clients:
       rotation_type: non-rotating
     sso_disabled: false
     token_endpoint_auth_method: none
+  - name: Webserver
+    app_type: non_interactive
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
 databases:
   - name: Username-Password-Authentication
     strategy: auth0
     enabled_clients:
       - GHA
       - Postman
+      - Webserver
     is_domain_connection: false
     options:
       mfa:
@@ -156,6 +182,7 @@ connections:
     strategy: apple
     enabled_clients:
       - Fractal
+      - Webserver
     is_domain_connection: false
     options:
       kid: D3T9SSLTY5
@@ -169,6 +196,7 @@ connections:
     strategy: google-oauth2
     enabled_clients:
       - Fractal
+      - Webserver
     is_domain_connection: false
     options:
       email: true
@@ -227,7 +255,11 @@ tenant:
       primary: "#4f35de"
 emailProvider: {}
 emailTemplates: []
-clientGrants: []
+clientGrants:
+  - client_id: Webserver
+    audience: "##API_IDENTIFIER##"
+    scope:
+      - backend
 guardianFactors:
   - name: duo
     enabled: false
