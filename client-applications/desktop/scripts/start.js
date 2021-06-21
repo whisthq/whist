@@ -2,10 +2,10 @@
 
 const helpers = require("./build-package-helpers")
 
-export default function start() {
+export default function start(env, ..._args) {
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
-  helpers.snowpackDev({ VERSION: helpers.getCurrentClientAppVersion() })
+  helpers.snowpackDev({ ...env, VERSION: helpers.getCurrentClientAppVersion() })
 }
 
 if (require.main === module) {

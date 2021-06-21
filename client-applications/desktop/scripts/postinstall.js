@@ -3,7 +3,7 @@ const execCommand = require("./execCommand").execCommand
 const fs = require("fs")
 const path = require("path")
 
-export default function postInstall() {
+export default function postInstall(_env, ..._args) {
   console.log("Building `@fractal/core-ts`...")
   execCommand("npm install", path.join("node_modules", "@fractal/core-ts"))
   execCommand("npm run build", path.join("node_modules", "@fractal/core-ts"))

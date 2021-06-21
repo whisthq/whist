@@ -1,6 +1,6 @@
 // Package the app for local testing using snowpack and electron-builder
 
-export default function packageLocal() {
+export default function packageLocal(env, ..._args) {
   const helpers = require("./build-package-helpers")
 
   helpers.buildAndCopyProtocol()
@@ -11,7 +11,7 @@ export default function packageLocal() {
   helpers.setPackagedEnv("dev")
 
   // For package-local, we don't want to increment the version so we use existing version
-  helpers.snowpackBuild({ VERSION: helpers.getCurrentClientAppVersion() })
+  helpers.snowpackBuild({ ...env, VERSION: helpers.getCurrentClientAppVersion() })
   helpers.electronBuild()
 }
 
