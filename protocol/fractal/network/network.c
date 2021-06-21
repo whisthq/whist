@@ -1901,20 +1901,19 @@ void set_timeout(SOCKET socket, int timeout_ms) {
         unsigned long mode = 0;
 
         if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
-            LOG_WARNING("Failed to make socket blocking.");
+            LOG_FATAL("Failed to make socket blocking.");
         }
 
     } else if (timeout_ms == 0) {
         unsigned long mode = 1;
         if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
-            LOG_WARNING("Failed to make socket return immediately.");
+            LOG_FATAL("Failed to make socket return immediately.");
         }
     } else {
         // Set to blocking when setting a timeout
         unsigned long mode = 0;
         if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
-            LOG_WARNING("Failed to make socket blocking.");
-            return;
+            LOG_FATAL("Failed to make socket blocking.");
         }
 
         clock read_timeout = create_clock(timeout_ms);
