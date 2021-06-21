@@ -118,6 +118,7 @@ sudo apt-get install -y lsof jq tar lz4
 echo "================================================"
 echo "Installing Uinput Config Files..."
 echo "================================================"
+
 sudo cp fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 echo "================================================"
