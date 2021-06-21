@@ -35,7 +35,6 @@ class Auth0Client:
         }
         res = requests.post(request_url, data=body)
         json = res.json()
-        print(json)
         return M2MAccessToken(json["access_token"], current_time + int(json["expires_in"]))
 
     def __init__(self, auth0_domain, auth0_client_id, auth0_client_secret):
