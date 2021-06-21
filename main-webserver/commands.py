@@ -88,8 +88,10 @@ def ami_upgrade(
 
     for active_instance in active_instances:
         try:
-            base_url = f"http://{active_instance.ip}/{current_app.config['HOST_SERVICE_PORT']}"
+            base_url = f"http://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
             requests.post(f"{base_url}/drain_and_shutdown")
+            # Host service would be setting the state in the DB once we call the drain endpoint.
+            # However, there is no downside to us setting this as well.
             active_instance.status = DRAINING
         except requests.exceptions.RequestException:
             active_instance.status = HOST_SERVICE_UNRESPONSIVE

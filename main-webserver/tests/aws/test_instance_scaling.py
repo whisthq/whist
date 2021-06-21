@@ -61,7 +61,7 @@ def test_scale_down_single_available(
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert (
         post_list[0]["args"][0]
-        == f"http://{instance.ip}/{current_app.config['HOST_SERVICE_PORT']}/drain_and_shutdown"
+        == f"http://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}/drain_and_shutdown"
     )
     db.session.refresh(instance)
     assert instance.status == "DRAINING"
