@@ -142,7 +142,7 @@ def _pass_start_values_to_instance(
             current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
             current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
         )
-        auth_token = auth0_client.token()
+        auth_token = auth0_client.token().access_token
         response = requests.put(
             (
                 f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
