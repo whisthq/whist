@@ -106,16 +106,19 @@ sudo systemctl restart docker
 echo "================================================"
 echo "Installing Other Host Service Dependencies..."
 echo "================================================"
+
 sudo apt-get install -y openssl
 
 echo "================================================"
 echo "Installing Other Utilities..."
 echo "================================================"
+
 sudo apt-get install -y lsof jq tar lz4
 
 echo "================================================"
 echo "Installing Uinput Config Files..."
 echo "================================================"
+
 sudo cp fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 echo "================================================"
