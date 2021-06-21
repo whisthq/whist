@@ -7,6 +7,7 @@ name: "Main Webserver: Hanging Resource Notification"
 on:
     schedule:
         - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    workflow_dispatch:
 
 jobs:
     main-webserver-enumerate-all-instances:

@@ -10,6 +10,11 @@ name: "Protocol: Build Dependencies"
 # We deploy new dependencies on modifications to this file (i.e. building a new version) or
 # manual dispatch on our default repository branch, which is `dev`
 on:
+    pull_request:
+        branches:
+            - dev
+        paths:
+            - ".github/workflows/protocol-build-dependencies.yml"
     push:
         branches:
             - dev
@@ -31,7 +36,7 @@ jobs:
                     - name: "OpenSSL (macOS)"
                       os: macos-10.14
                     - name: "OpenSSL (Linux Ubuntu)"
-                      os: ubuntu-18.04
+                      os: ubuntu-20.04
 
         env:
             windows-tar-name: fractal-windows-libcrypto-static-lib.tar.gz
@@ -42,6 +47,8 @@ jobs:
             s3-bucket-region: us-east-1
 
         steps:
+            ################################# CONFIG STEPS START ###############################
+
             - name: Checkout OpenSSL Git Repository
               uses: actions/checkout@v2
               with:
@@ -56,6 +63,9 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.s3-bucket-region }}
 
+            ###################################################################################
+            ################################ WINDOWS STEPS START ##############################
+
             - name: On Windows, Set up Visual Studio Developer Command Prompt (for nmake)
               if: runner.os == 'Windows'
               uses: ilammy/msvc-dev-cmd@v1
@@ -68,15 +78,18 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd
               run: |
-                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version
-                  perl Configure VC-WIN64A
+                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with O3 flag
+                  perl Configure VC-WIN64A --release
                   nmake
+
+            ###################################################################################
+            ################################# MACOS STEPS START ###############################
 
             - name: Build Fractal OpenSSL on macOS
               if: runner.os == 'macOS'
+              shell: bash
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
-              shell: bash
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
@@ -88,19 +101,27 @@ jobs:
                   # Move it to the right folder for building SDL
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
-                  # configure and build OpenSSL
-                  ./config
+                  # configure and build OpenSSL with O3 flag
+                  ./config --release
                   make
+
+            ###################################################################################
+            ############################# LINUX UBUNTU STEPS START ############################
 
             - name: Build Fractal OpenSSL on Linux Ubuntu
               if: runner.os == 'Linux'
               shell: bash
               run: |
-                  # configure and build OpenSSL
-                  ./config
+                  # configure and build OpenSSL with O3 flag
+                  ./config --release
                   make
 
-            - name: Tar libcrypto and Upload to AWS S3
+            ###################################################################################
+            ################################# PUBLISH STEPS START #############################
+
+            # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
+            - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+              if: ${{ github.event_name == 'push' || github.event_name = 'workflow_dispatch' }}
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
@@ -114,8 +135,9 @@ jobs:
                       aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
                   fi
 
-            - name: Tar OpenSSL headers and Upload to AWS S3
-              if: runner.os == 'Linux' # Only run once, as headers are identical on every OS
+            # Only run once, as headers are identical on every OS
+            - name: Tar OpenSSL headers and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+              if: ${{ (github.event_name == 'push' || github.event_name = 'workflow_dispatch') && runner.os == 'Linux'}}
               shell: bash
               run: |
                   # remove all .h.in unnecessary files
@@ -129,14 +151,24 @@ jobs:
                   tar -zcvf ${{ env.headers-tar-name }} include
                   aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
 
+            ###################################################################################
+
+            - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+              if: ${{ (github.event_name == 'push' || github.event_name = 'workflow_dispatch') && failure() }}
+              shell: bash
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \":rotating_light: Failed to deploy OpenSSL \`libcrypto\` Static Libraries to AWS S3, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     notify-slack-openssl:
         name: Notify Slack
         needs: [build-and-publish-openssl]
-        if: success()
+        if: ${{ (github.event_name == 'push' || github.event_name = 'workflow_dispatch') && success() }}
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal OpenSSL \`libcrypto\` Static Build Deployed to Production via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal OpenSSL \`libcrypto\` Static Libraries Deployed to Production via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
