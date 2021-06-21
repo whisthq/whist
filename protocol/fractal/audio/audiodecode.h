@@ -37,6 +37,7 @@ Defines
 */
 
 #define MAX_AUDIO_FRAME_SIZE 192000
+#define MAX_ENCODED_AUDIO_PACKETS 3
 
 /*
 ============================
@@ -54,6 +55,7 @@ typedef struct AudioDecoder {
     AVCodecContext* context;
     AVFrame* frame;
     SwrContext* swr_context;
+    AVPacket packets[MAX_ENCODED_AUDIO_PACKETS];
     uint8_t* out_buffer;
 } AudioDecoder;
 
@@ -127,4 +129,9 @@ int audio_decoder_decode_packet(AudioDecoder* decoder, AVPacket* encoded_packet)
  */
 void destroy_audio_decoder(AudioDecoder* decoder);
 
+int audio_decoder_send_packets(AudioDecoder* decoder, void* buffer, int buffer_size);
+
+int audio_decoder_get_frame(AudioDecoder* decoder);
+
+int audio_decoder_postprocess_frame(AudioDecoder* decoder);
 #endif  // DECODE_H

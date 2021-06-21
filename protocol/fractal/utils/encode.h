@@ -27,15 +27,15 @@ Public Functions
 */
 
 /**
- * @brief													Store num_packets AVPackets, found in packets, into a pre-allocated
- * buffer.
+ * @brief													Store num_packets AVPackets, found in packets, into a
+ * pre-allocated buffer.
  *
  * @param num_packets							Number of packets to store from packets
  *
  * @param packets									Array of packets to store
  *
- * @param buf											Buffer to store packets in. Format: (number of packets)(size of each
- * packet)(data of each packet)
+ * @param buf											Buffer to store packets in. Format: (number of packets)(size of
+ * each packet)(data of each packet)
  */
 void write_packets_to_buffer(int num_packets, AVPacket* packets, int* buf);
 

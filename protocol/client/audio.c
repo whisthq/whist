@@ -411,7 +411,9 @@ int get_next_audio_frame(uint8_t* data) {
       Arguments:
           decoded_data (uint8_t*): Data buffer to receive the decoded audio data
     */
-    // setup the frame
+    // TODO: frame global variable, like in video? or just take the ring buffer entry
+    // TODO: call audio_decoder_send_packets(audio_context.audio_decoder, ring buffer entry->data,
+    // ring buffer entry->size); setup the frame
     AVPacket* encoded_packet = av_packet_alloc();
     // reconstruct the audio frame from the indices.
     for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {

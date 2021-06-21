@@ -16,7 +16,7 @@ audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
 
 #include "audioencode.h"
 
-int audio_encoder_receive_packet(AudioEncoder *encoder, AVPacket *packet);
+int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet);
 
 /*
 ============================
@@ -217,7 +217,8 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     // our previous calls to av_packet_unref are unnecessary.
     encoder->encoded_frame_size = sizeof(int);
     encoder->num_packets = 0;
-    while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) == 0) {
+    while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
+           0) {
         if (res < 0) {
             LOG_ERROR("Failed to receive packet from audio encoder");
             return -1;
@@ -225,7 +226,8 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
         encoder->encoded_frame_size += sizeof(int) + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_NUM_AUDIO_PACKETS) {
-            LOG_ERROR("Audio encoder encoded into too many packets: reached %d", encoder->num_packets);
+            LOG_ERROR("Audio encoder encoded into too many packets: reached %d",
+                      encoder->num_packets);
             return -1;
         }
     }
@@ -269,7 +271,7 @@ void destroy_audio_encoder(AudioEncoder* encoder) {
     LOG_INFO("done destroying decoder!\n");
 }
 
-int audio_encoder_receive_packet(AudioEncoder *encoder, AVPacket *packet) {
+int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet) {
     /*
         Wrapper around avcodec_receive_packet.
 
@@ -278,7 +280,8 @@ int audio_encoder_receive_packet(AudioEncoder *encoder, AVPacket *packet) {
             packet (AVPacket*): packet to we fill with the encoded data
 
         Returns:
-            (int): 0 on success (can call this function again), 1 on EAGAIN (send more input before calling again), -1 on failure.
+            (int): 0 on success (can call this function again), 1 on EAGAIN (send more input before
+       calling again), -1 on failure.
             */
     int res_encoder;
     res_encoder = avcodec_receive_packet(encoder->context, packet);

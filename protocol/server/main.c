@@ -589,7 +589,9 @@ int32_t send_video(void* opaque) {
                     frame->is_iframe = encoder->is_iframe;
 
                     frame->videodata_length = encoder->encoded_frame_size;
-                    video_encoder_write_buffer(encoder, (void*)get_frame_videodata(frame));
+
+                    write_packets_to_buffer(encoder->num_packets, encoder->packets,
+                                            (void*)get_frame_videodata(frame));
 
                     // LOG_INFO("Sent video packet %d (Size: %d) %s", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
@@ -707,8 +709,9 @@ int32_t send_audio(void* opaque) {
                         audio_total_encode_time = 0.0;
                     }
 
-                    if (encoder->encoded_frame_size > 9000) {
-                        LOG_ERROR("Audio data too large: %d", encoder->encoded_frame_size);
+                    // TODO: make this a constant
+                    if (audio_encoder->encoded_frame_size > 9000) {
+                        LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else {
                         static char buf[9000];
 

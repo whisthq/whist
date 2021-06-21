@@ -1,6 +1,7 @@
 add_library(fractalUtils STATIC
         aes.h
         clock.h
+        decode.h
         encode.h
         logging.h
         error_monitor.h
@@ -8,6 +9,7 @@ add_library(fractalUtils STATIC
         window_name.h
         aes.c
         clock.c
+        decode.c
         encode.c
         logging.c
         error_monitor.c

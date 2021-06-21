@@ -23,6 +23,7 @@ Includes
 #include <fractal/core/fractal.h>
 #include <fractal/network/network.h>
 #include <fractal/video/videodecode.h>
+#include <fractal/utils/decode.h>
 
 /*
 ============================
