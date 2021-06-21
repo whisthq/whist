@@ -15,24 +15,25 @@
 const helpers = require("./build-package-helpers")
 const { isEmpty } = require("lodash")
 const path = require("path")
+const start = require("./start")
 
-export default function testManual() {
-  const args = process.argv.slice(2)
+export default function testManual(_env, ...args) {
+  const schemaNames = args.reduce((result, value) => {
+    if (result.length === 0) return `${value}`
+    return `${result}, ${value}`
+  }, "")
 
-const schemaNames = args.reduce((result, value) => {
-  if (result.length === 0) return `${value}`
-  return `${result}, ${value}`
-}, "")
-
-if (isEmpty(schemaNames)) {
-  const file = path.basename(process.argv[1])
-  const message = `Schema names must be passed as arguments to ${file}`
-  throw new Error(message)
+  if (isEmpty(schemaNames)) {
+    const file = path.basename(process.argv[1])
+    const message = `Schema names must be passed as arguments to ${file}`
+    throw new Error(message)
+}
+  start({
+    VERSION: helpers.getCurrentClientAppVersion(),
+    TEST_MANUAL_SCHEMAS: schemaNames,
+  })
 }
 
-helpers.buildAndCopyProtocol()
-helpers.buildTailwind()
-helpers.snowpackDev({
-  VERSION: helpers.getCurrentClientAppVersion(),
-  TEST_MANUAL_SCHEMAS: schemaNames,
-})
+if (require.main === module) {
+  testManual({}, ...process.argv.slice(2))
+}
