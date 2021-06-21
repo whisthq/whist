@@ -10,6 +10,7 @@ on:
         paths:
             - "ecs-host-setup/**"
             - "!ecs-host-setup/README.md"
+            - "!ecs-host-setup/setup_localdev_dependencies.sh"
             - ".github/workflows/ecs-host-setup-check-pr.yml"
     workflow_dispatch:
 
