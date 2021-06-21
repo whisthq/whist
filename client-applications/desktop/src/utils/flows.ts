@@ -37,7 +37,7 @@ export const fork = <T>(
 export const flow =
   <T>(
     name: string,
-    fn: (t: Observable<T>) => { [key: string]: Observable<any> }
+    flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
   ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
   /*
     Description: 
@@ -52,10 +52,8 @@ export const flow =
       Map of observables
   */
 
-  (trigger: Observable<T>) => {
-    const channels = fn(trigger)
-
-    return mapValues(withMocking(name, trigger, channels), (obs, key) =>
+  (trigger: Observable<T>) =>
+    mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
       obs.pipe(
         tap((value) =>
           console.log(
@@ -67,7 +65,6 @@ export const flow =
         share()
       )
     )
-  }
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   /*

@@ -60,6 +60,7 @@ const cmdElectron = [cmdMainCompile, "&&", "electron build/dist/main"].join(" ")
 const cmdMainWatch = [
   "nodemon",
   "--watch ./src/main",
+  "--watch ./src/testing",
   "--watch ./src/utils",
   "--ext js,jsx,ts,tsx,svg",
   `--exec "${cmdElectron}"`,

@@ -1,14 +1,26 @@
-import { Observable, EMPTY } from "rxjs"
-import { get, set, keys } from "lodash"
+// This file implements a wrapper that enables mocking the return values
+// for flows. It checks an environment variable named TEST_MANUAL_SCHEMAS
+// for the names of schemas that describe the new retun values.
+//
+// Mocking is enabled automatically on flows whose names exist in the
+// selected schemas. Mocked flows will be triggered as they would in
+// normal use of the application, but their return values will be the
+// value described in the schema.
+//
+// Schemas are stored in src/testing/schemas as default-exported objects.
+// Here, we import from src/testing/schemas/index.ts, so don't forget to
+// first import your schema file there when add new schema files.
+import { Observable, NEVER } from "rxjs"
+import { get, set, keys, isEmpty, negate } from "lodash"
 import * as schemas from "@app/testing/schemas"
-
-// This test should check for an enviroment variable, or some indicator
-// that we're in "testing mode". We'll just set to true for now.
-const isMockingEnabled = () => process.env.MANUAL_TEST === "true"
 
 // Arguments are passed through environment varialbes as positional arguments
 // separated by commas processed in scripts/testManual.js
-const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
+const schemaArguments = (process.env.TEST_MANUAL_SCHEMAS ?? "")
+  .split(",")
+  .filter(negate(isEmpty))
+
+const testingEnabled = !isEmpty(schemaArguments)
 
 // The form of this map will be something like:
 // {
@@ -25,9 +37,19 @@ const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 // only in testing mode. Some optimization here can be desired eventually,
 // such as only calling the mocks once instead of every time in withMocking()
 // when a flow is created.
+if (testingEnabled) {
+  console.log("TESTING MODE: Available schemas:", keys(schemas).join(", "))
+  console.log("TESTING MODE: Selected schemas:", schemaArguments.join(", "))
+
+  const available = new Set(keys(schemas))
+  schemaArguments.forEach((arg) => {
+    if (!available.has(arg))
+      console.log("TESTING MODE: Received unknown schema argument:", arg)
+  })
+}
+
 const getMocks = () => {
-  const args = getMockArgs()
-  return args.reduce((result, value) => {
+  return schemaArguments.reduce((result, value) => {
     const schema = get(schemas, value) ?? undefined
     if (schema !== undefined) return { ...result, ...schema }
     return result
@@ -38,7 +60,7 @@ const getMocks = () => {
 // specified keys.
 const emptyFlow = (keys: string[]) =>
   keys.reduce((result, key) => {
-    set(result as object, key, EMPTY)
+    set(result as object, key, NEVER)
     return result
   }, {})
 
@@ -55,20 +77,20 @@ export const withMocking = <
   */
   name: string,
   trigger: T,
-  channels: U
+  flowFn: (trigger: T | typeof NEVER) => U
 ): { [P in keyof U]: Observable<any> } => {
   // Return early if we're not in testing mode.
-  if (!isMockingEnabled()) return channels
-
+  if (!testingEnabled) return flowFn(trigger)
   // Search the map of mockFns for the name of this flow
   // Return channels unchanged if not found
   const mockFn = get(getMocks(), name) ?? undefined
-  if (mockFn === undefined) return channels
+
+  if (mockFn === undefined) return flowFn(trigger)
 
   // We want any channels that are not defined in the DebugSchema to be
   // empty observables, so we don't cause errors for subscribers.
   return {
-    ...emptyFlow(keys(channels)),
+    ...emptyFlow(keys(flowFn(NEVER))),
     ...mockFn(trigger),
   }
 }
