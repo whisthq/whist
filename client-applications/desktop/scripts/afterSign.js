@@ -1,3 +1,8 @@
+// This file is referenced directly in the bundleConfig object of
+// electron-builder.config.js. Electron-builder needs to pass the afterSign
+// function a "context" object, and we don't have control of how it's called.
+// For this reason, it doesn't conform to the (env, ...args) => {} signature
+// that most other scripts have.
 require("dotenv").config()
 const { notarize } = require("electron-notarize")
 const path = require("path")

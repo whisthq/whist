@@ -5,34 +5,40 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-// We require the version argument for notarization-level testing so that at
-// least some of our argument handling is covered by CI as well.
-const argv = yargs(process.argv.slice(2))
-  .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
-  .option("version", {
-    description:
-      "Set the version number of the client app for notarization testing.",
-    type: "string",
-    requiresArg: true,
-    demandOption: true,
-  })
-  .help().argv
+export default function packageNotarize() {
+  // We require the version argument for notarization-level testing so that at
+  // least some of our argument handling is covered by CI as well.
+  const argv = yargs(process.argv.slice(2))
+    .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
+    .option("version", {
+      description:
+        "Set the version number of the client app for notarization testing.",
+      type: "string",
+      requiresArg: true,
+      demandOption: true,
+    })
+    .help().argv
 
-helpers.reinitializeYarn()
-helpers.buildAndCopyProtocol()
-helpers.buildTailwind()
+  helpers.reinitializeYarn()
+  helpers.buildAndCopyProtocol()
+  helpers.buildTailwind()
 
-helpers.configureCodeSigning(true)
+  helpers.configureCodeSigning(true)
 
-// For testing, we just hardcode the environment to dev
-helpers.setPackagedEnv("dev")
+  // For testing, we just hardcode the environment to dev
+  helpers.setPackagedEnv("dev")
 
-// We test setting the secret keys
-helpers.populateSecretKeys([
-  "AWS_ACCESS_KEY",
-  "AWS_SECRET_KEY",
-  "AMPLITUDE_KEY",
-])
+  // We test setting the secret keys
+  helpers.populateSecretKeys([
+    "AWS_ACCESS_KEY",
+    "AWS_SECRET_KEY",
+    "AMPLITUDE_KEY",
+  ])
 
-helpers.snowpackBuild({ VERSION: argv.version })
-helpers.electronBuild()
+  helpers.snowpackBuild({ VERSION: argv.version })
+  helpers.electronBuild()
+}
+
+if (require.main === module) {
+  packageNotarize()
+}

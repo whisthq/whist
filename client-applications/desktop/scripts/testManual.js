@@ -16,7 +16,8 @@ const helpers = require("./build-package-helpers")
 const { isEmpty } = require("lodash")
 const path = require("path")
 
-const args = process.argv.slice(2)
+export default function testManual() {
+  const args = process.argv.slice(2)
 
 const schemaNames = args.reduce((result, value) => {
   if (result.length === 0) return `${value}`
