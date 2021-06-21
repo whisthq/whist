@@ -384,7 +384,7 @@ void update_render_context() {
     }
     // increment to indicate that we've processed these packets
     last_played_id += MAX_NUM_AUDIO_INDICES;
-};
+}
 
 bool is_valid_audio_frequency() {
     /*
