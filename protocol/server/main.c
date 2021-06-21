@@ -38,6 +38,7 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/utils/window_name.h>
 #include <fractal/core/fractalgetopt.h>
+#include <fractal/utils/encode.h>
 #include <fractal/audio/audiocapture.h>
 #include <fractal/audio/audioencode.h>
 #include <fractal/core/fractal.h>
@@ -45,7 +46,6 @@ Includes
 #include <fractal/input/input.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
-#include <fractal/utils/logging.h>
 #include <fractal/utils/error_monitor.h>
 #include <fractal/video/transfercapture.h>
 #include <fractal/video/screencapture.h>
@@ -707,25 +707,28 @@ int32_t send_audio(void* opaque) {
                         audio_total_encode_time = 0.0;
                     }
 
-                    // LOG_INFO("we got a packet of size %d",
-                    //         audio_encoder->encoded_frame_size);
+                    if (encoder->encoded_frame_size > 9000) {
+                        LOG_ERROR("Audio data too large: %d", encoder->encoded_frame_size);
+                    } else {
+                        static char buf[9000];
 
-                    // Send packet
-                    read_lock(&is_active_rwlock);
-                    if (broadcast_udp_packet(PACKET_AUDIO, audio_encoder->encoded_frame_data,
-                                             audio_encoder->encoded_frame_size, id,
-                                             STARTING_BURST_BITRATE,
-                                             audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                             audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
-                        LOG_WARNING("Could not send audio frame");
+                        write_packets_to_buffer(audio_encoder->num_packets, audio_encoder->packets,
+                                                (void*)buf);
+                        // LOG_INFO("we got a packet of size %d",
+                        //         audio_encoder->encoded_frame_size);
+
+                        // Send packet
+                        read_lock(&is_active_rwlock);
+                        if (broadcast_udp_packet(
+                                PACKET_AUDIO, (uint8_t*)buf, audio_encoder->encoded_frame_size, id,
+                                STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
+                            LOG_WARNING("Could not send audio frame");
+                        }
+                        read_unlock(&is_active_rwlock);
+                        // LOG_INFO("sent audio frame %d", id);
+                        id++;
                     }
-                    read_unlock(&is_active_rwlock);
-                    // LOG_INFO("sent audio frame %d", id);
-                    id++;
-
-                    // Free encoder packet
-
-                    av_packet_unref(&audio_encoder->packet);
                 }
 #else
                 read_lock(&is_active_rwlock);

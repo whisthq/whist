@@ -34,6 +34,8 @@ Custom Types
 ============================
 */
 
+#define MAX_NUM_AUDIO_PACKETS 3
+
 /**
  * @brief       Struct for handling encoding and resampling of audio. the FFmpeg codec and context
  *              handle encoding packets sent through audio_fifo, and audio is resampled from system
@@ -45,11 +47,13 @@ typedef struct AudioEncoder {
     AVCodecContext* context;
     AVFrame* frame;
     AVAudioFifo* audio_fifo;
-    AVPacket packet;
+
+    int num_packets;
+    AVPacket packets[MAX_NUM_AUDIO_PACKETS];
+
     SwrContext* swr_context;
     int frame_count;
     int encoded_frame_size;
-    void* encoded_frame_data;
 } AudioEncoder;
 
 /**

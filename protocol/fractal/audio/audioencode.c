@@ -16,6 +16,8 @@ audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
 
 #include "audioencode.h"
 
+int audio_encoder_receive_packet(AudioEncoder *encoder, AVPacket *packet);
+
 /*
 ============================
 Public Function Implementations
@@ -41,10 +43,6 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     memset(encoder, 0, sizeof(*encoder));
 
     // setup the AVCodec and AVFormatContext
-
-    // allocate the packet - we will set its fields in avcodec_receive_packet.
-    encoder->packet = *av_packet_alloc();
-
     encoder->codec = avcodec_find_encoder_by_name("libfdk_aac");
     if (!encoder->codec) {
         LOG_WARNING("AVCodec not found.");
@@ -217,24 +215,23 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     // get encoded packet
     // because this always calls av_packet_unref before doing anything,
     // our previous calls to av_packet_unref are unnecessary.
-    res = avcodec_receive_packet(encoder->context, &encoder->packet);
-    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
-        // encoder needs more data or there's nothing left
-        LOG_INFO("Audio encoder wants more input data");
-        av_packet_unref(&encoder->packet);
-        return 1;
-    } else if (res < 0) {
-        // real error
-        LOG_ERROR("Could not encode audio frame: error '%s'.\n", av_err2str(res));
-        return -1;
-    } else {
-        // we did it!
-        encoder->frame_count += encoder->frame->nb_samples;
-
-        encoder->encoded_frame_size = encoder->packet.size;
-        encoder->encoded_frame_data = encoder->packet.data;
-        return 0;
+    encoder->encoded_frame_size = sizeof(int);
+    encoder->num_packets = 0;
+    while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) == 0) {
+        if (res < 0) {
+            LOG_ERROR("Failed to receive packet from audio encoder");
+            return -1;
+        }
+        encoder->encoded_frame_size += sizeof(int) + encoder->packets[encoder->num_packets].size;
+        encoder->num_packets++;
+        if (encoder->num_packets == MAX_NUM_AUDIO_PACKETS) {
+            LOG_ERROR("Audio encoder encoded into too many packets: reached %d", encoder->num_packets);
+            return -1;
+        }
     }
+    // set frame count to number of samples as computed by ffmpeg
+    encoder->frame_count += encoder->frame->nb_samples;
+    return 0;
 }
 
 void destroy_audio_encoder(AudioEncoder* encoder) {
@@ -259,10 +256,37 @@ void destroy_audio_encoder(AudioEncoder* encoder) {
     LOG_INFO("av_freed frame\n");
     av_free(encoder->frame);
 
+    // free the packets
+    for (int i = 0; i < MAX_NUM_AUDIO_PACKETS; i++) {
+        av_packet_unref(&encoder->packets[i]);
+    }
+
     // free swr
     swr_free(&encoder->swr_context);
     LOG_INFO("freed swr\n");
-    // free the buffer and decoder
+    // free the encoder
     free(encoder);
     LOG_INFO("done destroying decoder!\n");
+}
+
+int audio_encoder_receive_packet(AudioEncoder *encoder, AVPacket *packet) {
+    /*
+        Wrapper around avcodec_receive_packet.
+
+        Arguments:
+            encoder (AudioEncoder*): audio encoder we want to use for encoding
+            packet (AVPacket*): packet to we fill with the encoded data
+
+        Returns:
+            (int): 0 on success (can call this function again), 1 on EAGAIN (send more input before calling again), -1 on failure.
+            */
+    int res_encoder;
+    res_encoder = avcodec_receive_packet(encoder->context, packet);
+    if (res_encoder == AVERROR(EAGAIN)) {
+        return 1;
+    } else if (res_encoder < 0) {
+        LOG_ERROR("Error receiving packet from encoder: %s", av_err2str(res_encoder));
+    }
+
+    return 0;
 }

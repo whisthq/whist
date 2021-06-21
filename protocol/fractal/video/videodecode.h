@@ -99,4 +99,8 @@ void destroy_video_decoder(VideoDecoder* decoder);
  */
 bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size);
 
+int video_decoder_send_packet(VideoDecoder* decoder, AVPacket* encoded_packet);
+
+int video_decoder_get_frame(VideoDecoder* decoder);
+
 #endif  // VIDEO_DECODE_H
