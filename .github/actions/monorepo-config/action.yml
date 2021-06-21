@@ -10,6 +10,17 @@ inputs:
 outputs:
   config:
     description: JSON object of Fractal config
+args:
+  - --secrets
+  - ${{ inputs.secrets }}
+  - config
+# If you want to pass positional arguments to your entrypoint, you need to
+# use the "exec" form that you see below, which takes the form of a JSON array.
+# This is so that the container runs your process directly, as opposed to using
+# a shell. If you pass arguments using the "shell" from (no brackets or quotes),
+# then the positional arguments passed to "docker run ..." will be passed to the
+# shell, not your entrypoint process.
+entrypoint: [python, /root/monorepo-config/main.py]
 runs:
   using: docker
   image: Dockerfile
