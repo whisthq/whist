@@ -1,7 +1,7 @@
 import { from, zip } from "rxjs"
 import { switchMap, map } from "rxjs/operators"
 
-import { flow, fork, createTrigger } from "@app/utils/flows"
+import { flow, fork } from "@app/utils/flows"
 import {
   generateRefreshedAuthInfo,
   generateRandomConfigToken,
@@ -32,13 +32,8 @@ export default flow<{
     }))
   )
 
-  const auth = fork(authInfoWithConfig, {
+  return fork(authInfoWithConfig, {
     success: (result: any) => authInfoValid(result),
     failure: (result: any) => !authInfoValid(result),
   })
-
-  return {
-    success: createTrigger("authFlowSuccess", auth.success),
-    failure: createTrigger("authFlowFailure", auth.failure),
-  }
 })
