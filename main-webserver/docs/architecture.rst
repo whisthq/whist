@@ -5,11 +5,11 @@
 Webserver Architecture
 =======================
 
-When deployed, the so-called "Fractal Webserver" is not so much a web server as it is a group of three closely-related services. They are
+When deployed, the so-called "Fractal Webserver" is not so much a web server as it is a group of three closely-related services:
 
-* the HTTP server itself,
-* an asynchronous task queue, and
-* a worker pool.
+* The HTTP server itself
+* An asynchronous task queue
+* A worker pool
 
 Only the HTTP server is accessible to the public. The HTTP server and the worker pool, using the asynchronous task queue as 
 their primary communication channel, work together to process all incoming requests. Any time the Fractal Webserver receives 
