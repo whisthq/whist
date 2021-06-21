@@ -1,10 +1,10 @@
-.. Fractal documentation master file, created by
+.. Fractal documentation main file, created by
    sphinx-quickstart on Mon Apr 12 16:38:37 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Fractal's internal documentation!
-============================================
+Welcome to the Fractal Webserver internal documentation!
+========================================================
 
 .. toctree::
    :maxdepth: 2
@@ -18,15 +18,21 @@ Welcome to Fractal's internal documentation!
 Introduction
 ------------
 
-Fractal's Webserver is responsible for implementating all of Fractal's business logic. Its responsibilities include
+The Fractal Webserver is responsible for implementating all of Fractal's business logic. Its responsibilities include:
 
-* access control, and
-* streaming session management.
+* access control
+* streaming session management
 
-In order to fulfill all of its responsibilites, Fractal's Webserver communicates with may other internal and external services. It receives incoming requests from
+
+interfacing frontend with cloud infrastructure
+passing parameters for streaming sessions
+
+
+In order to fulfill all of its responsibilites, the Fractal Webserver communicates with many other internal and external 
+services. It receives incoming requests from:
 
 * user agents (e.g. the desktop application, browsers, developer tools such as Postman and cURL),
-* the ECS host service,
+* the Fractal Host Service,
 * instances of the Fractal protocol server running in ECS containers,
 * GitHub Actions (GHA) workflows, and
 * HireFire.

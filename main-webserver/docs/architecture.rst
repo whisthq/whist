@@ -1,25 +1,37 @@
 .. architecture.rst
-   A description of the different components of Fractal's Webserver and how
+   A description of the different components of the Fractal Webserver and how
    they interact with one another.
 
-Webserver architecture
+Webserver Architecture
 =======================
 
-When deployed, the so-called "Webserver" is not so much a web server as it is a group of three closely-related services. They are
+When deployed, the so-called "Fractal Webserver" is not so much a web server as it is a group of three closely-related services. They are
 
 * the HTTP server itself,
 * an asynchronous task queue, and
 * a worker pool.
 
-Only the HTTP server is accessible to the public. The HTTP server and the worker pool, using the asynchronous task queue as their primary communication channel, work together to process all incoming requests.
+Only the HTTP server is accessible to the public. The HTTP server and the worker pool, using the asynchronous task queue as 
+their primary communication channel, work together to process all incoming requests. Any time the Fractal Webserver receives 
+a request that would take more than a few milliseconds to process, it adds the processing of that request to the asynchronous 
+task queue and immediately returns a unique ID identifying the entry in the queue to the caller (usually the Fractal desktop 
+applications). The caller can use this unique ID to poll for the tasks' status while it waits in the queue to be picked up 
+by a worker and while the task is being processed. When the tasks' processing is complete, the caller can use the unique ID 
+to retrieve the result.
 
-Any time the Webserver receives a request that would take more than a few milliseconds to process, it adds the processing of that request to the asynchronous task queue and immediately returns a unique ID identifying the entry in the queue to the caller (usually the Fractal desktop application). The caller can use this unique ID to poll for the tasks' status while it waits in the queue to be picked up by a worker and while the task is being processed. When the tasks' processing is complete, the caller can use the unique ID to retrieve the result.
+We have chosen to pair a worker pool with our HTTP server in this way to increase the worst-case rate at which our webserver 
+can process requests. Since the HTTP server processes each request in its own thread and it is only practical to spawn so many
+threads for request processing purposes, any thread that spends too much time processing the same request effectively decreases 
+the HTTP server's overall request processing capacity.
 
-We have chosen to pair a worker pool with our HTTP server in this way to increase the worst-case rate at which our Webserver can process requests. Since the HTTP server processes each request in its own thread and it is only practical to spawn so many threads for request processing purposes, any thread that spends too much time processing the same request effectively decreases the HTTP server's overall request processing capacity.
+Suppose there was no worker pool and the HTTP server had to handle all computation on its own. Suppose again that it takes 10 
+seconds to process a request for :code:`x`. Let's say that the HTTP server is allowed to spawn up to 50 request processing 
+threads. If 50 users send a requests for :code:`x` all within 10 seconds of one another, the HTTP server will become completely
+unable to process any other requests until at least one of the threads becomes available again. In the worst case, in which all 
+50 users sent the request at the same time, it could take 10 seconds before the HTTP server is able to process any other requests!
 
-Suppose there was no worker pool and the HTTP server had to handle all computation on its own. Suppose again that it takes 10 seconds to process a request for :code:`x`. Let's say that the HTTP server is allowed to spawn up to 50 request processing threads. If 50 users send a requests for :code:`x` all within 10 seconds of one another, the HTTP server will become completely unable to process any other requests until at least one of the threads becomes available again. In the worst case, in which all 50 users sent the request at the same time, it could take 10 seconds before the HTTP server is able to process any other requests!
-
-Since the worker pool handles all time-intensive computation, no HTTP server thread is blocked for more than a few milliseconds. It would take a massive number of requests to block the Webserver even for one second.
+Since the worker pool handles all time-intensive computation, no HTTP server thread is blocked for more than a few milliseconds. 
+It would take a massive number of requests to block the webserver even for one second.
 
 
 HTTP Server
@@ -28,13 +40,16 @@ HTTP Server
 Fractal's HTTP server is implemented using the Flask web framework for Python.
 
 
-Redis store
+Redis Store
 -----------
 
-As stated above, the Redis store is the primary communication channel between the HTTP server and the Worker pool. Generally, it stores state that needs to be shared across multiple HTTP server or worker processes. We can approximately classify all pieces of of state in the Redis store as either server state or task state, where a "task" is a function that the HTTP server wants the worker pool to compute asynchronously on some input.
+As stated above, the Redis store is the primary communication channel between the HTTP server and the Worker pool. Generally, 
+it stores state that needs to be shared across multiple HTTP server or worker processes. We can approximately classify all 
+pieces of of state in the Redis store as either server state or task state, where a "task" is a function that the HTTP server 
+wants the worker pool to compute asynchronously on some input.
 
 
-Server state
+Server State
 ^^^^^^^^^^^^
 
 During deployment, Heroku may run Fractal's HTTP server in multiple concurrent processes. This allows Heroku to load-balance requests across all available server processes, improving performance at scale.

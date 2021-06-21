@@ -1,34 +1,40 @@
 .. services.rst
    A description of the other internal and external services with which the
-   Fractal web server communicates.
+   Fractal webserver communicates.
 
-Other services
+Other Services
 ==============
 
 
-User agents
+User Agents
 -----------
 
-* The Fractal desktop application allows customers to register and log into user accounts. Once the desktop application is authenticated, it can request that the web server allocate it a streaming session.
-* Developers use tools such as web browsers, Postman, and cURL to perform manual tests against instances of the web server and also to perform administrative actions like creating and deleting cloud resources.
+* The Fractal desktop applications allow customers to register and log into user accounts. Once a Fractal desktop application
+* is authenticated, it requests that the Fractal webserver allocates it a Fractal container/mandelbox, at which point a 
+* streaming session can begin. Developers use tools such as web browsers, Postman, and cURL to perform manual tests against 
+* instances of the Fractal webserver, and also to perform administrative actions like creating and deleting cloud resources.
 
 
-The ECS host service
---------------------
+The Host Service
+----------------
 
-* The ECS host service wraps Amazon's default ECS agent and extends its functionality.
-* It listens for connections from the web server, which periodically sends commands and data to the host service that influence how and when containerized application streaming sessions start and run.
-* The ECS host service also sends periodic heartbeats back to the web server to let it know that it is alive.
-
-
-The Fractal protocol server
----------------------------------
-
-* The Fractal protocol server notifies the web server when connected clients disconnect so the web server knows when to tell AWS to delete containers that are no longer needed.
+* The Fractal host service is responsible for orchestrating container allocation and interaction on a host machine. It listens
+* for connections from the webserver, which periodically sends commands and data that influence how and when containerized 
+* application streaming sessions start and run to the Fractal host service. It is also responsible for handling properly
+* setting up Fractal containers and their interaction with the host, notably via allocating TTYs and Uinput nodes. The 
+* Fractal host service also sends periodic heartbeats back to the webserver to let it know that it is alive.
 
 
-GHA workflows
--------------
+The Fractal Protocol Server
+---------------------------
+
+* The Fractal protocol server is responsible for handling the server-side part of the streaming, and is installed in Fractal
+* containers. It notifies the Fractal webserver when connected clients disconnect, so that the Fractal webserver knows when
+* to tell AWS to delete containers that are no longer needed.
+
+
+GitHub Actions Workflows
+------------------------
 
 * Each time a new release is deployed, a GitHub Actions workflow places the web server in maintenance mode so the deployment can happen atomically. It is necessary to suspend normal Webserver operation temporarily when deploying new releases to give us time to update all of our cloud infrastructure.
 

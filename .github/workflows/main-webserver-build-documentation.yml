@@ -1,7 +1,7 @@
 # workflows/main-webserver-build-documentation.yml
 #
 # Main Webserver: Build Documentation
-# Build and conditionally deploy web server documentation. Although this
+# Build and conditionally deploy webserver documentation. Although this
 # workflow is triggered by both pull requests and pushes, the steps that deploy
 # the built documentation only run when the triggering event is a push.
 
@@ -13,26 +13,29 @@ on:
             - dev
         paths:
             - "main-webserver/docs/**"
-            - main-webserver/requirements-test.txt
+            - "main-webserver/requirements-test.txt"
     push:
         branches:
             - dev
         paths:
             - "main-webserver/docs/**"
-            - main-webserver/requirements-test.txt
+            - "main-webserver/requirements-test.txt"
     workflow_dispatch:
 
 jobs:
     main-webserver-build-documentation:
         name: Build and Deploy Webserver Documentation to fractal/docs
         runs-on: ubuntu-20.04
+        
         steps:
-            - name: Check out the fractal monorepo
+            ################################# CONFIG STEPS START ###############################
+
+            - name: Checkout the fractal Git Repository
               uses: actions/checkout@v2
               with:
                   path: fractal
 
-            - name: Check out the fractal/docs repository
+            - name: Checkout the fractal/docs Git Repository
               uses: actions/checkout@v2
               with:
                   repository: fractal/docs
@@ -44,34 +47,28 @@ jobs:
               with:
                   python-version: 3.8
 
-              # Install the version of Sphinx specified in
-              # main-webserver/requirements-test.txt. As a result, we need this
-              # workflow to run every time main-webserver/requirements-test.txt
-              # changes.
+            # Install the version of Sphinx specified in main-webserver/requirements-test.txt
             - name: Install Sphinx
               run: pip install $(cat fractal/main-webserver/requirements-test.txt | grep -m 1 ^Sphinx==)
 
-            - name: Build the latest documentation
+            - name: Build the Latest Documentation
               working-directory: fractal/main-webserver/docs
               run: make html
 
-            - name: Diff old and new documentation
+            - name: Diff Old and New Documentation
               id: diff
               run: |
                   git diff --no-index fractal/main-webserver/docs/_build/html docs/webserver && echo "No changes detected"
                   echo "::set-output name=changed::$?"
 
-              # All subsequent steps only run if both the event that triggered
-              # the workflow was a push and the modifications to the
-              # main-webserver/docs directory actually caused the built
-              # documentation to change. An example of a change that would not
-              # affect the built documentation is a formatting change in a
-              # Sphinx configuration file.
-            - name: Copy new documentation into the fractal/docs working tree
+            ###################################################################################
+            ################################# PUBLISH STEPS START #############################
+
+            - name: Copy New Documentation into the fractal/docs Working Tree (Only on Push Events)
               if: ${{ github.event_name == 'push' && steps.diff.outputs.changed == true}}
               run: rm -r docs/webserver && cp -r fractal/main-webserver/docs/_build/html docs/webserver
 
-            - name: Commit the documentation changes to fractal/docs
+            - name: Commit the Documentation Changes to fractal/docs (Only on Push Events)
               if: ${{ github.event_name == 'push' && steps.diff.outputs.changed == true}}
               working-directory: docs
               run: |
@@ -80,7 +77,7 @@ jobs:
                   git config user.name "${{ github.event.pusher.name }}"
                   git config user.email "${{ github.event.pusher.email }}"
 
-                  # Authenticate git as Phil with GitHub
+                  # Authenticate Git as Phil with GitHub
                   git config credential.helper store
                   git credential approve <<EOF
                   protocol=https
@@ -96,3 +93,28 @@ jobs:
                   EOF
                   git show --stat
                   git push
+
+            ###################################################################################
+
+
+
+
+
+
+            - name: Notify Slack on Workflow Error (Only on Push Events)
+              if: ${{ github.event_name == 'push' && failure() }}
+              shell: bash
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"@releases :rotating_light: Failed to deploy \`FFmpeg\` Shared Libraries to AWS S3, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+
+            - name: Notify Slack (Only on Push Events)
+              if: ${{ github.event_name == 'push' && failure() }}
+              shell: bash
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal \`FFmpeg\` Shared Libraries Deployed to Production via Upload to AWS S3\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
