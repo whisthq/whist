@@ -120,7 +120,7 @@ jobs:
             ################################# PUBLISH STEPS START #############################
 
             # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
-            - name: Tar libcrypto and Upload to AWS S3
+            - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
               if: ${{ github.event_name == 'push' || github.event_name = 'workflow_dispatch' }}
               shell: bash
               run: |
@@ -136,7 +136,7 @@ jobs:
                   fi
 
             # Only run once, as headers are identical on every OS
-            - name: Tar OpenSSL headers and Upload to AWS S3
+            - name: Tar OpenSSL headers and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name = 'workflow_dispatch') && runner.os == 'Linux'}}
               shell: bash
               run: |
@@ -153,7 +153,7 @@ jobs:
 
             ###################################################################################
 
-            - name: Notify Slack on Workflow Error (Only on Push Events)
+            - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name = 'workflow_dispatch') && failure() }}
               shell: bash
               run: |
