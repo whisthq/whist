@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import pytest
-from helpers.load import resolve
+from helpers.parse import resolve
 
 
 @pytest.fixture
@@ -35,8 +35,12 @@ def test_resolve(nested_map):
 
     nochange = resolve(["m ", "j"], nested_map)
     assert nochange["a"] == original_map["a"], "changed without profile match"
-    assert nochange["a"]["h"] == original_map["a"]["h"], "changed without profile match"
+    assert (
+        nochange["a"]["h"] == original_map["a"]["h"]
+    ), "changed without profile match"
 
-    assert nochange["a"]["h"]["y"] == original_map["a"]["h"]["y"], "changed without profile match"
+    assert (
+        nochange["a"]["h"]["y"] == original_map["a"]["h"]["y"]
+    ), "changed without profile match"
 
     assert original_map == nested_map, "map was mutated"
