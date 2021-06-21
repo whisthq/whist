@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 // This block contains the two transport protocols (TCP and UDP) that we care
@@ -32,7 +33,7 @@ func (tp *TransportProtocol) UnmarshalJSON(b []byte) error {
 		*tp = TransportProtocolUDP
 	default:
 		*tp = TransportProtocolTCP
-		return logger.MakeError("TransportProtocol must be \"tcp\" or \"udp\"; Got " + string(b))
+		return utils.MakeError("TransportProtocol must be \"tcp\" or \"udp\"; Got " + string(b))
 	}
 	return nil
 }
@@ -50,6 +51,6 @@ func NewTransportProtocol(protocol string) (TransportProtocol, error) {
 	case string(TransportProtocolUDP):
 		return TransportProtocolUDP, nil
 	default:
-		return TransportProtocolTCP, logger.MakeError(protocol + " is not a recognized transport protocol")
+		return TransportProtocolTCP, utils.MakeError(protocol + " is not a recognized transport protocol")
 	}
 }

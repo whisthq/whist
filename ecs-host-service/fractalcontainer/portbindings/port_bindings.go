@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 func init() {
@@ -69,7 +70,7 @@ var portMapsLock = new(sync.Mutex)
 func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	mapToUse, err := getProtocolSpecificHostPortMap(desiredBind.Protocol)
 	if err != nil {
-		return PortBinding{}, logger.MakeError("allocateSinglePort failed. Error: %s", err)
+		return PortBinding{}, utils.MakeError("allocateSinglePort failed. Error: %s", err)
 	}
 
 	// If the given HostPort is nonzero, we want to use that one specifically.
@@ -77,12 +78,12 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	if desiredBind.HostPort != 0 {
 		// Check that the desired port is actually in the allowed range
 		if !isInAllowedRange(desiredBind.HostPort) {
-			return PortBinding{}, logger.MakeError("allocateSinglePort: received a request to allocate a disallowed port: %v/%s", desiredBind.HostPort, desiredBind.Protocol)
+			return PortBinding{}, utils.MakeError("allocateSinglePort: received a request to allocate a disallowed port: %v/%s", desiredBind.HostPort, desiredBind.Protocol)
 		}
 
 		// Check that this port isn't already allocated to a container, or reserved
 		if _, exists := (*mapToUse)[desiredBind.HostPort]; exists {
-			return PortBinding{}, logger.MakeError("allocateSinglePort: Could not allocate HostPort %v/%v: already bound or reserved.", desiredBind.HostPort, desiredBind.Protocol)
+			return PortBinding{}, utils.MakeError("allocateSinglePort: Could not allocate HostPort %v/%v: already bound or reserved.", desiredBind.HostPort, desiredBind.Protocol)
 		}
 
 		// Mark it as allocated and return
@@ -100,7 +101,7 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 		}
 	}
 	if randomPort == 0 {
-		return PortBinding{}, logger.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", maxTries, desiredBind.HostPort, desiredBind.Protocol)
+		return PortBinding{}, utils.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", maxTries, desiredBind.HostPort, desiredBind.Protocol)
 	}
 
 	// Mark it as allocated and return
@@ -201,6 +202,6 @@ func getProtocolSpecificHostPortMap(protocol TransportProtocol) (*protocolSpecif
 	case TransportProtocolUDP:
 		return &udpPortMap, nil
 	default:
-		return nil, logger.MakeError("getProtocolSpecificHostPortMap: received incorrect protocol: %v", protocol)
+		return nil, utils.MakeError("getProtocolSpecificHostPortMap: received incorrect protocol: %v", protocol)
 	}
 }

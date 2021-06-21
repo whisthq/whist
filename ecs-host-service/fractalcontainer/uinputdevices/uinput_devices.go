@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 
 	uinput "github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices/uinput"
 
@@ -42,7 +43,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	absmouse, err = uinput.CreateTouchPad("/dev/uinput", []byte("Fractal Virtual Absolute Input"), 0, 0xFFF, 0, 0xFFF)
 	if err != nil {
-		reterr = logger.MakeError("Could not create virtual absolute input: %s", reterr)
+		reterr = utils.MakeError("Could not create virtual absolute input: %s", reterr)
 		return
 	}
 	defer func() {
@@ -53,13 +54,13 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	absmousePath, err = getDeviceFilePath(absmouse.DeviceFile())
 	if err != nil {
-		reterr = logger.MakeError("Failed to get device path for virtual absolute input: %s", err)
+		reterr = utils.MakeError("Failed to get device path for virtual absolute input: %s", err)
 		return
 	}
 
 	relmouse, err = uinput.CreateMouse("/dev/uinput", []byte("Fractal Virtual Relative Input"))
 	if err != nil {
-		reterr = logger.MakeError("Could not create virtual relative input: %s", err)
+		reterr = utils.MakeError("Could not create virtual relative input: %s", err)
 		return
 	}
 	defer func() {
@@ -70,13 +71,13 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	relmousePath, err = getDeviceFilePath(relmouse.DeviceFile())
 	if err != nil {
-		reterr = logger.MakeError("Failed to get device path for virtual relative input: %s", err)
+		reterr = utils.MakeError("Failed to get device path for virtual relative input: %s", err)
 		return
 	}
 
 	keyboard, err = uinput.CreateKeyboard("/dev/uinput", []byte("Fractal Virtual Keyboard"))
 	if err != nil {
-		reterr = logger.MakeError("Could not create virtual keyboard: %s", err)
+		reterr = utils.MakeError("Could not create virtual keyboard: %s", err)
 		return
 	}
 	defer func() {
@@ -87,7 +88,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 
 	keyboardPath, err = getDeviceFilePath(keyboard.DeviceFile())
 	if err != nil {
-		reterr = logger.MakeError("Failed to get device path for virtual keyboard: %s", err)
+		reterr = utils.MakeError("Failed to get device path for virtual keyboard: %s", err)
 		return
 	}
 
@@ -125,7 +126,7 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 
 	dir, err := filepath.Abs(filepath.Dir(socketPath))
 	if err != nil {
-		return logger.MakeError("Unable to calculate parent directory of given socketPath %s. Error: %s", socketPath, err)
+		return utils.MakeError("Unable to calculate parent directory of given socketPath %s. Error: %s", socketPath, err)
 	}
 
 	os.MkdirAll(dir, 0777)
@@ -134,7 +135,7 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	var lc net.ListenConfig
 	listener, err := lc.Listen(ctx, "unix", socketPath)
 	if err != nil {
-		return logger.MakeError("Could not create unix socket at %s: %s", socketPath, err)
+		return utils.MakeError("Could not create unix socket at %s: %s", socketPath, err)
 	}
 	// Instead of running `defer listener.Close()` we ran `defer cancel()` above,
 	// which will cause the following goroutine to always close `listener`.
@@ -152,13 +153,13 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	// listener.Accept() blocks until the protocol connects
 	client, err := listener.Accept()
 	if err != nil {
-		return logger.MakeError("Could not connect to client over unix socket at %s: %s", socketPath, err)
+		return utils.MakeError("Could not connect to client over unix socket at %s: %s", socketPath, err)
 	}
 	defer client.Close()
 
 	connf, err := client.(*net.UnixConn).File()
 	if err != nil {
-		return logger.MakeError("Could not get file corresponding to client connection for unix socket at %s: %s", socketPath, err)
+		return utils.MakeError("Could not get file corresponding to client connection for unix socket at %s: %s", socketPath, err)
 	}
 	defer connf.Close()
 
@@ -171,7 +172,7 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	rights := syscall.UnixRights(fds[:]...)
 	err = syscall.Sendmsg(connfd, nil, rights, nil, 0)
 	if err != nil {
-		return logger.MakeError("Error sending uinput file descriptors over socket: %s", err)
+		return utils.MakeError("Error sending uinput file descriptors over socket: %s", err)
 	}
 
 	logger.Infof("Sent uinput file descriptors to socket at %s", socketPath)
@@ -185,24 +186,24 @@ func getDeviceFilePath(fd *os.File) (string, error) {
 	bsysname := make([]byte, maxlen)
 	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd.Fd()), linuxUIGetSysName(maxlen), uintptr(unsafe.Pointer(&bsysname[0])))
 	if errno != 0 {
-		return "", logger.MakeError("ioctl to get sysname failed with errno %d", errno)
+		return "", utils.MakeError("ioctl to get sysname failed with errno %d", errno)
 	}
 	sysname := string(bytes.Trim(bsysname, "\x00"))
-	syspath := logger.Sprintf("/sys/devices/virtual/input/%s", sysname)
+	syspath := utils.Sprintf("/sys/devices/virtual/input/%s", sysname)
 	sysdir, err := os.Open(syspath)
 	if err != nil {
-		return "", logger.MakeError("could not open directory %s: %s", syspath, err)
+		return "", utils.MakeError("could not open directory %s: %s", syspath, err)
 	}
 	names, err := sysdir.Readdirnames(0)
 	if err != nil {
-		return "", logger.MakeError("Readdirnames for directory %s failed: %s", syspath, err)
+		return "", utils.MakeError("Readdirnames for directory %s failed: %s", syspath, err)
 	}
 	for _, name := range names {
 		if strings.HasPrefix(name, "event") {
 			return "/dev/input/" + name, nil
 		}
 	}
-	return "", logger.MakeError("did not find file in %s with prefix 'event'", syspath)
+	return "", utils.MakeError("did not find file in %s with prefix 'event'", syspath)
 }
 
 // In summary, this function computes the argument that gets passed to the

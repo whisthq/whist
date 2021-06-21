@@ -3,6 +3,7 @@ package utils // import "github.com/fractal/fractal/ecs-host-service/utils"
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"strings"
 )
 
@@ -30,4 +31,30 @@ func FindSubstringBetween(value string, start string, end string) string {
 		return ""
 	}
 	return value[posFirstAdjusted:posLast]
+}
+
+// ColorRed returns the input string surrounded by the ANSI escape codes to
+// color the text red. Text color is reset at the end of the returned string.
+func ColorRed(s string) string {
+	const (
+		codeReset = "\033[0m"
+		codeRed   = "\033[31m"
+	)
+
+	return Sprintf("%s%s%s", codeRed, s, codeReset)
+}
+
+// The following two functions exist so that we don't have to import `fmt` into
+// any other packages (so we don't accidentally log something using `fmt`
+// functions instead of using the `fractallogger` equivalents that send
+// information to logz.io and Sentry).
+
+// Sprintf creates a string from format string and args.
+func Sprintf(format string, v ...interface{}) string {
+	return fmt.Sprintf(format, v...)
+}
+
+// MakeError creates an error from format string and args.
+func MakeError(format string, v ...interface{}) error {
+	return fmt.Errorf(format, v...)
 }

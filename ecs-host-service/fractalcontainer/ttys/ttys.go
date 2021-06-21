@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 // TTY is defined as a type so that the implementation can change without the
@@ -43,7 +44,7 @@ func Allocate() (TTY, error) {
 		}
 	}
 	if tty == TTY(0) {
-		return TTY(0), logger.MakeError("Tried %v times to allocate a TTY for container. Breaking out to avoid spinning for too long. Number of currently-allocated TTYs: %v", maxTries, len(ttymap))
+		return TTY(0), utils.MakeError("Tried %v times to allocate a TTY for container. Breaking out to avoid spinning for too long. Number of currently-allocated TTYs: %v", maxTries, len(ttymap))
 	}
 
 	// Mark it as allocated and return

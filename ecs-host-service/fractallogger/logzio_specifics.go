@@ -5,6 +5,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
+	"github.com/fractal/fractal/ecs-host-service/utils"
+
 	"github.com/logzio/logzio-go"
 )
 
@@ -27,31 +31,31 @@ const (
 )
 
 func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
-	instanceID, _ := GetAwsInstanceID()
-	amiID, _ := GetAwsAmiID()
+	instanceID, _ := aws.GetInstanceID()
+	amiID, _ := aws.GetAmiID()
 
 	msg, err := json.Marshal(struct {
-		AWSInstanceID string `json:"aws_instance_id"`
-		AWSAmiID      string `json:"aws_ami_id"`
-		Environment   string `json:"environment"`
-		Message       string `json:"message"`
-		Type          string `json:"type"`
+		AWSInstanceID aws.InstanceID          `json:"aws_instance_id"`
+		AWSAmiID      aws.AmiID               `json:"aws_ami_id"`
+		Environment   metadata.AppEnvironment `json:"environment"`
+		Message       string                  `json:"message"`
+		Type          string                  `json:"type"`
 	}{
 		AWSInstanceID: instanceID,
 		AWSAmiID:      amiID,
-		Environment:   string(GetAppEnvironment()),
+		Environment:   metadata.GetAppEnvironment(),
 		Message:       payload,
 		Type:          string(msgType),
 	})
 
 	if err != nil {
-		log.Printf(ColorRed(Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
+		log.Printf(utils.ColorRed(utils.Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
 		return
 	}
 
 	err = (*logzio.LogzioSender)(sender).Send(msg)
 	if err != nil {
-		log.Printf(ColorRed(Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
+		log.Printf(utils.ColorRed(utils.Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
 		return
 	}
 }
@@ -65,7 +69,7 @@ func initializeLogzIO() (*logzioSender, error) {
 	}
 
 	if logzioShippingToken == "" {
-		return nil, MakeError("Error initializing logz.io integration: logzioShippingToken is uninitialized")
+		return nil, utils.MakeError("Error initializing logz.io integration: logzioShippingToken is uninitialized")
 	}
 
 	sender, err := logzio.New(
@@ -75,7 +79,7 @@ func initializeLogzIO() (*logzioSender, error) {
 		logzio.SetCheckDiskSpace(false),
 	)
 	if err != nil {
-		return nil, MakeError("Error initializing logz.io integration: %s", err)
+		return nil, utils.MakeError("Error initializing logz.io integration: %s", err)
 	}
 
 	return (*logzioSender)(sender), nil

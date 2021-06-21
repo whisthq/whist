@@ -9,11 +9,11 @@ import (
 	"sync"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
-	"github.com/fractal/fractal/ecs-host-service/utils"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
@@ -281,7 +281,7 @@ func (c *containerData) GetHostPort(containerPort uint16, protocol portbindings.
 		}
 	}
 
-	return 0, logger.MakeError("Couldn't GetHostPort(%v, %v) for container with FractalID %s", containerPort, protocol, c.GetFractalID())
+	return 0, utils.MakeError("Couldn't GetHostPort(%v, %v) for container with FractalID %s", containerPort, protocol, c.GetFractalID())
 }
 
 func (c *containerData) GetIdentifyingHostPort() (uint16, error) {
@@ -314,7 +314,7 @@ func (c *containerData) RegisterCreation(d DockerID, name AppName) error {
 	defer c.rwlock.Unlock()
 
 	if len(d) == 0 || len(name) == 0 {
-		return logger.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s", c.fractalID, d, name)
+		return utils.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s", c.fractalID, d, name)
 	}
 
 	c.dockerID = d
@@ -363,7 +363,7 @@ func (c *containerData) GetDeviceMappings() []dockercontainer.DeviceMapping {
 func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
 	devices, mappings, err := uinputdevices.Allocate()
 	if err != nil {
-		return logger.MakeError("Couldn't allocate uinput devices: %s", err)
+		return utils.MakeError("Couldn't allocate uinput devices: %s", err)
 	}
 
 	c.rwlock.Lock()
@@ -413,7 +413,7 @@ func (c *containerData) CompleteContainerSetup(userID UserID, clientAppAccessTok
 	//    note above the declaration of `calledSetupEndpoints`.
 	if c.firstCalledSetupEndpoint == callerFunction {
 		c.rwlock.Unlock()
-		return logger.MakeError("Same container setup endpoint called multiple times for user %s", userID)
+		return utils.MakeError("Same container setup endpoint called multiple times for user %s", userID)
 	}
 
 	c.rwlock.Unlock()
