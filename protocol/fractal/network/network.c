@@ -1914,7 +1914,6 @@ void set_timeout(SOCKET socket, int timeout_ms) {
         unsigned long mode = 0;
         if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket blocking.");
-            return;
         }
 
         clock read_timeout = create_clock(timeout_ms);
