@@ -289,7 +289,7 @@ CREATE VIEW hardware.instance_sorted AS
 
 
  CREATE VIEW hardware.instance_allocation AS
-    SELECT instance_name, aws_ami_id, location from hardware.instance_info
+    SELECT instance_name, aws_ami_id, commit_hash, location from hardware.instance_info
     WHERE instance_name IN (select instance_name from hardware.instance_sorted)
     AND last_updated_utc_unix_ms != -1 AND status = 'ACTIVE';
 
