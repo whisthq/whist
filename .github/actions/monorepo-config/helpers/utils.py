@@ -1,7 +1,7 @@
 # This file contains some general purpose utilities to be imported by the
 # rest of the configuration program. Most of them are defined for one-time
 # use by validation functions.
-import collections
+from collections.abc import MutableMapping
 from pathlib import Path
 
 
@@ -25,7 +25,7 @@ def truncated(limit, string, trail="..."):
 
 
 def truncated_children(d):
-    if not isinstance(d, collections.MutableMapping):
+    if not isinstance(d, MutableMapping):
         return d
     return {k: "{" + f"{truncated(0, v)}" + "}" for k, v in d.items()}
 
