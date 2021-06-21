@@ -9,28 +9,28 @@ Other Services
 User Agents
 -----------
 
-* The Fractal desktop applications allow customers to register and log into user accounts. Once a Fractal desktop application
-* is authenticated, it requests that the Fractal webserver allocates it a Fractal container/mandelbox, at which point a 
-* streaming session can begin. Developers use tools such as web browsers, Postman, and cURL to perform manual tests against 
-* instances of the Fractal webserver, and also to perform administrative actions like creating and deleting cloud resources.
+The Fractal desktop applications allow customers to register and log into user accounts. Once a Fractal desktop application
+is authenticated, it requests that the Fractal webserver allocates it a Fractal container at which point a 
+streaming session can begin. Developers use tools such as web browsers, Postman, and cURL to perform manual tests against 
+instances of the Fractal webserver, and also to perform administrative actions like creating and deleting cloud resources.
 
 
-The Host Service
-----------------
+The Fractal Host Service
+------------------------
 
-* The Fractal host service is responsible for orchestrating container allocation and interaction on a host machine. It listens
-* for connections from the webserver, which periodically sends commands and data that influence how and when containerized 
-* application streaming sessions start and run to the Fractal host service. It is also responsible for handling properly
-* setting up Fractal containers and their interaction with the host, notably via allocating TTYs and Uinput nodes. The 
-* Fractal host service also sends periodic heartbeats back to the webserver to let it know that it is alive.
+The Fractal host service is responsible for orchestrating container allocation and interaction on a host machine. 
+It listens for connections from the webserver, which periodically sends commands and data that influence how and when containerized 
+application streaming sessions start and run to the Fractal host service. It is also responsible for handling properly
+setting up Fractal containers and their interaction with the host, notably via allocating TTYs and Uinput nodes. The 
+Fractal host service also sends periodic heartbeats back to the webserver to let it know that it is alive.
 
 
 The Fractal Protocol Server
 ---------------------------
 
-* The Fractal protocol server is responsible for handling the server-side part of the streaming, and is installed in Fractal
-* containers. It notifies the Fractal webserver when connected clients disconnect, so that the Fractal webserver knows when
-* to tell AWS to delete containers that are no longer needed.
+The Fractal protocol server is responsible for handling the server-side part of the streaming, and is installed in Fractal
+containers. It notifies the Fractal webserver when connected clients disconnect, so that the Fractal webserver knows when
+to tell AWS to delete containers that are no longer needed.
 
 
 GitHub Actions Workflows
