@@ -91,18 +91,27 @@ const hostConfigFlow = flow<{
   mandelboxSecret: string
   sub: string
   configToken: string
+  accessToken: string
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(
-        ({ mandelboxIP, mandelboxPort, mandelboxSecret, sub, configToken }) =>
+        ({
+          mandelboxIP,
+          mandelboxPort,
+          mandelboxSecret,
+          sub,
+          configToken,
+          accessToken,
+        }) =>
           from(
             hostServiceConfig(
               mandelboxIP,
               mandelboxPort,
               mandelboxSecret,
               sub,
-              configToken
+              configToken,
+              accessToken
             )
           )
       )
@@ -126,7 +135,7 @@ export default flow<{
   const config = hostConfigFlow(
     zip(trigger, info.success).pipe(
       map(([t, i]) => ({
-        ...pick(t, ["sub", "configToken"]),
+        ...pick(t, ["sub", "configToken", "accessToken"]),
         ...pick(i, ["mandelboxIP", "mandelboxPort", "mandelboxSecret"]),
       }))
     )
