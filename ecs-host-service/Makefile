@@ -94,7 +94,12 @@ clean:
 run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with local dev (debug) configuration...)
 	# we run the built binary instead of using `go run` because otherwise signal
-	# handling for Ctrl+C does not work
+	# handling for Ctrl+C does not work. We also create the symlink below so that
+	# the host service can use the `ubuntu` account's aws credentials to run,
+	# even though it runs as root.
+ifeq ("$(wildcard /root/.aws/*)","")
+	sudo ln -sf /home/ubuntu/.aws /root/.aws
+endif
 	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build

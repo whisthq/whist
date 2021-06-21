@@ -17,3 +17,8 @@ cd ecs-host-setup
 
 # This part sets up the instance, and is necessary for both engineer dev instances and production instances
 ./setup_ubuntu20_host.sh
+
+echo "================================================"
+echo "Creating symlink for root user to get aws credentials..."
+echo "================================================"
+sudo ln -sf /home/ubuntu/.aws /root/.aws
