@@ -3,6 +3,8 @@ package fractallogger // import "github.com/fractal/fractal/ecs-host-service/fra
 import (
 	"os"
 	"strings"
+
+	"github.com/fractal/fractal/ecs-host-service/metadata"
 )
 
 // usingProdLogging implements the logic for us to decide whether to use
@@ -34,6 +36,6 @@ var usingProdLogging func() bool = func(unmemoized func() bool) func() bool {
 	case "0", "no", "false":
 		return false
 	default:
-		return (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging) || (GetAppEnvironment() == EnvDev)
+		return (metadata.GetAppEnvironment() == metadata.EnvProd) || (metadata.GetAppEnvironment() == metadata.EnvStaging) || (metadata.GetAppEnvironment() == metadata.EnvDev)
 	}
 })

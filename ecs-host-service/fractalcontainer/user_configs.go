@@ -19,12 +19,12 @@ func (c *containerData) PopulateUserConfigs() error {
 	// Make directory for user configs
 	configDir := c.getUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
-		return logger.MakeError("Could not make dir %s. Error: %s", configDir, err)
+		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
 	unpackedConfigDir := configDir + c.getUnpackedConfigsDirectoryName()
 	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
-		return logger.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
 
 	// Once we've extracted everything, we open up permissions for the user
@@ -44,7 +44,7 @@ func (c *containerData) PopulateUserConfigs() error {
 	}
 
 	if len(c.configEncryptionToken) == 0 {
-		return logger.MakeError("Cannot get user configs for FractalID %s since ConfigEncryptionToken is empty", c.fractalID)
+		return utils.MakeError("Cannot get user configs for FractalID %s since ConfigEncryptionToken is empty", c.fractalID)
 	}
 
 	// Retrieve config from s3
@@ -59,7 +59,7 @@ func (c *containerData) PopulateUserConfigs() error {
 			logger.Infof("Ran \"aws s3 cp\" and config does not exist")
 			return nil
 		}
-		return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+		return utils.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
 	}
 	logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
 
@@ -75,7 +75,7 @@ func (c *containerData) PopulateUserConfigs() error {
 		"-pass", "pass:"+string(c.configEncryptionToken), "-pbkdf2")
 	decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not decrypt config for userID %s and fractalID %s: %s. Output: %s", c.userID, c.GetFractalID(), err, decryptConfigOutput)
+		return utils.MakeError("Could not decrypt config for userID %s and fractalID %s: %s. Output: %s", c.userID, c.GetFractalID(), err, decryptConfigOutput)
 	}
 	logger.Infof("Decrypted config to %s", decTarPath)
 
@@ -89,7 +89,7 @@ func (c *containerData) PopulateUserConfigs() error {
 	untarConfigCmd := exec.Command("/usr/bin/tar", "-I", "lz4", "-xf", decTarPath, "-C", unpackedConfigPath)
 	untarConfigOutput, err := untarConfigCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
+		return utils.MakeError("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
 	}
 	logger.Infof("Untar config directory output: %s", untarConfigOutput)
 
@@ -105,7 +105,7 @@ func (c *containerData) backupUserConfigs() error {
 	}
 
 	if len(c.configEncryptionToken) == 0 {
-		return logger.MakeError("Cannot save user configs for FractalID %s since ConfigEncryptionToken is empty", c.fractalID)
+		return utils.MakeError("Cannot save user configs for FractalID %s since ConfigEncryptionToken is empty", c.fractalID)
 	}
 
 	configDir := c.getUserConfigDir()
@@ -122,7 +122,7 @@ func (c *containerData) backupUserConfigs() error {
 	//    exit status 1 just means that some files have changed while tarring,
 	//    which is an ignorable error
 	if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
-		return logger.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+		return utils.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
 	}
 	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
@@ -135,14 +135,14 @@ func (c *containerData) backupUserConfigs() error {
 	encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 	if err != nil {
 		// If the config could not be encrypted, don't upload
-		return logger.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
+		return utils.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
 	}
 	logger.Infof("Encrypted config to %s", encTarPath)
 
 	saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", encTarPath, s3ConfigPath)
 	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
+		return utils.MakeError("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
 	}
 	logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
 
@@ -159,11 +159,11 @@ func (c *containerData) cleanUserConfigDir() {
 }
 
 func (c *containerData) getUserConfigDir() string {
-	return logger.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.fractalID)
+	return utils.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.fractalID)
 }
 
 func (c *containerData) getS3ConfigPath() string {
-	return logger.Sprintf("s3://fractal-user-app-configs/%s/%s/%s", c.userID, c.appName, c.getEncryptedArchiveFilename())
+	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s", c.userID, c.appName, c.getEncryptedArchiveFilename())
 }
 
 func (c *containerData) getEncryptedArchiveFilename() string {

@@ -4,6 +4,7 @@ package utils // import "github.com/fractal/fractal/ecs-host-service/utils"
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 const (
-	FractalDir string = "/fractal/"
-	TempDir    string = FractalDir + "temp/"
+	FractalDir        string = "/fractal/"
+	TempDir           string = FractalDir + "temp/"
+	FractalPrivateDir string = "/fractalprivate/"
 )

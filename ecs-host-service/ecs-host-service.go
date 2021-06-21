@@ -24,9 +24,14 @@ import (
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
+	"github.com/fractal/fractal/ecs-host-service/metrics"
+
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
+	"github.com/fractal/fractal/ecs-host-service/heartbeats"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
@@ -45,6 +50,15 @@ var shutdownInstanceOnExit bool = false
 func init() {
 	// Initialize random number generator for all subpackages
 	rand.Seed(time.Now().UnixNano())
+
+	// Check that the program has been started with the correct permissions ---
+	// for now, we just want to run as root, but this service could be assigned
+	// its own user in the future.
+	if os.Geteuid() != 0 {
+		// We can do a "real" panic here because it's in an init function, so we
+		// haven't even entered the host service main() yet.
+		logger.Panicf(nil, "This service needs to run as root!")
+	}
 }
 
 // Start the Docker daemon ourselves, to have control over all Docker containers spun
@@ -89,7 +103,7 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 // equivalent) configurations as the ecsagent with our task definitions.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *httpserver.SpinUpMandelboxRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("SpinUpMandelbox(): "+fmt, v...)
+		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
@@ -160,11 +174,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// https://github.com/fractal/fractal/issues/2478
 	aesKey := utils.RandHex(16)
 	envs := []string{
-		logger.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
-		logger.Sprintf("WEBSERVER_URL=%s", logger.GetFractalWebserver()),
+		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+		utils.Sprintf("WEBSERVER_URL=%s", heartbeats.GetFractalWebserver()),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		"NVIDIA_VISIBLE_DEVICES=all",
-		logger.Sprintf("SENTRY_ENV=%s", logger.GetAppEnvironment()),
+		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -176,9 +190,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		Tty:          true,
 	}
 	natPortBindings := make(dockernat.PortMap)
-	natPortBindings[dockernat.Port("32262/tcp")] = []dockernat.PortBinding{{HostPort: logger.Sprintf("%v", hostPortForTCP32262)}}
-	natPortBindings[dockernat.Port("32263/udp")] = []dockernat.PortBinding{{HostPort: logger.Sprintf("%v", hostPortForUDP32263)}}
-	natPortBindings[dockernat.Port("32273/tcp")] = []dockernat.PortBinding{{HostPort: logger.Sprintf("%v", hostPortForTCP32273)}}
+	natPortBindings[dockernat.Port("32262/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32262)}}
+	natPortBindings[dockernat.Port("32263/udp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForUDP32263)}}
+	natPortBindings[dockernat.Port("32273/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32273)}}
 
 	tmpfs := make(map[string]string)
 	tmpfs["/run"] = "size=52428800"
@@ -187,10 +201,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			logger.Sprintf("/fractal/%s/containerResourceMappings:/fractal/resourceMappings:ro", fc.GetFractalID()),
-			logger.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetFractalID()),
+			utils.Sprintf("/fractal/%s/containerResourceMappings:/fractal/resourceMappings:ro", fc.GetFractalID()),
+			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetFractalID()),
 			"/run/udev/data:/run/udev/data:ro",
-			logger.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetFractalID()),
+			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetFractalID()),
 		},
 		PortBindings: natPortBindings,
 		CapDrop:      strslice.StrSlice{"ALL"},
@@ -234,7 +248,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		},
 	}
 	// TODO: investigate whether putting all GPUs in all containers (i.e. the default here) is beneficial.
-	containerName := logger.Sprintf("%s-%s", req.AppImage, fractalID)
+	containerName := utils.Sprintf("%s-%s", req.AppImage, fractalID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	containerName = re.ReplaceAllString(containerName, "-")
 
@@ -314,7 +328,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 // returns nil if no errors, and error object if error.
 func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetConfigEncryptionTokenRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("handleSetConfigEncryptionTokenRequest(): "+fmt, v...)
+		err := utils.MakeError("handleSetConfigEncryptionTokenRequest(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
@@ -354,7 +368,7 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 // goroutine and not block the event loop goroutine.
 func handleStartValuesRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetContainerStartValuesRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
+		err := utils.MakeError("handleStartValuesRequest(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
@@ -431,9 +445,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	}()
 
 	// Create fractal-private directory
-	err = os.MkdirAll(httpserver.FractalPrivatePath, 0777)
+	err = os.MkdirAll(utils.FractalPrivateDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
+		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalPrivateDir, err)
 	}
 
 	// Create fractal temp directory
@@ -454,11 +468,11 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", utils.FractalDir)
 	}
 
-	err = os.RemoveAll(httpserver.FractalPrivatePath)
+	err = os.RemoveAll(utils.FractalPrivateDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.FractalPrivateDir, err)
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
+		logger.Infof("Successfully deleted directory %s\n", utils.FractalPrivateDir)
 	}
 
 	err = os.RemoveAll(utils.TempDir)
@@ -470,9 +484,6 @@ func uninitializeFilesystem() {
 }
 
 func main() {
-	// The host service needs root permissions.
-	utils.RequireRootPermissions()
-
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
 	// WaitGroup for all goroutines to tell us when they've stopped (if the
@@ -525,10 +536,12 @@ func main() {
 		logger.Info("Finished host service shutdown procedure. Finally exiting...")
 		if shutdownInstanceOnExit {
 			if err := exec.Command("shutdown", "now").Run(); err != nil {
-				// This error will not go to sentry or logz!
 				logger.Errorf("Couldn't shut down instance: %s", err)
 			}
 		}
+
+		// Stop sending heartbeats
+		heartbeats.Close()
 
 		// Shut down the logging infrastructure (including re-draining the queues).
 		logger.Close()
@@ -537,7 +550,17 @@ func main() {
 	}()
 
 	// Log the Git commit of the running executable
-	logger.Info("Host Service Version: %s", logger.GetGitCommit())
+	logger.Info("Host Service Version: %s", metadata.GetGitCommit())
+
+	// Start collecting metrics
+	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
+
+	// Log the instance name we're running on
+	instanceName, err := aws.GetInstanceName(globalCtx)
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+	logger.Infof("Running on instance name: %s", instanceName)
 
 	initializeFilesystem(globalCancel)
 
@@ -553,11 +576,11 @@ func main() {
 
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
-	if logger.GetAppEnvironment() != logger.EnvLocalDev && logger.GetAppEnvironment() != logger.EnvLocalDevWithDB {
-		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", logger.GetAppEnvironment(), logger.GetFractalWebserver())
+	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
+		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), heartbeats.GetFractalWebserver())
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
-		logger.Infof("Running in environment %s, so not starting ecs-agent.", logger.GetAppEnvironment())
+		logger.Infof("Running in environment %s, so not starting ecs-agent.", metadata.GetAppEnvironment())
 	}
 
 	// Start main event loop
@@ -667,7 +690,7 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 
 				default:
 					if serverevent != nil {
-						err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+						err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
 						logger.Error(err)
 						serverevent.ReturnResult("", err)
 					}
