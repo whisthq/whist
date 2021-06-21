@@ -3,7 +3,6 @@
 const helpers = require("./build-package-helpers")
 
 const packageLocal = (env, ..._args) => {
-
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
   helpers.configureCodeSigning(false)

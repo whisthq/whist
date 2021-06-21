@@ -10,7 +10,7 @@ const { app } = require("electron")
 const fs = require("fs-extra")
 const { userDataFolderNames } = require("../config/configs")
 
-export default function clearAppData(_env, ...args) {
+const clearAppData = (_env, ...args) => {
   let foldersToDelete
 
   switch (args[0]) {
@@ -38,6 +38,8 @@ export default function clearAppData(_env, ...args) {
 
   app.exit()
 }
+
+module.exports = clearAppData
 
 if (require.main === module) {
   clearAppData({}, ...process.argv.slice(2))
