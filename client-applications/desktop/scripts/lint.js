@@ -29,5 +29,5 @@ export default function lint(_env, ...args) {
 }
 
 if (require.main === module) {
-  lint({}, process.argv.slice(2))
+  lint({}, ...process.argv.slice(2))
 }
