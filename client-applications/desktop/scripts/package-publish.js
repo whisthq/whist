@@ -4,7 +4,7 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-export default function packageNotarize(env, version, environment) {
+const packageNotarize = (env, version, environment) => {
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
@@ -38,6 +38,8 @@ export default function packageNotarize(env, version, environment) {
 
   helpers.electronPublish(getBucketName())
 }
+
+module.exports = packageNotarize
 
 if (require.main === module) {
   // Get required args

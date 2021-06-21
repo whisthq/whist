@@ -5,7 +5,7 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-export default function packageNotarize(env, version, ..._args) {
+const packageNotarize = (env, version, ..._args) => {
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
@@ -25,6 +25,8 @@ export default function packageNotarize(env, version, ..._args) {
   helpers.snowpackBuild({ ...env, VERSION: version })
   helpers.electronBuild()
 }
+
+module.exports = packageNotarize
 
 if (require.main === module) {
   // We require the version argument for notarization-level testing so that at

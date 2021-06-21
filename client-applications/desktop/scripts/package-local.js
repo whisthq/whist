@@ -1,7 +1,8 @@
 // Package the app for local testing using snowpack and electron-builder
 
-export default function packageLocal(env, ..._args) {
-  const helpers = require("./build-package-helpers")
+const helpers = require("./build-package-helpers")
+
+const packageLocal = (env, ..._args) => {
 
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
@@ -17,6 +18,8 @@ export default function packageLocal(env, ..._args) {
   })
   helpers.electronBuild()
 }
+
+module.exports = packageLocal
 
 if (require.main === module) {
   packageLocal()

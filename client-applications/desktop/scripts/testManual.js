@@ -17,7 +17,7 @@ const { isEmpty } = require("lodash")
 const path = require("path")
 const start = require("./start")
 
-export default function testManual(_env, ...args) {
+const testManual = (_env, ...args) => {
   const schemaNames = args.reduce((result, value) => {
     if (result.length === 0) return `${value}`
     return `${result}, ${value}`
@@ -27,12 +27,14 @@ export default function testManual(_env, ...args) {
     const file = path.basename(process.argv[1])
     const message = `Schema names must be passed as arguments to ${file}`
     throw new Error(message)
-}
+  }
   start({
     VERSION: helpers.getCurrentClientAppVersion(),
     TEST_MANUAL_SCHEMAS: schemaNames,
   })
 }
+
+module.exports = testManual
 
 if (require.main === module) {
   testManual({}, ...process.argv.slice(2))
