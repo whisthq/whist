@@ -1,32 +1,12 @@
 [
     {
-        "source": "blender",
-        "destination": "/home/fractal/.config/blender",
-        "type": "folder"
-    },
-    {
-        "source": "brave-BraveSoftware",
-        "destination": "/home/fractal/.config/BraveSoftware",
-        "type": "folder"
-    },
-    {
         "source": "firefox-mozilla",
         "destination": "/home/fractal/.mozilla",
         "type": "folder"
     },
     {
-        "source": "GIMP",
-        "destination": "/home/fractal/.config/GIMP",
-        "type": "folder"
-    },
-    {
         "source": "google-chrome",
         "destination": "/home/fractal/.config/google-chrome",
-        "type": "folder"
-    },
-    {
-        "source": "sidekick",
-        "destination": "/home/fractal/.config/sidekick",
         "type": "folder"
     }
 ]
