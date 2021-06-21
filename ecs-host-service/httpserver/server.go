@@ -223,7 +223,7 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SpinUpMandelboxRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
