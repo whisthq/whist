@@ -27,9 +27,10 @@ export default function postInstall(_env, ..._args) {
   const newContents = oldContents
     .replaceAll("\\0polyfill-node:", "\\0polyfill-node.")
     .replaceAll(
-      "dirs.set(id, path$L.dirname(" / " + path$L.relative(basedir, importer)));",
+      "dirs.set(id, path$L.dirname(" /
+        " + path$L.relative(basedir, importer)));",
       "dirs.set(id, path$L.posix.dirname(" /
-      " + path$L.posix.relative(basedir, importer)));"
+        " + path$L.posix.relative(basedir, importer)));"
     )
     .replaceAll(
       "path$L.join(importer.substr(PREFIX_LENGTH).replace('.js', ''), '..', importee)",
@@ -37,7 +38,6 @@ export default function postInstall(_env, ..._args) {
     )
   fs.writeFileSync(snowpackLibIndex, newContents, "utf8")
   console.log("Success patching `snowpack`!")
-
 }
 
 if (require.main === module) {

@@ -11,7 +11,10 @@ export default function packageLocal(env, ..._args) {
   helpers.setPackagedEnv("dev")
 
   // For package-local, we don't want to increment the version so we use existing version
-  helpers.snowpackBuild({ ...env, VERSION: helpers.getCurrentClientAppVersion() })
+  helpers.snowpackBuild({
+    ...env,
+    VERSION: helpers.getCurrentClientAppVersion(),
+  })
   helpers.electronBuild()
 }
 

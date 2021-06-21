@@ -4,7 +4,6 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-
 export default function packageNotarize(env, version, environment) {
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol()
@@ -19,7 +18,7 @@ export default function packageNotarize(env, version, environment) {
     "AMPLITUDE_KEY",
   ])
 
-  helpers.snowpackBuild({...env, VERSION: version })
+  helpers.snowpackBuild({ ...env, VERSION: version })
 
   const getBucketName = () => {
     let osStr
