@@ -136,7 +136,7 @@ def bulk_instance():
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
             last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
             status=kwargs.get("status", "ACTIVE"),
-            commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
+            commit_hash="dummy_client_hash",
         )
 
         db.session.add(new_instance)

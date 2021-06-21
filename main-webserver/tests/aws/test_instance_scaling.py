@@ -4,7 +4,7 @@ from sys import maxsize
 import requests
 
 from flask import current_app
-from app.models import db
+from app.models import db, RegionToAmi
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
 
@@ -15,9 +15,10 @@ def test_scale_up_single(hijack_ec2_calls, mock_get_num_new_instances, hijack_db
     """
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(1)
-    aws_funcs.do_scale_up_if_necessary("us-east-1", "test-AMI")
+    us_east_1_image_obj = RegionToAmi.query.filter_by(region_name="us-east-1", enabled=True).one_or_none()
+    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id)
     assert len(call_list) == 1
-    assert call_list[0]["kwargs"]["image_id"] == "test-AMI"
+    assert call_list[0]["kwargs"]["image_id"] == us_east_1_image_obj.ami_id
 
 
 def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
@@ -28,9 +29,10 @@ def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_
     desired_num = randint(1, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
-    aws_funcs.do_scale_up_if_necessary("us-east-1", "test-AMI")
+    us_east_1_image_obj = RegionToAmi.query.filter_by(region_name="us-east-1", enabled=True).one_or_none()
+    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id)
     assert len(call_list) == desired_num
-    assert all(elem["kwargs"]["image_id"] == "test-AMI" for elem in call_list)
+    assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.ami_id for elem in call_list)
 
 
 def test_scale_down_single_available(

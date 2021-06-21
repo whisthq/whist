@@ -6,7 +6,7 @@ def test_empty_instances():
     """
     Confirms that we don't find any instances on a fresh db
     """
-    assert find_instance("us-east-1") is None
+    assert find_instance("us-east-1", "dummy_client_hash") is None
 
 
 def test_find_initial_instance(bulk_instance):
@@ -14,7 +14,7 @@ def test_find_initial_instance(bulk_instance):
     Confirms that we find an empty instance
     """
     instance = bulk_instance(location="us-east-1")
-    assert find_instance("us-east-1") == instance.instance_name
+    assert find_instance("us-east-1", "dummy_client_hash") == instance.instance_name
 
 
 def test_find_part_full_instance(bulk_instance):
@@ -22,7 +22,7 @@ def test_find_part_full_instance(bulk_instance):
     Confirms that we find an in-use instance
     """
     instance = bulk_instance(location="us-east-1", associated_containers=3)
-    assert find_instance("us-east-1") == instance.instance_name
+    assert find_instance("us-east-1", "dummy_client_hash") == instance.instance_name
 
 
 def test_find_part_full_instance_order(bulk_instance):
@@ -31,7 +31,7 @@ def test_find_part_full_instance_order(bulk_instance):
     """
     instance = bulk_instance(location="us-east-1", associated_containers=3)
     _ = bulk_instance(location="us-east-1", associated_containers=2)
-    assert find_instance("us-east-1") == instance.instance_name
+    assert find_instance("us-east-1", "dummy_client_hash") == instance.instance_name
 
 
 def test_no_find_full_instance(bulk_instance):
@@ -39,7 +39,7 @@ def test_no_find_full_instance(bulk_instance):
     Confirms that we don't find a full instance
     """
     _ = bulk_instance(location="us-east-1", associated_containers=10)
-    assert find_instance("us-east-1") is None
+    assert find_instance("us-east-1", "dummy_client_hash") is None
 
 
 def test_no_find_full_small_instance(bulk_instance):
@@ -47,7 +47,7 @@ def test_no_find_full_small_instance(bulk_instance):
     Confirms that we don't find a full instance with <10 max
     """
     _ = bulk_instance(location="us-east-1", container_capacity=5, associated_containers=5)
-    assert find_instance("us-east-1") is None
+    assert find_instance("us-east-1", "dummy_client_hash") is None
 
 
 @pytest.mark.parametrize(
@@ -67,19 +67,19 @@ def test_assignment_logic(bulk_instance, location):
     replacement_region = bundled_region[location][0]
     bulk_instance(associated_containers=10, location=location)
     assert (
-        find_instance(location) is None
+        find_instance(location, "dummy_client_hash") is None
     ), f"we assigned an already full instance in the main region, {location}"
     bulk_instance(associated_containers=10, location=replacement_region)
     assert (
-        find_instance(location) is None
+        find_instance(location, "dummy_client_hash") is None
     ), f"we assigned an already full instance in the secondary region, {replacement_region}"
     bulk_instance(location=replacement_region, instance_name="replacement-container")
-    assert find_instance(location) is not None, (
+    assert find_instance(location, "dummy_client_hash") is not None, (
         f"we failed to find the available instance "
         f"in the replacement region {replacement_region}"
     )
     bulk_instance(location=location, instance_name="main-container")
-    instance = find_instance(location)
+    instance = find_instance(location, "dummy_client_hash")
     assert (
         instance is not None and instance == "main-container"
     ), f"we failed to find the available instance in the main region {location}"

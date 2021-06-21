@@ -99,7 +99,7 @@ def test_local_lock_timeout(app):
         try:
             with app.app_context():
                 set_local_lock_timeout(lock_timeout)
-                _ = RegionToAmi.query.with_for_update().get("us-east-1")
+                _ = RegionToAmi.query.with_for_update().get(("us-east-1", "dummy_client_hash"))
                 fractal_logger.info("Got lock and data")
                 time.sleep(hold_time)
             return True
