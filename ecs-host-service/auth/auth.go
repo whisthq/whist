@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/fractal/fractal/ecs-host-service/utils"
@@ -111,4 +112,20 @@ func VerifyWithUserID(accessToken string, userID string) (jwt.MapClaims, error) 
 	}
 
 	return claims, nil
+}
+
+// HasScope returns true if the given jwt.MapClaims has
+// a scope matching a string, and false if not.
+func HasScope(claims jwt.MapClaims, scope string) bool {
+	scopes, ok := claims["scope"].(string)
+	if !ok {
+		return false
+	}
+	scopeSlice := strings.Split(scopes, " ")
+	for _, s := range scopeSlice {
+		if s == scope {
+			return true
+		}
+	}
+	return false
 }

@@ -2,7 +2,6 @@ package httpserver // import "github.com/fractal/fractal/ecs-host-service/httpse
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fractal/fractal/ecs-host-service/auth"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
@@ -336,16 +336,11 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 			return utils.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 		}
 
-		// Actually verify authentication. Note that we check the length of the token
-		// that is sent before comparing the strings. This leaks the length of the
-		// correct key (which does not help the attacker too much), but provides us
-		// the benefit of preventing a super-long request from clogging up our host
-		// service with huge memory allocations.
-		if len(webserverAuthSecret) != len(requestAuthSecret) ||
-			subtle.ConstantTimeCompare(
-				[]byte(webserverAuthSecret),
-				[]byte(requestAuthSecret),
-			) == 0 {
+		// Actually verify authentication. We check that the access token sent is
+		// a valid JWT signed by Auth0 and that it has the "backend" scope.
+		claims, err := auth.Verify(requestAuthSecret)
+		isPermissioned := auth.HasScope(claims, "backend")
+		if err != nil || !isPermissioned {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return utils.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
 		}
