@@ -137,6 +137,7 @@ type SetConfigEncryptionTokenRequest struct {
 	UserID                string             `json:"user_id"`                 // User to whom token belongs
 	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
 	ClientAppAccessToken  string             `json:"client_app_auth_secret"`  // User access token for client app verification
+	JwtAccessToken        string             `json:"jwt_access_token"`        // User's JWT access token
 	resultChan            chan requestResult // Channel to pass the request result between goroutines
 }
 

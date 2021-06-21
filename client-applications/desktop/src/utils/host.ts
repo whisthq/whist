@@ -21,7 +21,8 @@ export const hostServiceConfig = async (
   host_port: number,
   client_app_auth_secret: string,
   sub: string,
-  config_encryption_token: string
+  config_encryption_token: string,
+  jwt_access_token: string
 ) => {
   return (await apiPut(
     "/set_config_encryption_token",
@@ -31,6 +32,7 @@ export const hostServiceConfig = async (
       client_app_auth_secret,
       host_port,
       config_encryption_token,
+      jwt_access_token,
     },
     true
   )) as { status: number }
