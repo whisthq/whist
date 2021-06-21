@@ -1296,6 +1296,9 @@ jobs:
               with:
                   node-version: 15
 
+            # We have to use npm install -g here, as the yarn
+            # equivalent "yarn global add" doesn't correctly
+            # add the command to the path in GitHub Actions.
             - name: Install the auth0-deploy-cli
               working-directory: microservices/auth0
               run: npm install -g auth0-deploy-cli
@@ -1310,7 +1313,7 @@ jobs:
                   AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
                   GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
                   APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
-              run: npm run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
+              run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
             - name: Notify Slack on successful deploy
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)

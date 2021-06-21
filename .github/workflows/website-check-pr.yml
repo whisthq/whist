@@ -36,10 +36,10 @@ jobs:
               with:
                   node-version: 14
 
-            - name: Run npm install
+            - name: Run yarn install
               working-directory: website
-              run: npm install
+              run: yarn install
 
             - name: Check if code follows ESLint standards
               working-directory: website
-              run: npm run lint-check
+              run: yarn run lint-check

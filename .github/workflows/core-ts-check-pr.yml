@@ -27,13 +27,13 @@ jobs:
               with:
                   node-version: 15
 
-            - name: Run npm install
+            - name: Run yarn install
               working-directory: core-ts
-              run: npm install
+              run: yarn install
 
             - name: Check if Code Follows ESLint Standards
               working-directory: core-ts
-              run: npm run lint-check
+              run: yarn run lint-check
 
     test:
         name: Testing
@@ -48,10 +48,10 @@ jobs:
               with:
                   node-version: 15
 
-            - name: Run npm install
+            - name: Run yarn install
               working-directory: core-ts
-              run: npm install
+              run: yarn install
 
             - name: Run core-ts test suite
               working-directory: core-ts
-              run: npm run test
+              run: yarn run test
