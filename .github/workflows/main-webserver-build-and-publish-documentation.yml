@@ -26,7 +26,7 @@ jobs:
     main-webserver-build-documentation:
         name: Build & Publish Webserver Documentation to fractal/docs
         runs-on: ubuntu-20.04
-        
+
         steps:
             ################################# CONFIG STEPS START ###############################
 
