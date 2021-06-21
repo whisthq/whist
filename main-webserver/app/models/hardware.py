@@ -59,6 +59,7 @@ class InstanceSorted(db.Model):
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
     aws_ami_id = db.Column(db.String(250), nullable=False)
+    commit_hash = db.Column(db.String(40), nullable=False)
 
 
 class InstancesWithRoomForContainers(db.Model):
