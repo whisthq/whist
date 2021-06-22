@@ -33,10 +33,6 @@ void mac_rm_rf(const char* path) {
     }
 }
 
-int cmp_files(const FTSENT** first, const FTSENT** second) {
-    return (strcmp((*first)->fts_name, (*second)->fts_name));
-}
-
 int dir_exists(const char* path) {
     struct stat sb;
     if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
