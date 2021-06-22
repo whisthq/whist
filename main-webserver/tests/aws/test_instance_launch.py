@@ -68,20 +68,13 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
     num_running_instances = 10
 
     def _mock_instance_info_query(*args, **kwargs):
-        mock_instances = [
+        return [
             bulk_instance(
                 instance_name=generate_name("current_running_instance", True),
                 status=random.choice([ACTIVE, PRE_CONNECTION]),
             )
             for _ in range(num_running_instances)
         ]
-        mock_instances.append(
-            bulk_instance(
-                instance_name=generate_name("current_running_instance", True),
-                status=DRAINING,
-            )
-        )
-        return mock_instances
 
     monkeypatch.setattr(ami_upgrade, "fetch_current_running_instances", _mock_instance_info_query)
 
