@@ -1151,11 +1151,12 @@ jobs:
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
+                  REM We use "call" before since ancient DOS versions don't support recursively executing batch files
                   REM We need to increase the timeout to deal with GHA's weak VMs.
-                  yarn config set network-timeout 600000
-                  yarn cache clean
-                  yarn install
-                  yarn package:publish --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
+                  call yarn config set network-timeout 600000
+                  call yarn cache clean
+                  call yarn install
+                  call yarn package:publish --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
