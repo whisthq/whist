@@ -138,12 +138,12 @@ type FindInstanceByNameRow struct {
 	InstanceName          pgtype.Varchar `json:"instance_name"`
 	CloudProviderID       pgtype.Varchar `json:"cloud_provider_id"`
 	AuthToken             pgtype.Varchar `json:"auth_token"`
-	CreationTimeUtcUnixMs *int           `json:"creation_time_utc_unix_ms"`
-	MemoryRemainingKb     int            `json:"memory_remaining_kb"`
-	NanocpusRemaining     int            `json:"nanocpus_remaining"`
-	GpuVramRemainingKb    int            `json:"gpu_vram_remaining_kb"`
-	ContainerCapacity     int            `json:"container_capacity"`
-	LastUpdatedUtcUnixMs  *int           `json:"last_updated_utc_unix_ms"`
+	CreationTimeUtcUnixMs *int64         `json:"creation_time_utc_unix_ms"`
+	MemoryRemainingKb     *int64         `json:"memory_remaining_kb"`
+	NanocpusRemaining     *int64         `json:"nanocpus_remaining"`
+	GpuVramRemainingKb    *int64         `json:"gpu_vram_remaining_kb"`
+	ContainerCapacity     *int64         `json:"container_capacity"`
+	LastUpdatedUtcUnixMs  *int64         `json:"last_updated_utc_unix_ms"`
 	Ip                    pgtype.Varchar `json:"ip"`
 	AwsAmiID              pgtype.Varchar `json:"aws_ami_id"`
 	Location              pgtype.Varchar `json:"location"`
