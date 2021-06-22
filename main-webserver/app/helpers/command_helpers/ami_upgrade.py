@@ -63,6 +63,7 @@ def fetch_current_running_instances():
         .all()
     )
 
+
 def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(enabled=True).all()
