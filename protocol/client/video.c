@@ -302,7 +302,7 @@ int render_video() {
         if (video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
                                        frame->videodata_length) < 0) {
             LOG_WARNING("Failed to send packets to the decoder!");
-            free_block(frame_buffer_allocator, render_context.frame_buffer);
+            free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
             rendering = false;
             return -1;
         }
@@ -312,7 +312,7 @@ int render_video() {
         while ((res = video_decoder_get_frame(video_context.decoder)) == 0) {
             if (res < 0) {
                 LOG_ERROR("Failed to get next frame from decoder!");
-                free_block(frame_buffer_allocator, render_context.frame_buffer);
+                free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
                 rendering = false;
                 return -1;
             }
@@ -497,7 +497,7 @@ int render_video() {
             video_data.last_rendered_id = render_context.id;
         }
         // Since we're done, we free the frame buffer
-        free_block(frame_buffer_allocator, render_context.frame_buffer);
+        free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
         has_video_rendered_yet = true;
         // rendering = false is set to false last,
         // since that can trigger the next frame render
@@ -917,13 +917,13 @@ void update_video() {
                      video_data.most_recent_iframe);
             // If `last_rendered_id` is further back than the first frame received, start from the
             // first frame received
-            for (int i = max(video_data.last_rendered_id + 1,
-                             video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
+            for (int i =
+                     max(video_data.last_rendered_id + 1,
+                         video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
                  i < video_data.most_recent_iframe; i++) {
                 FrameData* frame_data = get_frame_at_id(video_ring_buffer, i);
                 if (frame_data->id == i) {
-                    LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
-                                frame_data->packets_received,
+                    LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->packets_received,
                                 frame_data->num_packets);
 
                     for (int j = 0; j < frame_data->num_packets; j++) {
@@ -956,7 +956,8 @@ void update_video() {
                 ctx->frame_buffer = NULL;
                 // Get the FrameData for the next frame
                 int next_frame_render_id = next_render_id + 1;
-                FrameData* next_frame_ctx = get_frame_at_id(video_ring_buffer, next_frame_render_id);
+                FrameData* next_frame_ctx =
+                    get_frame_at_id(video_ring_buffer, next_frame_render_id);
 
                 // If the next frame has been received, let's skip the rendering so we can render
                 // the next frame faster. We do this because rendering is synced with screen
@@ -1054,7 +1055,8 @@ void update_video() {
         } else {
             // If we're rendering, we might catch up in a bit, so we can be more lenient
             // and will only i-frame if we're MAX_UNSYNCED_FRAMES_RENDER frames behind.
-            if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
+            if (video_ring_buffer->max_id >
+                video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is %d frames ahead of the most recent rendered frame. "
@@ -1091,27 +1093,27 @@ int32_t receive_video(FractalPacket* packet) {
 
     // Find frame in ring buffer that matches the id
     video_data.bytes_transferred += packet->payload_size;
-
     int res = receive_packet(video_ring_buffer, packet);
     if (res < 0) {
         return res;
-    }
-    FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
+    } else if (res == 0) {
+        FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
 
-    // TODO: video must handle iframe checking after ring buffer finishes
-    // If we received all of the packets
-    if (ctx->packets_received == ctx->num_packets) {
-        bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
+        // TODO: video must handle iframe checking after ring buffer finishes
+        // If we received all of the packets
+        if (ctx->packets_received == ctx->num_packets) {
+            bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
 
 #if LOG_VIDEO
-        LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
-                 ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
+            LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
+                     ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
 #endif
 
-        // If it's an I-frame, then just skip right to it, if the id is ahead of
-        // the next to render id
-        if (is_iframe) {
-            video_data.most_recent_iframe = max(video_data.most_recent_iframe, ctx->id);
+            // If it's an I-frame, then just skip right to it, if the id is ahead of
+            // the next to render id
+            if (is_iframe) {
+                video_data.most_recent_iframe = max(video_data.most_recent_iframe, ctx->id);
+            }
         }
     }
 

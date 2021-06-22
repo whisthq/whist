@@ -725,7 +725,8 @@ int32_t send_audio(void* opaque) {
                         // Send packet
                         read_lock(&is_active_rwlock);
                         if (broadcast_udp_packet(
-                                PACKET_AUDIO, (uint8_t*)frame, audio_encoder->encoded_frame_size + sizeof(int), id,
+                                PACKET_AUDIO, (uint8_t*)frame,
+                                audio_encoder->encoded_frame_size + sizeof(int), id,
                                 STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE],
                                 audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                             LOG_WARNING("Could not send audio frame");

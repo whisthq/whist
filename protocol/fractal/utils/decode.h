@@ -26,18 +26,18 @@ Public Functions
 */
 
 /**
- * @brief 											Read out the packets stored in buffer into the AVPacket
- * array packets.
+ * @brief                       Read out the packets stored in buffer into the
+ * AVPacket array packets.
  *
- * @param buffer								Buffer containing encoded packets. Format: (number of packets)(size of
- * each packet)(data of each packet)
+ * @param buffer                Buffer containing encoded packets. Format: (number of packets)(size
+ * of each packet)(data of each packet)
  *
- * @param buffer_size						Size of the buffer. Must agree with the metadata given
+ * @param buffer_size           Size of the buffer. Must agree with the metadata given
  * in buffer.
  *
- * @param packets								AVPacket array to store encoded packets
+ * @param packets               AVPacket array to store encoded packets
  *
- * @returns											0 on success, -1 on failure
+ * @returns                     0 on success, -1 on failure
  */
 int extract_packets_from_buffer(void* buffer, int buffer_size, AVPacket* packets);
 

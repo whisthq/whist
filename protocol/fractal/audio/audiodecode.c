@@ -252,7 +252,7 @@ int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_s
 
     int res;
     for (int i = 0; i < num_packets; i++) {
-        while ((res = avcodec_send_packet(decoder->pCodecCtx, &decoder->packets[i])) < 0) {
+        if ((res = avcodec_send_packet(decoder->pCodecCtx, &decoder->packets[i])) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!, error %d: %s", res, av_err2str(res));
             return -1;
         }
@@ -272,10 +272,8 @@ int audio_decoder_get_frame(AudioDecoder *decoder) {
        before calling again), -1 on failure
             */
     int res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
-    if (res == AVERROR(EAGAIN)) {
+    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // decoder needs more data or there's nothing left
-        LOG_INFO(
-            "No more frames can be received from current input. Send more input into the decoder.");
         return 1;
     } else if (res < 0) {
         // real error

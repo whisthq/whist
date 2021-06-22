@@ -187,7 +187,8 @@ bool is_next_audio_frame_valid() {
     int next_to_play_id = last_played_id + 1;
 
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
-    return frame_data->num_packets == frame_data->packets_received;
+    return frame_data->id == next_to_play_id &&
+           frame_data->num_packets == frame_data->packets_received;
 }
 
 bool buffer_audio(int audio_device_queue) {
@@ -251,8 +252,8 @@ bool flush_audio(int audio_device_queue) {
     int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
     if (audio_device_queue > real_limit) {
-        LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
-                    next_to_play_id, audio_device_queue);
+        LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)", next_to_play_id,
+                    audio_device_queue);
         flush_next_audio_frame();
         if (!audio_flush_triggered) {
             audio_flush_triggered = true;
@@ -296,7 +297,8 @@ bool is_valid_audio_frequency() {
 
 int send_next_frame_to_decoder() {
     AudioFrame* frame = (AudioFrame*)audio_render_context.frame_buffer;
-    if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) < 0) {
+    if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) <
+        0) {
         LOG_WARNING("Failed to send packets to decoder!");
         free(audio_render_context.frame_buffer);
         return -1;
@@ -376,7 +378,7 @@ void render_audio() {
         // this buffer will always hold the decoded data
         static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
         // decode the frame into the buffer
-        while ((res= get_next_audio_frame(decoded_data)) == 0) {
+        while ((res = get_next_audio_frame(decoded_data)) == 0) {
             res = SDL_QueueAudio(audio_context.dev, decoded_data,
                                  audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
