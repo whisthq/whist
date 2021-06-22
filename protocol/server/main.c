@@ -560,7 +560,7 @@ int32_t send_video(void* opaque) {
                     // Create frame struct with compressed frame data and
                     // metadata
                     static char buf[LARGEST_FRAME_SIZE];
-                    Frame* frame = (Frame*)buf;
+                    VideoFrame* frame = (VideoFrame*)buf;
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
@@ -714,16 +714,18 @@ int32_t send_audio(void* opaque) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else {
                         static char buf[9000];
+                        AudioFrame* frame = (AudioFrame*)buf;
+                        frame->data_length = audio_encoder->encoded_frame_size;
 
                         write_packets_to_buffer(audio_encoder->num_packets, audio_encoder->packets,
-                                                (void*)buf);
+                                                (void*)frame->data);
                         // LOG_INFO("we got a packet of size %d",
                         //         audio_encoder->encoded_frame_size);
 
                         // Send packet
                         read_lock(&is_active_rwlock);
                         if (broadcast_udp_packet(
-                                PACKET_AUDIO, (uint8_t*)buf, audio_encoder->encoded_frame_size, id,
+                                PACKET_AUDIO, (uint8_t*)frame, audio_encoder->encoded_frame_size + sizeof(int), id,
                                 STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE],
                                 audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                             LOG_WARNING("Could not send audio frame");

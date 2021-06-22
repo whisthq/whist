@@ -20,6 +20,7 @@ Includes
 
 #include "video.h"
 #include "sdl_utils.h"
+#include "ringbuffer.h"
 
 #include <stdio.h>
 
@@ -100,27 +101,6 @@ Custom Types
 ============================
 */
 
-typedef struct FrameData {
-    char* frame_buffer;
-    int frame_size;
-    int id;
-    int packets_received;
-    int num_packets;
-    bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
-    bool nacked_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
-    bool rendered;
-
-    int num_times_nacked;
-
-    int last_nacked_index;
-
-    clock last_nacked_timer;
-
-    clock last_packet_timer;
-
-    clock frame_creation_timer;
-} FrameData;
-
 struct VideoData {
     FrameData* pending_ctx;
     int frames_received;
@@ -128,15 +108,12 @@ struct VideoData {
     clock frame_timer;
     int last_statistics_id;
     int last_rendered_id;
-    int max_id;
     int most_recent_iframe;
-    int last_received_id;
 
     clock last_iframe_request_timer;
     bool is_waiting_for_iframe;
 
     double target_mbps;
-    int num_nacked;
     clock missing_frame_nack_timer;
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
@@ -174,7 +151,7 @@ SDL_mutex* render_mutex;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
-FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
+RingBuffer* video_ring_buffer;
 BlockAllocator* frame_buffer_allocator;
 
 bool has_video_rendered_yet = false;
@@ -281,8 +258,8 @@ int render_video() {
         }
         safe_SDL_UnlockMutex(render_mutex);
 
-        // Cast to Frame* because this variable is not volatile in this section
-        Frame* frame = (Frame*)render_context.frame_buffer;
+        // Cast to VideoFrame* because this variable is not volatile in this section
+        VideoFrame* frame = (VideoFrame*)render_context.frame_buffer;
         PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
@@ -601,34 +578,6 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     gif_frame_index %= NUMBER_LOADING_FRAMES;
 }
 
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-void video_nack(int id, int index) {
-    /*
-        Send a negative acknowledgement to the server if a video
-        packet is missing
-
-        Arguments:
-            id (int): missing packet ID
-            index (int): missing packet index
-    */
-    // If we can get the server to generate iframes quickly (i.e. about 60 ms), flip
-    // NO_NACKS_DURING_IFRAME to true
-#if NO_NACKS_DURING_IFRAME
-    if (video_data.is_waiting_for_iframe) {
-        return;
-    }
-#endif
-    video_data.num_nacked++;
-    LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_VIDEO_NACK;
-    fmsg.nack_data.id = id;
-    fmsg.nack_data.index = index;
-    send_fmsg(&fmsg);
-}
-
 bool request_iframe() {
     /*
         Request an IFrame from the server if too long since last frame
@@ -834,26 +783,18 @@ int init_video_renderer() {
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
     video_context.sws = NULL;
+    video_ring_buffer = init_ring_buffer(FRAME_VIDEO, RECV_FRAMES_BUFFER_SIZE);
 
     max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
     video_data.pending_ctx = NULL;
-    video_data.frames_received = 0;
     video_data.bytes_transferred = 0;
     start_timer(&video_data.frame_timer);
     video_data.last_statistics_id = 1;
     video_data.last_rendered_id = 0;
-    video_data.max_id = 0;
     video_data.most_recent_iframe = -1;
-    video_data.last_received_id = -1;
-    start_timer(&video_data.missing_frame_nack_timer);
-    video_data.num_nacked = 0;
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
-
-    for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
-        receiving_frames[i].id = -1;
-    }
 
     // Resize event handling
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
@@ -911,8 +852,8 @@ void update_video() {
         double dropped_rate = 1.0 - receive_rate;
         */
 
-        double nack_per_second = video_data.num_nacked / time;
-        video_data.nack_by_bitrate[video_data.bucket] += video_data.num_nacked;
+        double nack_per_second = video_ring_buffer->num_nacked / time;
+        video_data.nack_by_bitrate[video_data.bucket] += video_ring_buffer->num_nacked;
         video_data.seconds_by_bitrate[video_data.bucket] += time;
 
         LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
@@ -959,11 +900,10 @@ void update_video() {
         max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
         LOG_INFO("MBPS3: %d", max_bitrate);
-        video_data.num_nacked = 0;
+        video_ring_buffer->num_nacked = 0;
 
         video_data.bytes_transferred = 0;
-        video_data.frames_received = 0;
-        video_data.last_statistics_id = video_data.max_id;
+        video_data.last_statistics_id = video_ring_buffer->max_id;
         start_timer(&video_data.frame_timer);
     }
 
@@ -978,38 +918,35 @@ void update_video() {
             // If `last_rendered_id` is further back than the first frame received, start from the
             // first frame received
             for (int i = max(video_data.last_rendered_id + 1,
-                             video_data.most_recent_iframe - video_data.frames_received + 1);
+                             video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
                  i < video_data.most_recent_iframe; i++) {
-                int index = i % RECV_FRAMES_BUFFER_SIZE;
-                if (receiving_frames[index].id == i) {
+                FrameData* frame_data = get_frame_at_id(video_ring_buffer, i);
+                if (frame_data->id == i) {
                     LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
-                                receiving_frames[index].packets_received,
-                                receiving_frames[index].num_packets);
+                                frame_data->packets_received,
+                                frame_data->num_packets);
 
-                    for (int j = 0; j < receiving_frames[index].num_packets; j++) {
-                        if (!receiving_frames[index].received_indicies[j]) {
+                    for (int j = 0; j < frame_data->num_packets; j++) {
+                        if (!frame_data->received_indices[j]) {
                             LOG_WARNING("Did not receive ID %d, Index %d", i, j);
                         }
                     }
                 } else {
-                    LOG_WARNING("Bad ID? %d instead of %d", receiving_frames[index].id, i);
+                    LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
                 }
             }
             video_data.last_rendered_id = video_data.most_recent_iframe - 1;
         }
 
         int next_render_id = video_data.last_rendered_id + 1;
-
-        int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
-
-        FrameData* ctx = &receiving_frames[index];
+        FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
 
         // When we receive a packet that is a part of the next_render_id, and we have received every
         // packet for that frame, we set rendering=true
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 // LOG_INFO( "Packets: %d %s", ctx->num_packets,
-                // ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
+                // ((VideoFrame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
                 // LOG_INFO("Rendering %d (Age %f)", ctx->id,
                 // get_timer(ctx->frame_creation_timer));
 
@@ -1019,8 +956,7 @@ void update_video() {
                 ctx->frame_buffer = NULL;
                 // Get the FrameData for the next frame
                 int next_frame_render_id = next_render_id + 1;
-                int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
-                FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
+                FrameData* next_frame_ctx = get_frame_at_id(video_ring_buffer, next_frame_render_id);
 
                 // If the next frame has been received, let's skip the rendering so we can render
                 // the next frame faster. We do this because rendering is synced with screen
@@ -1046,15 +982,15 @@ void update_video() {
                     // MS", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1;
                          i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
-                        if (!ctx->received_indicies[i]) {
+                        if (!ctx->received_indices[i]) {
                             num_nacked++;
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
                                 ctx->id, i, ctx->num_packets,
                                 get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
-                            ctx->nacked_indicies[i] = true;
-                            video_nack(ctx->id, i);
+                            ctx->nacked_indices[i] = true;
+                            nack_packet(video_ring_buffer, ctx->id, i);
                         }
                         ctx->last_nacked_index = i;
                     }
@@ -1074,7 +1010,7 @@ void update_video() {
 
             // If we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
 
-            if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
+            if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
                 // old condition, which only checked if we hadn't received any packets in a while:
                 // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
                 // cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
@@ -1093,10 +1029,10 @@ void update_video() {
                 int missing_packets = 0;
                 for (int i = video_data.last_rendered_id + 1;
                      i < video_data.last_rendered_id + MAX_UNSYNCED_FRAMES; i++) {
-                    int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
-                    if (receiving_frames[buffer_index].id == i) {
-                        for (int j = 0; j < receiving_frames[buffer_index].num_packets; j++) {
-                            if (!receiving_frames[buffer_index].received_indicies[j]) {
+                    FrameData* ctx = get_frame_at_id(video_ring_buffer, i);
+                    if (ctx->id == i) {
+                        for (int j = 0; j < ctx->num_packets; j++) {
+                            if (!ctx->received_indices[j]) {
                                 missing_packets++;
                             }
                         }
@@ -1118,7 +1054,7 @@ void update_video() {
         } else {
             // If we're rendering, we might catch up in a bit, so we can be more lenient
             // and will only i-frame if we're MAX_UNSYNCED_FRAMES_RENDER frames behind.
-            if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
+            if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is %d frames ahead of the most recent rendered frame. "
@@ -1156,134 +1092,16 @@ int32_t receive_video(FractalPacket* packet) {
     // Find frame in ring buffer that matches the id
     video_data.bytes_transferred += packet->payload_size;
 
-    int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
-
-    FrameData* ctx = &receiving_frames[index];
-
-    // Check if we have to initialize the frame buffer
-    if (packet->id < ctx->id) {
-        LOG_INFO("Old packet received! %d is less than the previous %d", packet->id, ctx->id);
-        return -1;
-    } else if (packet->id > ctx->id) {
-        if (rendering && render_context.id == ctx->id) {
-            LOG_INFO(
-                "Error! Currently rendering an ID that will be overwritten! "
-                "Skipping packet.");
-            return 0;
-        }
-        ctx->id = packet->id;
-        // If the frame buffer doesn't exist yet, we allocate one
-        // in order to hold the frame data
-        if (ctx->frame_buffer == NULL) {
-            char* p = allocate_block(frame_buffer_allocator);
-            ctx->frame_buffer = p;
-        }
-        ctx->packets_received = 0;
-        ctx->num_packets = packet->num_indices;
-        ctx->last_nacked_index = -1;
-        ctx->num_times_nacked = -1;
-        ctx->rendered = false;
-        ctx->frame_size = 0;
-        memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
-        memset(ctx->nacked_indicies, 0, sizeof(ctx->nacked_indicies));
-        start_timer(&ctx->last_nacked_timer);
-        start_timer(&ctx->frame_creation_timer);
-        // LOG_INFO("Initialized packet %d!", ctx->id);
-    } else {
-        // LOG_INFO("Already Started: %d/%d - %f", ctx->packets_received + 1,
-        // ctx->num_packets, get_timer(ctx->client_frame_timer));
+    int res = receive_packet(video_ring_buffer, packet);
+    if (res < 0) {
+        return res;
     }
+    FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
 
-    start_timer(&ctx->last_packet_timer);
-
-    // If we already received this packet, we can skip
-    if (packet->is_a_nack) {
-        if (!ctx->received_indicies[packet->index]) {
-            LOG_INFO("NACK for Video ID %d, Index %d Received!", packet->id, packet->index);
-        } else {
-            LOG_INFO(
-                "NACK for Video ID %d, Index %d Received! But didn't need "
-                "it.",
-                packet->id, packet->index);
-        }
-    } else if (ctx->nacked_indicies[packet->index]) {
-        LOG_INFO(
-            "Received the original Video ID %d Index %d, but we had NACK'ed "
-            "for it.",
-            packet->id, packet->index);
-    }
-
-    // Already received
-    if (ctx->received_indicies[packet->index]) {
-#if LOG_VIDEO
-        LOG_DEBUG(
-            "Skipping duplicate Video ID %d Index %d at time since creation %f "
-            "%s",
-            packet->id, packet->index, get_timer(ctx->frame_creation_timer),
-            packet->is_a_nack ? "(nack)" : "");
-#endif
-        return 0;
-    }
-
-#if LOG_VIDEO
-    // LOG_INFO("Received Video ID %d Index %d at time since creation %f %s",
-    // packet->id, packet->index, get_timer(ctx->frame_creation_timer),
-    // packet->is_a_nack ? "(nack)" : "");
-#endif
-
-    video_data.max_id = max(video_data.max_id, ctx->id);
-
-    ctx->received_indicies[packet->index] = true;
-
-    // nack both for missing packets in this frame, and missing previous frames
-
-    // check if we have jumped 5 indices abruptly - if so, nack the missing packets
-    if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > 6.0 / 1000) {
-        int to_index = packet->index - 5;
-        for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
-            // Nacking index i
-            ctx->last_nacked_index = max(ctx->last_nacked_index, i);
-            if (!ctx->received_indicies[i]) {
-                ctx->nacked_indicies[i] = true;
-                video_nack(packet->id, i);
-                start_timer(&ctx->last_nacked_timer);
-                break;
-            }
-        }
-    }
-
-    // check if we have jumped a whole frame - if so, we should nack for index 0 on the missing
-    // frame
-    if (video_data.last_received_id != -1 &&
-        get_timer(video_data.missing_frame_nack_timer) > latency &&
-        video_data.last_received_id < ctx->id - 1) {
-        for (int i = video_data.last_received_id + 1; i < ctx->id; i++) {
-            int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
-            if (receiving_frames[buffer_index].id != i) {
-                LOG_INFO("Missing all packets for frame %d, nacking now for index 0", i);
-                start_timer(&video_data.missing_frame_nack_timer);
-                video_nack(i, 0);
-            }
-        }
-    }
-
-    video_data.last_received_id = ctx->id;
-    ctx->packets_received++;
-
-    // Copy packet data
-    int place = packet->index * MAX_PAYLOAD_SIZE;
-    if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
-        LOG_WARNING("Packet total payload is too large for buffer!");
-        return -1;
-    }
-    memcpy(ctx->frame_buffer + place, packet->data, packet->payload_size);
-    ctx->frame_size += packet->payload_size;
-
+    // TODO: video must handle iframe checking after ring buffer finishes
     // If we received all of the packets
     if (ctx->packets_received == ctx->num_packets) {
-        bool is_iframe = ((Frame*)ctx->frame_buffer)->is_iframe;
-
-        video_data.frames_received++;
+        bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
 
 #if LOG_VIDEO
         LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
@@ -1322,6 +1140,9 @@ void destroy_video() {
         if (destroy_peer_cursors() != 0) {
             LOG_ERROR("Failed to destroy peer cursors.");
         }
+
+        // Destroy the ring buffer
+        destroy_ring_buffer(video_ring_buffer);
     }
 
     SDL_DestroyMutex(render_mutex);
