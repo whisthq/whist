@@ -1,13 +1,17 @@
+from threading import Thread
 import requests
 from flask import current_app
+from sqlalchemy import or_
 
-from app.models import db, RegionToAmi
+from app.models import db, RegionToAmi, InstanceInfo
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.instance_state_values import (
     DRAINING,
     HOST_SERVICE_UNRESPONSIVE,
+    ACTIVE,
+    PRE_CONNECTION,
 )
 
 
@@ -50,3 +54,45 @@ def mark_instance_for_draining(active_instance):
         active_instance.status = DRAINING
     except requests.exceptions.RequestException:
         active_instance.status = HOST_SERVICE_UNRESPONSIVE
+
+
+def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
+    region_current_active_ami_map = {}
+    current_active_amis = RegionToAmi.query.filter_by(enabled=True).all()
+    for current_active_ami in current_active_amis:
+        region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
+
+    new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
+
+    region_wise_upgrade_threads = []
+    for region_name, ami_id in region_to_ami_id_mapping.items():
+        region_wise_upgrade_thread = Thread(
+            target=launch_new_ami_buffer,
+            args=(
+                region_name,
+                ami_id,
+            ),
+            # current_app is a proxy for app object, so `_get_current_object` method
+            # should be used to fetch the application object to be passed to the thread.
+            kwargs={"flask_app": current_app._get_current_object()},
+        )
+        region_wise_upgrade_threads.append(region_wise_upgrade_thread)
+        region_wise_upgrade_thread.start()
+
+    for region_wise_upgrade_thread in region_wise_upgrade_threads:
+        region_wise_upgrade_thread.join()
+
+    active_instances = (
+        db.session.query(InstanceInfo)
+        .filter(or_(InstanceInfo.status.like(ACTIVE), InstanceInfo.status.like(PRE_CONNECTION)))
+        .all()
+    )
+
+    for active_instance in active_instances:
+        mark_instance_for_draining(active_instance)
+
+    for new_ami in new_amis:
+        new_ami.enabled = True
+        region_current_active_ami_map[new_ami.region_name].enabled = False
+
+    db.session.commit()

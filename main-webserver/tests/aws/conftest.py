@@ -52,10 +52,15 @@ def hijack_db(monkeypatch):
     def _helper(*args, **kwargs):
         call_list.append({"args": args, "kwargs": kwargs})
 
+    def _add_all_helper(*args):
+        for obj in args[0]:
+            call_list.append({"args": obj})
+
     def _empty():
         return
 
     monkeypatch.setattr(db.session, "add", _helper)
+    monkeypatch.setattr(db.session, "add_all", _add_all_helper)
     monkeypatch.setattr(db.session, "commit", _empty)
     yield call_list
 

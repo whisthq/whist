@@ -1,19 +1,11 @@
-from threading import Thread
 from json import loads
 
 
 import click
-from flask import Blueprint, current_app
-from sqlalchemy import or_
+from flask import Blueprint
 
-from app.models import db, InstanceInfo
-from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.command_helpers.ami_upgrade import (
-    insert_new_amis,
-    launch_new_ami_buffer,
-    mark_instance_for_draining,
-)
-from app.constants.instance_state_values import ACTIVE, PRE_CONNECTION
+
+from app.helpers.command_helpers.ami_upgrade import perform_upgrade
 
 
 command_bp = Blueprint("command", __name__)
@@ -28,36 +20,4 @@ def ami_upgrade(
 ):
     region_to_ami_id_mapping = loads(region_to_ami_id_mapping_str)
 
-    new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
-
-    region_wise_upgrade_threads = []
-    for region_name, ami_id in region_to_ami_id_mapping.items():
-        region_wise_upgrade_thread = Thread(
-            target=launch_new_ami_buffer,
-            args=(
-                region_name,
-                ami_id,
-            ),
-            # current_app is a proxy for app object, so `_get_current_object` method
-            # should be used to fetch the application object to be passed to the thread.
-            kwargs={"flask_app": current_app._get_current_object()},
-        )
-        region_wise_upgrade_threads.append(region_wise_upgrade_thread)
-        region_wise_upgrade_thread.start()
-
-    for region_wise_upgrade_thread in region_wise_upgrade_threads:
-        region_wise_upgrade_thread.join()
-
-    active_instances = (
-        db.session.query(InstanceInfo)
-        .filter(or_(InstanceInfo.status.like(ACTIVE), InstanceInfo.status.like(PRE_CONNECTION)))
-        .all()
-    )
-
-    for active_instance in active_instances:
-        mark_instance_for_draining(active_instance)
-
-    for new_ami in new_amis:
-        new_ami.enabled = True
-
-    db.session.commit()
+    perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
