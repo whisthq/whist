@@ -565,9 +565,11 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
     int res;
     // If frame was computed on the GPU
     if (decoder->context->hw_frames_ctx) {
-        // If frame was computed on the GPU
-        if ((res = avcodec_receive_frame(decoder->context, decoder->hw_frame)) < 0) {
-            LOG_WARNING("Failed to avcodec_receive_frame!");
+        res = avcodec_receive_frame(decoder->context, decoder->hw_frame);
+        if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            return 1;
+        } else if (res < 0) {
+            LOG_WARNING("Failed to avcodec_receive_frame, error: %s", av_err2str(res));
             destroy_video_decoder(decoder);
             return -1;
         }
@@ -579,13 +581,16 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
             decoder->type = DECODE_TYPE_SOFTWARE;
         }
 
-        if ((res = avcodec_receive_frame(decoder->context, decoder->sw_frame)) < 0) {
-            LOG_WARNING("Failed to avcodec_receive_frame!");
+        res = avcodec_receive_frame(decoder->context, decoder->sw_frame);
+        if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            return 1;
+        } else if (res < 0) {
+            LOG_WARNING("Failed to avcodec_receive_frame, error: %s", av_err2str(res));
             destroy_video_decoder(decoder);
             return -1;
         }
     }
-    return res;
+    return 0;
 }
 
 bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) {
