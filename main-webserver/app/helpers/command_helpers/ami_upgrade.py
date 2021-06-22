@@ -56,6 +56,13 @@ def mark_instance_for_draining(active_instance):
         active_instance.status = HOST_SERVICE_UNRESPONSIVE
 
 
+def fetch_current_running_instances():
+    return (
+        db.session.query(InstanceInfo)
+        .filter(or_(InstanceInfo.status.like(ACTIVE), InstanceInfo.status.like(PRE_CONNECTION)))
+        .all()
+    )
+
 def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(enabled=True).all()
@@ -82,13 +89,7 @@ def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
     for region_wise_upgrade_thread in region_wise_upgrade_threads:
         region_wise_upgrade_thread.join()
 
-    active_instances = (
-        db.session.query(InstanceInfo)
-        .filter(or_(InstanceInfo.status.like(ACTIVE), InstanceInfo.status.like(PRE_CONNECTION)))
-        .all()
-    )
-
-    for active_instance in active_instances:
+    for active_instance in fetch_current_running_instances():
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
