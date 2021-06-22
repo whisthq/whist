@@ -1,18 +1,19 @@
 **High-Level Description of Features**
 
 
-**List of PRs that made it into this promotion**
+**List of PRs that Made It Into this Promotion**
 
 
-**Testing Checklist Before Approving**
+**Promotion Testing**
 
 In order for this PR to be merged, all of the following items need to be tested and checked. Make sure to perform these tests from the correct packaged app (on the `dev` > `staging` promotion, use the `dev` app, and on the `staging` > `prod` promotion, use the `staging` app). Everyone is encouraged to do these tests, the more people that test the better! If you don't have them already installed, you can download the applications from the following links:
 
 - [macOS Application (Dev)](https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg)
 - [macOS Application (Staging)](https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg)
-
 - [Windows Application (Dev)](https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.dmg)
 - [Windows Application (Staging)](https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.dmg)
+
+**Checklist**
 
 - [ ] Fractal successfully auto-updates
 - [ ] Fractal successfully launches
