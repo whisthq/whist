@@ -35,7 +35,7 @@ export const serializePorts = (ps: {
   port_32262: number
   port_32263: number
   port_32273: number
-}) => `32262:${ps.port_32262}.32263:${ps.port_32263}.32273:${ps.port_32273}`
+}) => `32262:${ps?.port_32262}.32263:${ps?.port_32263}.32273:${ps?.port_32273}`
 
 export const writeStream = (
   process: ChildProcess | undefined,
@@ -62,12 +62,14 @@ export const protocolLaunch = async () => {
     protocolLogFile.on("open", () => resolve())
   })
 
+  console.log("PROTOCOL PATH IS", protocolPath)
+
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
     // options are for [stdin, stdout, stderr]. pipe creates a pipe, ignore will ignore the
     // output. We only pipe stdin since that's how we send args to the protocol. Meanwhile,
     // we will write stdout to the log file client.log.
-    stdio: ["pipe", protocolLogFile, "ignore"],
+    stdio: ["pipe", "pipe", "ignore"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading

@@ -3,6 +3,7 @@
  * @file app.ts
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
+
 import { protocolStreamInfo } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
 
