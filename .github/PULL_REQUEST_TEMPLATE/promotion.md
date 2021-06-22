@@ -6,10 +6,10 @@
 
 **Testing Checklist Before Approving**
 
-In order for this PR to be merged, all of the following items need to be tested and checked. Make sure to perform these tests from the correct packaged app (on the dev > staging promotion, use the dev app, and on the staging > prod promotion, use the staging app). Everyone is encouraged to do these tests, the more people that test the better!
+In order for this PR to be merged, all of the following items need to be tested and checked. Make sure to perform these tests from the correct packaged app (on the `dev` > `staging` promotion, use the `dev` app, and on the `staging` > `prod` promotion, use the `staging` app). Everyone is encouraged to do these tests, the more people that test the better! If you don't have them already installed, you can download the applications from the following links:
 
-Dev client app: https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg
-Staging client app: https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg
+[Dev macOS Application](https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg)
+[Staging macOS Application](https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg)
 
 - [ ] Fractal successfully auto-updates
 - [ ] Fractal successfully launches
