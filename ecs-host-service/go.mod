@@ -9,7 +9,6 @@ require (
 	github.com/NVIDIA/go-nvml v0.11.1-0
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
 	github.com/aws/aws-sdk-go v1.38.52
-	github.com/aws/aws-sdk-go-v2 v1.6.0
 	github.com/aws/aws-sdk-go-v2/config v1.3.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.8.0
 	github.com/awslabs/go-config-generator-for-fluentd-and-fluentbit v0.0.0-20210308162251-8959c62cb8f9
@@ -35,8 +34,8 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/jackc/pgtype v1.7.1-0.20210424130834-4380e23ae1c8 // indirect
 	github.com/jackc/pgx/v4 v4.11.0
-	github.com/jschaf/pggen v0.0.0-20210517091311-cece7af82c5f // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/moby/sys/mount v0.2.0 // indirect
