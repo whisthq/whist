@@ -1,20 +1,20 @@
 .. responsibilities.rst
-   An description of each of the Fractal web server's main responsibilities.
+   An description of each of the Fractal Webserver's main responsibilities.
 
-Webserver responsibilities
+Webserver Responsibilities
 ===========================
 
-The Fractal Webserver performs four main functions. It
+The Fractal Webserver performs three main functions:
 
 * Controls which users have access to which compute resources
-* makes sure we have enough compute for the user load we're seeing, by starting and stopping cloud instances
-* allows users to initiate application streams -- i.e. to start using the product.
+* Makes sure we have enough compute for the user load we're seeing, by starting and stopping cloud instances
+* Allows users to initiate application streams -- i.e. to start using Fractal
 
 
-Access control
+Access Control
 --------------
 
-For each access token that the web server receives, it must verify that the authenticated user is authorized to access the
+For each access token that the Fractal Webserver receives, it must verify that the authenticated user is authorized to access the
 resources to which they are requesting access. For example, some Webserver resources are only accessible to Fractal 
 subscribers, while others are only access to Fractal administrators. Access tokens are JWTs issued by an Auth0 tenant that 
 takes care of user management and authentication. Each time the Webserver receives one of these access tokens, it uses the 
@@ -29,7 +29,7 @@ that are only accessible to Fractal administrators, the Webserver reads from the
 user is authorized to access. If one of those scopes is "admin", then the user is allowed to access the resource.
 
 
-Compute scaling
+Compute Scaling
 ---------------
 
 The webserver continuously keeps track of the amount of load on our system, both in terms of the number of active users and 
@@ -37,7 +37,7 @@ their actual activity level.  Based on this, it starts and stops instances dynam
 wants a session can have one, ideally without any wait.
 
 
-Application streaming
+Application Streaming
 ---------------------
 
 By far the most significant and complicated of the web server's responsibilities is that of allocating containers to users. 
@@ -46,7 +46,7 @@ information for a running instance of the protocol server and return it to the t
 streaming session.
 
 
-Starting streams
+Starting Streams
 ^^^^^^^^^^^^^^^^
 
 At a high level, when the web server receives a request to allocate an application stream to a user, it does the following 
@@ -71,7 +71,7 @@ to ourselves for the purposes of deploying containerized application streams and
 across all of these clusters.
 
 
-Ending streams
+Ending Streams
 ^^^^^^^^^^^^^^
 
 When a user closes a streamed application at the end of their streaming session, the application container notifies the web 
