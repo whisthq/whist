@@ -11,8 +11,8 @@ from app.constants.instance_state_values import (
 )
 
 
-def insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping):
-    new_disabled_amis = []
+def insert_new_amis(client_commit_hash, region_to_ami_id_mapping):
+    new_amis = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         new_ami = RegionToAmi(
             region_name=region_name,
@@ -21,10 +21,10 @@ def insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping):
             enabled=False,
             allowed=True,
         )
-        new_disabled_amis.append(new_ami)
-    db.session.add_all(new_disabled_amis)
+        new_amis.append(new_ami)
+    db.session.add_all(new_amis)
     db.session.commit()
-    return new_disabled_amis
+    return new_amis
 
 
 def launch_new_ami_buffer(region_name, ami_id, flask_app):

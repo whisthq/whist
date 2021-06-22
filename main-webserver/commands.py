@@ -9,7 +9,7 @@ from sqlalchemy import or_
 from app.models import db, InstanceInfo
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.command_helpers.ami_upgrade import (
-    insert_disabled_amis,
+    insert_new_amis,
     launch_new_ami_buffer,
     mark_instance_for_draining,
 )
@@ -28,7 +28,7 @@ def ami_upgrade(
 ):
     region_to_ami_id_mapping = loads(region_to_ami_id_mapping_str)
 
-    new_disabled_amis = insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping)
+    new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
 
     region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
@@ -57,7 +57,7 @@ def ami_upgrade(
     for active_instance in active_instances:
         mark_instance_for_draining(active_instance)
 
-    for new_disabled_ami in new_disabled_amis:
-        new_disabled_ami.enabled = True
+    for new_ami in new_amis:
+        new_ami.enabled = True
 
     db.session.commit()
