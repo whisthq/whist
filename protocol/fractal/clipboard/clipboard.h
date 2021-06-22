@@ -71,12 +71,22 @@ typedef enum ClipboardType {
 } ClipboardType;
 
 /**
+ * @brief                          The type of the clipboard chunk being sent
+ */
+typedef enum ClipboardChunkType {
+    CLIPBOARD_START,
+    CLIPBOARD_MIDDLE,
+    CLIPBOARD_FINAL
+} ClipboardChunkType;
+
+/**
  * @brief                          A packet of data referring to and containing
  *                                 the information of a clipboard
  */
 typedef struct ClipboardData {
     int size;            // Number of bytes for the clipboard data
     ClipboardType type;  // The type of data for the clipboard
+    ClipboardChunkType chunk_type; // Whether this is a first, middle or last chunk
     char data[0];        // The data that stores the clipboard information
 } ClipboardData;
 

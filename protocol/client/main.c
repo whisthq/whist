@@ -72,7 +72,7 @@ volatile SDL_Window* window;
 volatile char* window_title;
 volatile bool should_update_window_title;
 volatile bool run_receive_packets;
-volatile bool run_send_clipboard_packets;
+volatile bool run_send_tcp_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile double latency;
@@ -319,24 +319,29 @@ int send_clipboard_packets(void* opaque) {
     }
 
     clock clipboard_time;
-    while (run_send_clipboard_packets) {
+    while (run_send_tcp_packets) {
         start_timer(&clipboard_time);
-        ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
-        if (clipboard) {
+        // ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
+        ClipboardData* clipboard_chunk;
+        // if (clipboard) {
+        // TODO: this shouldn't exactly be a while loop here because we want to allow a file
+        // to be transferred while a clipboard is being transferred as well
+        while ((clipboard_chunk = clipboard_synchronizer_get_new_clipboard())) {
             // Alloc an fmsg
             FractalClientMessage* fmsg_clipboard = allocate_region(
-                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
             // Build the fmsg
             // Init metadata to 0 to prevent sending uninitialized packets over the network
             memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+            memcpy(&fmsg_clipboard->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
             // Send the fmsg
             send_fmsg(fmsg_clipboard);
             // Free the fmsg
             deallocate_region(fmsg_clipboard);
-            // Free the clipboard
-            free_clipboard(clipboard);
+            // // Free the clipboard
+            // free_clipboard(clipboard);
+            deallocate_region(clipboard_chunk);
         }
 
         // delay to avoid clipboard checking spam
@@ -867,10 +872,10 @@ int main(int argc, char* argv[]) {
         SDL_Thread* receive_packets_thread =
             SDL_CreateThread(receive_packets, "ReceivePackets", &packet_receive_context);
 
-        // Create thread to send clipboard TCP packets
-        run_send_clipboard_packets = true;
-        SDL_Thread* send_clipboard_thread =
-            SDL_CreateThread(send_clipboard_packets, "SendClipboardPackets", NULL);
+        // Create thread to send TCP packets
+        run_send_tcp_packets = true;
+        SDL_Thread* send_tcp_packets_thread =
+            SDL_CreateThread(send_tcp_packets, "SendTCPPackets", NULL);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
@@ -953,8 +958,10 @@ int main(int argc, char* argv[]) {
         if (exiting || exit_code != FRACTAL_EXIT_SUCCESS ||
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
-        run_send_clipboard_packets = false;
-        SDL_WaitThread(send_clipboard_thread, NULL);
+
+        run_send_tcp_packets = false;
+        SDL_WaitThread(send_tcp_packets_thread, NULL);
+
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
         destroy_audio();
