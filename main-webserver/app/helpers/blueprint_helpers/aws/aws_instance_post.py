@@ -161,7 +161,7 @@ def do_scale_up_if_necessary(
 
         ami_obj = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).one_or_none()
 
-        instance_type = "g3s.xlarge"
+        instance_type = "g3.4xlarge"
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
