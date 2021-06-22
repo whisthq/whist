@@ -94,12 +94,21 @@ sudo apt-get update -y
 sudo apt-get install -y nvidia-docker2
 
 echo "================================================"
+echo "Installing General Utilities..."
+echo "================================================"
+
+sudo apt-get install -y lsof jq tar lz4
+
+echo "================================================"
 echo "Configuring Docker daemon..."
 echo "================================================"
 
 # Set custom seccomp filter
+sudo systemctl start docker
+./docker-daemon-config/generate-seccomp.sh
+
 sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
-sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
+sudo cp docker-daemon-config/seccomp.json /etc/docker/seccomp.json
 
 sudo systemctl restart docker
 
@@ -108,12 +117,6 @@ echo "Installing Other Host Service Dependencies..."
 echo "================================================"
 
 sudo apt-get install -y openssl
-
-echo "================================================"
-echo "Installing Other Utilities..."
-echo "================================================"
-
-sudo apt-get install -y lsof jq tar lz4
 
 echo "================================================"
 echo "Installing Uinput Config Files..."
