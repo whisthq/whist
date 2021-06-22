@@ -328,43 +328,6 @@ void unsafe_set_clipboard(ClipboardData* cb) {
 
         LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
         return;
-        /*
-        struct dirent* de;
-        DIR* dr = opendir(SET_CLIPBOARD);
-
-        if (dr) {
-            inp = popen(CLOSE_FDS "xclip -i -sel clipboard -t x-special/gnome-copied-files", "w");
-
-            char prefix[] = "copy";
-            fwrite(prefix, 1, sizeof(prefix) - 1, inp);
-
-            // Construct path as "\nfile:///path/to/fractal/set_clipboard/"
-            char path[PATH_MAX] = "\nfile://";
-            int substr = strlen(path);
-            realpath(SET_CLIPBOARD, path + substr);
-            strcat(path, "/");
-            // subpath is an index that points to the end of the string
-            int subpath = strlen(path);
-
-            // Read through the directory
-            while (dr && (de = readdir(dr)) != NULL) {
-                // Ignore . and ..
-                if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) {
-                    continue;
-                }
-
-                // Copy the dname into it
-                int d_name_size = strlen(de->d_name);
-                memcpy(path + subpath, de->d_name, d_name_size);
-
-                // Write the subpath and the dname into it
-                fwrite(path, 1, subpath + d_name_size, inp);
-            }
-
-            // Close the file descriptor
-            pclose(inp);
-        }
-        */
     }
     return;
 }
