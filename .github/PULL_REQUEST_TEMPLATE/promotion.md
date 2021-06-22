@@ -11,6 +11,9 @@ In order for this PR to be merged, all of the following items need to be tested 
 [Dev macOS Application](https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg)
 [Staging macOS Application](https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg)
 
+[Dev Windows Application](https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.dmg)
+[Staging Windows Application](https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.dmg)
+
 - [ ] Fractal successfully auto-updates
 - [ ] Fractal successfully launches
 - [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
