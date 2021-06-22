@@ -16,12 +16,12 @@ import (
 // calling SendBatch on pgx.Conn, pgxpool.Pool, or pgx.Tx, use the Scan methods
 // to parse the results.
 type Querier interface {
-	FindInstanceByName(ctx context.Context, instanceName string) (FindInstanceByNameRow, error)
+	FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error)
 	// FindInstanceByNameBatch enqueues a FindInstanceByName query into batch to be executed
 	// later by the batch.
 	FindInstanceByNameBatch(batch *pgx.Batch, instanceName string)
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
-	FindInstanceByNameScan(results pgx.BatchResults) (FindInstanceByNameRow, error)
+	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 }
 
 type DBQuerier struct {
@@ -153,14 +153,25 @@ type FindInstanceByNameRow struct {
 }
 
 // FindInstanceByName implements Querier.FindInstanceByName.
-func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string) (FindInstanceByNameRow, error) {
+func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "FindInstanceByName")
-	row := q.conn.QueryRow(ctx, findInstanceByNameSQL, instanceName)
-	var item FindInstanceByNameRow
-	if err := row.Scan(&item.InstanceName, &item.CloudProviderID, &item.AuthToken, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.ContainerCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
-		return item, fmt.Errorf("query FindInstanceByName: %w", err)
+	rows, err := q.conn.Query(ctx, findInstanceByNameSQL, instanceName)
+	if err != nil {
+		return nil, fmt.Errorf("query FindInstanceByName: %w", err)
 	}
-	return item, nil
+	defer rows.Close()
+	items := []FindInstanceByNameRow{}
+	for rows.Next() {
+		var item FindInstanceByNameRow
+		if err := rows.Scan(&item.InstanceName, &item.CloudProviderID, &item.AuthToken, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.ContainerCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
+			return nil, fmt.Errorf("scan FindInstanceByName row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close FindInstanceByName rows: %w", err)
+	}
+	return items, err
 }
 
 // FindInstanceByNameBatch implements Querier.FindInstanceByNameBatch.
@@ -169,13 +180,24 @@ func (q *DBQuerier) FindInstanceByNameBatch(batch *pgx.Batch, instanceName strin
 }
 
 // FindInstanceByNameScan implements Querier.FindInstanceByNameScan.
-func (q *DBQuerier) FindInstanceByNameScan(results pgx.BatchResults) (FindInstanceByNameRow, error) {
-	row := results.QueryRow()
-	var item FindInstanceByNameRow
-	if err := row.Scan(&item.InstanceName, &item.CloudProviderID, &item.AuthToken, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.ContainerCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
-		return item, fmt.Errorf("scan FindInstanceByNameBatch row: %w", err)
+func (q *DBQuerier) FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error) {
+	rows, err := results.Query()
+	if err != nil {
+		return nil, fmt.Errorf("query FindInstanceByNameBatch: %w", err)
 	}
-	return item, nil
+	defer rows.Close()
+	items := []FindInstanceByNameRow{}
+	for rows.Next() {
+		var item FindInstanceByNameRow
+		if err := rows.Scan(&item.InstanceName, &item.CloudProviderID, &item.AuthToken, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.ContainerCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
+			return nil, fmt.Errorf("scan FindInstanceByNameBatch row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close FindInstanceByNameBatch rows: %w", err)
+	}
+	return items, err
 }
 
 // textPreferrer wraps a pgtype.ValueTranscoder and sets the preferred encoding

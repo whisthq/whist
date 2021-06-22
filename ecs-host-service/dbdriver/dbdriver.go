@@ -12,6 +12,8 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
 	"github.com/fractal/fractal/ecs-host-service/metrics"
 	"github.com/fractal/fractal/ecs-host-service/utils"
+
+	"github.com/fractal/fractal/ecs-host-service/dbdriver/queries"
 )
 
 // `enabled` is a flag denoting whether the functions in this package should do
@@ -84,7 +86,6 @@ func registerInstance(ctx context.Context) error {
 	if !enabled {
 		return nil
 	}
-
 	if dbpool == nil {
 		return utils.MakeError("registerInstance() called but dbdriver is not initialized!")
 	}
@@ -118,7 +119,7 @@ func registerInstance(ctx context.Context) error {
 	memoryRemaining := latestMetrics.AvailableMemoryKB
 
 	// Check if there's a row for us in the database already
-	// TODO: factor our `hardware.instance_info` into a variable
+
 	rows, err := dbpool.Query(ctx,
 		`SELECT * FROM hardware.instance_info
 		WHERE instance_id = $1`,
