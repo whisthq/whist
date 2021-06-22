@@ -10,7 +10,7 @@ from app.models import db, InstanceInfo
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.command_helpers.ami_upgrade import (
     insert_disabled_amis,
-    upgrade_region,
+    launch_new_ami_buffer,
     mark_instance_for_draining,
 )
 from app.constants.instance_state_values import ACTIVE, PRE_CONNECTION
@@ -33,7 +33,7 @@ def ami_upgrade(
     region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         region_wise_upgrade_thread = Thread(
-            target=upgrade_region,
+            target=launch_new_ami_buffer,
             args=(
                 region_name,
                 ami_id,

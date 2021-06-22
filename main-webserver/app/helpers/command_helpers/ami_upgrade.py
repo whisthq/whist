@@ -27,7 +27,7 @@ def insert_disabled_amis(client_commit_hash, region_to_ami_id_mapping):
     return new_disabled_amis
 
 
-def upgrade_region(region_name, ami_id, flask_app):
+def launch_new_ami_buffer(region_name, ami_id, flask_app):
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         # TODO: Right now buffer seems to be 1 instance if it is the first of its kind(AMI),

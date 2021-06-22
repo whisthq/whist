@@ -64,26 +64,31 @@ def hijack_db(monkeypatch):
 def disable_ami():
     ami_obj = None
     actual_enabled_value = None
-    def _do_stuff(region_name, client_commit_hash):
+
+    def _disable_ami(region_name, client_commit_hash):
         nonlocal ami_obj, actual_enabled_value
         ami_obj = RegionToAmi.query.get((region_name, client_commit_hash))
         actual_enabled_value = ami_obj.enabled
         ami_obj.enabled = False
         db.session.commit()
-    yield _do_stuff
+
+    yield _disable_ami
     ami_obj.enabled = actual_enabled_value
     db.session.commit()
+
 
 @pytest.fixture
 def enable_ami():
     ami_obj = None
     actual_enabled_value = None
-    def _do_stuff(region_name, client_commit_hash):
+
+    def _enable_ami(region_name, client_commit_hash):
         nonlocal ami_obj, actual_enabled_value
         ami_obj = RegionToAmi.query.get((region_name, client_commit_hash))
         actual_enabled_value = ami_obj.enabled
         ami_obj.enabled = True
         db.session.commit()
-    yield _do_stuff
+
+    yield _enable_ami
     ami_obj.enabled = actual_enabled_value
     db.session.commit()
