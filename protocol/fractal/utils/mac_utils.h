@@ -51,17 +51,6 @@ int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct F
 void mac_rm_rf(const char* path);
 
 /**
- * @brief                         Uses strcmp to compare two file names
- *
- * @param first                   First file to compare
- * @param second                  Second file to compare with
- *
- * @returns                       Same return values as strcmp, e.g 0 for
- *                                equality
- */
-int cmp_files(const FTSENT** first, const FTSENT** second);
-
-/**
  * @brief                         List the files in a directory
  *
  * @param dir                     The directory to list the files from

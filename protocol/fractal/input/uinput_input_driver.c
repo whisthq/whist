@@ -353,7 +353,7 @@ InputDevice* create_input_device() {
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     char* socket_path = "/tmp/sockets/uinput.sock";
-    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+    safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
 
     if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         char buf[1024];
