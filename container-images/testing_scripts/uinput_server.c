@@ -8,8 +8,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <fractal/core/fractal.h>
-
 #define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                         \
     if (ioctl(FD, PARAMS) == -1) {                                                \
         char buf[1024];                                                           \
@@ -447,7 +445,7 @@ int main() {
     int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path));
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path));
     unlink(socket_path);
     if (bind(fd_socket, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         char buf[1024];
