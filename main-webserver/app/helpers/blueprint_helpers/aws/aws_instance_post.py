@@ -90,7 +90,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     # If the region is invalid or the AMI is not current, we want no buffer
     if region not in {x.region_name for x in RegionToAmi.query.all()}:
         return -maxsize
-    enabled_ami_for_given_region = RegionToAmi.query.filter_by(region_name=region, enabled=True).one_or_none()
+    enabled_ami_for_given_region = RegionToAmi.query.filter_by(
+        region_name=region, enabled=True
+    ).one_or_none()
     if enabled_ami_for_given_region is None:
         return -maxsize
     if ami_id != enabled_ami_for_given_region.ami_id:
