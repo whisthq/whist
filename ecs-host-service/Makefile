@@ -6,6 +6,7 @@ GOCLEAN      = $(GOCMD) clean
 GOTEST       = $(GOCMD) test
 GOGET        = $(GOCMD) get
 GOMODTIDY    = $(GOCMD) mod tidy
+GOGEN        = $(GOCMD) generate
 
 # Build parameters
 BUILD_FOLDER = build
@@ -40,6 +41,8 @@ endif
 
 build: checkCI
 	$(GOMODTIDY)
+	$(GOGET) github.com/jschaf/pggen/cmd/pggen
+	$(GOGEN)
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
