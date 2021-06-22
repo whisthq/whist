@@ -61,34 +61,15 @@ def hijack_db(monkeypatch):
 
 
 @pytest.fixture(autouse=False)
-def disable_ami():
-    ami_obj = None
-    actual_enabled_value = None
-
-    def _disable_ami(region_name, client_commit_hash):
-        nonlocal ami_obj, actual_enabled_value
-        ami_obj = RegionToAmi.query.get((region_name, client_commit_hash))
-        actual_enabled_value = ami_obj.enabled
-        ami_obj.enabled = False
+def set_amis_state():
+    amis = []
+    amis_original_enabled_value = []
+    def _setter(amis_to_be_modified, enabled_state):
+        for ami in amis_to_be_modified:
+            amis_original_enabled_value.append(ami.enabled)
+            ami.enabled = enabled_state
         db.session.commit()
-
-    yield _disable_ami
-    ami_obj.enabled = actual_enabled_value
-    db.session.commit()
-
-
-@pytest.fixture(autouse=False)
-def enable_ami():
-    ami_obj = None
-    actual_enabled_value = None
-
-    def _enable_ami(region_name, client_commit_hash):
-        nonlocal ami_obj, actual_enabled_value
-        ami_obj = RegionToAmi.query.get((region_name, client_commit_hash))
-        actual_enabled_value = ami_obj.enabled
-        ami_obj.enabled = True
-        db.session.commit()
-
-    yield _enable_ami
-    ami_obj.enabled = actual_enabled_value
+    yield _setter
+    for ami, original_enabled_value in zip(amis, amis_original_enabled_value):
+        ami.enabled = original_enabled_value
     db.session.commit()
