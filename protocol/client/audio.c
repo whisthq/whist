@@ -228,7 +228,6 @@ void flush_next_audio_frame() {
     /*
       Skip the next audio frame in the ring buffer.
      */
-    int next_to_play_id = last_played_id + 1;
     last_played_id++;
 }
 

@@ -249,10 +249,10 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
             frame_data->last_nacked_index = max(frame_data->last_nacked_index, i);
             if (!frame_data->received_indices[i]) {
                 frame_data->nacked_indices[i] = true;
+                nack_packet(ring_buffer, frame_data->id, i);
+                start_timer(&frame_data->last_nacked_timer);
+                break;
             }
-            nack_packet(ring_buffer, frame_data->id, i);
-            start_timer(&frame_data->last_nacked_timer);
-            break;
         }
     }
 }
