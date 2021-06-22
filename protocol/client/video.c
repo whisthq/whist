@@ -152,7 +152,6 @@ SDL_mutex* render_mutex;
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
 RingBuffer* video_ring_buffer;
-BlockAllocator* frame_buffer_allocator;
 
 bool has_video_rendered_yet = false;
 
@@ -728,10 +727,6 @@ int init_video_renderer() {
     if (init_peer_cursors() != 0) {
         LOG_WARNING("Failed to init peer cursors.");
     }
-
-    // Here we create the frame buffer allocator,
-    // And make it allocate blocks of size LARGEST_FRAME_SIZE
-    frame_buffer_allocator = create_block_allocator(LARGEST_FRAME_SIZE);
 
     can_render = true;
 

@@ -116,6 +116,10 @@ void destroy_ring_buffer(RingBuffer* ring_buffer);
  * @brief Send a nack for the packet at index index of frame with ID id.
  *
  * @param ring_buffer Ring buffer that should have the packet
+ *
+ * @param id ID of the frame that should have the packet
+ *
+ * @param index Packet index
  */
 void nack_packet(RingBuffer* ring_buffer, int id, int index);
 
