@@ -196,6 +196,14 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
 }
 
 void nack_packet(RingBuffer* ring_buffer, int id, int index) {
+    /*
+        Nack the packet at ID id and index index.
+
+        Arguments:
+            ring_buffer (RingBuffer*): the ring buffer waiting for the packet
+            id (int): Frame ID of the packet
+            index (int): index of the packet
+            */
     ring_buffer->num_nacked++;
     LOG_INFO("NACKing for Packet ID %d, Index %d", id, index);
     FractalClientMessage fmsg = {0};
@@ -206,6 +214,15 @@ void nack_packet(RingBuffer* ring_buffer, int id, int index) {
 }
 
 void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {
+    /*
+        Nack missing frames between start_id (inclusive) and end_id (exclusive).
+
+        Arguments:
+            ring_buffer (RingBuffer*): ring buffer missing the frames
+            start_id (int): First frame to check
+            end_id (int): Last frame + 1 to check
+
+        */
     if (get_timer(ring_buffer->missing_frame_nack_timer) > 25.0 / 1000) {
         for (int i = start_id; i < end_id; i++) {
             if (get_frame_at_id(ring_buffer, i)->id != i) {
@@ -218,6 +235,14 @@ void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {
 }
 
 void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index) {
+    /*
+        Nack up to 1 missing packet up to index - 5 because UDP packets arrive out of order.
+
+        Arguments:
+            ring_buffer (RingBuffer*): ring buffer missing packets
+            frame_data (FrameData*): frame missing packets
+            index (int): index up to which to nack missing packets
+            */
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
         int to_index = index - 5;
         for (int i = max(0, frame_data->last_nacked_index + 1); i <= to_index; i++) {
@@ -233,6 +258,15 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 }
 
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
+    /*
+        Destroy the frame buffer of frame_data. If the ring buffer is for video, we must use the
+       frame buffer allocator.
+
+        Arguments:
+            ring_buffer (RingBuffer*): ring buffer containing the frame we want to destroy
+            frame_data (FrameData*): frame data containing the frame we want to destroy
+
+            */
     if (frame_data->frame_buffer != NULL) {
         if (ring_buffer->type == FRAME_AUDIO) {
             free(frame_data->frame_buffer);
@@ -243,6 +277,12 @@ void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
 }
 
 void destroy_ring_buffer(RingBuffer* ring_buffer) {
+    /*
+        Destroy ring_buffer: free all frames and any malloc'ed data, then free the ring buffer
+
+        Arguments:
+            ring_buffer (RingBuffer*): ring buffer to destroy
+            */
     // free each frame data: in particular, frame_buffer, received_indices, and nacked_indices.
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];

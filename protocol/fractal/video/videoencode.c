@@ -818,16 +818,19 @@ int video_encoder_encode(VideoEncoder *encoder) {
     // all packets have been received).
     while ((res = video_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
            0) {
-        if (res < 0) {
-            LOG_ERROR("PACKET RETURNED AN ERROR");
-            return -1;
-        }
         encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_ENCODER_PACKETS) {
             LOG_ERROR("TOO MANY PACKETS: REACHED %d", encoder->num_packets);
             return -1;
         }
+    }
+    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+        // Need more data
+        return 1;
+    } else if (res < 0) {
+        LOG_ERROR("Failed to receive packet, error: %s", av_err2str(res));
+        return -1;
     }
 
     // set iframe metadata
