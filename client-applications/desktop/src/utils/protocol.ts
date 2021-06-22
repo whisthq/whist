@@ -62,14 +62,12 @@ export const protocolLaunch = async () => {
     protocolLogFile.on("open", () => resolve())
   })
 
-  console.log("PROTOCOL PATH IS", protocolPath)
-
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
     // options are for [stdin, stdout, stderr]. pipe creates a pipe, ignore will ignore the
     // output. We only pipe stdin since that's how we send args to the protocol. Meanwhile,
     // we will write stdout to the log file client.log.
-    stdio: ["pipe", "pipe", "ignore"],
+    stdio: ["pipe", protocolLogFile, "ignore"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading
@@ -107,6 +105,7 @@ export const protocolStreamInfo = (info: {
     port_32273: number
   }
 }) => {
+  console.log("THE INFO IS", info)
   writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
   writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
   writeStream(childProcess, `ip?${info.mandelboxIP}`)
