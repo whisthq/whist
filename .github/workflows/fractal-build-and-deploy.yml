@@ -1002,7 +1002,7 @@ jobs:
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install cmake --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
+                  args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
 
             - name: Set up Visual Studio Developer Command Prompt (for nmake)
               if: runner.os == 'Windows'
