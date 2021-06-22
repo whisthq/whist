@@ -60,7 +60,7 @@ def hijack_db(monkeypatch):
     yield call_list
 
 
-@pytest.fixture
+@pytest.fixture(autouse=False)
 def disable_ami():
     ami_obj = None
     actual_enabled_value = None
@@ -77,7 +77,7 @@ def disable_ami():
     db.session.commit()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=False)
 def enable_ami():
     ami_obj = None
     actual_enabled_value = None
