@@ -226,28 +226,6 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             LOG_INFO("SetClipboard to Files");
             LOG_WARNING("SetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
             return;
-
-            /*
-            // allocate memory to store filenames in clipboard
-            char* filenames[MAX_URLS];
-            for (size_t i = 0; i < MAX_URLS; i++) {
-                filenames[i] = (char*)safe_malloc(PATH_MAX * sizeof(char));
-                memset(filenames[i], '\0', PATH_MAX * sizeof(char));
-            }
-
-            // populate filenames
-            get_filenames(SET_CLIPBOARD, filenames);
-
-            // add files to clipboard
-            ClipboardSetFiles(filenames);
-
-            // free memory
-            for (size_t i = 0; i < MAX_URLS; i++) {
-                free(filenames[i]);
-            }
-
-            break;
-            */
         }
         default: {
             LOG_INFO("No clipboard data to set!");
