@@ -10,8 +10,8 @@ In order for this PR to be merged, all of the following items need to be tested 
 
 - [macOS Application (Dev)](https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg)
 - [macOS Application (Staging)](https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg)
-- [Windows Application (Dev)](https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.dmg)
-- [Windows Application (Staging)](https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.dmg)
+- [Windows Application (Dev)](https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe)
+- [Windows Application (Staging)](https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe)
 
 **Checklist**
 
