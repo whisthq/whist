@@ -234,7 +234,7 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     free(decoder);
 }
 
-int audio_decoder_send_packets(AudioDecoder* decoder, void* buffer, int buffer_size) {
+int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_size) {
     /*
         Send the packets stored in buffer to the decoder. The buffer format should be as described
        in extract_packets_from_buffer.
@@ -261,10 +261,21 @@ int audio_decoder_send_packets(AudioDecoder* decoder, void* buffer, int buffer_s
 }
 
 int audio_decoder_get_frame(AudioDecoder *decoder) {
-        int res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
+    /*
+        Get the next frame from the decoder.
+
+        Arguments:
+            decoder (AudioDecoder*): the decoder we are using for decoding
+
+        Returns:
+            (int): 0 on success (can call this function again), 1 on EAGAIN (must send more input
+       before calling again), -1 on failure
+            */
+    int res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
     if (res == AVERROR(EAGAIN)) {
         // decoder needs more data or there's nothing left
-        LOG_INFO("No more frames can be received from current input. Send more input into the decoder.");
+        LOG_INFO(
+            "No more frames can be received from current input. Send more input into the decoder.");
         return 1;
     } else if (res < 0) {
         // real error
