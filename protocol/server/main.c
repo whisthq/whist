@@ -281,27 +281,32 @@ int main(int argc, char* argv[]) {
 
         // If they clipboard as updated, we should send it over to the
         // client
-        ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
-        if (clipboard) {
+        // ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
+        ClipboardData* clipboard_chunk;
+        // if (clipboard) {
+        // TODO: this shouldn't exactly be a while loop here because we want to allow a file
+        // to be transferred while a clipboard is being transferred as well
+        // also, this DEFINITELY shouldn't be in the hotpath
+        while ((clipboard_chunk = clipboard_synchronizer_get_new_clipboard())) {
             LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
             // Alloc fmsg
             FractalServerMessage* fmsg_response =
-                allocate_region(sizeof(FractalServerMessage) + clipboard->size);
+                allocate_region(sizeof(FractalServerMessage) + clipboard_chunk->size);
             // Build fmsg
             memset(fmsg_response, 0, sizeof(*fmsg_response));
             fmsg_response->type = SMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_response->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+            memcpy(&fmsg_response->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
             // Send fmsg
             read_lock(&is_active_rwlock);
             if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                     sizeof(FractalServerMessage) + clipboard->size) < 0) {
+                                     sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
                 LOG_WARNING("Failed to broadcast clipboard message.");
             }
             read_unlock(&is_active_rwlock);
             // Free fmsg
             deallocate_region(fmsg_response);
-            // Free clipboard
-            free_clipboard(clipboard);
+            // // Free clipboard
+            // free_clipboard(clipboard);
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms

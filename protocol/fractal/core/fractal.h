@@ -176,6 +176,9 @@ Custom Types
 ============================
 */
 
+// This is not because of limitations of TCP, but rather to keep the TCP thread from hanging
+#define CHUNK_SIZE 65536
+
 /**
  * @brief   Encode type.
  * @details Type of encoding used for video encoding.
@@ -589,8 +592,12 @@ typedef struct FractalClientMessage {
         bool reinitialize_encoder;
     };
 
-    // CMESSAGE_CLIPBOARD
-    ClipboardData clipboard;
+    // Any type of message that has an additional `data[]` member at the end
+    //     should be a part of this union
+    union {
+        // CMESSAGE_CLIPBOARD
+        ClipboardData clipboard;
+    };
 } FractalClientMessage;
 
 /**
