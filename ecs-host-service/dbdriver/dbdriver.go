@@ -119,20 +119,15 @@ func registerInstance(ctx context.Context) error {
 	memoryRemaining := latestMetrics.AvailableMemoryKB
 
 	// Check if there's a row for us in the database already
-
-	rows, err := dbpool.Query(ctx,
-		`SELECT * FROM hardware.instance_info
-		WHERE instance_id = $1`,
-		instanceName,
-	)
+	q := queries.NewQuerier(dbpool)
+	rows, err := q.FindInstanceByName(ctx, string(instanceName))
 	if err != nil {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
-	defer rows.Close()
 
 	// Since the `instance_id` is the primary key of `hardware.instance_info`, we
-	// know that `rows` will contain either 0 or 1 results.
-	if !rows.Next() {
+	// know that `rows` ought to contain either 0 or 1 results.
+	if len(rows) == 0 {
 		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
 	}
 
