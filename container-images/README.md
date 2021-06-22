@@ -41,10 +41,6 @@ A tree structure is provided below:
 │   ├── firefox
 │   │   └── Dockerfile.20 <- Container image for Mozilla Firefox
 ├── build_container_image.sh <- Helper script to build a specific Docker image
-├── creative
-│   ├── blender
-│   │   ├── Dockerfile.20 <- Container image for Blender
-│   │   └── userpref.blend <- Fractal-provided default Blender user settings
 ├── helper_scripts
 │   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
