@@ -6,5 +6,5 @@
             "runtimeArgs": []
         }
     },
-    "seccomp-profile": "/etc/docker/seccomp-filter.json"
+    "seccomp-profile": "/etc/docker/seccomp.json"
 }
