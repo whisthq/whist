@@ -2,7 +2,7 @@ import pytest
 
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 from app.helpers.utils.aws.base_ec2_client import EC2Client
-from app.models import db
+from app.models import db, RegionToAmi
 
 
 @pytest.fixture
@@ -58,3 +58,32 @@ def hijack_db(monkeypatch):
     monkeypatch.setattr(db.session, "add", _helper)
     monkeypatch.setattr(db.session, "commit", _empty)
     yield call_list
+
+
+@pytest.fixture
+def disable_ami():
+    ami_obj = None
+    actual_enabled_value = None
+    def _do_stuff(region_name, client_commit_hash):
+        nonlocal ami_obj, actual_enabled_value
+        ami_obj = RegionToAmi.query.get((region_name, client_commit_hash))
+        actual_enabled_value = ami_obj.enabled
+        ami_obj.enabled = False
+        db.session.commit()
+    yield _do_stuff
+    ami_obj.enabled = actual_enabled_value
+    db.session.commit()
+
+@pytest.fixture
+def enable_ami():
+    ami_obj = None
+    actual_enabled_value = None
+    def _do_stuff(region_name, client_commit_hash):
+        nonlocal ami_obj, actual_enabled_value
+        ami_obj = RegionToAmi.query.get((region_name, client_commit_hash))
+        actual_enabled_value = ami_obj.enabled
+        ami_obj.enabled = True
+        db.session.commit()
+    yield _do_stuff
+    ami_obj.enabled = actual_enabled_value
+    db.session.commit()
