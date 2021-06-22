@@ -53,10 +53,10 @@ void get_filenames(char* dir, char* filenames[]) {
 
             while ((child != NULL)) {
                 size_t pathlen = strlen(child->fts_path);
-                strncpy(filenames[i], child->fts_path, pathlen);
-                strncpy(filenames[i] + pathlen, "/", 1);
-                strncpy(filenames[i] + pathlen + 1, child->fts_name, child->fts_namelen);
-                strncpy(filenames[i] + pathlen + 1 + child->fts_namelen, "\0", 1);
+                safe_strncpy(filenames[i], child->fts_path, pathlen);
+                safe_strncpy(filenames[i] + pathlen, "/", 1);
+                safe_strncpy(filenames[i] + pathlen + 1, child->fts_name, child->fts_namelen);
+                safe_strncpy(filenames[i] + pathlen + 1 + child->fts_namelen, "\0", 1);
                 child = child->fts_link;
                 i++;
             }

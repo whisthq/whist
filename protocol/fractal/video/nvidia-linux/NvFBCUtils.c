@@ -459,7 +459,7 @@ void NvFBCUtilsParseTrackingType(const char* optarg,
         *trackingType = NVFBC_TRACKING_SCREEN;
     } else {
         *trackingType = NVFBC_TRACKING_OUTPUT;
-        strncpy(outputName, optarg, NVFBC_OUTPUT_NAME_LEN);
+        safe_strncpy(outputName, optarg, NVFBC_OUTPUT_NAME_LEN);
     }
 }
 
