@@ -1151,8 +1151,8 @@ jobs:
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
-                  REM We need to increase the timeout to deal with GHA's weak VMs.
                   REM We use "call" before since ancient DOS versions don't support recursively executing batch files
+                  REM We need to increase the timeout to deal with GHA's weak VMs.
                   call yarn config set network-timeout 600000
                   call yarn cache clean
                   call yarn install
