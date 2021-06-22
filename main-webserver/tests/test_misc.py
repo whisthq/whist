@@ -16,6 +16,7 @@ from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
 def test_callback_webserver_hostname_localhost():
@@ -99,7 +100,9 @@ def test_local_lock_timeout(app):
         try:
             with app.app_context():
                 set_local_lock_timeout(lock_timeout)
-                _ = RegionToAmi.query.with_for_update().get(("us-east-1", "dummy_client_hash"))
+                _ = RegionToAmi.query.with_for_update().get(
+                    ("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING)
+                )
                 fractal_logger.info("Got lock and data")
                 time.sleep(hold_time)
             return True

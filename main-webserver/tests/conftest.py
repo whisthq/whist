@@ -20,6 +20,7 @@ from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from tests.client import FractalAPITestClient
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
 @pytest.fixture(scope="session")
@@ -136,7 +137,7 @@ def bulk_instance():
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
             last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
             status=kwargs.get("status", "ACTIVE"),
-            commit_hash="dummy_client_hash",
+            commit_hash=CLIENT_COMMIT_HASH_FOR_TESTING,
         )
 
         db.session.add(new_instance)

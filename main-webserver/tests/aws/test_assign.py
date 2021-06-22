@@ -4,7 +4,9 @@ from http import HTTPStatus
 import pytest
 
 
+from app.models import SupportedAppImages
 from app.constants.http_codes import RESOURCE_UNAVAILABLE
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
 @pytest.mark.usefixtures("authorized")
@@ -44,7 +46,7 @@ def test_assign(client, bulk_instance, monkeypatch):
         "region": "us-east-1",
         "username": "test@fractal.co",
         "dpi": 96,
-        "client_commit_hash": "dummy_client_hash",
+        "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
     }
     response = client.post("/mandelbox/assign", json=args)
 
