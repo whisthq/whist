@@ -15,8 +15,8 @@ services:
 Only the HTTP server is accessible to the public. The HTTP server and the worker pool, using the asynchronous task queue as 
 their primary communication channel, work together to process all incoming requests. Any time the Fractal Webserver receives 
 a request that would take more than a few milliseconds to process, it adds the processing of that request to the asynchronous 
-task queue and immediately returns a unique ID identifying the entry in the queue to the caller (usually the Fractal desktop 
-applications). The caller can use this unique ID to poll for the tasks' status while it waits in the queue to be picked up 
+task queue and immediately returns a unique ID identifying the entry in the queue to the caller (usually the Fractal Desktop 
+Applications). The caller can use this unique ID to poll for the tasks' status while it waits in the queue to be picked up 
 by a worker and while the task is being processed. When the tasks' processing is complete, the caller can use the unique ID 
 to retrieve the result.
 
@@ -47,7 +47,7 @@ Redis Store
 
 As stated above, the Redis store is the primary communication channel between the HTTP server and the Worker pool. Generally, 
 it stores state that needs to be shared across multiple HTTP server or worker processes. We can approximately classify all 
-pieces of of state in the Redis store as either server state or task state, where a "task" is a function that the HTTP server 
+pieces of state in the Redis store as either server state or task state, where a "task" is a function that the HTTP server 
 wants the worker pool to compute asynchronously on some input.
 
 
@@ -66,7 +66,7 @@ incoming requests. All processes running the HTTP server read the same key from 
 variable.
 
 
-Task state
+Task State
 ^^^^^^^^^^
 
 As mentioned above, a task is a function that the HTTP server wants the worker pool to compute asynchronously on some input. 
@@ -75,31 +75,30 @@ to the queue. They are moved to a different data structure in the Redis store wh
 remain here until they have been processed completely.
 
 
-Worker pool
+Worker Pool
 -----------
 
 The Celery package for Python provides us with a platform upon which to implement our worker pool's functionality. Celery 
 defines the following roles:
 
-* Clients add tasks to task queues and may wait for results to become available,
-* Brokers implement task queues,
-* Backends store the results of processed tasks, and
-* Workers process tasks pending in task queues.
+* Clients add tasks to task queues and may wait for results to become available
+* Brokers implement task queues
+* Backends store the results of processed tasks
+* Workers process tasks pending in task queues
 
 In Fractal's case, our HTTP server is a Celery client. It enqueues long-running functions in our task queue to avoid blocking 
 its own threads. Our Redis store acts both as a task broker and a result backend, meaning that it stores not only metadata 
-about tasks that are yet to be processed, but also the results of tasks that have already been handled by workers.
+about tasks that are yet to be processed, but also the results of tasks that have already been handled by workers. All that's
+left is the Celery worker. It is launched with the :code:`celery worker` command.
 
-All that's left is the Celery worker. It is launched with the :code:`celery worker` command.
-
-An interesting thing to note is that we've decided to attach a worker pool to our deployment not because our Webserver is 
+An interesting thing to note is that we've decided to attach a worker pool to our deployment not because our webserver is 
 responsible for large amounts of intense computation, but rather because it spends a lot of time polling external services. 
 In other words, our long-running functions spend most of their time sleeping and making simple network requests.
 
 
-Scaling the worker pool
+Scaling the Worker Pool
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 When deployed, we use a Heroku add-on service called HireFire to automatically scale our Celery workers. Based on the number 
 of pending tasks in the task queue and the number of Celery "dynos" running on our Heroku app, HireFire may decide to scale 
-that number up or down.
+that number up or down to match compute needs.
