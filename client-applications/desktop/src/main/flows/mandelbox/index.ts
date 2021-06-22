@@ -7,6 +7,7 @@ import mandelboxPollingFlow from "@app/main/flows/mandelbox/polling"
 import hostServiceFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
+import { fromSignal } from "@app/utils/observables"
 
 export default flow(
   "mandelboxFlow",
@@ -38,7 +39,7 @@ export default flow(
     )
 
     return {
-      success: zip(polling.success, host.success),
+      success: fromSignal(polling.success, host.success),
       failure: merge(create.failure, polling.failure, host.failure),
     }
   }
