@@ -5,6 +5,7 @@ GORUN        = $(GOCMD) run
 GOCLEAN      = $(GOCMD) clean
 GOTEST       = $(GOCMD) test
 GOGET        = $(GOCMD) get
+GOMODTIDY    = $(GOCMD) mod tidy
 
 # Build parameters
 BUILD_FOLDER = build
@@ -38,6 +39,7 @@ else
 endif
 
 build: checkCI
+	$(GOMODTIDY)
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
