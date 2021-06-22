@@ -105,7 +105,6 @@ export const protocolStreamInfo = (info: {
     port_32273: number
   }
 }) => {
-  console.log("THE INFO IS", info)
   writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
   writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
   writeStream(childProcess, `ip?${info.mandelboxIP}`)
