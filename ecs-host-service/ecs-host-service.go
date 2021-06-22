@@ -25,10 +25,6 @@ import (
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
-	"github.com/fractal/fractal/ecs-host-service/metadata"
-	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
-	"github.com/fractal/fractal/ecs-host-service/metrics"
-
 	"github.com/fractal/fractal/ecs-host-service/dbdriver"
 	"github.com/fractal/fractal/ecs-host-service/metadata"
 	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
