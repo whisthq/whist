@@ -139,11 +139,12 @@ jobs:
               working-directory: client-applications\desktop
               run: |
                   REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
+                  REM We use "call" before since ancient DOS versions don't support recursively executing batch files
                   REM We need to increase the timeout to deal with GHA's weak VMs.
-                  yarn config set network-timeout 600000
-                  yarn cache clean
-                  yarn install
-                  yarn package:notarize --version 1.0.0
+                  call yarn config set network-timeout 600000
+                  call yarn cache clean
+                  call yarn install
+                  call yarn package:notarize --version 1.0.0
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
