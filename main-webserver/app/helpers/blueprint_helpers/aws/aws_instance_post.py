@@ -218,7 +218,9 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     requests.post(f"{base_url}/drain_and_shutdown")
                 except requests.exceptions.RequestException:
                     client = EC2Client(region_name=region)
-                    client.stop_instances([instance_info.cloud_provider_id[4:]])
+                    client.stop_instances(
+                        ["-".join(instance_info.cloud_provider_id.split("-")[1:])]
+                    )
                 db.session.commit()
 
 
