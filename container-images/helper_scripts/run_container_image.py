@@ -81,7 +81,6 @@ args = parser.parse_args()
 # Define some helper functions and variables
 docker_client = docker.from_env()
 HOST_SERVICE_URL = "https://127.0.0.1:4678/"
-HOST_SERVICE_AUTH_SECRET = "testwebserverauthsecretdev"
 HOST_SERVICE_CERT_PATH = "/fractalprivate/cert.pem"
 protocol_build_path = os.path.abspath("../protocol/build-docker/server/build64")
 container_server_path = os.path.abspath("/usr/share/fractal/bin")
@@ -150,7 +149,6 @@ def send_spin_up_mandelbox_request():
     print("Sending SpinUpMandelbox request to host service!")
     url = HOST_SERVICE_URL + "spin_up_mandelbox"
     payload = {
-        "auth_secret": HOST_SERVICE_AUTH_SECRET,
         "app_image": args.image,
         "dpi": args.dpi,
         "user_id": args.user_id,
