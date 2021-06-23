@@ -2,7 +2,7 @@ package aws // import "github.com/fractal/fractal/ecs-host-service/metadata/aws"
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -188,7 +188,7 @@ func generateAWSMetadataRetriever(path string) func() (string, error) {
 		}
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return string(body), utils.MakeError("Error reading response body from URL %s: %v", url, err)
 		}

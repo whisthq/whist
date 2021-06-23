@@ -3,7 +3,7 @@ package httpserver // import "github.com/fractal/fractal/ecs-host-service/httpse
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os/exec"
 	"sync"
@@ -303,7 +303,7 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 // Denial-of-Service attacks.
 func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authenticate bool) (err error) {
 	// Get body of request
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
 		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
