@@ -13,7 +13,7 @@ from .validate import (
 )
 
 
-def resolve(profiles, schema):
+def resolve(profiles, schema, skip=True):
     """Given a list of profiles (nested keys of schema), and a nested
     schema (dictionary), recursively flatten the schema.
 
@@ -29,6 +29,10 @@ def resolve(profiles, schema):
     and schema={"url": {"mac": "mac-url", "win" "win-url"}}, the result
     will be {"url: "win-url"}.
 
+    If skip=True, then this layer of keys in the schema will not be flattened,
+    and the function will recurse to the values of the keys. As the default
+    is True, the top-level keys are not flattened by default.
+
     If the schema is not a dictionary, it is returned unchanged.
 
     Args:
@@ -41,11 +45,12 @@ def resolve(profiles, schema):
         return schema
 
     key_set = set(schema.keys())
-    for key in reversed(profiles):
-        if key in key_set:
-            return resolve(profiles, schema[key])
+    if not skip:
+        for key in reversed(profiles):
+            if key in key_set:
+                return resolve(profiles, schema[key], skip=False)
 
-    return {key: resolve(profiles, schema[key]) for key in key_set}
+    return {key: resolve(profiles, schema[key], skip=False) for key in key_set}
 
 
 def yaml_load(path):
@@ -90,12 +95,18 @@ def parse(config_folder, secrets=(), profiles=()):
 
     # We don't want None values in the secrets map to override values in
     # the schema maps, so we'll make sure the secret maps do not contain None.
-    merged_secrets = {k: v for k, v in merge(*secrets).items() if v is not None} if secrets else {}
+    merged_secrets = (
+        {k: v for k, v in merge(*secrets).items() if v is not None}
+        if secrets
+        else {}
+    )
 
     # We sort the paths because we're unsure about the order from iterdir().
     sorted_paths = sorted(Path(schema_folder).iterdir(), key=str)
 
-    loaded_schemas = [schema_load(p, valid_profiles=valid_profiles) for p in sorted_paths]
+    loaded_schemas = [
+        schema_load(p, valid_profiles=valid_profiles) for p in sorted_paths
+    ]
 
     merged_schemas = merge(*loaded_schemas)
 
