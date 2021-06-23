@@ -122,7 +122,16 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		req.ReturnResult("", err)
 	}
 
-	// First, verify that we are expecting this user to request a container.
+	// First, verify that the request access token is valid for the given userID.
+	// We only do this in a non-local environment.
+	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
+		if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
+			logAndReturnError("Invalid JWT access token")
+			return
+		}
+	}
+
+	// Then, verify that we are expecting this user to request a container.
 	fractalID, err := dbdriver.VerifyAllocatedContainer(req.UserID)
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
@@ -359,8 +368,7 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 	}
 
 	// Verify that the request access token is valid for the given userID.
-	_, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID)
-	if err != nil {
+	if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
 		logAndReturnError("Invalid JWT access token: %s", err)
 		return
 	}

@@ -175,11 +175,11 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 // returns the Docker ID of the container. Eventually, as we move off ECS, this
 // endpoint will become the canonical way to start containers.
 type SpinUpMandelboxRequest struct {
-	// TODO: protect this with auth somehow, this is being worked on by @MYKatz
 	AppImage              string                        `json:"app_image"`               // The image to spin up
 	DPI                   int                           `json:"dpi"`                     // DPI to set for the container
 	UserID                fctypes.UserID                `json:"user_id"`                 // User ID of the container user
 	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JwtAccessToken        auth.RawJWT                   `json:"jwt_access_token"`        // User's JWT access token
 	resultChan            chan requestResult            // Channel to pass the request result between goroutines
 }
 
@@ -214,11 +214,9 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 		return
 	}
 
-	shouldAuthenticate := metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB
-
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SpinUpMandelboxRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, shouldAuthenticate); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
