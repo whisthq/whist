@@ -14,10 +14,11 @@ const verifyAllocatedContainerSQL = `SELECT * FROM hardware.container_info
     AND user_id = $2;`
 
 type VerifyAllocatedContainerRow struct {
-	ContainerID  pgtype.Varchar `json:"container_id"`
-	UserID       pgtype.Varchar `json:"user_id"`
-	InstanceName pgtype.Varchar `json:"instance_name"`
-	Status       pgtype.Varchar `json:"status"`
+	ContainerID           pgtype.Varchar `json:"container_id"`
+	UserID                pgtype.Varchar `json:"user_id"`
+	InstanceName          pgtype.Varchar `json:"instance_name"`
+	Status                pgtype.Varchar `json:"status"`
+	CreationTimeUtcUnixMs int            `json:"creation_time_utc_unix_ms"`
 }
 
 // VerifyAllocatedContainer implements Querier.VerifyAllocatedContainer.
@@ -31,7 +32,7 @@ func (q *DBQuerier) VerifyAllocatedContainer(ctx context.Context, instanceName s
 	items := []VerifyAllocatedContainerRow{}
 	for rows.Next() {
 		var item VerifyAllocatedContainerRow
-		if err := rows.Scan(&item.ContainerID, &item.UserID, &item.InstanceName, &item.Status); err != nil {
+		if err := rows.Scan(&item.ContainerID, &item.UserID, &item.InstanceName, &item.Status, &item.CreationTimeUtcUnixMs); err != nil {
 			return nil, fmt.Errorf("scan VerifyAllocatedContainer row: %w", err)
 		}
 		items = append(items, item)
@@ -57,7 +58,7 @@ func (q *DBQuerier) VerifyAllocatedContainerScan(results pgx.BatchResults) ([]Ve
 	items := []VerifyAllocatedContainerRow{}
 	for rows.Next() {
 		var item VerifyAllocatedContainerRow
-		if err := rows.Scan(&item.ContainerID, &item.UserID, &item.InstanceName, &item.Status); err != nil {
+		if err := rows.Scan(&item.ContainerID, &item.UserID, &item.InstanceName, &item.Status, &item.CreationTimeUtcUnixMs); err != nil {
 			return nil, fmt.Errorf("scan VerifyAllocatedContainerBatch row: %w", err)
 		}
 		items = append(items, item)

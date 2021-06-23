@@ -44,6 +44,13 @@ type Querier interface {
 	// RemoveContainerScan scans the result of an executed RemoveContainerBatch query.
 	RemoveContainerScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
+	RemoveStaleAllocatedContainers(ctx context.Context, params RemoveStaleAllocatedContainersParams) (pgconn.CommandTag, error)
+	// RemoveStaleAllocatedContainersBatch enqueues a RemoveStaleAllocatedContainers query into batch to be executed
+	// later by the batch.
+	RemoveStaleAllocatedContainersBatch(batch *pgx.Batch, params RemoveStaleAllocatedContainersParams)
+	// RemoveStaleAllocatedContainersScan scans the result of an executed RemoveStaleAllocatedContainersBatch query.
+	RemoveStaleAllocatedContainersScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
 	VerifyAllocatedContainer(ctx context.Context, instanceName string, userID string) ([]VerifyAllocatedContainerRow, error)
 	// VerifyAllocatedContainerBatch enqueues a VerifyAllocatedContainer query into batch to be executed
 	// later by the batch.
@@ -151,6 +158,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	if _, err := p.Prepare(ctx, removeContainerSQL, removeContainerSQL); err != nil {
 		return fmt.Errorf("prepare query 'RemoveContainer': %w", err)
+	}
+	if _, err := p.Prepare(ctx, removeStaleAllocatedContainersSQL, removeStaleAllocatedContainersSQL); err != nil {
+		return fmt.Errorf("prepare query 'RemoveStaleAllocatedContainers': %w", err)
 	}
 	if _, err := p.Prepare(ctx, verifyAllocatedContainerSQL, verifyAllocatedContainerSQL); err != nil {
 		return fmt.Errorf("prepare query 'VerifyAllocatedContainer': %w", err)

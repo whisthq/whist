@@ -2,6 +2,8 @@ package dbdriver // import "github.com/fractal/fractal/ecs-host-service/dbdriver
 
 import (
 	"context"
+	"math/rand"
+	"time"
 
 	"github.com/jackc/pgtype"
 
@@ -99,4 +101,65 @@ func RemoveContainer(containerID fctypes.FractalID) error {
 	logger.Infof("Removed row in database for container %s: %s", containerID, result)
 
 	return nil
+}
+
+// removeStaleAllocatedContainers removes containers that have an old creation
+// time but are still marked as allocated.
+func removeStaleAllocatedContainers(age time.Duration) error {
+	if !enabled {
+		return nil
+	}
+	if dbpool == nil {
+		return utils.MakeError("removeStaleAllocatedContainers() called but dbdriver is not initialized!")
+	}
+
+	instanceName, err := aws.GetInstanceName()
+	if err != nil {
+		return utils.MakeError("Couldn't remove stale allocated containers: %s", err)
+	}
+
+	q := queries.NewQuerier(dbpool)
+	result, err := q.RemoveStaleAllocatedContainers(context.Background(), queries.RemoveStaleAllocatedContainersParams{
+		InstanceName:          string(instanceName),
+		Status:                string(ContainerStatusAllocated),
+		CreationTimeThreshold: int(time.Now().Add(-1*age).UnixNano() / 1000),
+	})
+	if err != nil {
+		return utils.MakeError("Couldn't remove stale allocated containers from database: %s", err)
+	}
+	logger.Infof("Removed any stale allocated containers with result: %s", result)
+	return nil
+}
+
+func removeStaleAllocatedContainersGoroutine(globalCtx context.Context) {
+	defer logger.Infof("Finished removeStaleAllocatedContainers goroutine.")
+	timerChan := make(chan interface{})
+
+	// Instead of running exactly every 90 seconds, we choose a random time in
+	// the range [95, 105] seconds to prevent waves of hosts repeatedly crowding
+	// the database.
+	for {
+		sleepTime := 100000 - rand.Intn(10001)
+		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
+
+		select {
+		case <-globalCtx.Done():
+			// Remove allocated stale containers one last time
+			if err := removeStaleAllocatedContainers(90 * time.Second); err != nil {
+				logger.Error(err)
+			}
+
+			// Stop timer to avoid leaking a goroutine (not that it matters if we're
+			// shutting down, but still).
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return
+
+		case _ = <-timerChan:
+			if err := removeStaleAllocatedContainers(90 * time.Second); err != nil {
+				logger.Error(err)
+			}
+		}
+	}
 }
