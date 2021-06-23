@@ -30,13 +30,6 @@ type Querier interface {
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 
-	MarkContainerRunning(ctx context.Context, containerID string) (pgconn.CommandTag, error)
-	// MarkContainerRunningBatch enqueues a MarkContainerRunning query into batch to be executed
-	// later by the batch.
-	MarkContainerRunningBatch(batch *pgx.Batch, containerID string)
-	// MarkContainerRunningScan scans the result of an executed MarkContainerRunningBatch query.
-	MarkContainerRunningScan(results pgx.BatchResults) (pgconn.CommandTag, error)
-
 	MarkDraining(ctx context.Context, status pgtype.Varchar, instanceName string) (pgconn.CommandTag, error)
 	// MarkDrainingBatch enqueues a MarkDraining query into batch to be executed
 	// later by the batch.
@@ -64,6 +57,13 @@ type Querier interface {
 	VerifyContainerBatch(batch *pgx.Batch, instanceName string, userID string)
 	// VerifyContainerScan scans the result of an executed VerifyContainerBatch query.
 	VerifyContainerScan(results pgx.BatchResults) ([]VerifyContainerRow, error)
+
+	MarkContainerRunning(ctx context.Context, status pgtype.Varchar, containerID string) (pgconn.CommandTag, error)
+	// MarkContainerRunningBatch enqueues a MarkContainerRunning query into batch to be executed
+	// later by the batch.
+	MarkContainerRunningBatch(batch *pgx.Batch, status pgtype.Varchar, containerID string)
+	// MarkContainerRunningScan scans the result of an executed MarkContainerRunningBatch query.
+	MarkContainerRunningScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
@@ -146,9 +146,6 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
 	}
-	if _, err := p.Prepare(ctx, markContainerRunningSQL, markContainerRunningSQL); err != nil {
-		return fmt.Errorf("prepare query 'MarkContainerRunning': %w", err)
-	}
 	if _, err := p.Prepare(ctx, markDrainingSQL, markDrainingSQL); err != nil {
 		return fmt.Errorf("prepare query 'MarkDraining': %w", err)
 	}
@@ -160,6 +157,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	if _, err := p.Prepare(ctx, verifyContainerSQL, verifyContainerSQL); err != nil {
 		return fmt.Errorf("prepare query 'VerifyContainer': %w", err)
+	}
+	if _, err := p.Prepare(ctx, markContainerRunningSQL, markContainerRunningSQL); err != nil {
+		return fmt.Errorf("prepare query 'MarkContainerRunning': %w", err)
 	}
 	if _, err := p.Prepare(ctx, writeHeartbeatSQL, writeHeartbeatSQL); err != nil {
 		return fmt.Errorf("prepare query 'WriteHeartbeat': %w", err)

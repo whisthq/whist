@@ -6,17 +6,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
 const markContainerRunningSQL = `UPDATE hardware.container_info
-  SET status = 'RUNNING'
-  WHERE container_id = $1;`
+  SET status = $1
+  WHERE container_id = $2;`
 
 // MarkContainerRunning implements Querier.MarkContainerRunning.
-func (q *DBQuerier) MarkContainerRunning(ctx context.Context, containerID string) (pgconn.CommandTag, error) {
+func (q *DBQuerier) MarkContainerRunning(ctx context.Context, status pgtype.Varchar, containerID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "MarkContainerRunning")
-	cmdTag, err := q.conn.Exec(ctx, markContainerRunningSQL, containerID)
+	cmdTag, err := q.conn.Exec(ctx, markContainerRunningSQL, status, containerID)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query MarkContainerRunning: %w", err)
 	}
@@ -24,8 +25,8 @@ func (q *DBQuerier) MarkContainerRunning(ctx context.Context, containerID string
 }
 
 // MarkContainerRunningBatch implements Querier.MarkContainerRunningBatch.
-func (q *DBQuerier) MarkContainerRunningBatch(batch *pgx.Batch, containerID string) {
-	batch.Queue(markContainerRunningSQL, containerID)
+func (q *DBQuerier) MarkContainerRunningBatch(batch *pgx.Batch, status pgtype.Varchar, containerID string) {
+	batch.Queue(markContainerRunningSQL, status, containerID)
 }
 
 // MarkContainerRunningScan implements Querier.MarkContainerRunningScan.
