@@ -38,13 +38,14 @@ runs:
           run: |
               import requests
 
+              # The API request is documented here: https://auth0.com/docs/flows/call-your-api-using-the-client-credentials-flow
               response = requests.post(
               "https://${{ inputs.domain }}/oauth/token",
                   json={
-                      "grant_type": "refresh_token",
+                      "grant_type": "client_credentials",
                       "client_id": "${{ inputs.client-id }}",
                       "client_secret": "${{ inputs.client-secret }}",
-                      "refresh_token": "${{ inputs.refresh-token }}",
+                      "audience": "https://${{ inputs.domain }}/api/v2/"
                   }
               )
 
