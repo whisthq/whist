@@ -487,7 +487,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":whale: Container Images & AMIs deployed :whale:"
+                  TITLE = ":whale: Container Images & AMIs Deployed :whale:"
                   BODY = "A PR was merged and triggered automatic Container Images & AMIs deployment to GHCR and all AWS supported regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -612,7 +612,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":spiral_note_pad: ECS Task Definitions rendered and deployed :spiral_note_pad:"
+                  TITLE = ":spiral_note_pad: ECS Task Definitions Deployed :spiral_note_pad:"
                   BODY = "A PR was merged and triggered automatic ECS Task Definitions deployment to all AWS supported regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -725,7 +725,7 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":hammer_and_wrench: Webserver started Maintenance Mode :hammer_and_wrench:"
+                  TITLE = ":hammer_and_wrench: Webserver Started Maintenance Mode :hammer_and_wrench:"
                   BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to start maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -844,7 +844,7 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":hammer_and_wrench: Webserver ended Maintenance Mode :hammer_and_wrench:"
+                  TITLE = ":hammer_and_wrench: Webserver Ended Maintenance Mode :hammer_and_wrench:"
                   BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to end maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -939,7 +939,7 @@ jobs:
 
                   slack_redirect = f"You can take a look the commit here:\n{ISSUE_URL}"
 
-                  title = ":construction: Database migration performed :construction:"
+                  title = ":construction: Database Migration Performed :construction:"
                   body = (f"A PR was merged and triggered "
                           + "an automatic schema migration on branch: "
                           + f"`{BRANCH_NAME}`.\n\n"
@@ -1280,7 +1280,7 @@ jobs:
                   else:
                     WEBSITE_URL = "https://dev.fractal.co"
 
-                  TITLE = ":electron: Windows/macOS Electron Applications deployed :electron:"
+                  TITLE = ":electron: Windows & macOS Applications Deployed :electron:"
                   BODY = f"A PR was merged and triggered automatic Windows/macOS Electron applications deployment via upload to AWS S3 on branch: `{BRANCH_NAME}`. You can download them from {WEBSITE_URL}. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -1341,7 +1341,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":auth0: Auth0 Hooks Deployed to Auth0 Tenant :auth0:"
+                  TITLE = ":auth0: Auth0 Rules Deployed :auth0:"
                   BODY = f"A PR was merged and triggered automatic build and deployment of Auth0 Hooks to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
