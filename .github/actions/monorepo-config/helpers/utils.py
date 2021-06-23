@@ -17,10 +17,13 @@ def merge(*dicts):
 
 
 def truncated(limit, string, trail="..."):
-    end = limit - len(trail) if limit >= len(trail) else 0
-    if len(str(string)) < limit:
+    clamped = max(limit, 0)
+    if len(str(string)) < clamped:
         return string
     else:
+        if clamped < len(trail):
+            return trail[:clamped]
+        end = clamped - len(trail)
         return str(string)[:end] + trail
 
 
