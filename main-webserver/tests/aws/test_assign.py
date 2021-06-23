@@ -4,7 +4,6 @@ from http import HTTPStatus
 import pytest
 
 
-import app.helpers.blueprint_helpers.aws.aws_container_assign_post as aws_funcs
 from app.constants.http_codes import RESOURCE_UNAVAILABLE
 
 
