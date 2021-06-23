@@ -157,7 +157,9 @@ func markDraining() error {
 }
 
 // unregisterInstance removes the row for the instance from the
-// `hardware.instance_info` table.
+// `hardware.instance_info` table. Note that due to the `delete cascade`
+// constraint on `hardware.container_info` this automatically removes all the
+// containers for the instance as well.
 func unregisterInstance() error {
 	if !enabled {
 		return nil
