@@ -10,6 +10,8 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
+// This file is concerned with database interactions at the container-level.
+
 // A ContainerStatus represents a possible status that a container can have in the database.
 type ContainerStatus string
 
@@ -37,7 +39,7 @@ func VerifyAllocatedContainer(ctx context.Context, userID fctypes.UserID) (fctyp
 	}
 
 	q := queries.NewQuerier(dbpool)
-	rows, err := q.VerifyContainer(ctx, string(instanceName), string(userID))
+	rows, err := q.VerifyAllocatedContainer(ctx, string(instanceName), string(userID))
 	if err != nil {
 		return "", utils.MakeError("Couldn't verify container for user %s: couldn't verify query: %s", userID, err)
 	}

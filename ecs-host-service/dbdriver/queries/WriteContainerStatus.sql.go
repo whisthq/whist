@@ -10,30 +10,30 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const markContainerRunningSQL = `UPDATE hardware.container_info
+const writeContainerStatusSQL = `UPDATE hardware.container_info
   SET status = $1
   WHERE container_id = $2;`
 
-// MarkContainerRunning implements Querier.MarkContainerRunning.
-func (q *DBQuerier) MarkContainerRunning(ctx context.Context, status pgtype.Varchar, containerID string) (pgconn.CommandTag, error) {
-	ctx = context.WithValue(ctx, "pggen_query_name", "MarkContainerRunning")
-	cmdTag, err := q.conn.Exec(ctx, markContainerRunningSQL, status, containerID)
+// WriteContainerStatus implements Querier.WriteContainerStatus.
+func (q *DBQuerier) WriteContainerStatus(ctx context.Context, status pgtype.Varchar, containerID string) (pgconn.CommandTag, error) {
+	ctx = context.WithValue(ctx, "pggen_query_name", "WriteContainerStatus")
+	cmdTag, err := q.conn.Exec(ctx, writeContainerStatusSQL, status, containerID)
 	if err != nil {
-		return cmdTag, fmt.Errorf("exec query MarkContainerRunning: %w", err)
+		return cmdTag, fmt.Errorf("exec query WriteContainerStatus: %w", err)
 	}
 	return cmdTag, err
 }
 
-// MarkContainerRunningBatch implements Querier.MarkContainerRunningBatch.
-func (q *DBQuerier) MarkContainerRunningBatch(batch *pgx.Batch, status pgtype.Varchar, containerID string) {
-	batch.Queue(markContainerRunningSQL, status, containerID)
+// WriteContainerStatusBatch implements Querier.WriteContainerStatusBatch.
+func (q *DBQuerier) WriteContainerStatusBatch(batch *pgx.Batch, status pgtype.Varchar, containerID string) {
+	batch.Queue(writeContainerStatusSQL, status, containerID)
 }
 
-// MarkContainerRunningScan implements Querier.MarkContainerRunningScan.
-func (q *DBQuerier) MarkContainerRunningScan(results pgx.BatchResults) (pgconn.CommandTag, error) {
+// WriteContainerStatusScan implements Querier.WriteContainerStatusScan.
+func (q *DBQuerier) WriteContainerStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error) {
 	cmdTag, err := results.Exec()
 	if err != nil {
-		return cmdTag, fmt.Errorf("exec MarkContainerRunningBatch: %w", err)
+		return cmdTag, fmt.Errorf("exec WriteContainerStatusBatch: %w", err)
 	}
 	return cmdTag, err
 }

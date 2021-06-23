@@ -19,6 +19,16 @@ import (
 // This file is concerned with database interactions at the instance-level
 // (except heartbeats).
 
+// A InstanceStatus represents a possible status that this instance can have in the database.
+type InstanceStatus string
+
+// These represent the currently-defined statuses for instances.
+const (
+	InstanceStatusPreConnection InstanceStatus = "PRE-CONNECTION"
+	InstanceStatusActive        InstanceStatus = "ACTIVE"
+	InstanceStatusDraining      InstanceStatus = "DRAINING"
+)
+
 // database. If the expected row is not found, then it returns an error.
 func registerInstance(ctx context.Context) error {
 	if !enabled {
@@ -85,9 +95,8 @@ func registerInstance(ctx context.Context) error {
 	if rows[0].AwsInstanceType.String != string(instanceType) {
 		return utils.MakeError(`RegisterInstance(): Existing database row found, but AWS instance type differs. Expected "%s", Got "%s"`, instanceType, rows[0].AwsInstanceType.String)
 	}
-	// TODO: factor out pre-connection
-	if rows[0].Status.String != "PRE-CONNECTION" {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, "PRE-CONNECTION", rows[0].Status.String)
+	if rows[0].Status.String != string(InstanceStatusPreConnection) {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, InstanceStatusPreConnection, rows[0].Status.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
@@ -106,7 +115,7 @@ func registerInstance(ctx context.Context) error {
 			Status: pgtype.Present,
 		},
 		Status: pgtype.Varchar{
-			String: "ACTIVE",
+			String: string(InstanceStatusActive),
 			Status: pgtype.Present,
 		},
 		InstanceName: string(instanceName),
@@ -135,7 +144,11 @@ func markDraining(ctx context.Context) error {
 		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
 	}
 
-	result, err := q.MarkDraining(ctx, pgtype.Varchar{String: "DRAINING", Status: pgtype.Present}, string(instanceName))
+	result, err := q.WriteInstanceStatus(ctx, pgtype.Varchar{
+		String: string(InstanceStatusDraining),
+		Status: pgtype.Present,
+	},
+		string(instanceName))
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
