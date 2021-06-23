@@ -94,47 +94,6 @@ def test_truncated_children(dct):
     assert all(v == "..." for v in result.values()), truncates
 
 
-# def test_all_chars():
-#     is_true = "result must be true if fn(char) True for all chars"
-#     is_false = "result must be false if fn(char) is False for any char"
-
-#     def all_t(c):
-#         return c == "t"
-
-#     assert utils.all_chars(all_t, "ttttttttttttt"), is_true
-#     assert not utils.all_chars(all_t, "ttttxxxtt"), is_false
-
-
-# def test_all_string():
-#     is_true = "result must be true if all items are strings"
-#     is_false = "result must be false if any item is not a string"
-
-#     assert utils.all_string(["a", "b", "c", "d"]), is_true
-#     assert not utils.all_string(["a", "b", 5, 6]), is_false
-
-
-# def test_all_keys():
-#     is_true = "result must be true if fn(key) is true for all keys in dict"
-#     is_false = "result must be false if fn(key) is not true for a key in dict"
-
-#     def all_abc(k):
-#         return k in {"a", "b", "c"}
-
-#     assert utils.all_keys(all_abc, {"a": 1, "b": 2, "c": 3}), is_true
-#     assert not utils.all_keys(all_abc, {"a": 1, "e": 2, "f": 3}), is_false
-
-
-# def test_any_keys():
-#     is_true = "result must be true if fn(key) is true for any key in dict"
-#     is_false = "result must be false if fn(key) is true for no key in dict"
-
-#     def all_abc(k):
-#         return k in {"a", "b", "c"}
-
-#     assert utils.any_keys(all_abc, {"a": 1, "e": 2, "f": 3}), is_true
-#     assert not utils.any_keys(all_abc, {"d": 1, "e": 2, "f": 3}), is_false
-
-
 def test_nested_keys():
     assert sorted(utils.nested_keys(example_dict3)) == list("abcdefghijxyz")
 
