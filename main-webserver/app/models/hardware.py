@@ -20,14 +20,15 @@ class InstanceInfo(db.Model):
         last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         creation_time_utc_unix_ms (int):  When was this instance created?
         aws_ami_id (str): what image is this machine based on?
-        commit_hash (str): what commit hash is this machine running?"""
+        status (str): either PRE-CONNECTION, ACTIVE, or DRAINING
+        commit_hash (str): what commit hash of our infrastructure is this machine running?"""
 
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     cloud_provider_id = db.Column(db.String(250), nullable=False)
     location = db.Column(db.String(250), nullable=False)
-    creation_time_utc_unix_ms = db.Column(db.Integer)
+    creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
     aws_instance_type = db.Column(db.String(250), nullable=False)
     auth_token = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
@@ -35,7 +36,7 @@ class InstanceInfo(db.Model):
     gpu_vram_remaining_kb = db.Column(db.Integer, nullable=False, server_default="1024")
     memory_remaining_kb = db.Column(db.Integer, nullable=False, server_default="2000")
     container_capacity = db.Column(db.Integer, nullable=False, default=0)
-    last_updated_utc_unix_ms = db.Column(db.Integer)
+    last_updated_utc_unix_ms = db.Column(db.Integer, nullable=False, server_default="-1")
     aws_ami_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
     commit_hash = db.Column(db.String(250), nullable=False)
