@@ -27,39 +27,40 @@ const (
 )
 
 // VerifyAllocatedContainer verifies that this host service is indeed expecting
-// a container for the given user. On success, it returns the ID of the
-// container.
-func VerifyAllocatedContainer(userID fctypes.UserID) (fctypes.FractalID, error) {
+// the provided container for the given user.
+func VerifyAllocatedContainer(userID fctypes.UserID, containerID fctypes.FractalID) error {
 	if !enabled {
-		// We must simulate the webserver generating an ID for the container.
-		return fctypes.FractalID(utils.RandHex(30)), nil
+		return nil
 	}
 	if dbpool == nil {
-		return "", utils.MakeError("VerifyAllocatedContainer() called but dbdriver is not initialized!")
+		return utils.MakeError("VerifyAllocatedContainer() called but dbdriver is not initialized!")
 	}
 
 	instanceName, err := aws.GetInstanceName()
 	if err != nil {
-		return "", utils.MakeError("Couldn't verify container for user %s: couldn't get instance name: %s", userID, err)
+		return utils.MakeError("Couldn't verify container for user %s: couldn't get instance name: %s", userID, err)
 	}
 
 	q := queries.NewQuerier(dbpool)
 	rows, err := q.VerifyAllocatedContainer(context.Background(), string(instanceName), string(userID))
 	if err != nil {
-		return "", utils.MakeError("Couldn't verify container for user %s: couldn't verify query: %s", userID, err)
+		return utils.MakeError("Couldn't verify container for user %s: couldn't verify query: %s", userID, err)
 	}
 
 	// We expect that `rows` should contain exactly one, allocated (but not
-	// running) container. Any other state is an error.
+	// running) container with a matching container ID. Any other state is an
+	// error.
 	if len(rows) == 0 {
-		return "", utils.MakeError("Couldn't verify container for user %s: didn't find any container rows in the database for this user on this instance!", userID)
+		return utils.MakeError("Couldn't verify container for user %s: didn't find any container rows in the database for this user on this instance!", userID)
 	} else if len(rows) > 1 {
-		return "", utils.MakeError("Couldn't verify container for user %s: found too many container rows in the database for this user on this instance! Rows: %#v", userID, rows)
+		return utils.MakeError("Couldn't verify container for user %s: found too many container rows in the database for this user on this instance! Rows: %#v", userID, rows)
 	} else if rows[0].Status.String != string(ContainerStatusAllocated) {
-		return "", utils.MakeError(`Couldn't verify container for user %s: found a container row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, userID, ContainerStatusAllocated, rows[0].Status.String)
+		return utils.MakeError(`Couldn't verify container for user %s: found a container row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, userID, ContainerStatusAllocated, rows[0].Status.String)
+	} else if rows[0].ContainerID.String != string(containerID) {
+		return utils.MakeError(`Couldn't verify container for user %s: found an allocated container row in the database, but it has the wrong fractalID. Expected "%s", got "%s".`, userID, rows[0].ContainerID.String, containerID)
 	}
 
-	return fctypes.FractalID(rows[0].ContainerID.String), nil
+	return nil
 }
 
 // WriteContainerStatus updates a container's status in the database.

@@ -180,17 +180,17 @@ type SpinUpMandelboxRequest struct {
 	UserID                fctypes.UserID                `json:"user_id"`                 // User ID of the container user
 	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        auth.RawJWT                   `json:"jwt_access_token"`        // User's JWT access token
+	MandelboxID           fctypes.FractalID             `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
 	resultChan            chan requestResult            // Channel to pass the request result between goroutines
 }
 
 // SpinUpMandelboxRequestResult defines the data returned by the
 // `spin_up_mandelbox` endpoint.
 type SpinUpMandelboxRequestResult struct {
-	HostPortForTCP32262 uint16            `json:"port_32262"`
-	HostPortForUDP32263 uint16            `json:"port_32263"`
-	HostPortForTCP32273 uint16            `json:"port_32273"`
-	AesKey              string            `json:"aes_key"`
-	FractalID           fctypes.FractalID `json:"fractal_id"`
+	HostPortForTCP32262 uint16 `json:"port_32262"`
+	HostPortForUDP32263 uint16 `json:"port_32263"`
+	HostPortForTCP32273 uint16 `json:"port_32273"`
+	AesKey              string `json:"aes_key"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP

@@ -132,14 +132,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// Then, verify that we are expecting this user to request a container.
-	fractalID, err := dbdriver.VerifyAllocatedContainer(req.UserID)
+	err := dbdriver.VerifyAllocatedContainer(req.UserID, req.MandelboxID)
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
 		return
 	}
 
 	// If so, create the container object.
-	fc := fractalcontainer.New(globalCtx, goroutineTracker, fractalID)
+	fc := fractalcontainer.New(globalCtx, goroutineTracker, req.MandelboxID)
 	logger.Infof("SpinUpMandelbox(): created FractalContainer object %s", fc.GetFractalID())
 
 	// If the creation of the container fails, we want to clean up after it. We
@@ -276,7 +276,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		},
 	}
 	// TODO: investigate whether putting all GPUs in all containers (i.e. the default here) is beneficial.
-	containerName := utils.Sprintf("%s-%s", req.AppImage, fractalID)
+	containerName := utils.Sprintf("%s-%s", req.AppImage, req.MandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	containerName = re.ReplaceAllString(containerName, "-")
 
@@ -309,7 +309,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
-		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, fractalID, err)
+		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully started container %s", containerName)
@@ -319,7 +319,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
 		AesKey:              aesKey,
-		FractalID:           fractalID,
 	}
 
 	fc.WriteStartValues(req.DPI, "")
@@ -343,7 +342,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	err = dbdriver.WriteContainerStatus(fractalID, dbdriver.ContainerStatusRunning)
+	err = dbdriver.WriteContainerStatus(req.MandelboxID, dbdriver.ContainerStatusRunning)
 	if err != nil {
 		logAndReturnError("Error marking container running: %s", err)
 		return
