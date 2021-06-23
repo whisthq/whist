@@ -68,7 +68,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 		<-globalCtx.Done()
 		logger.Infof("Global context cancelled, marking instance as draining in database...")
-		if err := markDraining(globalCtx); err != nil {
+		if err := markDraining(context.Background()); err != nil {
 			logger.Error(err)
 		}
 	}()

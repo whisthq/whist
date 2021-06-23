@@ -159,7 +159,7 @@ func markDraining(ctx context.Context) error {
 		return nil
 	}
 	if dbpool == nil {
-		return utils.MakeError("MarkDraining() called but dbdriver is not initialized!")
+		return utils.MakeError("markDraining() called but dbdriver is not initialized!")
 	}
 
 	q := queries.NewQuerier(dbpool)
