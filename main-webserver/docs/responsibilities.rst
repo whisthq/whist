@@ -50,37 +50,35 @@ Desktop application that requested the streaming session.
 Starting Streams
 ^^^^^^^^^^^^^^^^
 
-At a high level, when the Fractal Webserver receives a request to allocate an application stream to a user, it does the 
-following in order:
+At a high level, when the Fractal Webserver receives a request to allocate a Fractal container to a user, from which an
+application stream will begin. It does the following in order:
 
+1. Check for any idle Fractal container that may have been created in advance in order to minimize the amount of time taken 
+to return an application stream connection information to the client. If any idle Fractal container exist, choose one, 
+return its connection information to the client, and skip to step 3.
+2. Start a new Fractal container on a cloud instance with availability, and return its connection information to the user.
+3. Scale the pool of idle Fractal containers based on current idle Fractal containers supply and application stream 
+demand metrics, creating new cloud instances as necessary.
 
-
-
-1. Check for any idle streaming sessions that may have been created in advance in order to minimize the amount of time taken 
-to return an application stream connection information to the client. If any idle streaming sessions exist, choose one, return 
-its connection information to the client, and skip to step 3.
-2. Start a new application stream and return its connection information to the user.
-3. Scale the pool of idle streaming sessions based idle application stream supply and application stream demand metrics.
-
-In order to reduce the amount of time it takes for the web server to associate an instance of the Fractal client with an 
-application stream, we "cache," as it were, some information about the cloud resources that are provisioned and available to 
-serve application streams. Although it is redundant for us to take it upon ourselves to store some of this information 
-because we could just as easily obtain it with a query to AWS, it is theoretically advantageous to do so because querying 
+In order to reduce the amount of time it takes for the Fractal Webserver to associate an instance of the Fractal client with 
+an application stream, we "cache," as it were, some information about the cloud resources that are provisioned and available 
+to serve Fractal containers. Although it is redundant for us to take it upon ourselves to store some of this information 
+because we could just as easily obtain it with a query to AWS, in practice it is advantageous to do so because querying 
 our own database is quicker than querying AWS.
 
 Another reason why it is useful, if not necessarily necessary, to cache some information about what cloud resources are 
-available to serve application streams is that we have implemented our own scaling layer on top of what scaling AWS already 
-provides. Specifically, there is code on the web server that both scales the number of ECS clusters we have made available 
-to ourselves for the purposes of deploying containerized application streams and also load balances application streams 
-across all of these clusters.
+available to serve application streams is that we have implement our own scaling layer on top of what scaling AWS already 
+provides. Specifically, there is code on the Fractal Webserver that both scales the number of ECS clusters we have made 
+available to ourselves for the purposes of deploying containerized application streams and also load balances application 
+streams across all of these clusters.
 
 
 Ending Streams
 ^^^^^^^^^^^^^^
 
-When a user closes a streamed application at the end of their streaming session, the application container notifies the web 
-server that the user has disconnected. At this point, the web server instructs AWS to delete the container. All data except 
-for any application-specific configuration vanishes. In other words, every streamed application (i.e. ECS container) has an 
-ephemeral hard drive. All data that is persisted between streaming sessions is encrypted with a user-specific encryption key 
-and uploaded in its encrypted to in S3 before the ECS container destroys itself. The encryption key is known only to the 
-end-user, so neither AWS nor Fractal employees are able to decrypt and read the users' data.
+When a user closes a streamed application at the end of their streaming session, the Fractal container running this
+application notifies the Fractal Webserver that the user has disconnected. At this point, the web server instructs AWS to 
+delete the container. All data except for any application-specific configuration vanishes. In other words, every streamed 
+application (i.e. Fractal container) has an ephemeral hard drive. All data that is persisted between streaming sessions is 
+encrypted with a user-specific encryption key and uploaded to in AWS S3 before the Fractal container destroys itself. The 
+encryption key is known only to the end-user, so neither AWS nor Fractal employees are able to decrypt and read the users' data.
