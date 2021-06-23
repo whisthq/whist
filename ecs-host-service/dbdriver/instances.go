@@ -115,8 +115,17 @@ func registerInstance(ctx context.Context) error {
 	return nil
 }
 
-// Heartbeat() is used to update the database with the latest metrics about this instance.
-func Heartbeat(ctx context.Context) error {
+// WriteHeartbeat() is used to update the database with the latest metrics about
+// this instance. We rely on Postgres atomicity to make this safe to call from
+// multiple concurrent goroutines.
+func WriteHeartbeat(ctx context.Context) error {
+	if !enabled {
+		return nil
+	}
+	if dbpool == nil {
+		return utils.MakeError("WriteHeartbeat() called but dbdriver is not initialized!")
+	}
+
 	q := queries.NewQuerier(dbpool)
 
 	instanceName, err := aws.GetInstanceName(ctx)
@@ -128,14 +137,14 @@ func Heartbeat(ctx context.Context) error {
 		return utils.MakeError("Couldn't write heartbeat: errors getting metrics: %+v", errs)
 	}
 
-	params := queries.HeartbeatParams{
+	params := queries.WriteHeartbeatParams{
 		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
 		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
 		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
 		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1000),
 		InstanceName:         string(instanceName),
 	}
-	result, err := q.Heartbeat(ctx, params)
+	result, err := q.WriteHeartbeat(ctx, params)
 	if err != nil {
 		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
@@ -143,13 +152,37 @@ func Heartbeat(ctx context.Context) error {
 	return nil
 }
 
-func MarkDraining() {
+// MarkDraining marks this instance as draining, causing the webserver
+// to stop assigning new containers here.
+func MarkDraining(ctx context.Context) error {
+	if !enabled {
+		return nil
+	}
+	if dbpool == nil {
+		return utils.MakeError("MarkDraining() called but dbdriver is not initialized!")
+	}
 
+	q := queries.NewQuerier(dbpool)
+
+	instanceName, err := aws.GetInstanceName(ctx)
+	if err != nil {
+		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
+	}
+
+	result, err := q.MarkDraining(ctx, pgtype.Varchar{String: "DRAINING", Status: pgtype.Present}, string(instanceName))
+	if err != nil {
+		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `hardware.instance_info`: %s", err)
+	}
+	logger.Infof("Marked instance as draining in db with result %s", result)
+	return nil
 }
 
 // unregisterInstance removes the row for the instance from the
 // `hardware.instance_info` table.
 func unregisterInstance() error {
+	if !enabled {
+		return nil
+	}
 	if dbpool == nil {
 		return utils.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
 	}
