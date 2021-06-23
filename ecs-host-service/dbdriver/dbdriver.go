@@ -189,16 +189,13 @@ func unregisterInstance() error {
 		return utils.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
 	}
 
-	// TODO
-	result, err := dbpool.Exec(ctx,
-		`DELETE FROM hardware.instance_info
-		WHERE instance_id = $1`,
-		instanceName,
-	)
+	q := queries.NewQuerier(dbpool)
+	result, err := q.DeleteInstance(ctx, string(instanceName))
 	if err != nil {
 		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
 	}
 	logger.Infof("UnregisterInstance(): Output from delete command: %s", result)
+
 	return nil
 }
 
