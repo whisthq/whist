@@ -18,6 +18,9 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 # Continuous Integration parameters
 CI ?= false
+DB_URL_DEV ?=
+DB_URL_STAGING ?=
+DB_URL_PROD ?=
 
 all: build
 
@@ -35,6 +38,24 @@ endif
 ifeq ($(LOGZIO_SHIPPING_TOKEN),)
 	$(error "LOGZIO_SHIPPING_TOKEN is empty, but CI is true")
 endif
+ifeq ($(origin DB_URL_DEV),file)
+	$(error "DB_URL_DEV is not set, but CI is true")
+endif
+ifeq ($(DB_URL_DEV),)
+	$(error "DB_URL_DEV is empty, but CI is true")
+endif
+ifeq ($(origin DB_URL_STAGING),file)
+	$(error "DB_URL_STAGING is not set, but CI is true")
+endif
+ifeq ($(DB_URL_STAGING),)
+	$(error "DB_URL_STAGING is empty, but CI is true")
+endif
+ifeq ($(origin DB_URL_PROD),file)
+	$(error "DB_URL_PROD is not set, but CI is true")
+endif
+ifeq ($(DB_URL_PROD),)
+	$(error "DB_URL_PROD is empty, but CI is true")
+endif
 else
 	$(info CI is false)
 endif
@@ -48,6 +69,9 @@ build: checkCI
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
+		-X 'github.com/fractal/fractal/ecs-host-service/dbdriver.devDatabaseURL=$(DB_URL_DEV)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/dbdriver.stagingDatabaseURL=$(DB_URL_STAGING)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/dbdriver.prodDatabaseURL=$(DB_URL_PROD)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 upload: build
