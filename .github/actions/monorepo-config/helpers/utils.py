@@ -1,6 +1,7 @@
 # This file contains some general purpose utilities to be imported by the
 # rest of the configuration program. Most of them are defined for one-time
 # use by validation functions.
+import itertools
 from collections.abc import MutableMapping
 from pathlib import Path
 
@@ -18,7 +19,7 @@ def merge(*dicts):
 
 def truncated(limit, string, trail="..."):
     clamped = max(limit, 0)
-    if len(str(string)) < clamped:
+    if len(str(string)) <= clamped:
         return string
     else:
         if clamped < len(trail):
@@ -30,11 +31,7 @@ def truncated(limit, string, trail="..."):
 def truncated_children(d):
     if not isinstance(d, MutableMapping):
         return d
-    return {k: "{" + f"{truncated(0, v)}" + "}" for k, v in d.items()}
-
-
-def to_namedtuple(class_name, **fields):
-    return collections.namedtuple(class_name, fields)(*fields.values())
+    return {k: "..." for k, v in d.items()}
 
 
 def children(path):
@@ -146,19 +143,15 @@ def has_child_path_partial(child_path):
     return has_child_path
 
 
-def test_child_keys(test_fn, dct):
-    def inner_recursion(data, child=False):
-        if not isinstance(data, dict):
-            return True
-        for key, value in data.items():
-            if child:
-                if not test_fn(key):
-                    return False
-            if isinstance(value, dict):
-                return inner_recursion(data[key], child=True)
-        return True
+def nested_keys(dct):
+    if not isinstance(dct, dict):
+        return []
+    child_keys = (nested_keys(v) for v in dct.values() if isinstance(v, dict))
+    return [*dct.keys(), *itertools.chain(*child_keys)]
 
-    return inner_recursion(dct)
+
+def all_child_keys(fn, dct):
+    return all(fn(k) for k in nested_keys(dct))
 
 
 def all_items_in_set_partial(lst):
@@ -174,6 +167,6 @@ def all_child_keys_in_set_partial(profiles):
     profiles_set = set(profiles)
 
     def all_child_keys_in_set(data):
-        return test_child_keys(lambda x: x in profiles_set, data)
+        return all_child_keys(lambda x: x in profiles_set, data)
 
     return all_child_keys_in_set
