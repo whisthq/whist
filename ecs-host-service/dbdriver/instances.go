@@ -75,7 +75,7 @@ func registerInstance(ctx context.Context) error {
 	if rows[0].Location.String != string(region) {
 		return utils.MakeError("RegisterInstance(): Existing database row found, but location differs. Expected %s, Got %s", region, rows[0].Location.String)
 	}
-	if rows[0].CommitHash.Status != pgtype.Present || strings.HasPrefix(metadata.GetGitCommit(), rows[0].CommitHash.String) {
+	if !(rows[0].CommitHash.Status == pgtype.Present && strings.HasPrefix(metadata.GetGitCommit(), rows[0].CommitHash.String)) {
 		// This is the only string where we have to check status, since an empty string is a prefix for anything.
 		return utils.MakeError("RegisterInstance(): Existing database row found, but commit hash differs. Expected %s, Got %s", metadata.GetGitCommit(), rows[0].CommitHash.String)
 	}
