@@ -214,9 +214,11 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 		return
 	}
 
+	shouldAuthenticate := metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB
+
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SpinUpMandelboxRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, shouldAuthenticate); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
