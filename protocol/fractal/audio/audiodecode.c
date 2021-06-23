@@ -47,7 +47,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     avcodec_register_all();
 #endif
 
-    decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
+    decoder->pCodec = avcodec_find_decoder_by_name("aac");
     if (!decoder->pCodec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_decoder(decoder);
@@ -60,6 +60,8 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
         return NULL;
     }
 
+    // if we are using libfdk_aac, the codec has no sample_fmts
+    // the context's sample_fmt is set during decoder initialization
     if (!decoder->pCodec->sample_fmts) {
         LOG_INFO(
             "No sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
@@ -67,6 +69,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     } else {
         decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
     }
+
     decoder->pCodecCtx->sample_rate = sample_rate;
     decoder->pCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
     decoder->pCodecCtx->channels =
@@ -194,9 +197,11 @@ int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet)
 
     // get decoded frame
     res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
-    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
-        // decoder needs more data or there's nothing left
-        LOG_INFO("packet wants more things");
+    if (res == AVERROR(EAGAIN)) {
+        LOG_DEBUG("EAGAIN: Send new input to decoder!");
+        return 1;
+    } else if (res == AVERROR_EOF) {
+        LOG_DEBUG("EOF: Decoder has been fully flushed!");
         return 1;
     } else if (res < 0) {
         // real error

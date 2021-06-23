@@ -523,7 +523,8 @@ void update_audio() {
     if (audio_context.dev) {
         // If we have a device, get the queue size
         audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context.dev);
-    }  // Otherwise, the queue size is 0
+    }
+    // Otherwise, the queue size is 0
 
 #if LOG_AUDIO
     LOG_DEBUG("Queue: %d", audio_device_queue);
@@ -573,7 +574,7 @@ int32_t receive_audio(FractalPacket* packet) {
             ret (int): 0 on success, -1 on failure
     */
     // make sure that we do not handle packets that construct frames that are bigger than we expect
-    if (packet->num_indices >= MAX_NUM_AUDIO_INDICES) {
+    if (packet->num_indices > MAX_NUM_AUDIO_INDICES) {
         LOG_WARNING("Packet Index too large!");
         return -1;
     }
