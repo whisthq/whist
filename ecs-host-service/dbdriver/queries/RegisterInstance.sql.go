@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const registerInstanceSQL = `UPDATE hardware.instance_info SET
-  (cloud_provider_id, memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, container_capacity, last_updated_utc_unix_ms, ip, status) =
-  ($1, $2, $3, $4, $5, $6, $7, $8)
+const registerInstanceSQL = `UPDATE hardware.instance_info
+  SET (cloud_provider_id, memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, container_capacity, last_updated_utc_unix_ms, ip, status)
+  = ($1, $2, $3, $4, $5, $6, $7, $8)
   WHERE instance_name = $9;`
 
 type RegisterInstanceParams struct {

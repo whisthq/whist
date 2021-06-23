@@ -9,9 +9,9 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const writeHeartbeatSQL = `UPDATE hardware.instance_info SET
-  (memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, last_updated_utc_unix_ms) =
-  ($1, $2, $3, $4)
+const writeHeartbeatSQL = `UPDATE hardware.instance_info
+  SET (memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, last_updated_utc_unix_ms)
+  = ($1, $2, $3, $4)
   WHERE instance_name = $5;`
 
 type WriteHeartbeatParams struct {

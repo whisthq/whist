@@ -20,13 +20,12 @@ func VerifyContainer(ctx context.Context) error {
 	return nil
 }
 
-// Check if container exists, etc.
-func RegisterContainer(ctx context.Context) error {
+func MarkContainerRunning(ctx context.Context) error {
 	if !enabled {
 		return nil
 	}
 	if dbpool == nil {
-		return utils.MakeError("RegisterContainer() called but dbdriver is not initialized!")
+		return utils.MakeError("MarkContainerRunning() called but dbdriver is not initialized!")
 	}
 
 	logger.Errorf("Unimplemented")

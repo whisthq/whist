@@ -30,6 +30,13 @@ type Querier interface {
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 
+	MarkContainerRunning(ctx context.Context, containerID string) (pgconn.CommandTag, error)
+	// MarkContainerRunningBatch enqueues a MarkContainerRunning query into batch to be executed
+	// later by the batch.
+	MarkContainerRunningBatch(batch *pgx.Batch, containerID string)
+	// MarkContainerRunningScan scans the result of an executed MarkContainerRunningBatch query.
+	MarkContainerRunningScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
 	MarkDraining(ctx context.Context, status pgtype.Varchar, instanceName string) (pgconn.CommandTag, error)
 	// MarkDrainingBatch enqueues a MarkDraining query into batch to be executed
 	// later by the batch.
@@ -43,6 +50,20 @@ type Querier interface {
 	RegisterInstanceBatch(batch *pgx.Batch, params RegisterInstanceParams)
 	// RegisterInstanceScan scans the result of an executed RegisterInstanceBatch query.
 	RegisterInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
+	RemoveContainer(ctx context.Context, containerID string) (pgconn.CommandTag, error)
+	// RemoveContainerBatch enqueues a RemoveContainer query into batch to be executed
+	// later by the batch.
+	RemoveContainerBatch(batch *pgx.Batch, containerID string)
+	// RemoveContainerScan scans the result of an executed RemoveContainerBatch query.
+	RemoveContainerScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
+	VerifyContainer(ctx context.Context, instanceName string, userID string) ([]VerifyContainerRow, error)
+	// VerifyContainerBatch enqueues a VerifyContainer query into batch to be executed
+	// later by the batch.
+	VerifyContainerBatch(batch *pgx.Batch, instanceName string, userID string)
+	// VerifyContainerScan scans the result of an executed VerifyContainerBatch query.
+	VerifyContainerScan(results pgx.BatchResults) ([]VerifyContainerRow, error)
 
 	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
@@ -125,11 +146,20 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
 	}
+	if _, err := p.Prepare(ctx, markContainerRunningSQL, markContainerRunningSQL); err != nil {
+		return fmt.Errorf("prepare query 'MarkContainerRunning': %w", err)
+	}
 	if _, err := p.Prepare(ctx, markDrainingSQL, markDrainingSQL); err != nil {
 		return fmt.Errorf("prepare query 'MarkDraining': %w", err)
 	}
 	if _, err := p.Prepare(ctx, registerInstanceSQL, registerInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'RegisterInstance': %w", err)
+	}
+	if _, err := p.Prepare(ctx, removeContainerSQL, removeContainerSQL); err != nil {
+		return fmt.Errorf("prepare query 'RemoveContainer': %w", err)
+	}
+	if _, err := p.Prepare(ctx, verifyContainerSQL, verifyContainerSQL); err != nil {
+		return fmt.Errorf("prepare query 'VerifyContainer': %w", err)
 	}
 	if _, err := p.Prepare(ctx, writeHeartbeatSQL, writeHeartbeatSQL); err != nil {
 		return fmt.Errorf("prepare query 'WriteHeartbeat': %w", err)
