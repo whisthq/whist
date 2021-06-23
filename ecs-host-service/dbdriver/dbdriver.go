@@ -60,22 +60,30 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}
 	logger.Infof("Successfully connected to the database.")
 
-	// Register the instance with the database
-	if err = registerInstance(globalCtx); err != nil {
-		return utils.MakeError("Unable to register instance in the database: %s", err)
-	}
-
-	// Start goroutine that closes the connection pool if the global context is cancelled
+	// Start goroutine that closes the connection pool if the global context is
+	// cancelled. Note that we do this before calling `registerInstance` so that
+	// even if it fails, we successfully remove our row from the database when
+	// cleaning up.
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
 
 		<-globalCtx.Done()
+		logger.Infof("Global context cancelled, removing instance from database...")
+		if err := unregisterInstance(); err != nil {
+			logger.Errorf("Error unregistering instance: %s", err)
+		}
+
 		logger.Infof("Closing the connection pool to the database...")
 		if dbpool != nil {
 			dbpool.Close()
 		}
 	}()
+
+	// Register the instance with the database
+	if err = registerInstance(globalCtx); err != nil {
+		return utils.MakeError("Unable to register instance in the database: %s", err)
+	}
 
 	return nil
 }
@@ -165,18 +173,23 @@ func MarkDraining() {
 
 }
 
-// UnregisterInstance removes the row for the instance from the
+// unregisterInstance removes the row for the instance from the
 // `hardware.instance_info` table.
-func UnregisterInstance(ctx context.Context) error {
+func unregisterInstance() error {
 	if dbpool == nil {
 		return utils.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
 	}
+
+	// Set an arbitrary deadline of 10 seconds for cleanup
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	instanceName, err := aws.GetInstanceName(ctx)
 	if err != nil {
 		return utils.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
 	}
 
+	// TODO
 	result, err := dbpool.Exec(ctx,
 		`DELETE FROM hardware.instance_info
 		WHERE instance_id = $1`,
