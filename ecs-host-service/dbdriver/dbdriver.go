@@ -55,30 +55,40 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}
 	logger.Infof("Successfully connected to the database.")
 
-	// Start goroutine that closes the connection pool if the global context is
-	// cancelled. Note that we do this before calling `registerInstance` so that
-	// even if it fails, we successfully remove our row from the database when
-	// cleaning up.
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
-
-		<-globalCtx.Done()
-		logger.Infof("Global context cancelled, removing instance from database...")
-		if err := unregisterInstance(); err != nil {
-			logger.Errorf("Error unregistering instance: %s", err)
-		}
-
-		logger.Infof("Closing the connection pool to the database...")
-		if dbpool != nil {
-			dbpool.Close()
-		}
-	}()
-
 	// Register the instance with the database
 	if err = registerInstance(globalCtx); err != nil {
 		return utils.MakeError("Unable to register instance in the database: %s", err)
 	}
 
+	// Start goroutine that marks the host as draining if the global context is
+	// cancelled.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+
+		<-globalCtx.Done()
+		logger.Infof("Global context cancelled, marking instance as draining in database...")
+		if err := markDraining(globalCtx); err != nil {
+			logger.Error(err)
+		}
+	}()
+
 	return nil
+}
+
+// Close unregisters the instance and closes the connection pool to the
+// database. We don't do this automatically in this package upon global context
+// cancellation, since we'd only like to mark the host as draining at that
+// time, but only close the database once we're actually about to shutdown.
+func Close() {
+	logger.Infof("Closing the database driver...")
+
+	if err := unregisterInstance(); err != nil {
+		logger.Errorf("Error unregistering instance: %s", err)
+	}
+
+	logger.Infof("Closing the connection pool to the database...")
+	if dbpool != nil {
+		dbpool.Close()
+	}
 }

@@ -97,6 +97,18 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 	}()
 }
 
+// Drain and shutdown the host service
+func DrainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.DrainAndShutdownRequest) {
+	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
+
+	// Note that the caller won't actually know if the `shutdown` command failed.
+	// This response is just saying that we got the request successfully.
+	defer req.ReturnResult("", nil)
+
+	shutdownInstanceOnExit = true
+	globalCancel()
+}
+
 // ------------------------------------
 // Container event handlers
 // ------------------------------------
@@ -536,6 +548,9 @@ func main() {
 
 		uninitializeFilesystem()
 
+		// Remove our row from the database and close out the database driver.
+		dbdriver.Close()
+
 		// Drain to our remote logging providers, but don't yet stop recording new
 		// events, in case the shutdown fails.
 		logger.FlushLogzio()
@@ -698,9 +713,8 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
 
 				case *httpserver.DrainAndShutdownRequest:
-					logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
-					shutdownInstanceOnExit = true
-					globalCancel()
+					// Don't do this in a separate goroutine, since there's no reason to.
+					DrainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
 
 				default:
 					if serverevent != nil {

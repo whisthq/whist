@@ -154,7 +154,7 @@ func WriteHeartbeat(ctx context.Context) error {
 
 // MarkDraining marks this instance as draining, causing the webserver
 // to stop assigning new containers here.
-func MarkDraining(ctx context.Context) error {
+func markDraining(ctx context.Context) error {
 	if !enabled {
 		return nil
 	}
@@ -187,7 +187,7 @@ func unregisterInstance() error {
 		return utils.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
 	}
 
-	// Set an arbitrary deadline of 10 seconds for cleanup
+	// Set an arbitrary deadline
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
