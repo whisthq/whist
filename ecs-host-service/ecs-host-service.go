@@ -334,6 +334,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
+	err = dbdriver.WriteContainerStatus(context.TODO(), fractalID, dbdriver.ContainerStatusRunning)
+	if err != nil {
+		logAndReturnError("Error marking container running: %s", err)
+		return
+	}
+
 	// Mark container creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false

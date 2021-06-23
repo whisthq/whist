@@ -74,7 +74,7 @@ func WriteContainerStatus(ctx context.Context, containerID fctypes.FractalID, st
 		Status: pgtype.Present,
 	}, string(containerID))
 	if err != nil {
-		return utils.MakeError("Couldn't write status for container %s: error updating existing row in table `hardware.container_info`: %s", containerID, err)
+		return utils.MakeError("Couldn't write status %s for container %s: error updating existing row in table `hardware.container_info`: %s", status, containerID, err)
 	}
 	logger.Infof("Updated status in database for container %s to %s: %s", containerID, status, result)
 
