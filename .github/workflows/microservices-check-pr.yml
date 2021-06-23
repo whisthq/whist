@@ -21,6 +21,7 @@ jobs:
     microservices-auth0-verify-management-auth:
         name: "Auth0: Verify Management Authentication for ${{ matrix.environment.name }}"
         runs-on: ubuntu-20.04
+
         strategy:
             matrix:
                 environment:
@@ -30,16 +31,19 @@ jobs:
                       ref: /refs/heads/staging
                     - name: Prod
                       ref: /refs/heads/prod
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+
+              # We are testing this configuration against deployable branches dev/staging/prod only
             - name: Set Workflow Environment
               id: set-workflow-environment
               uses: ./.github/actions/set-environment
               with:
-                  # We are testing this configuration against deployable branches dev/staging/prod only
                   ref: ${{ matrix.environment.ref }}
                   deploy: true
+
             - name: Obtain a Fractal access token
               id: get-token
               uses: ./.github/actions/generate-auth0-token
