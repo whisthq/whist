@@ -2,9 +2,11 @@ package dbdriver // import "github.com/fractal/fractal/ecs-host-service/dbdriver
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
@@ -137,6 +139,17 @@ func registerInstance(ctx context.Context) error {
 	// know that `rows` ought to contain either 0 or 1 results.
 	if len(rows) == 0 {
 		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
+	}
+
+	// Verify that the properties of the existing row are actually as we expect
+	if rows[0].AwsAmiID.String != string(amiID) {
+		return utils.MakeError("RegisterInstance(): Existing database row found, but AMI differs. Expected %s, Got %s", amiID, rows[0].AwsAmiID.String)
+	}
+	if rows[0].Location.String != string(region) {
+		return utils.MakeError("RegisterInstance(): Existing database row found, but location differs. Expected %s, Got %s", region, rows[0].Location.String)
+	}
+	if rows[0].CommitHash.Status != pgtype.Present || strings.HasPrefix(metadata.GetGitCommit(), rows[0].CommitHash.String) {
+		return utils.MakeError("RegisterInstance(): Existing database row found, but commit hash differs. Expected %s, Got %s", metadata.GetGitCommit(), rows[0].CommitHash.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
