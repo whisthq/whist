@@ -124,7 +124,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
         # aws_container_assign endpoint used by client app
         assign_container_body = dict(
             username=authorized,
-            app="Blender",
+            app="Firefox",
             region=region_name,
         )
         resp = client.post(
