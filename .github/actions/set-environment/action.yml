@@ -34,9 +34,6 @@ outputs:
     auth0-client-secret-key:
         description: The name of the secret containing the GHA client secret
         value: ${{ steps.set-environment.outputs.auth0-client-secret-key }}
-    auth0-refresh-token-key:
-        description: the name of the secret containing the GHA refresh token
-        value: ${{ steps.set-environment.outputs.auth0-refresh-token-key }}
 runs:
     using: composite
     steps:
@@ -66,4 +63,3 @@ runs:
               echo "::set-output name=auth0-domain::$auth0_domain"
               echo "::set-output name=auth0-client-id::$auth0_client_id"
               echo "::set-output name=auth0-client-secret-key::auth0_gha_client_secret_$environment"
-              echo "::set-output name=auth0-refresh-token-key::auth0_refresh_token_$environment"
