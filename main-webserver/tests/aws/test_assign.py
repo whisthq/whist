@@ -58,8 +58,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
         return True
 
     monkeypatch.setattr(
-        aws_funcs,
-        "is_user_active",
+        "app.helpers.blueprint_helpers.aws.aws_container_assign_post.is_user_active",
         patched_active,
     )
 
