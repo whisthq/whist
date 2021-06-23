@@ -1,11 +1,11 @@
-# actions/refresh-auth0-token/action.yml
+# actions/generate-auth0-token/action.yml
 #
-# Use Refresh Token to Obtain Access Token
-# Call an Auth0 tenant's /oauth/token endpoint, supplying a valid refresh token,
-# in order to obtain a valid access token.
+# Generate an Auth0 Access Token for Management API
+# Call an Auth0 tenant's /oauth/token endpoint in order to obtain a valid access token.
 
-name: Use a Refresh Token to Obtain Access Token
-description: Use a refresh token to obtain a new access token from an Auth0 tenant.
+name: Generate an Auth0 Access Token for Management API
+description: Call an Auth0 tenant's /oauth/token endpoint in order to obtain a valid access token.
+
 inputs:
     domain:
         description: The Auth0 tenant's domain name
@@ -16,14 +16,9 @@ inputs:
     client-secret:
         description: The client secret of the GHA client registered to the tenant
         required: true
-    refresh-token:
-        description: |
-            The refresh token belonging to a Fractal administrator and issued
-            to the GHA client registered to the Auth0 tenant
-        required: true
 outputs:
     access-token:
-        description: The access token obtained using the refresh token
+        description: The access token for the management API
         value: ${{ steps.get-token.outputs.token }}
 runs:
     using: composite
@@ -38,13 +33,14 @@ runs:
           run: |
               import requests
 
+              # The API request is documented here: https://auth0.com/docs/flows/call-your-api-using-the-client-credentials-flow
               response = requests.post(
               "https://${{ inputs.domain }}/oauth/token",
                   json={
-                      "grant_type": "refresh_token",
+                      "grant_type": "client_credentials",
                       "client_id": "${{ inputs.client-id }}",
                       "client_secret": "${{ inputs.client-secret }}",
-                      "refresh_token": "${{ inputs.refresh-token }}",
+                      "audience": "https://api.fractal.co"
                   }
               )
 
