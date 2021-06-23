@@ -155,10 +155,10 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                     instance_name=base_name + f"-{index}",
                     num_instances=1,
                 )
-                # Setting last_pinged to -1 indicates that the
-                # instance hasn't told the webserver it's live yet.
-                # We add the rows to the DB now so that future scaling operations
-                # don't double-scale.
+                # Setting last update time to -1 indicates that the instance
+                # hasn't told the webserver it's live yet. We add the rows to
+                # the DB now so that future scaling operations don't
+                # double-scale.
                 new_instance = InstanceInfo(
                     location=region,
                     aws_ami_id=ami,
