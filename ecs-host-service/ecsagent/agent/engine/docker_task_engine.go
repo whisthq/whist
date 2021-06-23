@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
@@ -1002,7 +1003,7 @@ func (engine *DockerTaskEngine) createContainer(task *apitask.Task, container *a
 	// explanation of the FractalID, see its definition in the host service.) We
 	// also use the engine's context as a parent context for the container, since
 	// it is derived from the globalContext in the host service.
-	fractalID := fractalcontainer.FractalID(utils.RandHex() + utils.RandHex() + utils.RandHex())
+	fractalID := fctypes.FractalID(utils.RandHex() + utils.RandHex() + utils.RandHex())
 	container.FractalContainer = fractalcontainer.New(engine.ctx, engine.fractalGoroutineTracker, fractalID)
 	seelog.Infof("Task engine [%s]: container %s will have FractalID: %s", task.Arn, container.Name, fractalID)
 
@@ -1265,8 +1266,8 @@ func (engine *DockerTaskEngine) createContainer(task *apitask.Task, container *a
 		// Fractal-specific change: we need to inform the host service of the
 		// mapping between this container's DockerID and FractalID, and between
 		// the FractalID and the running app.
-		appName := fractalcontainer.AppName(findSubstringBetween(config.Image, "fractal/", ":"))
-		dockerID := fractalcontainer.DockerID(metadata.DockerID)
+		appName := fctypes.AppName(findSubstringBetween(config.Image, "fractal/", ":"))
+		dockerID := fctypes.DockerID(metadata.DockerID)
 		if err := container.FractalContainer.RegisterCreation(dockerID, appName); err != nil {
 			// Don't need to wrap `err.Error()` here, since it contains `fractalID`
 			herr := &apierrors.HostConfigError{Msg: err.Error()}
