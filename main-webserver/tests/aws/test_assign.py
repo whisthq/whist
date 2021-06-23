@@ -41,7 +41,7 @@ def test_assign(client, bulk_instance, monkeypatch):
         patched_find,
     )
 
-    args = {"region": "us-east-1", "username": "neil@fractal.co", "dpi": 96}
+    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.json["IP"] == instance.ip
@@ -63,7 +63,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
         patched_active,
     )
 
-    args = {"region": "us-east-1", "username": "neil@fractal.co", "dpi": 96}
+    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.status_code == RESOURCE_UNAVAILABLE
