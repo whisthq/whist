@@ -111,7 +111,7 @@ func registerInstance(ctx context.Context) error {
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
-	logger.Infof("Result of registering instance in database", result)
+	logger.Infof("Result of registering instance in database: %s", result)
 	return nil
 }
 
