@@ -30,7 +30,7 @@ const (
 )
 
 // database. If the expected row is not found, then it returns an error.
-func registerInstance(ctx context.Context) error {
+func registerInstance() error {
 	if !enabled {
 		return nil
 	}
@@ -70,7 +70,7 @@ func registerInstance(ctx context.Context) error {
 
 	// Check if there's a row for us in the database already
 	q := queries.NewQuerier(dbpool)
-	rows, err := q.FindInstanceByName(ctx, string(instanceName))
+	rows, err := q.FindInstanceByName(context.Background(), string(instanceName))
 	if err != nil {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
@@ -100,7 +100,7 @@ func registerInstance(ctx context.Context) error {
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
-	result, err := q.RegisterInstance(ctx, queries.RegisterInstanceParams{
+	result, err := q.RegisterInstance(context.Background(), queries.RegisterInstanceParams{
 		CloudProviderID: pgtype.Varchar{
 			String: "aws-" + string(instanceID),
 			Status: pgtype.Present,
@@ -129,7 +129,7 @@ func registerInstance(ctx context.Context) error {
 
 // MarkDraining marks this instance as draining, causing the webserver
 // to stop assigning new containers here.
-func markDraining(ctx context.Context) error {
+func markDraining() error {
 	if !enabled {
 		return nil
 	}
@@ -144,7 +144,7 @@ func markDraining(ctx context.Context) error {
 		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
 	}
 
-	result, err := q.WriteInstanceStatus(ctx, pgtype.Varchar{
+	result, err := q.WriteInstanceStatus(context.Background(), pgtype.Varchar{
 		String: string(InstanceStatusDraining),
 		Status: pgtype.Present,
 	},
@@ -171,12 +171,8 @@ func unregisterInstance() error {
 		return utils.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
 	}
 
-	// Set an arbitrary deadline
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
 	q := queries.NewQuerier(dbpool)
-	result, err := q.DeleteInstance(ctx, string(instanceName))
+	result, err := q.DeleteInstance(context.Background(), string(instanceName))
 	if err != nil {
 		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
 	}

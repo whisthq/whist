@@ -56,7 +56,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	logger.Infof("Successfully connected to the database.")
 
 	// Register the instance with the database
-	if err = registerInstance(globalCtx); err != nil {
+	if err = registerInstance(); err != nil {
 		return utils.MakeError("Unable to register instance in the database: %s", err)
 	}
 
@@ -68,7 +68,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 
 		<-globalCtx.Done()
 		logger.Infof("Global context cancelled, marking instance as draining in database...")
-		if err := markDraining(context.Background()); err != nil {
+		if err := markDraining(); err != nil {
 			logger.Error(err)
 		}
 	}()

@@ -123,7 +123,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// First, verify that we are expecting this user to request a container.
-	fractalID, err := dbdriver.VerifyAllocatedContainer(globalCtx, req.UserID)
+	fractalID, err := dbdriver.VerifyAllocatedContainer(req.UserID)
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
 		return
@@ -334,7 +334,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	err = dbdriver.WriteContainerStatus(context.TODO(), fractalID, dbdriver.ContainerStatusRunning)
+	err = dbdriver.WriteContainerStatus(fractalID, dbdriver.ContainerStatusRunning)
 	if err != nil {
 		logAndReturnError("Error marking container running: %s", err)
 		return

@@ -27,7 +27,7 @@ const (
 // VerifyAllocatedContainer verifies that this host service is indeed expecting
 // a container for the given user. On success, it returns the ID of the
 // container.
-func VerifyAllocatedContainer(ctx context.Context, userID fctypes.UserID) (fctypes.FractalID, error) {
+func VerifyAllocatedContainer(userID fctypes.UserID) (fctypes.FractalID, error) {
 	if !enabled {
 		// We must simulate the webserver generating an ID for the container.
 		return fctypes.FractalID(utils.RandHex(30)), nil
@@ -42,7 +42,7 @@ func VerifyAllocatedContainer(ctx context.Context, userID fctypes.UserID) (fctyp
 	}
 
 	q := queries.NewQuerier(dbpool)
-	rows, err := q.VerifyAllocatedContainer(ctx, string(instanceName), string(userID))
+	rows, err := q.VerifyAllocatedContainer(context.Background(), string(instanceName), string(userID))
 	if err != nil {
 		return "", utils.MakeError("Couldn't verify container for user %s: couldn't verify query: %s", userID, err)
 	}
@@ -60,7 +60,7 @@ func VerifyAllocatedContainer(ctx context.Context, userID fctypes.UserID) (fctyp
 	return fctypes.FractalID(rows[0].ContainerID.String), nil
 }
 
-func WriteContainerStatus(ctx context.Context, containerID fctypes.FractalID, status ContainerStatus) error {
+func WriteContainerStatus(containerID fctypes.FractalID, status ContainerStatus) error {
 	if !enabled {
 		return nil
 	}
@@ -69,7 +69,7 @@ func WriteContainerStatus(ctx context.Context, containerID fctypes.FractalID, st
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.WriteContainerStatus(ctx, pgtype.Varchar{
+	result, err := q.WriteContainerStatus(context.Background(), pgtype.Varchar{
 		String: string(status),
 		Status: pgtype.Present,
 	}, string(containerID))
@@ -82,7 +82,7 @@ func WriteContainerStatus(ctx context.Context, containerID fctypes.FractalID, st
 }
 
 // Check if container exists, etc.
-func RemoveContainer(ctx context.Context, containerID fctypes.FractalID) error {
+func RemoveContainer(containerID fctypes.FractalID) error {
 	if !enabled {
 		return nil
 	}
@@ -91,7 +91,7 @@ func RemoveContainer(ctx context.Context, containerID fctypes.FractalID) error {
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.RemoveContainer(ctx, string(containerID))
+	result, err := q.RemoveContainer(context.Background(), string(containerID))
 	if err != nil {
 		return utils.MakeError("Couldn't remove container %s from database: %s", containerID, err)
 	}

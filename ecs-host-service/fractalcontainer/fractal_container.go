@@ -133,7 +133,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid fctypes.
 		<-ctx.Done()
 
 		// Mark container as dying in the database
-		if err := dbdriver.WriteContainerStatus(context.TODO(), c.fractalID, dbdriver.ContainerStatusDying); err != nil {
+		if err := dbdriver.WriteContainerStatus(c.fractalID, dbdriver.ContainerStatusDying); err != nil {
 			logger.Error(err)
 		}
 
@@ -173,7 +173,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid fctypes.
 		c.cleanUserConfigDir()
 
 		// Remove container from the database altogether
-		if err := dbdriver.RemoveContainer(context.TODO(), c.fractalID); err != nil {
+		if err := dbdriver.RemoveContainer(c.fractalID); err != nil {
 			logger.Error(err)
 		}
 
