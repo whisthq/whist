@@ -1,4 +1,5 @@
 from threading import Thread
+import time
 import uuid
 from flask import Blueprint, current_app
 from flask.json import jsonify
@@ -66,6 +67,7 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
         instance_name=instance.instance_name,
         user_id=body.username,
         status="ALLOCATED",
+        creation_time_utc_unix_ms=int(time.time()),
     )
     db.session.add(obj)
     db.session.commit()
