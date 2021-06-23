@@ -60,6 +60,7 @@ func VerifyAllocatedContainer(userID fctypes.UserID) (fctypes.FractalID, error) 
 	return fctypes.FractalID(rows[0].ContainerID.String), nil
 }
 
+// WriteContainerStatus updates a container's status in the database.
 func WriteContainerStatus(containerID fctypes.FractalID, status ContainerStatus) error {
 	if !enabled {
 		return nil
@@ -81,7 +82,7 @@ func WriteContainerStatus(containerID fctypes.FractalID, status ContainerStatus)
 	return nil
 }
 
-// Check if container exists, etc.
+// RemoveContainer removes a container's row in the database.
 func RemoveContainer(containerID fctypes.FractalID) error {
 	if !enabled {
 		return nil

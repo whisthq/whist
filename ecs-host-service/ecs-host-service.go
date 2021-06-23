@@ -97,7 +97,7 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 }
 
 // Drain and shutdown the host service
-func DrainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.DrainAndShutdownRequest) {
+func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.DrainAndShutdownRequest) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
 
 	// Note that the caller won't actually know if the `shutdown` command failed.
@@ -721,7 +721,7 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 
 				case *httpserver.DrainAndShutdownRequest:
 					// Don't do this in a separate goroutine, since there's no reason to.
-					DrainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
+					drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
 
 				default:
 					if serverevent != nil {
