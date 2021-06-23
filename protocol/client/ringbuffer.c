@@ -74,14 +74,13 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
         Returns:
             (FrameData*): Pointer to FrameData at the correct index
             */
-    // TODO: should there be checks to make sure IDs agree?
     return &ring_buffer->receiving_frames[id % ring_buffer->ring_buffer_size];
 }
 
 void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
     /*
         Helper function to allocate the frame buffer which will hold UDP packets. Because video will
-       have large frames, we use a block allocator, while audio can just malloc.
+        have large frames, we use a block allocator, while audio can just malloc.
 
         Arguments:
             ring_buffer (RingBuffer*): Ring buffer holding frame
@@ -99,7 +98,7 @@ void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
 void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
     /*
         Initialize a frame with num_indices indices and ID id. This allocates the frame buffer and
-       the arrays we use for metadata.
+        the arrays we use for metadata.
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer containing the frame
@@ -108,7 +107,6 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
             */
     FrameData* frame_data = get_frame_at_id(ring_buffer, id);
     // initialize new framedata
-    // TODO: figure out how to check whether or not we are rendering
     frame_data->id = id;
     allocate_frame_buffer(ring_buffer, frame_data);
     frame_data->packets_received = 0;
@@ -131,9 +129,9 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
 int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     /*
         Process a FractalPacket and add it to the ring buffer. If the packet belongs to an existing
-       frame, copy its data into the frame; if it belongs to a new frame, initialize the frame and
-       copy data. Nack for missing packets (of the packet's frame) and missing frames (before the
-       current frame).
+        frame, copy its data into the frame; if it belongs to a new frame, initialize the frame and
+        copy data. Nack for missing packets (of the packet's frame) and missing frames (before the
+        current frame).
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer to place the packet in
@@ -147,6 +145,8 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         LOG_INFO("Old packet (ID %d) received, previous ID %d", packet->id, frame_data->id);
         return -1;
     } else if (packet->id > frame_data->id) {
+        // We don't have to worry about overwriting a rendering frame - falling 200-something frames
+        // behind never happens, since we request i-frames after falling 10 frames behind.
         init_frame(ring_buffer, packet->id, packet->num_indices);
     }
 
@@ -177,7 +177,8 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     if (ring_buffer->last_received_id != -1) {
         nack_missing_frames(ring_buffer, ring_buffer->last_received_id + 1, frame_data->id);
     }
-    nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index);
+    // -5 because UDP packets can arrive out of order
+    nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index - 5);
     ring_buffer->last_received_id = frame_data->id;
     frame_data->packets_received++;
     // Copy the packet data
@@ -236,7 +237,7 @@ void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {
 
 void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index) {
     /*
-        Nack up to 1 missing packet up to index - 5 because UDP packets arrive out of order.
+        Nack up to 1 missing packet up to index
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer missing packets
@@ -244,8 +245,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
             index (int): index up to which to nack missing packets
             */
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
-        int to_index = index - 5;
-        for (int i = max(0, frame_data->last_nacked_index + 1); i <= to_index; i++) {
+        for (int i = max(0, frame_data->last_nacked_index + 1); i <= index; i++) {
             frame_data->last_nacked_index = max(frame_data->last_nacked_index, i);
             if (!frame_data->received_indices[i]) {
                 frame_data->nacked_indices[i] = true;
@@ -260,7 +260,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
     /*
         Destroy the frame buffer of frame_data. If the ring buffer is for video, we must use the
-       frame buffer allocator.
+        frame buffer allocator.
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer containing the frame we want to destroy

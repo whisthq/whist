@@ -34,6 +34,8 @@ Custom Types
 ============================
 */
 
+// This has been found to be a good number for audio packet size. In practice, with AAC one audio
+// frame is typically about 350-400 bytes, which is only one packet.
 #define MAX_NUM_AUDIO_PACKETS 3
 
 /**

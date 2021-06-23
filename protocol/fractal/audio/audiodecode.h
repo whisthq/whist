@@ -150,7 +150,7 @@ int audio_decoder_send_packets(AudioDecoder* decoder, void* buffer, int buffer_s
  * @param decoder                   The decoder we are using for decoding
  *
  * @returns                         0 on success (can call again), 1 on EAGAIN (send more input
- * before calling again), -1 on failure
+ *                                  before calling again), -1 on failure
  */
 int audio_decoder_get_frame(AudioDecoder* decoder);
 #endif  // DECODE_H

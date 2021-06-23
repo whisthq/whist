@@ -27,13 +27,13 @@ Public Functions
 
 /**
  * @brief                       Read out the packets stored in buffer into the
- * AVPacket array packets.
+ *                              AVPacket array packets.
  *
  * @param buffer                Buffer containing encoded packets. Format: (number of packets)(size
- * of each packet)(data of each packet)
+ *                              of each packet)(data of each packet)
  *
  * @param buffer_size           Size of the buffer. Must agree with the metadata given
- * in buffer.
+ *                              in buffer.
  *
  * @param packets               AVPacket array to store encoded packets
  *

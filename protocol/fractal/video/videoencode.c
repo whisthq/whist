@@ -1001,7 +1001,7 @@ int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
     if (res_encoder == AVERROR(EAGAIN) || res_encoder == AVERROR(EOF)) {
         return 1;
     } else if (res_encoder < 0) {
-        LOG_WARNING("Error getting frame from the encoder: %s", av_err2str(res_encoder));
+        LOG_ERROR("Error getting frame from the encoder: %s", av_err2str(res_encoder));
         return -1;
     }
 

@@ -123,4 +123,15 @@ void destroy_ring_buffer(RingBuffer* ring_buffer);
  */
 void nack_packet(RingBuffer* ring_buffer, int id, int index);
 
+/**
+ * @brief Nack 1 missing packet of frame_data up to index.
+ *
+ * @param ring_buffer Ring buffer containing the frame
+ *
+ * @param frame_data Frame that might be missing packets
+ *
+ * @param index Packet index to nack up to
+ */
+void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index);
+
 #endif

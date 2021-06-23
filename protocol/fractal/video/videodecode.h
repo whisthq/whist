@@ -124,12 +124,12 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_s
 
 /**
  * @brief                           Get the next decoded frame from the decoder, which will be
- * placed in decoder->sw_frame.
+ *                                  placed in decoder->sw_frame.
  *
  * @param decoder                   The decoder we are using for decoding
  *
  * @returns                         0 on success (can call again), 1 on EAGAIN (send more input
- * before calling again), -1 on failure
+ *                                  before calling again), -1 on failure
  */
 int video_decoder_get_frame(VideoDecoder* decoder);
 

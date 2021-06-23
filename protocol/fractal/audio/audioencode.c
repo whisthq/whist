@@ -292,6 +292,7 @@ int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet) {
         return 1;
     } else if (res_encoder < 0) {
         LOG_ERROR("Error receiving packet from encoder: %s", av_err2str(res_encoder));
+        return -1;
     }
 
     return 0;

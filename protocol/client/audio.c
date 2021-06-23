@@ -68,7 +68,8 @@ static bool volatile audio_refresh = false;
 
 // the last ID we've processed for rendering
 static int last_played_id = -1;
-
+// 2 channels, 1024 samples per channel, 32 bits (4 bytes) per sample makes 2 * 1024 * 4 = 8192
+// bytes per frame!
 static int decoded_bytes_per_frame = 8192;
 
 // END AUDIO VARIABLES
