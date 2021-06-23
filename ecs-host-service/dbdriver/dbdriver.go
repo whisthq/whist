@@ -120,13 +120,15 @@ func registerInstance(ctx context.Context) error {
 	if err != nil {
 		return utils.MakeError("Couldn't register container instance: couldn't get AWS Instance type: %s", err)
 	}
+	instanceID, err := aws.GetInstanceID()
+	if err != nil {
+		return utils.MakeError("Couldn't register container instance: couldn't get AWS Instance id: %s", err)
+	}
 
 	latestMetrics, errs := metrics.GetLatest()
 	if len(errs) != 0 {
 		return utils.MakeError("Couldn't register container instance: errors getting metrics: %+v", errs)
 	}
-	cpus := latestMetrics.LogicalCPUs
-	memoryRemaining := latestMetrics.AvailableMemoryKB
 
 	// Check if there's a row for us in the database already
 	q := queries.NewQuerier(dbpool)
@@ -149,18 +151,38 @@ func registerInstance(ctx context.Context) error {
 		return utils.MakeError("RegisterInstance(): Existing database row found, but location differs. Expected %s, Got %s", region, rows[0].Location.String)
 	}
 	if rows[0].CommitHash.Status != pgtype.Present || strings.HasPrefix(metadata.GetGitCommit(), rows[0].CommitHash.String) {
+		// This is the only string where we have to check status, since an empty string is a prefix for anything.
 		return utils.MakeError("RegisterInstance(): Existing database row found, but commit hash differs. Expected %s, Got %s", metadata.GetGitCommit(), rows[0].CommitHash.String)
+	}
+	if rows[0].AwsInstanceType.String != string(instanceType) {
+		return utils.MakeError("RegisterInstance(): Existing database row found, but AWS instance type differs. Expected %s, Got %s", instanceType, rows[0].AwsInstanceType.String)
+	}
+	// TODO: factor out pre-connection
+	if rows[0].Status.String != "PRE-CONNECTION" {
+		return utils.MakeError("RegisterInstance(): Existing database row found, but status differs. Expected %s, Got %s", "PRE-CONNECTION", rows[0].Status.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
-	result, err := dbpool.Exec(ctx,
-		`UPDATE hardware.instance_info SET
-		(instance_id, auth_token, "memoryRemainingInInstanceInMb", "CPURemainingInInstance", "GPURemainingInInstance", "maxContainers", last_pinged, ip, ami_id, location, instance_type)
-		=
-		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		WHERE instance_id = $1`,
-		instanceName, utils.RandHex(10), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
-	)
+	result, err := q.RegisterInstance(ctx, queries.RegisterInstanceParams{
+		CloudProviderID: pgtype.Varchar{
+			String: "aws-" + string(instanceID),
+			Status: pgtype.Present,
+		},
+		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
+		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
+		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
+		ContainerCapacity:    4 * latestMetrics.NumberOfGPUs,
+		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1000),
+		Ip: pgtype.Varchar{
+			String: publicIP4.String(),
+			Status: pgtype.Present,
+		},
+		Status: pgtype.Varchar{
+			String: "ACTIVE",
+			Status: pgtype.Present,
+		},
+		InstanceName: string(instanceName),
+	})
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
 	}

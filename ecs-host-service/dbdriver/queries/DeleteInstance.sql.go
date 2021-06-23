@@ -29,6 +29,13 @@ type Querier interface {
 	FindInstanceByNameBatch(batch *pgx.Batch, instanceName string)
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
+
+	RegisterInstance(ctx context.Context, params RegisterInstanceParams) (pgconn.CommandTag, error)
+	// RegisterInstanceBatch enqueues a RegisterInstance query into batch to be executed
+	// later by the batch.
+	RegisterInstanceBatch(batch *pgx.Batch, params RegisterInstanceParams)
+	// RegisterInstanceScan scans the result of an executed RegisterInstanceBatch query.
+	RegisterInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
 
 type DBQuerier struct {
@@ -103,6 +110,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
+	}
+	if _, err := p.Prepare(ctx, registerInstanceSQL, registerInstanceSQL); err != nil {
+		return fmt.Errorf("prepare query 'RegisterInstance': %w", err)
 	}
 	return nil
 }
