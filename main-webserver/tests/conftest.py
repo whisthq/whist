@@ -1,5 +1,6 @@
 import os
 import uuid
+import time
 
 from random import randint
 import platform
@@ -127,6 +128,7 @@ def bulk_instance():
             instance_name=inst_name,
             cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
+            creation_time_utc_unix_ms=int(time.time()),
             auth_token=auth_token if auth_token is not None else "test-auth",
             container_capacity=container_capacity if container_capacity is not None else 10,
             ip=kwargs.get("ip", "123.456.789"),
