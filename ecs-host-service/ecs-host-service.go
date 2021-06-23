@@ -122,9 +122,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		req.ReturnResult("", err)
 	}
 
-	// We begin by creating the container.
+	// First, verify that we are expecting this user to request a container.
+	fractalID, err := dbdriver.VerifyAllocatedContainer(globalCtx, req.UserID)
+	if err != nil {
+		logAndReturnError("Unable to spin up mandelbox: %s", err)
+		return
+	}
 
-	fractalID := fctypes.FractalID(utils.RandHex(30))
+	// If so, create the container object.
 	fc := fractalcontainer.New(globalCtx, goroutineTracker, fractalID)
 	logger.Infof("SpinUpMandelbox(): created FractalContainer object %s", fc.GetFractalID())
 

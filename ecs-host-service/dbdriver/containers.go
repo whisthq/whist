@@ -3,6 +3,8 @@ package dbdriver // import "github.com/fractal/fractal/ecs-host-service/dbdriver
 import (
 	"context"
 
+	"github.com/jackc/pgtype"
+
 	"github.com/fractal/fractal/ecs-host-service/dbdriver/queries"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
@@ -27,10 +29,11 @@ const (
 // container.
 func VerifyAllocatedContainer(ctx context.Context, userID fctypes.UserID) (fctypes.FractalID, error) {
 	if !enabled {
-		return "", nil
+		// We must simulate the webserver generating an ID for the container.
+		return fctypes.FractalID(utils.RandHex(30)), nil
 	}
 	if dbpool == nil {
-		return "", utils.MakeError("VerifyContainer() called but dbdriver is not initialized!")
+		return "", utils.MakeError("VerifyAllocatedContainer() called but dbdriver is not initialized!")
 	}
 
 	instanceName, err := aws.GetInstanceName()
@@ -57,7 +60,7 @@ func VerifyAllocatedContainer(ctx context.Context, userID fctypes.UserID) (fctyp
 	return fctypes.FractalID(rows[0].ContainerID.String), nil
 }
 
-func WriteContainerStatus(ctx context.Context) error {
+func WriteContainerStatus(ctx context.Context, containerID fctypes.FractalID, status ContainerStatus) error {
 	if !enabled {
 		return nil
 	}
@@ -65,7 +68,16 @@ func WriteContainerStatus(ctx context.Context) error {
 		return utils.MakeError("WriteContainerStatus() called but dbdriver is not initialized!")
 	}
 
-	logger.Errorf("Unimplemented")
+	q := queries.NewQuerier(dbpool)
+	result, err := q.WriteContainerStatus(ctx, pgtype.Varchar{
+		String: string(status),
+		Status: pgtype.Present,
+	}, string(containerID))
+	if err != nil {
+		return utils.MakeError("Couldn't write status for container %s: error updating existing row in table `hardware.container_info`: %s", containerID, err)
+	}
+	logger.Infof("Updated status in database for container %s to %s: %s", containerID, status, result)
+
 	return nil
 }
 
