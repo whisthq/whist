@@ -56,7 +56,6 @@ jobs:
             auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
             auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
             auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
-            auth0-refresh-token-key: ${{ steps.set-deploy-environment.outputs.auth0-refresh-token-key }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -658,12 +657,11 @@ jobs:
 
             - name: Obtain a Fractal access token
               id: get-token
-              uses: ./.github/actions/refresh-auth0-token
+              uses: ./.github/actions/generate-auth0-token
               with:
                   domain: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
                   client-id: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
                   client-secret: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
-                  refresh-token: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-refresh-token-key] }}
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
