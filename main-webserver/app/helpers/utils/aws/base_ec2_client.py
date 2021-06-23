@@ -51,8 +51,7 @@ class EC2Client(CloudClient):
         instance_type: str = "g3.4xlarge",
     ) -> List[str]:
         """
-        Starts AWS instances with the given properties, not returning until they're
-        actively running
+        Starts AWS instances with the given properties, returning once started
         Args:
             image_id: which AMI to use
             instance_name: what name the instance should have
