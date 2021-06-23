@@ -418,7 +418,7 @@ def test_update_single_taskdef(client, monkeypatch):
     fake_aws_response = {"taskDefinition": {"revision": -1}}
     monkeypatch.setattr(ECSClient, "describe_task", function(returns=fake_aws_response))
 
-    app_id = "Blender"
+    app_id = "Firefox"
     # cache the current task defs
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
@@ -527,7 +527,7 @@ def test_update_taskdef_fk_regression(bulk_container):
     to be a foreign key issue that errored out.
     """
 
-    app_data = SupportedAppImages.query.get("Blender")
+    app_data = SupportedAppImages.query.get("Firefox")
     _ = bulk_container(assigned_to=None)
 
     old_version = app_data.task_version
