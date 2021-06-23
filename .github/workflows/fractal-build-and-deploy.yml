@@ -82,6 +82,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+            # TODO: This action does not respect workflow_dispatch inputs, effectively rendering it useless for anything but redeploys.
             - name: Set deploy environment
               id: set-deploy-environment
               uses: ./.github/actions/set-environment
@@ -1294,13 +1295,6 @@ jobs:
               uses: actions/setup-node@v2.1.5
               with:
                   node-version: 15
-
-            # We have to use npm install -g here, as the yarn
-            # equivalent "yarn global add" doesn't correctly
-            # add the command to the path in GitHub Actions.
-            - name: Install the auth0-deploy-cli
-              working-directory: microservices/auth0
-              run: npm install -g auth0-deploy-cli
 
             - name: Install development dependencies
               working-directory: microservices/auth0

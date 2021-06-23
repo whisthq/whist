@@ -11,7 +11,9 @@ function addCustomerIdClaim(user, context, callback) {
   const app_metadata = user.app_metadata || {};
   const stripe_customer_id = app_metadata.stripe_customer_id || null;
 
-  context.accessToken["https://api.fractal.co/stripe_customer_id"] = stripe_customer_id;
+  context.accessToken[
+    "https://api.fractal.co/stripe_customer_id"
+  ] = stripe_customer_id;
 
   return callback(null, user, context);
 }
