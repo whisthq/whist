@@ -81,7 +81,7 @@ jobs:
                   # Create new deploy for this Sentry release
                   sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
-            - name: Notify Slack on failure
+            - name: Notify Slack on Failure
               if: failure()
               shell: python3 {0}
               run: |
