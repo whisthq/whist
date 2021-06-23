@@ -30,6 +30,13 @@ type Querier interface {
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 
+	Heartbeat(ctx context.Context, params HeartbeatParams) (pgconn.CommandTag, error)
+	// HeartbeatBatch enqueues a Heartbeat query into batch to be executed
+	// later by the batch.
+	HeartbeatBatch(batch *pgx.Batch, params HeartbeatParams)
+	// HeartbeatScan scans the result of an executed HeartbeatBatch query.
+	HeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
 	RegisterInstance(ctx context.Context, params RegisterInstanceParams) (pgconn.CommandTag, error)
 	// RegisterInstanceBatch enqueues a RegisterInstance query into batch to be executed
 	// later by the batch.
@@ -110,6 +117,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
+	}
+	if _, err := p.Prepare(ctx, heartbeatSQL, heartbeatSQL); err != nil {
+		return fmt.Errorf("prepare query 'Heartbeat': %w", err)
 	}
 	if _, err := p.Prepare(ctx, registerInstanceSQL, registerInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'RegisterInstance': %w", err)

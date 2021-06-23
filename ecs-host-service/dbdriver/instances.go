@@ -111,13 +111,36 @@ func registerInstance(ctx context.Context) error {
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
-	logger.Infof("Result of updating existing row in table `hardware.instance_info`: %v", result)
+	logger.Infof("Result of registering instance in database", result)
 	return nil
 }
 
-func Heartbeat() {
-	// Equivalent of existing heartbeats
+// Heartbeat() is used to update the database with the latest metrics about this instance.
+func Heartbeat(ctx context.Context) error {
+	q := queries.NewQuerier(dbpool)
 
+	instanceName, err := aws.GetInstanceName(ctx)
+	if err != nil {
+		return utils.MakeError("Couldn't write heartbeat: couldn't get instance name: %s", err)
+	}
+	latestMetrics, errs := metrics.GetLatest()
+	if len(errs) != 0 {
+		return utils.MakeError("Couldn't write heartbeat: errors getting metrics: %+v", errs)
+	}
+
+	params := queries.HeartbeatParams{
+		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
+		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
+		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
+		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1000),
+		InstanceName:         string(instanceName),
+	}
+	result, err := q.Heartbeat(ctx, params)
+	if err != nil {
+		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `hardware.instance_info`: %s", err)
+	}
+	logger.Infof("Wrote heartbeat %+v with result %s", params, result)
+	return nil
 }
 
 func MarkDraining() {
