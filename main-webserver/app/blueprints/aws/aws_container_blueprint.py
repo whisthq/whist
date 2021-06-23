@@ -19,6 +19,7 @@ from app.constants.http_codes import (
     SUCCESS,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.helpers.blueprint_helpers.aws.aws_container_assign_post import is_user_active
 from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
@@ -81,6 +82,9 @@ def container_state(action, **kwargs):
 @payment_required
 @validate()
 def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
+    if is_user_active(body.username):
+        # If the user already has a container running, don't start up a new one
+        return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
     instance_id = find_instance(body.region)
     if instance_id is None:
 
