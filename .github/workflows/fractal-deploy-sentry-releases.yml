@@ -114,6 +114,6 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
                   TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-                  BODY = f"Sentry Releases for Fractal Sentry Projects `main-webserver`, `protocol`, `ecs-host-service`, `client-applications` Deployed to Sentry on branch: `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"Sentry Releases for Fractal Sentry Projects `main-webserver`, `protocol`, `ecs-host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
