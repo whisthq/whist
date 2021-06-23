@@ -685,6 +685,8 @@ int32_t send_audio(void* opaque) {
                        audio_encoder->pCodecCtx->frame_size) {
                     // create and encode a frame
 
+                    clock t;
+                    start_timer(&t);
                     res = audio_encoder_encode_frame(audio_encoder);
 
                     if (res < 0) {
@@ -694,6 +696,15 @@ int32_t send_audio(void* opaque) {
                     } else if (res > 0) {
                         // no data or need more data
                         break;
+                    }
+                    static int audio_frame_number = 0;
+                    static double audio_total_encode_time = 0.0;
+                    audio_total_encode_time += get_timer(t);
+                    audio_frame_number++;
+
+                    if (audio_frame_number % 30 == 0) {
+                        LOG_INFO("Average Audio Encode Time: %f", audio_total_encode_time / 30);
+                        audio_total_encode_time = 0.0;
                     }
 
                     // LOG_INFO("we got a packet of size %d",
