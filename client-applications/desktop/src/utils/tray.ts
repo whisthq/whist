@@ -18,6 +18,12 @@ const createNativeImage = () => {
 
 const rootMenu = [
   {
+    label: "Billing Information",
+    click: () => {
+      trayEvent.emit("payment")
+    },
+  },
+  {
     label: "Sign out",
     click: () => {
       trayEvent.emit("signout")
@@ -27,12 +33,6 @@ const rootMenu = [
     label: "Quit",
     click: () => {
       trayEvent.emit("quit")
-    },
-  },
-  {
-    label: "Billing Information",
-    click: () => {
-      trayEvent.emit("payment")
     },
   },
 ]

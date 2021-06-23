@@ -9,7 +9,7 @@ import { trayEvent } from "@app/utils/tray"
 import { createTrigger } from "@app/utils/flows"
 import TRIGGER from "@app/utils/triggers"
 
+createTrigger(TRIGGER.showPaymentWindow, fromEvent(trayEvent, "payment"))
 createTrigger(TRIGGER.showSignoutWindow, fromEvent(trayEvent, "signout"))
 createTrigger(TRIGGER.trayQuitAction, fromEvent(trayEvent, "quit"))
 createTrigger(TRIGGER.trayRegionAction, fromEvent(trayEvent, "region"))
-createTrigger(TRIGGER.showPaymentWindow, fromEvent(trayEvent, "payment"))
