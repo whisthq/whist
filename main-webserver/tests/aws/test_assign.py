@@ -1,13 +1,10 @@
 """Tests for the /mandelbox/assign endpoint."""
 
 from http import HTTPStatus
-
-from types import SimpleNamespace
-
 import pytest
 
 
-from app.models import SupportedAppImages
+from app.constants.http_codes import RESOURCE_UNAVAILABLE
 
 
 @pytest.mark.usefixtures("authorized")
@@ -43,10 +40,31 @@ def test_assign(client, bulk_instance, monkeypatch):
         patched_find,
     )
 
-    args = {"region": "us-east-1", "username": "neil@fractal.co", "dpi": 96}
+    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.json["IP"] == instance.ip
+
+
+@pytest.mark.usefixtures("authorized")
+def test_assign_active(client, bulk_instance, monkeypatch):
+    """
+    Ensures we 503 a user with active containers
+    """
+    bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
+
+    def patched_active(*args, **kwargs):
+        return True
+
+    monkeypatch.setattr(
+        "app.blueprints.aws.aws_container_blueprint.is_user_active",
+        patched_active,
+    )
+
+    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
+    response = client.post("/mandelbox/assign", json=args)
+
+    assert response.status_code == RESOURCE_UNAVAILABLE
 
 
 @pytest.mark.skip(reason="The @payment_required() decorator is not implemented yet.")

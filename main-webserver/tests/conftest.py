@@ -145,7 +145,7 @@ def bulk_instance():
             new_container = ContainerInfo(
                 container_id=str(randint(0, 10000000)),
                 instance_name=new_instance.instance_name,
-                user_id="test-user",
+                user_id=kwargs.get("user_for_containers", "test-user"),
                 status="Running",
             )
             db.session.add(new_container)
