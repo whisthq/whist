@@ -82,7 +82,7 @@ func WriteContainerStatus(ctx context.Context, containerID fctypes.FractalID, st
 }
 
 // Check if container exists, etc.
-func RemoveContainer(ctx context.Context) error {
+func RemoveContainer(ctx context.Context, containerID fctypes.FractalID) error {
 	if !enabled {
 		return nil
 	}
@@ -90,6 +90,12 @@ func RemoveContainer(ctx context.Context) error {
 		return utils.MakeError("RemoveContainer() called but dbdriver is not initialized!")
 	}
 
-	logger.Errorf("Unimplemented")
+	q := queries.NewQuerier(dbpool)
+	result, err := q.RemoveContainer(ctx, string(containerID))
+	if err != nil {
+		return utils.MakeError("Couldn't remove container %s from database: %s", containerID, err)
+	}
+	logger.Infof("Removed row in database for container %s: %s", containerID, result)
+
 	return nil
 }
