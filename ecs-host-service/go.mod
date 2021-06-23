@@ -1,6 +1,6 @@
 module github.com/fractal/fractal/ecs-host-service
 
-go 1.15
+go 1.16
 
 require (
 	github.com/MicahParks/keyfunc v0.4.2
@@ -19,7 +19,6 @@ require (
 	github.com/containernetworking/cni v0.8.1
 	github.com/containernetworking/plugins v0.9.1
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
-	github.com/creack/pty v1.1.13 // indirect
 	github.com/deniswernert/udev v0.0.0-20170418162847-a12666f7b5a1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/didip/tollbooth v4.0.2+incompatible
@@ -38,7 +37,6 @@ require (
 	github.com/jackc/pgtype v1.7.1-0.20210424130834-4380e23ae1c8
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/jschaf/pggen v0.0.0-20210622015421-8d43ddabaecf // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
@@ -65,6 +63,5 @@ require (
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.1.2
 	google.golang.org/genproto v0.0.0-20210601170153-0befbe3492e2 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
