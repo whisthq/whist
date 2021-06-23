@@ -34,7 +34,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
-	"github.com/fractal/fractal/ecs-host-service/heartbeats"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
@@ -190,7 +189,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	aesKey := utils.RandHex(16)
 	envs := []string{
 		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
-		utils.Sprintf("WEBSERVER_URL=%s", heartbeats.GetFractalWebserver()),
+		utils.Sprintf("WEBSERVER_URL=%s", metadata.GetFractalWebserver()),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		"NVIDIA_VISIBLE_DEVICES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
@@ -563,9 +562,6 @@ func main() {
 			}
 		}
 
-		// Stop sending heartbeats
-		heartbeats.Close()
-
 		// Shut down the logging infrastructure (including re-draining the queues).
 		logger.Close()
 
@@ -579,7 +575,7 @@ func main() {
 	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
 
 	// Log the instance name we're running on
-	instanceName, err := aws.GetInstanceName(globalCtx)
+	instanceName, err := aws.GetInstanceName()
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
@@ -606,7 +602,7 @@ func main() {
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
 	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
-		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), heartbeats.GetFractalWebserver())
+		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), metadata.GetFractalWebserver())
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
 		logger.Infof("Running in environment %s, so not starting ecs-agent.", metadata.GetAppEnvironment())

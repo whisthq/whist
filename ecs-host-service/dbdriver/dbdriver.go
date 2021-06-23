@@ -16,14 +16,14 @@ import (
 // operations to be meaningful in environments where we can expect the database
 // guarantees to hold (i.e. `logger.EnvLocalDevWithDB` for now) but no-ops in
 // other environments.
-var enabled = (metadata.GetAppEnvironment() == metadata.EnvLocalDevWithDB)
+var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
 // This is the connection pool for the database. It is an error for `dbpool` to
 // be non-nil if `enabled` is true.
 var dbpool *pgxpool.Pool
 
 // Initialize creates and tests a connection to the database, and registers the
-// instance in the database.
+// instance in the database. It also starts the heartbeat goroutine.
 func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) error {
 	if !enabled {
 		logger.Infof("Running in app environment %s so not enabling database code.", metadata.GetAppEnvironment())
@@ -73,16 +73,28 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 		}
 	}()
 
+	// Initialize the heartbeat goroutine. Note that this goroutine does not
+	// listen to the global context, and is not tracked by the global
+	// goroutineTracker. This is because we want the heartbeat goroutine to
+	// outlive the global context. Instead, we have the explicit Close(), which
+	// ends up finishing off the heartbeat goroutine as well.
+	go heartbeatGoroutine()
+
 	return nil
 }
 
 // Close unregisters the instance and closes the connection pool to the
 // database. We don't do this automatically in this package upon global context
 // cancellation, since we'd only like to mark the host as draining at that
-// time, but only close the database once we're actually about to shutdown.
+// time, but only close the database once we're actually about to shutdown. It
+// also stops the heartbeat goroutine.
 func Close() {
 	logger.Infof("Closing the database driver...")
 
+	// Stop the heartbeat goroutine
+	close(heartbeatKeepAlive)
+
+	// Delete the instance row
 	if err := unregisterInstance(); err != nil {
 		logger.Errorf("Error unregistering instance: %s", err)
 	}
