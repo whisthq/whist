@@ -3,6 +3,7 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 import (
 	"sync"
 
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
@@ -15,7 +16,7 @@ import (
 
 // We optimize for the eventual case of needing to look up containers by
 // `fractalID` _only_, not IdentifyingHostPort.
-var tracker = make(map[FractalID]FractalContainer)
+var tracker = make(map[fctypes.FractalID]FractalContainer)
 var trackerLock sync.RWMutex
 
 func trackContainer(fc FractalContainer) {
@@ -49,7 +50,7 @@ func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, 
 
 // LookUpByDockerID finds a container by its Docker ID. Note that this function
 // (sequentially) gets a lock on every single container.
-func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
+func LookUpByDockerID(DockerID fctypes.DockerID) (FractalContainer, error) {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
 

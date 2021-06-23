@@ -11,42 +11,13 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
-
-// We define special types for the following string types for all the benefits
-// of type safety, including making sure we never switch Docker and Fractal
-// IDs, for instance.
-
-// A FractalID is a random hex string that the ecs agent creates for each
-// container. We need some sort of identifier for each container, and we need
-// it _before_ Docker gives us back the runtime Docker ID for the container to
-// coordinate communication between the host service and the ecs-agent.
-// Currently, `FractalID` is also used as the replacement for
-// `FRACTAL_ID_PLACEHOLDER` in the task definition for the mounted paths of
-// this container on the host.
-type FractalID string
-
-// A DockerID is provided by Docker at container creation time.
-type DockerID string
-
-// AppName is defined as its own type so, in the future, we can always easily
-// enforce that it is part of a limited set of values.
-type AppName string
-
-// UserID is defined as its own type as well so the compiler can check argument
-// orders, etc. more effectively.
-type UserID string
-
-// ConfigEncryptionToken is defined as its own type for similar reasons.
-type ConfigEncryptionToken string
-
-// ClientAppAccessToken is defined as its own type for similar reasons.
-type ClientAppAccessToken string
 
 // A SetupEndpoint is either "handleStartValuesRequest", or
 // "handleSetConfigEncryptionTokenRequest".
@@ -59,10 +30,10 @@ type SetupEndpoint string
 // package. Both the ECS agent and higher layers of the host service use this
 // interface.
 type FractalContainer interface {
-	GetFractalID() FractalID
+	GetFractalID() fctypes.FractalID
 
-	AssignToUser(UserID)
-	GetUserID() UserID
+	AssignToUser(fctypes.UserID)
+	GetUserID() fctypes.UserID
 
 	GetHostPort(containerPort uint16, protocol portbindings.TransportProtocol) (uint16, error)
 	GetIdentifyingHostPort() (uint16, error)
@@ -76,15 +47,15 @@ type FractalContainer interface {
 	// are actually started, and therefore assigned a Docker runtime ID).
 	// FractalIDs are also used to dynamically provide each container with a
 	// directory that only that container has access to).
-	RegisterCreation(DockerID, AppName) error
-	GetDockerID() DockerID
-	GetAppName() AppName
+	RegisterCreation(fctypes.DockerID, fctypes.AppName) error
+	GetDockerID() fctypes.DockerID
+	GetAppName() fctypes.AppName
 
-	GetConfigEncryptionToken() ConfigEncryptionToken
-	SetConfigEncryptionToken(ConfigEncryptionToken)
+	GetConfigEncryptionToken() fctypes.ConfigEncryptionToken
+	SetConfigEncryptionToken(fctypes.ConfigEncryptionToken)
 
-	GetClientAppAccessToken() ClientAppAccessToken
-	SetClientAppAccessToken(ClientAppAccessToken)
+	GetClientAppAccessToken() fctypes.ClientAppAccessToken
+	SetClientAppAccessToken(fctypes.ClientAppAccessToken)
 
 	// AssignPortBindings is used by the ecs-agent (built into the host service,
 	// in package `ecsagent`) to request port bindings on the host for
@@ -124,7 +95,7 @@ type FractalContainer interface {
 	// handleSetConfigEncryptionTokenRequest and handleStartValuesRequest.
 	// If both tasks have completed, then get the user's config and set the
 	// container as ready.
-	CompleteContainerSetup(userID UserID, clientAppAccessToken ClientAppAccessToken, callerFunction SetupEndpoint) error
+	CompleteContainerSetup(userID fctypes.UserID, clientAppAccessToken fctypes.ClientAppAccessToken, callerFunction SetupEndpoint) error
 
 	// GetContext provides the context corresponding to this specific container.
 	GetContext() context.Context
@@ -134,7 +105,7 @@ type FractalContainer interface {
 }
 
 // New creates a new FractalContainer given a parent context and a fractal ID.
-func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid FractalID) FractalContainer {
+func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid fctypes.FractalID) FractalContainer {
 	// We create a context for this container specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
 
@@ -208,18 +179,18 @@ type containerData struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	fractalID FractalID
+	fractalID fctypes.FractalID
 
 	// We use rwlock to protect all the below fields.
 	rwlock sync.RWMutex
 
-	dockerID DockerID
-	appName  AppName
-	userID   UserID
+	dockerID fctypes.DockerID
+	appName  fctypes.AppName
+	userID   fctypes.UserID
 	tty      ttys.TTY
 
-	configEncryptionToken    ConfigEncryptionToken
-	clientAppAccessToken     ClientAppAccessToken
+	configEncryptionToken    fctypes.ConfigEncryptionToken
+	clientAppAccessToken     fctypes.ClientAppAccessToken
 	firstCalledSetupEndpoint SetupEndpoint
 
 	uinputDevices        *uinputdevices.UinputDevices
@@ -231,41 +202,41 @@ type containerData struct {
 }
 
 // We do not lock here because the fractalID NEVER changes.
-func (c *containerData) GetFractalID() FractalID {
+func (c *containerData) GetFractalID() fctypes.FractalID {
 	return c.fractalID
 }
 
-func (c *containerData) AssignToUser(u UserID) {
+func (c *containerData) AssignToUser(u fctypes.UserID) {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 	c.userID = u
 }
 
-func (c *containerData) GetUserID() UserID {
+func (c *containerData) GetUserID() fctypes.UserID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.userID
 }
 
-func (c *containerData) GetConfigEncryptionToken() ConfigEncryptionToken {
+func (c *containerData) GetConfigEncryptionToken() fctypes.ConfigEncryptionToken {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.configEncryptionToken
 }
 
-func (c *containerData) SetConfigEncryptionToken(token ConfigEncryptionToken) {
+func (c *containerData) SetConfigEncryptionToken(token fctypes.ConfigEncryptionToken) {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	c.configEncryptionToken = token
 }
 
-func (c *containerData) GetClientAppAccessToken() ClientAppAccessToken {
+func (c *containerData) GetClientAppAccessToken() fctypes.ClientAppAccessToken {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.clientAppAccessToken
 }
 
-func (c *containerData) SetClientAppAccessToken(token ClientAppAccessToken) {
+func (c *containerData) SetClientAppAccessToken(token fctypes.ClientAppAccessToken) {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	c.clientAppAccessToken = token
@@ -309,7 +280,7 @@ func (c *containerData) GetTTY() ttys.TTY {
 	return c.tty
 }
 
-func (c *containerData) RegisterCreation(d DockerID, name AppName) error {
+func (c *containerData) RegisterCreation(d fctypes.DockerID, name fctypes.AppName) error {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
@@ -323,13 +294,13 @@ func (c *containerData) RegisterCreation(d DockerID, name AppName) error {
 	return nil
 }
 
-func (c *containerData) GetDockerID() DockerID {
+func (c *containerData) GetDockerID() fctypes.DockerID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.dockerID
 }
 
-func (c *containerData) GetAppName() AppName {
+func (c *containerData) GetAppName() fctypes.AppName {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.appName
@@ -386,7 +357,7 @@ func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 	return nil
 }
 
-func (c *containerData) CompleteContainerSetup(userID UserID, clientAppAccessToken ClientAppAccessToken, callerFunction SetupEndpoint) error {
+func (c *containerData) CompleteContainerSetup(userID fctypes.UserID, clientAppAccessToken fctypes.ClientAppAccessToken, callerFunction SetupEndpoint) error {
 	// If the user ID has already been set, then this function has already been successfully called twice
 	//    and shouldn't be run again
 	// TODO: use a different synchronization mechanism

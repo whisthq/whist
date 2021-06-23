@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/fractal/fractal/ecs-host-service/auth"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	"github.com/fractal/fractal/ecs-host-service/metadata"
@@ -86,12 +86,12 @@ func (r requestResult) send(w http.ResponseWriter) {
 // SetContainerStartValuesRequest defines the (unauthenticated) start values
 // endpoint (currently called by the webserver, soon to be removed altogether).
 type SetContainerStartValuesRequest struct {
-	HostPort             int                `json:"host_port"`              // Port on the host to whose container the start values correspond
-	DPI                  int                `json:"dpi"`                    // DPI to set for the container
-	UserID               string             `json:"user_id"`                // User ID of the container user
-	ClientAppAccessToken string             `json:"client_app_auth_secret"` // User access token for client app verification
-	ContainerARN         string             `json:"container_ARN"`          // AWS ID of the container
-	resultChan           chan requestResult // Channel to pass the request result between goroutines
+	HostPort             int                          `json:"host_port"`              // Port on the host to whose container the start values correspond
+	DPI                  int                          `json:"dpi"`                    // DPI to set for the container
+	UserID               fctypes.UserID               `json:"user_id"`                // User ID of the container user
+	ClientAppAccessToken fctypes.ClientAppAccessToken `json:"client_app_auth_secret"` // User access token for client app verification
+	ContainerARN         string                       `json:"container_ARN"`          // AWS ID of the container
+	resultChan           chan requestResult           // Channel to pass the request result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -133,12 +133,12 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 // encryption token endpoint (currently called by the client application, soon
 // to be removed altogether).
 type SetConfigEncryptionTokenRequest struct {
-	HostPort              int                `json:"host_port"`               // Port on the host to whose container this user corresponds
-	UserID                string             `json:"user_id"`                 // User to whom token belongs
-	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
-	ClientAppAccessToken  string             `json:"client_app_auth_secret"`  // User access token for client app verification
-	JwtAccessToken        string             `json:"jwt_access_token"`        // User's JWT access token
-	resultChan            chan requestResult // Channel to pass the request result between goroutines
+	HostPort              int                           `json:"host_port"`               // Port on the host to whose container this user corresponds
+	UserID                fctypes.UserID                `json:"user_id"`                 // User to whom token belongs
+	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	ClientAppAccessToken  fctypes.ClientAppAccessToken  `json:"client_app_auth_secret"`  // User access token for client app verification
+	JwtAccessToken        auth.RawJWT                   `json:"jwt_access_token"`        // User's JWT access token
+	resultChan            chan requestResult            // Channel to pass the request result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -183,21 +183,21 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 // endpoint will become the canonical way to start containers.
 type SpinUpMandelboxRequest struct {
 	// TODO: protect this with auth somehow, this is being worked on by @MYKatz
-	AppImage              string             `json:"app_image"`               // The image to spin up
-	DPI                   int                `json:"dpi"`                     // DPI to set for the container
-	UserID                string             `json:"user_id"`                 // User ID of the container user
-	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
-	resultChan            chan requestResult // Channel to pass the request result between goroutines
+	AppImage              string                        `json:"app_image"`               // The image to spin up
+	DPI                   int                           `json:"dpi"`                     // DPI to set for the container
+	UserID                fctypes.UserID                `json:"user_id"`                 // User ID of the container user
+	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	resultChan            chan requestResult            // Channel to pass the request result between goroutines
 }
 
 // SpinUpMandelboxRequestResult defines the data returned by the
 // `spin_up_mandelbox` endpoint.
 type SpinUpMandelboxRequestResult struct {
-	HostPortForTCP32262 uint16                     `json:"port_32262"`
-	HostPortForUDP32263 uint16                     `json:"port_32263"`
-	HostPortForTCP32273 uint16                     `json:"port_32273"`
-	AesKey              string                     `json:"aes_key"`
-	FractalID           fractalcontainer.FractalID `json:"fractal_id"`
+	HostPortForTCP32262 uint16            `json:"port_32262"`
+	HostPortForUDP32263 uint16            `json:"port_32263"`
+	HostPortForTCP32273 uint16            `json:"port_32273"`
+	AesKey              string            `json:"aes_key"`
+	FractalID           fctypes.FractalID `json:"fractal_id"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -314,6 +314,8 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		return utils.MakeError("Error getting body from request from %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
+	// TODO: rename these auth_secrets to something more accurate, like `jwt`s or something.
+
 	// Extract only the auth_secret field from a raw JSON unmarshalling that
 	// delays as much decoding as possible
 	var rawmap map[string]*json.RawMessage
@@ -324,7 +326,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	}
 
 	if authenticate {
-		var requestAuthSecret string
+		var requestAuthSecret auth.RawJWT
 		err = func() error {
 			if value, ok := rawmap["auth_secret"]; ok {
 				return json.Unmarshal(*value, &requestAuthSecret)

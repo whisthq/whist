@@ -16,8 +16,17 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
+
+// A RawJWT is a custom type we define to make sure we never pass in the wrong
+// field to a JWT. This would have prevented some bugs we've ran into before.
+type RawJWT string
+
+// A JwtScope is another custom type we define to enforce correctness.
+type JwtScope string
 
 var config authConfig = getAuthConfig()
 
@@ -84,8 +93,8 @@ func validateClaims(claims jwt.MapClaims) error {
 
 // Verify verifies that a JWT is valid.
 // If valid, the JWT's claims are returned.
-func Verify(accessToken string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(accessToken, keyFunc)
+func Verify(accessToken RawJWT) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(string(accessToken), keyFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +110,7 @@ func Verify(accessToken string) (jwt.MapClaims, error) {
 // VerifyWithUserID verifies that a JWT is valid and
 // corresponds to the user with userID.
 // If valid, the JWT's claims are returned.
-func VerifyWithUserID(accessToken string, userID string) (jwt.MapClaims, error) {
+func VerifyWithUserID(accessToken RawJWT, userID fctypes.UserID) (jwt.MapClaims, error) {
 	claims, err := Verify(accessToken)
 	if err != nil {
 		return claims, err
@@ -116,14 +125,14 @@ func VerifyWithUserID(accessToken string, userID string) (jwt.MapClaims, error) 
 
 // HasScope returns true if the given jwt.MapClaims has
 // a scope matching a string, and false if not.
-func HasScope(claims jwt.MapClaims, scope string) bool {
+func HasScope(claims jwt.MapClaims, scope JwtScope) bool {
 	scopes, ok := claims["scope"].(string)
 	if !ok {
 		return false
 	}
 	scopeSlice := strings.Split(scopes, " ")
 	for _, s := range scopeSlice {
-		if s == scope {
+		if s == string(scope) {
 			return true
 		}
 	}

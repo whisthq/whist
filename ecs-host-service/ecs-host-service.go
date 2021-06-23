@@ -31,6 +31,7 @@ import (
 
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/heartbeats"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
@@ -111,7 +112,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// We begin by creating the container.
 
-	fractalID := fractalcontainer.FractalID(utils.RandHex(30))
+	fractalID := fctypes.FractalID(utils.RandHex(30))
 	fc := fractalcontainer.New(globalCtx, goroutineTracker, fractalID)
 	logger.Infof("SpinUpMandelbox(): created FractalContainer object %s", fc.GetFractalID())
 
@@ -160,7 +161,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): successfully initialized TTY.")
 
-	appName := fractalcontainer.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
+	appName := fctypes.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
 
 	logger.Infof(`SpinUpMandelbox(): app name: "%s"`, appName)
 	logger.Infof(`SpinUpMandelbox(): app image: "%s"`, req.AppImage)
@@ -263,7 +264,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	logger.Infof("Value returned from ContainerCreate: %#v", dockerBody)
-	dockerID := fractalcontainer.DockerID(dockerBody.ID)
+	dockerID := fctypes.DockerID(dockerBody.ID)
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
 
@@ -296,8 +297,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	fc.WriteStartValues(req.DPI, "")
-	fc.SetConfigEncryptionToken(fractalcontainer.ConfigEncryptionToken(req.ConfigEncryptionToken))
-	fc.AssignToUser(fractalcontainer.UserID(req.UserID))
+	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
+	fc.AssignToUser(req.UserID)
 
 	err = fc.PopulateUserConfigs()
 	// TODO: check that the config token is actually good? This might happen
@@ -355,10 +356,10 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 	}
 
 	// Save config encryption token in container struct
-	fc.SetConfigEncryptionToken(fractalcontainer.ConfigEncryptionToken(req.ConfigEncryptionToken))
+	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 
 	// If CompleteContainerSetup doesn't verify the client app access token, configs are not retrieved or saved.
-	err = fc.CompleteContainerSetup(fractalcontainer.UserID(req.UserID), fractalcontainer.ClientAppAccessToken(req.ClientAppAccessToken), "handleSetConfigEncryptionTokenRequest")
+	err = fc.CompleteContainerSetup(req.UserID, req.ClientAppAccessToken, "handleSetConfigEncryptionTokenRequest")
 	if err != nil {
 		logAndReturnError(err.Error())
 		return
@@ -398,7 +399,7 @@ func handleStartValuesRequest(globalCtx context.Context, globalCancel context.Ca
 		return
 	}
 
-	err = fc.CompleteContainerSetup(fractalcontainer.UserID(req.UserID), fractalcontainer.ClientAppAccessToken(req.ClientAppAccessToken), fractalcontainer.SetupEndpoint("handleStartValuesRequest"))
+	err = fc.CompleteContainerSetup(req.UserID, req.ClientAppAccessToken, fractalcontainer.SetupEndpoint("handleStartValuesRequest"))
 	if err != nil {
 		logAndReturnError(err.Error())
 		return
@@ -411,7 +412,7 @@ func handleStartValuesRequest(globalCtx context.Context, globalCancel context.Ca
 func containerDieHandler(id string) {
 	// Exit if we are not dealing with a Fractal container, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
-	fc, err := fractalcontainer.LookUpByDockerID(fractalcontainer.DockerID(id))
+	fc, err := fractalcontainer.LookUpByDockerID(fctypes.DockerID(id))
 	if err != nil {
 		logger.Infof("containerDieHandler(): %s", err)
 		return
