@@ -183,11 +183,11 @@ def send_spin_up_mandelbox_request():
     )
 
 
-def write_protocol_timeout(mandelboxid):
+def write_protocol_timeout(mandelbox_id):
     """
     Takes in a Mandelbox ID, and writes the protocol timeout to the corresponding container.
     """
-    with open(f"/fractal/{mandelboxid}/containerResourceMappings/timeout", "w") as timeout_file:
+    with open(f"/fractal/{mandelbox_id}/containerResourceMappings/timeout", "w") as timeout_file:
         timeout_file.write(f"{args.protocol_timeout}")
 
 
@@ -195,12 +195,12 @@ if __name__ == "__main__":
     # pylint: disable=line-too-long
     ensure_root_privileges()
     ensure_host_service_is_running()
-    container, host_ports, aeskey, mandelbox_id = send_spin_up_mandelbox_request()
+    container, host_ports, aeskey, mandelboxid = send_spin_up_mandelbox_request()
     if args.update_protocol:
         copy_locally_built_protocol(container)
 
     try:
-        write_protocol_timeout(mandelbox_id)
+        write_protocol_timeout(mandelboxid)
     except Exception as err:
         kill_container(container)
         raise err
