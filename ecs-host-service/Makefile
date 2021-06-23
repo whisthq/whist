@@ -79,7 +79,7 @@ upload: build
 
 format:
 	(cd ~ && $(GOGET) -u golang.org/x/tools/cmd/goimports)
-	goimports -l -w $$(find $(CURDIR) -name "*.go" | xargs)
+	goimports -l -w $$(find $(CURDIR) -name "*.go" | grep --invert-match ".sql.go" | xargs)
 
 lint: build
 	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
