@@ -299,7 +299,7 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 // 3. If we get a bad, unauthenticated request we can minimize the amount of
 // processsing power we devote to it. This is useful for being resistant to
 // Denial-of-Service attacks.
-func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authenticate bool) (err error) {
+func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
 	// Get body of request
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -318,7 +318,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		return utils.MakeError("Error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
-	if authenticate {
+	if authorizeAsBackend {
 		var requestAuthSecret auth.RawJWT
 		err = func() error {
 			if value, ok := rawmap["auth_secret"]; ok {
