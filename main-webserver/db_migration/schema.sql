@@ -323,19 +323,6 @@ CREATE TABLE hardware.supported_app_images (
 );
 
 
---
--- Name: user_app_state; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.user_app_state (
-    user_id character varying(255),
-    ip character varying(255),
-    client_app_auth_secret character varying(255),
-    port integer,
-    task_id character varying(255) NOT NULL,
-    state character varying(255)
-);
-
 
 
 --
@@ -1062,13 +1049,6 @@ ALTER TABLE ONLY hardware.supported_app_images
 ALTER TABLE ONLY hardware.supported_app_images
     ADD CONSTRAINT unique_taskdef UNIQUE (task_definition);
 
-
---
--- Name: user_app_state user_app_state_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_app_state
-    ADD CONSTRAINT user_app_state_pkey PRIMARY KEY (task_id);
 
 
 --
