@@ -825,11 +825,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
             return -1;
         }
     }
-    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
-        // Need more data
-        return 1;
-    } else if (res < 0) {
-        LOG_ERROR("Failed to receive packet, error: %s", av_err2str(res));
+    if (res < 0) {
         return -1;
     }
 
