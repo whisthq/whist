@@ -1,23 +1,26 @@
 rules:
   - name: add-customer-id-claim
-    script: ./src/rules/add-customer-id-claim.js
+    script: ./rules/add-customer-id-claim.js
     stage: login_success
     enabled: true
     order: 2
   - name: create-customer
-    script: ./src/rules/create-customer.js
+    script: ./rules/create-customer.js
     stage: login_success
     enabled: true
     order: 1
 rulesConfigs: []
 hooks: []
 pages:
+  - name: guardian_multifactor
+    enabled: false
+    html: ./pages/guardian_multifactor.html
   - name: login
     enabled: true
     html: ./pages/login.html
 resourceServers:
   - name: Fractal API
-    identifier: "##API_IDENTIFIER##"
+    identifier: "##FRACTAL_AUTHENTICATION_API##"
     allow_offline_access: true
     enforce_policies: true
     scopes:
@@ -34,7 +37,7 @@ clients:
   - name: Fractal
     allowed_clients: []
     app_type: native
-    callbacks: @@APP_CALLBACKS@@
+    callbacks: @@FRACTAL_ELECTRON_APP_CALLBACK@@
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
@@ -66,7 +69,7 @@ clients:
       rotation_type: rotating
     sso_disabled: false
     token_endpoint_auth_method: none
-  - name: GHA
+  - name: GitHub Actions
     allowed_clients: []
     app_type: non_interactive
     callbacks: []
@@ -160,23 +163,7 @@ clients:
       rotation_type: non-rotating
     sso_disabled: false
     token_endpoint_auth_method: client_secret_post
-databases:
-  - name: Username-Password-Authentication
-    strategy: auth0
-    enabled_clients:
-      - GHA
-      - Postman
-      - Webserver
-    is_domain_connection: false
-    options:
-      mfa:
-        active: true
-        return_enroll_settings: true
-      passwordPolicy: good
-      strategy_version: 2
-      brute_force_protection: true
-    realms:
-      - Username-Password-Authentication
+databases: []
 connections:
   - name: apple
     strategy: apple
@@ -237,12 +224,12 @@ connections:
       google_affiliate_network: false
 tenant:
   default_audience: ""
-  default_directory: Username-Password-Authentication
   enabled_locales:
     - en
   flags:
     new_universal_login_experience_enabled: true
     universal_login: true
+    dashboard_ui_next: true
     revoke_refresh_token_grant: false
     disable_clickjack_protection_headers: false
   friendly_name: ""
@@ -257,7 +244,7 @@ emailProvider: {}
 emailTemplates: []
 clientGrants:
   - client_id: Webserver
-    audience: "##API_IDENTIFIER##"
+    audience: "##FRACTAL_AUTHENTICATION_API##"
     scope:
       - backend
 guardianFactors:
@@ -269,6 +256,8 @@ guardianFactors:
     enabled: false
   - name: push-notification
     enabled: false
+  - name: recovery-code
+    enabled: true
   - name: sms
     enabled: false
   - name: webauthn-platform
@@ -288,7 +277,7 @@ roles:
     description: A Fractal developer
     permissions:
       - permission_name: admin
-        resource_server_identifier: "##API_IDENTIFIER##"
+        resource_server_identifier: "##FRACTAL_AUTHENTICATION_API##"
 branding:
   colors:
     page_background: "#ffffff"
@@ -298,3 +287,6 @@ prompts:
   universal_login_experience: new
   identifier_first: true
 migrations: {}
+actions: []
+triggers: {}
+organizations: []
