@@ -59,6 +59,7 @@ typedef struct RingBuffer {
     FrameData* receiving_frames;
     FrameDataType type;
     int largest_frame_size;
+    int largest_num_packets;
 
     int last_received_id;
     int num_nacked;
@@ -133,5 +134,12 @@ void nack_packet(RingBuffer* ring_buffer, int id, int index);
  * @param index Packet index to nack up to
  */
 void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index);
+
+/**
+ * @brief Reset the frame's metadata.
+ *
+ * @param frame_data Frame to "clear" from the ring buffer.
+ */
+void reset_frame(FrameData* frame_data);
 
 #endif

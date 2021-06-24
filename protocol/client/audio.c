@@ -174,9 +174,11 @@ void catchup_audio() {
     if (last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) {
         last_played_id = audio_ring_buffer->max_id - 1;
     }
-    if (last_played_id >= 0 && has_video_rendered_yet && audio_ring_buffer->max_id - last_played_id > 30) {
-        last_played_id += 30;
-        LOG_INFO("Last played ID too far from max received, moving last played id to %d", last_played_id);
+    for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
+        FrameData* frame_data = &audio_ring_buffer->receiving_frames[i];
+        if (frame_data->id <= last_played_id) {
+            reset_frame(frame_data);
+        }
     }
 }
 
@@ -237,6 +239,7 @@ void flush_next_audio_frame() {
       Skip the next audio frame in the ring buffer.
      */
     last_played_id++;
+    reset_frame(get_frame_at_id(audio_ring_buffer, last_played_id));
 }
 
 bool flush_audio(int audio_device_queue) {
@@ -471,6 +474,14 @@ int32_t receive_audio(FractalPacket* packet) {
     int res = receive_packet(audio_ring_buffer, packet);
     if (res < 0) {
         return res;
+    } else if (res == 1) {
+        // we overwrote the last frame
+        if (last_played_id < packet->id && last_played_id > 0) {
+            last_played_id = packet->id;
+            // pretend we played the frame
+            reset_frame(get_frame_at_id(audio_ring_buffer, last_played_id));
+            LOG_INFO("Last played ID now %d", last_played_id);
+        }
     }
     return 0;
 }

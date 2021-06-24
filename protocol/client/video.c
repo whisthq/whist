@@ -1091,10 +1091,8 @@ int32_t receive_video(FractalPacket* packet) {
     int res = receive_packet(video_ring_buffer, packet);
     if (res < 0) {
         return res;
-    } else if (res == 0) {
+    } else {
         FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
-
-        // TODO: video must handle iframe checking after ring buffer finishes
         // If we received all of the packets
         if (ctx->packets_received == ctx->num_packets) {
             bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;

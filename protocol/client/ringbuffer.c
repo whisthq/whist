@@ -4,6 +4,8 @@
 #define MAX_RING_BUFFER_SIZE 500
 #define LARGEST_AUDIO_FRAME_SIZE 9000
 #define LARGEST_VIDEO_FRAME_SIZE 1000000
+#define MAX_VIDEO_PACKETS 500
+#define MAX_AUDIO_PACKETS 3
 
 void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id);
 void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index);
@@ -39,9 +41,17 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
     if (!ring_buffer->receiving_frames) {
         return NULL;
     }
+    ring_buffer->largest_num_packets =
+        ring_buffer->type == FRAME_VIDEO ? MAX_VIDEO_PACKETS : MAX_AUDIO_PACKETS;
     for (int i = 0; i < ring_buffer_size; i++) {
-        ring_buffer->receiving_frames[i].id = -1;
-        ring_buffer->receiving_frames[i].frame_buffer = NULL;
+        FrameData* frame_data = &ring_buffer->receiving_frames[i];
+        frame_data->id = -1;
+        frame_data->frame_buffer = NULL;
+        int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
+        frame_data->received_indices = safe_malloc(indices_array_size);
+        frame_data->nacked_indices = safe_malloc(indices_array_size);
+        memset(frame_data->received_indices, 0, indices_array_size);
+        memset(frame_data->nacked_indices, 0, indices_array_size);
     }
     ring_buffer->last_received_id = -1;
     ring_buffer->max_id = -1;
@@ -106,24 +116,31 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
             num_indices (int): number of indices in the frame
             */
     FrameData* frame_data = get_frame_at_id(ring_buffer, id);
+    int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
     // initialize new framedata
     frame_data->id = id;
     allocate_frame_buffer(ring_buffer, frame_data);
     frame_data->packets_received = 0;
     frame_data->num_packets = num_indices;
-    // allocate the boolean arrays
-    int indices_array_size = frame_data->num_packets * sizeof(bool);
-    frame_data->received_indices = safe_malloc(indices_array_size);
-    frame_data->nacked_indices = safe_malloc(indices_array_size);
     memset(frame_data->received_indices, 0, indices_array_size);
     memset(frame_data->nacked_indices, 0, indices_array_size);
     frame_data->last_nacked_index = -1;
-    frame_data->num_times_nacked = -1;
+    frame_data->num_times_nacked = 0;
     frame_data->rendered = false;
     frame_data->frame_size = 0;
     frame_data->type = ring_buffer->type;
     start_timer(&frame_data->frame_creation_timer);
     start_timer(&frame_data->last_nacked_timer);
+}
+
+void reset_frame(FrameData* frame_data) {
+    frame_data->id = -1;
+    frame_data->packets_received = 0;
+    frame_data->num_packets = 0;
+    frame_data->last_nacked_index = -1;
+    frame_data->num_times_nacked = 0;
+    frame_data->rendered = false;
+    frame_data->frame_size = 0;
 }
 
 int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
@@ -138,15 +155,17 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
             packet (FractalPacket*): UDP packet for either audio or video
 
         Returns:
-            (int): 0 on success, -1 on failure
+            (int): 1 if we overwrote a valid frame, 0 on success, -1 on failure
             */
     FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
+    bool overwrote_frame = false;
     if (packet->id < frame_data->id) {
         LOG_INFO("Old packet (ID %d) received, previous ID %d", packet->id, frame_data->id);
         return -1;
     } else if (packet->id > frame_data->id) {
         // We don't have to worry about overwriting a rendering frame - falling 200-something frames
         // behind never happens, since we request i-frames after falling 10 frames behind.
+        overwrote_frame = (frame_data->id != -1);
         init_frame(ring_buffer, packet->id, packet->num_indices);
     }
 
@@ -168,7 +187,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     // If we have already received the packet, there is nothing to do
     if (frame_data->received_indices[packet->index]) {
         LOG_INFO("Duplicate of ID %d, Index %d received", packet->id, packet->index);
-        return 1;
+        return -1;
     }
 
     // Update framedata metadata + buffer
@@ -193,7 +212,11 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     if (frame_data->packets_received == frame_data->num_packets) {
         ring_buffer->frames_received++;
     }
-    return 0;
+    if (overwrote_frame) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 void nack_packet(RingBuffer* ring_buffer, int id, int index) {
