@@ -1,7 +1,7 @@
 # workflows/meta-spellcheck-files.yml
 #
 # Meta: Spellcheck Files
-# Checks files in the fractal/fractal monorepo for spelling mistakes 
+# Checks files in the fractal/fractal monorepo for spelling mistakes
 # using PySpelling lib (https://pypi.org/project/pyspelling/).
 
 name: "Meta: Spellcheck Files"
