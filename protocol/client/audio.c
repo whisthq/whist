@@ -194,9 +194,6 @@ bool is_next_audio_frame_valid() {
     int next_to_play_id = last_played_id + 1;
 
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
-    if (frame_data->id != next_to_play_id) {
-        LOG_DEBUG("Next to play ID is %d, but frame data ID %d", next_to_play_id, frame_data->id);
-    }
     return frame_data->id == next_to_play_id &&
            frame_data->num_packets == frame_data->packets_received;
 }
