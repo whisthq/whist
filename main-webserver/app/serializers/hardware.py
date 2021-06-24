@@ -3,7 +3,6 @@ from app.models import (
     InstanceInfo,
     RegionToAmi,
     SupportedAppImages,
-    UserContainerState,
 )
 
 
@@ -20,9 +19,3 @@ class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):
 class InstanceInfoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = InstanceInfo
-
-
-class UserContainerStateSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = UserContainerState
-        include_fk = True
