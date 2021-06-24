@@ -1,13 +1,10 @@
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import { pick } from "lodash"
-
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
-import mandelboxPollingFlow from "@app/main/flows/mandelbox/polling"
-import hostServiceFlow from "@app/main/flows/mandelbox/host"
+import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
-import { fromSignal } from "@app/utils/observables"
 
 export default flow(
   "mandelboxFlow",
@@ -23,24 +20,22 @@ export default flow(
       trigger.pipe(map((t) => pick(t, ["sub", "accessToken", "region"])))
     )
 
-    const polling = mandelboxPollingFlow(
-      zip(create.success, trigger).pipe(
-        map(([c, t]) => ({
-          ...pick(c, ["mandelboxID"]),
-          ...pick(t, ["accessToken"]),
+    const host = hostSpinUpFlow(
+      zip([trigger, create.success]).pipe(
+        map(([t, c]) => ({
+          ip: c.ip,
+          dpi: 1000000,
+          user_id: t.sub,
+          config_encryption_token: t.configToken,
+          jwt_access_token: t.accessToken,
+          mandelbox_id: c.mandelboxID,
         }))
       )
     )
 
-    const host = hostServiceFlow(
-      zip([trigger, create.success]).pipe(
-        map(([t, _c]) => pick(t, ["sub", "accessToken", "configToken"]))
-      )
-    )
-
     return {
-      success: fromSignal(polling.success, host.success),
-      failure: merge(create.failure, polling.failure, host.failure),
+      success: host.success,
+      failure: merge(create.failure, host.failure),
     }
   }
 )

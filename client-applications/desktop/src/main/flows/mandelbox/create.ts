@@ -30,8 +30,9 @@ export default flow<{ sub: string; accessToken: string; region?: AWSRegion }>(
 
     return {
       success: create.success.pipe(
-        map((response: { json: { ID: string } }) => ({
-          mandelboxID: response.json.ID,
+        map((response: { json: { mandelbox_id: string; ip: string } }) => ({
+          mandelboxID: response.json.mandelbox_id,
+          ip: response.json.ip,
         }))
       ),
       failure: create.failure,

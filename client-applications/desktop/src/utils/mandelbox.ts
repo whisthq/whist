@@ -5,7 +5,7 @@ import { get, post } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
-import { appEnvironment, FractalEnvironments } from "../../../config/configs"
+import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import { COMMIT_SHA } from "@app/config/environment"
 
 // For the purposes of the low-level rendering which is performed by the

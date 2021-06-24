@@ -1,6 +1,7 @@
 import { AsyncReturnType } from "@app/@types/state"
-import { get, apiPut } from "@app/utils/api"
+import { apiPut } from "@app/utils/api"
 import { HostServicePort } from "@app/utils/constants"
+import { appEnvironment, FractalEnvironments } from "../../config/configs"
 
 // This file directly interacts with data returned from the webserver, which
 // has keys labelled in Python's snake_case format. We want to be able to pass
@@ -10,59 +11,73 @@ import { HostServicePort } from "@app/utils/constants"
 // So we choose to just ignore the linter rule.
 /* eslint-disable @typescript-eslint/naming-convention */
 
-export const hostServiceInfo = async (sub: string, accessToken?: string) =>
-  get({
-    endpoint: `/host_service?username=${encodeURIComponent(sub)}`,
-    accessToken,
-  })
-
-export const hostServiceConfig = async (
-  ip: string,
-  host_port: number,
-  client_app_auth_secret: string,
-  sub: string,
-  config_encryption_token: string,
-  jwt_access_token: string
-) => {
-  return (await apiPut(
-    "/set_config_encryption_token",
-    `https://${ip}:${HostServicePort}`,
-    {
-      user_id: sub,
-      client_app_auth_secret,
-      host_port,
-      config_encryption_token,
-      jwt_access_token,
-    },
-    true
-  )) as { status: number }
+const imageEnv = () => {
+  switch (appEnvironment) {
+    case FractalEnvironments.LOCAL:
+      return "dev"
+    case FractalEnvironments.DEVELOPMENT:
+      return "dev"
+    case FractalEnvironments.STAGING:
+      return "staging"
+    case FractalEnvironments.PRODUCTION:
+      return "prod"
+    default:
+      return "dev"
+  }
 }
 
-export type HostServiceInfoResponse = AsyncReturnType<typeof hostServiceInfo>
+export const hostSpinUp = async ({
+  ip,
+  dpi,
+  user_id,
+  config_encryption_token,
+  jwt_access_token,
+  mandelbox_id,
+}: {
+  ip: string
+  dpi: number
+  user_id: string
+  config_encryption_token: string
+  jwt_access_token: string
+  mandelbox_id: string
+}) =>
+  (await apiPut(
+    "/spin_up_mandelbox",
+    `https://${ip}:${HostServicePort}`,
+    {
+      app_image: `fractal/${imageEnv()}/browsers/chrome:current-build`,
+      dpi,
+      user_id,
+      config_encryption_token,
+      jwt_access_token,
+      mandelbox_id,
+    },
+    true
+  )) as {
+    status: number
+    json?: {
+      result?: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
+        aes_key: string
+      }
+    }
+  }
 
-export type HostServiceConfigResponse = AsyncReturnType<
-  typeof hostServiceConfig
->
+export type HostSpinUpResponse = AsyncReturnType<typeof hostSpinUp>
 
-export const hostServiceInfoIP = (res: HostServiceInfoResponse) => res.json?.ip
+export const hostSpinUpValid = (res: HostSpinUpResponse) => {
+  const result = res.json?.result
+  return (
+    (result?.port_32262 &&
+      result.port_32263 &&
+      result?.port_32273 &&
+      result?.aes_key &&
+      true) ||
+    false
+  )
+}
 
-export const hostServiceInfoPort = (res: HostServiceInfoResponse) =>
-  res?.json?.port
-
-export const hostServiceInfoSecret = (res: HostServiceInfoResponse) =>
-  res?.json?.client_app_auth_secret
-
-export const hostServiceInfoValid = (res: HostServiceInfoResponse) =>
-  res?.status === 200 &&
-  (hostServiceInfoIP(res) ?? "") !== "" &&
-  (hostServiceInfoPort(res) ?? "") !== "" &&
-  (hostServiceInfoSecret(res) ?? "") !== ""
-
-export const hostServiceInfoPending = (res: HostServiceInfoResponse) =>
-  res?.status === 200 && !hostServiceInfoValid(res)
-
-export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
-  res?.status === 200
-
-export const hostServiceConfigError = (res: HostServiceConfigResponse) =>
-  !hostServiceConfigValid(res)
+export const hostSpinUpError = (res: HostSpinUpResponse) =>
+  !hostSpinUpValid(res)
