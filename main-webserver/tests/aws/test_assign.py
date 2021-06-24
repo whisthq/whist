@@ -69,7 +69,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
         patched_active,
     )
 
-    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
+    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96, "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING}
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.status_code == RESOURCE_UNAVAILABLE
