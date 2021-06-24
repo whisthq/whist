@@ -1276,63 +1276,63 @@ jobs:
     # Build and deploy the Auth0 hooks to the Fractal Auth0 Tenant platform, with
     # which our client-application interfaces with authenticating users through Auth0
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-    microservices-deploy-auth0-hooks:
-        name: "Deploy Auth0 hooks"
-        runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
-        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-hooks|')
+#     microservices-deploy-auth0-hooks:
+#         name: "Deploy Auth0 hooks"
+#         runs-on: ubuntu-20.04
+#         needs: [fractal-publish-build-config]
+#         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-hooks|')
 
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+#         steps:
+#             - name: Checkout Git Repository
+#               uses: actions/checkout@v2
 
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              shell: bash
-              run: ./notifications/setup_notifications.sh
+#             - name: Setup Python-based notifications
+#               working-directory: .github/workflows/helpers
+#               shell: bash
+#               run: ./notifications/setup_notifications.sh
 
-            - name: Install Node.js 15
-              uses: actions/setup-node@v2.1.5
-              with:
-                  node-version: 15
+#             - name: Install Node.js 15
+#               uses: actions/setup-node@v2.1.5
+#               with:
+#                   node-version: 15
 
-            - name: Install development dependencies
-              working-directory: microservices/auth0
-              run: yarn install
+#             - name: Install development dependencies
+#               working-directory: microservices/auth0
+#               run: yarn install
 
-            - name: Deploy changes to the Auth0 tenant
-              working-directory: microservices/auth0
-              env:
-                  AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
-                  GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
-                  APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
-              run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
+#             - name: Deploy changes to the Auth0 tenant
+#               working-directory: microservices/auth0
+#               env:
+#                   AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
+#                   GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
+#                   APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
+#               run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
-            - name: Notify Slack on successful deploy
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              shell: python3 {0}
-              run: |
-                  import os
-                  from notifications.slack_bot import slack_post
+#             - name: Notify Slack on successful deploy
+#               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+#               shell: python3 {0}
+#               run: |
+#                   import os
+#                   from notifications.slack_bot import slack_post
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  TITLE = ":auth0: Auth0 Hooks Deployed to Auth0 Tenant :auth0:"
-                  BODY = f"A PR was merged and triggered automatic build and deployment of Auth0 Hooks to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+#                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+#                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+#                   TITLE = ":auth0: Auth0 Hooks Deployed to Auth0 Tenant :auth0:"
+#                   BODY = f"A PR was merged and triggered automatic build and deployment of Auth0 Hooks to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+#                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
-              if: failure()
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
+#             - name: Notify Slack if error
+#               if: failure()
+#               shell: python3 {0}
+#               run: |
+#                   from notifications.slack_bot import slack_post
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-hooks` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+#                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+#                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+#                   BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-hooks` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+#                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Create GitHub Tag
     # Create a GitHub Tag when promoting to the `prod` branch
