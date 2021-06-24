@@ -91,171 +91,6 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
-int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec,
-                          NVFBC_TOGL_SETUP_PARAMS* p_setup_params) {
-    NVENCSTATUS status;
-
-    /*
-     * Dynamically load the NvEncodeAPI library.
-     */
-    void* lib_enc = dlopen(LIB_ENCODEAPI_NAME, RTLD_NOW);
-    if (lib_enc == NULL) {
-        LOG_ERROR("Unable to open '%s' (%s)", LIB_ENCODEAPI_NAME, dlerror());
-        return -1;
-    }
-
-    /*
-     * Resolve the 'NvEncodeAPICreateInstance' symbol that will allow us to get
-     * the API function pointers.
-     */
-    typedef NVENCSTATUS(NVENCAPI * NVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST*);
-    NVENCODEAPICREATEINSTANCEPROC nv_encode_api_create_instance_ptr =
-        (NVENCODEAPICREATEINSTANCEPROC)dlsym(lib_enc, "NvEncodeAPICreateInstance");
-    if (nv_encode_api_create_instance_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'NvEncodeAPICreateInstance'");
-        return -1;
-    }
-
-    /*
-     * Create an NvEncodeAPI instance.
-     *
-     * API function pointers are accessible through pEncFn.
-     */
-    memset(&device->p_enc_fn, 0, sizeof(device->p_enc_fn));
-
-    device->p_enc_fn.version = NV_ENCODE_API_FUNCTION_LIST_VER;
-
-    status = nv_encode_api_create_instance_ptr(&device->p_enc_fn);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Unable to create NvEncodeAPI instance (status: %d)", status);
-        return -1;
-    }
-
-    /*
-     * Create an encoder session
-     */
-    NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS encode_session_params = {0};
-
-    encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
-    encode_session_params.apiVersion = NVENCAPI_VERSION;
-    encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_OPENGL;
-
-    status = device->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params, &device->encoder);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to open an encoder session, status = %d", status);
-        return -1;
-    }
-
-    /*
-     * Validate the codec requested
-     */
-    GUID codec_guid;
-    if (requested_codec == CODEC_TYPE_H265) {
-        device->codec_type = CODEC_TYPE_H265;
-        codec_guid = NV_ENC_CODEC_HEVC_GUID;
-    } else {
-        device->codec_type = CODEC_TYPE_H264;
-        codec_guid = NV_ENC_CODEC_H264_GUID;
-    }
-    // status = validateEncodeGUID(encoder, codec_guid);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to validate codec GUID");
-        return -1;
-    }
-
-    NV_ENC_PRESET_CONFIG preset_config;
-    memset(&preset_config, 0, sizeof(preset_config));
-
-    preset_config.version = NV_ENC_PRESET_CONFIG_VER;
-    preset_config.presetCfg.version = NV_ENC_CONFIG_VER;
-    status = device->p_enc_fn.nvEncGetEncodePresetConfig(
-        device->encoder, codec_guid, NV_ENC_PRESET_LOW_LATENCY_HP_GUID, &preset_config);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR(
-            "Failed to obtain preset settings, "
-            "status = %d",
-            status);
-        return -1;
-    }
-
-    // Set iframe length to basically be infinite
-    preset_config.presetCfg.gopLength = 999999;
-    // Set bitrate
-    preset_config.presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    preset_config.presetCfg.rcParams.averageBitRate = bitrate;
-    // Specify the size of the clientside buffer, 1 * bitrate is recommended
-    preset_config.presetCfg.rcParams.vbvBufferSize = bitrate;
-
-    /*
-     * Initialize the encode session
-     */
-    NV_ENC_INITIALIZE_PARAMS init_params;
-    memset(&init_params, 0, sizeof(init_params));
-    init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
-    init_params.encodeGUID = codec_guid;
-    init_params.presetGUID = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
-    init_params.encodeConfig = &preset_config.presetCfg;
-    init_params.encodeWidth = device->width;
-    init_params.encodeHeight = device->height;
-    init_params.frameRateNum = FPS;
-    init_params.frameRateDen = 1;
-    init_params.enablePTD = 1;
-
-    status = device->p_enc_fn.nvEncInitializeEncoder(device->encoder, &init_params);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to initialize the encode session, status = %d", status);
-        return -1;
-    }
-
-    /*
-     * Register the textures received from NvFBC for use with NvEncodeAPI
-     */
-    for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
-        NV_ENC_REGISTER_RESOURCE register_params;
-        NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params;
-
-        if (!p_setup_params->dwTextures[i]) {
-            break;
-        }
-
-        memset(&register_params, 0, sizeof(register_params));
-
-        tex_params.texture = p_setup_params->dwTextures[i];
-        tex_params.target = p_setup_params->dwTexTarget;
-
-        register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
-        register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_OPENGL_TEX;
-        register_params.width = device->width;
-        register_params.height = device->height;
-        register_params.pitch = device->width;
-        register_params.resourceToRegister = &tex_params;
-        register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
-
-        status = device->p_enc_fn.nvEncRegisterResource(device->encoder, &register_params);
-        if (status != NV_ENC_SUCCESS) {
-            LOG_ERROR("Failed to register texture, status = %d", status);
-            return -1;
-        }
-
-        device->registered_resources[i] = register_params.registeredResource;
-    }
-
-    /*
-     * Create a bitstream buffer to hold the output
-     */
-    NV_ENC_CREATE_BITSTREAM_BUFFER bitstream_buffer_params = {0};
-    bitstream_buffer_params.version = NV_ENC_CREATE_BITSTREAM_BUFFER_VER;
-
-    status = device->p_enc_fn.nvEncCreateBitstreamBuffer(device->encoder, &bitstream_buffer_params);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to create a bitstream buffer, status = %d", status);
-        return -1;
-    }
-
-    device->output_buffer = bitstream_buffer_params.bitstreamBuffer;
-    return 0;
-}
-
 int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
                                  CodecType requested_codec) {
     // 0-initialize everything in the NvidiaCaptureDevice
@@ -395,11 +230,6 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
         return -1;
     }
 
-    if (create_nvidia_encoder(device, bitrate, requested_codec, &setup_params) != 0) {
-        LOG_ERROR("Failed to create nvidia encoder!");
-        return -1;
-    }
-
     // Set initial frame pointer to NULL, nvidia will overwrite this with the framebuffer pointer
     device->frame = NULL;
     device->frame_idx = -1;
@@ -410,38 +240,16 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
     LOG_INFO(
         "Nvidia Frame capture session started. New frames will be captured when "
         "the display is refreshed or when the mouse cursor moves.");
+
+    if (create_nvidia_encoder(device, bitrate, requested_codec, &setup_params) != 0) {
+        LOG_ERROR("Failed to create nvidia encoder!");
+        return -1;
+    }
+    
     return 0;
 }
 
 #define SHOW_DEBUG_FRAMES false
-
-void try_free_frame(NvidiaCaptureDevice* device) {
-    NVENCSTATUS enc_status;
-
-    // If there was a previous frame, we should free it first
-    if (device->frame != NULL) {
-        /*
-         * Unlock the bitstream
-         */
-        enc_status = device->p_enc_fn.nvEncUnlockBitstream(device->encoder, device->output_buffer);
-        if (enc_status != NV_ENC_SUCCESS) {
-            // If LOG_ERROR is ever desired here in the future,
-            // make sure to still UnmapInputResource before returning -1
-            LOG_FATAL("Failed to unlock bitstream buffer, status = %d", enc_status);
-        }
-        /*
-         * Unmap the input buffer
-         */
-        enc_status =
-            device->p_enc_fn.nvEncUnmapInputResource(device->encoder, device->input_buffer);
-        if (enc_status != NV_ENC_SUCCESS) {
-            // FATAL is chosen over ERROR here to prevent
-            // out-of-control runaway memory usage
-            LOG_FATAL("Failed to unmap the resource, memory is leaking! status = %d", enc_status);
-        }
-        device->frame = NULL;
-    }
-}
 
 int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     NVFBCSTATUS fbc_status;
@@ -509,72 +317,9 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 
     // If the frame is new, then free the old frame and capture+encode the new frame
 
-    // Try to free the device frame
-    try_free_frame(device);
-
     // Set the device to use the newly captured width/height
     device->width = frame_info.dwWidth;
     device->height = frame_info.dwHeight;
-
-    /*
-     * Map the frame for use by the encoder.
-     */
-    NV_ENC_MAP_INPUT_RESOURCE map_params = {0};
-    map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
-    map_params.registeredResource = device->registered_resources[grab_params.dwTextureIndex];
-    enc_status = device->p_enc_fn.nvEncMapInputResource(device->encoder, &map_params);
-    if (enc_status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to map the resource, status = %d\n", enc_status);
-        return -1;
-    }
-    device->input_buffer = map_params.mappedResource;
-
-    /*
-     * Pre-fill frame encoding information
-     */
-    NV_ENC_PIC_PARAMS enc_params = {0};
-    enc_params.version = NV_ENC_PIC_PARAMS_VER;
-    enc_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
-    enc_params.inputWidth = device->width;
-    enc_params.inputHeight = device->height;
-    enc_params.inputPitch = device->width;
-    enc_params.inputBuffer = device->input_buffer;
-    enc_params.bufferFmt = map_params.mappedBufferFmt;
-    // frame_idx starts at -1, so first frame has idx 0
-    enc_params.frameIdx = ++device->frame_idx;
-    enc_params.outputBitstream = device->output_buffer;
-    if (force_iframe) {
-        enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR;
-    }
-
-    /*
-     * Encode the frame.
-     */
-    enc_status = device->p_enc_fn.nvEncEncodePicture(device->encoder, &enc_params);
-    if (enc_status != NV_ENC_SUCCESS) {
-        // TODO: Unmap the frame! Otherwise, memory leaks here
-        LOG_ERROR("Failed to encode frame, status = %d", enc_status);
-        return -1;
-    }
-
-    /*
-     * Get the bitstream and dump to file.
-     */
-    NV_ENC_LOCK_BITSTREAM lock_params = {0};
-
-    lock_params.version = NV_ENC_LOCK_BITSTREAM_VER;
-    lock_params.outputBitstream = device->output_buffer;
-
-    enc_status = device->p_enc_fn.nvEncLockBitstream(device->encoder, &lock_params);
-    if (enc_status != NV_ENC_SUCCESS) {
-        // TODO: Unmap the frame! Otherwise, memory leaks here
-        LOG_ERROR("Failed to lock bitstream buffer, status = %d", enc_status);
-        return -1;
-    }
-
-    device->size = lock_params.bitstreamSizeInBytes;
-    device->frame = lock_params.bitstreamBufferPtr;
-    device->is_iframe = force_iframe || device->frame_idx == 0;
 
 #if SHOW_DEBUG_FRAMES
     t2 = NvFBCUtilsGetTimeInMillis();
@@ -588,60 +333,9 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     return frame_info.dwMissedFrames + 1;
 }
 
-void destroy_nvidia_encoder(NvidiaCaptureDevice* device) {
-    NVENCSTATUS enc_status;
-
-    NV_ENC_PIC_PARAMS enc_params = {0};
-    enc_params.version = NV_ENC_PIC_PARAMS_VER;
-    enc_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-
-    enc_status = device->p_enc_fn.nvEncEncodePicture(device->encoder, &enc_params);
-    if (enc_status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to flush the encoder, status = %d", enc_status);
-    }
-
-    if (device->output_buffer) {
-        enc_status =
-            device->p_enc_fn.nvEncDestroyBitstreamBuffer(device->encoder, device->output_buffer);
-        if (enc_status != NV_ENC_SUCCESS) {
-            LOG_ERROR("Failed to destroy buffer, status = %d", enc_status);
-        }
-        device->output_buffer = NULL;
-    }
-
-    /*
-     * Unregister all the resources that we had registered earlier with the
-     * encoder.
-     */
-    for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
-        if (device->registered_resources[i]) {
-            enc_status = device->p_enc_fn.nvEncUnregisterResource(device->encoder,
-                                                                  device->registered_resources[i]);
-            if (enc_status != NV_ENC_SUCCESS) {
-                LOG_ERROR("Failed to unregister resource, status = %d", enc_status);
-            }
-            device->registered_resources[i] = NULL;
-        }
-    }
-
-    /*
-     * Destroy the encode session
-     */
-    enc_status = device->p_enc_fn.nvEncDestroyEncoder(device->encoder);
-    if (enc_status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to destroy encoder, status = %d", enc_status);
-    }
-}
-
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBCSTATUS fbc_status;
-
-    // Try to free a device frame
-    try_free_frame(device);
-
-    // Destroy the encoder first
-    destroy_nvidia_encoder(device);
-
+    
     /*
      * Destroy capture session, tear down resources.
      */
