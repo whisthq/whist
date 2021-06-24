@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 import pytest
+import yaml
+import tempfile
+from pathlib import Path
+from contextlib import contextmanager
 from helpers.parse import resolve
 from hypothesis import given, example
 from hypothesis.strategies import (
@@ -27,6 +31,47 @@ example_nested_map = {
     },
     "DEV_NUM": {"dev": "twenty", "prod": "thirty"},
 }
+
+
+@contextmanager
+def temporary_config(profile_list, schema_dicts):
+    with tempfile.TemporaryDirectory() as tempdir:
+        paths = []
+        kws = {"mode": "w", "suffix": ".yml", "dir": tempdir, "delete": False}
+        with tempfile.NamedTemporaryFile(prefix="profile", **kws) as tf:
+            paths.append(tf.name)
+            tf.write(yaml.dump(profile_list))
+
+        for schema in schema_dicts:
+            with tempfile.NamedTemporaryFile(prefix="schema", **kws) as tf:
+                paths.append(tf.name)
+                tf.write(yaml.dump(schema))
+
+        yield tuple(paths)
+
+
+def test_temporary_config():
+    profile_list = ["e"]
+    schema_dicts = [{"a": 1, "b": 2}, {"c": 3, "d": {"e": 4}}]
+    with temporary_config(profile_list, schema_dicts) as temp_paths:
+        for p in temp_paths:
+            assert Path(p).exists(), "Path does not exist in contextmanager"
+
+    for p in temp_paths:
+        assert not Path(p).exists(), "Path not deleted outside contextmanager"
+
+
+# def test_temp_files():
+#     with temporary_config(["person"], [{"neil": "hansen"}]) as temp_paths:
+#         profile_path, *schema_paths = temp_paths
+#         print(temp_paths)
+#         print("Exists?", *(Path(p).exists() for p in temp_paths))
+#     print("Exists?", *(Path(p).exists() for p in temp_paths))
+#     assert False
+
+
+def write_yaml(f, data):
+    f.write(yaml.dump(data))
 
 
 @composite
