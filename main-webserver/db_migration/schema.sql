@@ -1050,13 +1050,6 @@ ALTER TABLE ONLY hardware.supported_app_images
     ADD CONSTRAINT unique_taskdef UNIQUE (task_definition);
 
 
---
--- Name: user_app_state user_app_state_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_app_state
-    ADD CONSTRAINT user_app_state_pkey PRIMARY KEY (task_id);
-
 
 --
 -- Name: event_invocation_logs event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
