@@ -525,7 +525,7 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                containers-and-ami-publish-ghcr-and-aws
+                containers-and-ami-publish-ghcr-and-aws,
             ]
         # run this if either task defs or amis job succeed
         # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
@@ -558,7 +558,7 @@ jobs:
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
-              run: 'flask command ami_upgrade ${{env.commit_hash}} ${{ needs.containers-and-ami-publish-ghcr-and-aws.outputs.region_names }}'
+              run: "flask command ami_upgrade ${{env.commit_hash}} ${{ needs.containers-and-ami-publish-ghcr-and-aws.outputs.region_names }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
