@@ -59,18 +59,18 @@ void init_clipboard_synchronizer(bool is_client);
 /**
  * @brief                          Set the clipboard to a given clipboard data
  *
- * @param clipboard				   The clipboard data to update the
+ * @param cb_chunk                 The clipboard data chunk to update the
  *                                 clipboard with
  *
- * @returns						   true on success, false on failure
+ * @returns                        true on success, false on failure
  */
-bool clipboard_synchronizer_set_clipboard(ClipboardData* clipboard);
+bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk);
 
 /**
  * @brief                          Check if the clipboard is in the midst of
  *                                 being updated
  *
- * @returns						   True if the clipboard is currently
+ * @returns                        True if the clipboard is currently
  *                                 busy being updated. This will be true
  *                                 for a some period of time after
  *                                 updateSetClipboard
@@ -80,13 +80,13 @@ bool is_clipboard_synchronizing();
 /**
  * @brief                          Get a new clipboard, if any
  *
- * @returns						   A pointer to new clipboard data
+ * @returns                        A pointer to new clipboard data chunk
  *                                 that should be sent to the server.
  *                                 NULL if the clipboard has not been
  *                                 updated since the last call to the
  *                                 clipboard
  */
-ClipboardData* clipboard_synchronizer_get_new_clipboard();
+ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk();
 
 /**
  * @brief                          Cleanup the clipboard synchronizer

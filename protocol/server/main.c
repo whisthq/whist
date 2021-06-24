@@ -2,7 +2,7 @@
  * Copyright Fractal Computers, Inc. 2020
  * @file main.c
  * @brief This file contains the main code that runs a Fractal server on a
-Windows or Linux Ubuntu computer.
+ *        Windows or Linux Ubuntu computer.
 ============================
 Usage
 ============================
@@ -228,7 +228,6 @@ int multithreaded_send_receive_tcp_packets(void* opaque) {
     LOG_INFO("multithreaded_send_receive_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
-    clock clipboard_time;
     while (!exiting) {
         // RECEIVE TCP PACKET HANDLER
         get_fractal_client_messages(true, false);
@@ -238,7 +237,7 @@ int multithreaded_send_receive_tcp_packets(void* opaque) {
         // GET CLIPBOARD HANDLER
         // If the clipboard has a new available chunk, we should send it over to the
         // client
-        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_new_clipboard();
+        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
         if (clipboard_chunk) {
             LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
             // Alloc fmsg
