@@ -31,7 +31,7 @@ extern bool has_video_rendered_yet;
 #define AUDIO_QUEUE_UPPER_LIMIT 59000
 #define TARGET_AUDIO_QUEUE_LIMIT 28000
 
-#define MAX_NUM_AUDIO_FRAMES 275
+#define MAX_NUM_AUDIO_FRAMES 25
 RingBuffer* audio_ring_buffer;
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
@@ -471,11 +471,10 @@ int32_t receive_audio(FractalPacket* packet) {
     int res = receive_packet(audio_ring_buffer, packet);
     if (res < 0) {
         return res;
-    } else if (res == 1) {
+    } else if (res > 0) {
         // we overwrote the last frame
         if (last_played_id < packet->id && last_played_id > 0) {
-            last_played_id = packet->id;
-            // pretend we played the frame
+            last_played_id = packet->id - 1;
             reset_frame(get_frame_at_id(audio_ring_buffer, last_played_id));
             LOG_INFO("Last played ID now %d", last_played_id);
         }
