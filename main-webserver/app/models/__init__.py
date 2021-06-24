@@ -6,6 +6,5 @@ from .hardware import (
     InstanceInfo,
     RegionToAmi,
     SupportedAppImages,
-    UserContainerState,
 )
 from .sales import EmailTemplates
