@@ -159,7 +159,7 @@ jobs:
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
-                  job_dependencies[microservices-deploy-auth0-hooks]="microservices"
+                  job_dependencies[microservices-deploy-auth0-rules]="microservices"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -989,6 +989,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
+                microservices-deploy-auth0-rules,
             ]
         if: always() && (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|'))
 
@@ -1298,15 +1299,15 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Auth0 Hooks: Build & Deploy Auth0 Hooks to Auth0 Tenant
-    # Build and deploy the Auth0 hooks to the Fractal Auth0 Tenant platform, with
+    # Auth0 Rules: Build & Deploy Auth0 Rules to Auth0 Tenant
+    # Build and deploy the Auth0 rules to the Fractal Auth0 Tenant platform, with
     # which our client-application interfaces with authenticating users through Auth0
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-    microservices-deploy-auth0-hooks:
-        name: "Deploy Auth0 hooks"
+    microservices-deploy-auth0-rules:
+        name: "Deploy Auth0 Rules"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-hooks|')
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-rules|')
 
         steps:
             - name: Checkout Git Repository
@@ -1355,7 +1356,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-hooks` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -1368,6 +1369,7 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
+                containers-and-ami-publish-ghcr-and-aws,
                 client-applications-publish-build-s3,
                 main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
