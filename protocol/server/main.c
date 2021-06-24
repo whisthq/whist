@@ -1161,8 +1161,6 @@ int main(int argc, char* argv[]) {
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
-    update_server_status(false, webserver_url, identifier, hex_aes_private_key);
-
     clock startup_time;
     start_timer(&startup_time);
 
@@ -1209,8 +1207,6 @@ int main(int argc, char* argv[]) {
                 }
                 read_unlock(&is_active_rwlock);
             }
-            update_server_status(num_controlling_clients > 0, webserver_url, identifier,
-                                 hex_aes_private_key);
             start_timer(&ack_timer);
         }
 
