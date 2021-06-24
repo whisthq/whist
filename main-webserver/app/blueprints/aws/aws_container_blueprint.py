@@ -33,7 +33,9 @@ def regions():
         A list of strings, where each string is the name of a region.
     """
 
-    allowed_regions = RegionToAmi.query.filter_by(region_enabled=True).distinct(RegionToAmi.region_name)
+    allowed_regions = RegionToAmi.query.filter_by(region_enabled=True).distinct(
+        RegionToAmi.region_name
+    )
 
     return jsonify([region.region_name for region in allowed_regions])
 

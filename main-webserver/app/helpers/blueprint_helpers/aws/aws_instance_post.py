@@ -146,6 +146,8 @@ def do_scale_up_if_necessary(
     Args:
         region: which region to check for scaling
         ami: which AMI to scale with
+        force_buffer: this will be used to override the recommendation for
+        number of instances to be launched by `_get_num_new_instances`
 
     Returns: List of database objects representing the instances created.
 
