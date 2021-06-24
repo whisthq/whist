@@ -47,8 +47,7 @@ jobs:
                   fi
 
             - name: Check if Code Matches Pylint Standards
-              working-directory: main-webserver
-              run: pylint app # Returns 0 if and only if code is linted
+              run: pylint main-webserver/app # Returns 0 if and only if code is linted
 
     # Heroku Testing
     # Checks unit tests on the Heroku pipeline.
