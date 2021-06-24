@@ -155,5 +155,4 @@ void flush_logs();
  */
 void destroy_logger();
 
-
 #endif  // LOGGING_H
