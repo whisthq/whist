@@ -1,16 +1,27 @@
 import { screen } from "electron"
-import { pick } from "lodash"
+import { pick, isEmpty } from "lodash"
 
 import { get, post } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
+import { appEnvironment, FractalEnvironments } from "../../../config/configs"
+import { COMMIT_SHA } from "@app/config/environment"
 
 // For the purposes of the low-level rendering which is performed by the
 // protocol, the default DPI is always 96; this is modified by a scale factor
 // on high-resolution monitors, as they scale up assets to keep sizes
 // consistent with their low-resolution counterparts.
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
+
+const isLocalEnv = () => {
+  const isLocal = appEnvironment === FractalEnvironments.LOCAL
+  if (!isLocal && (isEmpty(COMMIT_SHA) || !COMMIT_SHA)) {
+    console.log("COMMIT_SHA is empty when appEnvironment is not LOCAL!")
+    console.log("No COMMIT_SHA may create issues communicating with server.")
+  }
+  return isLocal
+}
 
 export const regionGet = async (sub: string, accessToken: string) => {
   const regions: Record<string, any> = await regionRequest(sub, accessToken)
@@ -102,7 +113,7 @@ const mandelboxRequest = async (
       username,
       region,
       dpi,
-      app: "Google Chrome",
+      client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
     },
   })
 
