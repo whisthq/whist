@@ -1,4 +1,5 @@
 from threading import Thread
+from typing import Dict, List
 import requests
 from flask import current_app
 from sqlalchemy import or_
@@ -15,7 +16,21 @@ from app.constants.instance_state_values import (
 )
 
 
-def insert_new_amis(client_commit_hash, region_to_ami_id_mapping):
+def insert_new_amis(
+    client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]
+) -> List[RegionToAmi]:
+    """
+    Inserts new AMIs into the RegionToAmi table, will be invoked from the
+    Flask CLI command to upgrade the AMIs for regions.
+    Args:
+        client_commit_hash: Commit hash of the client that is compatible with the AMIs
+                            that are going to be passed in as the other argument.
+        region_to_ami_id_mapping: Dict<Region, AMI> Dict of regions to AMIs that are compatible
+                                    with the <client_commit_hash>.
+
+    Returns:
+        A list of the created RegionToAmi objects that are created.
+    """
     new_amis = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         new_ami = RegionToAmi(
@@ -31,7 +46,20 @@ def insert_new_amis(client_commit_hash, region_to_ami_id_mapping):
     return new_amis
 
 
-def launch_new_ami_buffer(region_name, ami_id, flask_app):
+def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
+    """
+    This function will be invoked from the Flask CLI command to upgrade the AMIs for regions.
+    Inserts new AMIs into the RegionToAmi table and block until the instance is started, the
+    host service is active and marks the instance as active in the database.
+
+    Args:
+        region_name: Name of the region in which new instances neeed to be launched.
+        ami_id: AMI for the instances that need to be launched.
+        flask_app: Needed for providing the context need for interacting with the database.
+
+    Returns:
+        None.
+    """
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         # TODO: Right now buffer seems to be 1 instance if it is the first of its kind(AMI),
@@ -45,7 +73,17 @@ def launch_new_ami_buffer(region_name, ami_id, flask_app):
             _poll(new_instance.instance_name)
 
 
-def mark_instance_for_draining(active_instance):
+def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
+    """
+    Marks the instance for draining by calling the drain_and_shutdown endpoint of the host service
+    and marks the instance as draining. If the endpoint errors out with an unexpected status code,
+    we are going to mark the instance as unresponsive. We are not going to kill the instance as at
+    this point in time, we won't be sure if all the users have left the instance. While, the instance
+    is marked as draining, we won't launch associate a "mandelbox" running on this instance to an user.
+
+    Args:
+        active_instance: InstanceInfo object for the instance that need to be marked as draining.
+    """
     try:
         base_url = f"http://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
         requests.post(f"{base_url}/drain_and_shutdown")
@@ -56,15 +94,66 @@ def mark_instance_for_draining(active_instance):
         active_instance.status = HOST_SERVICE_UNRESPONSIVE
 
 
-def fetch_current_running_instances():
+def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo]:
+    """
+    Fetches the instances that are either
+        ACTIVE - Instances that were launched and have potentially users running their applications on it.
+        PRE_CONNECTION - Instances that are launched few instants ago but haven't
+                        marked themselves active in the database through host service.
+    Args:
+        active_amis -> List of active AMIs before the upgrade started. We will be using this list to differntiate 
+        between the instances launched from new AMIs that we are going to upgrade to and the current/older AMIs.
+        We can just mark all the running instances as DRAINING before we start the instances with new AMI but that
+        is going to increase the length of our unavailable window for users. This reduces the window by the time 
+        it takes to spin up an AWS instance which can be anywhere from seconds to few minutes.
+    Returns:
+        List[InstanceInfo] -> List of instanes that are currently running. Since the
+    """
     return (
         db.session.query(InstanceInfo)
-        .filter(or_(InstanceInfo.status.like(ACTIVE), InstanceInfo.status.like(PRE_CONNECTION)))
+        .filter(
+            or_(
+                InstanceInfo.status.like(ACTIVE),
+                InstanceInfo.status.like(PRE_CONNECTION),
+                InstanceInfo.aws_ami_id.in_(active_amis),
+            )
+        )
         .all()
     )
 
 
-def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
+def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> None:
+    """
+    Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
+    This happens in the following steps
+        - Get current active amis in the database, these will be marked as inactive once
+        we have sufficient buffer capacity from the new AMIs
+        - Insert the new AMIs that are passed in as an argument to this function and associate them with the
+        client_commit_hash.
+        - Launch new instances in regions with the new AMIs and wait until they are up and mark themselves as
+        active in the instances table. Since this launching the instances is going to take time, we will be using
+        a thread per each region to parallelize the process.
+        - Once the instances with the new AMIs are up and running, we will mark the instances that are running with
+        an older AMI version i.e the current active AMI versions as DRAINING to stop associating users with mandelboxes 
+        on the instances.
+        - Once all the instances across all the regions are up, mark the current active AMIs as inactive and the
+        new AMIs as active.
+
+        Edge cases:
+            - What if the argument region_to_ami_id_mapping has more regions than we currently support. This should be fine
+            as we use the regions passed in as the argument as a reference to spin up instances in new regions.
+            - What if the argument region_to_ami_id_mapping has less number of regions than we currently support. Then, we
+            would only update the AMIs in the regions that are passed in as the argument.
+
+        Args:
+            client_commit_hash: Commit hash of the client that is compatible with the AMIs
+                            that are going to be passed in as the other argument.
+            region_to_ami_id_mapping: String representation of Dict<Region, AMI>. Dict of regions to AMIs that are compatible
+                                        with the <client_commit_hash>.
+
+        Returns:
+            None
+    """
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
     for current_active_ami in current_active_amis:
@@ -90,11 +179,14 @@ def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
     for region_wise_upgrade_thread in region_wise_upgrade_threads:
         region_wise_upgrade_thread.join()
 
-    for active_instance in fetch_current_running_instances():
+    active_amis = current_active_amis.values()
+    for active_instance in fetch_current_running_instances(active_amis):
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
         new_ami.ami_active = True
-        region_current_active_ami_map[new_ami.region_name].ami_active = False
+        current_ami = region_current_active_ami_map.get(new_ami.region_name, None)
+        if current_ami is not None: # To guard against the edge case when we add a new region.
+            region_current_active_ami_map[new_ami.region_name].ami_active = False
 
     db.session.commit()

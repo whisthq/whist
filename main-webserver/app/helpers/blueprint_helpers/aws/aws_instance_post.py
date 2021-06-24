@@ -155,6 +155,10 @@ def do_scale_up_if_necessary(
     new_instances = []
     with scale_mutex[f"{region}-{ami}"]:
 
+        # num_new indicates how many new instances need to be spun up from
+        # the ami that is passed in. Usually, we calculate that through
+        # invoking `_get_num_new_instances` function. However, we can chose to
+        # ignore that recommendation by passing in the `force_buffer` value.
         num_new = 0
         if force_buffer > 0:
             num_new = force_buffer
@@ -193,7 +197,7 @@ def do_scale_up_if_necessary(
                     creation_time_utc_unix_ms=int(time.time()),
                     status=PRE_CONNECTION,
                     commit_hash=ami_obj.client_commit_hash,
-                    auth_token="",  # Will be through HTTP request `host_service` once it boots up.
+                    auth_token="",  # Will be set through HTTP request `host_service` once it boots up.
                     ip="",  # Will be set through HTTP request `host_service` once it boots up.
                 )
                 new_instances.append(new_instance)
