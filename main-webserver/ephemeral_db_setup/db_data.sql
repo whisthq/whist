@@ -21,13 +21,13 @@ SET row_security = off;
 --
 
 
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('eu-central-1', 'ami-04e791bf07624272e', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('eu-west-1', 'ami-04b85bdd938419795', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('us-east-1', 'ami-00c40082600650a9a', true, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('us-east-2', 'ami-0a7da7479f37c924a', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('us-west-1', 'ami-0bb9ea3cf997fb4ec', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('us-west-2', 'ami-0a2e1892cafee19d4', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, allowed, client_commit_hash, enabled) VALUES ('ca-central-1', 'ami-09b2b490cdf85f1f1', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('eu-central-1', 'ami-04e791bf07624272e', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('eu-west-1', 'ami-04b85bdd938419795', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('us-east-1', 'ami-00c40082600650a9a', true, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('us-east-2', 'ami-0a7da7479f37c924a', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('us-west-1', 'ami-0bb9ea3cf997fb4ec', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('us-west-2', 'ami-0a2e1892cafee19d4', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, enabled) VALUES ('ca-central-1', 'ami-09b2b490cdf85f1f1', false, 'dummy_client_hash', true);
 
 
 --

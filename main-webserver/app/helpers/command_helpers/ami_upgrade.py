@@ -23,7 +23,7 @@ def insert_new_amis(client_commit_hash, region_to_ami_id_mapping):
             ami_id=ami_id,
             client_commit_hash=client_commit_hash,
             enabled=False,
-            allowed=True,
+            region_enabled=True,
         )
         new_amis.append(new_ami)
     db.session.add_all(new_amis)

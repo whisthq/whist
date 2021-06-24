@@ -119,7 +119,7 @@ class RegionToAmi(db.Model):
         client_commit_hash: A string representing the commit hash for the client.
         enabled: A boolean that will be marked true if this AMI corresponds to
             an active versions of the client app'.
-        allowed: A boolean indicating whether or not users are allowed to deploy tasks in the
+        region_enabled: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
 
     Constraints:
@@ -138,7 +138,7 @@ class RegionToAmi(db.Model):
     ami_id = db.Column(db.String(250), nullable=False)
     client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)
     enabled = db.Column(db.Boolean, nullable=False, server_default=true())
-    allowed = db.Column(db.Boolean, nullable=False, server_default=true())
+    region_enabled = db.Column(db.Boolean, nullable=False, server_default=true())
 
 
 class SupportedAppImages(db.Model):

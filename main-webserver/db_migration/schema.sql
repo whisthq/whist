@@ -303,7 +303,7 @@ CREATE VIEW hardware.instance_sorted AS
 CREATE TABLE hardware.region_to_ami (
     region_name character varying NOT NULL,
     ami_id character varying NOT NULL,
-    allowed boolean DEFAULT true NOT NULL,
+    region_enabled boolean DEFAULT true NOT NULL,
     client_commit_hash character varying NOT NULL,
     enabled boolean DEFAULT false NOT NULL
 );
