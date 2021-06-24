@@ -22,5 +22,5 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Run Spellcheck
+            - name: Run Spellcheck from Root Directory
               uses: igsekor/pyspelling-any@v0.0.2
