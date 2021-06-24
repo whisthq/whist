@@ -155,19 +155,4 @@ void flush_logs();
  */
 void destroy_logger();
 
-/**
- * @brief                          Tell the server the WinLogon and connection
- *                                 status
- *
- * @param is_connected             The connection status to send to the server.
- *                                 Pass true if connected to a client and false
- *                                 otherwise.
- * @param host                     The webserver host to send the message to.
- * @param identifier               The string that uniquely identifies this
- *                                 instance of the protocol to the webserver.
- * @param hex_aes_private_key      The private key, as a hex string.
- */
-void update_server_status(bool is_connected, char* host, char* identifier,
-                          char* hex_aes_private_key);
-
 #endif  // LOGGING_H

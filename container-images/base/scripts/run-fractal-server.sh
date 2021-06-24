@@ -33,12 +33,6 @@ if [ -f "$PRIVATE_KEY_FILENAME" ]; then
     OPTIONS="$OPTIONS --private-key=$FRACTAL_AES_KEY"
 fi
 
-# Send in Fractal webserver url, if set
-if [ -f "$WEBSERVER_URL_FILENAME" ]; then
-    export WEBSERVER_URL=$(cat $WEBSERVER_URL_FILENAME)
-    OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
-fi
-
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
     export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
@@ -99,78 +93,6 @@ kill $fractal_server_pid ||:
 wait $fractal_application_runuser_pid ||:
 
 echo "Both fractal-application and FractalServer have exited"
-
-# If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
-if [[ ! ${WEBSERVER_URL+x} ]]; then
-    exit 0
-fi
-
-# POST $WEBSERVER_URL/logs
-#   Upload the logs from the protocol run to S3.
-# JSON Parameters:
-#   sender: "server" because these are server protocol logs
-#   identifier: "$CONTAINER_ID" because this endpoint wants task ARN
-#   secret_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
-#   logs: Appropriately JSON-sanitize `log.txt`
-# JSON Response:
-#   ID: the ID for the task for uploading logs; we need this to finish before container delete
-LOGS_TASK_ID=$(curl \
-        --header "Content-Type: application/json" \
-        --request POST \
-        --data @- \
-        $WEBSERVER_URL/logs \
-        << END \
-    | jq -er ".ID"
-{
-    "sender": "server",
-    "identifier": "$CONTAINER_ID",
-    "secret_key": "$FRACTAL_AES_KEY",
-    "logs": $(jq -Rs . < $LOG_FILENAME)
-}
-END
-)
-
-get_task_state() {
-    # GET $WEBSERVER_URL/status/$1
-    #   Get the status of the provided task.
-    # JSON Response:
-    #   state: The status for the task, "SUCCESS" on completion
-    curl -L -X GET "$WEBSERVER_URL/status/$1" | jq -e ".state"
-}
-
-echo "About to poll for log upload to finish..."
-
-# Poll for logs upload to finish
-state=$(get_task_state $LOGS_TASK_ID)
-while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
-    # Since this is post-disconnect, we can afford to query with such a low frequency.
-    # We choose to do this to reduce strain on the webserver, with the understanding
-    # that we're adding at most 5 seconds to container shutdown time in expectation.
-    sleep 5
-
-    state=$(get_task_state $LOGS_TASK_ID)
-done
-
-echo "Done polling for logs upload to finish. Sending a container/delete request to the webserver..."
-
-# POST $WEBSERVER_URL/mandelbox/delete
-#   Trigger the container deletion request in AWS.
-# JSON Parameters:
-#   container_id: The AWS container id for this container.
-#   private_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
-curl \
-    --header "Content-Type: application/json" \
-    --request POST \
-    --data @- \
-    $WEBSERVER_URL/mandelbox/delete \
-    << END
-{
-    "container_id": "$CONTAINER_ID",
-    "private_key":  "$FRACTAL_AES_KEY"
-}
-END
-
-echo "Done sending a mandelbox/delete request to the websever. Shutting down the container..."
 
 # Once the server has exited, we should just shutdown the container so it doesn't hang
 sudo shutdown now
