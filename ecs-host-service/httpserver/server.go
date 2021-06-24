@@ -274,7 +274,7 @@ func processDrainAndShutdownRequest(w http.ResponseWriter, r *http.Request, queu
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
-		err := utils.MakeError("Received a request from %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
+		err := utils.MakeError("Received a request on %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
 		logger.Error(err)
 
 		http.Error(w, utils.Sprintf("Bad request type. Expected %s, got %s", method, r.Method), http.StatusBadRequest)
@@ -304,7 +304,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Error getting body from request from %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// TODO: rename these auth_secrets to something more accurate, like `jwt`s or something.
@@ -315,7 +315,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = json.Unmarshal(body, &rawmap)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	if authenticate {
@@ -328,7 +328,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		}()
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
+			return utils.MakeError("Error getting auth_secret from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 		}
 
 		// Actually verify authentication. We check that the access token sent is
@@ -337,7 +337,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		isPermissioned := auth.HasScope(claims, "backend")
 		if err != nil || !isPermissioned {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
+			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s", r.Host, r.URL)
 		}
 	}
 
@@ -345,7 +345,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Could not fully unmarshal the body of a request sent from %s to URL %s: %s", r.Host, r.URL, err)
+		return utils.MakeError("Could not fully unmarshal the body of a request sent on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
 	// Set up the result channel
