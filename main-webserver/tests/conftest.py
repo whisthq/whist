@@ -172,7 +172,7 @@ def bulk_instance():
 @pytest.fixture
 def region_to_ami_map(app):
     all_regions = RegionToAmi.query.all()
-    region_map = {region.region_name: region.ami_id for region in all_regions if region.enabled}
+    region_map = {region.region_name: region.ami_id for region in all_regions if region.ami_active}
     return region_map
 
 

@@ -305,7 +305,7 @@ CREATE TABLE hardware.region_to_ami (
     ami_id character varying NOT NULL,
     region_enabled boolean DEFAULT true NOT NULL,
     client_commit_hash character varying NOT NULL,
-    enabled boolean DEFAULT false NOT NULL
+    ami_active boolean DEFAULT false NOT NULL
 );
 
 

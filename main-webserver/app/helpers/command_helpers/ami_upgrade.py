@@ -22,7 +22,7 @@ def insert_new_amis(client_commit_hash, region_to_ami_id_mapping):
             region_name=region_name,
             ami_id=ami_id,
             client_commit_hash=client_commit_hash,
-            enabled=False,
+            ami_active=False,
             region_enabled=True,
         )
         new_amis.append(new_ami)
@@ -66,7 +66,7 @@ def fetch_current_running_instances():
 
 def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
     region_current_active_ami_map = {}
-    current_active_amis = RegionToAmi.query.filter_by(enabled=True).all()
+    current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
     for current_active_ami in current_active_amis:
         region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
@@ -94,7 +94,7 @@ def perform_upgrade(client_commit_hash, region_to_ami_id_mapping):
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
-        new_ami.enabled = True
-        region_current_active_ami_map[new_ami.region_name].enabled = False
+        new_ami.ami_active = True
+        region_current_active_ami_map[new_ami.region_name].ami_active = False
 
     db.session.commit()

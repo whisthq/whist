@@ -117,7 +117,7 @@ class RegionToAmi(db.Model):
         ami_id: A string representing the AMI ID of the latest AMI provisioned in the region
             corresponding to this row.
         client_commit_hash: A string representing the commit hash for the client.
-        enabled: A boolean that will be marked true if this AMI corresponds to
+        ami_active: A boolean that will be marked true if this AMI corresponds to
             an active versions of the client app'.
         region_enabled: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
@@ -137,7 +137,7 @@ class RegionToAmi(db.Model):
     region_name = db.Column(db.String(250), nullable=False, primary_key=True)
     ami_id = db.Column(db.String(250), nullable=False)
     client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)
-    enabled = db.Column(db.Boolean, nullable=False, server_default=true())
+    ami_active = db.Column(db.Boolean, nullable=False, server_default=true())
     region_enabled = db.Column(db.Boolean, nullable=False, server_default=true())
 
 

@@ -87,7 +87,7 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
     monkeypatch.setattr(requests, "post", _helper)
 
     region_current_active_ami_map = {}
-    current_active_amis = RegionToAmi.query.filter_by(enabled=True).all()
+    current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
     for current_active_ami in current_active_amis:
         region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
@@ -106,7 +106,7 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
     }
 
     for upgraded_region in regions_to_upgrade:
-        assert region_current_active_ami_map[upgraded_region].enabled is False
-        assert region_wise_new_amis_added_to_db_session[upgraded_region].enabled is True
+        assert region_current_active_ami_map[upgraded_region].ami_active is False
+        assert region_wise_new_amis_added_to_db_session[upgraded_region].ami_active is True
 
     assert len(drain_and_shutdown_call_list) == num_running_instances
