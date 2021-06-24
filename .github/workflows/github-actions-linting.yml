@@ -41,4 +41,4 @@ jobs:
 
             - name: Check if Actions are Formatted
               working-directory: .github/actions
-              run: prettier --check '*.yml'
+              run: prettier --check '**/*.yml'
