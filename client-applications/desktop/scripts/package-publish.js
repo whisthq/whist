@@ -18,7 +18,7 @@ const packageNotarize = (env, version, environment, commit) => {
     "AMPLITUDE_KEY",
   ])
 
-  helpers.snowpackBuild({ ...env, VERSION: version, COMMIT_SHA: commit})
+  helpers.snowpackBuild({ ...env, VERSION: version, COMMIT_SHA: commit })
 
   const getBucketName = () => {
     let osStr

@@ -70,11 +70,11 @@ export type HostSpinUpResponse = AsyncReturnType<typeof hostSpinUp>
 export const hostSpinUpValid = (res: HostSpinUpResponse) => {
   const result = res.json?.result
   return (
-    (result?.port_32262 &&
-      result.port_32263 &&
-      result?.port_32273 &&
-      result?.aes_key &&
-      true) ||
+    (result?.port_32262 !== undefined &&
+      result?.port_32263 !== undefined &&
+      result?.port_32273 !== undefined &&
+      result?.aes_key !== undefined &&
+      true) ??
     false
   )
 }

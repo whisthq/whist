@@ -16,7 +16,7 @@ const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
 const isLocalEnv = () => {
   const isLocal = appEnvironment === FractalEnvironments.LOCAL
-  if (!isLocal && (isEmpty(COMMIT_SHA) || !COMMIT_SHA)) {
+  if (!isLocal && (isEmpty(COMMIT_SHA) || COMMIT_SHA === undefined)) {
     console.log("COMMIT_SHA is empty when appEnvironment is not LOCAL!")
     console.log("No COMMIT_SHA may create issues communicating with server.")
   }
