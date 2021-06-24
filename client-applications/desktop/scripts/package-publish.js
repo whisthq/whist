@@ -4,7 +4,7 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-const packageNotarize = (env, version, environment) => {
+const packageNotarize = (env, version, environment, commit) => {
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
@@ -18,7 +18,7 @@ const packageNotarize = (env, version, environment) => {
     "AMPLITUDE_KEY",
   ])
 
-  helpers.snowpackBuild({ ...env, VERSION: version })
+  helpers.snowpackBuild({ ...env, VERSION: version, COMMIT_SHA: commit})
 
   const getBucketName = () => {
     let osStr
@@ -59,7 +59,13 @@ if (require.main === module) {
       choices: ["dev", "staging", "prod"],
       demandOption: true,
     })
+    .option("commit", {
+      description: "Set the commit hash of the current branch",
+      type: "string",
+      requiresArg: true,
+      demandOption: true,
+    })
     .help().argv
 
-  packageNotarize({}, argv.version, argv.environment)
+  packageNotarize({}, argv.version, argv.environment, argv.commit)
 }
