@@ -101,10 +101,10 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
         PRE_CONNECTION - Instances that are launched few instants ago but haven't
                         marked themselves active in the database through host service.
     Args:
-        active_amis -> List of active AMIs before the upgrade started. We will be using this list to differntiate 
+        active_amis -> List of active AMIs before the upgrade started. We will be using this list to differntiate
         between the instances launched from new AMIs that we are going to upgrade to and the current/older AMIs.
         We can just mark all the running instances as DRAINING before we start the instances with new AMI but that
-        is going to increase the length of our unavailable window for users. This reduces the window by the time 
+        is going to increase the length of our unavailable window for users. This reduces the window by the time
         it takes to spin up an AWS instance which can be anywhere from seconds to few minutes.
     Returns:
         List[InstanceInfo] -> List of instanes that are currently running. Since the
@@ -134,7 +134,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         active in the instances table. Since this launching the instances is going to take time, we will be using
         a thread per each region to parallelize the process.
         - Once the instances with the new AMIs are up and running, we will mark the instances that are running with
-        an older AMI version i.e the current active AMI versions as DRAINING to stop associating users with mandelboxes 
+        an older AMI version i.e the current active AMI versions as DRAINING to stop associating users with mandelboxes
         on the instances.
         - Once all the instances across all the regions are up, mark the current active AMIs as inactive and the
         new AMIs as active.
@@ -186,7 +186,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     for new_ami in new_amis:
         new_ami.ami_active = True
         current_ami = region_current_active_ami_map.get(new_ami.region_name, None)
-        if current_ami is not None: # To guard against the edge case when we add a new region.
+        if current_ami is not None:  # To guard against the edge case when we add a new region.
             region_current_active_ami_map[new_ami.region_name].ami_active = False
 
     db.session.commit()
