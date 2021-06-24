@@ -16,10 +16,6 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 # Continuous Integration parameters
 CI ?= false
-WEBSERVER_AUTH_SECRET_DEV ?= testwebserverauthsecretdev
-WEBSERVER_AUTH_SECRET_STAGING ?= testwebserverauthsecretstaging
-WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecretprod
-
 
 all: build
 
@@ -37,24 +33,6 @@ endif
 ifeq ($(LOGZIO_SHIPPING_TOKEN),)
 	$(error "LOGZIO_SHIPPING_TOKEN is empty, but CI is true")
 endif
-ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
-	$(error "WEBSERVER_AUTH_SECRET_DEV is not set, but CI is true")
-endif
-ifeq ($(WEBSERVER_AUTH_SECRET_DEV),)
-	$(error "WEBSERVER_AUTH_SECRET_DEV is empty, but CI is true")
-endif
-ifeq ($(origin WEBSERVER_AUTH_SECRET_STAGING),file)
-	$(error "WEBSERVER_AUTH_SECRET_STAGING is not set, but CI is true")
-endif
-ifeq ($(WEBSERVER_AUTH_SECRET_STAGING),)
-	$(error "WEBSERVER_AUTH_SECRET_STAGING is empty, but CI is true")
-endif
-ifeq ($(origin WEBSERVER_AUTH_SECRET_PROD),file)
-	$(error "WEBSERVER_AUTH_SECRET_PROD is not set, but CI is true")
-endif
-ifeq ($(WEBSERVER_AUTH_SECRET_PROD),)
-	$(error "WEBSERVER_AUTH_SECRET_PROD is empty, but CI is true")
-endif
 else
 	$(info CI is false)
 endif
@@ -63,9 +41,6 @@ build: checkCI
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
-		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
-		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
-		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 upload: build
