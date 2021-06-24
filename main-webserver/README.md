@@ -367,7 +367,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── pgparse.py --> util for pulling down config info for local server
 │   └── retrieve_config.sh --> script to pull down config info for local server
 ├── entry.py --> Heroku app entrypoint, starts up web workers
-├── pylintrc --> pylint config
 ├── pyproject.toml --> Black config
 ├── pytest.ini --> pytest config
 ├── requirements-test.txt --> test package requirements
