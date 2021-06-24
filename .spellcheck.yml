@@ -1,0 +1,29 @@
+matrix:
+- name: Markdown
+  sources:
+  - '**/**/*.md'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+
+- name: Python
+  sources:
+  - '**/**/*.py'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+ 
+- name: Go
+  sources:
+  - '**/**/*.go'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+
+- name: C/C++
+  sources:
+  - '**/**/*.c'
+  - '**/**/*.h'
+  default_encoding: utf-8
+  aspell:
+    lang: en
