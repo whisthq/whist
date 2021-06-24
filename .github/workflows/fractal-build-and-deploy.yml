@@ -508,7 +508,7 @@ jobs:
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and publish-images-ghcr succeeds.
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and containers-and-ami-publish-ghcr-and-aws succeeds.
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
@@ -590,13 +590,13 @@ jobs:
     # Runs if deploy-task-definitions-ecs succeeds.
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
+        runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
                 ecs-task-definitions-deploy-task-definitions-ecs,
             ]
         if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -622,13 +622,13 @@ jobs:
     # Runs unconditionally after containers-and-ami-publish-ghcr-and-aws
     kill-packer-builder-instances:
         name: "Kill Packer Builder Tagged EC2 Instances"
+        runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
                 containers-and-ami-publish-ghcr-and-aws,
             ]
         if: always()
-        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -648,9 +648,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Kill All Packer Instances
-              run: |
-                  aws-hashicorp-packer-reaper list
-                  aws-hashicorp-packer-reaper terminate --older-than 45m
+              run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
             - name: Notify Slack on Job Error
               if: failure()
@@ -669,6 +667,7 @@ jobs:
     # 2. new AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
+        runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
@@ -679,8 +678,7 @@ jobs:
         # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
         # later, when we actually update amis, we make sure they were published
-        if: always() && ( needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.containers-and-ami-publish-ghcr-and-aws.result == 'success' )
-        runs-on: ubuntu-20.04
+        if: always() && (needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -988,10 +986,20 @@ jobs:
             [
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
-                main-webserver-update-fractal-services,
                 microservices-deploy-auth0-rules,
+                containers-and-ami-publish-ghcr-and-aws,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                main-webserver-update-fractal-services,
             ]
-        if: always() && (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|'))
+        # Only run client-apps deployment if none of the previous steps failed
+        if: |
+            always() && 
+            (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) && 
+            (needs.main-webserver-deploy-heroku.result != 'failure') &&
+            (needs.microservices-deploy-auth0-rules.result != 'failure') &&
+            (needs.containers-and-ami-publish-ghcr-and-aws.result != 'failure') &&
+            (needs.ecs-task-definitions-deploy-task-definitions-ecs.result != 'failure') &&
+            (needs.main-webserver-update-fractal-services.result != 'failure')
 
         strategy:
             matrix:
@@ -1035,9 +1043,8 @@ jobs:
               if: runner.os == 'Windows'
               uses: ilammy/msvc-dev-cmd@v1
 
-            ############################# Windows Configuration Steps END #############################
-
-            ############################# Unix Configuration Steps START #############################
+            #############################################################################################
+            ############################### Unix Configuration Steps START ##############################
 
             - name: Install macOS Codesigning Certificates on macOS GHA Machine
               if: runner.os == 'macOS'
@@ -1058,7 +1065,8 @@ jobs:
               working-directory: protocol
               run: ./setup-linux-build-environment.sh
 
-            ############################# Unix Configuration Steps END #############################
+            #############################################################################################
+            #################################### Publish Steps START ####################################
 
             - name: Retrieve Desktop App Version from Config Database
               id: generate-release-version
@@ -1265,7 +1273,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack on success
+            - name: Notify Slack on Job Success
               shell: python3 {0}
               if: needs.client-applications-publish-build-s3.result == 'success'
               run: |
@@ -1287,7 +1295,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: needs.client-applications-publish-build-s3.result == 'failure'
               shell: python3 {0}
               run: |
@@ -1369,10 +1377,12 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                containers-and-ami-publish-ghcr-and-aws,
-                client-applications-publish-build-s3,
                 main-webserver-deploy-heroku,
+                microservices-deploy-auth0-rules,
+                containers-and-ami-publish-ghcr-and-aws,
+                ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
+                client-applications-publish-build-s3,
             ]
         if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
@@ -1407,7 +1417,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Errors
               if: failure()
               shell: python3 {0}
               run: |
