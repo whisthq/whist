@@ -710,6 +710,7 @@ int32_t send_audio(void* opaque) {
                         LOG_INFO("Average Audio Encode Time: %f", audio_total_encode_time / 30);
                         audio_total_encode_time = 0.0;
                         LOG_INFO("Average Audio Frame Size: %f", audio_frame_size / 30.0);
+                        audio_frame_size = 0;
                     }
 
                     // TODO: make this a constant

@@ -31,7 +31,7 @@ extern bool has_video_rendered_yet;
 #define AUDIO_QUEUE_UPPER_LIMIT 59000
 #define TARGET_AUDIO_QUEUE_LIMIT 28000
 
-#define MAX_NUM_AUDIO_FRAMES 25
+#define MAX_NUM_AUDIO_FRAMES 275
 RingBuffer* audio_ring_buffer;
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
@@ -174,6 +174,10 @@ void catchup_audio() {
     if (last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) {
         last_played_id = audio_ring_buffer->max_id - 1;
     }
+    if (last_played_id >= 0 && has_video_rendered_yet && audio_ring_buffer->max_id - last_played_id > 30) {
+        last_played_id += 30;
+        LOG_INFO("Last played ID too far from max received, moving last played id to %d", last_played_id);
+    }
 }
 
 bool is_next_audio_frame_valid() {
@@ -188,6 +192,9 @@ bool is_next_audio_frame_valid() {
     int next_to_play_id = last_played_id + 1;
 
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
+    if (frame_data->id != next_to_play_id) {
+        LOG_DEBUG("Next to play ID is %d, but frame data ID %d", next_to_play_id, frame_data->id);
+    }
     return frame_data->id == next_to_play_id &&
            frame_data->num_packets == frame_data->packets_received;
 }
@@ -271,6 +278,7 @@ void update_render_context() {
     // we always encode our audio now
     int next_to_play_id = last_played_id + 1;
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
+    LOG_INFO("Moving audio frame ID %d into render context", frame_data->id);
     audio_render_context = *frame_data;
     frame_data->frame_buffer = NULL;
     // increment to indicate that we've processed the next frame
