@@ -288,7 +288,6 @@ int send_receive_tcp_packets(void* opaque) {
     LOG_INFO("send_receive_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
-    clock clipboard_time;
     while (run_send_receive_tcp_packets) {
         // RECEIVE TCP PACKET HANDLER
         // Check if TCP connection is active
@@ -297,6 +296,9 @@ int send_receive_tcp_packets(void* opaque) {
             LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
             // TODO: Should exit or recover protocol if TCP connection is lost
         }
+
+        // Update the last TCP check timer
+        start_timer((clock*)&update_data.last_tcp_check_timer);
 
         // Receive tcp buffer, if a full packet has been received
         FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
@@ -309,8 +311,7 @@ int send_receive_tcp_packets(void* opaque) {
         // SEND TCP PACKET HANDLERS:
 
         // GET CLIPBOARD HANDLER
-        // start_timer(&clipboard_time);
-        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_new_clipboard();
+        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
         if (clipboard_chunk) {
             // Alloc an fmsg
             FractalClientMessage* fmsg_clipboard = allocate_region(
@@ -319,7 +320,8 @@ int send_receive_tcp_packets(void* opaque) {
             // Init metadata to 0 to prevent sending uninitialized packets over the network
             memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
+            memcpy(&fmsg_clipboard->clipboard, clipboard_chunk,
+                   sizeof(ClipboardData) + clipboard_chunk->size);
             // Send the fmsg
             send_fmsg(fmsg_clipboard);
             // Free the fmsg
@@ -328,12 +330,13 @@ int send_receive_tcp_packets(void* opaque) {
             deallocate_region(clipboard_chunk);
         }
 
-        // TODO: update this based on overall spam time
-        // delay to avoid clipboard checking spam
-        // const int spam_time_ms = 500;
-        // if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-        //     SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
-        // }
+        // Wait until 25 ms have elapsed since we started interacting with the TCP socket, unless
+        //    the clipboard is actively being written or read
+        if (!is_clipboard_synchronizing() &&
+            get_timer(update_data.last_tcp_check_timer) < 25.0 / MS_IN_SECOND) {
+            SDL_Delay(
+                max((int)(25.0 - MS_IN_SECOND * get_timer(update_data.last_tcp_check_timer)), 1));
+        }
     }
 
     return 0;
