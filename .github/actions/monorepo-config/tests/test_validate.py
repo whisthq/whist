@@ -1,62 +1,61 @@
 #!/usr/bin/env python
 import pytest
-from helpers.validate import validate_schema_data
+import helpers.validate as validate
 
 
-@pytest.mark.skip
-def test_validate_schema_data():
+def test_must():
+    is_fn = "result must be function"
+    is_true = "result fn must return True if test_fn(value) is not falsey"
+    is_false = "result fn must throw error if test_fn(value) is falsey"
+
+    example = True
+
+    result_true = validate.must(lambda x: x is True)
+    result_false = validate.must(lambda x: x is False)
+    assert callable(result_true), is_fn
+    assert result_true(example), is_true
+    assert callable(result_false), is_fn
     with pytest.raises(AssertionError):
-        validate_schema_data(25, ())
+        assert result_false(example), is_false
+
+
+def test_validate_safe():
+    catches = "result must return list of any Assertion errors thrown"
+    empties = "result should be an empty list if no errors thrown"
+    must = validate.must
+
+    result_true = validate.validate_safe(
+        [1, 2, 3, 4, 5],
+        must(lambda x: isinstance(x, list), "be a list"),
+        must(lambda x: len(x) == 5, "length 5"),
+        must(lambda x: sum(x) == 15, "sums to 15"),
+    )
+
+    result_false = validate.validate_safe(
+        [1, 2, 3, 4, 5],
+        must(lambda x: isinstance(x, list), "be a list"),
+        must(lambda x: len(x) == 5, "length 5"),
+        must(lambda x: sum(x) == 20, "sums to 20"),
+    )
+
+    assert len(result_true) == 0, empties
+    assert len(result_false) == 1, catches
+
+
+def test_validate():
+    must = validate.must
+
+    validate.validate(
+        [1, 2, 3, 4, 5],
+        must(lambda x: isinstance(x, list), "be a list"),
+        must(lambda x: len(x) == 5, "length 5"),
+        must(lambda x: sum(x) == 15, "sums to 15"),
+    )
 
     with pytest.raises(AssertionError):
-        validate_schema_data({}, ())
-
-    with pytest.raises(AssertionError):
-        validate_schema_data({"a": 1, "b": 1, "3": "c"}, ())
-
-    with pytest.raises(AssertionError):
-        validate_schema_data({"a": 1, "b": 1, "r": "c"}, ())
-
-    with pytest.raises(AssertionError):
-        validate_schema_data({"_JDKF": "b"}, ())
-
-    with pytest.raises(AssertionError):
-        validate_schema_data({"123DKF": "b"}, ())
-
-    with pytest.raises(AssertionError):
-        validate_schema_data({"HDF*SSF": "b"}, ())
-
-    with pytest.raises(AssertionError):
-        validate_schema_data({}, ())
-
-    validate_schema_data({"A13_3": "good data", "LJDF993_": "good data"}, ())
-
-    # validate_schema_data(
-    #     {
-    #         "a": {
-    #             "h": {},
-    #             "i": {},
-    #         },
-    #         "b": {
-    #             "h": {},
-    #             "i": {},
-    #         },
-    #         "c": {},
-    #     },
-    #     ("h", "i"),
-    # )
-    with pytest.raises(AssertionError):
-        validate_schema_data(
-            {
-                "a": {
-                    "g": {},
-                    "r": {},
-                },
-                "b": {
-                    "k": {},
-                    "j": {},
-                },
-                "c": {},
-            },
-            ("h", "i"),
+        validate.validate(
+            [1, 2, 3, 4, 5],
+            must(lambda x: isinstance(x, list), "be a list"),
+            must(lambda x: len(x) == 5, "length 5"),
+            must(lambda x: sum(x) == 20, "sums to 20"),
         )
