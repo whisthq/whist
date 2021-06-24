@@ -13,15 +13,8 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
-	"github.com/fractal/fractal/ecs-host-service/metadata"
 	utils "github.com/fractal/fractal/ecs-host-service/utils"
 )
-
-// Variables for the auth_secret used to communicate between the webserver and
-// host service --- filled in by linker
-var webserverAuthSecretDev, webserverAuthSecretStaging, webserverAuthSecretProd string
-
-var webserverAuthSecret string
 
 // Constants for use in setting up the HTTPS server
 const (
@@ -364,18 +357,6 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 // Start returns a channel of events from the webserver as its first return value
 func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
-
-	// Select the correct environment (dev, staging, prod)
-	switch metadata.GetAppEnvironment() {
-	case metadata.EnvLocalDev, metadata.EnvLocalDevWithDB:
-		fallthrough
-	case metadata.EnvDev:
-		webserverAuthSecret = webserverAuthSecretDev
-	case metadata.EnvStaging:
-		webserverAuthSecret = webserverAuthSecretStaging
-	case metadata.EnvProd:
-		webserverAuthSecret = webserverAuthSecretProd
-	}
 
 	err := initializeTLS()
 	if err != nil {
