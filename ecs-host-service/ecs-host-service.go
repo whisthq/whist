@@ -126,7 +126,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// We only do this in a non-local environment.
 	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
 		if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
-			logAndReturnError("Invalid JWT access token")
+			logAndReturnError("Invalid JWT access token: %s", err)
 			return
 		}
 	}
