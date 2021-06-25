@@ -22,7 +22,7 @@ int video_encoder_send_frame(VideoEncoder *encoder);
 #define MIN_NVENC_HEIGHT 17
 
 void set_opt(VideoEncoder *encoder, char *option, char *value) {
-    int ret = av_opt_set(encoder->pCodecCtx->priv_data, option, value, 0);
+    int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
     if (ret < 0) {
         LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
     }
@@ -78,25 +78,25 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
         return NULL;
     }
 
-    // init encoder format in pCodecCtx
+    // init encoder format in context
 
     if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->pCodec = avcodec_find_encoder_by_name("h264_nvenc");
+        encoder->codec = avcodec_find_encoder_by_name("h264_nvenc");
     } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->pCodec = avcodec_find_encoder_by_name("hevc_nvenc");
+        encoder->codec = avcodec_find_encoder_by_name("hevc_nvenc");
     }
 
-    encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
-    encoder->pCodecCtx->width = encoder->out_width;
-    encoder->pCodecCtx->height = encoder->out_height;
-    encoder->pCodecCtx->bit_rate = bitrate;
-    encoder->pCodecCtx->rc_max_rate = bitrate;
-    encoder->pCodecCtx->rc_buffer_size = 4 * (bitrate / FPS);
-    encoder->pCodecCtx->time_base.num = 1;
-    encoder->pCodecCtx->time_base.den = FPS;
-    encoder->pCodecCtx->gop_size = encoder->gop_size;
-    encoder->pCodecCtx->keyint_min = 5;
-    encoder->pCodecCtx->pix_fmt = hw_format;
+    encoder->context = avcodec_alloc_context3(encoder->codec);
+    encoder->context->width = encoder->out_width;
+    encoder->context->height = encoder->out_height;
+    encoder->context->bit_rate = bitrate;
+    encoder->context->rc_max_rate = bitrate;
+    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    encoder->context->time_base.num = 1;
+    encoder->context->time_base.den = FPS;
+    encoder->context->gop_size = encoder->gop_size;
+    encoder->context->keyint_min = 5;
+    encoder->context->pix_fmt = hw_format;
 
     // enable automatic insertion of non-reference P-frames
     set_opt(encoder, "nonref_p", "1");
@@ -113,22 +113,22 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     set_opt(encoder, "delay", "0");
 
     // assign hw_device_ctx
-    av_buffer_unref(&encoder->pCodecCtx->hw_frames_ctx);
-    encoder->pCodecCtx->hw_frames_ctx = av_hwframe_ctx_alloc(encoder->hw_device_ctx);
+    av_buffer_unref(&encoder->context->hw_frames_ctx);
+    encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(encoder->hw_device_ctx);
 
     // init HWFramesContext
-    AVHWFramesContext *frames_ctx = (AVHWFramesContext *)encoder->pCodecCtx->hw_frames_ctx->data;
+    AVHWFramesContext *frames_ctx = (AVHWFramesContext *)encoder->context->hw_frames_ctx->data;
     frames_ctx->format = hw_format;
     frames_ctx->sw_format = sw_format;
     frames_ctx->width = encoder->in_width;
     frames_ctx->height = encoder->in_height;
-    if (av_hwframe_ctx_init(encoder->pCodecCtx->hw_frames_ctx) < 0) {
+    if (av_hwframe_ctx_init(encoder->context->hw_frames_ctx) < 0) {
         LOG_WARNING("Failed to initialize hardware frames context");
         destroy_video_encoder(encoder);
         return NULL;
     }
 
-    if (avcodec_open2(encoder->pCodecCtx, encoder->pCodec, NULL) < 0) {
+    if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
         LOG_WARNING("Failed to open context for stream");
         destroy_video_encoder(encoder);
         return NULL;
@@ -136,17 +136,17 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
 
     // init hardware frame
     encoder->hw_frame = av_frame_alloc();
-    int res = av_hwframe_get_buffer(encoder->pCodecCtx->hw_frames_ctx, encoder->hw_frame, 0);
+    int res = av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
     if (res < 0) {
         LOG_WARNING("Failed to init buffer for video encoder hw frames: %s", av_err2str(res));
         destroy_video_encoder(encoder);
         return NULL;
     }
 
-    // init resizing in pFilterGraph
+    // init resizing in filter_graph
 
-    encoder->pFilterGraph = avfilter_graph_alloc();
-    if (!encoder->pFilterGraph) {
+    encoder->filter_graph = avfilter_graph_alloc();
+    if (!encoder->filter_graph) {
         LOG_WARNING("Unable to create filter graph");
         destroy_video_encoder(encoder);
         return NULL;
@@ -172,14 +172,14 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     AVFilterContext *filter_contexts[N_FILTERS_NVENC] = {0};
 
     // source buffer
-    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[0], "src");
+    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
     AVBufferSrcParameters *avbsp = av_buffersrc_parameters_alloc();
     avbsp->width = encoder->in_width;
     avbsp->height = encoder->in_height;
     avbsp->format = hw_format;
     avbsp->frame_rate = (AVRational){FPS, 1};
     avbsp->time_base = (AVRational){1, FPS};
-    avbsp->hw_frames_ctx = encoder->pCodecCtx->hw_frames_ctx;
+    avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
     av_buffersrc_parameters_set(filter_contexts[0], avbsp);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
         LOG_WARNING("Unable to initialize buffer source");
@@ -187,11 +187,11 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
         return NULL;
     }
     av_free(avbsp);
-    encoder->pFilterGraphSource = filter_contexts[0];
+    encoder->filter_graph_source = filter_contexts[0];
 
     // scale_cuda
     filter_contexts[1] =
-        avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[1], "scale_cuda");
+        avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "scale_cuda");
     char options_string[60] = "";
     snprintf(options_string, 60, "w=%d:h=%d", encoder->out_width, encoder->out_height);
     if (avfilter_init_str(filter_contexts[1], options_string) < 0) {
@@ -202,12 +202,12 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
 
     // sink buffer
     if (avfilter_graph_create_filter(&filter_contexts[2], filters[2], "sink", NULL, NULL,
-                                     encoder->pFilterGraph) < 0) {
+                                     encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_video_encoder(encoder);
         return NULL;
     }
-    encoder->pFilterGraphSink = filter_contexts[2];
+    encoder->filter_graph_sink = filter_contexts[2];
 #else
 // linux currently doesn't support hw resize
 #define N_FILTERS_NVENC 2
@@ -227,14 +227,14 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     AVFilterContext *filter_contexts[N_FILTERS_NVENC] = {0};
 
     // source buffer
-    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[0], "src");
+    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
     AVBufferSrcParameters *avbsp = av_buffersrc_parameters_alloc();
     avbsp->width = encoder->in_width;
     avbsp->height = encoder->in_height;
     avbsp->format = hw_format;
     avbsp->frame_rate = (AVRational){FPS, 1};
     avbsp->time_base = (AVRational){1, FPS};
-    avbsp->hw_frames_ctx = encoder->pCodecCtx->hw_frames_ctx;
+    avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
     av_buffersrc_parameters_set(filter_contexts[0], avbsp);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
         LOG_WARNING("Unable to initialize buffer source");
@@ -242,15 +242,15 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
         return NULL;
     }
     av_free(avbsp);
-    encoder->pFilterGraphSource = filter_contexts[0];
+    encoder->filter_graph_source = filter_contexts[0];
     // sink buffer
     if (avfilter_graph_create_filter(&filter_contexts[1], filters[1], "sink", NULL, NULL,
-                                     encoder->pFilterGraph) < 0) {
+                                     encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_video_encoder(encoder);
         return NULL;
     }
-    encoder->pFilterGraphSink = filter_contexts[1];
+    encoder->filter_graph_sink = filter_contexts[1];
 #endif
 
     // connect the filters in a simple line
@@ -262,7 +262,7 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
         }
     }
 
-    int err = avfilter_graph_config(encoder->pFilterGraph, NULL);
+    int err = avfilter_graph_config(encoder->filter_graph, NULL);
     if (err < 0) {
         LOG_WARNING("Unable to configure the filter graph: %s", av_err2str(err));
         destroy_video_encoder(encoder);
@@ -319,45 +319,45 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
         return NULL;
     }
 
-    // init encoder format in pCodecCtx
+    // init encoder format in context
 
     if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->pCodec = avcodec_find_encoder_by_name("h264_qsv");
+        encoder->codec = avcodec_find_encoder_by_name("h264_qsv");
     } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->pCodec = avcodec_find_encoder_by_name("hevc_qsv");
+        encoder->codec = avcodec_find_encoder_by_name("hevc_qsv");
     }
 
-    encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
-    encoder->pCodecCtx->width = encoder->out_width;
-    encoder->pCodecCtx->height = encoder->out_height;
-    encoder->pCodecCtx->bit_rate = bitrate;
-    encoder->pCodecCtx->rc_max_rate = bitrate;
-    encoder->pCodecCtx->rc_buffer_size = 4 * (bitrate / FPS);
-    encoder->pCodecCtx->time_base.num = 1;
-    encoder->pCodecCtx->time_base.den = FPS;
-    encoder->pCodecCtx->gop_size = encoder->gop_size;
-    encoder->pCodecCtx->keyint_min = 5;
-    encoder->pCodecCtx->pix_fmt = hw_format;
+    encoder->context = avcodec_alloc_context3(encoder->codec);
+    encoder->context->width = encoder->out_width;
+    encoder->context->height = encoder->out_height;
+    encoder->context->bit_rate = bitrate;
+    encoder->context->rc_max_rate = bitrate;
+    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    encoder->context->time_base.num = 1;
+    encoder->context->time_base.den = FPS;
+    encoder->context->gop_size = encoder->gop_size;
+    encoder->context->keyint_min = 5;
+    encoder->context->pix_fmt = hw_format;
 
     // assign hw_device_ctx
-    av_buffer_unref(&encoder->pCodecCtx->hw_frames_ctx);
-    encoder->pCodecCtx->hw_frames_ctx = av_hwframe_ctx_alloc(encoder->hw_device_ctx);
+    av_buffer_unref(&encoder->context->hw_frames_ctx);
+    encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(encoder->hw_device_ctx);
 
     // init HWFramesContext
-    AVHWFramesContext *frames_ctx = (AVHWFramesContext *)encoder->pCodecCtx->hw_frames_ctx->data;
+    AVHWFramesContext *frames_ctx = (AVHWFramesContext *)encoder->context->hw_frames_ctx->data;
     frames_ctx->format = hw_format;
     frames_ctx->sw_format = sw_format;
     frames_ctx->width = encoder->in_width;
     frames_ctx->height = encoder->in_height;
     frames_ctx->initial_pool_size = 2;
 
-    if (av_hwframe_ctx_init(encoder->pCodecCtx->hw_frames_ctx) < 0) {
+    if (av_hwframe_ctx_init(encoder->context->hw_frames_ctx) < 0) {
         LOG_WARNING("Failed to initialize hardware frames context");
         destroy_video_encoder(encoder);
         return NULL;
     }
 
-    if (avcodec_open2(encoder->pCodecCtx, encoder->pCodec, NULL) < 0) {
+    if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
         LOG_WARNING("Failed to open context for stream");
         destroy_video_encoder(encoder);
         return NULL;
@@ -365,17 +365,17 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
 
     // init hardware frame
     encoder->hw_frame = av_frame_alloc();
-    int res = av_hwframe_get_buffer(encoder->pCodecCtx->hw_frames_ctx, encoder->hw_frame, 0);
+    int res = av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
     if (res < 0) {
         LOG_WARNING("Failed to init buffer for video encoder hw frames: %s", av_err2str(res));
         destroy_video_encoder(encoder);
         return NULL;
     }
 
-    // init resizing in pFilterGraph
+    // init resizing in filter_graph
 
-    encoder->pFilterGraph = avfilter_graph_alloc();
-    if (!encoder->pFilterGraph) {
+    encoder->filter_graph = avfilter_graph_alloc();
+    if (!encoder->filter_graph) {
         LOG_WARNING("Unable to create filter graph");
         destroy_video_encoder(encoder);
         return NULL;
@@ -399,14 +399,14 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
     AVFilterContext *filter_contexts[N_FILTERS_QSV] = {0};
 
     // source buffer
-    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[0], "src");
+    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
     AVBufferSrcParameters *avbsp = av_buffersrc_parameters_alloc();
     avbsp->width = encoder->in_width;
     avbsp->height = encoder->in_height;
     avbsp->format = hw_format;
     avbsp->frame_rate = (AVRational){FPS, 1};
     avbsp->time_base = (AVRational){1, FPS};
-    avbsp->hw_frames_ctx = encoder->pCodecCtx->hw_frames_ctx;
+    avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
     av_buffersrc_parameters_set(filter_contexts[0], avbsp);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
         LOG_WARNING("Unable to initialize buffer source");
@@ -414,12 +414,12 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
         return NULL;
     }
     av_free(avbsp);
-    encoder->pFilterGraphSource = filter_contexts[0];
+    encoder->filter_graph_source = filter_contexts[0];
 
     // scale_qsv (this is not tested yet, but should either just work or be easy
     // to fix on QSV-supporting machines)
     filter_contexts[1] =
-        avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[1], "scale_qsv");
+        avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "scale_qsv");
     char options_string[60] = "";
     snprintf(options_string, 60, "w=%d:h=%d", encoder->out_width, encoder->out_height);
     if (avfilter_init_str(filter_contexts[1], options_string) < 0) {
@@ -430,12 +430,12 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
 
     // sink buffer
     if (avfilter_graph_create_filter(&filter_contexts[2], filters[2], "sink", NULL, NULL,
-                                     encoder->pFilterGraph) < 0) {
+                                     encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_video_encoder(encoder);
         return NULL;
     }
-    encoder->pFilterGraphSink = filter_contexts[2];
+    encoder->filter_graph_sink = filter_contexts[2];
 
     // connect the filters in a simple line
     for (int i = 0; i < N_FILTERS_QSV - 1; ++i) {
@@ -446,7 +446,7 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
         }
     }
 
-    int err = avfilter_graph_config(encoder->pFilterGraph, NULL);
+    int err = avfilter_graph_config(encoder->filter_graph, NULL);
     if (err < 0) {
         LOG_WARNING("Unable to configure the filter graph: %s", av_err2str(err));
         destroy_video_encoder(encoder);
@@ -498,10 +498,10 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
                          (uint8_t *)encoder->sw_frame_buffer, out_format, encoder->out_width,
                          encoder->out_height, 1);
 
-    // init resizing and resampling in pFilterGraph
+    // init resizing and resampling in filter_graph
 
-    encoder->pFilterGraph = avfilter_graph_alloc();
-    if (!encoder->pFilterGraph) {
+    encoder->filter_graph = avfilter_graph_alloc();
+    if (!encoder->filter_graph) {
         LOG_WARNING("Unable to create filter graph");
         destroy_video_encoder(encoder);
         return NULL;
@@ -526,7 +526,7 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     AVFilterContext *filter_contexts[N_FILTERS_SW] = {0};
 
     // source buffer
-    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[0], "src");
+    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
     av_opt_set_int(filter_contexts[0], "width", encoder->in_width, AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(filter_contexts[0], "height", encoder->in_height, AV_OPT_SEARCH_CHILDREN);
     av_opt_set(filter_contexts[0], "pix_fmt", av_get_pix_fmt_name(in_format),
@@ -537,10 +537,10 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
         destroy_video_encoder(encoder);
         return NULL;
     }
-    encoder->pFilterGraphSource = filter_contexts[0];
+    encoder->filter_graph_source = filter_contexts[0];
 
     // format
-    filter_contexts[1] = avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[1], "format");
+    filter_contexts[1] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "format");
     av_opt_set(filter_contexts[1], "pix_fmts", av_get_pix_fmt_name(out_format),
                AV_OPT_SEARCH_CHILDREN);
     if (avfilter_init_str(filter_contexts[1], NULL) < 0) {
@@ -550,7 +550,7 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     }
 
     // scale
-    filter_contexts[2] = avfilter_graph_alloc_filter(encoder->pFilterGraph, filters[2], "scale");
+    filter_contexts[2] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[2], "scale");
     char options_string[60] = "";
     snprintf(options_string, 60, "w=%d:h=%d", encoder->out_width, encoder->out_height);
     if (avfilter_init_str(filter_contexts[2], options_string) < 0) {
@@ -561,12 +561,12 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
 
     // sink buffer
     if (avfilter_graph_create_filter(&filter_contexts[3], filters[3], "sink", NULL, NULL,
-                                     encoder->pFilterGraph) < 0) {
+                                     encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_video_encoder(encoder);
         return NULL;
     }
-    encoder->pFilterGraphSink = filter_contexts[3];
+    encoder->filter_graph_sink = filter_contexts[3];
 
     // connect the filters in a simple line
     for (int i = 0; i < N_FILTERS_SW - 1; ++i) {
@@ -578,7 +578,7 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     }
 
     // configure the graph
-    int err = avfilter_graph_config(encoder->pFilterGraph, NULL);
+    int err = avfilter_graph_config(encoder->filter_graph, NULL);
     if (err < 0) {
         LOG_WARNING("Unable to configure the filter graph: %s", av_err2str(err));
         destroy_video_encoder(encoder);
@@ -588,31 +588,31 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     // init transfer frame
     encoder->filtered_frame = av_frame_alloc();
 
-    // init encoder format in pCodecCtx
+    // init encoder format in context
 
     if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->pCodec = avcodec_find_encoder_by_name("libx264");
+        encoder->codec = avcodec_find_encoder_by_name("libx264");
     } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->pCodec = avcodec_find_encoder_by_name("libx265");
+        encoder->codec = avcodec_find_encoder_by_name("libx265");
     }
 
-    encoder->pCodecCtx = avcodec_alloc_context3(encoder->pCodec);
-    encoder->pCodecCtx->width = encoder->out_width;
-    encoder->pCodecCtx->height = encoder->out_height;
-    encoder->pCodecCtx->bit_rate = bitrate;
-    encoder->pCodecCtx->rc_max_rate = bitrate;
-    encoder->pCodecCtx->rc_buffer_size = 4 * (bitrate / FPS);
-    encoder->pCodecCtx->time_base.num = 1;
-    encoder->pCodecCtx->time_base.den = FPS;
-    encoder->pCodecCtx->gop_size = encoder->gop_size;
-    encoder->pCodecCtx->keyint_min = 5;
-    encoder->pCodecCtx->pix_fmt = out_format;
-    encoder->pCodecCtx->max_b_frames = 0;
+    encoder->context = avcodec_alloc_context3(encoder->codec);
+    encoder->context->width = encoder->out_width;
+    encoder->context->height = encoder->out_height;
+    encoder->context->bit_rate = bitrate;
+    encoder->context->rc_max_rate = bitrate;
+    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    encoder->context->time_base.num = 1;
+    encoder->context->time_base.den = FPS;
+    encoder->context->gop_size = encoder->gop_size;
+    encoder->context->keyint_min = 5;
+    encoder->context->pix_fmt = out_format;
+    encoder->context->max_b_frames = 0;
 
     set_opt(encoder, "preset", "fast");
     set_opt(encoder, "tune", "zerolatency");
 
-    if (avcodec_open2(encoder->pCodecCtx, encoder->pCodec, NULL) < 0) {
+    if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
         LOG_WARNING("Failed to open context for stream");
         destroy_video_encoder(encoder);
         return NULL;
@@ -662,12 +662,12 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         return;
     }
 
-    if (encoder->pCodecCtx) {
-        avcodec_free_context(&encoder->pCodecCtx);
+    if (encoder->context) {
+        avcodec_free_context(&encoder->context);
     }
 
-    if (encoder->pFilterGraph) {
-        avfilter_graph_free(&encoder->pFilterGraph);
+    if (encoder->filter_graph) {
+        avfilter_graph_free(&encoder->filter_graph);
     }
 
     if (encoder->hw_device_ctx) {
@@ -690,7 +690,7 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
     }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
     encoder->sw_frame->pts +=
-        encoder->pCodecCtx->gop_size - (encoder->sw_frame->pts % encoder->pCodecCtx->gop_size);
+        encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
     encoder->sw_frame->key_frame = 1;
 }
 
@@ -787,22 +787,22 @@ int video_encoder_send_frame(VideoEncoder *encoder) {
         active_frame = encoder->hw_frame;
     }
 
-    int res = av_buffersrc_add_frame(encoder->pFilterGraphSource, active_frame);
+    int res = av_buffersrc_add_frame(encoder->filter_graph_source, active_frame);
     if (res < 0) {
         LOG_WARNING("Error submitting frame to the filter graph: %s", av_err2str(res));
     }
 
     if (encoder->hw_frame) {
         // have to re-create buffers after sending to filter graph
-        av_hwframe_get_buffer(encoder->pCodecCtx->hw_frames_ctx, encoder->hw_frame, 0);
+        av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
     }
 
     int res_buffer;
 
     // submit all available frames to the encoder
     while ((res_buffer =
-                av_buffersink_get_frame(encoder->pFilterGraphSink, encoder->filtered_frame)) >= 0) {
-        int res_encoder = avcodec_send_frame(encoder->pCodecCtx, encoder->filtered_frame);
+                av_buffersink_get_frame(encoder->filter_graph_sink, encoder->filtered_frame)) >= 0) {
+        int res_encoder = avcodec_send_frame(encoder->context, encoder->filtered_frame);
 
         // unref the frame so it may be reused
         av_frame_unref(encoder->filtered_frame);
@@ -825,7 +825,7 @@ int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
     int res_encoder;
 
     // receive_packet already calls av_packet_unref, no need to reinitialize packet
-    res_encoder = avcodec_receive_packet(encoder->pCodecCtx, packet);
+    res_encoder = avcodec_receive_packet(encoder->context, packet);
     if (res_encoder == AVERROR(EAGAIN) || res_encoder == AVERROR(EOF)) {
         return 1;
     } else if (res_encoder < 0) {

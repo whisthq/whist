@@ -32,17 +32,20 @@ Custom Types
 #define MAX_ENCODER_PACKETS 20
 
 typedef struct VideoEncoder {
-    const AVCodec* pCodec;
-    AVCodecContext* pCodecCtx;
-    AVFilterGraph* pFilterGraph;
-    AVFilterContext* pFilterGraphSource;
-    AVFilterContext* pFilterGraphSink;
+    // FFmpeg members to encode and scale video
+    const AVCodec* codec;
+    AVCodecContext* context;
+    AVFilterGraph* filter_graph;
+    AVFilterContext* filter_graph_source;
+    AVFilterContext* filter_graph_sink;
     AVBufferRef* hw_device_ctx;
     int frames_since_last_iframe;
 
+    // packet metadata + data
     int num_packets;
     AVPacket packets[MAX_ENCODER_PACKETS];
 
+    // frame metadata + data
     int in_width, in_height;
     int out_width, out_height;
     int gop_size;
