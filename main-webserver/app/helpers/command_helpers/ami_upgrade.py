@@ -21,8 +21,9 @@ def insert_new_amis(
     client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]
 ) -> List[RegionToAmi]:
     """
-    Inserts new AMIs into the RegionToAmi table, will be invoked from the
-    Flask CLI command to upgrade the AMIs for regions.
+    Inserts new AMIs (but doesn't mark them as activate) into the RegionToAmi table,
+    will be invoked from the Flask CLI command to upgrade the AMIs for regions.
+    We should mark the new AMIs as active only after we cleanup the existing instances and AMIs.
     Args:
         client_commit_hash: Commit hash of the client that is compatible with the AMIs
                             that are going to be passed in as the other argument.
@@ -63,8 +64,6 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
     """
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
-        # TODO: Right now buffer seems to be 1 instance if it is the first of its kind(AMI),
-        #       Probably move this to a config.
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
         new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
         for new_instance in new_instances:
@@ -79,7 +78,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
     Marks the instance for draining by calling the drain_and_shutdown endpoint of the host service
     and marks the instance as draining. If the endpoint errors out with an unexpected status code,
     we are going to mark the instance as unresponsive. We are not going to kill the instance as at
-    this point in time, we won't be sure if all the users have left the instance. While, the instance
+    this point in time, we won't be sure if all the users have left the instance. Once the instance
     is marked as draining, we won't launch associate a "mandelbox" running on this instance to an user.
 
     Args:
@@ -91,6 +90,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = DRAINING
+        db.session.commit()
     except requests.exceptions.RequestException:
         active_instance.status = HOST_SERVICE_UNRESPONSIVE
 

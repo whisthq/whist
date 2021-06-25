@@ -132,6 +132,13 @@ def register_handlers(app: Flask):
 
 
 def register_commands(app):
+    """
+    Registers all blueprints (cli commands) for the Flask app
+
+    Args:
+        - app: Flask object
+    """
+
     from commands import command_bp
 
     app.register_blueprint(command_bp)

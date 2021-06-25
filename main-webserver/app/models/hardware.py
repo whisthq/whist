@@ -21,7 +21,7 @@ class InstanceInfo(db.Model):
         last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         creation_time_utc_unix_ms (int):  When was this instance created?
         aws_ami_id (str): what image is this machine based on?
-        status (str): either PRE-CONNECTION, ACTIVE, or DRAINING
+        status (str): either PRE_CONNECTION, ACTIVE, HOST_SERVICE_UNRESPONSIVE or DRAINING
         commit_hash (str): what commit hash of our infrastructure is this machine running?"""
 
     __tablename__ = "instance_info"
