@@ -1,5 +1,5 @@
 import { screen } from "electron"
-import { pick, isEmpty } from "lodash"
+import { isEmpty } from "lodash"
 
 import { get, post } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
