@@ -12,7 +12,7 @@ import { COMMIT_SHA } from "@app/config/environment"
 // protocol, the default DPI is always 96; this is modified by a scale factor
 // on high-resolution monitors, as they scale up assets to keep sizes
 // consistent with their low-resolution counterparts.
-const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
+export const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
 const isLocalEnv = () => {
   const isLocal = appEnvironment === FractalEnvironments.LOCAL
@@ -37,10 +37,11 @@ export const regionGet = async (sub: string, accessToken: string) => {
 export const mandelboxCreate = async (
   sub: string,
   accessToken: string,
+  dpi: number,
   region?: AWSRegion
 ) => {
   region = region ?? (await regionGet(sub, accessToken))
-  const response = await mandelboxRequest(sub, accessToken, region, getDPI())
+  const response = await mandelboxRequest(sub, accessToken, region, dpi)
   return response
 }
 
@@ -68,38 +69,7 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorUnauthorized(response) &&
   !mandelboxCreateErrorMaintenance(response)
 
-export const mandelboxPolling = async (taskID: string, accessToken: string) =>
-  await taskStatus(taskID, accessToken)
-
-export const mandelboxPollingError = (
-  response: AsyncReturnType<typeof mandelboxPolling>
-) => (response?.json?.state ?? "") === ""
-
-export const mandelboxPollingSuccess = (
-  response: AsyncReturnType<typeof mandelboxPolling>
-) => response?.json?.state === "SUCCESS"
-
-export const mandelboxPollingPending = (
-  response: AsyncReturnType<typeof mandelboxPolling>
-) => response?.json?.state !== "SUCCESS" && response?.json?.state !== "FAILURE"
-
-export const mandelboxPollingPorts = (
-  response: AsyncReturnType<typeof mandelboxPolling>
-) => pick(response?.json?.output, ["port_32262", "port_32263", "port_32273"])
-
-export const mandelboxPollingIP = (
-  response: AsyncReturnType<typeof mandelboxPolling>
-) => response?.json?.output?.ip
-
-export const mandelboxPollingSecretKey = (
-  response: AsyncReturnType<typeof mandelboxPolling>
-) => response?.json?.output?.secret_key
-
 // Helper functions
-
-const taskStatus = async (taskID: string, accessToken: string) =>
-  get({ endpoint: "/status/" + taskID, accessToken })
-
 const mandelboxRequest = async (
   username: string,
   accessToken: string,
