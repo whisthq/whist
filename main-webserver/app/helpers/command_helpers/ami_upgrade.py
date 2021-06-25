@@ -136,7 +136,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         active in the instances table. Since this launching the instances is going to take time, we will be using
         a thread per each region to parallelize the process.
         - Once the instances with the new AMIs are up and running, we will mark the instances that are running with
-        an older AMI version i.e the current active AMI versions as DRAINING to stop associating users with mandelboxes
+        an older AMI version (i.e the current active AMI versions) as DRAINING to stop associating users with mandelboxes
         on the instances.
         - Once all the instances across all the regions are up, mark the current active AMIs as inactive and the
         new AMIs as active.
