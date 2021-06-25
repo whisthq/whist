@@ -128,8 +128,13 @@ func VerifyWithUserID(accessToken RawJWT, userID fctypes.UserID) (jwt.MapClaims,
 		return claims, err
 	}
 
-	if claims["sub"] != userID {
-		return claims, utils.MakeError(`userID "%s" does not match JWT's expected "%s"`, userID, claims["sub"])
+	jwtID, ok := claims["sub"].(string)
+	if !ok {
+		return claims, utils.MakeError("Couldn't cast JWT-provided sub %v into string!", claims["sub"])
+	}
+	if jwtID != string(userID) {
+		logger.Errorf("JWT USERID as char array: %+v, JWT's provided: %+v", strings.Split(string(userID), ""), strings.Split(jwtID, ""))
+		return claims, utils.MakeError(`userID "%s" does not match JWT's provided "%s"`, userID, jwtID)
 	}
 
 	return claims, nil
