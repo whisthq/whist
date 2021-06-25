@@ -5,6 +5,7 @@ from flask import current_app
 from sqlalchemy import or_
 
 from app.models import db, RegionToAmi, InstanceInfo
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
@@ -107,8 +108,10 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
         is going to increase the length of our unavailable window for users. This reduces the window by the time
         it takes to spin up an AWS instance which can be anywhere from seconds to few minutes.
     Returns:
-        List[InstanceInfo] -> List of instances that are currently running. Since the
+        List[InstanceInfo] -> List of instances that are currently running.
     """
+    # 5sec arbitrarily decided as sufficient timeout when using with_for_update
+    set_local_lock_timeout(5)
     return (
         db.session.query(InstanceInfo)
         .filter(
@@ -118,6 +121,7 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
                 InstanceInfo.aws_ami_id.in_(active_amis),
             )
         )
+        .with_for_update(skip_locked=True)
         .all()
     )
 
