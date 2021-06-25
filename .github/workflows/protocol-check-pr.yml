@@ -206,13 +206,6 @@ jobs:
                   cd build
                   ninja clang-tidy || EXIT /B 1
 
-            # Verify that doxygen documentation is well-formed
-            - name: Build Protocol Documentation on Linux
-              if: runner.os == 'Linux' || runner.os == 'macOS'
-              working-directory: protocol/build
-              run: |
-                  make docs -j
-
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
               if: runner.os == 'Linux'
