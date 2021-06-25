@@ -42,7 +42,7 @@ def has_scope(scope: str) -> bool:
     """
 
     verify_jwt_in_request(optional=True)
-
+    print(f"scope of request: {get_jwt().get('scope', '').split()}")
     return scope in get_jwt().get("scope", "").split()
 
 
