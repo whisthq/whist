@@ -1,22 +1,49 @@
-/*
- * Video decoding via FFmpeg library.
- *
- * Copyright Fractal Computers, Inc. 2020
- **/
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file videodecode.c
+ * @brief This file contains the code to create a video decoder and use that
+ *        decoder to decode frames.
+============================
+Usage
+============================
+Video is decoded from H264 via ffmpeg; H265 is supported, but not currently used.
+Hardware-accelerated decoders are given priority, but if those fail, we decode on the CPU. All
+frames are eventually moved to the CPU for scaling and color conversion. Create a decoder via
+create_video_decoder. To decode a frame, call video_decoder_decode on the decoder and the encoded
+packets. To destroy the decoder when finished, destroy the encoder using video_decoder_decode.
+*/
 #if defined(_WIN32)
 #pragma warning(disable : 4706)  // assignment within conditional warning
 #endif
 
+/*
+============================
+Includes
+============================
+*/
 #include "videodecode.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+============================
+Private Functions
+============================
+*/
+static void set_opt(VideoDecoder* decoder, char* option, char* value);
+void set_decoder_opts(VideoDecoder* decoder);
+int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type);
+enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts, enum AVPixelFormat match_pix_fmt);
+enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts);
+int try_setup_video_decoder(VideoDecoder* decoder);
+static bool try_next_decoder(VideoDecoder* decoder);
 void destroy_video_decoder_members(VideoDecoder* decoder);
 
 #define SHOW_DECODER_LOGS false
 
 #if SHOW_DECODER_LOGS
+void swap_decoder(void* t, int t2, const char* fmt, va_list vargs);
 void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
     UNUSED(t);
     UNUSED(t2);
@@ -25,7 +52,20 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
 }
 #endif
 
+/*
+============================
+Private Function Implementations
+============================
+*/
 static void set_opt(VideoDecoder* decoder, char* option, char* value) {
+    /*
+        Wrapper function to set decoder options.
+
+        Arguments:
+            decoder (VideoDecoder*): video decoder to set options for
+            option (char*): name of option as string
+            value (char*): value of option as string
+    */
     int ret = av_opt_set(decoder->context->priv_data, option, value, 0);
     if (ret < 0) {
         LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
@@ -33,12 +73,28 @@ static void set_opt(VideoDecoder* decoder, char* option, char* value) {
 }
 
 void set_decoder_opts(VideoDecoder* decoder) {
+    /*
+        Set any decoder options common across all decoders.
+
+        Arguments:
+            decoder (VideoDecoder*): decoder whose options we are setting
+    */
     // decoder->context->flags |= AV_CODEC_FLAG_LOW_DELAY;
     // decoder->context->flags2 |= AV_CODEC_FLAG2_FAST;
     set_opt(decoder, "async_depth", "1");
 }
 
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
+    /*
+        Initialize a hardware-accelerated decoder with the given context and device type. Wrapper around FFmpeg functions to do so.
+
+        Arguments:
+            ctx (AVCodecContext*): context used to create the hardware decoder
+            type (const enum AVHWDeviceType): hardware device type
+
+        Returns:
+            (int): 0 on success, negative error on failure
+    */
     int err = 0;
 
     if ((err = av_hwdevice_ctx_create(&ctx->hw_device_ctx, type, NULL, NULL, 0)) < 0) {
@@ -51,8 +107,20 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
 
 enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
                                 enum AVPixelFormat match_pix_fmt) {
+    /*
+        Determine if match_pix_fmt is in the array of pixel formats given in pix_fmts. This is called as a helper function in FFmpeg.
+
+        Arguments:
+            ctx (AVCodecContext*): unused, but required for the function signature by FFmpeg.
+            pix_fmts (const enum AVPixelFormat*): Array of pixel formats to search through
+            match_pix_fmt (enum AVPixelFormat): pixel format we want to find
+
+        Returns:
+            (enum AVPixelFormat): the match_pix_fmt if found; otherwise, the first entry of pix_fmts if pix_fmts is a valid format; otherwise, AV_PIX_FMT_NONE.
+    */
     UNUSED(ctx);
 
+    // log all the entries of pix_fmts as supported formats.
     char supported_formats[2000] = "";
     int len = 2000;
     int i = 0;
@@ -72,16 +140,28 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
         }
     }
 
+    // default to the first entry of pix_fmts if we couldn't find a match
     if (*pix_fmts != -1) {
         LOG_WARNING("Hardware format not found, using format %s", av_get_pix_fmt_name(*pix_fmts));
         return *pix_fmts;
     }
 
+    // There were no supported formats.
     LOG_WARNING("Failed to get HW surface format.");
     return AV_PIX_FMT_NONE;
 }
 
 enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
+    /*
+        Choose a format for the video decoder. Used as a callback function in FFmpeg. This is a wrapper around match_fmt unless the decoder wants to use QSV format, in which case we have to create a different hardware device.
+
+        Arguments:
+            ctx (AVCodecContext*): the context being used for decoding
+            pix_fmts (const enum AVPixelFormat*): list of format choices
+
+        Returns:
+            (enum AVPixelFormat): chosen pixel format
+     */
     VideoDecoder* decoder = ctx->opaque;
 
     enum AVPixelFormat match = match_format(ctx, pix_fmts, decoder->match_fmt);
@@ -125,14 +205,16 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
 }
 
 int try_setup_video_decoder(VideoDecoder* decoder) {
+    /*
+        Try to setup a video decoder by checking to see if we can create AVCodecs with the specified device type and video codec.
+
+        Arguments:
+            decoder (VideoDecoder*): decoder struct with device type and codec type that we want to setup.
+
+        Returns:
+            0 on success, -1 on failure
+    */
     // setup the AVCodec and AVFormatContext
-    // avcodec_register_all is deprecated on FFmpeg 4+
-    // only Linux uses FFmpeg 3.4.x because of canonical system packages
-#if LIBAVCODEC_VERSION_MAJOR < 58
-    LOG_INFO("OLD VERSON FFMPEG: %d.%d.%d", LIBAVCODEC_VERSION_MAJOR, LIBAVCODEC_VERSION_MINOR,
-             LIBAVCODEC_VERSION_MICRO);
-    avcodec_register_all();
-#endif
 
     destroy_video_decoder_members(decoder);
 
@@ -276,6 +358,7 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
     return 0;
 }
 
+// Indicate in what order we should try decoding. Software is always last - we prefer hardware acceleration whenever possible.
 #if defined(_WIN32)
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER,
                                    DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
@@ -288,8 +371,16 @@ DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
 
-// Returns false if there are no more decoders that work
 static bool try_next_decoder(VideoDecoder* decoder) {
+    /*
+        Keep trying different decode types until we find one that works.
+        
+        Arguments:
+            decoder (VideoDecoder*): decoder we want to set up
+
+        Returns:
+            (bool): True if we found a working decoder, False if all decoders failed
+    */
     if (decoder->can_use_hardware) {
         unsigned int i = 0;
         if (decoder->type != DECODE_TYPE_NONE) {
@@ -304,6 +395,7 @@ static bool try_next_decoder(VideoDecoder* decoder) {
 
         LOG_INFO("Trying decoder #%d", i);
 
+        // loop through all decoders until we find one that works
         for (; i < NUM_DECODER_TYPES; i++) {
             decoder->type = decoder_precedence[i];
             if (try_setup_video_decoder(decoder) < 0) {
@@ -321,6 +413,7 @@ static bool try_next_decoder(VideoDecoder* decoder) {
         LOG_WARNING("Video decoder: Failed, No more decoders, All decoders failed!");
         return false;
     } else {
+        // if no hardware support for decoding is found, we should try software immediately.
         LOG_WARNING("Video Decoder: NO HARDWARE");
         decoder->type = DECODE_TYPE_SOFTWARE;
         if (try_setup_video_decoder(decoder) < 0) {
@@ -333,42 +426,13 @@ static bool try_next_decoder(VideoDecoder* decoder) {
     }
 }
 
-VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, CodecType codec_type) {
-#if SHOW_DECODER_LOGS
-    // av_log_set_level( AV_LOG_ERROR );
-    av_log_set_callback(swap_decoder);
-#endif
-
-    VideoDecoder* decoder = (VideoDecoder*)safe_malloc(sizeof(VideoDecoder));
-    memset(decoder, 0, sizeof(VideoDecoder));
-
-    decoder->width = width;
-    decoder->height = height;
-    decoder->can_use_hardware = use_hardware;
-    decoder->type = DECODE_TYPE_NONE;
-    decoder->codec_type = codec_type;
-
-    if (!try_next_decoder(decoder)) {
-        LOG_WARNING("No valid decoder to use");
-        destroy_video_decoder(decoder);
-        return NULL;
-    }
-
-    return decoder;
-}
-
-/// @brief destroy decoder decoder
-/// @details frees FFmpeg decoder memory
-
-void destroy_video_decoder(VideoDecoder* decoder) {
-    destroy_video_decoder_members(decoder);
-
-    // free the buffer and decoder
-    free(decoder);
-    return;
-}
-
 void destroy_video_decoder_members(VideoDecoder* decoder) {
+    /*
+        Destroy the members of the video decoder.
+
+        Arguments:
+            decoder (VideoDecoder*): decoder we are in the process of destroying
+    */
     // check if decoder decoder exists
     if (decoder == NULL) {
         LOG_WARNING("Cannot destroy decoder decoder.");
@@ -386,6 +450,63 @@ void destroy_video_decoder_members(VideoDecoder* decoder) {
     av_frame_free(&decoder->sw_frame);
     av_frame_free(&decoder->hw_frame);
     av_buffer_unref(&decoder->ref);
+}
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, CodecType codec_type) {
+    /*
+        Initialize a video decoder with the specified parameters.
+
+        Arguments:
+            width (int): width of the frames to decode
+            height (int): height of the frames to decode
+            use_hardware (bool): Whether or not we should try hardware-accelerated decoding
+            codec_type (CodecType): which video codec (H264 or H265) we should use
+        
+        Returns:
+            (VideoDecoder*): decoder with the specified parameters, or NULL on failure.
+    */
+#if SHOW_DECODER_LOGS
+    // av_log_set_level( AV_LOG_ERROR );
+    av_log_set_callback(swap_decoder);
+#endif
+
+    VideoDecoder* decoder = (VideoDecoder*)safe_malloc(sizeof(VideoDecoder));
+    memset(decoder, 0, sizeof(VideoDecoder));
+
+    decoder->width = width;
+    decoder->height = height;
+    decoder->can_use_hardware = use_hardware;
+    decoder->type = DECODE_TYPE_NONE;
+    decoder->codec_type = codec_type;
+
+    // Try all decoders until we find one that works
+    if (!try_next_decoder(decoder)) {
+        LOG_WARNING("No valid decoder to use");
+        destroy_video_decoder(decoder);
+        return NULL;
+    }
+
+    return decoder;
+}
+
+void destroy_video_decoder(VideoDecoder* decoder) {
+    /*
+        Destroy the video decoder and its members.
+        
+        Arguments:
+            decoder (VideoDecoder*): decoder to destroy
+    */
+    destroy_video_decoder_members(decoder);
+
+    // free the buffer and decoder
+    free(decoder);
+    return;
 }
 
 /// @brief decode a frame using the decoder decoder

@@ -8,11 +8,10 @@
 ============================
 Usage
 ============================
-
-Video is encoded to H264 via either a hardware encoder (currently the Nvidia capture SDK) or an
-FFmpeg software encoder. H265 is also supported but not currently used. Since NVidia allows us to
-both capture and encode the screen, most of the functions will be called in server/main.c with an
-empty dummy encoder. For software encoders, create an H264 encoder via create_video_encode, and use
+Video is encoded to H264 via either a hardware encoder (currently, we use NVidia GPUs, so we use
+NVENC) or a software encoder. H265 is also supported but not currently used. Since NVidia allows us
+to both capture and encode the screen, most of the functions will be called in server/main.c with an
+empty dummy encoder. For encoders, create an H264 encoder via create_video_encode, and use
 it to encode frames via video_encoder_encode. Write the encoded output via
 video_encoder_write_buffer, and when finished, destroy the encoder using destroy_video_encoder.
 */

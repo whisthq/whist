@@ -6,8 +6,9 @@
 ============================
 Usage
 ============================
-Video is encoded to H264 via either a hardware encoder (currently, we use NVidia GPUs, so we use NVENC) or a software encoder. H265 is also supported but not currently used. Since NVidia allows us to
-both capture and encode the screen, most of the functions will be called in server/main.c with an
+Video is encoded to H264 via either a hardware encoder (currently, we use NVidia GPUs, so we use
+NVENC) or a software encoder. H265 is also supported but not currently used. Since NVidia allows us
+to both capture and encode the screen, most of the functions will be called in server/main.c with an
 empty dummy encoder. For encoders, create an H264 encoder via create_video_encode, and use
 it to encode frames via video_encoder_encode. Write the encoded output via
 video_encoder_write_buffer, and when finished, destroy the encoder using destroy_video_encoder.
@@ -69,7 +70,7 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     /*
         Create an encoder using Nvidia's video encoding alorithms.
 
-        Arguments: 
+        Arguments:
             in_width (int): Width of the frames that the encoder intakes
             in_height (int): height of the frames that the encoder intakes
             out_width (int): width of the frames that the encoder outputs
@@ -328,7 +329,7 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
     /*
         Create a QSV (Intel Quick Sync Video) encoder for Intel hardware encoding.
 
-        Arguments: 
+        Arguments:
             in_width (int): Width of the frames that the encoder intakes
             in_height (int): height of the frames that the encoder intakes
             out_width (int): width of the frames that the encoder outputs
@@ -526,7 +527,7 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     /*
         Create an FFmpeg software encoder.
 
-        Arguments: 
+        Arguments:
             in_width (int): Width of the frames that the encoder intakes
             in_height (int): height of the frames that the encoder intakes
             out_width (int): width of the frames that the encoder outputs
@@ -706,9 +707,10 @@ Public Function Implementations
 VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
     /*
-        Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding, then software encoding if that fails.
+        Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,
+       then software encoding if that fails.
 
-        Arguments: 
+        Arguments:
             in_width (int): Width of the frames that the encoder intakes
             in_height (int): height of the frames that the encoder intakes
             out_width (int): width of the frames that the encoder outputs
@@ -744,7 +746,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 
 int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitch) {
     /*
-        Copy frame data in rgb_pixels and pitch to the software frame, and to the hardware frame if possible.
+        Copy frame data in rgb_pixels and pitch to the software frame, and to the hardware frame if
+       possible.
 
         Arguments:
             encoder (VideoEncoder*): video encoder containing encoded frames
@@ -773,7 +776,8 @@ int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitc
 
 int video_encoder_encode(VideoEncoder *encoder) {
     /*
-        Encode a frame using the encoder and store the resulting packets into encoder->packets. If the frame has alreday been encoded, this function does nothing.
+        Encode a frame using the encoder and store the resulting packets into encoder->packets. If
+       the frame has alreday been encoded, this function does nothing.
 
         Arguments:
             encoder (VideoEncoder*): encoder that will encode the frame
@@ -782,7 +786,8 @@ int video_encoder_encode(VideoEncoder *encoder) {
             (int): 0 on success, -1 on failure
      */
     if (encoder->already_encoded) {
-        // If the frame comes already encoded (in the case of nvidia e.g.), then we treat the encoded frame is one encoded packet.
+        // If the frame comes already encoded (in the case of nvidia e.g.), then we treat the
+        // encoded frame is one encoded packet.
         encoder->num_packets = 1;
         encoder->packets[0].data = encoder->encoded_frame_data;
         encoder->packets[0].size = encoder->encoded_frame_size;
@@ -795,19 +800,22 @@ int video_encoder_encode(VideoEncoder *encoder) {
         return -1;
     }
 
-    // If the encoder has been used to encode a frame before we should clear packet data for previously used packets
+    // If the encoder has been used to encode a frame before we should clear packet data for
+    // previously used packets
     if (encoder->num_packets) {
         for (int i = 0; i < encoder->num_packets; i++) {
             av_packet_unref(&encoder->packets[i]);
         }
     }
 
-    // The encoded frame size starts out as sizeof(int) because of the way we send packets. See encode.h and decode.h.
+    // The encoded frame size starts out as sizeof(int) because of the way we send packets. See
+    // encode.h and decode.h.
     encoder->encoded_frame_size = sizeof(int);
     encoder->num_packets = 0;
     int res;
 
-    // receive packets until we receive a nonzero code (indicating either an encoding error, or that all packets have been received).
+    // receive packets until we receive a nonzero code (indicating either an encoding error, or that
+    // all packets have been received).
     while ((res = video_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
            0) {
         if (res < 0) {
@@ -834,7 +842,8 @@ int video_encoder_encode(VideoEncoder *encoder) {
 
 void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
     /*
-        Write all the encoded packets found in encoder into buf, which we assume is large enough to hold the data.
+        Write all the encoded packets found in encoder into buf, which we assume is large enough to
+       hold the data.
 
         Arguments:
             encoder (VideoEncoder*): encoder holding encoded packets
@@ -971,14 +980,16 @@ int video_encoder_send_frame(VideoEncoder *encoder) {
 
 int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
     /*
-        Wrapper around FFmpeg's avcodec_receive_packet. Get an encoded packet from the encoder and store it in packet.
+        Wrapper around FFmpeg's avcodec_receive_packet. Get an encoded packet from the encoder and
+       store it in packet.
 
         Arguments:
             encoder (VideoEncoder*): encoder used to encode the frame
             packet (AVPacket*): packet in which to store encoded data
 
         Returns:
-            (int): 1 on EAGAIN (no more packets), 0 on success (call this function again), and -1 on failure.
+            (int): 1 on EAGAIN (no more packets), 0 on success (call this function again), and -1 on
+       failure.
     */
     int res_encoder;
 
