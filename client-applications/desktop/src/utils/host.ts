@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file auth.ts
+ * @file host.ts
  * @brief This file contains utility functions for interacting with the host service.
  */
 

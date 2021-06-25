@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file index.ts
+ * @file index.tsx
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */
 

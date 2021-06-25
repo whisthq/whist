@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file auth.ts
+ * @file ipc.ts
  * @brief This file contains utility functions for IPC communication between the main and renderer
  * thread.
  */
