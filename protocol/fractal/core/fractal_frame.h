@@ -75,9 +75,10 @@ unsigned char* get_frame_videodata(Frame* frame);
 /**
  * @brief                          Get a pointer to the PeerUpdateMessage inside of the Frame*
  *                                 Prerequisites for writing to the returned PeerUpdateMessage
- *                                 pointer: frame->videodata_length must be set set_frame_cursor_image
- *                                 must be called. After writing to the returned PeerUpdateMessage*,
- *                                 please update frame->num_peer_update_msgs
+ *                                 pointer: frame->videodata_length must be set
+ *                                 set_frame_cursor_image must be called. After writing to
+ *                                 the returned PeerUpdateMessage*, please update
+ *                                 frame->num_peer_update_msgs
  *
  * @param frame                    The Frame whose data buffer is being used
  *
