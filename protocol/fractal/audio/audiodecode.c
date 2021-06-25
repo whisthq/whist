@@ -41,11 +41,6 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
-    // avcodec_register_all is deprecated on FFmpeg 4+
-    // only Linux uses FFmpeg 3.4.x because of canonical system packages
-#if LIBAVCODEC_VERSION_MAJOR < 58
-    avcodec_register_all();
-#endif
 
     decoder->codec = avcodec_find_decoder_by_name("aac");
     if (!decoder->codec) {
@@ -84,7 +79,8 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     // setup the AVFrame
     decoder->frame = av_frame_alloc();
 
-    // setup the SwrContext for resampling
+    // setup the SwrContext for resampling. We use AV_SAMPLE_FMT_FLT since we are sending float
+    // 32-bit audio to SDL.
 
     decoder->swr_context =
         swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, sample_rate,
@@ -136,7 +132,8 @@ int init_av_frame(AudioDecoder *decoder) {
 
 void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
     /*
-        Read a decoded audio packet from the decoder into a data buffer
+        Read a decoded audio packet from the decoder into a data buffer, resampling as needed to
+        match system audio format.
 
         Arguments:
             decoder (AudioDecoder*): The audio decoder that decoded the audio packet

@@ -45,7 +45,9 @@ Custom Types
 */
 
 /**
- * @brief                          Audio decoder features
+ * @brief       Struct for handling decoding and resampling of audio. The FFmpeg codec and context
+ *              handle decoding packets into frame, and then swr_context resamples the data to the
+ *              system output format in out_buffer.
  */
 typedef struct AudioDecoder {
     const AVCodec* codec;
