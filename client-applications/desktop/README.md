@@ -78,7 +78,7 @@ Work begins in the main process when events are triggered. Events might be built
 
 Our main process "reacts" to events using RXJS observable subcriptions. We organize these observables into "flows", which are the main unit of work in the main process. Flows are just a function with the following signature:
 
-``` js
+```js
 const FlowA = (t: Obervable<T>) => { success: Observable<F>, failure: Observable<F>, warning: Observable<F> }
 ```
 
@@ -90,6 +90,65 @@ What causes `ObservableA` to emit? `ObservableA` itself is subscribed to some ob
 
 This is a functional reactive programming model. We're not change of the timing of the work. We're basically saying "when we have new data from x, start doing y" across the entire application. This frees us from managing asynchronous vs. synchronous functions. All work triggers other work "when the work is done".
 
+Here's a more concrete example using the `mandelboxCreate` flow in the client app:
+
+```js
+// A "flow" is created with the "flow" function, which accepts
+// a string name as its first argument and the actual definition as the
+// second argument. This allows us to wrap the defintion with other context,
+// such as information for logging.
+const mandelboxFlow  = flow(
+  "mandelboxFlow", // flow name usually matches the variable
+  (
+    trigger: Observable<{ // flows take a single argument, which is always
+      sub: string         // a observable containing named parameters.
+      accessToken: string // We need to "unwrap" this observable inside
+      configToken: string // of the flow to make use of its arguments.
+      region?: AWSRegion
+    }>
+  ) => {
+    // Rxjs has its own library of operators to use on observables, such
+    // "map", which is like Array.map() in that it applies a function to
+    // each element in the sequence.
+    const create = mandelboxCreateFlow(
+      trigger.pipe(map((t) => pick(t, ["sub", "accessToken", "region"])))
+    ) // create will have a value of:
+      // {
+      //   success: Observable<ServerResponse>
+      //   failure: Observable<ServerResponse>
+      // }
+      //
+      // If the response was successful, the "success" observable will emit.
+      // If it's not successful, only the "failure" observable will emit.
+      // Both observables should not emit for the same input.
+
+    // As with mandelboxCreateFlow above, here we are  initializing another
+    // flow (child flow) using the result of another flow.
+    const polling = mandelboxPollingFlow(
+      zip(create.success, trigger).pipe( // rxjs "zip" allows us to make an
+        map(([c, t]) => ({               // observavble containing the contents
+          ...pick(c, ["mandelboxID"]),   // of multiple source observables.
+          ...pick(t, ["accessToken"]),   // The result observable will only
+        }))                              // emit when all source observables
+      )                                  // have new emissions.
+    )
+
+    const host = hostServiceFlow(
+      zip([trigger, create.success]).pipe(
+        map(([t, _c]) => pick(t, ["sub", "accessToken", "configToken"]))
+      ) // We sometimes do these "map" calls when we're passing inputs
+    )   // to flows when we need to "shuffle around" arguments to fit
+        // a flow's function signature.
+
+    return {
+      success: fromSignal(polling.success, host.success),
+      failure: merge(create.failure, polling.failure, host.failure),
+    } // just like "create" above, the output of the mandelboxFlow will be
+  }   // an object of { success, failure }, with values that will emit a result
+)     // once all the processes we've "wired up" in the flow complete.
+
+```
+
 #### Observables and RxJS
 
 An observable is not much more complicated than a function. If I'm an observable, I might "subscribe" to an Event, so that when the Event is triggered, I run my function with the data created by the event. It's possible that I may have subscribers of my own. When I have my function result, I'll pass it on to my subscribers, who may themselves be observables.
@@ -99,7 +158,6 @@ The interaction of observables creates room for rich expression of control flow.
 Observables are a concept of functional reactive programming, and are the main structure introduced by RxJS. Rx can be intimidating. The library has a huge API of utilities for creating and manipulating observables, and there's a natual learning curve that comes with starting to think about time-based streams of data. Once things start to click, the Rx standard library becomes a powerful tool, and it becomes very fast to implement complex behavior that can is otherwise unwiedly to write in an imperative style.
 
 There are some great tutorials for RxJS out there, like [this one](https://www.learnrxjs.io) and [this one](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754). Try starting out by thinking about how a "stream of data across time" is similar to a simple "list of data", and how you might `map`, `filter`, and `reduce` each one.
-
 
 #### Config
 
