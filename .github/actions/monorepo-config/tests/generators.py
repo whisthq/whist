@@ -16,9 +16,7 @@ def schemas(draw, min_profiles=0):
     keys = text()
     values = one_of(integers(), text())
     profiles = draw(lists(text(), min_size=min_profiles, max_size=30))
-    children = dictionaries(
-        sampled_from(profiles) if profiles else just(()), values, max_size=50
-    )
+    children = dictionaries(sampled_from(profiles) if profiles else just(()), values, max_size=50)
     return (
         profiles,
         draw(dictionaries(keys, one_of(values, children))),

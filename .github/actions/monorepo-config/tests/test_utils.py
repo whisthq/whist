@@ -42,17 +42,11 @@ example_dict3 = {
 
 @composite
 def nested_dict(draw):
-    return draw(
-        dictionaries(
-            text(), dictionaries(text(), text(), max_size=10), max_size=10
-        )
-    )
+    return draw(dictionaries(text(), dictionaries(text(), text(), max_size=10), max_size=10))
 
 
 def recursive_dicts():
-    return recursive(
-        dictionaries(text(), text()), lambda x: dictionaries(text(), x)
-    )
+    return recursive(dictionaries(text(), text()), lambda x: dictionaries(text(), x))
 
 
 @given(lists(nested_dict(), max_size=8))
@@ -148,12 +142,8 @@ def test_all_child_keys():
     no_top_level = "fn must not be called with top-level keys"
     children = set("bcdefghijyz")
     parents = set("ax")
-    assert utils.all_child_keys(
-        lambda x: x in children, example_dict3
-    ), all_children
-    assert utils.all_child_keys(
-        lambda x: x not in parents, example_dict3
-    ), no_top_level
+    assert utils.all_child_keys(lambda x: x in children, example_dict3), all_children
+    assert utils.all_child_keys(lambda x: x not in parents, example_dict3), no_top_level
 
 
 def test_all_items_in_set_partial():

@@ -73,9 +73,7 @@ def test_resolve(schema, random_value):
     profiles, _source = schema
 
     base1 = resolve(profiles, random_value)
-    assert (
-        base1 == random_value
-    ), "a value that wasn't a dictionary was returned changed."
+    assert base1 == random_value, "a value that wasn't a dictionary was returned changed."
 
 
 @given(schemas())
@@ -89,8 +87,7 @@ def test_resolve_flattening(schema):
                 for profile in reversed(profiles):
                     if profile in child:
                         assert result[key] == child[profile], (
-                            "resolved child value must match"
-                            + " value of highest index profile"
+                            "resolved child value must match" + " value of highest index profile"
                         )
 
                         break
@@ -105,6 +102,4 @@ def test_resolve_flattening(schema):
 def test_resolve_same_keys(schema):
     profiles, source = schema
     result = resolve(profiles, source)
-    assert (
-        result.keys() == source.keys()
-    ), "result must have same keys as source"
+    assert result.keys() == source.keys(), "result must have same keys as source"
