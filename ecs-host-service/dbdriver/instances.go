@@ -24,7 +24,7 @@ type InstanceStatus string
 
 // These represent the currently-defined statuses for instances.
 const (
-	InstanceStatusPreConnection InstanceStatus = "PRE-CONNECTION"
+	InstanceStatusPreConnection InstanceStatus = "PRE_CONNECTION"
 	InstanceStatusActive        InstanceStatus = "ACTIVE"
 	InstanceStatusDraining      InstanceStatus = "DRAINING"
 )
