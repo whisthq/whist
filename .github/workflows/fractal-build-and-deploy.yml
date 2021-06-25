@@ -1140,9 +1140,6 @@ jobs:
                   cat packageOld.json | jq '.version = "${{ env.desktop_app_new_version }}"' > package.json
                   rm packageOld.json
 
-            - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             # - name: Publish the Windows Electron Application
             #   if: runner.os == 'Windows'
