@@ -4,7 +4,7 @@
   are overwritten on a new code push
 
   To be called via:
-  yarn update-tenant
+  yarn dump:[env]
 */
 
 const { execSync } = require("child_process");
@@ -12,13 +12,14 @@ const fs = require("fs");
 const YAML = require("yaml");
 const _ = require("lodash");
 
+const env = process.argv[2];
+
 // Download up-to-date tenant.yaml config from Auth0
 execSync(
-  "a0deploy export --config_file ./config/dev.json --strip --format yaml --output_folder .",
+  `a0deploy export --config_file ./config/${env}.json --strip --format yaml --output_folder .`,
   { stdio: "inherit" }
 );
 
-const env = process.argv[2];
 const {
   AUTH0_KEYWORD_REPLACE_MAPPINGS: mappings,
 } = require(`../config/${env}.json`);

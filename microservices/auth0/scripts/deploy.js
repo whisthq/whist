@@ -12,7 +12,7 @@ const REQUIRED_ENV_VARS = ["GOOGLE_OAUTH_SECRET", "APPLE_OAUTH_SECRET"];
 
 REQUIRED_ENV_VARS.forEach((v) => {
   if (!process.env[v]) {
-    console.log(`Environment varialbe "${v}" not defined`);
+    console.log(`Environment variable "${v}" not defined`);
     process.exit();
   }
 });
