@@ -132,7 +132,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     desired_free_containers = 10.0
 
     if num_free_containers < desired_free_containers:
-        return 1
+        return current_app.config["DEFAULT_INSTANCE_BUFFER"]
 
     if num_free_containers >= (desired_free_containers + avg_max_containers):
         return -1
@@ -253,7 +253,11 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 if instance_containers is None or instance_containers.num_running_containers != 0:
                     db.session.commit()
                     continue
+                # We need to modify the status to DRAINING to ensure that we don't assign a new
+                # container to the instance. We need to commit here as we don't want to enter a
+                # deadlock with host service where it tries to modify the instance_info row.
                 instance_info.status = DRAINING
+                db.session.commit()
                 try:
                     base_url = (
                         f"http://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
@@ -264,7 +268,6 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     client.stop_instances(
                         ["-".join(instance_info.cloud_provider_id.split("-")[1:])]
                     )
-                db.session.commit()
 
 
 def try_scale_down_if_necessary_all_regions() -> None:

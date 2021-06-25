@@ -51,7 +51,7 @@ def test_region_upgrade(app, monkeypatch, hijack_ec2_calls, hijack_db):
         randomized_ami = random.choice(all_amis)
         randomly_picked_ami_id = randomized_ami.ami_id
         launch_new_ami_buffer(randomized_ami.region_name, randomly_picked_ami_id, app)
-        assert len(call_list) == 1
+        assert len(call_list) == app.config["DEFAULT_INSTANCE_BUFFER"]
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
 

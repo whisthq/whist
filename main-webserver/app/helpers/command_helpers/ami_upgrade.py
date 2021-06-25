@@ -65,7 +65,7 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
     with flask_app.app_context():
         # TODO: Right now buffer seems to be 1 instance if it is the first of its kind(AMI),
         #       Probably move this to a config.
-        force_buffer = 1
+        force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
         new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
         for new_instance in new_instances:
             fractal_logger.debug(
@@ -110,8 +110,6 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
     Returns:
         List[InstanceInfo] -> List of instances that are currently running.
     """
-    # 5sec arbitrarily decided as sufficient timeout when using with_for_update
-    set_local_lock_timeout(5)
     return (
         db.session.query(InstanceInfo)
         .filter(
@@ -121,7 +119,7 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
                 InstanceInfo.aws_ami_id.in_(active_amis),
             )
         )
-        .with_for_update(skip_locked=True)
+        .with_for_update()
         .all()
     )
 
@@ -189,7 +187,18 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         current_active_ami.ami_id for current_active_ami in current_active_amis
     ]  # Fetching the AMI strings for instances running with current/older AMIs.
     # This will be used to select only the instances with current/older AMIs
-    for active_instance in fetch_current_running_instances(current_active_amis_str):
+
+    current_running_instances = fetch_current_running_instances(current_active_amis_str)
+    for active_instance in current_running_instances:
+        # At this point, we should still have the lock that we grabbed when we invoked
+        # the `fetch_current_running_instances` function. Using this lock, we mark the
+        # instances as DRAINING to prevent a container being assigned to the instances.
+        active_instance.status = DRAINING
+    db.session.commit()
+
+    for active_instance in current_running_instances:
+        # At this point, the instance is marked as DRAINING in the database. But we need
+        # to inform the HOST_SERVICE that we have marked the instance as draining.
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
