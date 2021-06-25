@@ -162,6 +162,13 @@ def nested_keys(dct):
     return [*dct.keys(), *itertools.chain(*child_keys)]
 
 
+def child_nested_keys(dct):
+    for v in dct.values():
+        if isinstance(v, dict):
+            for k in v.keys():
+                yield k
+
+
 def all_child_keys(fn, dct):
     for path in walk_keys(dct):
         child_keys = path[1:-1]

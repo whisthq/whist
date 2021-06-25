@@ -14,4 +14,5 @@ from helpers.cli import create_cli
 traceback.install()
 
 if __name__ == "__main__":
-    create_cli(parse)
+    cli = create_cli(parse)
+    cli(None)  # Pass an argument to quiet the linter. It's ignored.

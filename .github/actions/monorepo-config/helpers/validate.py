@@ -29,6 +29,7 @@ from .utils import (
     all_string,
     all_yml_children,
     not_empty_dict,
+    child_nested_keys,
     has_child_path_partial,
     no_keys_start_with_number,
     no_keys_start_with_underscore,
@@ -52,7 +53,10 @@ GROUPABLE_ERRORS = (
 )
 
 
-def must(test_fn, msg=None):
+def must(test_fn, msg=None, got=None):
+    if not got:
+        got = lambda x: x
+
     def from_value(value):
         error = False
         try:
@@ -64,7 +68,7 @@ def must(test_fn, msg=None):
         tstr = error if error else f"<{type(value).__name__}>"
 
         val_string = "got: " + truncated(
-            PRINT_LIMIT, f"{truncated_children(value)}: {tstr}"
+            PRINT_LIMIT, f"{truncated_children(got(value))}: {tstr}"
         )
 
         msg_present = f"{msg}... {val_string}."
@@ -165,5 +169,6 @@ def validate_schema_data(data, valid_profiles):
         must(
             all_child_keys_in_set_partial(valid_profiles),
             f"nested schema keys must be one of {valid_profiles}",
+            got=lambda x: set(child_nested_keys(x)),
         ),
     )

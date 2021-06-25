@@ -16,7 +16,9 @@ def _coerce_json(_ctx, _param, values):
     try:
         dicts = [json.loads(v) for v in values]
         if not all(isinstance(d, dict) for d in dicts):
-            raise click.BadParameter("All --secrets much be JSON dictionaries.")
+            raise click.BadParameter(
+                "All --secrets much be JSON dictionaries."
+            )
         return dicts
     except json.JSONDecodeError as err:
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")
@@ -112,4 +114,4 @@ def create_cli(main_fn):
         else:
             click.echo(result_json)
 
-    return cli(None)  # Pass an argument to quiet the linter. It's ignored.
+    return cli

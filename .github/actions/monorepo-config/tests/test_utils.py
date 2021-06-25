@@ -165,10 +165,14 @@ def test_all_items_in_set_partial():
 
 # @pytest.mark.skip()
 def test_all_child_keys_in_set_partial():
+    all_child = "true when all child keys are in set"
+    no_child = "false when some child keys not in set"
+    no_parent = "parent keys should not be tested for inclusion"
+
     children = set("bcdefghijyz")
     parents = set("ax")
-    applied1 = utils.all_child_keys_in_set_partial(children)
-    applied2 = utils.all_child_keys_in_set_partial(parents)
-    assert applied1(example_dict3)
-    assert not applied1(example_dict2)
-    # assert not applied2(example_dict3)
+    in_children = utils.all_child_keys_in_set_partial(children)
+    in_parents = utils.all_child_keys_in_set_partial(parents)
+    assert in_children(example_dict3), all_child
+    assert not in_children(example_dict1), no_child
+    assert not in_parents(example_dict3), no_parent

@@ -2,10 +2,12 @@
 import pytest
 import yaml
 import os
+import tests.mock_data as mock_data
 from pathlib import Path
 from contextlib import contextmanager
 from helpers.parse import resolve, parse
-from helpers.utils import walk_keys, temporary_fs
+from helpers.utils import temporary_fs
+from tests.generators import schemas, non_dict
 from hypothesis import given, example
 from hypothesis.strategies import (
     text,
@@ -19,90 +21,6 @@ from hypothesis.strategies import (
 )
 
 
-example_profiles = ["dev", "prod"]
-
-example_nested_map = {
-    "API_KEY": {
-        "dev": {"x": "t", "y": "u", "z": "v"},
-        "prod": {"d": "q", "e": "r", "f": "s"},
-    },
-    "WEB_URL": {
-        "dev": {"x": "t", "y": "u", "z": "v"},
-        "prod": {"d": "q", "e": "r", "f": "s"},
-    },
-    "DEV_NUM": {"dev": "twenty", "prod": "thirty"},
-}
-
-
-# @contextmanager
-# def temporary_config(profile_list, schema_dicts):
-#     with tempfile.TemporaryDirectory() as tempdir:
-#         paths = []
-#         kws = {"mode": "w", "suffix": ".yml", "dir": tempdir, "delete": False}
-#         with tempfile.NamedTemporaryFile(prefix="profile", **kws) as tf:
-#             paths.append(tf.name)
-#             tf.write(yaml.dump(profile_list))
-
-#         for schema in schema_dicts:
-#             with tempfile.NamedTemporaryFile(prefix="schema", **kws) as tf:
-#                 paths.append(tf.name)
-#                 tf.write(yaml.dump(schema))
-
-#         yield tuple(paths)
-
-
-# def test_temporary_config():
-#     path_exists = "Path does not exist in contextmanager"
-#     path_delete = "Path not deleted outside contextmanager"
-#     data_valid = "Loaded yaml data does not match written yaml data"
-
-#     profile_list = ["e"]
-#     schema_dicts = [{"a": 1, "b": 2}, {"c": 3, "d": {"e": 4}}]
-#     all_data = [profile_list, *schema_dicts]
-#     with temporary_config(profile_list, schema_dicts) as temp_paths:
-#         for idx, p in enumerate(temp_paths):
-#             assert Path(p).exists(), path_exists
-#             with open(p) as f:
-#                 assert yaml.safe_load(f) == all_data[idx], data_valid
-
-#     for p in temp_paths:
-#         assert not Path(p).exists(), path_delete
-
-
-# def test_temp_files():
-#     with temporary_config(["person"], [{"neil": "hansen"}]) as temp_paths:
-#         profile_path, *schema_paths = temp_paths
-#         print(temp_paths)
-#         print("Exists?", *(Path(p).exists() for p in temp_paths))
-#     print("Exists?", *(Path(p).exists() for p in temp_paths))
-#     assert False
-
-
-def write_yaml(f, data):
-    f.write(yaml.dump(data))
-
-
-@composite
-def schemas(draw, min_profiles=0):
-    keys = text()
-    values = one_of(integers(), text())
-    profiles = draw(lists(text(), min_size=min_profiles, max_size=30))
-    children = dictionaries(
-        sampled_from(profiles) if profiles else just(()), values, max_size=50
-    )
-    return (
-        profiles,
-        draw(dictionaries(keys, one_of(values, children))),
-    )
-
-
-@composite
-def non_dict(draw):
-    lit = one_of(text(), integers())
-    seq = lists(lit)
-    return draw(one_of(lit, seq))
-
-
 def flatten_child(profiles, child):
     for profile in reversed(profiles):
         if profile in child:
@@ -110,53 +28,49 @@ def flatten_child(profiles, child):
     return child
 
 
-config_folder_simple = {
-    "config": {
-        "profiles.yml": yaml.dump(["dev", "stg", "prd"]),
-        "schema": {
-            "web.yml": yaml.dump(
-                {
-                    "URL": {
-                        "dev": "http://url-dev.com",
-                        "stg": "http://url-stg.com",
-                        "prd": "http://url-prd.com",
-                    },
-                    "WEB": {
-                        "dev": "http://web-dev.com",
-                        "stg": "http://web-stg.com",
-                        "prd": "http://web-prd.com",
-                    },
-                    "COM": {
-                        "dev": "http://com-dev.com",
-                        "stg": "http://com-stg.com",
-                        "prd": "http://com-prd.com",
-                    },
-                }
-            ),
-            "auth.yml": yaml.dump(
-                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
-            ),
-            "secret.yml": yaml.dump(
-                {
-                    "KEY": {"pro1": "key01000", "pro2": "key02000"},
-                    "API": {"pro1": "api01000", "pro2": "api02000"},
-                }
-            ),
-        },
-    },
-}
+def test_parse_profiles():
+    with temporary_fs(mock_data.config_simple_fs) as tempdir:
+        config = tempdir.joinpath("config")
+
+        expect_1 = mock_data.config_simple_json_dev
+        assert expect_1 == parse(config, profiles=["dev"])
+
+        expect_2 = mock_data.config_simple_json_stg
+        assert expect_2 == parse(config, profiles=["stg"])
+
+        expect_3 = mock_data.config_simple_json_prd
+        assert expect_3 == parse(config, profiles=["prd"])
+
+        expect_4 = mock_data.config_simple_json_default
+        assert expect_4 == parse(config)
 
 
-@pytest.mark.skip()
-def test_parse():
-    with temporary_fs(config_folder_simple) as tempdir:
-        parse(tempdir.joinpath("config"))
-        pass
+def test_parse_secrets():
+    with temporary_fs(mock_data.config_secrets_fs) as tempdir:
+        config = tempdir.joinpath("config")
+        secrets = [{"KEY": "secretKEY", "API": "secretAPI"}]
+        expect_1 = mock_data.config_secrets_json
+        assert expect_1 == parse(config, secrets=secrets)
+
+
+def test_parse_secrets_profiles():
+    with temporary_fs(mock_data.config_secrets_profiles_fs) as tempdir:
+        config = tempdir.joinpath("config")
+        secrets = [{"KEY": "secretKEY", "API": "secretAPI"}]
+
+        expect_1 = mock_data.config_secrets_profiles_json_dev
+        assert expect_1 == parse(config, profiles=["dev"], secrets=secrets)
+
+        expect_1 = mock_data.config_secrets_profiles_json_stg
+        assert expect_1 == parse(config, profiles=["stg"], secrets=secrets)
+
+        expect_1 = mock_data.config_secrets_profiles_json_prd
+        assert expect_1 == parse(config, profiles=["prd"], secrets=secrets)
 
 
 @given(schemas(), non_dict())
-def test_resolve_(schema, random_value):
-    profiles, source = schema
+def test_resolve(schema, random_value):
+    profiles, _source = schema
 
     base1 = resolve(profiles, random_value)
     assert (
@@ -165,7 +79,7 @@ def test_resolve_(schema, random_value):
 
 
 @given(schemas())
-@example((example_profiles, example_nested_map))
+@example((mock_data.example_profiles, mock_data.example_nested_map))
 def test_resolve_flattening(schema):
     profiles, source = schema
     result = resolve(profiles, source)
@@ -187,7 +101,7 @@ def test_resolve_flattening(schema):
 
 
 @given(schemas())
-@example((example_profiles, example_nested_map))
+@example((mock_data.example_profiles, mock_data.example_nested_map))
 def test_resolve_same_keys(schema):
     profiles, source = schema
     result = resolve(profiles, source)
