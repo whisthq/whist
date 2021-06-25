@@ -807,6 +807,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
     encoder->num_packets = 0;
     int res;
 
+    // receive packets until we receive a nonzero code (indicating either an encoding error, or that all packets have been received).
     while ((res = video_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
            0) {
         if (res < 0) {
@@ -821,6 +822,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
         }
     }
 
+    // set iframe metadata
     encoder->is_iframe = encoder->frames_since_last_iframe % encoder->gop_size == 0;
     if (encoder->is_iframe) {
         encoder->frames_since_last_iframe = 0;
@@ -831,6 +833,13 @@ int video_encoder_encode(VideoEncoder *encoder) {
 }
 
 void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
+    /*
+        Write all the encoded packets found in encoder into buf, which we assume is large enough to hold the data.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder holding encoded packets
+            buf (int*): memory buffer for storing the packets
+    */
     *buf = encoder->num_packets;
     buf++;
     for (int i = 0; i < encoder->num_packets; i++) {
@@ -845,6 +854,12 @@ void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
 }
 
 void video_encoder_set_iframe(VideoEncoder *encoder) {
+    /*
+        Set the next frame to be an iframe.
+
+        Arguments:
+            encoder (VideoEncoder*): Encoder containing the frame
+    */
     if (encoder->already_encoded) {
         return;
     }
@@ -855,6 +870,12 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
 }
 
 void video_encoder_unset_iframe(VideoEncoder *encoder) {
+    /*
+        Indicate that the next frame is not an iframe.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder containing the frame
+    */
     if (encoder->already_encoded) {
         return;
     }
@@ -863,6 +884,12 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
 }
 
 void destroy_video_encoder(VideoEncoder *encoder) {
+    /*
+        Destroy all components of the encoder, then free the encoder itself.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder to destroy
+    */
     // check if encoder encoder exists
     if (encoder == NULL) {
         LOG_INFO("Encoder empty, not destroying anything.");
@@ -894,6 +921,15 @@ void destroy_video_encoder(VideoEncoder *encoder) {
 // Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
 // next one when the previous one doesn't work
 int video_encoder_send_frame(VideoEncoder *encoder) {
+    /*
+        Send a frame through the filter graph, then encode it.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder used to encode the frame
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
     AVFrame *active_frame = encoder->sw_frame;
     if (encoder->hw_frame) {
         active_frame = encoder->hw_frame;
@@ -934,6 +970,16 @@ int video_encoder_send_frame(VideoEncoder *encoder) {
 }
 
 int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
+    /*
+        Wrapper around FFmpeg's avcodec_receive_packet. Get an encoded packet from the encoder and store it in packet.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder used to encode the frame
+            packet (AVPacket*): packet in which to store encoded data
+
+        Returns:
+            (int): 1 on EAGAIN (no more packets), 0 on success (call this function again), and -1 on failure.
+    */
     int res_encoder;
 
     // receive_packet already calls av_packet_unref, no need to reinitialize packet
