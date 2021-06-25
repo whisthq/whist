@@ -681,8 +681,8 @@ int32_t send_audio(void* opaque) {
                                           audio_device->frames_available);
 
                 // while fifo has enough samples for an aac frame, handle it
-                while (av_audio_fifo_size(audio_encoder->pFifo) >=
-                       audio_encoder->pCodecCtx->frame_size) {
+                while (av_audio_fifo_size(audio_encoder->audio_fifo) >=
+                       audio_encoder->context->frame_size) {
                     // create and encode a frame
 
                     clock t;
