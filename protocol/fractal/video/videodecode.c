@@ -34,7 +34,8 @@ Private Functions
 static void set_opt(VideoDecoder* decoder, char* option, char* value);
 void set_decoder_opts(VideoDecoder* decoder);
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type);
-enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts, enum AVPixelFormat match_pix_fmt);
+enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
+                                enum AVPixelFormat match_pix_fmt);
 enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts);
 int try_setup_video_decoder(VideoDecoder* decoder);
 static bool try_next_decoder(VideoDecoder* decoder);
@@ -86,7 +87,8 @@ void set_decoder_opts(VideoDecoder* decoder) {
 
 int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     /*
-        Initialize a hardware-accelerated decoder with the given context and device type. Wrapper around FFmpeg functions to do so.
+        Initialize a hardware-accelerated decoder with the given context and device type. Wrapper
+       around FFmpeg functions to do so.
 
         Arguments:
             ctx (AVCodecContext*): context used to create the hardware decoder
@@ -108,7 +110,8 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
 enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
                                 enum AVPixelFormat match_pix_fmt) {
     /*
-        Determine if match_pix_fmt is in the array of pixel formats given in pix_fmts. This is called as a helper function in FFmpeg.
+        Determine if match_pix_fmt is in the array of pixel formats given in pix_fmts. This is
+       called as a helper function in FFmpeg.
 
         Arguments:
             ctx (AVCodecContext*): unused, but required for the function signature by FFmpeg.
@@ -116,7 +119,8 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
             match_pix_fmt (enum AVPixelFormat): pixel format we want to find
 
         Returns:
-            (enum AVPixelFormat): the match_pix_fmt if found; otherwise, the first entry of pix_fmts if pix_fmts is a valid format; otherwise, AV_PIX_FMT_NONE.
+            (enum AVPixelFormat): the match_pix_fmt if found; otherwise, the first entry of pix_fmts
+       if pix_fmts is a valid format; otherwise, AV_PIX_FMT_NONE.
     */
     UNUSED(ctx);
 
@@ -153,7 +157,9 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
 
 enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
     /*
-        Choose a format for the video decoder. Used as a callback function in FFmpeg. This is a wrapper around match_fmt unless the decoder wants to use QSV format, in which case we have to create a different hardware device.
+        Choose a format for the video decoder. Used as a callback function in FFmpeg. This is a
+       wrapper around match_fmt unless the decoder wants to use QSV format, in which case we have to
+       create a different hardware device.
 
         Arguments:
             ctx (AVCodecContext*): the context being used for decoding
@@ -206,10 +212,12 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
 
 int try_setup_video_decoder(VideoDecoder* decoder) {
     /*
-        Try to setup a video decoder by checking to see if we can create AVCodecs with the specified device type and video codec.
+        Try to setup a video decoder by checking to see if we can create AVCodecs with the specified
+       device type and video codec.
 
         Arguments:
-            decoder (VideoDecoder*): decoder struct with device type and codec type that we want to setup.
+            decoder (VideoDecoder*): decoder struct with device type and codec type that we want to
+       setup.
 
         Returns:
             0 on success, -1 on failure
@@ -358,7 +366,8 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
     return 0;
 }
 
-// Indicate in what order we should try decoding. Software is always last - we prefer hardware acceleration whenever possible.
+// Indicate in what order we should try decoding. Software is always last - we prefer hardware
+// acceleration whenever possible.
 #if defined(_WIN32)
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER,
                                    DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
@@ -374,7 +383,7 @@ DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
 static bool try_next_decoder(VideoDecoder* decoder) {
     /*
         Keep trying different decode types until we find one that works.
-        
+
         Arguments:
             decoder (VideoDecoder*): decoder we want to set up
 
@@ -467,7 +476,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
             height (int): height of the frames to decode
             use_hardware (bool): Whether or not we should try hardware-accelerated decoding
             codec_type (CodecType): which video codec (H264 or H265) we should use
-        
+
         Returns:
             (VideoDecoder*): decoder with the specified parameters, or NULL on failure.
     */
@@ -498,7 +507,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
 void destroy_video_decoder(VideoDecoder* decoder) {
     /*
         Destroy the video decoder and its members.
-        
+
         Arguments:
             decoder (VideoDecoder*): decoder to destroy
     */
