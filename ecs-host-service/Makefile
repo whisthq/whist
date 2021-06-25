@@ -65,6 +65,7 @@ build: checkCI
 	$(GOGET) github.com/jschaf/pggen/cmd/pggen
 	# Once the ecsagent code is removed, let's generate `./...` instead of just
 	# `dbdriver`.
+	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
 	$(GOGEN) ./dbdriver/...
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata.gitCommit=$(GIT_COMMIT)'\
