@@ -167,7 +167,6 @@ def do_scale_up_if_necessary(
 
         ami_obj = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).one_or_none()
 
-        instance_type = "g3.4xlarge"
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
@@ -180,7 +179,7 @@ def do_scale_up_if_necessary(
                     image_id=ami,
                     instance_name=base_name + f"-{index}",
                     num_instances=1,
-                    instance_type=instance_type,
+                    instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                 )
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
@@ -191,7 +190,7 @@ def do_scale_up_if_necessary(
                     aws_ami_id=ami,
                     cloud_provider_id=f"aws-{instance_ids[0]}",
                     instance_name=base_name + f"-{index}",
-                    aws_instance_type=instance_type,
+                    aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                     container_capacity=base_number_free_containers,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
