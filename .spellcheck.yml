@@ -1,7 +1,23 @@
 matrix:
-- name: Markdown
+- name: Markdown/Text
   sources:
   - '**/**/*.md'
+  - '**/**/*.txt'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+
+- name: YAML
+  sources:
+  - '**/**/*.yml'
+  - '**/**/*.yaml'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+
+- name: Bash
+  sources:
+  - '**/**/*.sh'
   default_encoding: utf-8
   aspell:
     lang: en
@@ -23,7 +39,25 @@ matrix:
 - name: C/C++
   sources:
   - '**/**/*.c'
+  - '**/**/*.cpp'
   - '**/**/*.h'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+
+- name: JavaScript/TypeScript
+  sources:
+  - '**/**/*.js'
+  - '**/**/*.ts'
+  - '**/**/*.tsx'
+  default_encoding: utf-8
+  aspell:
+    lang: en
+
+- name: HTML/CSS
+  sources:
+  - '**/**/*.html'
+  - '**/**/*.css'
   default_encoding: utf-8
   aspell:
     lang: en
