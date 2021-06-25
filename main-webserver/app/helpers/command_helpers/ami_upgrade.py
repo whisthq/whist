@@ -143,7 +143,9 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             - What if the argument region_to_ami_id_mapping has more regions than we currently support. This should be fine
             as we use the regions passed in as the argument as a reference to spin up instances in new regions.
             - What if the argument region_to_ami_id_mapping has less number of regions than we currently support. Then, we
-            would only update the AMIs in the regions that are passed in as the argument.
+            would update the AMIs in the regions that are passed in as the argument and mark the amis in missing regions as disabled.
+            Also, we would be marking all the current running instances for draining. So, this would essentially purge the regions
+            that are missing in the passed in arguments.
 
         Args:
             client_commit_hash: Commit hash of the client that is compatible with the AMIs
@@ -179,14 +181,17 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     for region_wise_upgrade_thread in region_wise_upgrade_threads:
         region_wise_upgrade_thread.join()
 
-    active_amis = current_active_amis.values()
-    for active_instance in fetch_current_running_instances(active_amis):
+    current_active_amis_str = [
+        current_active_ami.ami_id for current_active_ami in current_active_amis
+    ]  # Fetching the AMI strings for instances running with current/older AMIs.
+    # This will be used to select only the instances with current/older AMIs
+    for active_instance in fetch_current_running_instances(current_active_amis_str):
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
         new_ami.ami_active = True
-        current_ami = region_current_active_ami_map.get(new_ami.region_name, None)
-        if current_ami is not None:  # To guard against the edge case when we add a new region.
-            region_current_active_ami_map[new_ami.region_name].ami_active = False
+
+    for current_ami in current_active_amis:
+        current_ami.ami_active = False
 
     db.session.commit()
