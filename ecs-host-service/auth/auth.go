@@ -39,7 +39,7 @@ func init() {
 	refreshUnknown := true
 	var err error // don't want to shadow jwks accidentally
 
-	jwks, err = keyfunc.Get(config.getJwksUrl(), keyfunc.Options{
+	jwks, err = keyfunc.Get(config.getJwksURL(), keyfunc.Options{
 		RefreshInterval: &refreshInterval,
 		RefreshErrorHandler: func(err error) {
 			logger.Errorf("Error refreshing JWKs: %s", err)
@@ -50,7 +50,7 @@ func init() {
 		// Can do a "real" panic since we're in an init function
 		logger.Panicf(nil, "Error getting JWKs on startup: %s", err)
 	}
-	logger.Infof("Successfully got JWKs from %s on startup.", config.getJwksUrl())
+	logger.Infof("Successfully got JWKs from %s on startup.", config.getJwksURL())
 }
 
 func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {

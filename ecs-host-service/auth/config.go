@@ -11,7 +11,7 @@ type authConfig struct {
 	Iss string
 }
 
-func (a authConfig) getJwksUrl() string {
+func (a authConfig) getJwksURL() string {
 	return a.Iss + ".well-known/jwks.json"
 }
 
