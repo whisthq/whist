@@ -75,9 +75,7 @@ def set_amis_state():
         for ami in amis_to_be_modified:
             amis_original_enabled_value.append(ami.ami_active)
             ami.ami_active = enabled_state
-        db.session.commit()
 
     yield _setter
     for ami, original_enabled_value in zip(amis, amis_original_enabled_value):
         ami.ami_active = original_enabled_value
-    db.session.commit()
