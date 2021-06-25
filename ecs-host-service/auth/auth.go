@@ -50,6 +50,7 @@ func init() {
 		// Can do a "real" panic since we're in an init function
 		logger.Panicf(nil, "Error getting JWKs on startup: %s", err)
 	}
+	logger.Infof("Successfully got JWKs from %s on startup.", config.getJwksUrl())
 }
 
 func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
