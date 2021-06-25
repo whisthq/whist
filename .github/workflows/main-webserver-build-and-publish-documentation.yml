@@ -12,14 +12,12 @@ on:
         branches:
             - dev
         paths:
-            - "main-webserver/docs/**"
-            - "main-webserver/requirements-test.txt"
+            - "main-webserver/**"
     push:
         branches:
             - dev
         paths:
-            - "main-webserver/docs/**"
-            - "main-webserver/requirements-test.txt"
+            - "main-webserver/**"
     workflow_dispatch:
 
 jobs:
