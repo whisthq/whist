@@ -495,7 +495,10 @@ int render_video() {
 
             video_data.last_rendered_id = render_context.id;
         }
-        // Since we're done, we free the frame buffer
+        // indicate that we finished rendering the frame
+        FrameData* frame_data = get_frame_at_id(video_ring_buffer, video_data.last_rendered_id);
+        frame_data->rendered = true;
+        // Since we're done, we free the render context frame buffer
         free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
         has_video_rendered_yet = true;
         // rendering = false is set to false last,

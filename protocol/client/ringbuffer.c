@@ -7,11 +7,32 @@
 #define MAX_VIDEO_PACKETS 500
 #define MAX_AUDIO_PACKETS 3
 
+void reset_ring_buffer(RingBuffer* ring_buffer);
 void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id);
 void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index);
 void init_frame(RingBuffer* ring_buffer, int id, int num_indices);
 void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
+
+void reset_ring_buffer(RingBuffer* ring_buffer) {
+    /*
+        Reset the members of ring_buffer except type and size.
+    */
+    // wipe all frames
+    for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
+        FrameData* frame_data = &ring_buffer->receiving_frames[i];
+        frame_data->id = -1;
+        int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
+        memset(frame_data->received_indices, 0, indices_array_size);
+        memset(frame_data->nacked_indices, 0, indices_array_size);
+    }
+    // reset metadata
+    ring_buffer->last_received_id = -1;
+    ring_buffer->max_id = -1;
+    ring_buffer->num_nacked = 0;
+    ring_buffer->frames_received = 0;
+    start_timer(&ring_buffer->missing_frame_nack_timer);
+}
 
 RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
     /*
@@ -43,24 +64,20 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
     }
     ring_buffer->largest_num_packets =
         ring_buffer->type == FRAME_VIDEO ? MAX_VIDEO_PACKETS : MAX_AUDIO_PACKETS;
+    // allocate data for frames
     for (int i = 0; i < ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        frame_data->id = -1;
         frame_data->frame_buffer = NULL;
         int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
         frame_data->received_indices = safe_malloc(indices_array_size);
         frame_data->nacked_indices = safe_malloc(indices_array_size);
-        memset(frame_data->received_indices, 0, indices_array_size);
-        memset(frame_data->nacked_indices, 0, indices_array_size);
     }
-    ring_buffer->last_received_id = -1;
-    ring_buffer->max_id = -1;
-    ring_buffer->num_nacked = 0;
-    ring_buffer->frames_received = 0;
 
+    // determine largest frame size
     ring_buffer->largest_frame_size =
         ring_buffer->type == FRAME_VIDEO ? LARGEST_VIDEO_FRAME_SIZE : LARGEST_AUDIO_FRAME_SIZE;
 
+    // determine how we will allocate frames
     if (ring_buffer->type == FRAME_VIDEO) {
         ring_buffer->frame_buffer_allocator =
             create_block_allocator(ring_buffer->largest_frame_size);
@@ -68,7 +85,8 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
         ring_buffer->frame_buffer_allocator = NULL;
     }
 
-    start_timer(&ring_buffer->missing_frame_nack_timer);
+    // set all additional metadata for frames and ring buffer
+    reset_ring_buffer(ring_buffer);
     return ring_buffer;
 }
 
@@ -163,8 +181,11 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         LOG_INFO("Old packet (ID %d) received, previous ID %d", packet->id, frame_data->id);
         return -1;
     } else if (packet->id > frame_data->id) {
-        // We don't have to worry about overwriting a rendering frame - falling 200-something frames
-        // behind never happens, since we request i-frames after falling 10 frames behind.
+        // if we are overwriting a frame that has not yet rendered, we should wipe the whole ring
+        // buffer and start over.
+        if (frame_data->id != -1 && frame_data->rendered == false) {
+            reset_ring_buffer(ring_buffer);
+        }
         overwrote_frame = (frame_data->id != -1);
         init_frame(ring_buffer, packet->id, packet->num_indices);
     }

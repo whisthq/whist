@@ -278,7 +278,7 @@ void update_render_context() {
     // we always encode our audio now
     int next_to_play_id = last_played_id + 1;
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
-#ifdef LOG_AUDIO
+#if LOG_AUDIO
     LOG_INFO("Moving audio frame ID %d into render context", frame_data->id);
 #endif
     audio_render_context = *frame_data;
@@ -396,6 +396,9 @@ void render_audio() {
                 LOG_ERROR("Could not play audio!");
             }
         }
+        // indicate that we rendered the next frame
+        FrameData* frame_data = get_frame_at_id(audio_ring_buffer, last_played_id);
+        frame_data->rendered = true;
         // No longer rendering audio
         rendering_audio = false;
     }
