@@ -35,7 +35,10 @@ Custom Types
 */
 
 /**
- * @brief                          Audio encoder features
+ * @brief       Struct for handling encoding and resampling of audio. the FFmpeg codec and context
+ *              handle encoding packets sent through audio_fifo, and audio is resampled from system
+ *              audio using swr_context. The encoded frame is located in encoded_frame_data.
+ *
  */
 typedef struct AudioEncoder {
     const AVCodec* codec;

@@ -41,11 +41,6 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     memset(encoder, 0, sizeof(*encoder));
 
     // setup the AVCodec and AVFormatContext
-    // avcodec_register_all is deprecated on FFmpeg 4+
-    // only Linux uses FFmpeg 3.4.x because of canonical system packages
-#if LIBAVCODEC_VERSION_MAJOR < 58
-    avcodec_register_all();
-#endif
 
     // allocate the packet - we will set its fields in avcodec_receive_packet.
     encoder->packet = *av_packet_alloc();
@@ -108,13 +103,13 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
         return NULL;
     }
 
-    // setup the SwrContext for resampling
+    // setup the SwrContext for resampling alsa audio into the FDK-AAC format (16-bit audio)
 
     encoder->swr_context = swr_alloc_set_opts(
         NULL, encoder->frame->channel_layout, encoder->frame->format, encoder->context->sample_rate,
-        AV_CH_LAYOUT_STEREO,  // should get layout from WASAPI
-        AV_SAMPLE_FMT_FLT,    // should get format from WASAPI
-        sample_rate,          // should use same sample rate as WASAPI, though this just
+        AV_CH_LAYOUT_STEREO,  // should get layout from alsa
+        AV_SAMPLE_FMT_FLT,    // should get format from alsa, which uses SND_PCM_FORMAT_FLOAT_LE
+        sample_rate,          // should use same sample rate as alsa, though this just
         0, NULL);             //       might not work if not same sample size throughout
     if (!encoder->swr_context) {
         LOG_WARNING("Could not initialize SwrContext.");
