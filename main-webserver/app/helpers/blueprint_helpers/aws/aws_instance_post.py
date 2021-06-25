@@ -42,8 +42,8 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     # This condition below is to accomodate the worflow for developers of client_apps to test their changes
     #  without needing to update the development database with commit_hashes on their local machines.
     #  TODO: move the `local_dev` to the mono-repo config as this needs to be a shared secret between
-    #  client_app and main-webserver. 
-    if current_app.config['ENVIRONMENT'] == DEVELOPMENT and client_commit_hash == 'local_dev':
+    #  client_app and main-webserver.
+    if current_app.config["ENVIRONMENT"] == DEVELOPMENT and client_commit_hash == "local_dev":
         avail_instance: Optional[InstanceSorted] = (
             InstanceSorted.query.filter_by(location=region)
             .limit(1)
