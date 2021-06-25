@@ -85,19 +85,19 @@ func validateClaims(claims jwt.MapClaims) error {
 		audValid = utils.SliceContains(audSlice, config.Aud)
 	}
 	if !audValid {
-		return errors.New("invalid audience")
+		return utils.MakeError(`Invalid JWT audience. Expected "%s", Got "%s".`, config.Aud, audSlice)
 	}
 
 	// Verify issuer
 	issValid := claims["iss"] == config.Iss
 	if !issValid {
-		return errors.New("invalid issuer")
+		return utils.MakeError(`Invalid JWT issuer. Expected "%s", Got "%s"`, config.Iss, claims["iss"])
 	}
 
 	// Verify JWT is not expired
 	err := claims.Valid()
 	if err != nil {
-		return err
+		return utils.MakeError("Couldn't validate JWT claims: %s", err)
 	}
 
 	return nil
@@ -108,13 +108,13 @@ func validateClaims(claims jwt.MapClaims) error {
 func Verify(accessToken RawJWT) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(string(accessToken), jwks.KeyFunc)
 	if err != nil {
-		return nil, err
+		return nil, utils.MakeError("Error parsing JWT: %s", err)
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
 	err = validateClaims(claims)
 	if err != nil {
-		return nil, err
+		return nil, utils.MakeError("Error verifying JWT since couldn't validate claims: %s", err)
 	}
 	return claims, nil
 }
@@ -129,7 +129,7 @@ func VerifyWithUserID(accessToken RawJWT, userID fctypes.UserID) (jwt.MapClaims,
 	}
 
 	if claims["sub"] != userID {
-		return claims, errors.New("userID does not match jwt")
+		return claims, utils.MakeError(`userID "%s" does not match JWT's expected "%s"`, userID, claims["sub"])
 	}
 
 	return claims, nil

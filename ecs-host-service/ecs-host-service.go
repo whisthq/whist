@@ -338,7 +338,7 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 	// Verify that the request access token is valid for the given userID.
 	_, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID)
 	if err != nil {
-		logAndReturnError("Invalid JWT access token")
+		logAndReturnError("Invalid JWT access token: %s", err)
 		return
 	}
 
