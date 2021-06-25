@@ -15,7 +15,7 @@ on:
 
 jobs:
     meta-spellcheck-files-main:
-        name: Spellcheck fractal/fractal Files
+        name: Spellcheck Files
         runs-on: ubuntu-20.04
 
         steps:
