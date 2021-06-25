@@ -1,148 +1,38 @@
-import { loadingFrom } from "@app/utils/observables"
 import {
-  hostServiceInfo,
-  hostServiceInfoValid,
-  hostServiceInfoIP,
-  hostServiceInfoPort,
-  hostServiceInfoPending,
-  hostServiceInfoSecret,
-  hostServiceConfig,
-  hostServiceConfigValid,
-  hostServiceConfigError,
-  HostServiceInfoResponse,
-  HostServiceConfigResponse,
+  hostSpinUp,
+  hostSpinUpValid,
+  hostSpinUpError,
+  HostSpinUpResponse,
 } from "@app/utils/host"
-import { from, interval, of, merge, zip } from "rxjs"
-import { map, share, takeUntil, switchMap, mapTo, take } from "rxjs/operators"
+import { zip, from } from "rxjs"
+import { map, switchMap } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
-import { some, pick } from "lodash"
-
-const hostServiceInfoRequest = flow<{
-  subClaim: string
-  accessToken: string
-  configToken: string
-}>("hostServiceInfoRequest", (trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(({ subClaim, accessToken }) =>
-        from(hostServiceInfo(subClaim, accessToken))
-      )
-    ),
-    {
-      success: (result: HostServiceInfoResponse) =>
-        hostServiceInfoValid(result),
-      pending: (result: HostServiceInfoResponse) =>
-        hostServiceInfoPending(result),
-      failure: (result: HostServiceInfoResponse) =>
-        !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
-    }
-  )
-)
-
-const hostPollingInner = flow<{
-  subClaim: string
-  accessToken: string
-  configToken: string
-}>("hostPollingInner", (trigger) => {
-  const tick = trigger.pipe(
-    switchMap((args) => interval(1000).pipe(mapTo(args)))
-  )
-  const poll = hostServiceInfoRequest(tick)
-
-  return {
-    pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
-    success: poll.success.pipe(take(1)),
-    failure: poll.failure.pipe(takeUntil(poll.success), take(1)),
-  }
-})
-
-const hostInfoFlow = flow<{
-  subClaim: string
-  accessToken: string
-  configToken: string
-}>("hostInfoFlow", (trigger) => {
-  const poll = trigger.pipe(
-    map((args) => hostPollingInner(of(args))),
-    share()
-  )
-
-  const success = poll.pipe(switchMap((inner) => inner.success))
-  const failure = poll.pipe(switchMap((inner) => inner.failure))
-  const pending = poll.pipe(switchMap((inner) => inner.pending))
-  const loading = loadingFrom(trigger, success, failure)
-
-  return {
-    success: success.pipe(
-      map((response) => ({
-        mandelboxIP: hostServiceInfoIP(response),
-        mandelboxPort: hostServiceInfoPort(response),
-        mandelboxSecret: hostServiceInfoSecret(response),
-      }))
-    ),
-    failure,
-    pending,
-    loading,
-  }
-})
-
-const hostConfigFlow = flow<{
-  mandelboxIP: string
-  mandelboxPort: number
-  mandelboxSecret: string
-  subClaim: string
-  configToken: string
-  accessToken: string
-}>("hostConfigFlow", (trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(
-        ({
-          mandelboxIP,
-          mandelboxPort,
-          mandelboxSecret,
-          subClaim,
-          configToken,
-          accessToken,
-        }) =>
-          from(
-            hostServiceConfig(
-              mandelboxIP,
-              mandelboxPort,
-              mandelboxSecret,
-              subClaim,
-              configToken,
-              accessToken
-            )
-          )
-      )
-    ),
-    {
-      success: (result: HostServiceConfigResponse) =>
-        hostServiceConfigValid(result),
-      failure: (result: HostServiceConfigResponse) =>
-        hostServiceConfigError(result),
-    }
-  )
-)
 
 export default flow<{
-  subClaim: string
-  accessToken: string
-  configToken: string
-}>("hostServiceFlow", (trigger) => {
-  const info = hostInfoFlow(trigger)
-
-  const config = hostConfigFlow(
-    zip(trigger, info.success).pipe(
-      map(([t, i]) => ({
-        ...pick(t, ["subClaim", "configToken", "accessToken"]),
-        ...pick(i, ["mandelboxIP", "mandelboxPort", "mandelboxSecret"]),
-      }))
-    )
-  )
+  ip: string
+  dpi: number
+  user_id: string
+  config_encryption_token: string
+  jwt_access_token: string
+  mandelbox_id: string
+}>("hostSpinUpFlow", (trigger) => {
+  const spin = fork(trigger.pipe(switchMap((args) => from(hostSpinUp(args)))), {
+    success: (result: HostSpinUpResponse) => hostSpinUpValid(result),
+    failure: (result: HostSpinUpResponse) => hostSpinUpError(result),
+  })
 
   return {
-    success: config.success,
-    failure: merge(info.failure, config.failure),
+    success: zip([trigger, spin.success]).pipe(
+      map(([t, s]) => ({
+        mandelboxIP: t.ip,
+        mandelboxSecret: s.json?.result?.aes_key,
+        mandelboxPorts: {
+          port_32262: s.json?.result?.port_32262,
+          port_32263: s.json?.result?.port_32263,
+          port_32273: s.json?.result?.port_32273,
+        },
+      }))
+    ),
+    failure: spin.failure,
   }
 })

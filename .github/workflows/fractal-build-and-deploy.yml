@@ -1198,7 +1198,11 @@ jobs:
             #      call yarn config set network-timeout 600000
             #      call yarn cache clean
             #      call yarn install
-            #      call yarn package:publish --config="{}" --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+            #      call yarn package:publish \
+            #      --config="{}" \
+            #      --version=${{ env.desktop_app_new_version }} \
+            #      --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
+            #       --commit=${{ env.commit_sha }}
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
@@ -1229,7 +1233,11 @@ jobs:
                   yarn config set network-timeout 600000
                   yarn cache clean
                   yarn install
-                  yarn package:publish --config="{}" --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  yarn package:publish \
+                  --config="{}" \
+                  --version=${{ env.desktop_app_new_version }} \
+                  --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  --commit=${{ env.commit_sha }}
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
