@@ -12,12 +12,15 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 
+	"github.com/MicahParks/keyfunc"
+
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
@@ -29,6 +32,26 @@ type RawJWT string
 type JwtScope string
 
 var config authConfig = getAuthConfig()
+var jwks *keyfunc.JWKs
+
+func init() {
+	refreshInterval := time.Hour * 1
+	refreshUnknown := true
+	var err error // don't want to shadow jwks accidentally
+
+	jwks, err = keyfunc.Get(config.getJwksURL(), keyfunc.Options{
+		RefreshInterval: &refreshInterval,
+		RefreshErrorHandler: func(err error) {
+			logger.Errorf("Error refreshing JWKs: %s", err)
+		},
+		RefreshUnknownKID: &refreshUnknown,
+	})
+	if err != nil {
+		// Can do a "real" panic since we're in an init function
+		logger.Panicf(nil, "Error getting JWKs on startup: %s", err)
+	}
+	logger.Infof("Successfully got JWKs from %s on startup.", config.getJwksURL())
+}
 
 func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pubPEM))
@@ -49,17 +72,6 @@ func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 	}
 }
 
-// Checks that audience and issuer are correct, then returns the public key.
-// This should not be used except as an argument to jwt's parse methods.
-func keyFunc(token *jwt.Token) (interface{}, error) {
-	// Our Auth0 configuration uses RS256, so we return an rsa public key
-	key, err := parsePubPEM(config.VerifyKey)
-	if err != nil {
-		fmt.Printf("key err %v", err)
-	}
-	return key, nil
-}
-
 func validateClaims(claims jwt.MapClaims) error {
 	// Verify audience
 	audSlice := claims["aud"]
@@ -73,19 +85,19 @@ func validateClaims(claims jwt.MapClaims) error {
 		audValid = utils.SliceContains(audSlice, config.Aud)
 	}
 	if !audValid {
-		return errors.New("invalid audience")
+		return utils.MakeError(`Invalid JWT audience. Expected "%s", Got "%s".`, config.Aud, audSlice)
 	}
 
 	// Verify issuer
 	issValid := claims["iss"] == config.Iss
 	if !issValid {
-		return errors.New("invalid issuer")
+		return utils.MakeError(`Invalid JWT issuer. Expected "%s", Got "%s"`, config.Iss, claims["iss"])
 	}
 
 	// Verify JWT is not expired
 	err := claims.Valid()
 	if err != nil {
-		return err
+		return utils.MakeError("Couldn't validate JWT claims: %s", err)
 	}
 
 	return nil
@@ -94,30 +106,36 @@ func validateClaims(claims jwt.MapClaims) error {
 // Verify verifies that a JWT is valid.
 // If valid, the JWT's claims are returned.
 func Verify(accessToken RawJWT) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(string(accessToken), keyFunc)
+	token, err := jwt.Parse(string(accessToken), jwks.KeyFunc)
 	if err != nil {
-		return nil, err
+		return nil, utils.MakeError("Error parsing JWT: %s", err)
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
 	err = validateClaims(claims)
 	if err != nil {
-		return nil, err
+		return nil, utils.MakeError("Error verifying JWT since couldn't validate claims: %s", err)
 	}
 	return claims, nil
 }
 
-// VerifyWithUserID verifies that a JWT is valid and
-// corresponds to the user with userID.
-// If valid, the JWT's claims are returned.
+// VerifyWithUserID verifies that a JWT is valid and corresponds to the user
+// with userID. If valid, the JWT's claims are returned.
 func VerifyWithUserID(accessToken RawJWT, userID fctypes.UserID) (jwt.MapClaims, error) {
 	claims, err := Verify(accessToken)
 	if err != nil {
-		return claims, err
+		return nil, err
 	}
 
-	if claims["sub"] != userID {
-		return claims, errors.New("userID does not match jwt")
+	// Note that we need to do this cast, since `claims["sub"]` is an
+	// interface{}. Therefore, naively comparing `claims["sub"]` with userID will
+	// always result in non-equality, even if they are equal strings.
+	jwtID, ok := claims["sub"].(string)
+	if !ok {
+		return nil, utils.MakeError("Couldn't cast JWT-provided sub %v into string!", claims["sub"])
+	}
+	if jwtID != string(userID) {
+		return nil, utils.MakeError(`userID "%s" does not match JWT's provided "%s"`, userID, jwtID)
 	}
 
 	return claims, nil
