@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file error.ts
+ * @brief This file contains various error messages.
+ */
+
 import { allowPayments } from "@app/utils/constants"
 
 export const NO_PAYMENT_ERROR = "NO_PAYMENT_ERROR"

@@ -1,3 +1,10 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file history.ts
+ * @brief This file contains utility functions for browser history, which is used by the renderer
+ * thread to navigate between page routes.
+ */
+
 import { createHashHistory, createMemoryHistory } from "history"
 
 const chooseHistory = () => {

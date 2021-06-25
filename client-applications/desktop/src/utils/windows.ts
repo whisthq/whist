@@ -1,6 +1,9 @@
-// This file manages creation of renderer process windows. It is called from the
-// main process, and passes all the configuration needed to load files into
-// Electron renderer windows.
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file auth.ts
+ * @brief This file contains utility functions to create Electron windows.
+ */
+
 import path from "path"
 import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"

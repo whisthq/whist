@@ -1,3 +1,10 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file auth.ts
+ * @brief This file contains utility functions for managing the MacOS tray, which appears at the
+ * top right corner of the screen when the protocol launches.
+ */
+
 import events from "events"
 import { Menu, Tray, nativeImage } from "electron"
 import { values, endsWith } from "lodash"

@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file index.ts
+ * @brief This file is the entry point of the renderer thread and acts as a router.
+ */
+
 import React from "react"
 import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
@@ -85,19 +91,7 @@ const RootComponent = () => {
 
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
-  const win = window as unknown as { VERSION: number }
-  const version = win.VERSION
-  return (
-    <div className="relative w-full h-full">
-      <div
-        className="bg-white absolute flex flex-col-reverse items-center w-full h-full"
-        style={{ zIndex: -10 }}
-      >
-        <p className="font-body font-light text-gray-200 py-4">{version}</p>
-      </div>
-      {props.children}
-    </div>
-  )
+  return <div className="relative w-full h-full">{props.children}</div>
 }
 
 ReactDOM.render(

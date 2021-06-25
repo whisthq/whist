@@ -1,6 +1,9 @@
-// This file is imported both by the main and the renderer process, so it's
-// important that it doesn't use any functionality that can't be bundled into
-// the browser.
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file auth.ts
+ * @brief This file contains utility functions for IPC communication between the main and renderer
+ * thread.
+ */
 
 import { useEffect, useState } from "react"
 import { every } from "lodash"

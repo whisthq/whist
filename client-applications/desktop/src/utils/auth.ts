@@ -1,3 +1,10 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file auth.ts
+ * @brief This file contains utility functions for authentication, mostly interacting with
+ * the auth0 server.
+ */
+
 import jwtDecode from "jwt-decode"
 import events from "events"
 import { URL } from "url"

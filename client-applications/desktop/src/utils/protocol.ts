@@ -1,5 +1,7 @@
-/*
-    This file contains all the code used to interact with the protocol through the client-app. Everything -- launching, passing args, and closing args -- should be done here.
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file protocol.ts
+ * @brief This file contains utility functions launching the protocol ChildProcess.
  */
 
 import { app } from "electron"
