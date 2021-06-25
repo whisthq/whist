@@ -41,7 +41,7 @@ fi
 # add env vars to current env. these tell us the host, db, role, pwd
 export $(cat .env | xargs)
 
-#For local deploys, we need to launch the bulky `g3.4xlarge` instances.
+#For local deploys, we don't need to launch the bulky `g3.4xlarge` instances.
 export AWS_INSTANCE_TYPE_TO_LAUNCH="g3s.xlarge"
 
 if [ $USE_DEV_DB == true ]; then
