@@ -8,12 +8,13 @@
 typedef struct {
     NVFBC_SESSION_HANDLE fbc_handle;
     NVFBC_API_FUNCTION_LIST p_fbc_fn;
+    // Contains pointers to the opengl textures that the Nvidia Capture Device will capture into
+    NVFBC_TOGL_SETUP_PARAMS togl_setup_params;
     int width;
     int height;
-    CodecType codec_type;
 } NvidiaCaptureDevice;
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, CodecType codec);
+int create_nvidia_capture_device(NvidiaCaptureDevice* device);
 int nvidia_capture_screen(NvidiaCaptureDevice* device);
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device);
 

@@ -220,19 +220,15 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
     /*
      * Set up the capture session.
      */
-    NVFBC_TOGL_SETUP_PARAMS setup_params = {0};
-    setup_params.dwVersion = NVFBC_TOGL_SETUP_PARAMS_VER;
-    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
+    memset(&device->togl_setup_params, 0, sizeof(device->togl_setup_params));
+    togl_setup_params.dwVersion = NVFBC_TOGL_SETUP_PARAMS_VER;
+    togl_setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
 
-    fbc_status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &setup_params);
+    fbc_status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &device->togl_setup_params);
     if (fbc_status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
-
-    // Set initial frame pointer to NULL, nvidia will overwrite this with the framebuffer pointer
-    device->frame = NULL;
-    device->frame_idx = -1;
 
     /*
      * We are now ready to start grabbing frames.
@@ -240,11 +236,6 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
     LOG_INFO(
         "Nvidia Frame capture session started. New frames will be captured when "
         "the display is refreshed or when the mouse cursor moves.");
-
-    if (create_nvidia_encoder(device, bitrate, requested_codec, &setup_params) != 0) {
-        LOG_ERROR("Failed to create nvidia encoder!");
-        return -1;
-    }
     
     return 0;
 }
@@ -263,7 +254,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 #endif
 
     NVFBC_TOGL_GRAB_FRAME_PARAMS grab_params = {0};
-    NVFBC_FRAME_GRAB_INFO frame_info;
+    NVFBC_FRAME_GRAB_INFO frame_info = {0};
 
     grab_params.dwVersion = NVFBC_TOGL_GRAB_FRAME_PARAMS_VER;
 
@@ -309,13 +300,10 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         return -1;
     }
 
-    // TODO: Make this work by factoring out encoder
     // If the frame isn't new, just return 0
-    // if (!frame_info.bIsNewFrame) {
-    //    return 0;
-    //}
-
-    // If the frame is new, then free the old frame and capture+encode the new frame
+    if (!frame_info.bIsNewFrame) {
+        return 0;
+    }
 
     // Set the device to use the newly captured width/height
     device->width = frame_info.dwWidth;
@@ -330,12 +318,13 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
              frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long)(t2 - t1));
 #endif
 
+    // Return with the number of accumulated frames
     return frame_info.dwMissedFrames + 1;
 }
 
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBCSTATUS fbc_status;
-    
+
     /*
      * Destroy capture session, tear down resources.
      */

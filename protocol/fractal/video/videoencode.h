@@ -23,6 +23,7 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
+#include "nvidia_encode.h"
 
 /*
 ============================
@@ -71,6 +72,8 @@ typedef struct VideoEncoder {
 
     EncodeType type;
     CodecType codec_type;
+
+    NvidiaEncoder nvidia_encoder;
 } VideoEncoder;
 
 /*

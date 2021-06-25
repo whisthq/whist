@@ -116,15 +116,16 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         }
     }
 
-#if USING_GPU_CAPTURE
-    if (create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec) < 0) {
-        device->using_nvidia = false;
-        LOG_ERROR("USING_GPU_CAPTURE defined but unable to use Nvidia Capture SDK!");
-    } else {
+#if USING_NVIDIA_CAPTURE_AND_ENCODE
+    if (create_nvidia_capture_device(&device->nvidia_capture_device) == 0) {
         device->using_nvidia = true;
         device->image = NULL;
         LOG_INFO("Using Nvidia Capture SDK!");
         return 0;
+    } else {
+        device->using_nvidia = false;
+        LOG_ERROR("USING_NVIDIA_CAPTURE_AND_ENCODE defined but unable to use Nvidia Capture SDK!");
+        // Cascade to X11 capture below
     }
 #endif
 

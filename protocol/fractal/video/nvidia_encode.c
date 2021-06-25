@@ -5,18 +5,15 @@ void try_free_frame(NvidiaEncoder* encoder) {
 
     // If there was a previous frame, we should free it first
     if (encoder->frame != NULL) {
-        /*
-         * Unlock the bitstream
-         */
+        // Unlock the bitstream
         enc_status = encoder->p_enc_fn.nvEncUnlockBitstream(encoder->internal_nvidia_encoder, encoder->output_buffer);
         if (enc_status != NV_ENC_SUCCESS) {
             // If LOG_ERROR is ever desired here in the future,
             // make sure to still UnmapInputResource before returning -1
             LOG_FATAL("Failed to unlock bitstream buffer, status = %d", enc_status);
         }
-        /*
-         * Unmap the input buffer
-         */
+
+        // Unmap the input buffer
         enc_status =
             encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder, encoder->input_buffer);
         if (enc_status != NV_ENC_SUCCESS) {
@@ -28,17 +25,56 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec,
+void update_registered_resource(NVFBC_TOGL_SETUP_PARAMS togl_setup_params) {
+    // Register the textures received from NvFBC for use with NvEncodeAPI
+    int in_width = out_height;
+    int in_height = out_height;
+    for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
+        NV_ENC_REGISTER_RESOURCE register_params;
+        NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params;
+
+        if (!togl_setup_params->dwTextures[i]) {
+            break;
+        }
+
+        memset(&register_params, 0, sizeof(register_params));
+
+        tex_params.texture = togl_setup_params->dwTextures[i];
+        tex_params.target = togl_setup_params->dwTexTarget;
+
+        register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
+        register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_OPENGL_TEX;
+        register_params.width = in_width;
+        register_params.height = in_height;
+        register_params.pitch = in_width;
+        register_params.resourceToRegister = &tex_params;
+        register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
+
+        status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
+        if (status != NV_ENC_SUCCESS) {
+            LOG_ERROR("Failed to register texture, status = %d", status);
+            return NULL;
+        }
+
+        encoder->registered_resources[i] = register_params.registeredResource;
+    }
+}
+
+NvidiaEncode* create_nvidia_encoder(int bitrate, CodecType requested_codec,
                           NVFBC_TOGL_SETUP_PARAMS* p_setup_params, int out_width, int out_height) {
     NVENCSTATUS status;
 
-    /*
-     * Dynamically load the NvEncodeAPI library.
-     */
+    NvidiaEncode* encoder = malloc(sizeof(NvidiaEncode));
+
+    // Set initial frame pointer to NULL, nvidia will overwrite this later with the framebuffer pointer
+    encoder->frame = NULL;
+    encoder->frame_idx = -1;
+
+    // Dynamically load the NvEncodeAPI library
     void* lib_enc = dlopen(LIB_ENCODEAPI_NAME, RTLD_NOW);
     if (lib_enc == NULL) {
         LOG_ERROR("Unable to open '%s' (%s)", LIB_ENCODEAPI_NAME, dlerror());
-        return -1;
+        return NULL;
     }
 
     /*
@@ -50,7 +86,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
         (NVENCODEAPICREATEINSTANCEPROC)dlsym(lib_enc, "NvEncodeAPICreateInstance");
     if (nv_encode_api_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvEncodeAPICreateInstance'");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -65,12 +101,10 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
     status = nv_encode_api_create_instance_ptr(&encoder->p_enc_fn);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Unable to create NvEncodeAPI instance (status: %d)", status);
-        return -1;
+        return NULL;
     }
 
-    /*
-     * Create an encoder session
-     */
+    // Create an encoder session
     NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS encode_session_params = {0};
 
     encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
@@ -80,12 +114,10 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
     status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params, &encoder->internal_nvidia_encoder);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to open an encoder session, status = %d", status);
-        return -1;
+        return NULL;
     }
 
-    /*
-     * Validate the codec requested
-     */
+    // Validate the codec requested
     GUID codec_guid;
     if (requested_codec == CODEC_TYPE_H265) {
         encoder->codec_type = CODEC_TYPE_H265;
@@ -97,7 +129,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
     // status = validateEncodeGUID(encoder, codec_guid);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to validate codec GUID");
-        return -1;
+        return NULL;
     }
 
     NV_ENC_PRESET_CONFIG preset_config;
@@ -112,7 +144,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
             "Failed to obtain preset settings, "
             "status = %d",
             status);
-        return -1;
+        return NULL;
     }
 
     // Set iframe length to basically be infinite
@@ -123,9 +155,7 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
     // Specify the size of the clientside buffer, 1 * bitrate is recommended
     preset_config.presetCfg.rcParams.vbvBufferSize = bitrate;
 
-    /*
-     * Initialize the encode session
-     */
+    // Initialize the encode session
     NV_ENC_INITIALIZE_PARAMS init_params;
     memset(&init_params, 0, sizeof(init_params));
     init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
@@ -141,58 +171,21 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
     status = encoder->p_enc_fn.nvEncInitializeEncoder(encoder->internal_nvidia_encoder, &init_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to initialize the encode session, status = %d", status);
-        return -1;
+        return NULL;
     }
 
-    /*
-     * Register the textures received from NvFBC for use with NvEncodeAPI
-     */
-    int in_width = out_height;
-    int in_height = out_height;
-    for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
-        NV_ENC_REGISTER_RESOURCE register_params;
-        NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params;
-
-        if (!p_setup_params->dwTextures[i]) {
-            break;
-        }
-
-        memset(&register_params, 0, sizeof(register_params));
-
-        tex_params.texture = p_setup_params->dwTextures[i];
-        tex_params.target = p_setup_params->dwTexTarget;
-
-        register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
-        register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_OPENGL_TEX;
-        register_params.width = in_width;
-        register_params.height = out_height;
-        register_params.pitch = in_width;
-        register_params.resourceToRegister = &tex_params;
-        register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
-
-        status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
-        if (status != NV_ENC_SUCCESS) {
-            LOG_ERROR("Failed to register texture, status = %d", status);
-            return -1;
-        }
-
-        encoder->registered_resources[i] = register_params.registeredResource;
-    }
-
-    /*
-     * Create a bitstream buffer to hold the output
-     */
+    // Create a bitstream buffer to hold the output
     NV_ENC_CREATE_BITSTREAM_BUFFER bitstream_buffer_params = {0};
     bitstream_buffer_params.version = NV_ENC_CREATE_BITSTREAM_BUFFER_VER;
 
     status = encoder->p_enc_fn.nvEncCreateBitstreamBuffer(encoder->internal_nvidia_encoder, &bitstream_buffer_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to create a bitstream buffer, status = %d", status);
-        return -1;
+        return NULL;
     }
 
     encoder->output_buffer = bitstream_buffer_params.bitstreamBuffer;
-    return 0;
+    return encoder;
 }
 
 void nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* input_buffer, int width, int height) {
@@ -204,9 +197,7 @@ void nvidia_encoder_encode(NvidiaEncoder* encoder) {
     // Try to free the encoder's previous frame
     try_free_frame(encoder);
 
-    /*
-     * Map the frame for use by the encoder.
-     */
+    // Map the frame for use by the encoder.
     NV_ENC_MAP_INPUT_RESOURCE map_params = {0};
     map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
     map_params.registeredResource = encoder->registered_resources[grab_params.dwTextureIndex];
@@ -217,9 +208,7 @@ void nvidia_encoder_encode(NvidiaEncoder* encoder) {
     }
     encoder->input_buffer = map_params.mappedResource;
 
-    /*
-     * Pre-fill frame encoding information
-     */
+    // Fill in the frame encoding information
     NV_ENC_PIC_PARAMS enc_params = {0};
     enc_params.version = NV_ENC_PIC_PARAMS_VER;
     enc_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
@@ -235,9 +224,7 @@ void nvidia_encoder_encode(NvidiaEncoder* encoder) {
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR;
     }
 
-    /*
-     * Encode the frame.
-     */
+    // Encode the frame.
     enc_status = encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
     if (enc_status != NV_ENC_SUCCESS) {
         // TODO: Unmap the frame! Otherwise, memory leaks here
@@ -245,9 +232,7 @@ void nvidia_encoder_encode(NvidiaEncoder* encoder) {
         return -1;
     }
 
-    /*
-     * Get the bitstream and dump to file.
-     */
+    // Lock the bitstream
     NV_ENC_LOCK_BITSTREAM lock_params = {0};
 
     lock_params.version = NV_ENC_LOCK_BITSTREAM_VER;
@@ -289,10 +274,7 @@ void destroy_nvidia_encoder(NvidiaEncode* encoder) {
         encoder->output_buffer = NULL;
     }
 
-    /*
-     * Unregister all the resources that we had registered earlier with the
-     * encoder.
-     */
+    // Unregister all the resources that we had registered earlier
     for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
         if (encoder->registered_resources[i]) {
             enc_status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
@@ -311,4 +293,7 @@ void destroy_nvidia_encoder(NvidiaEncode* encoder) {
     if (enc_status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to destroy encoder, status = %d", enc_status);
     }
+    
+    // Free the encoder struct itself
+    free(encoder);
 }
