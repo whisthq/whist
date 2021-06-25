@@ -46,8 +46,10 @@ jobs:
                   python-version: 3.8
 
             # Install the version of Sphinx specified in main-webserver/requirements-test.txt
-            - name: Install Sphinx
-              run: pip install $(cat fractal/main-webserver/requirements-test.txt | grep -m 1 ^Sphinx==)
+            - name: Install requirements
+              run: |
+                  pip install -r ./fractal/main-webserver/requirements-test.txt
+                  pip install -r ./fractal/main-webserver/requirements.txt
 
             - name: Build the Latest Documentation
               working-directory: fractal/main-webserver/docs
