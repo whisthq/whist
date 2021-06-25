@@ -144,7 +144,10 @@ jobs:
                   call yarn config set network-timeout 600000
                   call yarn cache clean
                   call yarn install
-                  call yarn package:notarize --version 1.0.0
+
+            - name: Debug w/ Tmate
+              if: runner.os == 'Windows'
+              uses: mxschmitt/action-tmate@v3.5
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
