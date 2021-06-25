@@ -47,9 +47,10 @@ jobs:
 
             # Install the version of Sphinx specified in main-webserver/requirements-test.txt
             - name: Install requirements
+              working-directory: main-webserver
               run: |
-                  pip install -r ./fractal/main-webserver/requirements-test.txt
-                  pip install -r ./fractal/main-webserver/requirements.txt
+                  pip install -r requirements.txt
+                  pip install -r requirements-test.txt
 
             - name: Build the Latest Documentation
               working-directory: fractal/main-webserver/docs
