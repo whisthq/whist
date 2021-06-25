@@ -119,22 +119,23 @@ func Verify(accessToken RawJWT) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-// VerifyWithUserID verifies that a JWT is valid and
-// corresponds to the user with userID.
-// If valid, the JWT's claims are returned.
+// VerifyWithUserID verifies that a JWT is valid and corresponds to the user
+// with userID. If valid, the JWT's claims are returned.
 func VerifyWithUserID(accessToken RawJWT, userID fctypes.UserID) (jwt.MapClaims, error) {
 	claims, err := Verify(accessToken)
 	if err != nil {
-		return claims, err
+		return nil, err
 	}
 
+	// Note that we need to do this cast, since `claims["sub"]` is an
+	// interface{}. Therefore, naively comparing `claims["sub"]` with userID will
+	// always result in non-equality, even if they are equal strings.
 	jwtID, ok := claims["sub"].(string)
 	if !ok {
-		return claims, utils.MakeError("Couldn't cast JWT-provided sub %v into string!", claims["sub"])
+		return nil, utils.MakeError("Couldn't cast JWT-provided sub %v into string!", claims["sub"])
 	}
 	if jwtID != string(userID) {
-		logger.Errorf("JWT USERID as char array: %+v, JWT's provided: %+v", strings.Split(string(userID), ""), strings.Split(jwtID, ""))
-		return claims, utils.MakeError(`userID "%s" does not match JWT's provided "%s"`, userID, jwtID)
+		return nil, utils.MakeError(`userID "%s" does not match JWT's provided "%s"`, userID, jwtID)
 	}
 
 	return claims, nil
