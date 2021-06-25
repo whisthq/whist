@@ -107,7 +107,7 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
         is going to increase the length of our unavailable window for users. This reduces the window by the time
         it takes to spin up an AWS instance which can be anywhere from seconds to few minutes.
     Returns:
-        List[InstanceInfo] -> List of instanes that are currently running. Since the
+        List[InstanceInfo] -> List of instances that are currently running. Since the
     """
     return (
         db.session.query(InstanceInfo)
