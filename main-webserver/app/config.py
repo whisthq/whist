@@ -203,7 +203,7 @@ class DeploymentConfig:
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     AWS_INSTANCE_TYPE_TO_LAUNCH = property(
         # Having a `fetch=True` can let us dynamically change the instance type to be launched.
-        getattr("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g3.4xlarge")
+        getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g3.4xlarge")
     )
     SENTRY_DSN = property(getter("SENTRY_DSN", fetch=False))
 
