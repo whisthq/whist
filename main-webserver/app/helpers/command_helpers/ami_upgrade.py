@@ -127,8 +127,8 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
 def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> None:
     """
     Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
-    This happens in the following steps
-        - Get current active amis in the database, these will be marked as inactive once
+    This happens in the following steps:
+        - Get current active AMIs in the database, these will be marked as inactive once
         we have sufficient buffer capacity from the new AMIs
         - Insert the new AMIs that are passed in as an argument to this function and associate them with the
         client_commit_hash.
@@ -145,7 +145,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             - What if the argument region_to_ami_id_mapping has more regions than we currently support. This should be fine
             as we use the regions passed in as the argument as a reference to spin up instances in new regions.
             - What if the argument region_to_ami_id_mapping has less number of regions than we currently support. Then, we
-            would update the AMIs in the regions that are passed in as the argument and mark the amis in missing regions as disabled.
+            would update the AMIs in the regions that are passed in as the argument and mark the AMIs in missing regions as disabled.
             Also, we would be marking all the current running instances for draining. So, this would essentially purge the regions
             that are missing in the passed in arguments.
 
