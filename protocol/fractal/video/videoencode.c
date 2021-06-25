@@ -6,22 +6,56 @@
 ============================
 Usage
 ============================
+Video is encoded to H264 via either a hardware encoder (currently, we use NVidia GPUs, so we use NVENC) or a software encoder. H265 is also supported but not currently used. Since NVidia allows us to
+both capture and encode the screen, most of the functions will be called in server/main.c with an
+empty dummy encoder. For encoders, create an H264 encoder via create_video_encode, and use
+it to encode frames via video_encoder_encode. Write the encoded output via
+video_encoder_write_buffer, and when finished, destroy the encoder using destroy_video_encoder.
 */
 
+/*
+============================
+Includes
+============================
+*/
 #include "videoencode.h"
 
 #include <libavfilter/avfilter.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet);
-int video_encoder_send_frame(VideoEncoder *encoder);
-
 #define GOP_SIZE 99999
 #define MIN_NVENC_WIDTH 33
 #define MIN_NVENC_HEIGHT 17
+/*
+============================
+Private Functions
+============================
+*/
+int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet);
+int video_encoder_send_frame(VideoEncoder *encoder);
+void set_opt(VideoEncoder *encoder, char *option, char *value);
+VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
+                                   int bitrate, CodecType codec_type);
+VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
+                                 int bitrate, CodecType codec_type);
+VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
+                                int bitrate, CodecType codec_type);
 
+/*
+============================
+Private Function Implementations
+============================
+*/
 void set_opt(VideoEncoder *encoder, char *option, char *value) {
+    /*
+        Wrapper function to set encoder options, like presets, latency, and bitrate.
+
+        Arguments:
+            encoder (VideoEncoder*): video encoder to set options for
+            option (char*): name of option as string
+            value (char*): value of option as string
+    */
     int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
     if (ret < 0) {
         LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
@@ -32,6 +66,20 @@ typedef VideoEncoder *(*VideoEncoderCreator)(int, int, int, int, int, CodecType)
 
 VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
+    /*
+        Create an encoder using Nvidia's video encoding alorithms.
+
+        Arguments: 
+            in_width (int): Width of the frames that the encoder intakes
+            in_height (int): height of the frames that the encoder intakes
+            out_width (int): width of the frames that the encoder outputs
+            out_height (int): Height of the frames that the encoder outputs
+            bitrate (int): bits per second the encoder will encode to
+            codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
+
+        Returns:
+            (VideoEncoder*): the newly created encoder
+     */
     LOG_INFO("Trying NVENC encoder...");
     VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -277,6 +325,20 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
 
 VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
                                  int bitrate, CodecType codec_type) {
+    /*
+        Create a QSV (Intel Quick Sync Video) encoder for Intel hardware encoding.
+
+        Arguments: 
+            in_width (int): Width of the frames that the encoder intakes
+            in_height (int): height of the frames that the encoder intakes
+            out_width (int): width of the frames that the encoder outputs
+            out_height (int): Height of the frames that the encoder outputs
+            bitrate (int): bits per second the encoder will encode to
+            codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
+
+        Returns:
+            (VideoEncoder*): the newly created encoder
+     */
     LOG_INFO("Trying QSV encoder...");
     VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -461,6 +523,20 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
 
 VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
                                 int bitrate, CodecType codec_type) {
+    /*
+        Create an FFmpeg software encoder.
+
+        Arguments: 
+            in_width (int): Width of the frames that the encoder intakes
+            in_height (int): height of the frames that the encoder intakes
+            out_width (int): width of the frames that the encoder outputs
+            out_height (int): Height of the frames that the encoder outputs
+            bitrate (int): bits per second the encoder will encode to
+            codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
+
+        Returns:
+            (VideoEncoder*): the newly created encoder
+     */
     LOG_INFO("Trying software encoder...");
     VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -621,18 +697,29 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     return encoder;
 }
 
-// Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
-// next one when the previous one doesn't work
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
-    // setup the AVCodec and AVFormatContext
-    // avcodec_register_all is deprecated on FFmpeg 4+
-    // only linux uses FFmpeg 3.4.x because of canonical system packages
-#if LIBAVCODEC_VERSION_MAJOR < 58
-    avcodec_register_all();
-    avfilter_register_all();
-#endif
+    /*
+        Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding, then software encoding if that fails.
 
+        Arguments: 
+            in_width (int): Width of the frames that the encoder intakes
+            in_height (int): height of the frames that the encoder intakes
+            out_width (int): width of the frames that the encoder outputs
+            out_height (int): Height of the frames that the encoder outputs
+            bitrate (int): bits per second the encoder will encode to
+            codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
+
+        Returns:
+            (VideoEncoder*): the newly created encoder
+     */
+    // setup the AVCodec and AVFormatContext
 #if !USING_SERVERSIDE_SCALE
     out_width = in_width;
     out_height = in_height;
@@ -655,59 +742,51 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     return NULL;
 }
 
-void destroy_video_encoder(VideoEncoder *encoder) {
-    // check if encoder encoder exists
-    if (encoder == NULL) {
-        LOG_INFO("Encoder empty, not destroying anything.");
-        return;
+int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitch) {
+    /*
+        Copy frame data in rgb_pixels and pitch to the software frame, and to the hardware frame if possible.
+
+        Arguments:
+            encoder (VideoEncoder*): video encoder containing encoded frames
+            rgb_pixels (void*): pixel data for the frame
+            pitch (int): Pitch data for the frame
+
+        Returns:
+            (int): 0 on success, -1 on failure
+     */
+    memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
+    memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
+    encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
+    encoder->sw_frame->linesize[0] = pitch;
+    encoder->sw_frame->pts++;
+
+    if (encoder->hw_frame) {
+        int res = av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
+        if (res < 0) {
+            LOG_ERROR("Unable to transfer frame to hardware frame: %s", av_err2str(res));
+            return -1;
+        }
+        encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
     }
-
-    if (encoder->context) {
-        avcodec_free_context(&encoder->context);
-    }
-
-    if (encoder->filter_graph) {
-        avfilter_graph_free(&encoder->filter_graph);
-    }
-
-    if (encoder->hw_device_ctx) {
-        av_buffer_unref(&encoder->hw_device_ctx);
-    }
-
-    av_frame_free(&encoder->hw_frame);
-    av_frame_free(&encoder->sw_frame);
-    av_frame_free(&encoder->filtered_frame);
-
-    // free the buffer and encoder
-    free(encoder->sw_frame_buffer);
-    free(encoder);
-    return;
-}
-
-void video_encoder_set_iframe(VideoEncoder *encoder) {
-    if (encoder->already_encoded) {
-        return;
-    }
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-    encoder->sw_frame->pts +=
-        encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
-    encoder->sw_frame->key_frame = 1;
-}
-
-void video_encoder_unset_iframe(VideoEncoder *encoder) {
-    if (encoder->already_encoded) {
-        return;
-    }
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-    encoder->sw_frame->key_frame = 0;
+    return 0;
 }
 
 int video_encoder_encode(VideoEncoder *encoder) {
+    /*
+        Encode a frame using the encoder and store the resulting packets into encoder->packets. If the frame has alreday been encoded, this function does nothing.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder that will encode the frame
+
+        Returns:
+            (int): 0 on success, -1 on failure
+     */
     if (encoder->already_encoded) {
+        // If the frame comes already encoded (in the case of nvidia e.g.), then we treat the encoded frame is one encoded packet.
         encoder->num_packets = 1;
         encoder->packets[0].data = encoder->encoded_frame_data;
         encoder->packets[0].size = encoder->encoded_frame_size;
-        encoder->encoded_frame_size += 8;
+        encoder->encoded_frame_size += 2 * sizeof(int);
         return 0;
     }
 
@@ -716,13 +795,15 @@ int video_encoder_encode(VideoEncoder *encoder) {
         return -1;
     }
 
+    // If the encoder has been used to encode a frame before we should clear packet data for previously used packets
     if (encoder->num_packets) {
         for (int i = 0; i < encoder->num_packets; i++) {
             av_packet_unref(&encoder->packets[i]);
         }
     }
 
-    encoder->encoded_frame_size = 4;
+    // The encoded frame size starts out as sizeof(int) because of the way we send packets. See encode.h and decode.h.
+    encoder->encoded_frame_size = sizeof(int);
     encoder->num_packets = 0;
     int res;
 
@@ -763,24 +844,55 @@ void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
     }
 }
 
-int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitch) {
-    memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
-    memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
-    encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
-    encoder->sw_frame->linesize[0] = pitch;
-    encoder->sw_frame->pts++;
-
-    if (encoder->hw_frame) {
-        int res = av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
-        if (res < 0) {
-            LOG_ERROR("Unable to transfer frame to hardware frame: %s", av_err2str(res));
-            return -1;
-        }
-        encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
+void video_encoder_set_iframe(VideoEncoder *encoder) {
+    if (encoder->already_encoded) {
+        return;
     }
-    return 0;
+    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
+    encoder->sw_frame->pts +=
+        encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
+    encoder->sw_frame->key_frame = 1;
 }
 
+void video_encoder_unset_iframe(VideoEncoder *encoder) {
+    if (encoder->already_encoded) {
+        return;
+    }
+    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+    encoder->sw_frame->key_frame = 0;
+}
+
+void destroy_video_encoder(VideoEncoder *encoder) {
+    // check if encoder encoder exists
+    if (encoder == NULL) {
+        LOG_INFO("Encoder empty, not destroying anything.");
+        return;
+    }
+
+    if (encoder->context) {
+        avcodec_free_context(&encoder->context);
+    }
+
+    if (encoder->filter_graph) {
+        avfilter_graph_free(&encoder->filter_graph);
+    }
+
+    if (encoder->hw_device_ctx) {
+        av_buffer_unref(&encoder->hw_device_ctx);
+    }
+
+    av_frame_free(&encoder->hw_frame);
+    av_frame_free(&encoder->sw_frame);
+    av_frame_free(&encoder->filtered_frame);
+
+    // free the buffer and encoder
+    free(encoder->sw_frame_buffer);
+    free(encoder);
+    return;
+}
+
+// Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
+// next one when the previous one doesn't work
 int video_encoder_send_frame(VideoEncoder *encoder) {
     AVFrame *active_frame = encoder->sw_frame;
     if (encoder->hw_frame) {
@@ -800,8 +912,8 @@ int video_encoder_send_frame(VideoEncoder *encoder) {
     int res_buffer;
 
     // submit all available frames to the encoder
-    while ((res_buffer =
-                av_buffersink_get_frame(encoder->filter_graph_sink, encoder->filtered_frame)) >= 0) {
+    while ((res_buffer = av_buffersink_get_frame(encoder->filter_graph_sink,
+                                                 encoder->filtered_frame)) >= 0) {
         int res_encoder = avcodec_send_frame(encoder->context, encoder->filtered_frame);
 
         // unref the frame so it may be reused

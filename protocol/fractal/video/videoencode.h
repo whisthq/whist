@@ -9,10 +9,12 @@
 Usage
 ============================
 
-
-
-
-
+Video is encoded to H264 via either a hardware encoder (currently the Nvidia capture SDK) or an
+FFmpeg software encoder. H265 is also supported but not currently used. Since NVidia allows us to
+both capture and encode the screen, most of the functions will be called in server/main.c with an
+empty dummy encoder. For software encoders, create an H264 encoder via create_video_encode, and use
+it to encode frames via video_encoder_encode. Write the encoded output via
+video_encoder_write_buffer, and when finished, destroy the encoder using destroy_video_encoder.
 */
 
 /*
@@ -31,6 +33,14 @@ Custom Types
 
 #define MAX_ENCODER_PACKETS 20
 
+/**
+ * @brief           Struct for handling ffmpeg encoding of video frames. Set to a dummy struct if we
+ *                  are using NVidia's SDK, which both captures and encodes frames. If software
+ *                  encoding, the codec and context determine the properties of the output frames,
+ *                  and scaling is done using the filter_graph. Frames encoded on the GPU are stored
+ *                  in hw_frame, while frames encoded on the CPU are stored in sw_frame.
+ *
+ */
 typedef struct VideoEncoder {
     // FFmpeg members to encode and scale video
     const AVCodec* codec;
