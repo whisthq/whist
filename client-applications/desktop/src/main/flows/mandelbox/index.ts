@@ -1,13 +1,10 @@
+import { screen } from "electron"
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
-import { pick } from "lodash"
-
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
-import mandelboxPollingFlow from "@app/main/flows/mandelbox/polling"
-import hostServiceFlow from "@app/main/flows/mandelbox/host"
+import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
-import { fromSignal } from "@app/utils/observables"
 
 export default flow(
     "mandelboxFlow",
@@ -19,32 +16,37 @@ export default flow(
             region?: AWSRegion
         }>
     ) => {
-        const create = mandelboxCreateFlow(
-            trigger.pipe(
-                map((t) => pick(t, ["subClaim", "accessToken", "region"]))
-            )
+        const dpiStream = trigger.pipe(
+            map(() => screen.getPrimaryDisplay().scaleFactor * 96)
         )
 
-        const polling = mandelboxPollingFlow(
-            zip(create.success, trigger).pipe(
-                map(([c, t]) => ({
-                    ...pick(c, ["mandelboxID"]),
-                    ...pick(t, ["accessToken"]),
+        const create = mandelboxCreateFlow(
+            zip(trigger, dpiStream).pipe(
+                map(([t, dpi]) => ({
+                    sub: t.subClaim,
+                    accessToken: t.accessToken,
+                    dpi: dpi,
+                    region: t.region,
                 }))
             )
         )
 
-        const host = hostServiceFlow(
-            zip([trigger, create.success]).pipe(
-                map(([t, _c]) =>
-                    pick(t, ["subClaim", "accessToken", "configToken"])
-                )
+        const host = hostSpinUpFlow(
+            zip([trigger, create.success, dpiStream]).pipe(
+                map(([t, c, dpi]) => ({
+                    ip: c.ip,
+                    dpi: dpi,
+                    user_id: t.subClaim,
+                    config_encryption_token: t.configToken,
+                    jwt_access_token: t.accessToken,
+                    mandelbox_id: c.mandelboxID,
+                }))
             )
         )
 
         return {
-            success: fromSignal(polling.success, host.success),
-            failure: merge(create.failure, polling.failure, host.failure),
+            success: host.success,
+            failure: merge(create.failure, host.failure),
         }
     }
 )
