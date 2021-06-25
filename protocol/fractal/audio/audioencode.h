@@ -38,12 +38,12 @@ Custom Types
  * @brief                          Audio encoder features
  */
 typedef struct AudioEncoder {
-    const AVCodec* pCodec;
-    AVCodecContext* pCodecCtx;
-    AVFrame* pFrame;
-    AVAudioFifo* pFifo;
+    const AVCodec* codec;
+    AVCodecContext* context;
+    AVFrame* frame;
+    AVAudioFifo* audio_fifo;
     AVPacket packet;
-    SwrContext* pSwrContext;
+    SwrContext* swr_context;
     int frame_count;
     int encoded_frame_size;
     void* encoded_frame_data;
