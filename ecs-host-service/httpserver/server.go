@@ -337,6 +337,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		isPermissioned := auth.HasScope(claims, "backend")
 		if err != nil || !isPermissioned {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			logger.Infof("GOT BAD JWT: %s WITH CLAIMS: %s", requestAuthSecret, claims)
 			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s", r.Host, r.URL)
 		}
 	}
