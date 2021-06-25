@@ -63,7 +63,9 @@ def must(test_fn, msg=None):
 
         tstr = error if error else f"<{type(value).__name__}>"
 
-        val_string = "got: " + truncated(PRINT_LIMIT, f"{truncated_children(value)}: {tstr}")
+        val_string = "got: " + truncated(
+            PRINT_LIMIT, f"{truncated_children(value)}: {tstr}"
+        )
 
         msg_present = f"{msg}... {val_string}."
         msg_default = f"{test_fn.__name__} returns {result}... {val_string}"
@@ -113,11 +115,11 @@ def validate_config_folder(config_folder_path):
         must(is_dir, "path must be folder"),
         must(
             has_child_path_partial("schema"),
-            "schema must be a subfolder of this folder",
+            "schema must be a subfolder of working directory",
         ),
         must(
             has_child_path_partial("profiles.yml"),
-            "profiles.yml must be inside this folder",
+            "profiles.yml must be a file in working directory",
         ),
     )
 

@@ -1,7 +1,10 @@
 # This file contains some general purpose utilities to be imported by the
 # rest of the configuration program. Most of them are defined for one-time
 # use by validation functions.
+import os
 import itertools
+import tempfile
+from contextlib import contextmanager
 from collections.abc import MutableMapping
 from pathlib import Path
 
@@ -143,6 +146,15 @@ def has_child_path_partial(child_path):
     return has_child_path
 
 
+def walk_keys(d, parents=()):
+    for k, v in d.items():
+        if isinstance(v, dict):
+            for path in walk_keys(v, parents=(*parents, k)):
+                yield path
+        else:
+            yield (*parents, k, v)
+
+
 def nested_keys(dct):
     if not isinstance(dct, dict):
         return []
@@ -151,7 +163,11 @@ def nested_keys(dct):
 
 
 def all_child_keys(fn, dct):
-    return all(fn(k) for k in nested_keys(dct))
+    for path in walk_keys(dct):
+        child_keys = path[1:-1]
+        if not all(fn(k) for k in child_keys):
+            return False
+    return True
 
 
 def all_items_in_set_partial(lst):
@@ -170,3 +186,25 @@ def all_child_keys_in_set_partial(profiles):
         return all_child_keys(lambda x: x in profiles_set, data)
 
     return all_child_keys_in_set
+
+
+@contextmanager
+def temporary_fs(tree):
+    with tempfile.TemporaryDirectory() as tempdir:
+
+        for path in walk_keys(tree):
+            file_data = path[-1]
+            file_name = path[-2]
+            file_path = path[:-2]
+            file_mode = "wb"
+
+            parent = Path(tempdir).joinpath(*file_path)
+            os.makedirs(parent, exist_ok=True)
+
+            if not isinstance(file_data, bytes):
+                file_mode = "w"
+                file_data = str(file_data)
+
+            with open(parent.joinpath(file_name), file_mode) as f:
+                f.write(file_data)
+        yield Path(tempdir)

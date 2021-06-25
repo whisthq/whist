@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import pytest
 import itertools
 import helpers.utils as utils
 from functools import partial
@@ -48,6 +49,12 @@ def nested_dict(draw):
     )
 
 
+def recursive_dicts():
+    return recursive(
+        dictionaries(text(), text()), lambda x: dictionaries(text(), x)
+    )
+
+
 @given(lists(nested_dict(), max_size=8))
 @example([example_dict1, example_dict2])
 def test_merge(dicts):
@@ -57,6 +64,44 @@ def test_merge(dicts):
             cache[k] = v
 
     assert cache == utils.merge(*dicts)
+
+
+def test_temporary_fs():
+    fs_exists = "path should exist in contextmanager"
+    fs_delete = "path should not exist outside of contextmanager"
+    fs_data = "file at path should contain input data"
+
+    paths = []
+    with utils.temporary_fs(example_dict3) as tempdir:
+        for *file_path, file_name, data in utils.walk_keys(example_dict3):
+            path = Path(tempdir).joinpath(*file_path, file_name)
+            assert path.exists()
+
+            file_mode = "rb"
+            if not isinstance(data, bytes):
+                file_mode = "r"
+
+            with open(path, file_mode) as f:
+                if file_mode == "rb":
+                    assert data == f.read(), fs_exists
+                else:
+                    assert str(data) == f.read(), fs_data
+
+            paths.append(path)
+    for pth in paths:
+        assert not pth.exists(), fs_delete
+
+
+@given(recursive_dicts())
+def test_walk_keys(dct):
+    has_keys = "all keys in outputs paths must exist in input dict"
+
+    for path in utils.walk_keys(dct):
+        subdct = dct
+        for key in path[:-1]:
+            assert key in subdct, has_keys
+            subdct = subdct[key]
+        assert not isinstance(path[-1], dict)
 
 
 @given(integers(max_value=10), text(max_size=100), text(max_size=5))
@@ -99,8 +144,16 @@ def test_nested_keys():
 
 
 def test_all_child_keys():
-    keys = set("abcdefghijxyz")
-    assert utils.all_child_keys(lambda x: x in keys, example_dict3)
+    all_children = "fn must be called with all keys below top-level of dict"
+    no_top_level = "fn must not be called with top-level keys"
+    children = set("bcdefghijyz")
+    parents = set("ax")
+    assert utils.all_child_keys(
+        lambda x: x in children, example_dict3
+    ), all_children
+    assert utils.all_child_keys(
+        lambda x: x not in parents, example_dict3
+    ), no_top_level
 
 
 def test_all_items_in_set_partial():
@@ -110,8 +163,12 @@ def test_all_items_in_set_partial():
     assert not applied([4, 5, 6])
 
 
+# @pytest.mark.skip()
 def test_all_child_keys_in_set_partial():
-    superset = list("abcdefghijxyz")
-    applied = utils.all_child_keys_in_set_partial(superset)
-    assert applied(example_dict3)
-    assert not applied(example_dict2)
+    children = set("bcdefghijyz")
+    parents = set("ax")
+    applied1 = utils.all_child_keys_in_set_partial(children)
+    applied2 = utils.all_child_keys_in_set_partial(parents)
+    assert applied1(example_dict3)
+    assert not applied1(example_dict2)
+    # assert not applied2(example_dict3)

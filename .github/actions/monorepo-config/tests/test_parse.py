@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import pytest
 import yaml
-import tempfile
+import os
 from pathlib import Path
 from contextlib import contextmanager
-from helpers.parse import resolve
+from helpers.parse import resolve, parse
+from helpers.utils import walk_keys, temporary_fs
 from hypothesis import given, example
 from hypothesis.strategies import (
     text,
@@ -33,32 +34,39 @@ example_nested_map = {
 }
 
 
-@contextmanager
-def temporary_config(profile_list, schema_dicts):
-    with tempfile.TemporaryDirectory() as tempdir:
-        paths = []
-        kws = {"mode": "w", "suffix": ".yml", "dir": tempdir, "delete": False}
-        with tempfile.NamedTemporaryFile(prefix="profile", **kws) as tf:
-            paths.append(tf.name)
-            tf.write(yaml.dump(profile_list))
+# @contextmanager
+# def temporary_config(profile_list, schema_dicts):
+#     with tempfile.TemporaryDirectory() as tempdir:
+#         paths = []
+#         kws = {"mode": "w", "suffix": ".yml", "dir": tempdir, "delete": False}
+#         with tempfile.NamedTemporaryFile(prefix="profile", **kws) as tf:
+#             paths.append(tf.name)
+#             tf.write(yaml.dump(profile_list))
 
-        for schema in schema_dicts:
-            with tempfile.NamedTemporaryFile(prefix="schema", **kws) as tf:
-                paths.append(tf.name)
-                tf.write(yaml.dump(schema))
+#         for schema in schema_dicts:
+#             with tempfile.NamedTemporaryFile(prefix="schema", **kws) as tf:
+#                 paths.append(tf.name)
+#                 tf.write(yaml.dump(schema))
 
-        yield tuple(paths)
+#         yield tuple(paths)
 
 
-def test_temporary_config():
-    profile_list = ["e"]
-    schema_dicts = [{"a": 1, "b": 2}, {"c": 3, "d": {"e": 4}}]
-    with temporary_config(profile_list, schema_dicts) as temp_paths:
-        for p in temp_paths:
-            assert Path(p).exists(), "Path does not exist in contextmanager"
+# def test_temporary_config():
+#     path_exists = "Path does not exist in contextmanager"
+#     path_delete = "Path not deleted outside contextmanager"
+#     data_valid = "Loaded yaml data does not match written yaml data"
 
-    for p in temp_paths:
-        assert not Path(p).exists(), "Path not deleted outside contextmanager"
+#     profile_list = ["e"]
+#     schema_dicts = [{"a": 1, "b": 2}, {"c": 3, "d": {"e": 4}}]
+#     all_data = [profile_list, *schema_dicts]
+#     with temporary_config(profile_list, schema_dicts) as temp_paths:
+#         for idx, p in enumerate(temp_paths):
+#             assert Path(p).exists(), path_exists
+#             with open(p) as f:
+#                 assert yaml.safe_load(f) == all_data[idx], data_valid
+
+#     for p in temp_paths:
+#         assert not Path(p).exists(), path_delete
 
 
 # def test_temp_files():
@@ -100,6 +108,50 @@ def flatten_child(profiles, child):
         if profile in child:
             return child[profile]
     return child
+
+
+config_folder_simple = {
+    "config": {
+        "profiles.yml": yaml.dump(["dev", "stg", "prd"]),
+        "schema": {
+            "web.yml": yaml.dump(
+                {
+                    "URL": {
+                        "dev": "http://url-dev.com",
+                        "stg": "http://url-stg.com",
+                        "prd": "http://url-prd.com",
+                    },
+                    "WEB": {
+                        "dev": "http://web-dev.com",
+                        "stg": "http://web-stg.com",
+                        "prd": "http://web-prd.com",
+                    },
+                    "COM": {
+                        "dev": "http://com-dev.com",
+                        "stg": "http://com-stg.com",
+                        "prd": "http://com-prd.com",
+                    },
+                }
+            ),
+            "auth.yml": yaml.dump(
+                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
+            ),
+            "secret.yml": yaml.dump(
+                {
+                    "KEY": {"pro1": "key01000", "pro2": "key02000"},
+                    "API": {"pro1": "api01000", "pro2": "api02000"},
+                }
+            ),
+        },
+    },
+}
+
+
+@pytest.mark.skip()
+def test_parse():
+    with temporary_fs(config_folder_simple) as tempdir:
+        parse(tempdir.joinpath("config"))
+        pass
 
 
 @given(schemas(), non_dict())
