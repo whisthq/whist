@@ -13,6 +13,7 @@ Welcome to the Fractal Webserver internal documentation!
    architecture
    responsibilities
    services
+   module_docs
 
 
 Introduction
@@ -24,7 +25,7 @@ The Fractal Webserver is responsible for implementing all of Fractal's business 
 * Interfacing our frontend (end user applications) with our cloud infrastructure
 * Streaming sessions management (monitoring active instances, etc.)
 
-In order to fulfill all of its responsibilites, the Fractal Webserver communicates with many other internal and external 
+In order to fulfill all of its responsibilites, the Fractal Webserver communicates with many other internal and external
 services. It receives incoming requests from:
 
 * User agents (e.g. the desktop applications, browsers, developer tools such as Postman and cURL)
