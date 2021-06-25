@@ -1,21 +1,23 @@
-# workflows/workflows-linting.yml
+# workflows/github-actions-linting.yml
 #
-# Workflows: Linting
-# Lint YAML workflows using Prettier.
+# GitHub Actions: Linting
+# Lint GitHub Actions YAML workflows/actions using Prettier.
 
-name: "Workflows: Linting"
+name: "GitHub Actions: Linting"
 
 on:
     pull_request:
         paths:
             - ".github/workflows/**"
+            - ".github/actions/**"
             - "!.github/workflows/README.md"
-            - ".github/workflows/workflows-linting.yml"
+            - "!.github/actions/README.md"
+            - ".github/workflows/github-actions-linting.yml"
     workflow_dispatch:
 
 jobs:
-    workflows-linting-main:
-        name: Lint GitHub Actions Workflows
+    github-actions-linting-main:
+        name: Lint GitHub Actions Workflows & Actions
         runs-on: ubuntu-20.04
 
         steps:
@@ -33,6 +35,10 @@ jobs:
             - name: Install Prettier
               run: npm install -g prettier
 
-            - name: Check if Code is Formatted
+            - name: Check if Workflows are Formatted
               working-directory: .github/workflows
-              run: prettier --check '*.yml'
+              run: prettier --check "*.{yml,yaml}" # workflows have to be in /workflows folder
+
+            - name: Check if Actions are Formatted
+              working-directory: .github/actions
+              run: prettier --check "**/*.{yml,yaml}"
