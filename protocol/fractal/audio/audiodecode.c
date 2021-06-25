@@ -41,7 +41,6 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
-
     decoder->codec = avcodec_find_decoder_by_name("aac");
     if (!decoder->codec) {
         LOG_WARNING("AVCodec not found.");
@@ -82,11 +81,10 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     // setup the SwrContext for resampling. We use AV_SAMPLE_FMT_FLT since we are sending float
     // 32-bit audio to SDL.
 
-    decoder->swr_context =
-        swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, sample_rate,
-                           decoder->context->channel_layout, decoder->context->sample_fmt,
-                           decoder->context->sample_rate, 0,
-                           NULL);  //       might not work if not same sample size throughout
+    decoder->swr_context = swr_alloc_set_opts(
+        NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, sample_rate, decoder->context->channel_layout,
+        decoder->context->sample_fmt, decoder->context->sample_rate, 0,
+        NULL);  //       might not work if not same sample size throughout
 
     if (!decoder->swr_context) {
         LOG_WARNING("Could not initialize SwrContext.");
