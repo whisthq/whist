@@ -41,20 +41,14 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
-    // avcodec_register_all is deprecated on FFmpeg 4+
-    // only Linux uses FFmpeg 3.4.x because of canonical system packages
-#if LIBAVCODEC_VERSION_MAJOR < 58
-    avcodec_register_all();
-#endif
-
-    decoder->pCodec = avcodec_find_decoder_by_name("aac");
-    if (!decoder->pCodec) {
+    decoder->codec = avcodec_find_decoder_by_name("aac");
+    if (!decoder->codec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_decoder(decoder);
         return NULL;
     }
-    decoder->pCodecCtx = avcodec_alloc_context3(decoder->pCodec);
-    if (!decoder->pCodecCtx) {
+    decoder->context = avcodec_alloc_context3(decoder->codec);
+    if (!decoder->context) {
         LOG_WARNING("Could not allocate AVCodecContext.");
         destroy_audio_decoder(decoder);
         return NULL;
@@ -62,43 +56,43 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
 
     // if we are using libfdk_aac, the codec has no sample_fmts
     // the context's sample_fmt is set during decoder initialization
-    if (!decoder->pCodec->sample_fmts) {
+    if (!decoder->codec->sample_fmts) {
         LOG_INFO(
-            "No sample formats found in pCodec. Assuming that pCodecCtx's sample_fmt is "
+            "No sample formats found in codec. Assuming that context's sample_fmt is "
             "set automatically during initialization to FDK AAC's AV_SAMPLE_FMT_S16.");
     } else {
-        decoder->pCodecCtx->sample_fmt = decoder->pCodec->sample_fmts[0];
+        decoder->context->sample_fmt = decoder->codec->sample_fmts[0];
     }
 
-    decoder->pCodecCtx->sample_rate = sample_rate;
-    decoder->pCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
-    decoder->pCodecCtx->channels =
-        av_get_channel_layout_nb_channels(decoder->pCodecCtx->channel_layout);
+    decoder->context->sample_rate = sample_rate;
+    decoder->context->channel_layout = AV_CH_LAYOUT_STEREO;
+    decoder->context->channels =
+        av_get_channel_layout_nb_channels(decoder->context->channel_layout);
 
-    if (avcodec_open2(decoder->pCodecCtx, decoder->pCodec, NULL) < 0) {
+    if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
         LOG_WARNING("Could not open AVCodec.");
         destroy_audio_decoder(decoder);
         return NULL;
     }
 
     // setup the AVFrame
-    decoder->pFrame = av_frame_alloc();
+    decoder->frame = av_frame_alloc();
 
-    // setup the SwrContext for resampling
+    // setup the SwrContext for resampling. We use AV_SAMPLE_FMT_FLT since we are sending float
+    // 32-bit audio to SDL.
 
-    decoder->pSwrContext =
-        swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, sample_rate,
-                           decoder->pCodecCtx->channel_layout, decoder->pCodecCtx->sample_fmt,
-                           decoder->pCodecCtx->sample_rate, 0,
-                           NULL);  //       might not work if not same sample size throughout
+    decoder->swr_context = swr_alloc_set_opts(
+        NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, sample_rate, decoder->context->channel_layout,
+        decoder->context->sample_fmt, decoder->context->sample_rate, 0,
+        NULL);  //       might not work if not same sample size throughout
 
-    if (!decoder->pSwrContext) {
+    if (!decoder->swr_context) {
         LOG_WARNING("Could not initialize SwrContext.");
         destroy_audio_decoder(decoder);
         return NULL;
     }
 
-    if (swr_init(decoder->pSwrContext)) {
+    if (swr_init(decoder->swr_context)) {
         LOG_WARNING("Could not open SwrContext.");
         destroy_audio_decoder(decoder);
         return NULL;
@@ -121,12 +115,12 @@ int init_av_frame(AudioDecoder *decoder) {
     */
 
     // setup the AVFrame fields
-    decoder->pFrame->nb_samples = MAX_AUDIO_FRAME_SIZE;
-    decoder->pFrame->format = decoder->pCodecCtx->sample_fmt;
-    decoder->pFrame->channel_layout = decoder->pCodecCtx->channel_layout;
+    decoder->frame->nb_samples = MAX_AUDIO_FRAME_SIZE;
+    decoder->frame->format = decoder->context->sample_fmt;
+    decoder->frame->channel_layout = decoder->context->channel_layout;
 
     // initialize the AVFrame buffer
-    if (av_frame_get_buffer(decoder->pFrame, 0)) {
+    if (av_frame_get_buffer(decoder->frame, 0)) {
         LOG_WARNING("Could not initialize AVFrame buffer.");
         return -1;
     }
@@ -136,7 +130,8 @@ int init_av_frame(AudioDecoder *decoder) {
 
 void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
     /*
-        Read a decoded audio packet from the decoder into a data buffer
+        Read a decoded audio packet from the decoder into a data buffer, resampling as needed to
+        match system audio format.
 
         Arguments:
             decoder (AudioDecoder*): The audio decoder that decoded the audio packet
@@ -148,11 +143,11 @@ void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
 
     // initialize
     uint8_t **data_out = &data;
-    int len = decoder->pFrame->nb_samples;
+    int len = decoder->frame->nb_samples;
 
     // convert
-    if (swr_convert(decoder->pSwrContext, data_out, len,
-                    (const uint8_t **)decoder->pFrame->extended_data, len) < 0) {
+    if (swr_convert(decoder->swr_context, data_out, len,
+                    (const uint8_t **)decoder->frame->extended_data, len) < 0) {
         LOG_WARNING("Could not convert samples to output format.");
     }
 }
@@ -168,8 +163,8 @@ int audio_decoder_get_frame_data_size(AudioDecoder *decoder) {
             (int): The size of the audio frame, in bytes
     */
 
-    return av_get_bytes_per_sample(decoder->pCodecCtx->sample_fmt) * decoder->pFrame->nb_samples *
-           av_get_channel_layout_nb_channels(decoder->pFrame->channel_layout);
+    return av_get_bytes_per_sample(decoder->context->sample_fmt) * decoder->frame->nb_samples *
+           av_get_channel_layout_nb_channels(decoder->frame->channel_layout);
 }
 
 int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet) {
@@ -189,14 +184,14 @@ int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet)
     }
 
     // send packet for decoding
-    int res = avcodec_send_packet(decoder->pCodecCtx, encoded_packet);
+    int res = avcodec_send_packet(decoder->context, encoded_packet);
     if (res < 0) {
         LOG_WARNING("Could not send AVPacket for decoding: error '%s'.", av_err2str(res));
         return -1;
     }
 
     // get decoded frame
-    res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
+    res = avcodec_receive_frame(decoder->context, decoder->frame);
     if (res == AVERROR(EAGAIN)) {
         LOG_DEBUG("EAGAIN: Send new input to decoder!");
         return 1;
@@ -227,13 +222,13 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     LOG_INFO("destroying audio decoder!");
 
     // free the ffmpeg context
-    avcodec_free_context(&decoder->pCodecCtx);
+    avcodec_free_context(&decoder->context);
 
     // free the frame
-    av_frame_free(&decoder->pFrame);
+    av_frame_free(&decoder->frame);
 
     // free swr
-    swr_free(&decoder->pSwrContext);
+    swr_free(&decoder->swr_context);
 
     // free the buffer and decoder
     free(decoder);
