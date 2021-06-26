@@ -198,12 +198,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
 	exposedPorts[dockernat.Port("32273/tcp")] = struct{}{}
 
-	// TODO: refactor client app to no longer use webserver's AES KEY
-	// https://github.com/fractal/fractal/issues/2478
 	aesKey := utils.RandHex(16)
 	envs := []string{
 		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
-		utils.Sprintf("WEBSERVER_URL=%s", metadata.GetFractalWebserver()),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		"NVIDIA_VISIBLE_DEVICES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
