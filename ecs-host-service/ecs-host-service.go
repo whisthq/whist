@@ -25,6 +25,7 @@ import (
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
+	"github.com/fractal/fractal/ecs-host-service/dbdriver"
 	"github.com/fractal/fractal/ecs-host-service/metadata"
 	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
 	"github.com/fractal/fractal/ecs-host-service/metrics"
@@ -33,7 +34,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
-	"github.com/fractal/fractal/ecs-host-service/heartbeats"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
@@ -96,6 +96,18 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 	}()
 }
 
+// Drain and shutdown the host service
+func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.DrainAndShutdownRequest) {
+	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
+
+	// Note that the caller won't actually know if the `shutdown` command failed.
+	// This response is just saying that we got the request successfully.
+	defer req.ReturnResult("", nil)
+
+	shutdownInstanceOnExit = true
+	globalCancel()
+}
+
 // ------------------------------------
 // Container event handlers
 // ------------------------------------
@@ -110,10 +122,24 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		req.ReturnResult("", err)
 	}
 
-	// We begin by creating the container.
+	// First, verify that the request access token is valid for the given userID.
+	// We only do this in a non-local environment.
+	if !metadata.IsLocalEnv() {
+		if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
+			logAndReturnError("Invalid JWT access token: %s", err)
+			return
+		}
+	}
 
-	fractalID := fctypes.FractalID(utils.RandHex(30))
-	fc := fractalcontainer.New(globalCtx, goroutineTracker, fractalID)
+	// Then, verify that we are expecting this user to request a container.
+	err := dbdriver.VerifyAllocatedContainer(req.UserID, req.MandelboxID)
+	if err != nil {
+		logAndReturnError("Unable to spin up mandelbox: %s", err)
+		return
+	}
+
+	// If so, create the container object.
+	fc := fractalcontainer.New(globalCtx, goroutineTracker, req.MandelboxID)
 	logger.Infof("SpinUpMandelbox(): created FractalContainer object %s", fc.GetFractalID())
 
 	// If the creation of the container fails, we want to clean up after it. We
@@ -177,7 +203,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	aesKey := utils.RandHex(16)
 	envs := []string{
 		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
-		utils.Sprintf("WEBSERVER_URL=%s", heartbeats.GetFractalWebserver()),
+		utils.Sprintf("WEBSERVER_URL=%s", metadata.GetFractalWebserver()),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		"NVIDIA_VISIBLE_DEVICES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
@@ -250,7 +276,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		},
 	}
 	// TODO: investigate whether putting all GPUs in all containers (i.e. the default here) is beneficial.
-	containerName := utils.Sprintf("%s-%s", req.AppImage, fractalID)
+	containerName := utils.Sprintf("%s-%s", req.AppImage, req.MandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	containerName = re.ReplaceAllString(containerName, "-")
 
@@ -283,7 +309,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
-		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, fractalID, err)
+		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully started container %s", containerName)
@@ -293,7 +319,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
 		AesKey:              aesKey,
-		FractalID:           fractalID,
 	}
 
 	fc.WriteStartValues(req.DPI, "")
@@ -317,6 +342,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
+	err = dbdriver.WriteContainerStatus(req.MandelboxID, dbdriver.ContainerStatusRunning)
+	if err != nil {
+		logAndReturnError("Error marking container running: %s", err)
+		return
+	}
+
 	// Mark container creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false
@@ -336,8 +367,7 @@ func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCanc
 	}
 
 	// Verify that the request access token is valid for the given userID.
-	_, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID)
-	if err != nil {
+	if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
 		logAndReturnError("Invalid JWT access token: %s", err)
 		return
 	}
@@ -535,6 +565,9 @@ func main() {
 
 		uninitializeFilesystem()
 
+		// Remove our row from the database and close out the database driver.
+		dbdriver.Close()
+
 		// Drain to our remote logging providers, but don't yet stop recording new
 		// events, in case the shutdown fails.
 		logger.FlushLogzio()
@@ -546,9 +579,6 @@ func main() {
 				logger.Errorf("Couldn't shut down instance: %s", err)
 			}
 		}
-
-		// Stop sending heartbeats
-		heartbeats.Close()
 
 		// Shut down the logging infrastructure (including re-draining the queues).
 		logger.Close()
@@ -563,13 +593,19 @@ func main() {
 	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
 
 	// Log the instance name we're running on
-	instanceName, err := aws.GetInstanceName(globalCtx)
+	instanceName, err := aws.GetInstanceName()
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
 	logger.Infof("Running on instance name: %s", instanceName)
 
 	initializeFilesystem(globalCancel)
+
+	// Initialize the database driver, if necessary (the `dbdriver`) package
+	// takes care of the "if necessary" part.
+	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+		logger.Panic(globalCancel, err)
+	}
 
 	// Now we start all the goroutines that actually do work.
 
@@ -583,8 +619,8 @@ func main() {
 
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
-	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
-		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), heartbeats.GetFractalWebserver())
+	if !metadata.IsLocalEnv() {
+		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), metadata.GetFractalWebserver())
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
 		logger.Infof("Running in environment %s, so not starting ecs-agent.", metadata.GetAppEnvironment())
@@ -691,9 +727,8 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
 
 				case *httpserver.DrainAndShutdownRequest:
-					logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
-					shutdownInstanceOnExit = true
-					globalCancel()
+					// Don't do this in a separate goroutine, since there's no reason to.
+					drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
 
 				default:
 					if serverevent != nil {
