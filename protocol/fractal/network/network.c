@@ -118,6 +118,11 @@ typedef struct {
     char signature[32];
 } PrivateKeyData;
 
+typedef struct {
+    char iv[16];
+    char private_key[16];
+} SignatureData;
+
 /**
  * @brief                       Struct to keep response data from a curl
  *                              request as it is being received.
@@ -135,14 +140,15 @@ Private Functions
 */
 
 /*
-@brief                          This will set the socket s to have timeout
-timeout_ms.
+@brief                          This will set `socket` to have timeout
+                                timeout_ms.
 
-@param s                        The SOCKET to be configured
+@param socket                   The SOCKET to be configured
 @param timeout_ms               The maximum amount of time that all recv/send
-calls will take for that socket (0 to return immediately, -1 to never return)
-                                Set 0 to have a non-blocking socket, and -1 for
-an indefinitely blocking socket
+                                calls will take for that socket (0 to return
+                                immediately, -1 to never return). Set 0 to have
+                                a non-blocking socket, and -1 for an indefinitely
+                                blocking socket.
 */
 void set_timeout(SOCKET socket, int timeout_ms);
 
@@ -166,21 +172,6 @@ SOCKET socketp_udp();
 @returns                        The new socket file descriptor, -1 on failure
 */
 SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
-
-/*
-@brief                          This will send or receive data over a socket
-
-@param s                        The SOCKET to be used
-@param buf                      The buffer to read or write to
-@param len                      The length of the buffer to send over the socket
-                                Or, the maximum number of bytes that can be read
-from the socket
-
-@returns                        The number of bytes that have been read or
-written to or from the buffer
-*/
-int recvp(SocketContext* context, void* buf, int len);
-int sendp(SocketContext* context, void* buf, int len);
 
 /*
 @brief                          This will prepare the private key data
@@ -216,28 +207,21 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
 
 /*
 ============================
-Public Function Implementations
+Private Function Implementations
 ============================
 */
 
-/*
-@brief                          Initialize default port mappings (i.e. the identity)
-*/
-void init_networking() {
-    for (int i = 0; i <= USHRT_MAX; i++) {
-        port_mappings[i] = (unsigned short)i;
-    }
-}
-
-int get_last_network_error() {
-#if defined(_WIN32)
-    return WSAGetLastError();
-#else
-    return errno;
-#endif
-}
-
 bool handshake_private_key(SocketContext* context) {
+    /*
+        Perform a private key handshake with a peer.
+
+        Arguments:
+            context (SocketContext*): the socket context to be used
+
+        Returns:
+            (bool): True on success, False on failure
+    */
+
     set_timeout(context->socket, 1000);
 
     PrivateKeyData our_priv_key_data;
@@ -288,199 +272,6 @@ bool handshake_private_key(SocketContext* context) {
         set_timeout(context->socket, context->timeout);
         return true;
     }
-}
-
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-
-    // Use 256kb static buffer for sending smaller TCP packets
-    // But use our block allocator for sending large TCP packets
-    // This function fragments the heap too much to use malloc here
-    char* packet_buffer = allocate_region(sizeof(FractalPacket) + len + 64);
-    char* encrypted_packet_buffer = allocate_region(sizeof(FractalPacket) + len + 128);
-
-    FractalPacket* packet = (FractalPacket*)packet_buffer;
-
-    // Contruct packet metadata
-    packet->id = -1;
-    packet->type = type;
-    packet->index = 0;
-    packet->payload_size = len;
-    packet->num_indices = 1;
-    packet->is_a_nack = false;
-
-    // Copy packet data
-    memcpy(packet->data, data, len);
-
-    // Encrypt the packet using aes encryption
-    int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
-    int encrypted_len = encrypt_packet(packet, unencrypted_len,
-                                       (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
-                                       (unsigned char*)context->binary_aes_private_key);
-
-    // Pass the length of the packet as the first byte
-    *((int*)encrypted_packet_buffer) = encrypted_len;
-
-    // Send the packet
-    LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
-    bool failed = false;
-    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
-        LOG_WARNING("Failed to send packet!");
-        failed = true;
-    }
-
-    deallocate_region(packet_buffer);
-    deallocate_region(encrypted_packet_buffer);
-
-    // Return success code
-    return failed ? -1 : 0;
-}
-
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
-                    int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer) {
-    if (id <= 0) {
-        LOG_WARNING("IDs must be positive!");
-        return -1;
-    }
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-
-    int payload_size;
-    int curr_index = 0, i = 0;
-
-    int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
-
-    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
-
-    /*
-    if (type == PACKET_AUDIO) {
-        static int ddata = 0;
-        static clock last_timer;
-        if( ddata == 0 )
-        {
-            start_timer( &last_timer );
-        }
-        ddata += len;
-        get_timer( last_timer );
-        if( get_timer( last_timer ) > 5.0 )
-        {
-            LOG_INFO( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
-    last_timer ) / 1024 ); ddata = 0;
-        }
-        // LOG_INFO("Video ID %d (Packets: %d)", id, num_indices);
-    }
-    */
-
-    clock packet_timer;
-    start_timer(&packet_timer);
-
-    while (curr_index < len) {
-        // Delay distribution of packets as needed
-        while (burst_bitrate > 0 &&
-               curr_index - 5000 > get_timer(packet_timer) * max_bytes_per_second) {
-            fractal_sleep(1);
-        }
-
-        // local packet and len for when nack buffer isn't needed
-        FractalPacket l_packet = {0};
-        int l_len = 0;
-
-        int* packet_len = &l_len;
-        FractalPacket* packet = &l_packet;
-
-        // Based on packet type, the packet to one of the buffers to serve later
-        // nacks
-        if (packet_buffer) {
-            packet = &packet_buffer[i];
-        }
-
-        if (packet_len_buffer) {
-            packet_len = &packet_len_buffer[i];
-        }
-
-        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
-
-        // Construct packet
-        packet->type = type;
-        memcpy(packet->data, (uint8_t*)data + curr_index, payload_size);
-        packet->index = (short)i;
-        packet->payload_size = payload_size;
-        packet->id = id;
-        packet->num_indices = (short)num_indices;
-        packet->is_a_nack = false;
-        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-        // Save the len to nack buffer lens
-        *packet_len = packet_size;
-
-        // Encrypt the packet with AES
-        FractalPacket encrypted_packet;
-        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char*)context->binary_aes_private_key);
-
-        // Send it off
-        fractal_lock_mutex(context->mutex);
-        // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
-        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        fractal_unlock_mutex(context->mutex);
-
-        if (sent_size < 0) {
-            int error = get_last_network_error();
-            LOG_WARNING("Unexpected Packet Error: %d", error);
-            return -1;
-        }
-
-        i++;
-        curr_index += payload_size;
-    }
-
-    // LOG_INFO( "Packet Time: %f\n", get_timer( packet_timer ) );
-
-    return 0;
-}
-
-int replay_packet(SocketContext* context, FractalPacket* packet, size_t len) {
-    if (len > sizeof(FractalPacket)) {
-        LOG_WARNING("Len too long!");
-        return -1;
-    }
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-    if (packet == NULL) {
-        LOG_WARNING("packet is NULL");
-        return -1;
-    }
-
-    packet->is_a_nack = true;
-
-    FractalPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char*)context->binary_aes_private_key);
-
-    fractal_lock_mutex(context->mutex);
-    LOG_INFO("Replay Packet of length %d", encrypt_len);
-    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-    fractal_unlock_mutex(context->mutex);
-
-    if (sent_size < 0) {
-        LOG_WARNING("Could not replay packet!");
-        return -1;
-    }
-
-    return 0;
 }
 
 SOCKET socketp_tcp() {
@@ -587,38 +378,19 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) 
     return new_socket;
 }
 
-int recvp(SocketContext* context, void* buf, int len) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-    return recv(context->socket, buf, len, 0);
-}
-
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-int sendp(SocketContext* context, void* buf, int len) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-    if (len != 0 && buf == NULL) {
-        LOG_ERROR("Passed non zero length and a NULL pointer to sendto");
-        return -1;
-    }
-    // cppcheck-suppress nullPointer
-    if (context->is_tcp) {
-        return send(context->socket, buf, len, 0);
-    } else {
-        return sendto(context->socket, buf, len, 0, (struct sockaddr*)(&context->addr),
-                      sizeof(context->addr));
-    }
-}
-
-int ack(SocketContext* context) { return sendp(context, NULL, 0); }
-
 bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
+    /*
+        Connect to TCP server
+
+        Arguments:
+            socket (SOCKET): socket to connect over
+            addr (struct sockaddr_in): connection address information
+            timeout_ms (int): timeout in milliseconds
+
+        Returns:
+            (bool): true on success, false on failure
+    */
+
     // Connect to TCP server
     int ret;
     set_timeout(socket, 0);
@@ -659,144 +431,21 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-FractalPacket* read_udp_packet(SocketContext* context) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return NULL;
-    }
-
-    // Wait to receive packet over TCP, until timing out
-    FractalPacket encrypted_packet;
-    int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
-
-    static FractalPacket decrypted_packet;
-
-    // If the packet was successfully received, then decrypt it
-    if (encrypted_len > 0) {
-        int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                           (unsigned char*)context->binary_aes_private_key);
-
-        // If there was an issue decrypting it, post warning and then
-        // ignore the problem
-        if (decrypted_len < 0) {
-            if (encrypted_len == sizeof(StunEntry)) {
-                StunEntry* e;
-                e = (void*)&encrypted_packet;
-                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
-                         ntohs(e->private_port));
-            }
-            LOG_WARNING("Failed to decrypt packet");
-            return NULL;
-        }
-
-        return &decrypted_packet;
-    } else {
-        if (encrypted_len < 0) {
-            int error = get_last_network_error();
-            switch (error) {
-                case FRACTAL_ETIMEDOUT:
-                    // LOG_ERROR("Read UDP Packet error: Timeout");
-                case FRACTAL_EWOULDBLOCK:
-                    // LOG_ERROR("Read UDP Packet error: Blocked");
-                    // Break on expected network errors
-                    break;
-                default:
-                    LOG_WARNING("Unexpected Packet Error: %d", error);
-                    break;
-            }
-        }
-        return NULL;
-    }
-}
-
-FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return NULL;
-    }
-    if (!context->is_tcp) {
-        LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
-        return NULL;
-    }
-    // The dynamically sized buffer to read into
-    DynamicBuffer* encrypted_tcp_packet_buffer = context->encrypted_tcp_packet_buffer;
-
-#define TCP_SEGMENT_SIZE 4096
-
-    int len = TCP_SEGMENT_SIZE;
-    while (should_recvp && len == TCP_SEGMENT_SIZE) {
-        // Make the tcp buffer larger if needed
-        resize_dynamic_buffer(encrypted_tcp_packet_buffer,
-                              context->reading_packet_len + TCP_SEGMENT_SIZE);
-        // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE
-        len = recvp(context, encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
-                    TCP_SEGMENT_SIZE);
-
-        if (len < 0) {
-            int err = get_last_network_error();
-            if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
-            } else {
-                LOG_WARNING("Network Error %d", err);
-            }
-        } else if (len > 0) {
-            // LOG_INFO( "READ LEN: %d", len );
-            context->reading_packet_len += len;
-        }
-
-        // If the previous recvp was maxed out, ie == TCP_SEGMENT_SIZE,
-        // then try pulling some more from recvp
-    };
-
-    if ((unsigned long)context->reading_packet_len >= sizeof(int)) {
-        // The amount of data bytes read (actual len), and the amount of bytes
-        // we're looking for (target len), respectively
-        int actual_len = context->reading_packet_len - sizeof(int);
-        int target_len = *((int*)encrypted_tcp_packet_buffer->buf);
-
-        // If the target len is valid, and actual len > target len, then we're
-        // good to go
-        if (target_len >= 0 && actual_len >= target_len) {
-            FractalPacket* decrypted_packet_buffer = allocate_region(target_len);
-            // Decrypt it
-            int decrypted_len =
-                decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                                 target_len, decrypted_packet_buffer, target_len,
-                                 (unsigned char*)context->binary_aes_private_key);
-
-            // Move the rest of the read bytes to the beginning of the buffer to
-            // continue
-            int start_next_bytes = sizeof(int) + target_len;
-            for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
-                encrypted_tcp_packet_buffer->buf[i - start_next_bytes] =
-                    encrypted_tcp_packet_buffer->buf[i];
-            }
-            context->reading_packet_len = actual_len - target_len;
-
-            // Realloc the buffer smaller if we have room to
-            resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
-
-            if (decrypted_len < 0) {
-                // A warning not an error, since it doesn't simply we did something wrong
-                // Someone else in the same coffeeshop as you could make you generate these
-                // by sending bad TCP packets. After this point though, the packet is authenticated,
-                // and problems with its data should be LOG_ERROR'ed
-                LOG_WARNING("Could not decrypt TCP message");
-                deallocate_region(decrypted_packet_buffer);
-                return NULL;
-            } else {
-                // Return the decrypted packet
-                return decrypted_packet_buffer;
-            }
-        }
-    }
-
-    return NULL;
-}
-
-void free_tcp_packet(FractalPacket* tcp_packet) { deallocate_region(tcp_packet); }
-
 int create_tcp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
+    /*
+        Create a TCP server context
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -889,6 +538,19 @@ int create_tcp_server_context(SocketContext* context, int port, int recvfrom_tim
 
 int create_tcp_server_context_stun(SocketContext* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
+    /*
+        Create a TCP server context over STUN server
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -1030,6 +692,20 @@ int create_tcp_server_context_stun(SocketContext* context, int port, int recvfro
 
 int create_tcp_client_context(SocketContext* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
+    /*
+        Create a TCP client context
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            destination (char*): the destination address
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -1074,6 +750,20 @@ int create_tcp_client_context(SocketContext* context, char* destination, int por
 
 int create_tcp_client_context_stun(SocketContext* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
+    /*
+        Create a TCP client context over STUN server
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            destination (char*): the destination address
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -1227,6 +917,22 @@ int create_tcp_client_context_stun(SocketContext* context, char* destination, in
 
 int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
                        int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
+    /*
+        Create a TCP context
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            destination (char*): the destination address
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+            using_stun (bool): whether to connect over the STUN server or not
+            binary_aes_private_key (char*): the AES private key to use for the connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1276,6 +982,19 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
 
 int create_udp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
+    /*
+        Create a UDP server context
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -1330,6 +1049,19 @@ int create_udp_server_context(SocketContext* context, int port, int recvfrom_tim
 
 int create_udp_server_context_stun(SocketContext* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
+    /*
+        Create a UDP client context over STUN server
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1487,6 +1219,20 @@ int create_udp_client_context(SocketContext* context, char* destination, int por
 
 int create_udp_client_context_stun(SocketContext* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
+    /*
+        Create a UDP client context
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            destination (char*): the destination address
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1567,38 +1313,6 @@ int create_udp_client_context_stun(SocketContext* context, char* destination, in
     set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
-}
-
-int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
-    if ((int)((unsigned short)port) != port) {
-        LOG_ERROR("Port invalid: %d", port);
-    }
-    if (context == NULL) {
-        LOG_ERROR("Context is NULL");
-        return -1;
-    }
-    port = port_mappings[port];
-
-    context->timeout = recvfrom_timeout_ms;
-    context->mutex = fractal_create_mutex();
-    memcpy(context->binary_aes_private_key, binary_aes_private_key,
-           sizeof(context->binary_aes_private_key));
-
-    if (using_stun) {
-        if (destination == NULL)
-            return create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
-                                                  stun_timeout_ms);
-        else
-            return create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                                  stun_timeout_ms);
-    } else {
-        if (destination == NULL)
-            return create_udp_server_context(context, port, recvfrom_timeout_ms, stun_timeout_ms);
-        else
-            return create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                             stun_timeout_ms);
-    }
 }
 
 size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
@@ -1834,6 +1548,695 @@ bool send_http_request(char* type, char* host_s, char* path, char* payload, char
     return true;
 }
 
+void set_timeout(SOCKET socket, int timeout_ms) {
+    /*
+        Sets the timeout for `socket` to be `timeout_ms` in milliseconds.
+        Any recv calls will wait this long before timing out.
+
+        Arguments:
+            socket (SOCKET): the socket to set timeout for
+            timeout_ms (int): a positibe number is the timeout in milliseconds.
+                -1 means that it will block indefinitely until a packet is
+                received. 0 means that it will immediately return with whatever
+                data is waiting in the buffer.
+    */
+
+    if (timeout_ms < 0) {
+        LOG_WARNING(
+            "WARNING: This socket will blocking indefinitely. You will not be "
+            "able to recover if a packet is never received");
+        unsigned long mode = 0;
+
+        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+            LOG_FATAL("Failed to make socket blocking.");
+        }
+
+    } else if (timeout_ms == 0) {
+        unsigned long mode = 1;
+        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+            LOG_FATAL("Failed to make socket return immediately.");
+        }
+    } else {
+        // Set to blocking when setting a timeout
+        unsigned long mode = 0;
+        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+            LOG_FATAL("Failed to make socket blocking.");
+        }
+
+        clock read_timeout = create_clock(timeout_ms);
+
+        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
+                       sizeof(read_timeout)) < 0) {
+            int err = get_last_network_error();
+            LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
+
+            return;
+        }
+    }
+}
+
+void prepare_private_key_request(PrivateKeyData* priv_key_data) {
+    /*
+        This will prepare the private key data
+
+        Arguments:
+            priv_key_data (PrivateKeyData*): The private key data buffer
+    */
+
+    // Generate the IV, so that someone else can sign it
+    gen_iv(priv_key_data->iv);
+    // Clear priv_key_data so that PrivateKeyData is entirely initialized
+    // (For valgrind)
+    memset(priv_key_data->signature, 0, sizeof(priv_key_data->signature));
+}
+
+bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key) {
+    /*
+        This will sign the other connection's private key data
+
+        Arguments:
+            priv_key_data (PrivateKeyData*): The private key data buffer
+            recv_size (int): The length of the buffer
+            private_key (void*): The private key
+
+        Returns:
+            (bool): True if the verification succeeds, false if it fails
+    */
+
+    if (recv_size == sizeof(PrivateKeyData)) {
+        SignatureData sig_data;
+        memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
+        memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+        hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
+        return true;
+    } else {
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+                  sizeof(PrivateKeyData));
+        return false;
+    }
+}
+
+bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                         void* private_key) {
+    /*
+        This will verify the given private key
+
+        Arguments:
+            our_priv_key_data (PrivateKeyData*): The private key data buffer
+            our_signed_priv_key_data (PrivateKeyData*): The signed private key data buffer
+            recv_size (int): The length of the buffer
+            private_key (void*): The private key
+
+        Returns:
+            (bool): True if the verification succeeds, false if it fails
+    */
+
+    if (recv_size == sizeof(PrivateKeyData)) {
+        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
+            LOG_ERROR("IV is incorrect!");
+            return false;
+        } else {
+            SignatureData sig_data;
+            memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
+            memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
+            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
+                             private_key)) {
+                LOG_ERROR("Verify HMAC Failed");
+                return false;
+            } else {
+                return true;
+            }
+        }
+    } else {
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+                  sizeof(PrivateKeyData));
+        return false;
+    }
+}
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+void init_networking() {
+    /*
+        Initialize default port mappings (i.e. the identity)
+    */
+
+    for (int i = 0; i <= USHRT_MAX; i++) {
+        port_mappings[i] = (unsigned short)i;
+    }
+}
+
+int get_last_network_error() {
+    /*
+        Get the most recent network error.
+
+        Returns:
+            (int): The network error that most recently occured,
+                through WSAGetLastError on Windows or errno on Linux
+    */
+
+#if defined(_WIN32)
+    return WSAGetLastError();
+#else
+    return errno;
+#endif
+}
+
+int recvp(SocketContext* context, void* buf, int len) {
+    /*
+        This will receive data over a socket
+
+        Arguments:
+            context (SocketContext*): The socket context to be used
+            buf (void*): The buffer to write to
+            len (int): The maximum number of bytes that can be read
+                from the socket
+
+        Returns:
+            (int): The number of bytes that have been read into the
+                buffer
+    */
+
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    return recv(context->socket, buf, len, 0);
+}
+
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+int sendp(SocketContext* context, void* buf, int len) {
+    /*
+        This will send data over a socket
+
+        Arguments:
+            context (SocketContext*): The socket context to be used
+            buf (void*): The buffer to read from
+            len (int): The length of the buffer to send over the socket
+
+        Returns:
+            (int): The number of bytes that have been read from the buffer
+    */
+
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    if (len != 0 && buf == NULL) {
+        LOG_ERROR("Passed non zero length and a NULL pointer to sendto");
+        return -1;
+    }
+    // cppcheck-suppress nullPointer
+    if (context->is_tcp) {
+        return send(context->socket, buf, len, 0);
+    } else {
+        return sendto(context->socket, buf, len, 0, (struct sockaddr*)(&context->addr),
+                      sizeof(context->addr));
+    }
+}
+
+int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
+    /*
+        Create a UDP context
+
+        Arguments:
+            context (SocketContext*): pointer to the context to populate
+            destination (char*): the destination address
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
+            using_stun (bool): whether to connect over the STUN server or not
+            binary_aes_private_key (char*): the AES private key to use for the connection
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
+    if ((int)((unsigned short)port) != port) {
+        LOG_ERROR("Port invalid: %d", port);
+    }
+    if (context == NULL) {
+        LOG_ERROR("Context is NULL");
+        return -1;
+    }
+    port = port_mappings[port];
+
+    context->timeout = recvfrom_timeout_ms;
+    context->mutex = fractal_create_mutex();
+    memcpy(context->binary_aes_private_key, binary_aes_private_key,
+           sizeof(context->binary_aes_private_key));
+
+    if (using_stun) {
+        if (destination == NULL)
+            return create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
+                                                  stun_timeout_ms);
+        else
+            return create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
+                                                  stun_timeout_ms);
+    } else {
+        if (destination == NULL)
+            return create_udp_server_context(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+        else
+            return create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
+                                             stun_timeout_ms);
+    }
+}
+
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len) {
+    /*
+        This will send a FractalPacket over TCP to the SocketContext context. A
+        FractalPacketType is also provided to describe the packet
+
+        Arguments:
+            context (SocketContext*): The socket context
+            type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+            data (void*): A pointer to the data to be sent
+            len (int): The number of bytes to send
+
+        Returns:
+            (int): Will return -1 on failure, will return 0 on success
+    */
+
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+
+    // Use 256kb static buffer for sending smaller TCP packets
+    // But use our block allocator for sending large TCP packets
+    // This function fragments the heap too much to use malloc here
+    char* packet_buffer = allocate_region(sizeof(FractalPacket) + len + 64);
+    char* encrypted_packet_buffer = allocate_region(sizeof(FractalPacket) + len + 128);
+
+    FractalPacket* packet = (FractalPacket*)packet_buffer;
+
+    // Contruct packet metadata
+    packet->id = -1;
+    packet->type = type;
+    packet->index = 0;
+    packet->payload_size = len;
+    packet->num_indices = 1;
+    packet->is_a_nack = false;
+
+    // Copy packet data
+    memcpy(packet->data, data, len);
+
+    // Encrypt the packet using aes encryption
+    int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
+    int encrypted_len = encrypt_packet(packet, unencrypted_len,
+                                       (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
+                                       (unsigned char*)context->binary_aes_private_key);
+
+    // Pass the length of the packet as the first byte
+    *((int*)encrypted_packet_buffer) = encrypted_len;
+
+    // Send the packet
+    LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
+    bool failed = false;
+    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
+        LOG_WARNING("Failed to send packet!");
+        failed = true;
+    }
+
+    deallocate_region(packet_buffer);
+    deallocate_region(encrypted_packet_buffer);
+
+    // Return success code
+    return failed ? -1 : 0;
+}
+
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
+                    int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer) {
+    /*
+        This will send a FractalPacket over UDP to the SocketContext context. A
+        FractalPacketType is also provided to the receiving end.
+
+        Arguments:
+            context (SocketContext*): The socket context
+            type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+            data (void*): A pointer to the data to be sent
+            len (int): The number of bytes to send
+            id (int): An ID for the UDP data.
+            burst_bitrate (int): The maximum bitrate that packets will be sent over.
+                -1 will imply sending as fast as possible
+            packet_buffer (FractalPacket*): An array of RTPPacket's, each sub-packet of
+                the UDPPacket will be stored in packet_buffer[i]
+            packet_len_buffer (int*): An array of int's, defining the length of each
+                sub-packet located in packet_buffer[i]
+
+        Returns:
+            (int): Will return -1 on failure, will return 0 on success
+    */
+
+    if (id <= 0) {
+        LOG_WARNING("IDs must be positive!");
+        return -1;
+    }
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+
+    int payload_size;
+    int curr_index = 0, i = 0;
+
+    int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
+
+    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
+
+    /*
+    if (type == PACKET_AUDIO) {
+        static int ddata = 0;
+        static clock last_timer;
+        if( ddata == 0 )
+        {
+            start_timer( &last_timer );
+        }
+        ddata += len;
+        get_timer( last_timer );
+        if( get_timer( last_timer ) > 5.0 )
+        {
+            LOG_INFO( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
+    last_timer ) / 1024 ); ddata = 0;
+        }
+        // LOG_INFO("Video ID %d (Packets: %d)", id, num_indices);
+    }
+    */
+
+    clock packet_timer;
+    start_timer(&packet_timer);
+
+    while (curr_index < len) {
+        // Delay distribution of packets as needed
+        while (burst_bitrate > 0 &&
+               curr_index - 5000 > get_timer(packet_timer) * max_bytes_per_second) {
+            fractal_sleep(1);
+        }
+
+        // local packet and len for when nack buffer isn't needed
+        FractalPacket l_packet = {0};
+        int l_len = 0;
+
+        int* packet_len = &l_len;
+        FractalPacket* packet = &l_packet;
+
+        // Based on packet type, the packet to one of the buffers to serve later
+        // nacks
+        if (packet_buffer) {
+            packet = &packet_buffer[i];
+        }
+
+        if (packet_len_buffer) {
+            packet_len = &packet_len_buffer[i];
+        }
+
+        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
+
+        // Construct packet
+        packet->type = type;
+        memcpy(packet->data, (uint8_t*)data + curr_index, payload_size);
+        packet->index = (short)i;
+        packet->payload_size = payload_size;
+        packet->id = id;
+        packet->num_indices = (short)num_indices;
+        packet->is_a_nack = false;
+        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
+
+        // Save the len to nack buffer lens
+        *packet_len = packet_size;
+
+        // Encrypt the packet with AES
+        FractalPacket encrypted_packet;
+        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
+                                         (unsigned char*)context->binary_aes_private_key);
+
+        // Send it off
+        fractal_lock_mutex(context->mutex);
+        // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
+        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
+        fractal_unlock_mutex(context->mutex);
+
+        if (sent_size < 0) {
+            int error = get_last_network_error();
+            LOG_WARNING("Unexpected Packet Error: %d", error);
+            return -1;
+        }
+
+        i++;
+        curr_index += payload_size;
+    }
+
+    // LOG_INFO( "Packet Time: %f\n", get_timer( packet_timer ) );
+
+    return 0;
+}
+
+int replay_packet(SocketContext* context, FractalPacket* packet, size_t len) {
+    /*
+        Replay the sending of a packet that has already been sent by the network
+        protocol. (Via a packet_buffer write from SendUDPPacket)
+
+        Arguments:
+            context (SocketContext*): The socket context
+            packet (FractalPacket*): The packet to resend
+            len (size_t): The length of the packet to resend
+
+        Returns:
+            (int): Will return -1 on failure, will return 0 on success
+    */
+
+    if (len > sizeof(FractalPacket)) {
+        LOG_WARNING("Len too long!");
+        return -1;
+    }
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return -1;
+    }
+    if (packet == NULL) {
+        LOG_WARNING("packet is NULL");
+        return -1;
+    }
+
+    packet->is_a_nack = true;
+
+    FractalPacket encrypted_packet;
+    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
+                                     (unsigned char*)context->binary_aes_private_key);
+
+    fractal_lock_mutex(context->mutex);
+    LOG_INFO("Replay Packet of length %d", encrypt_len);
+    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
+    fractal_unlock_mutex(context->mutex);
+
+    if (sent_size < 0) {
+        LOG_WARNING("Could not replay packet!");
+        return -1;
+    }
+
+    return 0;
+}
+
+int ack(SocketContext* context) {
+    /*
+        Send a 0-length packet over the socket. Used to keep-alive over NATs,
+        and to check on the validity of the socket.
+
+        Arguments:
+            context (SocketContext*): The socket context
+
+        Returns:
+            (int): Will return -1 on failure, will return 0 on success.
+                Failure implies that the socket is broken or the TCP
+                connection has ended, use GetLastNetworkError() to learn
+                more about the error
+    */
+
+    return sendp(context, NULL, 0);
+}
+
+FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
+    /*
+        Receive a FractalPacket from a SocketContext, if any such packet exists
+
+        Arguments:
+            context (SocketContext*): The socket context
+            should_recvp (bool): If false, this function will only pop buffered packets
+                If true, this function will pull data from the TCP socket,
+                but that might take a while
+
+        Returns:
+            (FractalPacket*): A pointer to the FractalPacket on success, NULL on failure
+    */
+
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return NULL;
+    }
+    if (!context->is_tcp) {
+        LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
+        return NULL;
+    }
+    // The dynamically sized buffer to read into
+    DynamicBuffer* encrypted_tcp_packet_buffer = context->encrypted_tcp_packet_buffer;
+
+#define TCP_SEGMENT_SIZE 4096
+
+    int len = TCP_SEGMENT_SIZE;
+    while (should_recvp && len == TCP_SEGMENT_SIZE) {
+        // Make the tcp buffer larger if needed
+        resize_dynamic_buffer(encrypted_tcp_packet_buffer,
+                              context->reading_packet_len + TCP_SEGMENT_SIZE);
+        // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE
+        len = recvp(context, encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
+                    TCP_SEGMENT_SIZE);
+
+        if (len < 0) {
+            int err = get_last_network_error();
+            if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
+            } else {
+                LOG_WARNING("Network Error %d", err);
+            }
+        } else if (len > 0) {
+            // LOG_INFO( "READ LEN: %d", len );
+            context->reading_packet_len += len;
+        }
+
+        // If the previous recvp was maxed out, ie == TCP_SEGMENT_SIZE,
+        // then try pulling some more from recvp
+    };
+
+    if ((unsigned long)context->reading_packet_len >= sizeof(int)) {
+        // The amount of data bytes read (actual len), and the amount of bytes
+        // we're looking for (target len), respectively
+        int actual_len = context->reading_packet_len - sizeof(int);
+        int target_len = *((int*)encrypted_tcp_packet_buffer->buf);
+
+        // If the target len is valid, and actual len > target len, then we're
+        // good to go
+        if (target_len >= 0 && actual_len >= target_len) {
+            FractalPacket* decrypted_packet_buffer = allocate_region(target_len);
+            // Decrypt it
+            int decrypted_len =
+                decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
+                                 target_len, decrypted_packet_buffer, target_len,
+                                 (unsigned char*)context->binary_aes_private_key);
+
+            // Move the rest of the read bytes to the beginning of the buffer to
+            // continue
+            int start_next_bytes = sizeof(int) + target_len;
+            for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
+                encrypted_tcp_packet_buffer->buf[i - start_next_bytes] =
+                    encrypted_tcp_packet_buffer->buf[i];
+            }
+            context->reading_packet_len = actual_len - target_len;
+
+            // Realloc the buffer smaller if we have room to
+            resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
+
+            if (decrypted_len < 0) {
+                // A warning not an error, since it doesn't simply we did something wrong
+                // Someone else in the same coffeeshop as you could make you generate these
+                // by sending bad TCP packets. After this point though, the packet is authenticated,
+                // and problems with its data should be LOG_ERROR'ed
+                LOG_WARNING("Could not decrypt TCP message");
+                deallocate_region(decrypted_packet_buffer);
+                return NULL;
+            } else {
+                // Return the decrypted packet
+                return decrypted_packet_buffer;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+FractalPacket* read_udp_packet(SocketContext* context) {
+    /*
+        Receive a FractalPacket from a SocketContext, if any such packet exists
+
+        Arguments:
+            context (SocketContext*): The socket context
+
+        Returns:
+            (FractalPacket*): A pointer to the FractalPacket on success, NULL on failure
+    */
+
+    if (context == NULL) {
+        LOG_WARNING("Context is NULL");
+        return NULL;
+    }
+
+    // Wait to receive packet over TCP, until timing out
+    FractalPacket encrypted_packet;
+    int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
+
+    static FractalPacket decrypted_packet;
+
+    // If the packet was successfully received, then decrypt it
+    if (encrypted_len > 0) {
+        int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                                           (unsigned char*)context->binary_aes_private_key);
+
+        // If there was an issue decrypting it, post warning and then
+        // ignore the problem
+        if (decrypted_len < 0) {
+            if (encrypted_len == sizeof(StunEntry)) {
+                StunEntry* e;
+                e = (void*)&encrypted_packet;
+                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
+                         ntohs(e->private_port));
+            }
+            LOG_WARNING("Failed to decrypt packet");
+            return NULL;
+        }
+
+        return &decrypted_packet;
+    } else {
+        if (encrypted_len < 0) {
+            int error = get_last_network_error();
+            switch (error) {
+                case FRACTAL_ETIMEDOUT:
+                    // LOG_ERROR("Read UDP Packet error: Timeout");
+                case FRACTAL_EWOULDBLOCK:
+                    // LOG_ERROR("Read UDP Packet error: Blocked");
+                    // Break on expected network errors
+                    break;
+                default:
+                    LOG_WARNING("Unexpected Packet Error: %d", error);
+                    break;
+            }
+        }
+        return NULL;
+    }
+}
+
+void free_tcp_packet(FractalPacket* tcp_packet) {
+    /*
+        Frees a TCP packet created by read_tcp_packet
+
+        Arguments:
+            tcp_packet (FractalPacket*): The TCP packet to free
+    */
+
+    deallocate_region(tcp_packet);
+}
+
 bool send_post_request(char* host_s, char* path, char* payload, char** response_body,
                        size_t max_response_size) {
     /*
@@ -1886,97 +2289,4 @@ bool send_get_request(char* host_s, char* path, char** response_body, size_t max
     }
 
     return send_http_request("GET", host_s, path, NULL, response_body, max_response_size);
-}
-
-void set_timeout(SOCKET socket, int timeout_ms) {
-    // Sets the timeout for SOCKET s to be timeout_ms in milliseconds
-    // Any recv calls will wait this long before timing out
-    // -1 means that it will block indefinitely until a packet is received
-    // 0 means that it will immediately return with whatever data is waiting in
-    // the buffer
-    if (timeout_ms < 0) {
-        LOG_WARNING(
-            "WARNING: This socket will blocking indefinitely. You will not be "
-            "able to recover if a packet is never received");
-        unsigned long mode = 0;
-
-        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
-            LOG_FATAL("Failed to make socket blocking.");
-        }
-
-    } else if (timeout_ms == 0) {
-        unsigned long mode = 1;
-        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
-            LOG_FATAL("Failed to make socket return immediately.");
-        }
-    } else {
-        // Set to blocking when setting a timeout
-        unsigned long mode = 0;
-        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
-            LOG_FATAL("Failed to make socket blocking.");
-        }
-
-        clock read_timeout = create_clock(timeout_ms);
-
-        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
-                       sizeof(read_timeout)) < 0) {
-            int err = get_last_network_error();
-            LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
-
-            return;
-        }
-    }
-}
-
-void prepare_private_key_request(PrivateKeyData* priv_key_data) {
-    // Generate the IV, so that someone else can sign it
-    gen_iv(priv_key_data->iv);
-    // Clear priv_key_data so that PrivateKeyData is entirely initialized
-    // (For valgrind)
-    memset(priv_key_data->signature, 0, sizeof(priv_key_data->signature));
-}
-
-typedef struct {
-    char iv[16];
-    char private_key[16];
-} SignatureData;
-
-bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key) {
-    if (recv_size == sizeof(PrivateKeyData)) {
-        SignatureData sig_data;
-        memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
-        memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
-        hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
-        return true;
-    } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
-                  sizeof(PrivateKeyData));
-        return false;
-    }
-}
-
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
-                         void* private_key) {
-    if (recv_size == sizeof(PrivateKeyData)) {
-        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
-            LOG_ERROR("IV is incorrect!");
-            return false;
-        } else {
-            SignatureData sig_data;
-            memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
-            memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
-            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
-                             private_key)) {
-                LOG_ERROR("Verify HMAC Failed");
-                return false;
-            } else {
-                return true;
-            }
-        }
-    } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
-                  sizeof(PrivateKeyData));
-        return false;
-    }
 }
