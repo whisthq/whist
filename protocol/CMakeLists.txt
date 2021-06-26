@@ -84,10 +84,10 @@ include(cmake/default-build.cmake)
 
 # For debug builds log every thing, for release builds log warnings or higher
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
-    add_definitions(-DLOG_LEVEL=5)
+    add_definitions(-DLOG_LEVEL=0)
 elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     # For now, always show all logs
-    add_definitions(-DLOG_LEVEL=5)
+    add_definitions(-DLOG_LEVEL=0)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
