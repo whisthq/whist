@@ -3,7 +3,7 @@ package httpserver // import "github.com/fractal/fractal/ecs-host-service/httpse
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os/exec"
 	"sync"
@@ -13,7 +13,8 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
-	utils "github.com/fractal/fractal/ecs-host-service/utils"
+	"github.com/fractal/fractal/ecs-host-service/metadata"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 // Constants for use in setting up the HTTPS server
@@ -175,22 +176,22 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 // returns the Docker ID of the container. Eventually, as we move off ECS, this
 // endpoint will become the canonical way to start containers.
 type SpinUpMandelboxRequest struct {
-	// TODO: protect this with auth somehow, this is being worked on by @MYKatz
 	AppImage              string                        `json:"app_image"`               // The image to spin up
 	DPI                   int                           `json:"dpi"`                     // DPI to set for the container
 	UserID                fctypes.UserID                `json:"user_id"`                 // User ID of the container user
 	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JwtAccessToken        auth.RawJWT                   `json:"jwt_access_token"`        // User's JWT access token
+	MandelboxID           fctypes.FractalID             `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
 	resultChan            chan requestResult            // Channel to pass the request result between goroutines
 }
 
 // SpinUpMandelboxRequestResult defines the data returned by the
 // `spin_up_mandelbox` endpoint.
 type SpinUpMandelboxRequestResult struct {
-	HostPortForTCP32262 uint16            `json:"port_32262"`
-	HostPortForUDP32263 uint16            `json:"port_32263"`
-	HostPortForTCP32273 uint16            `json:"port_32273"`
-	AesKey              string            `json:"aes_key"`
-	FractalID           fctypes.FractalID `json:"fractal_id"`
+	HostPortForTCP32262 uint16 `json:"port_32262"`
+	HostPortForUDP32263 uint16 `json:"port_32263"`
+	HostPortForTCP32273 uint16 `json:"port_32273"`
+	AesKey              string `json:"aes_key"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -299,9 +300,9 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 // 3. If we get a bad, unauthenticated request we can minimize the amount of
 // processsing power we devote to it. This is useful for being resistant to
 // Denial-of-Service attacks.
-func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authenticate bool) (err error) {
+func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
 	// Get body of request
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Malformed body", http.StatusBadRequest)
 		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
@@ -318,7 +319,7 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		return utils.MakeError("Error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
-	if authenticate {
+	if authorizeAsBackend {
 		var requestAuthSecret auth.RawJWT
 		err = func() error {
 			if value, ok := rawmap["auth_secret"]; ok {
@@ -406,13 +407,27 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 
 		// Listen for global context cancellation
 		<-globalCtx.Done()
+
+		// This is only necessary since we don't have the ability to subscribe to
+		// database events. In particular, the webserver might mark this host
+		// service as draining after allocating a container on it. If we didn't
+		// have this sleep, we would stop accepting requests right away, and the
+		// SpinUpMandelbox request from the client app would error out. We don't
+		// want that, so we accept requests for another 30 seconds. This would be
+		// annoying in local development, so it's disabled in that case.
+		// TODO: get rid of this once we have pubsub
+		if !metadata.IsLocalEnv() {
+			logger.Infof("Global context cancelled. Starting 30 second grace period for requests before http server is shutdown...")
+			time.Sleep(30 * time.Second)
+		}
+
 		logger.Infof("Shutting down httpserver...")
-		shutdownCtx, shutdownCancel := context.WithTimeout(globalCtx, 5*time.Second)
+		shutdownCtx, shutdownCancel := context.WithTimeout(globalCtx, 30*time.Second)
 		defer shutdownCancel()
 
 		err := server.Shutdown(shutdownCtx)
 		if err != nil {
-			logger.Errorf("Shut down httpserver with error %s", err)
+			logger.Infof("Shut down httpserver with error %s", err)
 		} else {
 			logger.Info("Gracefully shut down httpserver.")
 		}
@@ -443,12 +458,11 @@ func initializeTLS() error {
 		"-out",
 		certPath,
 	)
-	logger.Infof("Openssl command: %s", cmd.String())
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return utils.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
 	}
 
-	logger.Info("Successfully created TLS certificate/private key pair.")
+	logger.Info("Successfully created TLS certificate/private key pair. Certificate path: %s", certPath)
 	return nil
 }
