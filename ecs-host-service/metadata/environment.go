@@ -50,3 +50,10 @@ var GetAppEnvironment func() AppEnvironment = func(unmemoized func() AppEnvironm
 		return EnvLocalDev
 	}
 })
+
+// IsLocalEnv returns true if this host service is running locally for
+// development.
+func IsLocalEnv() bool {
+	env := GetAppEnvironment()
+	return env == EnvLocalDev || env == EnvLocalDevWithDB
+}

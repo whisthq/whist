@@ -14,8 +14,8 @@ import (
 // `enabled` is a flag denoting whether the functions in this package should do
 // anything, or simply be no-ops. This is necessary, since we want the database
 // operations to be meaningful in environments where we can expect the database
-// guarantees to hold (i.e. `logger.EnvLocalDevWithDB` for now) but no-ops in
-// other environments.
+// guarantees to hold (e.g. `metadata.EnvLocalDevWithDB` or `metadata.EnvDev`)
+// but no-ops in other environments.
 var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
 // This is the connection pool for the database. It is an error for `dbpool` to

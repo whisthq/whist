@@ -124,7 +124,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// First, verify that the request access token is valid for the given userID.
 	// We only do this in a non-local environment.
-	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
+	if !metadata.IsLocalEnv() {
 		if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
 			logAndReturnError("Invalid JWT access token: %s", err)
 			return
@@ -619,7 +619,7 @@ func main() {
 
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
-	if metadata.GetAppEnvironment() != metadata.EnvLocalDev && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
+	if !metadata.IsLocalEnv() {
 		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), metadata.GetFractalWebserver())
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
