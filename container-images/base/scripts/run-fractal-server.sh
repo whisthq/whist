@@ -12,7 +12,6 @@ USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 CONTAINER_ID_FILENAME=ContainerARN
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
-WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
@@ -21,7 +20,7 @@ LOG_FILENAME=/usr/share/fractal/log.txt
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
 
-# Pull out the webserver identifier for this container
+# Pull out the identifier for this container
 CONTAINER_ID=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID_FILENAME)
 
 # Create list of command-line arguments to pass to the Fractal protocol server
