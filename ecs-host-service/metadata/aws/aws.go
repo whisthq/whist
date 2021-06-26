@@ -2,7 +2,7 @@ package aws // import "github.com/fractal/fractal/ecs-host-service/metadata/aws"
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -97,15 +97,14 @@ func GetPublicIpv4() (net.IP, error) {
 // instance).
 type InstanceName string
 
-// GetInstanceName returns the "Name" tag of the current EC2 instance.
-func GetInstanceName(ctx context.Context) (InstanceName, error) {
+var getInstanceName = utils.MemoizeStringWithError(func() (string, error) {
 	region, err := GetPlacementRegion()
 	if err != nil {
 		return "", utils.MakeError("Unable to find region to create AWS SDK config!")
 	}
 
 	// Initialize general AWS config and ec2 client
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(string(region)))
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(string(region)))
 	if err != nil {
 		return "", utils.MakeError("Unable to load AWS SDK config: %s", err)
 	}
@@ -138,7 +137,7 @@ func GetInstanceName(ctx context.Context) (InstanceName, error) {
 
 	for _, t := range out.Tags {
 		if *(t.Key) == "Name" {
-			return InstanceName(*(t.Value)), nil
+			return *(t.Value), nil
 		}
 	}
 
@@ -149,6 +148,12 @@ func GetInstanceName(ctx context.Context) (InstanceName, error) {
 	}
 
 	return "", utils.MakeError(`Did not find a "Name" tag for this instance! Found these tags instead: %v`, printableTags)
+})
+
+// GetInstanceName returns the "Name" tag of the current EC2 instance.
+func GetInstanceName() (InstanceName, error) {
+	str, err := getInstanceName()
+	return InstanceName(str), err
 }
 
 //===============
@@ -183,7 +188,7 @@ func generateAWSMetadataRetriever(path string) func() (string, error) {
 		}
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return string(body), utils.MakeError("Error reading response body from URL %s: %v", url, err)
 		}
