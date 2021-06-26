@@ -14,12 +14,6 @@ then
     echo $FRACTAL_AES_KEY > /usr/share/fractal/private/aes_key
 fi
 
-# If WEBSERVER_URL is set, then create file
-if [ -n "${WEBSERVER_URL+1}" ]
-then
-    echo $WEBSERVER_URL > /usr/share/fractal/private/webserver_url
-fi
-
 # If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
 then
