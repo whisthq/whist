@@ -61,9 +61,17 @@ sudo rm -f /var/lib/ecs/data/*
 # Here we pre-pull the desired container-images onto the AMI to speed up container startup.
 ghcr_uri=ghcr.io
 echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
-pull_image="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome:$GIT_HASH"
+pull_image_base="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"
+pull_image="$pull_image_base:$GIT_HASH"
 echo "pulling image: $pull_image"
 docker pull "$pull_image"
+
+# Tag the image as `current-build` for now as well, so the client app can ask
+# for `current-build` without worrying about commit hash mismatches (yet).
+# Once maintenance mode removal is solidly implemented, we _shouldn't_ need it,
+# but I strongly suspect our deployment pipeline is not up to snuff for us to
+# actually get rid of this quite yet.
+docker tag "$pull_image" "$pull_image_base:current-build"
 
 echo
 echo "Install complete. Make sure you do not reboot when creating the AMI (check NO REBOOT)"

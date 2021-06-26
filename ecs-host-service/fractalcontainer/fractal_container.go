@@ -8,6 +8,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/fractal/fractal/ecs-host-service/dbdriver"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
@@ -131,6 +132,11 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid fctypes.
 
 		<-ctx.Done()
 
+		// Mark container as dying in the database
+		if err := dbdriver.WriteContainerStatus(c.fractalID, dbdriver.ContainerStatusDying); err != nil {
+			logger.Error(err)
+		}
+
 		untrackContainer(c)
 		logger.Infof("Successfully untracked container %s", c.fractalID)
 
@@ -165,6 +171,11 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid fctypes.
 			logger.Infof("Successfully backed up user configs for FractalID %s", c.fractalID)
 		}
 		c.cleanUserConfigDir()
+
+		// Remove container from the database altogether
+		if err := dbdriver.RemoveContainer(c.fractalID); err != nil {
+			logger.Error(err)
+		}
 
 		logger.Infof("Cleaned up after FractalContainer %s", c.fractalID)
 	}()

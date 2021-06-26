@@ -6,6 +6,7 @@ import argparse
 from collections import namedtuple
 import io
 import os
+import secrets
 import sys
 import tarfile
 
@@ -170,16 +171,18 @@ def send_spin_up_mandelbox_request():
     Sends the host service a SpinUpMandelbox request and returns a Container
     object corresponding to that container, along with its identifying host
     port (i.e. host port corresponding to tcp/32262 in the container),
-    aeskey, and fractalID.
+    aeskey, and mandelboxID.
     """
     print("Sending SpinUpMandelbox request to host service!")
     url = HOST_SERVICE_URL + "spin_up_mandelbox"
+    mandelbox_id = secrets.token_hex(30)
     payload = {
-        "auth_secret": HOST_SERVICE_AUTH_SECRET,
         "app_image": args.image,
         "dpi": args.dpi,
         "user_id": args.user_id,
         "config_encryption_token": args.user_config_encryption_token,
+        "jwt_access_token": "bogus_jwt",
+        "mandelbox_id": mandelbox_id,
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
     respobj = requests.put(url=url, json=payload, verify=tls_verification)
@@ -191,20 +194,19 @@ def send_spin_up_mandelbox_request():
     host_port_32263udp = response["result"]["port_32263"]
     host_port_32273tcp = response["result"]["port_32273"]
     key = response["result"]["aes_key"]
-    resulting_fractal_id = response["result"]["fractal_id"]
 
     return (
         PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
-        resulting_fractal_id,
+        mandelbox_id,
     )
 
 
-def write_protocol_timeout(fractalid):
+def write_protocol_timeout(mandelbox_id):
     """
-    Takes in a fractalID, and writes the protocol timeout to the corresponding container.
+    Takes in a Mandelbox ID, and writes the protocol timeout to the corresponding container.
     """
-    with open(f"/fractal/{fractalid}/containerResourceMappings/timeout", "w") as timeout_file:
+    with open(f"/fractal/{mandelbox_id}/containerResourceMappings/timeout", "w") as timeout_file:
         timeout_file.write(f"{args.protocol_timeout}")
 
 
