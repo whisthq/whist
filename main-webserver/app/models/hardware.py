@@ -97,6 +97,7 @@ class ContainerInfo(db.Model):
 
     __tablename__ = "container_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
     container_id = db.Column(db.String(250), primary_key=True)
     instance_name = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.String(250), nullable=False)
