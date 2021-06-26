@@ -147,6 +147,7 @@ def bulk_instance():
                 instance_name=new_instance.instance_name,
                 user_id=kwargs.get("user_for_containers", "test-user"),
                 status="Running",
+                creation_time_utc_unix_ms=int(time.time()),
             )
             db.session.add(new_container)
             db.session.commit()

@@ -216,7 +216,8 @@ CREATE TABLE hardware.container_info (
     container_id character varying NOT NULL,
     user_id character varying NOT NULL,
     instance_name character varying NOT NULL,
-    status character varying NOT NULL
+    status character varying NOT NULL,
+    creation_time_utc_unix_ms bigint NOT NULL
 );
 
 
