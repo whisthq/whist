@@ -8,6 +8,11 @@
 ============================
 Usage
 ============================
+Video is decoded from H264 via ffmpeg; H265 is supported, but not currently used.
+Hardware-accelerated decoders are given priority, but if those fail, we decode on the CPU. All
+frames are eventually moved to the CPU for scaling and color conversion. Create a decoder via
+create_video_decoder. To decode a frame, call video_decoder_decode on the decoder and the encoded
+packets. To destroy the decoder when finished, destroy the encoder using video_decoder_decode.
 */
 
 /*
@@ -18,12 +23,12 @@ Includes
 
 #include <fractal/core/fractal.h>
 
-/*
-============================
-Includes
-============================
-*/
-
+/**
+ * @brief   Enum indicating the types of decoding we are doing. Type is initially set to
+ * DECODE_TYPE_NONE, then set to one of the below 4. QSV and HARDWARE_OLDER are separate types
+ * because they require different configurations than standard hardware-accelerated decoding.
+ *
+ */
 typedef enum DecodeType {
     DECODE_TYPE_NONE = 0,
     DECODE_TYPE_SOFTWARE = 1,
@@ -32,6 +37,12 @@ typedef enum DecodeType {
     DECODE_TYPE_HARDWARE_OLDER = 4,
 } DecodeType;
 
+/**
+ * @brief       Struct for decoding frames via ffmpeg. Decoding is handled by the codec and context,
+ * and after decoding finishes, the decoded frame will be in sw_frame, regardless of whether or not
+ * we used hardware-accelerated decoding.
+ *
+ */
 typedef struct VideoDecoder {
     int width;
     int height;
@@ -54,7 +65,7 @@ Public Functions
 */
 
 /**
- * @brief                          InitializeThis will initialize the FFmpeg AAC
+ * @brief                          Initialize the FFmpeg H264 or H265
  *                                 video decoder, and set the proper video
  *                                 parameters for receiving from the server
  *
