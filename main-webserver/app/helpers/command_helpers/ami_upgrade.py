@@ -21,8 +21,8 @@ def insert_new_amis(
     client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]
 ) -> List[RegionToAmi]:
     """
-    Inserts new AMIs (but doesn't mark them as activate) into the RegionToAmi table,
-    will be invoked from the Flask CLI command to upgrade the AMIs for regions.
+    Inserts new AMIs (but doesn't mark them as active) into the RegionToAmi table.
+    Will be invoked from the Flask CLI command to upgrade the AMIs for regions.
     We should mark the new AMIs as active only after we cleanup the existing instances and AMIs.
     Args:
         client_commit_hash: Commit hash of the client that is compatible with the AMIs
@@ -51,8 +51,8 @@ def insert_new_amis(
 def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
     """
     This function will be invoked from the Flask CLI command to upgrade the AMIs for regions.
-    Inserts new AMIs into the RegionToAmi table and block until the instance is started, the
-    host service is active and marks the instance as active in the database.
+    Inserts new AMIs into the RegionToAmi table and blocks until the instance is started, and the
+    host service is active and has marked the instance as active in the database.
 
     Args:
         region_name: Name of the region in which new instances neeed to be launched.
