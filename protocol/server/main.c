@@ -79,7 +79,6 @@ char hex_aes_private_key[33];
 
 // This variables should stay as arrays - we call sizeof() on them
 char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
-char webserver_url[WEBSERVER_URL_MAXLEN + 1];
 
 volatile int connection_id;
 static volatile bool exiting;
@@ -989,7 +988,6 @@ int multithreaded_manage_clients(void* opaque) {
 // required_argument means --identifier MUST take an argument
 const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
                                      {"identifier", required_argument, NULL, 'i'},
-                                     {"webserver", required_argument, NULL, 'w'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"timeout", required_argument, NULL, 't'},
                                      // these are standard for POSIX programs
@@ -1019,8 +1017,6 @@ int parse_args(int argc, char* argv[]) {
         "                                  server as a hexadecimal string\n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
         "                                  e.g production, staging, development. Default: none\n"
-        "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
-        "                                  server's requests\n"
         "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
         "                                  is -1, disable auto exit completely. Default: 60\n"
         // special options should be indented further to the left
@@ -1056,14 +1052,6 @@ int parse_args(int argc, char* argv[]) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
                     return -1;
-                }
-                break;
-            }
-            case 'w': {
-                printf("Webserver URL passed in: %s\n", optarg);
-                if (!safe_strncpy(webserver_url, optarg, sizeof(webserver_url))) {
-                    printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
-                           (unsigned long)strlen(optarg), WEBSERVER_URL_MAXLEN);
                 }
                 break;
             }
