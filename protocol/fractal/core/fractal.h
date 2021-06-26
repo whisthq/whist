@@ -151,7 +151,6 @@ Defines
 // Therefore, whenever arrays are created or length of the string is compared, we should be
 // comparing to *MAXLEN + 1
 #define FRACTAL_IDENTIFIER_MAXLEN 31
-#define WEBSERVER_URL_MAXLEN 63
 // this maxlen is the determined Fractal environment max length (the upper bound on all flags passed
 // into the protocol)
 #define FRACTAL_ARGS_MAXLEN 255
