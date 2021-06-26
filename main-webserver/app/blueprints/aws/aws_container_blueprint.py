@@ -1,4 +1,5 @@
 from threading import Thread
+import time
 import uuid
 from flask import Blueprint, current_app
 from flask.json import jsonify
@@ -58,14 +59,16 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
                 args=(body.region, RegionToAmi.query.get(body.region).ami_id),
             )
             scaling_thread.start()
-        return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
+        return jsonify({"ip": "None", "mandelbox_id": "None"}), RESOURCE_UNAVAILABLE
 
     instance = InstanceInfo.query.get(instance_id)
+    container_id = str(uuid.uuid4())
     obj = ContainerInfo(
-        container_id=str(uuid.uuid4()),
+        container_id=container_id,
         instance_name=instance.instance_name,
         user_id=body.username,
         status="ALLOCATED",
+        creation_time_utc_unix_ms=int(time.time()),
     )
     db.session.add(obj)
     db.session.commit()
@@ -79,4 +82,4 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
         )
         scaling_thread.start()
 
-    return jsonify({"IP": instance.ip}), ACCEPTED
+    return jsonify({"ip": instance.ip, "mandelbox_id": container_id}), ACCEPTED
