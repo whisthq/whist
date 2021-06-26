@@ -43,7 +43,8 @@ def test_assign(client, bulk_instance, monkeypatch):
     args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.json["IP"] == instance.ip
+    assert response.json["ip"] == instance.ip
+    assert response.json["mandelbox_id"] != "" and response.json["mandelbox_id"] != "None"
 
 
 @pytest.mark.usefixtures("authorized")
