@@ -36,6 +36,6 @@ var usingProdLogging func() bool = func(unmemoized func() bool) func() bool {
 	case "0", "no", "false":
 		return false
 	default:
-		return (metadata.GetAppEnvironment() == metadata.EnvProd) || (metadata.GetAppEnvironment() == metadata.EnvStaging) || (metadata.GetAppEnvironment() == metadata.EnvDev)
+		return !metadata.IsLocalEnv()
 	}
 })
