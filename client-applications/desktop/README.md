@@ -6,7 +6,7 @@ At a high-level, this repository has two main functions. The first is that it's 
 
 ## Setting Up for Development
 
-We use `yarn` as the package manager for this project. All of the commands requried for development are aliased in `package.json`, and can be called with `yarn`. For example, `yarn start` will boot up the development environment. We don't write commands out directly in the `scripts` section of `package.json`. Instead, each command has a corresponding file in the `desktop/scripts` folder. This allows us to more carefully comment our `yarn` commands, and it makes diffs more visible in PRs. You shouldn't `cd scripts` to run anything in the scripts folder. They should all be run with `desktop` as the working directory, and you should only need to interact with them using `yarn`.
+We use `yarn` as the package manager for this project. All of the commands required for development are aliased in `package.json`, and can be called with `yarn`. For example, `yarn start` will boot up the development environment. We don't write commands out directly in the `scripts` section of `package.json`. Instead, each command has a corresponding file in the `desktop/scripts` folder. This allows us to more carefully comment our `yarn` commands, and it makes diffs more visible in PRs. You shouldn't `cd scripts` to run anything in the scripts folder. They should all be run with `desktop` as the working directory, and you should only need to interact with them using `yarn`.
 
 1. Go to the `/protocol/` README to install all the necessary prerequisites.
 
@@ -74,51 +74,90 @@ Files related to the renderer process mostly live in `src/renderer`, with some s
 
 The Electron "main" process runs in a NodeJS environment, and has full access to the NodeJS standard library and ecosystem. HTTP requests, process management, and file system interaction are handled with standard NodeJS APIs, while GUI windows, communication with the renderer process, and application lifecycle are managed with Electron's API.
 
-#### The Event Loop
+Work begins in the main process when events are triggered. Events might be built in Electron EventEmitters like `appReady`, or they might be our custom `triggers`, which emit based on the success or failure of API calls, etc.
 
-The backbone of our main process is a reactive event loop managed by [RxJS](https://rxjs-dev.firebaseapp.com/guide/overview). It's useful to visualize each cycle of the event loop as a "stream" of data flowing in one direction. It's also useful to think of it as a story with a beginning, a middle, and an end.
+Our main process "reacts" to events using RXJS observable subcriptions. We organize these observables into "flows", which are the main unit of work in the main process. Flows are just a function with the following signature:
 
-"Events" are the beginning of the story. Events create the data that flows through the event loop. Major events include Electron lifecycle events (`appReady`, `appQuit`, etc.), and events related to user input (button clicks, input submit, etc). As the user interacts with the renderer process, data is sent through IPC back to the main process, where the new data is processed as a "event". Anytime there is a new event with data, the application event loop comes to life and reacts to it.
+```js
+const FlowA = (t: Obervable<T>) => { success: Observable<F>, failure: Observable<F>, warning: Observable<F> }
+```
 
-"Effects" are the end of the story. Effects take incoming data, and perform some sort of side-effect that changes the state of the world. This might include creating GUI windows, sending state over IPC, or quitting the application. Nothing is done with the return value of an Effect function. When it receives new "upstream" data, it shouts a command out into the void and waits for new data.
+The function above accepts of Observable and returns an JS object of observables. The keys you see above are `success`, `failure`, `warning`, but you can choose any number of keys with any name to emit from a flow. As a convention, try and use names you see elsewhere in the app, like `success` and `failure`.
 
-"Observables" are the middle of the story. Observables represent the chain of computation between Events and Effects, and are the most important part of the main process architecture. Events and Effects have no state, little control flow, and generally don't do very much. This makes them easily testable and highly resuable. Our architecture places all of our key logic and state within observables, which provide a high-level abstraction over the scheduling of asynchronous events.
+When you call `FlowA(ObservableA)`, the return value will be an object with observable values. However, work inside `FlowA` will not happen right away. Calling `FlowA(ObservableA)` just "wires up" the flow of data, which causes observables and flows within `FlowA` to start subscribing to `ObservableA`. The actual work will be started when `ObservableA` _actually emits some data_.
+
+What causes `ObservableA` to emit? `ObservableA` itself is subscribed to some observable "upstream", maybe `ObservableB`. It might also be subscribe to a NodeJS EventEmitter, but from the perspective of `FlowA` it doesn't matter. When `ObservableA` emits, `FlowA` does some work, and the results of the work are emitted through one of the `success`, `failure`, `warning` observables returned by `FlowA`.
+
+This is a functional reactive programming model. We're not change of the timing of the work. We're basically saying "when we have new data from x, start doing y" across the entire application. This frees us from managing asynchronous vs. synchronous functions. All work triggers other work "when the work is done".
+
+Here's a more concrete example using the `mandelboxCreate` flow in the client app:
+
+```js
+// A "flow" is created with the "flow" function, which accepts
+// a string name as its first argument and the actual definition as the
+// second argument. This allows us to wrap the defintion with other context,
+// such as information for logging.
+const mandelboxFlow  = flow(
+  "mandelboxFlow", // flow name usually matches the variable
+  (
+    trigger: Observable<{ // flows take a single argument, which is always
+      sub: string         // a observable containing named parameters.
+      accessToken: string // We need to "unwrap" this observable inside
+      configToken: string // of the flow to make use of its arguments.
+      region?: AWSRegion
+    }>
+  ) => {
+    // Rxjs has its own library of operators to use on observables, such
+    // "map", which is like Array.map() in that it applies a function to
+    // each element in the sequence.
+    const create = mandelboxCreateFlow(
+      trigger.pipe(map((t) => pick(t, ["sub", "accessToken", "region"])))
+    ) // create will have a value of:
+      // {
+      //   success: Observable<ServerResponse>
+      //   failure: Observable<ServerResponse>
+      // }
+      //
+      // If the response was successful, the "success" observable will emit.
+      // If it's not successful, only the "failure" observable will emit.
+      // Both observables should not emit for the same input.
+
+    // As with mandelboxCreateFlow above, here we are  initializing another
+    // flow (child flow) using the result of another flow.
+    const polling = mandelboxPollingFlow(
+      zip(create.success, trigger).pipe( // rxjs "zip" allows us to make an
+        map(([c, t]) => ({               // observavble containing the contents
+          ...pick(c, ["mandelboxID"]),   // of multiple source observables.
+          ...pick(t, ["accessToken"]),   // The result observable will only
+        }))                              // emit when all source observables
+      )                                  // have new emissions.
+    )
+
+    const host = hostServiceFlow(
+      zip([trigger, create.success]).pipe(
+        map(([t, _c]) => pick(t, ["sub", "accessToken", "configToken"]))
+      ) // We sometimes do these "map" calls when we're passing inputs
+    )   // to flows when we need to "shuffle around" arguments to fit
+        // a flow's function signature.
+
+    return {
+      success: fromSignal(polling.success, host.success),
+      failure: merge(create.failure, polling.failure, host.failure),
+    } // just like "create" above, the output of the mandelboxFlow will be
+  }   // an object of { success, failure }, with values that will emit a result
+)     // once all the processes we've "wired up" in the flow complete.
+
+```
 
 #### Observables and RxJS
 
-An observable is not much more complicated than a function. If I'm an observable, I might "subscribe" to an Event, so that when the Event is triggered, I run my function with the data created by the event. It's possible that I may have subscribers of my own. When I have my function result, I'll pass it on to my subscribers, who may themselves be observables. Data flows through this "chain" of computation until it gets to an Effect, which uses the data to change something in the environment.
+An observable is not much more complicated than a function. If I'm an observable, I might "subscribe" to an Event, so that when the Event is triggered, I run my function with the data created by the event. It's possible that I may have subscribers of my own. When I have my function result, I'll pass it on to my subscribers, who may themselves be observables.
 
 The interaction of observables creates room for rich expression of control flow. Observables can accept "upstream" data with a fine degree of control over timing and parallelism. They can transform, filter, and join other observables to create new data structures. They are a higher-level abstraction of asynchrony than Promises, and allow us to focus on the "rules" that drive the order of computation within our system.
 
 Observables are a concept of functional reactive programming, and are the main structure introduced by RxJS. Rx can be intimidating. The library has a huge API of utilities for creating and manipulating observables, and there's a natual learning curve that comes with starting to think about time-based streams of data. Once things start to click, the Rx standard library becomes a powerful tool, and it becomes very fast to implement complex behavior that can is otherwise unwiedly to write in an imperative style.
 
 There are some great tutorials for RxJS out there, like [this one](https://www.learnrxjs.io) and [this one](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754). Try starting out by thinking about how a "stream of data across time" is similar to a simple "list of data", and how you might `map`, `filter`, and `reduce` each one.
-
-#### Organization
-
-Main process functions are grouped primarily by level of abstraction, and then sub-grouped based on their functionality. This means that we have several files named, for example, `mandelbox.ts`, in locations like `utils/mandelbox.ts`, `effects/mandelbox.ts`, and `observables/mandelbox.ts`. It should feel natural to choose a place to put a new function, or where to look for an existing one.
-
-You can identify a level of abstraction by "what the functions know about". Generally, the `utils` folder is for the lowest level of abstraction. `utils/mandelbox.ts` knows about the NodeJS standard library, `core-ts`, and HTTP responses. The functions inside it are tiny, only a few lines each. Files like this tend to be bags of functions that all have a similar return type, like an HTTP response, and provide helpers to extract data or perform validation. For example, `mandelboxPolling` returns an HTTP response, and comes with `mandelboxPollingValid` to check if the response is successful. It also brings along `mandelboxPollingIP` and `mandelboxPollingPorts` to extract the IP address and ports from the response.
-
-This format makes function names verbose, but it allows for higher-levels of abstraction to be expressed much more concisely. `observables/mandelbox.ts` now doesn't need to know that it's dealing with an HTTP response. It can be entirely devoted to scheduling `mandelboxPolling` requests and managing relationships with other observables. This becomes especially useful when you realize that `mandelboxPolling`, when triggered by an event, needs to poll the webserver every second until certain other parts of application state receive certain data. This requires complex business logic that's much easier to manage when you're not complecting it with details like HTTP status codes.
-
-Consistency is a key design goal of this project. It should be easy to choose a name for a function or observable when you need to. Names tend to be prefixed by their functionality, like `mandelboxPolling` and `mandelboxAssign`, and are often trailed by some sort of state like `Request`, `Warning`, `Success`, `Failure`, or `Loading`. Try and re-use these key terms as often as possible.
-
-A good indication of well-organized functions is visual consistency. Functions on the same level of abstraction that return similar data will often look similar, especially if they don't do too much and use consistent parameter names. In fact, visual coherence is so important that we often carefully pick names that have the same letter count. For example:
-
-```js
-import {
-  mandelboxPollingRequest,
-  mandelboxPollingSuccess,
-  mandelboxPollingFailure,
-  mandelboxPollingLoading,
-  mandelboxPollingWarning,
-  mandelboxPollingProcess,
-  mandelboxPollingPolling,
-} from "@app/observables/mandelbox"
-```
-
-This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
 
 #### Config
 
@@ -129,14 +168,6 @@ All config variables are stored in various files in the `config` folder in the a
 - `paths.js` exports relevant OS-dependent paths
 
 In the electron app itself, these variables are re-exported by the files in `src/config`.
-
-#### Debugging
-
-Subscribers to observables can live anywhere in your codebase, which allows for complete decoupling of logging and logic. By "spying" on the emissions of each observable, we can implement sophisticated logging without peppering every function with `log` statements.
-
-You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `mandelboxPollingRequest` and `mandelboxPollingSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
-
-A handy file during development is `main/debug.ts`. When the environment variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
 
 ## Packaging
 
