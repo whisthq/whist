@@ -33,7 +33,7 @@ Public Functions
 
 /**
  * @brief                          Initialize the input system. Should be used prior to every new
- * client connection that will send inputs
+ *                                 client connection that will send inputs
  */
 void reset_input();
 
@@ -43,6 +43,7 @@ void reset_input();
  *
  * @param input_device             The initialized input device struct defining
  *                                 mouse and keyboard states for the user
+ *
  * @param fmsg                     The Fractal message packet, defining one user
  *                                 action event, to replay on the computer
  *
@@ -57,6 +58,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg);
  *
  * @param input_device             The initialized input device struct defining
  *                                 mouse and keyboard states for the user
+ *
  * @param fmsg                     The Fractal message packet, defining one
  *                                 keyboard event, to update the keyboard state
  */

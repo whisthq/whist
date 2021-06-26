@@ -212,16 +212,28 @@ Public Functions
 void init_networking();
 
 /**
- * @brief                          This will set the socket s to have timeout
- *                                 timeout_ms. Use 0 to have a non-blocking
- *                                 socket, and -1 for an indefinitely blocking
- *                                 socket
+ * @brief                          Get the most recent network error.
  *
  * @returns                        The network error that most recently occured,
  *                                 through WSAGetLastError on Windows or errno
  *                                 on Linux
  */
 int get_last_network_error();
+
+/**
+ * @brief                          This will send or receive data over a socket
+ *
+ * @param context                  The socket context to be used
+ * @param buf                      The buffer to read or write to
+ * @param len                      The length of the buffer to send over the socket
+                                   Or, the maximum number of bytes that can be read
+ *                                 from the socket
+
+ * @returns                        The number of bytes that have been read or
+ *                                 written to or from the buffer
+ */
+int recvp(SocketContext* context, void* buf, int len);
+int sendp(SocketContext* context, void* buf, int len);
 
 /**
  * @brief                          Initialize a UDP/TCP connection between a
@@ -266,7 +278,7 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
  * @param type                     The FractalPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
  * @param data                     A pointer to the data to be sent
- * @param len                      The nubmer of bytes to send
+ * @param len                      The number of bytes to send
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
@@ -283,7 +295,7 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
  * @param type                     The FractalPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
  * @param data                     A pointer to the data to be sent
- * @param len                      The nubmer of bytes to send
+ * @param len                      The number of bytes to send
  * @param id                       An ID for the UDP data.
  * @param burst_bitrate            The maximum bitrate that packets will be sent
  *                                 over. -1 will imply sending as fast as
@@ -400,7 +412,5 @@ bool send_post_request(char* host_s, char* path, char* payload, char** response_
  *                                 more about the error
  */
 bool send_get_request(char* host_s, char* path, char** response_body, size_t max_response_size);
-
-int sendp(SocketContext* context, void* buf, int len);
 
 #endif  // NETWORK_H
