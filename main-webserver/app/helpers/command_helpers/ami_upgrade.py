@@ -90,9 +90,10 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = DRAINING
-        db.session.commit()
     except requests.exceptions.RequestException:
         active_instance.status = HOST_SERVICE_UNRESPONSIVE
+    finally:
+        db.session.commit()
 
 
 def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo]:
