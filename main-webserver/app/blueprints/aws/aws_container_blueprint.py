@@ -50,8 +50,8 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a container running, don't start up a new one
         return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
-    instance_id = find_instance(body.region, body.client_commit_hash)
-    if instance_id is None:
+    instance_name = find_instance(body.region, body.client_commit_hash)
+    if instance_name is None:
 
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
@@ -66,7 +66,7 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
             scaling_thread.start()
         return jsonify({"ip": "None", "mandelbox_id": "None"}), RESOURCE_UNAVAILABLE
 
-    instance = InstanceInfo.query.get(instance_id)
+    instance = InstanceInfo.query.get(instance_name)
     container_id = str(uuid.uuid4())
     obj = ContainerInfo(
         container_id=container_id,

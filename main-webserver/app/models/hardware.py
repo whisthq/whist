@@ -49,7 +49,7 @@ class InstanceSorted(db.Model):
     we deploy incoming tasks to.
 
     Attributes:
-        instance_id (string): instance id from AWS console
+        instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         ami_id (string): What image is the instance running?
     """
@@ -69,7 +69,7 @@ class InstancesWithRoomForContainers(db.Model):
     'how many can be', etc.
 
     Attributes:
-        instance_id (string): instance id from AWS console
+        instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         ami_id (string):  What image is the instance running?
         max_containers (int): How many containers can the instance have?
@@ -92,7 +92,7 @@ class ContainerInfo(db.Model):
 
     Attributes:
         container_id (int):  which container is this?
-        instance_id (string): which instance is it on?
+        instance_name (string): A unique identifier generated randomly to identify the instance.
         user_id (string): who's running it?
         status (string): is it running?
     """

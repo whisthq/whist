@@ -30,11 +30,11 @@ bundled_region = {
 def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
     Given a region, finds (if it can) an instance in that region or a neighboring region with space
-    If it succeeds, returns the instance ID.  Else, returns None
+    If it succeeds, returns the instance name.  Else, returns None
     Args:
         region: which region to search
 
-    Returns: either a good instance ID or None
+    Returns: either a good instance name or None
 
     """
     # 5sec arbitrarily decided as sufficient timeout when using with_for_update
