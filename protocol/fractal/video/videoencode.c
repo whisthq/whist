@@ -916,6 +916,11 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         av_buffer_unref(&encoder->hw_device_ctx);
     }
 
+    // free packets
+    for (int i = 0; i < MAX_ENCODER_PACKETS; i++) {
+        av_packet_unref(&encoder->packets[i]);
+    }
+
     av_frame_free(&encoder->hw_frame);
     av_frame_free(&encoder->sw_frame);
     av_frame_free(&encoder->filtered_frame);

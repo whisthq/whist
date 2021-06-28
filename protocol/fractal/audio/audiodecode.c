@@ -227,6 +227,11 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     // free the frame
     av_frame_free(&decoder->frame);
 
+    // free the packets
+    for (int i = 0; i < MAX_ENCODED_AUDIO_PACKETS; i++) {
+        av_packet_unref(&decoder->packets[i]);
+    }
+
     // free swr
     swr_free(&decoder->swr_context);
 
@@ -252,7 +257,7 @@ int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_s
 
     int res;
     for (int i = 0; i < num_packets; i++) {
-        if ((res = avcodec_send_packet(decoder->pCodecCtx, &decoder->packets[i])) < 0) {
+        if ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!, error %d: %s", res, av_err2str(res));
             return -1;
         }
@@ -271,7 +276,7 @@ int audio_decoder_get_frame(AudioDecoder *decoder) {
             (int): 0 on success (can call this function again), 1 on EAGAIN (must send more input
        before calling again), -1 on failure
             */
-    int res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
+    int res = avcodec_receive_frame(decoder->context, decoder->frame);
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // decoder needs more data or there's nothing left
         return 1;

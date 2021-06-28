@@ -458,6 +458,11 @@ void destroy_video_decoder_members(VideoDecoder* decoder) {
     av_free(decoder->context);
     av_frame_free(&decoder->sw_frame);
     av_frame_free(&decoder->hw_frame);
+
+    // free the packets
+    for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
+        av_packet_unref(&decoder->packets[i]);
+    }
     av_buffer_unref(&decoder->ref);
 }
 
