@@ -35,24 +35,18 @@ Includes
 #include <unistd.h>
 #endif
 
-#include <fractal/utils/logging.h>
 #include <fractal/utils/window_name.h>
 #include <fractal/core/fractalgetopt.h>
-#include <fractal/utils/avpacket_buffer.h>
-#include <fractal/audio/audiocapture.h>
-#include <fractal/audio/audioencode.h>
 #include <fractal/core/fractal.h>
-#include <fractal/cursor/cursor.h>
 #include <fractal/input/input.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/error_monitor.h>
-#include <fractal/video/transfercapture.h>
-#include <fractal/video/screencapture.h>
-#include <fractal/video/videoencode.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include "video.h"
+#include "audio.h"
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
@@ -63,68 +57,35 @@ Includes
 #endif
 // Linux shouldn't have this
 
-#define USE_GPU 0
-#define USE_MONITOR 0
-#define DEFAULT_WIDTH 1920
-#define DEFAULT_HEIGHT 1080
-
-#define BITS_IN_BYTE 8.0
 #define TCP_CONNECTION_WAIT 5000
 #define CLIENT_PING_TIMEOUT_SEC 3.0
 
 extern Client clients[MAX_NUM_CLIENTS];
 
-char binary_aes_private_key[16];
-char hex_aes_private_key[33];
+static char binary_aes_private_key[16];
+static char hex_aes_private_key[33];
 
 // This variables should stay as arrays - we call sizeof() on them
-char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
-char webserver_url[WEBSERVER_URL_MAXLEN + 1];
+static char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
+static char webserver_url[WEBSERVER_URL_MAXLEN + 1];
 
 volatile int connection_id;
-static volatile bool exiting;
+volatile bool exiting;
+
+int sample_rate = -1;
 
 volatile double max_mbps;
-volatile int client_width = -1;
-volatile int client_height = -1;
-volatile int client_dpi = -1;
-volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
-volatile bool update_device = true;
 InputDevice* input_device = NULL;
 
-#define VIDEO_BUFFER_SIZE 25
-#define MAX_VIDEO_INDEX 500
-FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
-int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
-
-#define AUDIO_BUFFER_SIZE 100
-#define MAX_NUM_AUDIO_INDICES 3
-FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
-int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
-
-FractalMutex packet_mutex;
+static FractalMutex packet_mutex;
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
 
-bool pending_encoder;
-bool encoder_finished;
-VideoEncoder* encoder_factory_result = NULL;
-// If we are using nvidia's built in encoder, then we do not need to create a real encoder
-// struct since frames will already be encoded, So we can use this dummy encoder.
-VideoEncoder dummy_encoder = {0};
-
-int encoder_factory_server_w;
-int encoder_factory_server_h;
-int encoder_factory_client_w;
-int encoder_factory_client_h;
-int encoder_factory_current_bitrate;
-CodecType encoder_factory_codec_type;
-
-bool client_joined_after_window_name_broadcast = false;
-int begin_time_to_exit = 60;
+static bool client_joined_after_window_name_broadcast = false;
+static int begin_time_to_exit = 60;
 // This variable should always be an array - we call sizeof()
-char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
+static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
 
 /*
 ============================
@@ -206,6 +167,7 @@ bool get_using_stun() {
     return false;
 }
 
+<<<<<<< HEAD
 int32_t multithreaded_encoder_factory(void* opaque) {
     UNUSED(opaque);
     encoder_factory_result = create_video_encoder(
@@ -763,6 +725,8 @@ int32_t send_audio(void* opaque) {
     return 0;
 }
 
+=======
+>>>>>>> 130c9664c (Separates server protocol audio and video handling from other functions)
 #include <time.h>
 
 int do_discovery_handshake(SocketContext* context, int* client_id) {
