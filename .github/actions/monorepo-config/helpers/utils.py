@@ -195,6 +195,11 @@ def all_child_keys_in_set_partial(profiles):
     return all_child_keys_in_set
 
 
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
+
 @contextmanager
 def temporary_fs(tree):
     with tempfile.TemporaryDirectory() as tempdir:
