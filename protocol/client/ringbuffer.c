@@ -167,14 +167,17 @@ void reset_frame(FrameData* frame_data) {
 
 void set_rendering(RingBuffer* ring_buffer, int id) {
     /*
-        Indicate that the frame with ID id is currently rendering and free the frame buffer for the previously rendering frame. The currently rendered frame will not be overwritten during calls to reset_ring_buffer or receive_packet.
+        Indicate that the frame with ID id is currently rendering and free the frame buffer for the
+        previously rendering frame. The currently rendered frame will not be overwritten during calls
+        to reset_ring_buffer or receive_packet.
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer metadata to change
             id (int): ID of the frame we are currently rendering.
     */
     if (ring_buffer->currently_rendering_id != -1) {
-        FrameData* last_rendered_frame = get_frame_at_id(ring_buffer, ring_buffer->currently_rendering_id);
+        FrameData* last_rendered_frame =
+            get_frame_at_id(ring_buffer, ring_buffer->currently_rendering_id);
         // We are no longer rendering this ID, so we are free to free the frame buffer
         destroy_frame_buffer(ring_buffer, last_rendered_frame);
     }
@@ -202,12 +205,16 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         return -1;
     } else if (packet->id > frame_data->id) {
         overwrote_frame = (frame_data->id != -1);
-        if (ring_buffer->currently_rendering_id != -1 && frame_data->id == ring_buffer->currently_rendering_id) {
+        if (ring_buffer->currently_rendering_id != -1 &&
+            frame_data->id == ring_buffer->currently_rendering_id) {
             // We cannot overwrite the frame because it's rendering
-            LOG_INFO("Skipping packet (ID %d) because it would overwrite the currently rendering ID %d", packet->id, ring_buffer->currently_rendering_id);
+            LOG_INFO(
+                "Skipping packet (ID %d) because it would overwrite the currently rendering ID %d",
+                packet->id, ring_buffer->currently_rendering_id);
             return -1;
         } else if (frame_data->id > ring_buffer->currently_rendering_id) {
-            // We have received a packet which will overwrite a frame that has not yet rendered. This implies we are quite behind, so we should wipe the whole ring buffer.
+            // We have received a packet which will overwrite a frame that has not yet rendered.
+            // This implies we are quite behind, so we should wipe the whole ring buffer.
             reset_ring_buffer(ring_buffer);
         }
         // Now, we can overwrite with no other concerns
