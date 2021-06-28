@@ -257,10 +257,10 @@ ALTER TABLE ONLY hardware.container_info
 
 --
 -- TOC entry 249 (class 1259 OID 16800)
--- Name: instance_sorted; Type: VIEW; Schema: hardware; Owner: -
+-- Name: instances_with_room_for_containers; Type: VIEW; Schema: hardware; Owner: -
 --
 
-CREATE VIEW hardware.instance_sorted AS
+CREATE VIEW hardware.instances_with_room_for_containers AS
   SELECT sub_with_running.instance_name,
     sub_with_running.aws_ami_id,
     sub_with_running.commit_hash,
@@ -288,9 +288,9 @@ CREATE VIEW hardware.instance_sorted AS
 
 
 
- CREATE VIEW hardware.instance_allocation AS
+ CREATE VIEW hardware.instance_sorted AS
     SELECT instance_name, aws_ami_id, commit_hash, location from hardware.instance_info
-    WHERE instance_name IN (select instance_name from hardware.instance_sorted)
+    WHERE instance_name IN (select instance_name from hardware.instances_with_room_for_containers)
     AND last_updated_utc_unix_ms != -1 AND status = 'ACTIVE';
 
 

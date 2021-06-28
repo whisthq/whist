@@ -45,8 +45,12 @@ class InstanceInfo(db.Model):
 
 class InstanceSorted(db.Model):
     """
-    A sorted list of instance IDs and info, for selecting where
+    A list of instance IDs and info, for selecting where
     we deploy incoming tasks to.
+    Ordered by region (for faster SQL queries) and descending by
+    number of running containers (so we preferentially fill up old
+    instances rather than creating new ones).
+    See tests/aws/test_instance_selection for a bunch of sample instance sort orders.
 
     Attributes:
         instance_name (string): A unique identifier generated randomly to identify the instance.
@@ -54,7 +58,7 @@ class InstanceSorted(db.Model):
         ami_id (string): What image is the instance running?
     """
 
-    __tablename__ = "instance_allocation"
+    __tablename__ = "instance_sorted"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
@@ -76,7 +80,7 @@ class InstancesWithRoomForContainers(db.Model):
         num_running_containers (int): and how many does it have?
     """
 
-    __tablename__ = "instance_sorted"
+    __tablename__ = "instances_with_room_for_containers"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
