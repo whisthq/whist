@@ -1,4 +1,4 @@
-FROM python
+FROM python:3.9.5
 
 COPY ./requirements.txt /root/monorepo-config/requirements.txt
 
