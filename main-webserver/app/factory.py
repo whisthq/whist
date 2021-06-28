@@ -96,6 +96,7 @@ def create_app(testing=False):
     CORS(app)
 
     register_handlers(app)
+    register_commands(app)
     register_blueprints(app)
 
     if not app.testing:
@@ -128,6 +129,19 @@ def register_handlers(app: Flask):
             jsonify(error="That resource is only available to Fractal subscribers"),
             HTTPStatus.PAYMENT_REQUIRED,
         )
+
+
+def register_commands(app):
+    """
+    Registers all blueprints (cli commands) for the Flask app
+
+    Args:
+        - app: Flask object
+    """
+
+    from commands import command_bp
+
+    app.register_blueprint(command_bp)
 
 
 def register_blueprints(app):

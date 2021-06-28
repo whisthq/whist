@@ -85,8 +85,8 @@ func registerInstance() error {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
 
-	// Since the `instance_id` is the primary key of `hardware.instance_info`, we
-	// know that `rows` ought to contain either 0 or 1 results.
+	// Since the `instance_name` is the primary key of `hardware.instance_info`,
+	// we know that `rows` ought to contain either 0 or 1 results.
 	if len(rows) == 0 {
 		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
 	}
