@@ -141,6 +141,15 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
  */
 void reset_frame(FrameData* frame_data);
 
+/**
+ * @brief       Indicate that the frame with ID id is currently rendering, and free the frame buffer
+ *              for the previously rendered frame. The ring buffer will not write to the currently
+ *              rendering frame.
+ *
+ * @param ring_buffer Ring buffer containing the frame
+ *
+ * @param id ID of the frame we are currently rendering.
+ */
 void set_rendering(RingBuffer* ring_buffer, int id);
 
 #endif
