@@ -2,7 +2,7 @@ import pytest
 
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 from app.helpers.utils.aws.base_ec2_client import EC2Client
-from app.models import db
+from app.models import db, RegionToAmi
 
 
 @pytest.fixture
@@ -52,9 +52,30 @@ def hijack_db(monkeypatch):
     def _helper(*args, **kwargs):
         call_list.append({"args": args, "kwargs": kwargs})
 
-    def _empty():
+    def _add_all_helper(*args):
+        for obj in args[0]:
+            call_list.append({"args": obj})
+
+    def _empty(*args):
         return
 
     monkeypatch.setattr(db.session, "add", _helper)
+    monkeypatch.setattr(db.session, "add_all", _add_all_helper)
     monkeypatch.setattr(db.session, "commit", _empty)
+    monkeypatch.setattr(db.session, "delete", _empty)
     yield call_list
+
+
+@pytest.fixture(autouse=False)
+def set_amis_state():
+    amis = []
+    amis_original_enabled_value = []
+
+    def _setter(amis_to_be_modified, enabled_state):
+        for ami in amis_to_be_modified:
+            amis_original_enabled_value.append(ami.ami_active)
+            ami.ami_active = enabled_state
+
+    yield _setter
+    for ami, original_enabled_value in zip(amis, amis_original_enabled_value):
+        ami.ami_active = original_enabled_value

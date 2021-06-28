@@ -4,7 +4,9 @@ from http import HTTPStatus
 import pytest
 
 
+from app.models import SupportedAppImages
 from app.constants.http_codes import RESOURCE_UNAVAILABLE
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
 @pytest.mark.usefixtures("authorized")
@@ -30,7 +32,7 @@ def test_no_region(client):
 
 @pytest.mark.usefixtures("authorized")
 def test_assign(client, bulk_instance, monkeypatch):
-    instance = bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
+    instance = bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
     def patched_find(*args, **kwargs):
         return instance.instance_name
@@ -40,7 +42,12 @@ def test_assign(client, bulk_instance, monkeypatch):
         patched_find,
     )
 
-    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
+    args = {
+        "region": "us-east-1",
+        "username": "test@fractal.co",
+        "dpi": 96,
+        "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
+    }
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.json["ip"] == instance.ip
@@ -52,7 +59,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     """
     Ensures we 503 a user with active containers
     """
-    bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
     def patched_active(*args, **kwargs):
         return True
@@ -62,7 +69,12 @@ def test_assign_active(client, bulk_instance, monkeypatch):
         patched_active,
     )
 
-    args = {"region": "us-east-1", "username": "test@fractal.co", "dpi": 96}
+    args = {
+        "region": "us-east-1",
+        "username": "test@fractal.co",
+        "dpi": 96,
+        "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
+    }
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.status_code == RESOURCE_UNAVAILABLE

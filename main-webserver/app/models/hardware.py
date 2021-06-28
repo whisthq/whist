@@ -1,3 +1,4 @@
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.sql.expression import true
 from ._meta import db
 
@@ -11,7 +12,6 @@ class InstanceInfo(db.Model):
         cloud_provider_id (string): instance id from AWS console
         location (string): AWS region (i.e. us-east-1)
         instance_type (string): what hardware is the instance running on?
-        auth_token (string): what token does this instance use to auth with the webserver?
         ip (string): the instance's public IP
         nanocpus_remaining (float): CPU that isn't in use
         gpu_vram_remaining_kb (float): GPU that isn't in use
@@ -20,7 +20,7 @@ class InstanceInfo(db.Model):
         last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         creation_time_utc_unix_ms (int):  When was this instance created?
         aws_ami_id (str): what image is this machine based on?
-        status (str): either PRE-CONNECTION, ACTIVE, or DRAINING
+        status (str): either PRE_CONNECTION, ACTIVE, HOST_SERVICE_UNRESPONSIVE or DRAINING
         commit_hash (str): what commit hash of our infrastructure is this machine running?"""
 
     __tablename__ = "instance_info"
@@ -30,7 +30,6 @@ class InstanceInfo(db.Model):
     location = db.Column(db.String(250), nullable=False)
     creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
     aws_instance_type = db.Column(db.String(250), nullable=False)
-    auth_token = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
     nanocpus_remaining = db.Column(db.Integer, nullable=False, server_default="1024")
     gpu_vram_remaining_kb = db.Column(db.Integer, nullable=False, server_default="1024")
@@ -44,20 +43,25 @@ class InstanceInfo(db.Model):
 
 class InstanceSorted(db.Model):
     """
-    A sorted list of instance IDs and info, for selecting where
+    A list of instance IDs and info, for selecting where
     we deploy incoming tasks to.
+    Ordered by region (for faster SQL queries) and descending by
+    number of running containers (so we preferentially fill up old
+    instances rather than creating new ones).
+    See tests/aws/test_instance_selection for a bunch of sample instance sort orders.
 
     Attributes:
-        instance_id (string): instance id from AWS console
+        instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         ami_id (string): What image is the instance running?
     """
 
-    __tablename__ = "instance_allocation"
+    __tablename__ = "instance_sorted"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
     aws_ami_id = db.Column(db.String(250), nullable=False)
+    commit_hash = db.Column(db.String(40), nullable=False)
 
 
 class InstancesWithRoomForContainers(db.Model):
@@ -67,14 +71,14 @@ class InstancesWithRoomForContainers(db.Model):
     'how many can be', etc.
 
     Attributes:
-        instance_id (string): instance id from AWS console
+        instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         ami_id (string):  What image is the instance running?
         max_containers (int): How many containers can the instance have?
         num_running_containers (int): and how many does it have?
     """
 
-    __tablename__ = "instance_sorted"
+    __tablename__ = "instances_with_room_for_containers"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
@@ -90,7 +94,7 @@ class ContainerInfo(db.Model):
 
     Attributes:
         container_id (int):  which container is this?
-        instance_id (string): which instance is it on?
+        instance_name (string): A unique identifier generated randomly to identify the instance.
         user_id (string): who's running it?
         status (string): is it running?
     """
@@ -114,15 +118,29 @@ class RegionToAmi(db.Model):
         region_name: The name of the region to which the AMI corresponds as a string.
         ami_id: A string representing the AMI ID of the latest AMI provisioned in the region
             corresponding to this row.
-        allowed: A boolean indicating whether or not users are allowed to deploy tasks in the
+        client_commit_hash: A string representing the commit hash for the client.
+        ami_active: A boolean that will be marked true if this AMI corresponds to
+            an active versions of the client app'.
+        region_enabled: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
+
+    Constraints:
+        Unique:
+            _region_name_ami_id_unique_constraint: AMIs are expected to be unique per region
+            and most likely global too.
+            But didn't find any reference to back that up, so including a constraint.
     """
 
     __tablename__ = "region_to_ami"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    region_name = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
+    __table_args__ = (
+        UniqueConstraint("region_name", "ami_id", name="_region_name_ami_id_unique_constraint"),
+        {"extend_existing": True, "schema": "hardware"},
+    )
+    region_name = db.Column(db.String(250), nullable=False, primary_key=True)
     ami_id = db.Column(db.String(250), nullable=False)
-    allowed = db.Column(db.Boolean, nullable=False, server_default=true())
+    client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)
+    ami_active = db.Column(db.Boolean, nullable=False, server_default=true())
+    region_enabled = db.Column(db.Boolean, nullable=False, server_default=true())
 
 
 class SupportedAppImages(db.Model):
