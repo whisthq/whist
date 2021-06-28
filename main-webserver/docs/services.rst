@@ -37,10 +37,11 @@ to tell AWS to delete instances/containers that are no longer needed.
 GitHub Actions Workflows
 ------------------------
 
-Each time a new release is deployed, a GitHub Actions workflow places the Fractal Webserver in maintenance mode so that the
-deployment can happen atomically. It is necessary to suspend normal webserver operation temporarily (during which users won't
-be able to request new connections, but existing connections will not be impacted) when deploying new releases so that the 
-system has time to programmatically update all of our cloud infrastructure to that of the new release.
+Each time a new release is deployed on protocol, a GitHub Actions workflow triggers the following steps.
+
+#. Builds the AMIs with the updated version of protocol.
+#. Invokes the flask cli bundled along with the webserver to create preconfigured buffer capacity.
+#. Once the instances are up with with the newer AMIs, we atomically switch over from the older AMIs to newer AMIs across all regions.
 
 
 HireFire
