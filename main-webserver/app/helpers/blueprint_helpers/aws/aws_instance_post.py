@@ -3,7 +3,7 @@ import time
 
 from collections import defaultdict
 from sys import maxsize
-from typing import Optional
+from typing import List, Optional
 import requests
 from flask import current_app
 from app.models.hardware import (
@@ -16,6 +16,8 @@ from app.models.hardware import (
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
+from app.constants.instance_state_values import PRE_CONNECTION, DRAINING
+from app.constants.env_names import DEVELOPMENT
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -25,20 +27,33 @@ bundled_region = {
 }
 
 
-def find_instance(region: str) -> Optional[str]:
+def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
     Given a region, finds (if it can) an instance in that region or a neighboring region with space
-    If it succeeds, returns the instance ID.  Else, returns None
+    If it succeeds, returns the instance name.  Else, returns None
     Args:
         region: which region to search
 
-    Returns: either a good instance ID or None
+    Returns: either a good instance name or None
 
     """
     # 5sec arbitrarily decided as sufficient timeout when using with_for_update
     set_local_lock_timeout(5)
+    # TODO: move the `local_dev` to the mono-repo config as this needs to be a shared secret between
+    #  client_app and main-webserver.
+    if (
+        current_app.config["ENVIRONMENT"] == DEVELOPMENT or current_app.testing
+    ) and client_commit_hash == "local_dev":
+        # This condition is to accomodate the worflow for developers of client_apps
+        # to test their changes without needing to update the development database with
+        # commit_hashes on their local machines.
+        client_commit_hash = (
+            RegionToAmi.query.filter_by(region_name=region, ami_active=True)
+            .one_or_none()
+            .client_commit_hash
+        )
     avail_instance: Optional[InstanceSorted] = (
-        InstanceSorted.query.filter_by(location=region)
+        InstanceSorted.query.filter_by(location=region, commit_hash=client_commit_hash)
         .limit(1)
         .with_for_update(skip_locked=True)
         .one_or_none()
@@ -49,7 +64,9 @@ def find_instance(region: str) -> Optional[str]:
             # 5sec arbitrarily decided as sufficient timeout when using with_for_update
             set_local_lock_timeout(5)
             avail_instance = (
-                InstanceSorted.query.filter_by(location=bundlable_region)
+                InstanceSorted.query.filter_by(
+                    location=bundlable_region, commit_hash=client_commit_hash
+                )
                 .limit(1)
                 .with_for_update(skip_locked=True)
                 .one_or_none()
@@ -87,7 +104,12 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     # If the region is invalid or the AMI is not current, we want no buffer
     if region not in {x.region_name for x in RegionToAmi.query.all()}:
         return -maxsize
-    if ami_id != RegionToAmi.query.filter_by(region_name=region).one_or_none().ami_id:
+    active_ami_for_given_region = RegionToAmi.query.filter_by(
+        region_name=region, ami_active=True
+    ).one_or_none()
+    if active_ami_for_given_region is None:
+        return -maxsize
+    if ami_id != active_ami_for_given_region.ami_id:
         return -maxsize
     # Now, we want to get the average number of containers per instance in that region
     # and the number of free containers
@@ -111,7 +133,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     desired_free_containers = 10.0
 
     if num_free_containers < desired_free_containers:
-        return 1
+        return current_app.config["DEFAULT_INSTANCE_BUFFER"]
 
     if num_free_containers >= (desired_free_containers + avg_max_containers):
         return -1
@@ -127,7 +149,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 scale_mutex = defaultdict(threading.Lock)
 
 
-def do_scale_up_if_necessary(region: str, ami: str) -> None:
+def do_scale_up_if_necessary(
+    region: str, ami: str, force_buffer: Optional[int] = 0
+) -> List[InstanceInfo]:
     """
     Scales up new instances as needed, given a region and AMI to check
     Specifically, if we want to add X instances (_get_num_new_instances
@@ -136,12 +160,27 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
     Args:
         region: which region to check for scaling
         ami: which AMI to scale with
+        force_buffer: this will be used to override the recommendation for
+        number of instances to be launched by `_get_num_new_instances`
 
-    Returns: None
+    Returns: List of database objects representing the instances created.
 
     """
+    new_instances = []
     with scale_mutex[f"{region}-{ami}"]:
-        num_new = _get_num_new_instances(region, ami)
+
+        # num_new indicates how many new instances need to be spun up from
+        # the ami that is passed in. Usually, we calculate that through
+        # invoking `_get_num_new_instances` function. However, we can chose to
+        # ignore that recommendation by passing in the `force_buffer` value.
+        num_new = 0
+        if force_buffer > 0:
+            num_new = force_buffer
+        else:
+            num_new = _get_num_new_instances(region, ami)
+
+        ami_obj = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).one_or_none()
+
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
@@ -154,6 +193,7 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                     image_id=ami,
                     instance_name=base_name + f"-{index}",
                     num_instances=1,
+                    instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                 )
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
@@ -164,15 +204,18 @@ def do_scale_up_if_necessary(region: str, ami: str) -> None:
                     aws_ami_id=ami,
                     cloud_provider_id=f"aws-{instance_ids[0]}",
                     instance_name=base_name + f"-{index}",
-                    aws_instance_type="g3.4xlarge",
+                    aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                     container_capacity=base_number_free_containers,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
-                    status="PRE-CONNECTION",
-                    commit_hash=current_app.config["APP_GIT_COMMIT"][0:7],
+                    status=PRE_CONNECTION,
+                    commit_hash=ami_obj.client_commit_hash,
+                    ip="",  # Will be set by `host_service` once it boots up.
                 )
+                new_instances.append(new_instance)
                 db.session.add(new_instance)
                 db.session.commit()
+    return new_instances
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:
@@ -210,10 +253,14 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 if instance_containers is None or instance_containers.num_running_containers != 0:
                     db.session.commit()
                     continue
-                instance_info.status = "DRAINING"
+                # We need to modify the status to DRAINING to ensure that we don't assign a new
+                # container to the instance. We need to commit here as we don't want to enter a
+                # deadlock with host service where it tries to modify the instance_info row.
+                instance_info.status = DRAINING
+                db.session.commit()
                 try:
                     base_url = (
-                        f"http://{instance_info.ip}/{current_app.config['HOST_SERVICE_PORT']}"
+                        f"http://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
                     )
                     requests.post(f"{base_url}/drain_and_shutdown")
                 except requests.exceptions.RequestException:
@@ -221,7 +268,6 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     client.stop_instances(
                         ["-".join(instance_info.cloud_provider_id.split("-")[1:])]
                     )
-                db.session.commit()
 
 
 def try_scale_down_if_necessary_all_regions() -> None:
