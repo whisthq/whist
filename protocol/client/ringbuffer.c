@@ -20,13 +20,17 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     */
     // wipe all frames
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
-        FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        frame_data->id = -1;
-        int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
-        memset(frame_data->received_indices, 0, indices_array_size);
-        memset(frame_data->nacked_indices, 0, indices_array_size);
+        // we CANNOT overwrite the currently rendering ID
+        if (i != ring_buffer->currently_rendering_id) {
+            FrameData* frame_data = &ring_buffer->receiving_frames[i];
+            frame_data->id = -1;
+            int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
+            memset(frame_data->received_indices, 0, indices_array_size);
+            memset(frame_data->nacked_indices, 0, indices_array_size);
+        }
     }
     // reset metadata
+    ring_buffer->currently_rendering_id = -1;
     ring_buffer->last_received_id = -1;
     ring_buffer->max_id = -1;
     ring_buffer->num_nacked = 0;
@@ -144,7 +148,7 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
     memset(frame_data->nacked_indices, 0, indices_array_size);
     frame_data->last_nacked_index = -1;
     frame_data->num_times_nacked = 0;
-    frame_data->rendered = false;
+    // frame_data->rendered = false;
     frame_data->frame_size = 0;
     frame_data->type = ring_buffer->type;
     start_timer(&frame_data->frame_creation_timer);
@@ -157,8 +161,17 @@ void reset_frame(FrameData* frame_data) {
     frame_data->num_packets = 0;
     frame_data->last_nacked_index = -1;
     frame_data->num_times_nacked = 0;
-    frame_data->rendered = false;
+    // frame_data->rendered = false;
     frame_data->frame_size = 0;
+}
+
+void set_rendering(RingBuffer* ring_buffer, int id) {
+    if (ring_buffer->currently_rendering_id != -1) {
+        FrameData* last_rendered_frame = get_frame_at_id(ring_buffer, ring_buffer->currently_rendering_id);
+        // We are no longer rendering this ID, so we are free to free the frame buffer
+        destroy_frame_buffer(ring_buffer, last_rendered_frame);
+    }
+    ring_buffer->currently_rendering_id = id;
 }
 
 int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
@@ -181,11 +194,15 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         LOG_INFO("Old packet (ID %d) received, previous ID %d", packet->id, frame_data->id);
         return -1;
     } else if (packet->id > frame_data->id) {
-        // if we are overwriting a frame that has not yet rendered, we should wipe the whole ring
-        // buffer and start over.
-        if (frame_data->id != -1 && frame_data->rendered == false) {
+        if (ring_buffer->currently_rendering_id != -1 && frame_data->id == ring_buffer->currently_rendering_id) {
+            // We cannot overwrite the frame because it's rendering
+            LOG_INFO("Skipping packet (ID %d) because it would overwrite the currently rendering ID %d", packet->id, ring_buffer->currently_rendering_id);
+            return -1;
+        } else if (frame_data->id > ring_buffer->currently_rendering_id) {
+            // We have received a packet which will overwrite a frame that has not yet rendered. This implies we are quite behind, so we should wipe the whole ring buffer.
             reset_ring_buffer(ring_buffer);
         }
+        // Now, we can overwrite with no other concerns
         overwrote_frame = (frame_data->id != -1);
         init_frame(ring_buffer, packet->id, packet->num_indices);
     }
@@ -317,6 +334,7 @@ void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
         } else {
             free_block(ring_buffer->frame_buffer_allocator, frame_data->frame_buffer);
         }
+        frame_data->frame_buffer = NULL;
     }
 }
 

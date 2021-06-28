@@ -45,7 +45,6 @@ typedef struct FrameData {
     clock last_nacked_timer;
     clock last_packet_timer;
     clock frame_creation_timer;
-    bool rendered;
 } FrameData;
 
 /**
@@ -61,14 +60,14 @@ typedef struct RingBuffer {
     int largest_frame_size;
     int largest_num_packets;
 
+    int currently_rendering_id;
     int last_received_id;
     int num_nacked;
     int frames_received;
     int max_id;
     clock missing_frame_nack_timer;
 
-    BlockAllocator* frame_buffer_allocator;  // unusued if audio
-
+    BlockAllocator* frame_buffer_allocator;  // unused if audio
 } RingBuffer;
 
 /**
@@ -141,5 +140,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
  * @param frame_data Frame to "clear" from the ring buffer.
  */
 void reset_frame(FrameData* frame_data);
+
+void set_rendering(RingBuffer* ring_buffer, int id);
 
 #endif

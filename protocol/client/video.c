@@ -495,9 +495,6 @@ int render_video() {
 
             video_data.last_rendered_id = render_context.id;
         }
-        // indicate that we finished rendering the frame
-        FrameData* frame_data = get_frame_at_id(video_ring_buffer, video_data.last_rendered_id);
-        frame_data->rendered = true;
         // Since we're done, we free the render context frame buffer
         free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
         has_video_rendered_yet = true;
@@ -950,8 +947,8 @@ void update_video() {
 
                 // Now render_context will own the frame_buffer memory block
                 render_context = *ctx;
-                // So we make sure that ctx->frame_buffer no longer owns the memory block
-                ctx->frame_buffer = NULL;
+                // Tell the ring buffer we're rendering this frame
+                set_rendering(video_ring_buffer, ctx->id);
                 // Get the FrameData for the next frame
                 int next_frame_render_id = next_render_id + 1;
                 FrameData* next_frame_ctx =
