@@ -211,10 +211,6 @@ ext install ms-python.python
 
 TODO: improve this section with explanations on how to debug using Logz.io and run admin level things with Postman/Heroku.
 
-## Maintenance Mode
-
-It is possible for maintenance mode to hang, even though we've taken several precautions to stop this from happening. Please see this doc on how to deal with it: https://www.notion.so/tryfractal/Manually-Managing-Maintenance-Mode-d946ab8b01454ecca66a1e51743fde46.
-
 # FAQ
 
 ### What is the general structure of our codebase and the purpose of specific files?
@@ -281,10 +277,8 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── logs.py --> our webserver logging config
 │   │       │   ├── sql_commands.py --> helpers for SQL commit, update, and deletion
 │   │       │   └── tokens.py --> utils for generating JWTs
-│   │       ├── mail
-│   │       │   └── mail_client.py --> helpers for mail generation
-│   ├── maintenance
-│   │   └── maintenance_manager.py --> helpers for webserver maintenance mode
+│   │       └── mail
+│   │           └── mail_client.py --> helpers for mail generation
 │   ├── models --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
@@ -322,8 +316,6 @@ Note that all conftest files contain test fixtures for their respective director
 ├── requirements-test.txt --> test package requirements
 ├── requirements.txt --> packages you need to run the webserver
 ├── runtime.txt --> desired python version
-├── scripts
-│   └── poll_maintenance.sh --> script to check on webserver maintenance status
 ├── run-web.sh --> script to spawn the web process.
 └── tests --> tests for our assorted endpoints.  All files without docs
     should be assumed to unit test the endpoints/bps they name.
@@ -343,8 +335,6 @@ Note that all conftest files contain test fixtures for their respective director
     ├── helpers
     │   └── general
     │       └── progress.py
-    ├── maintenance
-    │   └── test_webserver_maintenance.py --> integration tests for webserver maintenance mode
     ├── misc
     │   └── test_rate_limiter.py
     ├── patches.py --> useful monkeypatches for all our tests
