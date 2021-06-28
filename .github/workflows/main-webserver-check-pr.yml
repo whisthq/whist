@@ -47,10 +47,11 @@ jobs:
                   fi
 
             - name: Check if Code Matches Pylint Standards
+              working-directory: main-webserver
               run: |
                   # Global pylintrc for fractal/fractal
-                  ln -sf ../../pylintrc ./pylintrc              
-                  pylint -j 0 main-webserver/app # Returns 0 if and only if code is linted
+                  ln -sf ../pylintrc ./pylintrc              
+                  pylint -j 0 app # Returns 0 if and only if code is linted
 
     # Heroku Testing
     # Checks unit tests on the Heroku pipeline.
