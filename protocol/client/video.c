@@ -301,7 +301,6 @@ int render_video() {
         if (video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
                                        frame->videodata_length) < 0) {
             LOG_WARNING("Failed to send packets to the decoder!");
-            free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
             rendering = false;
             return -1;
         }
@@ -311,7 +310,6 @@ int render_video() {
         while ((res = video_decoder_get_frame(video_context.decoder)) == 0) {
             if (res < 0) {
                 LOG_ERROR("Failed to get next frame from decoder!");
-                free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
                 rendering = false;
                 return -1;
             }
@@ -496,7 +494,6 @@ int render_video() {
             video_data.last_rendered_id = render_context.id;
         }
         // Since we're done, we free the render context frame buffer
-        free_block(video_ring_buffer->frame_buffer_allocator, render_context.frame_buffer);
         has_video_rendered_yet = true;
         // rendering = false is set to false last,
         // since that can trigger the next frame render

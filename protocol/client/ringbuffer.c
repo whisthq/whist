@@ -194,6 +194,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         LOG_INFO("Old packet (ID %d) received, previous ID %d", packet->id, frame_data->id);
         return -1;
     } else if (packet->id > frame_data->id) {
+        overwrote_frame = (frame_data->id != -1);
         if (ring_buffer->currently_rendering_id != -1 && frame_data->id == ring_buffer->currently_rendering_id) {
             // We cannot overwrite the frame because it's rendering
             LOG_INFO("Skipping packet (ID %d) because it would overwrite the currently rendering ID %d", packet->id, ring_buffer->currently_rendering_id);
@@ -203,7 +204,6 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
             reset_ring_buffer(ring_buffer);
         }
         // Now, we can overwrite with no other concerns
-        overwrote_frame = (frame_data->id != -1);
         init_frame(ring_buffer, packet->id, packet->num_indices);
     }
 

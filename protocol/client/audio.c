@@ -311,7 +311,6 @@ int send_next_frame_to_decoder() {
     if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) <
         0) {
         LOG_WARNING("Failed to send packets to decoder!");
-        free(audio_render_context.frame_buffer);
         return -1;
     }
     return 0;
@@ -397,8 +396,6 @@ void render_audio() {
                 LOG_ERROR("Could not play audio!");
             }
         }
-        // free the frame buffer
-        free(audio_render_context.frame_buffer);
         // No longer rendering audio
         rendering_audio = false;
     }
