@@ -151,7 +151,7 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images ecs-task-definitions"
+                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
@@ -245,7 +245,6 @@ jobs:
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         outputs:
-            task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
             region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|containers-and-ami-publish-ghcr-and-aws|')
 
@@ -289,18 +288,6 @@ jobs:
                   do
                     ./push_container_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
                   done
-
-            - name: Package app names into JSON for ecs-task-definitions strategy matrices
-              id: package-matrix
-              run: |
-                  apps_json='[]'
-
-                  for app in ${{ env.apps }}
-                  do
-                    apps_json=$(echo $apps_json | jq -c ". += [\"$app\"]")
-                  done
-
-                  echo "::set-output name=task-definitions-apps-json::$apps_json"
 
             ##########################################################################################
             ########################### Stage 2 - Build ECS Host Service  ############################
@@ -517,9 +504,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Uses webserver maintenance mode to update the following:
-    # 1. new task definitions if new task defs have been pushed to ECS
-    # 2. new AMIs if new AMIs have been built
+    # Uses webserver maintenance mode to update AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
         needs:
@@ -527,10 +512,6 @@ jobs:
                 fractal-publish-build-config,
                 containers-and-ami-publish-ghcr-and-aws,
             ]
-        # run this if either task defs or amis job succeed
-        # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
-        # later, when we actually update amis, we make sure they were published
         if: always() && (needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
         runs-on: ubuntu-20.04
         steps:
