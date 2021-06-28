@@ -26,7 +26,8 @@ args = parser.parse_args()
 
 # Input Variables
 show_output = args.show_output
-image_paths = args.image_paths
+# Remove trailing slashes
+image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
 
 # If --all is passed, generate image_paths procedurally
