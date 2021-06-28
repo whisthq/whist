@@ -67,9 +67,9 @@ jobs:
               shell: bash
               run: ./notifications/setup_notifications.sh
 
-            # The workflow will wait up to 15 minutes for other runs of the same workflow on
-            # the same branch to complete. TODO: Figure out how to better do `concurrency` at
-            # the job level and nix this.
+            # The workflow will wait up to 15 minutes for other runs of the same workflow on the
+            # same branch to complete.
+            # TODO: Figure out how to better do `concurrency` at the job level and nix this.
             - name: Serialize Workflows with Turnstyle
               uses: softprops/turnstyle@v1
               with:
@@ -147,7 +147,7 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images ecs-task-definitions"
+                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
@@ -241,9 +241,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         outputs:
-            task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
-            region_names: ${{ steps.build-new-amis.outputs.region_names }}
-            amis: ${{ steps.build-new-amis.outputs.amis }}
+            region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|containers-and-ami-publish-ghcr-and-aws|')
 
         env:
@@ -286,18 +284,6 @@ jobs:
                   do
                     ./push_container_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
                   done
-
-            - name: Package app names into JSON for ecs-task-definitions strategy matrices
-              id: package-matrix
-              run: |
-                  apps_json='[]'
-
-                  for app in ${{ env.apps }}
-                  do
-                    apps_json=$(echo $apps_json | jq -c ". += [\"$app\"]")
-                  done
-
-                  echo "::set-output name=task-definitions-apps-json::$apps_json"
 
             ##########################################################################################
             ########################### Stage 2 - Build ECS Host Service  ############################
@@ -413,14 +399,12 @@ jobs:
                   new_ami_ids = data["builds"][0]["artifact_id"]
                   region_ami_pairs = new_ami_ids.split(",")
 
-                  REGION_NAMES = list()
-                  AMIS = list()
+                  REGION_TO_AMI_MAP = dict()
                   for region_ami_pair in region_ami_pairs:
                     region_name, ami = region_ami_pair.split(":")
-                    REGION_NAMES.append(region_name)
-                    AMIS.append(ami)
+                    REGION_TO_AMI_MAP[region_name] = ami
 
-                  # export REGION_NAMES and AMIS arrays
+                  # export REGION_TO_AMI_MAP
                   # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
                   # it is best to explain via example:
                   # >>> data = {'key': "val'ue"} # tricky example because we have single and double quotes
@@ -432,14 +416,10 @@ jobs:
                   # {'key': "val'ue"}
                   # if I did not add the \, then the json library would get confused by trying to read this:
                   # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-                  region_names_str = json.dumps(REGION_NAMES).replace('"', '\\"')
-                  amis_str = json.dumps(AMIS).replace('"', '\\"')
+                  region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
 
-                  print(f"Regions array is set to {region_names_str}")
-                  print(f"::set-output name=region_names::{region_names_str}")
-
-                  print(f"AMI array is set to {amis_str}")
-                  print(f"::set-output name=amis::{amis_str}")
+                  print(f"Region to AMI map is set to {region_to_ami_map_str}")
+                  print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
 
             ##########################################################################################
             ############################# Stage 4 - Slack Notifications ##############################
@@ -470,120 +450,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-            ##########################################################################################
-
-    # ECS Task Definitions: Render & Deploy Task Definitions to ECS
-    # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and publish-images-ghcr succeeds.
-    ecs-task-definitions-deploy-task-definitions-ecs:
-        name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
-        runs-on: ubuntu-20.04
-        needs:
-            [
-                fractal-publish-build-config,
-                containers-and-ami-publish-ghcr-and-aws,
-            ]
-        strategy:
-            matrix:
-                app: ${{ fromJSON(needs.containers-and-ami-publish-ghcr-and-aws.outputs.task-definitions-apps-json) }}
-                aws-region:
-                    - us-east-1
-                    - us-east-2
-                    - us-west-1
-                    - us-west-2
-                    - ca-central-1
-                    - eu-west-1
-                    - eu-central-1
-
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              shell: bash
-              run: ./notifications/setup_notifications.sh
-
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ matrix.aws-region }}
-
-            - name: Retrieve Branch HEAD Git Hash as Env Variable
-              run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
-            - name: Store GitHub Container Registry base URI as env variable
-              run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
-
-            - name: Store taskdef name as env variable
-              run: echo "taskdef_name=$(echo fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
-
-            - name: Generate taskdef and store JSON path to variable
-              working-directory: ecs-task-definitions
-              run: |
-                  taskdef_json_filename=$(./generate-taskdef.sh $taskdef_name ${{ needs.fractal-publish-build-config.outputs.sentry_environment }})
-                  echo "taskdef_json=ecs-task-definitions/$taskdef_json_filename" >> $GITHUB_ENV
-
-            - name: Render Amazon ECS task Definitions
-              id: render-web-container
-              uses: aws-actions/amazon-ecs-render-task-definition@v1
-              with:
-                  container-name: fractal-container
-                  task-definition: ${{ env.taskdef_json }}
-                  image: ${{ env.ghcr_base_uri }}/fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
-
-            - name: Deploy to Amazon ECS service
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-              with:
-                  task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-
-            - name: Notify Slack if error
-              if: failure()
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy ECS task definitions in `ecs-task-definitions-deploy-task-definitions-ecs` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-    # ECS Task Definitions: Notify Slack
-    # Notify Slack after rendering and deploying all the task definitions.
-    # Runs if deploy-task-definitions-ecs succeeds.
-    ecs-task-definitions-notify-slack:
-        name: "ECS Task Definitions: Notify Slack"
-        needs:
-            [
-                fractal-publish-build-config,
-                ecs-task-definitions-deploy-task-definitions-ecs,
-            ]
-        if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              shell: bash
-              run: ./notifications/setup_notifications.sh
-
-            - name: Notify Slack
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  TITLE = ":spiral_note_pad: ECS Task Definitions rendered and deployed :spiral_note_pad:"
-                  BODY = "A PR was merged and triggered automatic ECS Task Definitions deployment to all AWS supported regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+    ##########################################################################################
 
     # AMI: Kill "Packer Builder" Instances
     # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
@@ -633,22 +500,16 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Uses webserver maintenance mode to update the following:
-    # 1. new task definitions if new task defs have been pushed to ECS
-    # 2. new AMIs if new AMIs have been built
+    # Uses webserver maintenance mode to update AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
         needs:
             [
                 fractal-publish-build-config,
                 containers-and-ami-publish-ghcr-and-aws,
-                ecs-task-definitions-deploy-task-definitions-ecs,
             ]
-        # run this if either task defs or amis job succeed
-        # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
-        # later, when we actually update amis, we make sure they were published
-        if: always() && ( needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.containers-and-ami-publish-ghcr-and-aws.result == 'success' )
+        concurrency: main-webserver-update-fractal-services-${{ github.ref }}
+        if: always() && (needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
@@ -667,26 +528,18 @@ jobs:
               shell: bash
               run: ./notifications/setup_notifications.sh
 
-            - name: Install webserver scripting dependencies
+            - name: Install webserver dependencies for running the flask cli
               working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
+              run: pip install -r requirements.txt
 
-            - name: Put Webserver into Maintenance Mode
-              id: start-maintenance-mode
+            - name: Run flask cli to upgrade the AMIs
+              id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  from scripts.maintenance_scripts import start_maintenance
+              shell: bash
+              run: "flask command ami_upgrade ${{env.commit_hash}} ${{ needs.containers-and-ami-publish-ghcr-and-aws.outputs.region_names }}"
 
-                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-
-                  # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
-                  start_maintenance(WEBSERVER_URL, TOKEN)
-
-            - name: Notify Slack that Maintenance Mode has started
-              if: always() && steps.start-maintenance-mode.outcome == 'success'
+            - name: Notify Slack that AMI upgrade has completed succesfully
+              if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -696,12 +549,12 @@ jobs:
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
                   TITLE = ":hammer_and_wrench: Webserver started Maintenance Mode :hammer_and_wrench:"
-                  BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to start maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack on failure to start Maintenance Mode
-              if: always() && steps.start-maintenance-mode.outcome == 'failure'
+            - name: Notify Slack that AMI upgrade has failed
+              if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'failure')
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -709,126 +562,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to start maintenance mode in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-            # this must be run before ami update, because that prewarms a container running the new task version
-            - name: Update webserver task definitions if new ones were published
-              id: update-webserver-taskdefs
-              if: needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success'
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  from scripts.maintenance_scripts import update_taskdefs
-
-                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-
-                  # Try to update taskdefs. Errors if request/celery task fails.
-                  update_taskdefs(WEBSERVER_URL, TOKEN)
-
-            - name: Notify Slack on failure to update webserver task definition
-              if: always() && steps.update-webserver-taskdefs.outcome == 'failure'
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to update webserver task definitons in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-            - name: Update webserver AMIs if new ones were built
-              id: update-webserver-amis
-              # check for success AND amis being published
-              if: needs.containers-and-ami-publish-ghcr-and-aws.result == 'success' && contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  import json
-
-                  from scripts.maintenance_scripts import update_region
-
-                  # get region_names and amis as python vars
-                  # we use single quotes (') because earlier we put a backslash in front
-                  # of every single quote in the JSON-dumped string. Python won't get confused by
-                  # >>> var = 'blah \'blah'
-                  # those same protections were not made for double quotes (")
-                  region_names_str='${{ needs.containers-and-ami-publish-ghcr-and-aws.outputs.region_names }}'
-                  print(f"Region names: {region_names_str}")
-                  REGION_NAMES = json.loads(region_names_str)
-
-                  amis_str='${{ needs.containers-and-ami-publish-ghcr-and-aws.outputs.amis }}'
-                  print(f"AMIs: {amis_str}")
-                  AMIS = json.loads(amis_str)
-
-                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
-                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-
-                  # call update region
-                  for region_name, ami in zip(REGION_NAMES, AMIS):
-                    print(f"Updating region {region_name} to AMI: {ami}")
-                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
-
-            - name: Notify Slack on failure to update webserver amis
-              if: always() && steps.update-webserver-amis.outcome == 'failure'
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to update webserver AMIs in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-            - name: End Maintenance Mode
-              id: end-maintenance-mode
-              # always end maintenance mode if we started it
-              if: always() && steps.start-maintenance-mode.outcome == 'success'
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  from scripts.maintenance_scripts import end_maintenance
-
-                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-
-                  # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
-                  end_maintenance(WEBSERVER_URL, TOKEN)
-
-            - name: Notify Slack ended maintenance mode
-              if: always() && steps.end-maintenance-mode.outcome == 'success'
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":hammer_and_wrench: Webserver ended Maintenance Mode :hammer_and_wrench:"
-                  BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to end maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
-
-            - name: Notify Slack on failure to end maintenance mode
-              if: always() && steps.end-maintenance-mode.outcome == 'failure'
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to end maintenance mode in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to upgrade AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -961,7 +695,7 @@ jobs:
                 main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
             ]
-        if: always() && (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|'))
+        if: always() && (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) && (needs.main-webserver-update-fractal-services.result == 'success')
 
         strategy:
             matrix:
