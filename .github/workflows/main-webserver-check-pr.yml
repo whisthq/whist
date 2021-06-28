@@ -350,4 +350,4 @@ jobs:
 
                   # these are the valid returns
                   # step fails here if assertion fails
-                  assert return_code in (0, 2, 3)
+                  assert return_code in (0, 2, 3, 4)
