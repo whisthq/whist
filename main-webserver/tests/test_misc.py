@@ -15,7 +15,7 @@ from app.models import RegionToAmi
 from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
+from app.constants.http_codes import SUCCESS, RESOURCE_UNAVAILABLE
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
@@ -49,7 +49,7 @@ def test_callback_webserver_hostname_localhost_with_port():
 def test_webserver_sigterm(client):
     """
     Make sure SIGTERM is properly handled by webserver. After a SIGTERM, all new web requests should
-    error out with code WEBSERVER_MAINTENANCE. For more info, see app/signals.py.
+    error out with code RESOURCE_UNAVAILABLE. For more info, see app/signals.py.
 
     Note that this is not the perfect test; third party libs like waitress can override signal
     handlers. Waitress is only used in deployments (local or in Procfile with Heroku), not during
@@ -66,7 +66,7 @@ def test_webserver_sigterm(client):
 
     # web requests should be rejected
     resp = client.post("/newsletter/post")
-    assert resp.status_code == WEBSERVER_MAINTENANCE
+    assert resp.status_code == RESOURCE_UNAVAILABLE
 
     # re-enable web requests
     assert set_web_requests_status(True)
