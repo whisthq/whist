@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 # Argument parser
-parser = argparse.ArgumentParser(description="Build Fractal container image(s).")
+parser = argparse.ArgumentParser(description="Build Fractal mandelbox image(s).")
 parser.add_argument(
     "-o",
     "--show-output",
