@@ -1,0 +1,53 @@
+# Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
+# This job does:
+# 1- Build and publish the mandelbox images to a GitHub Container Registry repository
+# 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal ECS Host Service and pre-pulled
+#    Fractal mandelbox images from step 1, to all supported AWS EC2 regions
+# Runs if config succeeds and branch is in ["prod", "staging", "dev"]
+name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelbox Images and AMIs"
+inputs:
+  branch_name:
+    description: which branch this code is running on
+    required: true
+  should_publish:
+    description: should we push these built images?
+    required: true
+  gha_username:
+    description: our GitHub username
+    required: true
+  gha_pat:
+    description: our GitHub personal access token
+    required: true
+
+description: Builds and pushes our mandelbox images based on current repo state
+runs:
+  using: composite
+  steps:
+    - name: Build release protocol # No need to run this for debug, just for release
+      shell: bash
+      working-directory: protocol
+      run: ./build_server_protocol.sh Release
+
+    - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
+      shell: bash
+      run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
+    - name: Build mandelbox images
+      working-directory: mandelbox-images
+      shell: bash
+      run: ./build_mandelbox_image.sh -o --all
+
+    - name: Push mandelbox images
+      working-directory: mandelbox-images
+      shell: bash
+      env:
+        GH_USERNAME: ${{ inputs.gha_username }}
+        GH_PAT: ${{ inputs.gha_pat }}
+      run: |
+        if ${{ inputs.should_publish }}
+          then
+          for app in ${{ env.apps }}
+          do
+            ./push_mandelbox_image.sh $app ${{ inputs.branch_name }}
+          done
+        fi

@@ -266,6 +266,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
+<<<<<<< HEAD
             - name: Build release protocol # No need to run this for debug, just for release
               working-directory: protocol
               run: ./build_server_protocol.sh Release
@@ -288,6 +289,15 @@ jobs:
                   do
                     ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
                   done
+=======
+            - name: Build and push release protocol # No need to run this for debug, just for release
+              uses: ./.github/actions/build-and-push-protocol
+              with:
+                  branch_name: ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
+                  should_publish: true
+                  gha_username: ${{ secrets.GHA_USERNAME }}
+                  gha_pat: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+>>>>>>> 933b8c014... swap over protocol build/push into an action
 
             ##########################################################################################
             ########################### Stage 2 - Build ECS Host Service  ############################
