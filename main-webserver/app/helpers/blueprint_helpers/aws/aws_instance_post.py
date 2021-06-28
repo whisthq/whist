@@ -250,7 +250,10 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 instance_mandelboxes = InstancesWithRoomForMandelboxes.query.filter_by(
                     instance_name=instance.instance_name
                 ).one_or_none()
-                if instance_mandelboxes is None or instance_mandelboxes.num_running_mandelboxes != 0:
+                if (
+                    instance_mandelboxes is None
+                    or instance_mandelboxes.num_running_mandelboxes != 0
+                ):
                     db.session.commit()
                     continue
                 # We need to modify the status to DRAINING to ensure that we don't assign a new
