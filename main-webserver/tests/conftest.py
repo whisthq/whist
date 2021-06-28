@@ -98,7 +98,7 @@ def bulk_instance():
     containers = []
 
     def _instance(
-        associated_containers=0,
+        associated_mandelboxes=0,
         instance_name=None,
         location=None,
         mandelbox_capacity=None,
@@ -107,7 +107,7 @@ def bulk_instance():
         """Create a dummy instance for testing.
 
         Arguments:
-            associated_containers (int): How many containers should be made running
+            associated_mandelboxes (int): How many containers should be made running
                 on this instance
             instance_name (Optional[str]): what to call the instance
                     defaults to random name
@@ -138,7 +138,7 @@ def bulk_instance():
 
         db.session.add(new_instance)
         db.session.commit()
-        for _ in range(associated_containers):
+        for _ in range(associated_mandelboxes):
             new_container = MandelboxInfo(
                 mandelbox_id=str(randint(0, 10000000)),
                 instance_name=new_instance.instance_name,
