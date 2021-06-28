@@ -10,8 +10,8 @@ name: "Main Webserver: Check PR"
 on:
     pull_request:
         paths:
-            - "main-webserver/**"
             - "!main-webserver/README.md"
+            - "main-webserver/**"
             - "main-webserver/db_migration/schema.sql"
             - ".github/workflows/main-webserver-check-pr.yml"
     workflow_dispatch:
