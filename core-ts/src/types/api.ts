@@ -6,7 +6,7 @@ export class FractalAPI {
         VALIDATE: "/token/validate",
     }
 
-    static CONTAINER = {
+    static MANDELBOX = {
         ASSIGN: "/mandelbox/assign",
     }
 

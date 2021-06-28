@@ -52,7 +52,7 @@ For testing, you can also use the `upload` target in the makefile, which builds 
 .
 ├── ecs-host-service.go <- The main file, contains the main logic and the most comments to explain the design decisions of the host service
 ├── mandelbox <- package for the abstraction of a mandelboxes managed by Fractal
-│   ├── mandelbox.go <- the main file in the mandelbox package, defines the types and implements the simple functions associated with Fractal-managed mandelboxes 
+│   ├── mandelbox.go <- the main file in the mandelbox package, defines the types and implements the simple functions associated with Fractal-managed mandelboxes
 │   ├── portbindings <- package for the abstraction of port bindings between the mandelboxes and the host
 │   │   ├── port_bindings.go <- provides helper functions for port bindings
 │   │   └── transport_protocol.go <- provides the abstraction of a transport_protocol
