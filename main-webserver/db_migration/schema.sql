@@ -251,7 +251,7 @@ ALTER TABLE ONLY hardware.instance_info
     ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_name);
 
 
-ALTER TABLE ONLY hardware.mandelbox_info
+ALTER TABLE ONLY hardware.instance_info
     ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES hardware.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 --
