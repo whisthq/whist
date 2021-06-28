@@ -4,12 +4,12 @@ from app.helpers.utils.general.logs import fractal_logger
 
 # ones with F at the end must be formatted
 from app.helpers.utils.event_logging.event_tags import (
-    CONTAINER_ASSIGNMENT,
-    CONTAINER_CREATION,
-    CONTAINER_DELETION,
-    CONTAINER_LIFECYCLE,
-    CONTAINER_NAME as CONTAINER_NAME_F,  # container_name=
-    CONTAINER_USER as CONTAINER_USER_F,
+    MANDELBOX_ASSIGNMENT,
+    MANDELBOX_CREATION,
+    MANDELBOX_DELETION,
+    MANDELBOX_LIFECYCLE,
+    MANDELBOX_NAME as MANDELBOX_NAME_F,  # mandelbox_name=
+    MANDELBOX_USER as MANDELBOX_USER_F,
     CLUSTER_CREATION,
     CLUSTER_DELETION,
     CLUSTER_LIFECYCLE,
@@ -43,13 +43,13 @@ def basic_logging_event(title, tags, text=""):
 
 
 # below are some commonly used events
-def logged_event_container_prewarmed(
-    container_name, cluster_name, username="unknown", time_taken="unknown"
+def logged_event_mandelbox_prewarmed(
+    mandelbox_name, cluster_name, username="unknown", time_taken="unknown"
 ):
-    """Logs an event for container creation for future metric collection
+    """Logs an event for mandelbox creation for future metric collection
 
     Args:
-        container_name (str): The name of the container which was created.
+        mandelbox_name (str): The name of the mandelbox which was created.
             This is used to search in lifecycle.
         cluster_name (str): The cluster it was created in.
         username (str, optional): The username of the user this is created for.
@@ -57,18 +57,18 @@ def logged_event_container_prewarmed(
     """
 
     tags = [
-        CONTAINER_CREATION,
+        MANDELBOX_CREATION,
         SUCCESS,
-        CONTAINER_NAME_F.format(container_name=container_name),
+        MANDELBOX_NAME_F.format(mandelbox_name=mandelbox_name),
         CLUSTER_NAME_F.format(cluster_name=cluster_name),
     ]
     if username:
-        tags.append(CONTAINER_USER_F.format(container_user=username))
+        tags.append(MANDELBOX_USER_F.format(mandelbox_user=username))
 
     basic_logging_event(
-        title="Created new Container",
+        title="Created new mandelbox",
         text=to_text(
-            container_name=container_name,
+            mandelbox_name=mandelbox_name,
             cluster_name=cluster_name,
             username=username,
             spinup_time=time_taken,
@@ -78,12 +78,12 @@ def logged_event_container_prewarmed(
 
 
 def logged_event_mandelbox_assigned(
-    container_name, cluster_name, username="unknown", time_taken="unknown"
+    mandelbox_name, cluster_name, username="unknown", time_taken="unknown"
 ):
-    """Logs an event for container assignment.
+    """Logs an event for mandelbox assignment.
 
     Args:
-        container_name (str): The name of the container which was created.
+        mandelbox_name (str): The name of the mandelbox which was created.
             This is used to search in lifecycle.
         cluster_name (str): The cluster it was created in.
         username (str, optional): The username of the user this is created for.
@@ -91,19 +91,19 @@ def logged_event_mandelbox_assigned(
     """
 
     tags = [
-        CONTAINER_ASSIGNMENT,
-        CONTAINER_LIFECYCLE,
+        MANDELBOX_ASSIGNMENT,
+        MANDELBOX_LIFECYCLE,
         SUCCESS,
-        CONTAINER_NAME_F.format(container_name=container_name),
+        MANDELBOX_NAME_F.format(mandelbox_name=mandelbox_name),
         CLUSTER_NAME_F.format(cluster_name=cluster_name),
     ]
     if username:
-        tags.append(CONTAINER_USER_F.format(container_user=username))
+        tags.append(MANDELBOX_USER_F.format(mandelbox_user=username))
 
     basic_logging_event(
-        title="Assigned new Container",
+        title="Assigned new mandelbox",
         text=to_text(
-            container_name=container_name,
+            mandelbox_name=mandelbox_name,
             cluster_name=cluster_name,
             username=username,
             spinup_time=time_taken,
@@ -113,7 +113,7 @@ def logged_event_mandelbox_assigned(
 
 
 def logged_event_cluster_created(cluster_name, time_taken="unknown"):
-    """Same as logged_event_container_prewarmed but for clusters.
+    """Same as logged_event_mandelbox_prewarmed but for clusters.
 
     Args:
         cluster_name (str): The name of the cluster which was created.
@@ -127,46 +127,46 @@ def logged_event_cluster_created(cluster_name, time_taken="unknown"):
     )
 
 
-def logged_event_container_deleted(
-    container_name, container_user, cluster_name, lifecycle=True, time_taken=None
+def logged_event_mandelbox_deleted(
+    mandelbox_name, mandelbox_user, cluster_name, lifecycle=True, time_taken=None
 ):
-    """Logs an event for the deletion of the container. It has a "naive" option and a
+    """Logs an event for the deletion of the mandelbox. It has a "naive" option and a
     lifecycle option. In the lifecycle option it will log a lifecycle type event instead
     of a deletion type event. This event will inform users of the length of time taken.
     In the case of the naive method (lifecycle=False) it will simply log that deletion
     without any calculation etc.
 
     Args:
-        container_name (str): The name of the container that was deleted.
-        cluster_name (str): The name of the cluster that the deleted container was in.
+        mandelbox_name (str): The name of the mandelbox that was deleted.
+        cluster_name (str): The name of the cluster that the deleted mandelbox was in.
         lifecycle (bool, optional): Whether we want to measure time and return a lifecycle type
             event or prefer just to log the deletion itself naively. Defaults to False.'
         time_taken (int):  how long the operation took
     """
     if lifecycle:
-        logged_event_container_lifecycle(
-            container_name, container_user, cluster_name=cluster_name, time_taken=time_taken
+        logged_event_mandelbox_lifecycle(
+            mandelbox_name, mandelbox_user, cluster_name=cluster_name, time_taken=time_taken
         )
     else:
         basic_logging_event(
-            title="Deleted Container",
+            title="Deleted mandelbox",
             text=to_text(
-                container_name=container_name,
-                container_user=container_user,
+                mandelbox_name=mandelbox_name,
+                mandelbox_user=mandelbox_user,
                 cluster_name=cluster_name,
                 shutdown_time=time_taken,
             ),
             tags=[
-                CONTAINER_DELETION,
+                MANDELBOX_DELETION,
                 SUCCESS,
-                CONTAINER_NAME_F.format(container_name=container_name),
+                MANDELBOX_NAME_F.format(mandelbox_name=mandelbox_name),
                 CLUSTER_NAME_F.format(cluster_name=cluster_name),
             ],
         )
 
 
 def logged_event_cluster_deleted(cluster_name, lifecycle=False, time_taken="unknown"):
-    """Same idea as logged_event_container_deleted but for clusters.
+    """Same idea as logged_event_mandelbox_deleted but for clusters.
 
     Args:
         cluster_name (str): Name of the cluster deleted.
@@ -183,43 +183,43 @@ def logged_event_cluster_deleted(cluster_name, lifecycle=False, time_taken="unkn
         )
 
 
-def logged_event_container_lifecycle(
-    container_name, container_user, cluster_name="unknown", time_taken="unknown"
+def logged_event_mandelbox_lifecycle(
+    mandelbox_name, mandelbox_user, cluster_name="unknown", time_taken="unknown"
 ):
-    """The goal is to tell the amount of time a container was up/down.
+    """The goal is to tell the amount of time a mandelbox was up/down.
 
-    This will log an event for the lifecycle of a container that is being shut down.
+    This will log an event for the lifecycle of a mandelbox that is being shut down.
     It will search for the (most recent )previous event with tags corresponding to
-    the creation of the container which is being deleted and then find the distance in time
+    the creation of the mandelbox which is being deleted and then find the distance in time
     and put it into the body along with this event. This is meant to be filtered and then used
     for log analysis elsewhere.
 
     Args:
-        container_name (str): The name of the container whose lifecycle we are observing the end of.
+        mandelbox_name (str): The name of the mandelbox whose lifecycle we are observing the end of.
     """
     deletion_date = time()
 
     deletion_date = str(deletion_date)
 
     basic_logging_event(
-        title="Container Lifecycle Ended",
+        title="Mandelbox Lifecycle Ended",
         text=to_text(
-            container_name=container_name,
+            mandelbox_name=mandelbox_name,
             end_date=deletion_date,
-            username=container_user,
+            username=mandelbox_user,
             cluster_name=cluster_name,
             shutdown_time=time_taken,
         ),
         tags=[
-            CONTAINER_LIFECYCLE,
+            MANDELBOX_LIFECYCLE,
             SUCCESS,
-            CONTAINER_NAME_F.format(container_name=container_name),
+            MANDELBOX_NAME_F.format(mandelbox_name=mandelbox_name),
         ],
     )
 
 
 def logged_event_cluster_lifecycle(cluster_name, time_taken="unknown"):
-    """Effectively the same as logged_event_container_lifecycle, except for clusters.
+    """Effectively the same as logged_event_mandelbox_lifecycle, except for clusters.
     Read above.
 
     Args:
