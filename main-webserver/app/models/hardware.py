@@ -45,8 +45,12 @@ class InstanceInfo(db.Model):
 
 class InstanceSorted(db.Model):
     """
-    A sorted list of instance IDs and info, for selecting where
+    A list of instance IDs and info, for selecting where
     we deploy incoming tasks to.
+    Ordered by region (for faster SQL queries) and descending by
+    number of running containers (so we preferentially fill up old
+    instances rather than creating new ones).
+    See tests/aws/test_instance_selection for a bunch of sample instance sort orders.
 
     Attributes:
         instance_name (string): A unique identifier generated randomly to identify the instance.
