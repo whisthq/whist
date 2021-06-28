@@ -167,6 +167,13 @@ jobs:
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
         runs-on: ubuntu-20.04
         steps:
+
+
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
             - name: Notify Slack
               run: |
                   curl -X POST \
