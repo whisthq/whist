@@ -68,6 +68,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     }
     device->width = width;
     device->height = height;
+    device->first = true;
 
     if (!is_same_wh(device)) {
         char modename[128];
@@ -158,13 +159,18 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 
     if (!XShmAttach(device->display, &device->segment)) {
         LOG_ERROR("Error while attaching display");
+        destroy_capture_device(device);
         return -1;
     }
     device->frame_data = device->image->data;
     device->pitch = device->width * 4;
 #else
     device->image = NULL;
-    capture_screen(device);
+    if (capture_screen(device) < 0) {
+        LOG_ERROR("Failed to call capture_screen for the first frame!");
+        destroy_capture_device(device);
+        return -1;
+    }
 #endif
     device->capture_is_on_nvidia = false;
     device->texture_on_gpu = false;
@@ -173,11 +179,15 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 }
 
 int capture_screen(CaptureDevice* device) {
-    if (!device) return -1;
+    if (!device) {
+        LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
+        return -1;
+    }
 
     if (device->using_nvidia) {
         int ret = nvidia_capture_screen(&device->nvidia_capture_device);
         if (ret < 0) {
+            LOG_ERROR("nvidia_capture_screen failed!");
             return ret;
         } else {
             device->frame_data = device->nvidia_capture_device.frame;
@@ -188,8 +198,6 @@ int capture_screen(CaptureDevice* device) {
             return ret;
         }
     }
-
-    static bool first = true;
 
     XLockDisplay(device->display);
 
@@ -204,8 +212,8 @@ int capture_screen(CaptureDevice* device) {
         }
     }
 
-    if (update || first) {
-        first = false;
+    if (update || device->first) {
+        device->first = false;
 
         XDamageSubtract(device->display, device->damage, None, None);
 
