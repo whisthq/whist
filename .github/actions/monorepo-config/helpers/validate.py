@@ -46,22 +46,14 @@ from .utils import (
 # The errors below will be caught and reported as a group. Other errors will
 # be raised normally.
 PRINT_LIMIT = 100  # truncate message after this many characters.
-GROUPABLE_ERRORS = (
-    AttributeError,
-    KeyError,
-    IndexError,
-    TypeError,
-    ValueError,
-    ZeroDivisionError,
-)
 
 
 @dataclass
 class ValidationData:
     got: typing.Any
     message: str
-    exception: Exception
     test: typing.Callable
+    exception: typing.Optional[Exception] = None
 
     def __repr__(self):
         """
@@ -90,14 +82,9 @@ class ValidationError(Exception):
 
 def must(test_fn, msg=None, got=None):
     def from_value(value):
-        try:
-            if not test_fn(value):
-                return ValidationData(
-                    test=test_fn, message=msg, got=(got or value)
-                )
-        except GROUPABLE_ERRORS as e:
+        if not test_fn(value):
             return ValidationData(
-                test=test_fn, message=msg, got=(got or value), exception=e
+                test=test_fn, message=msg, got=(got or value)
             )
 
     return from_value
