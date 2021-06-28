@@ -81,6 +81,11 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
     this point in time, we won't be sure if all the users have left the instance. Once the instance
     is marked as draining, we won't launch associate a "mandelbox" running on this instance to an user.
 
+    Note that we shouldn't call this function on a single instance multiple times. In particular,
+    the http server in a host service is shut down soon after the endpoint is called, which means
+    that future requests are always going to fail, unfairly marking the host service as
+    unresponsive.
+
     Args:
         active_instance: InstanceInfo object for the instance that need to be marked as draining.
     """
