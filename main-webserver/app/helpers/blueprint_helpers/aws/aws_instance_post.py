@@ -210,7 +210,6 @@ def do_scale_up_if_necessary(
                     creation_time_utc_unix_ms=int(time.time()),
                     status=PRE_CONNECTION,
                     commit_hash=ami_obj.client_commit_hash,
-                    auth_token="",  # Will be set by `host_service` once it boots up.
                     ip="",  # Will be set by `host_service` once it boots up.
                 )
                 new_instances.append(new_instance)

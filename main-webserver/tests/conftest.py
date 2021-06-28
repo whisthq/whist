@@ -101,7 +101,6 @@ def bulk_instance():
         associated_containers=0,
         instance_name=None,
         location=None,
-        auth_token=None,
         container_capacity=None,
         **kwargs,
     ):
@@ -114,8 +113,6 @@ def bulk_instance():
                     defaults to random name
             location (Optional[str]): what region to put the instance in
                     defaults to us-east-1
-            auth_token (Optional[str]): what the instance's auth token with the webserver
-                should be, defaults to 'test-auth'
             container_capacity (Optional[int]): how many containers can the instance hold?
                 defaults to 10
 
@@ -130,7 +127,6 @@ def bulk_instance():
             cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
             creation_time_utc_unix_ms=int(time.time()),
-            auth_token=auth_token if auth_token is not None else "test-auth",
             container_capacity=container_capacity if container_capacity is not None else 10,
             ip=kwargs.get("ip", "123.456.789"),
             aws_ami_id=kwargs.get("aws_ami_id", "test"),
