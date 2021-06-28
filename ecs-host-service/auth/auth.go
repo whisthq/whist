@@ -19,8 +19,8 @@ import (
 
 	"github.com/MicahParks/keyfunc"
 
-	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 

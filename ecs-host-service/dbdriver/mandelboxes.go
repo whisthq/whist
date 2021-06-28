@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgtype"
 
 	"github.com/fractal/fractal/ecs-host-service/dbdriver/queries"
-	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
