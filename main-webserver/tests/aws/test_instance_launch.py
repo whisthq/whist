@@ -109,9 +109,9 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
             for _ in range(num_running_instances)
         ]
 
-    # We mock `fetch_current_running_instances` to return a list of mock instances that are running
-    # with older AMIs. We will be checking that the instances that we returned are being called
-    # called drain_and_shutdown.
+    # We mock `fetch_current_running_instances` to return a list of mock
+    # instances that are running with older AMIs. We will be checking that the
+    # instances returned are being passed to drain_and_shutdown.
     monkeypatch.setattr(ami_upgrade, "fetch_current_running_instances", _mock_instance_info_query)
 
     drain_and_shutdown_call_list = []
