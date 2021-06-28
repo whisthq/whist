@@ -18,9 +18,9 @@ instances of the Fractal Webserver, and also to perform administrative actions l
 Fractal Host Service
 --------------------
 
-The Fractal Host Service is responsible for orchestrating container allocation and interaction on a host machine. 
+The Fractal Host Service is responsible for orchestrating mandelbox allocation and interaction on a host machine. 
 It listens for connections from the Fractal Webserver, which periodically sends commands and data that influence how and when 
-containerized application streaming sessions start and run to the Fractal Host Service on a specific host machine. It is also 
+application streaming sessions start and run to the Fractal Host Service on a specific host machine. It is also 
 responsible for handling properly setting up Fractal mandelboxes and their interaction with the host, notably via allocating 
 TTYs and Uinput nodes. The Fractal Host Service also sends periodic heartbeats back to the Fractal Webserver to let it know 
 that it is alive.
@@ -31,7 +31,7 @@ Fractal Protocol Server
 
 The Fractal Protocol Server is responsible for handling the server-side part of the streaming, and is installed in Fractal
 mandelboxes. It notifies the Fractal Webserver when connected clients disconnect, so that the Fractal Webserver knows when
-to tell AWS to delete instances/containers that are no longer needed.
+to tell AWS to delete instances that are no longer needed.
 
 
 GitHub Actions Workflows
