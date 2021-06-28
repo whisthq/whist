@@ -969,7 +969,7 @@ jobs:
             matrix:
                 config:
                     - name: "Windows Desktop Application"
-                      os: windows-2016 # cmake is pre-installed on windows-2016+ GHA machines
+                      os: windows-2019 # cmake is pre-installed on windows-2016+ GHA machines
                     - name: "macOS Desktop Application"
                       os: macos-10.14 # cmake is pre-installed on macos-10.14+ machines
 
