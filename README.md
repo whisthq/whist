@@ -24,34 +24,34 @@ This repository contains the end-to-end code for the Fractal Application Streami
 
 ## Introduction
 
-Application Streaming is Fractal's core service. It consists in running an application in a GPU-enabled Linux Docker container on a powerful host server in the cloud, currently EC2 instances, and streaming the content of the container to a user device.
+Application Streaming is Fractal's core service. It consists of running an application in a GPU-enabled Linux Docker container (called a "mandelbox" here at Fractal) on a powerful host server in the cloud (currently an EC2 instance) and streaming the audio and video output of the mandelbox to a user device.
 
 At a high-level, Fractal works the following way:
 
 - Users download the Fractal Electron application for their OS and log in to launch the streamed application(s).
 - The login and launch processes are REST API requests to the Fractal webserver.
-- When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific container.
-- The webserver will then provision a container associated with the specific streamed application/task definition requested.
-  - If all existing EC2 instances are at maxed capacity of containers running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/ecs-host-setup` scripts and has the `/ecs-host-service` preinstalled.
-- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker container for the requested application on the chosen EC2 instance. The Fractal protocol server inside this container image will be started and will notify the webserver that it is ready to stream.
-  - The container images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
-- Once the webserver receives a confirmation that the container is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
+- When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific mandelbox.
+- The webserver will then provision a mandelbox associated with the specific streamed application/task definition requested.
+  - If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/ecs-host-setup` scripts and has the `/ecs-host-service` preinstalled.
+- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker mandelbox for the requested application on the chosen EC2 instance. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver that it is ready to stream.
+  - The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
+- Once the webserver receives a confirmation that the mandelbox is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
 
 ### Repository Structure
 
 The Fractal monorepository contains 8 Fractal subrepositories:
 
-| Subrepository        | Description                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------- |
-| client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.      |
-| mandelbox-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
-| core-ts              | The Fractal internal TypeScript library of utilities and reusable components.                            |
-| ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates container management.              |
-| ecs-host-setup       | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal containers.     |
-| ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how container tasks are run.        |
-| main-webserver       | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.      |
-| protocol             | The streaming technology API, both client and server, for streaming containerized applications to users. |
-| website              | The website hosted at `fractal.co`.                                                                      |
+| Subrepository        | Description                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.   |
+| mandelbox-images     | The Dockerfiles defining the mandelbox images and helper scripts for the applications we stream.      |
+| core-ts              | The Fractal internal TypeScript library of utilities and reusable components.                         |
+| ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
+| ecs-host-setup       | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal mandelboxes. |
+| ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how mandelbox tasks are run.     |
+| main-webserver       | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.   |
+| protocol             | The streaming technology API, both client and server, for streaming applications to users.            |
+| website              | The website hosted at `fractal.co`.                                                                   |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
