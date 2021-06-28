@@ -275,7 +275,7 @@ jobs:
 
             - name: Build container images
               working-directory: mandelbox-images
-              run: ./build_container_image.sh -o --all
+              run: ./build_mandelbox_image.sh -o --all
 
             - name: Push container images
               working-directory: mandelbox-images
@@ -286,7 +286,7 @@ jobs:
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./push_container_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
+                    ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
                   done
 
             ##########################################################################################

@@ -14,8 +14,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
 # We add the `fractal/` prefix and `:current-build` tag to the image name, then
-# call `run_container_image.sh` with that image name and any other arguments
+# call `run_mandelbox_image.sh` with that image name and any other arguments
 # provided.
 app_path=${1%/}
 image=fractal/$app_path:current-build
-./helper_scripts/run_container_image.sh "$image" --update-protocol=True "${@:2}"
+./helper_scripts/run_mandelbox_image.sh "$image" --update-protocol=True "${@:2}"

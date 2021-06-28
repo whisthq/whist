@@ -16,8 +16,8 @@ import requests
 DESCRIPTION = """
 This script runs a Fractal container by calling the `SpinUpMandelbox` endpoint
 on the host service and emulating the client-app (but not the client protocol).
-It is used by the scripts `run_local_container_image.sh` and
-`run_remote_container_image.sh` and is usually not called directly.
+It is used by the scripts `run_local_mandelbox_image.sh` and
+`run_remote_mandelbox_image.sh` and is usually not called directly.
 """
 
 
@@ -44,8 +44,8 @@ parser.add_argument(
         "This flag causes the locally-built server protocol to be copied into "
         "the running container. Not passing in this flag causes the container to use "
         "the version of the server protocol already built into its image. By "
-        "default, run_local_container_image.sh enables this flag, but "
-        "run_remote_container_image.sh does not."
+        "default, run_local_mandelbox_image.sh enables this flag, but "
+        "run_remote_mandelbox_image.sh does not."
     ),
 )
 parser.add_argument(
@@ -65,8 +65,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--user-id",
-    default="run_container_image_user",
-    help="User ID to use for config retrieval. Defaults to 'run_container_image_user'.",
+    default="run_mandelbox_image_user",
+    help="User ID to use for config retrieval. Defaults to 'run_mandelbox_image_user'.",
 )
 parser.add_argument(
     "--user-config-encryption-token",
@@ -217,6 +217,6 @@ Name of resulting container:
 Docker ID of resulting container:"""
     )
 
-    # Note that ./run_container_image.sh relies on the dockerID being printed
+    # Note that ./run_mandelbox_image.sh relies on the dockerID being printed
     # alone on the last line of the output of this script!!
     print(f"{container.id}")

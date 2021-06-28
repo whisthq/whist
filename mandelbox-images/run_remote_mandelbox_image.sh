@@ -7,7 +7,7 @@
 # Arguments:
 #    $1 - app name, including deploy environment (e.g. dev/browsers/chrome)
 #    $2 - remote tag, i.e. git hash you wanna use
-#    ...- any remaining arguments are passed to `run_container_image.sh`. Pass
+#    ...- any remaining arguments are passed to `run_mandelbox_image.sh`. Pass
 #           in `--help` to see some helpful usage text.
 
 set -Eeuo pipefail
@@ -32,4 +32,4 @@ echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin $ghcr_u
 docker pull "$image"
 
 # Run the container image retrieved from GHCR, with the first two arguments (app_path and remote_tag) removed.
-./helper_scripts/run_container_image.sh "$image" "${@:3}"
+./helper_scripts/run_mandelbox_image.sh "$image" "${@:3}"

@@ -9,4 +9,4 @@ cd "$DIR"
 docker pull ubuntu:20.04
 
 # Run with mounted fractal binary, rather than copying the binary into the container
-./build_container_image.sh mount "$@"
+./build_mandelbox_image.sh mount "$@"

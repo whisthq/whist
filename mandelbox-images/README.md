@@ -40,16 +40,16 @@ A tree structure is provided below:
 │   │   └── start-chrome.sh <- Helper script to start Chrome with specific flags
 │   ├── firefox
 │   │   └── Dockerfile.20 <- Container image for Mozilla Firefox
-├── build_container_image.sh <- Helper script to build a specific Docker image
+├── build_mandelbox_image.sh <- Helper script to build a specific Docker image
 ├── helper_scripts
-│   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
+│   ├── build_mandelbox_image.py <- Helper script to build a/many Docker image(s)
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
 │   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
-│   └── run_container_image.sh <- Helper script to run a container image
-│   └── run_container_image.py <- Helper script to run a container image
-├── push_container_image.sh <- Helper script to push a built container image to GHCR
-├── run_local_container_image.sh <- Helper script to run a locally-built container image
-├── run_remote_container_image.sh <- Helper script to fetch and run a container image stored on GHCR
+│   └── run_mandelbox_image.sh <- Helper script to run a container image
+│   └── run_mandelbox_image.py <- Helper script to run a container image
+├── push_mandelbox_image.sh <- Helper script to push a built container image to GHCR
+├── run_local_mandelbox_image.sh <- Helper script to run a locally-built container image
+├── run_remote_mandelbox_image.sh <- Helper script to fetch and run a container image stored on GHCR
 └── testing_scripts
     ├── connection_tester.py <- Helper script to test UDP/TCP connectivity between a Fractal protocol server in a container and a client
     ├── uinput_server.c <- Helper script to set up a Linux uinput server in a container
@@ -73,12 +73,12 @@ After cloning the repo, set up your EC2 instance with the setup script from the 
 This will begin installing all dependencies and configurations required to run our container images on an AWS EC2 host. It will also ask if you want to connect your EC2 instance to an ECS cluster, which is optional for development. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
 ```shell
-../protocol/build_server_protocol.sh && ./build_container_image.sh base && ./run_local_container_image.sh base
+../protocol/build_server_protocol.sh && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
 ### Building Images
 
-To build the server protocol for use in a container image (for example with the `--update-protocol` parameter to `run_container_image.sh`), run:
+To build the server protocol for use in a container image (for example with the `--update-protocol` parameter to `run_mandelbox_image.sh`), run:
 
 ```shell
 ../protocol/build_server_protocol.sh
@@ -87,10 +87,10 @@ To build the server protocol for use in a container image (for example with the 
 To build a specific application's container image, run:
 
 ```shell
-./build_container_image.sh APP
+./build_mandelbox_image.sh APP
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose application container you wish to build. For example, the base container is built with `./build_container_image.sh base` and the Chrome container is built with `./build_container_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application container you wish to build. For example, the base container is built with `./build_mandelbox_image.sh base` and the Chrome container is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
 
@@ -103,15 +103,15 @@ You first need to build the protocol and then build the base image before you ca
 
 Before you can run container images (local or remote), make sure you have the host service running in a separate terminal with `cd ../ecs-host-service && make run`.
 
-Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
+Once an image with tag `current-build` has been built locally via `build_mandelbox_images.sh`, it may be run locally by calling:
 
 ```
-./run_local_container_image.sh APP [OPTIONS...]
+./run_local_mandelbox_image.sh APP [OPTIONS...]
 ```
 
 As usual, `APP` is the path to the app folder. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
 
-There are some other options available to control properties of the resulting container, like DPI, or whether the server protocol should be replaced with the locally-built version. Run `./run_local_container_image.sh --help` to see all the other configuration options.
+There are some other options available to control properties of the resulting container, like DPI, or whether the server protocol should be replaced with the locally-built version. Run `./run_local_mandelbox_image.sh --help` to see all the other configuration options.
 
 ### Running Remote-Pushed Images
 
@@ -128,7 +128,7 @@ Replace `<PAT>` with a [GitHub Personal Access Token](https://docs.github.com/en
 Then, retrieve the tag you wish to run by grabbing the relevant (full) Git commit hash from this repository, and run:
 
 ```
-./run_remote_container_image.sh APP_WITH_ENVIRONMENT TAG [OPTIONS...]
+./run_remote_mandelbox_image.sh APP_WITH_ENVIRONMENT TAG [OPTIONS...]
 ```
 
 The argument `TAG` is the full Git commit hash to run. Note that `APP_WITH_ENVIRONMENT` is something like `dev/browsers/chrome`, for instance. All other configuration is the same as the local case, and the `--help` argument works with this script too.
@@ -145,10 +145,10 @@ We store our production container images on GitHub Container Registry (GHCR) and
 
 ### Manual Publishing
 
-Once an image has been built via `./build_container_image.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
+Once an image has been built via `./build_mandelbox_image.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
 
 ```
-GH_PAT=xxx GH_USERNAME=xxx ./push_container_image.sh APP ENVIRONMENT
+GH_PAT=xxx GH_USERNAME=xxx ./push_mandelbox_image.sh APP ENVIRONMENT
 ```
 
 Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. Environment is either `dev`, `staging`, `prod`, or nothing. The image is tagged with the full git commit hash of the current branch.
@@ -159,7 +159,7 @@ This is how we push to production. For every push to `prod`, all applications th
 
 ### Useful Debugging Practices
 
-If `./build_container_images.sh` is failing, try running with `./build-container_images.sh -o` for logging output.
+If `./build_mandelbox_images.sh` is failing, try running with `./build-mandelbox_images.sh -o` for logging output.
 
 If the error messages seem to be related to fetching archives, try `docker system prune -af`. It's possible that Docker has cached out-of-date steps generated from an old container image, and needs to be cleaned and rebuilt.
 

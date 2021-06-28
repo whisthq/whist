@@ -42,7 +42,7 @@ cd ~/fractal/protocol/
 
 # build the Fractal base container image
 cd ~/fractal/mandelbox-images
-./build_container_image.sh base
+./build_mandelbox_image.sh base
 
 # build the Fractal ECS host service
 cd ~/fractal/ecs-host-service
@@ -50,7 +50,7 @@ make run # keep this open in a separate terminal
 
 # run the Fractal base container image
 cd ~/fractal/mandelbox-images
-./run_local_container_image.sh base
+./run_local_mandelbox_image.sh base
 ```
 
 - If `./setup_ubuntu20_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.

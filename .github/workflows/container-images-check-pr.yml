@@ -11,9 +11,9 @@ on:
             - "mandelbox-images/**"
             - "!mandelbox-images/README.md"
             - ".github/workflows/mandelbox-images-check-pr.yml"
-            - "!mandelbox-images/helper_scripts/run_container_image.sh"
-            - "!mandelbox-images/run_local_container_image.sh"
-            - "!mandelbox-images/run_remote_container_image.sh"
+            - "!mandelbox-images/helper_scripts/run_mandelbox_image.sh"
+            - "!mandelbox-images/run_local_mandelbox_image.sh"
+            - "!mandelbox-images/run_remote_mandelbox_image.sh"
     workflow_dispatch:
 
 jobs:
@@ -92,4 +92,4 @@ jobs:
 
             - name: Build Container Images
               working-directory: mandelbox-images
-              run: ./build_container_image.sh --all
+              run: ./build_mandelbox_image.sh --all

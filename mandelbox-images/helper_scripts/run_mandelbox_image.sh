@@ -15,7 +15,7 @@ cd "$DIR"
 # need to set up some fancy indirection to store the last line of the script's
 # output (which should be the docker container's ID) as $docker_id.
 # see https://stackoverflow.com/questions/39615142/bash-get-last-line-from-a-variable
-output=$(sudo python3 run_container_image.py "$@" | tee /dev/tty)
+output=$(sudo python3 run_mandelbox_image.py "$@" | tee /dev/tty)
 docker_id="${output##*$'\n'}"
 
 # Start bash in the container.

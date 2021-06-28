@@ -41,4 +41,4 @@ if [[ ! -d "base/build-temp/nvidia-driver" ]]; then
     ../ecs-host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
 fi
 
-python3 ./helper_scripts/build_container_image.py "$@"
+python3 ./helper_scripts/build_mandelbox_image.py "$@"
