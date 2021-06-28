@@ -13,7 +13,7 @@ from flask import (
 )
 
 from app.helpers.utils.general.logs import fractal_logger
-from app.constants.http_codes import WEBSERVER_MAINTENANCE
+from app.constants.http_codes import RESOURCE_UNAVAILABLE
 
 # global lock-protected variable indicating whether webserver can process web requests
 _WEB_REQUESTS_ENABLED = True
@@ -23,7 +23,7 @@ _WEB_REQUESTS_LOCK = threading.Lock()
 def set_web_requests_status(enabled: bool) -> bool:
     """
     Set state of _WEB_REQUESTS_ENABLED. If True, web requests allowed. If False, all are
-    rejected with WEBSERVER_MAINTENANCE status code.
+    rejected with RESOURCE_UNAVAILABLE status code.
 
     Args:
         enabled: Desired state of _WEB_REQUESTS_ENABLED.
@@ -81,10 +81,10 @@ def can_process_requests_handler(app: Flask):
         Make sure web requests can actually be processed before proceeding
         """
         if not can_process_requests():
-            # abort with maintenance status and a message
+            # abort with resource unavailable status and a message
             abort(
                 make_response(
                     jsonify({"msg": "Webserver is not processing requests right now."}),
-                    WEBSERVER_MAINTENANCE,
+                    RESOURCE_UNAVAILABLE,
                 )
             )
