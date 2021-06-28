@@ -169,7 +169,7 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
     /*
         Indicate that the frame with ID id is currently rendering and free the frame buffer for the
         previously rendering frame. The currently rendered frame will not be overwritten during
-       calls to reset_ring_buffer or receive_packet.
+        calls to reset_ring_buffer or receive_packet.
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer metadata to change
