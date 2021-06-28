@@ -1,27 +1,23 @@
 #!/bin/bash
 
 # This script starts the Fractal protocol server, and assumes that it is
-# being run within a Fractal Docker container.
+# being run within a Fractal mandelbox.
 
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Set/Retrieve Container parameters
+# Set/Retrieve Mandelbox parameters
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
-CONTAINER_ID_FILENAME=ContainerARN
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 LOG_FILENAME=/usr/share/fractal/log.txt
 
-# Define a string-format identifier for this container
+# Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
-
-# Pull out the identifier for this container
-CONTAINER_ID=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID_FILENAME)
 
 # Create list of command-line arguments to pass to the Fractal protocol server
 OPTIONS=""
@@ -44,7 +40,7 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
     OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Start the application that this container runs
+# Start the application that this mandelbox runs
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
 fractal_application_runuser_pid=$!
 
@@ -70,7 +66,7 @@ echo "Done sleeping until there are X clients..."
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-# Allow the command to fail without the script exiting, since we want to send logs/clean up the container.
+# Allow the command to fail without the script exiting, since we want to send logs/clean up the mandelbox.
 # The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
 /usr/share/fractal/FractalServer $OPTIONS > >(tee $LOG_FILENAME) &
 fractal_server_pid=$!
@@ -93,5 +89,5 @@ wait $fractal_application_runuser_pid ||:
 
 echo "Both fractal-application and FractalServer have exited"
 
-# Once the server has exited, we should just shutdown the container so it doesn't hang
+# Once the server has exited, we should just shutdown the mandelbox so it doesn't hang
 sudo shutdown now
