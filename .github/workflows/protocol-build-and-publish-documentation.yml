@@ -16,10 +16,10 @@ on:
             - "protocol/**"
     push:
         branches:
-            - ".github/workflows/protocol-build-and-publish-documentation.yml"
             - dev
         paths:
             - "protocol/**"
+            - ".github/workflows/protocol-build-and-publish-documentation.yml"
     workflow_dispatch:
 
 jobs:
@@ -41,6 +41,10 @@ jobs:
                   repository: fractal/docs
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   path: docs
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
 
             # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
             - name: Configure AWS S3 CLI

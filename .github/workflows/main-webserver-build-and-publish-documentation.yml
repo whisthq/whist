@@ -47,6 +47,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
             # Install the version of Sphinx specified in main-webserver/requirements-test.txt
             - name: Install requirements
               run: |
