@@ -34,6 +34,23 @@ def _coerce_json(_ctx, _param, values):
 # passed, the command line argument will override the environment variable.
 
 
+def parse_profiles(f):
+    @click.pass_context
+    def decorator(ctx, *args, **kwargs):
+        # import inspect
+        # from rich import print
+
+        # ctx_inspect = inspect.getmembers(ctx)
+        # print(ctx_inspect)
+        # print(ctx, args, kwargs)
+        # assert False
+        return ctx.invoke(f, *args, **kwargs)
+        # path = kwargs["path"]
+        # print("PARAMS", args, kwargs)
+
+    return decorator
+
+
 def create_cli(main_fn):
     """A utility function to create a CLI that passes configured arguments
     to a main_fn.
@@ -59,8 +76,10 @@ def create_cli(main_fn):
         None
     """
 
-    @click.command()
+    @click.command(context_settings=dict(ignore_unknown_options=True))
     @click.argument("path", type=click.Path(exists=True))
+    @click.argument("profiles", nargs=-1, type=click.UNPROCESSED)
+    @parse_profiles
     @click.option(
         "-o",
         "--out",
@@ -69,13 +88,13 @@ def create_cli(main_fn):
         envvar="INPUT_OUT",
         help="A target file path to write output JSON.",
     )
-    @click.option(
-        "-p",
-        "--profile",
-        multiple=True,
-        envvar="INPUT_PROFILE",
-        help="A single profile from the list in profiles.yml.",
-    )
+    # @click.option(
+    #     "-p",
+    #     "--profile",
+    #     multiple=True,
+    #     envvar="INPUT_PROFILE",
+    #     help="A single profile from the list in profiles.yml.",
+    # )
     @click.option(
         "-s",
         "--secrets",
@@ -84,7 +103,7 @@ def create_cli(main_fn):
         envvar="INPUT_SECRETS",
         help="A JSON string containing a dictionary.",
     )
-    def cli(path, secrets=(), profile=(), out=()):
+    def cli(path, secrets=(), profile=(), out=(), profiles=None):
         """Parse configuration and secrets, merging all values into a single
         output JSON file.
 
@@ -104,7 +123,7 @@ def create_cli(main_fn):
         be merged into the final JSON object. Multiple --out files can be
         given, and all will be written to.
         """
-        result = main_fn(path, secrets=secrets, profiles=profile)
+        result = main_fn(path, secrets=secrets, profiles=profiles)
         result_json = json.dumps(result, indent=4)
 
         click.echo(result_json)
