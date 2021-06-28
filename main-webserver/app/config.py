@@ -201,6 +201,15 @@ class DeploymentConfig:
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
+    AWS_INSTANCE_TYPE_TO_LAUNCH = property(
+        # Having a `fetch=True` can let us dynamically change the instance type to be launched.
+        getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g3.4xlarge")
+    )
+    DEFAULT_INSTANCE_BUFFER = property(
+        # This will be as a count to launch new instances when we don't have
+        #  any instances with the current AMI running.
+        getter("DEFAULT_INSTANCE_BUFFER", fetch=True, default=1)
+    )
     SENTRY_DSN = property(getter("SENTRY_DSN", fetch=False))
 
     # If this is not set then metrics will not be shipped to logz
