@@ -1,9 +1,9 @@
 # workflows/mandelbox-images-check-pr.yml
 #
-# Container Images: Check PR
+# Mandelbox Images: Check PR
 # Check a mandelbox-images/protocol PR for Dockerfile linting and Docker images building success.
 
-name: "Container Images: Check PR"
+name: "Mandelbox Images: Check PR"
 
 on:
     pull_request:
@@ -33,14 +33,14 @@ jobs:
               run: hadolint ./**/*Dockerfile
 
             # Start from top-level folder to use .hadolint.yaml config
-            - name: Check if Container Images Dockerfiles Follow Hadolint Standards
+            - name: Check if Mandelbox Dockerfiles Follow Hadolint Standards
               run: |
                   hadolint ./mandelbox-images/*/Dockerfile.20
                   hadolint ./mandelbox-images/*/*/Dockerfile.20
 
     # Linting/formatting python code in mandelbox-images
     mandelbox-images-python-scripts-linting:
-        name: Lint Container Images Python Scripts
+        name: Lint Mandelbox-Images Python Scripts
         runs-on: ubuntu-20.04
 
         steps:
@@ -90,6 +90,6 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Build Container Images
+            - name: Build Mandelbox Images
               working-directory: mandelbox-images
               run: ./build_mandelbox_image.sh --all

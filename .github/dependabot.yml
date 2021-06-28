@@ -27,7 +27,7 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
-  ################## Container-Images #################
+  ################## Mandelbox-Images #################
 
   - package-ecosystem: "docker"
     directory: "/mandelbox-images/base" # looks for Dockerfile in this directory
