@@ -11,7 +11,7 @@ from app.models.hardware import (
     InstanceSorted,
     RegionToAmi,
     InstanceInfo,
-    InstancesWithRoomForContainers,
+    InstancesWithRoomForMandelboxes,
 )
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
@@ -119,7 +119,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         # If there are no instances running, we want one.
         return 1
     all_free_instances = list(
-        InstancesWithRoomForContainers.query.filter_by(location=region, aws_ami_id=ami_id).all()
+        InstancesWithRoomForMandelboxes.query.filter_by(location=region, aws_ami_id=ami_id).all()
     )
     num_free_containers = sum(
         instance.mandelbox_capacity - instance.num_running_mandelboxes
@@ -236,7 +236,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
         if num_new < 0:
             # we only want to scale down unused instances
             available_empty_instances = list(
-                InstancesWithRoomForContainers.query.filter_by(
+                InstancesWithRoomForMandelboxes.query.filter_by(
                     location=region, aws_ami_id=ami, num_running_mandelboxes=0
                 )
                 .limit(abs(num_new))
@@ -247,7 +247,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             for instance in available_empty_instances:
                 # grab a lock on the instance to ensure nothing new's being assigned to it
                 instance_info = InstanceInfo.query.with_for_update().get(instance.instance_name)
-                instance_containers = InstancesWithRoomForContainers.query.filter_by(
+                instance_containers = InstancesWithRoomForMandelboxes.query.filter_by(
                     instance_name=instance.instance_name
                 ).one_or_none()
                 if instance_containers is None or instance_containers.num_running_mandelboxes != 0:

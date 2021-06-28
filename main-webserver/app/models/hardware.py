@@ -64,7 +64,7 @@ class InstanceSorted(db.Model):
     commit_hash = db.Column(db.String(40), nullable=False)
 
 
-class InstancesWithRoomForContainers(db.Model):
+class InstancesWithRoomForMandelboxes(db.Model):
     """
     A map linking instance information to general container information
     i.e. 'how many containers are running on this instance',
@@ -78,7 +78,7 @@ class InstancesWithRoomForContainers(db.Model):
         num_running_mandelboxes (int): and how many does it have?
     """
 
-    __tablename__ = "instances_with_room_for_containers"
+    __tablename__ = "instances_with_room_for_mandelboxes"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
