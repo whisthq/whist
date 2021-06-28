@@ -1,6 +1,6 @@
-# Fractal Container Testing Scripts
+# Fractal Mandelbox Testing Scripts
 
-This subfolder contains various scripts for manually testing different components of the Fractal Docker containers (i.e. latency, connectivity, etc.). If you find yourself creating a testing script while implementing or debugging a feature of the Fractal containers, add it here so that it can help others eventually.
+This subfolder contains various scripts for manually testing different components of the Fractal mandelboxes (i.e. latency, connectivity, etc.). If you find yourself creating a testing script while implementing or debugging a feature of the mandelboxes, add it here so that it can help others eventually.
 
 ## Existing Scripts
 
@@ -20,7 +20,7 @@ python3 connection_tester.py server
 
 ## uinput_tester.py
 
-Creates virtual device nodes using `/dev/uinput` in order to test the uinput driver. Contains code that periodically writes to the virtual device node, which is useful for testing if the xserver running on the container is reading from the device files. Also contains code that sets up a unix socket, which is useful for testing if the container is able to communicate with the host via a socket.
+Creates virtual device nodes using `/dev/uinput` in order to test the uinput driver. Contains code that periodically writes to the virtual device node, which is useful for testing if the xserver running on the mandelbox is reading from the device files. Also contains code that sets up a unix socket, which is useful for testing if the mandelbox is able to communicate with the host via a socket.
 
 Usage:
 
