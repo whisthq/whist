@@ -71,7 +71,7 @@ def test_scale_down_single_available(
 
 def test_scale_down_single_unavailable(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
     """
-    Tests that we don't scale down an instance with running containers
+    Tests that we don't scale down an instance with running mandelboxes
     """
     call_list = hijack_ec2_calls
     bulk_instance(instance_name="test_instance", associated_mandelboxes=1, aws_ami_id="test-AMI")
