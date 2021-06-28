@@ -232,7 +232,6 @@ ALTER TABLE ONLY hardware.container_info
 CREATE TABLE hardware.instance_info (
     instance_name character varying NOT NULL,
     cloud_provider_id character varying NOT NULL,
-    auth_token character varying NOT NULL,
     creation_time_utc_unix_ms bigint NOT NULL,
     memory_remaining_kb bigint NOT NULL DEFAULT 2000,
     nanocpus_remaining bigint NOT NULL DEFAULT 1024,
@@ -257,23 +256,26 @@ ALTER TABLE ONLY hardware.container_info
 
 --
 -- TOC entry 249 (class 1259 OID 16800)
--- Name: instance_sorted; Type: VIEW; Schema: hardware; Owner: -
+-- Name: instances_with_room_for_containers; Type: VIEW; Schema: hardware; Owner: -
 --
 
-CREATE VIEW hardware.instance_sorted AS
+CREATE VIEW hardware.instances_with_room_for_containers AS
   SELECT sub_with_running.instance_name,
     sub_with_running.aws_ami_id,
+    sub_with_running.commit_hash,
     sub_with_running.location,
     sub_with_running."container_capacity" AS container_capacity,
     sub_with_running.num_running_containers
    FROM ( SELECT base_table.instance_name,
             base_table.aws_ami_id,
             base_table.location,
+            base_table.commit_hash,
             base_table."container_capacity",
             COALESCE(base_table.count, 0::bigint) AS num_running_containers
            FROM (( SELECT instance_info.instance_name,
                     instance_info.aws_ami_id,
                     instance_info.location,
+                    instance_info.commit_hash,
                     instance_info."container_capacity"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
@@ -285,9 +287,9 @@ CREATE VIEW hardware.instance_sorted AS
 
 
 
- CREATE VIEW hardware.instance_allocation AS
-    SELECT instance_name, aws_ami_id, location from hardware.instance_info
-    WHERE instance_name IN (select instance_name from hardware.instance_sorted)
+ CREATE VIEW hardware.instance_sorted AS
+    SELECT instance_name, aws_ami_id, commit_hash, location from hardware.instance_info
+    WHERE instance_name IN (select instance_name from hardware.instances_with_room_for_containers)
     AND last_updated_utc_unix_ms != -1 AND status = 'ACTIVE';
 
 
@@ -300,8 +302,9 @@ CREATE VIEW hardware.instance_sorted AS
 CREATE TABLE hardware.region_to_ami (
     region_name character varying NOT NULL,
     ami_id character varying NOT NULL,
-    allowed boolean DEFAULT true NOT NULL,
-    region_being_updated boolean DEFAULT false NOT NULL
+    region_enabled boolean DEFAULT true NOT NULL,
+    client_commit_hash character varying NOT NULL,
+    ami_active boolean DEFAULT false NOT NULL
 );
 
 
@@ -1032,7 +1035,7 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY hardware.region_to_ami
-    ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name);
+    ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
 
 
 --

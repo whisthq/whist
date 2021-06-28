@@ -33,9 +33,11 @@ def regions():
         A list of strings, where each string is the name of a region.
     """
 
-    allowed_regions = RegionToAmi.query.filter_by(allowed=True)
+    enabled_regions = RegionToAmi.query.filter_by(region_enabled=True).distinct(
+        RegionToAmi.region_name
+    )
 
-    return jsonify([region.region_name for region in allowed_regions])
+    return jsonify([region.region_name for region in enabled_regions])
 
 
 @aws_container_bp.route("/mandelbox/assign", methods=("POST",))
@@ -48,20 +50,23 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a container running, don't start up a new one
         return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
-    instance_id = find_instance(body.region)
-    if instance_id is None:
+    instance_name = find_instance(body.region, body.client_commit_hash)
+    if instance_name is None:
 
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
             # and we know what instance type we're missing from the request
             scaling_thread = Thread(
                 target=do_scale_up_if_necessary,
-                args=(body.region, RegionToAmi.query.get(body.region).ami_id),
+                args=(
+                    body.region,
+                    RegionToAmi.query.get(body.region, body.client_commit_hash).ami_id,
+                ),
             )
             scaling_thread.start()
         return jsonify({"ip": "None", "mandelbox_id": "None"}), RESOURCE_UNAVAILABLE
 
-    instance = InstanceInfo.query.get(instance_id)
+    instance = InstanceInfo.query.get(instance_name)
     container_id = str(uuid.uuid4())
     obj = ContainerInfo(
         container_id=container_id,
