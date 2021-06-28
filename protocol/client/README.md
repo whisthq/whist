@@ -33,4 +33,4 @@ To test if a build of the client runs (by calling the dummy IP address `0.0.0.0`
 
 A window should appear and show an animated Fractal logo before closing after a couple seconds.
 
-To run the client to connect to a server, first start a host server instance. In a terminal window on the client machine, follow the instruction listed in the printout in the _host_ terminal that's running the docker containe, which will involve running `fclient` followed by the IP address of your Fractal protocol server, along with some additional flags from the list above, if desired.
+To run the client to connect to a server, first start a host server instance. In a terminal window on the client machine, follow the instruction listed in the printout in the _host_ terminal that's running the docker container, which will involve running `fclient` followed by the IP address of your Fractal protocol server, along with some additional flags from the list above, if desired.
