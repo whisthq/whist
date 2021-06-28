@@ -69,10 +69,10 @@ def remove_all_containers():
 
 
 @with_docker
-def is_ready(client, mandelbox_id):
+def is_ready(client, container_id):
     """Tests if a Docker container has finished starting up.
 
-    We use the mandelbox_id to query the list of running containers.
+    We use the container_id to query the list of running containers.
     It's important to do this instead of just checking the status on the
     container object, as the Docker Python API does not always correctly
     update the status attribute on "live" container objects.
@@ -82,11 +82,11 @@ def is_ready(client, mandelbox_id):
 
     Args:
         client: A Docker connection object.
-        mandelbox_id: The string id of the container to ping.
+        container_id: The string id of the container to ping.
     Returns:
         True if the status of the container is "running", False otherwise.
     """
-    return client.containers.get(mandelbox_id).status == "running"
+    return client.containers.get(container_id).status == "running"
 
 
 @catch_timeout_error
