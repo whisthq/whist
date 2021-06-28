@@ -4,7 +4,7 @@ This directory contains a Dockerfile used to containerize both the Flask server 
 
 ## Deploying the stack locally
 
-Before deploying `bash docker/local_deploy.sh`, it is necessary to save a `.env` file, which contains lines of the form `KEY=VALUE` specifiying environment variables that are used to configure the processes running inside of the containers. Specifically, the following five environment variables must be set (`REDIS_URL` is ignored):
+Before deploying `bash docker/local_deploy.sh`, it is necessary to save a `.env` file, which contains lines of the form `KEY=VALUE` specifying environment variables that are used to configure the processes running inside of the containers. Specifically, the following five environment variables must be set (`REDIS_URL` is ignored):
 
 - `CONFIG_DB_URL`
 - `POSTGRES_DB`

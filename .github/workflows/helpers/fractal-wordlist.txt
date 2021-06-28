@@ -7,7 +7,10 @@ CLI
 CLI
 COVID
 Ctrl
+postgresql
+md
 DBs
+owen
 Dockerfile
 ECSClient
 FutureSharks
@@ -16,6 +19,7 @@ HIREFIRE
 Hasura
 Hirefire
 JWTs
+cadbb
 LoadTestUser
 Logz
 MYKatz
