@@ -97,10 +97,11 @@ unsigned char* get_frame_videodata(VideoFrame* frame);
 PeerUpdateMessage* get_frame_peer_messages(VideoFrame* frame);
 
 /**
- * @brief                          Get the total VideoFrame size, including all of the data embedded in
- *                                 the VideoFrame's buffer. Even if the VideoFrame* is being stored in a much larger buffer, this function
- *                                 returns only the number of bytes needed for the data inside the VideoFrame* to be read correctly.
- *                                 I.e., these are the only bytes that need to be sent over for example a network connection.
+ * @brief                          Get the total VideoFrame size, including all of the data embedded
+ * in the VideoFrame's buffer. Even if the VideoFrame* is being stored in a much larger buffer, this
+ * function returns only the number of bytes needed for the data inside the VideoFrame* to be read
+ * correctly. I.e., these are the only bytes that need to be sent over for example a network
+ * connection.
  *
  * @returns                        The number of bytes that the frame uses up.
  */
