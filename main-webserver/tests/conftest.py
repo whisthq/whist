@@ -95,7 +95,7 @@ def bulk_instance():
         row whose columns are set as arguments to the function.
     """
     instances = []
-    containers = []
+    mandelboxes = []
 
     def _instance(
         associated_mandelboxes=0,
@@ -107,13 +107,13 @@ def bulk_instance():
         """Create a dummy instance for testing.
 
         Arguments:
-            associated_mandelboxes (int): How many containers should be made running
+            associated_mandelboxes (int): How many mandelboxes should be made running
                 on this instance
             instance_name (Optional[str]): what to call the instance
                     defaults to random name
             location (Optional[str]): what region to put the instance in
                     defaults to us-east-1
-            mandelbox_capacity (Optional[int]): how many containers can the instance hold?
+            mandelbox_capacity (Optional[int]): how many mandelboxes can the instance hold?
                 defaults to 10
 
         Yields:
@@ -139,16 +139,16 @@ def bulk_instance():
         db.session.add(new_instance)
         db.session.commit()
         for _ in range(associated_mandelboxes):
-            new_container = MandelboxInfo(
+            new_mandelbox = MandelboxInfo(
                 mandelbox_id=str(randint(0, 10000000)),
                 instance_name=new_instance.instance_name,
-                user_id=kwargs.get("user_for_containers", "test-user"),
+                user_id=kwargs.get("user_for_mandelboxes", "test-user"),
                 status="Running",
                 creation_time_utc_unix_ms=int(time.time()),
             )
-            db.session.add(new_container)
+            db.session.add(new_mandelbox)
             db.session.commit()
-            containers.append(new_container)
+            mandelboxes.append(new_mandelbox)
 
         instances.append(new_instance)
 
@@ -156,8 +156,8 @@ def bulk_instance():
 
     yield _instance
 
-    for container in containers:
-        db.session.delete(container)
+    for mandelbox in mandelboxes:
+        db.session.delete(mandelbox)
 
     for instance in instances:
         db.session.delete(instance)

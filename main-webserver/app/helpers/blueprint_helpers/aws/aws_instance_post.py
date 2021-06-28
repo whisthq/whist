@@ -59,7 +59,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         .one_or_none()
     )
     if avail_instance is None:
-        # check each replacement region for available containers
+        # check each replacement region for available mandelboxes
         for bundlable_region in bundled_region.get(region, []):
             # 5sec arbitrarily decided as sufficient timeout when using with_for_update
             set_local_lock_timeout(5)
@@ -88,7 +88,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
      negative infinity).
 
      At the moment, our scaling algorithm is
-     - 'if we have less than 10 containers in a valid AMI/region pair,
+     - 'if we have less than 10 mandelboxes in a valid AMI/region pair,
      make a new instance'
      - 'Else, if we have a full instance of extra space more than 10, try to
      stop an instance'
@@ -111,8 +111,8 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         return -maxsize
     if ami_id != active_ami_for_given_region.ami_id:
         return -maxsize
-    # Now, we want to get the average number of containers per instance in that region
-    # and the number of free containers
+    # Now, we want to get the average number of mandelboxes per instance in that region
+    # and the number of free mandelboxes
     all_instances = list(InstanceInfo.query.filter_by(location=region, aws_ami_id=ami_id).all())
 
     if len(all_instances) == 0:
@@ -121,7 +121,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     all_free_instances = list(
         InstancesWithRoomForMandelboxes.query.filter_by(location=region, aws_ami_id=ami_id).all()
     )
-    num_free_containers = sum(
+    num_free_mandelboxes = sum(
         instance.mandelbox_capacity - instance.num_running_mandelboxes
         for instance in all_free_instances
     )
@@ -130,12 +130,12 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     )
 
     # And then figure out how many instances we need to spin up/purge to get 10 free total
-    desired_free_containers = 10.0
+    desired_free_mandelboxes = 10.0
 
-    if num_free_containers < desired_free_containers:
+    if num_free_mandelboxes < desired_free_mandelboxes:
         return current_app.config["DEFAULT_INSTANCE_BUFFER"]
 
-    if num_free_containers >= (desired_free_containers + avg_mandelbox_capacity):
+    if num_free_mandelboxes >= (desired_free_mandelboxes + avg_mandelbox_capacity):
         return -1
 
     return 0
@@ -184,10 +184,10 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
-            # TODO: test that we actually get 16 containers per instance
+            # TODO: test that we actually get 16 mandelboxes per instance
             # Which is savvy's guess as to g3.4xlarge capacity
             # TODO: Move this value to top-level config when more fleshed out
-            base_number_free_containers = 16
+            base_number_free_mandelboxes = 16
             for index in range(num_new):
                 instance_ids = client.start_instances(
                     image_id=ami,
@@ -205,7 +205,7 @@ def do_scale_up_if_necessary(
                     cloud_provider_id=f"aws-{instance_ids[0]}",
                     instance_name=base_name + f"-{index}",
                     aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                    mandelbox_capacity=base_number_free_containers,
+                    mandelbox_capacity=base_number_free_mandelboxes,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
                     status=PRE_CONNECTION,
@@ -247,14 +247,14 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             for instance in available_empty_instances:
                 # grab a lock on the instance to ensure nothing new's being assigned to it
                 instance_info = InstanceInfo.query.with_for_update().get(instance.instance_name)
-                instance_containers = InstancesWithRoomForMandelboxes.query.filter_by(
+                instance_mandelboxes = InstancesWithRoomForMandelboxes.query.filter_by(
                     instance_name=instance.instance_name
                 ).one_or_none()
-                if instance_containers is None or instance_containers.num_running_mandelboxes != 0:
+                if instance_mandelboxes is None or instance_mandelboxes.num_running_mandelboxes != 0:
                     db.session.commit()
                     continue
                 # We need to modify the status to DRAINING to ensure that we don't assign a new
-                # container to the instance. We need to commit here as we don't want to enter a
+                # mandelbox to the instance. We need to commit here as we don't want to enter a
                 # deadlock with host service where it tries to modify the instance_info row.
                 instance_info.status = DRAINING
                 db.session.commit()
