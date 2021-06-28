@@ -32,7 +32,7 @@ def test_no_region(client):
 
 @pytest.mark.usefixtures("authorized")
 def test_assign(client, bulk_instance, monkeypatch):
-    instance = bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
+    instance = bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
     def patched_find(*args, **kwargs):
         return instance.instance_name
@@ -59,7 +59,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     """
     Ensures we 503 a user with active containers
     """
-    bulk_instance(instance_name="mock_instance_id", ip="123.456.789")
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
     def patched_active(*args, **kwargs):
         return True
