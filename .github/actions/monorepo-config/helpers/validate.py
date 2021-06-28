@@ -15,7 +15,10 @@
 # but it also ensures that these predicate functions have a name. The name is
 # important, because our general-purpose validation framework will try and
 # helpfully print the name of the failing function along with the error.
+import typing
+import inspect
 from pathlib import Path
+from dataclasses import dataclass
 from .utils import (
     truncated,
     truncated_children,
@@ -53,52 +56,64 @@ GROUPABLE_ERRORS = (
 )
 
 
+@dataclass
+class ValidationData:
+    got: typing.Any
+    message: str
+    exception: Exception
+    test: typing.Callable
+
+    def __repr__(self):
+        """
+        Prints out the "must()" function call that triggered the error.
+        Example:
+         helpers.validate.ValidationError: [1, 2, 3, 4, 5] failed validation.
+             Failed test:
+                 must(lambda x: sum(x) == 20, "sum to 20")
+             Received:
+                 [1, 2, 3, 4, 5]
+        """
+        code = inspect.getsource(self.test).strip().strip(",")
+
+        head = f"{self.got} failed validation.\n"
+        fail = f"    Failed test:\n"
+        test = f"        {code}\n"
+        recv = f"    Received:\n"
+        data = f"        {self.got}\n"
+
+        return head + fail + test + recv + data
+
+
+class ValidationError(Exception):
+    pass
+
+
 def must(test_fn, msg=None, got=None):
-    if not got:
-        got = lambda x: x
-
     def from_value(value):
-        error = False
         try:
-            result = test_fn(value)
+            if not test_fn(value):
+                return ValidationData(
+                    test=test_fn, message=msg, got=(got or value)
+                )
         except GROUPABLE_ERRORS as e:
-            result = e
-            error = e
-
-        tstr = error if error else f"<{type(value).__name__}>"
-
-        val_string = "got: " + truncated(PRINT_LIMIT, f"{truncated_children(got(value))}: {tstr}")
-
-        msg_present = f"{msg}... {val_string}."
-        msg_default = f"{test_fn.__name__} returns {result}... {val_string}"
-
-        message = msg_present if msg else msg_default
-        assert result and not error, message
-        return True
+            return ValidationData(
+                test=test_fn, message=msg, got=(got or value), exception=e
+            )
 
     return from_value
 
 
 def validate_safe(i, *validators):
-    errors = []
     for valid_fn in validators:
-        try:
-            valid_fn(i)
-        except AssertionError as err:
-            errors.append(err)
-    return errors
+        error_data = valid_fn(i)
+        if error_data:
+            yield error_data
 
 
 def validate(i, *validators):
-    errors = validate_safe(i, *validators)
-    if errors:
-        value = truncated(PRINT_LIMIT, truncated_children(i))
-        message = f"'{value}' failed validation.\n    Errors:"
-        for index, error in enumerate(errors):
-            message += f"\n    {index + 1}. "
-            message += error.args[0]
-        raise AssertionError(message)
-    return True
+    for error in validate_safe(i, *validators):
+        if error:
+            raise ValidationError(error)
 
 
 def validate_schema_folder(schema_folder_path):
