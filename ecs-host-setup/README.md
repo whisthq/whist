@@ -10,7 +10,10 @@ The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host 
 
 To set up your Fractal development instance:
 
-- Create an Ubuntu Server 20.04 g3s.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image). Note that the **g3** EC2 instance type is required for GPU compatibility with our containers and streaming technology. Also, note that the `g3s.xlarge` instance type only exists on `us-east-1`, which is why we require personal instances to be in that region.
+- Create an Ubuntu Server 20.04 g4dn.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image).
+
+  - Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything.
+  - Note that the EC2 instance type must be **g4** or **g3** for GPU compatibility with our containers and streaming technology. We use g4 instances in because they have better performance and cost for our purposes.
 
 - Add your EC2 instance to the security group **container-tester**, to enable proper networking rules. If you decide to set up your EC2 instance in a different AWS region, you will need to add it to the appropriate security group for that region, which may vary per region.
 
@@ -65,7 +68,7 @@ If you are on a high-DPI screen, you can optionally append the above code block 
 
 To create an AMI:
 
-- Create an Ubuntu Server 20.04 g3.4xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage.
+- Create an Ubuntu Server 20.04 g4dn.4xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of persistent, EBS storage in addition to the 225 GB of ephemeral storage.
 
 - Add your EC2 instance to the relevant production-ready security group(s) for the region you created it in. You can see which security group(s) currently-running production EC2 instances are attached to in the AWS console.
 
