@@ -8,5 +8,5 @@ cd "$DIR"
 # Pull any changes to the Ubuntu 20.04 image
 docker pull ubuntu:20.04
 
-# Run with mounted fractal binary, rather than copying the binary into the container
+# Run with mounted fractal binary, rather than copying the binary into the mandelbox
 ./build_mandelbox_image.sh mount "$@"

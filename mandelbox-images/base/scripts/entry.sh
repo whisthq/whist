@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This script is the entrance for Fractal within the Fractal Docker containers. It retrieves
-# the relevant parameters for the container and starts the fractal systemd user
+# This script is the entrance for Fractal within the Fractal mandelboxes. It retrieves
+# the relevant parameters for the mandelbox and starts the fractal systemd user
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -51,7 +51,7 @@ find $USER_CONFIGS_DIR -xtype l -delete
 # Register TTY once it was assigned via writing to a file by Fractal ECS host service
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 
-# Create a TTY within the container so we don't have to hook it up to one of the host's
+# Create a TTY within the mandelbox so we don't have to hook it up to one of the host's.
 # Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that
 # this CANNOT be done in the Dockerfile because it affects /dev/, so we have to do it here.
 # Note that we always use /dev/tty10 even though the minor number below (i.e.

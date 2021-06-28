@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# This script is the first script run within the Fractal container. It retrieves the
-# container-specific parameters from Linux environment variables and sets them for
-# the Fractal container to use. It then starts systemd, which starts all of the
-# Fractal system services (.service files), starting Fractal inside the container
+# This script is the first script run within the Fractal mandelbox. It retrieves the
+# mandelbox-specific parameters from Linux environment variables and sets them for
+# the Fractal mandelbox to use. It then starts systemd, which starts all of the
+# Fractal system services (.service files), starting Fractal inside the mandelbox.
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -27,7 +27,7 @@ unset FRACTAL_AES_KEY
 # Remove a vestigal file that we do not use.
 # This is how LXC used to read environment variables: see that deprecated code in
 # https://github.com/moby/moby/blob/v1.9.1/daemon/execdriver/lxc/init.go#L107-L134
-# We remove the file to make it less obvious that we are running in a container.
+# We remove the file to make our infrastructure less obvious.
 rm /.dockerenv
 
 # Start systemd

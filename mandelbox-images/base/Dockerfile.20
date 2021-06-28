@@ -222,7 +222,7 @@ RUN mkdir /dist/etc && \
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
 # - Install and configure all necessary components for
-#   our base container image
+#   our base mandelbox image
 # EXPOSES all of fractal-base as the final image
 #######################################################
 FROM ubuntu:20.04 as fractal-base
@@ -444,7 +444,7 @@ RUN apt-get install --no-install-recommends -y \
 # Use twemoji font
 RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
 
-# Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
+# Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # Create fractal user with dynamic, random password and do NOT add to sudo group
@@ -504,7 +504,7 @@ RUN systemctl enable ssh
 RUN chown -vR fractal:fractal /home/fractal
 RUN chown root:root /run/user
 
-# Set up the entrypoint for the Docker container
+# Set up the entrypoint for the mandelbox
 COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
@@ -615,8 +615,8 @@ RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 # Install Fractal Protocol binaries and helper files
 COPY build-temp/protocol/* /usr/share/fractal/bin/
 
-# Copy config reference to container
+# Copy config reference to mandelbox 
 COPY config/app-config-map.json /usr/share/fractal/app-config-map.json
 
-# Enter the Docker container via the entrypoint script
+# Enter the mandelbox via the entrypoint script
 CMD ["/usr/share/fractal/docker-entrypoint.sh"]
