@@ -11,5 +11,5 @@ exec google-chrome \
         --flag-switches-begin \
         --enable-gpu-rasterization \
         --enable-zero-copy \
-        --enable-features=VaapiVideoDecoder \
+        --enable-features=VaapiVideoDecoder,Vulkan \
         --flag-switches-end
