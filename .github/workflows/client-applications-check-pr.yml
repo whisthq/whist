@@ -144,6 +144,7 @@ jobs:
                   call yarn config set network-timeout 600000
                   call yarn cache clean
                   call yarn install
+                  call yarn package:notarize --version 1.0.0
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
