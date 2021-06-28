@@ -5,6 +5,17 @@
 # input and output as JSON.
 import json
 import click
+from .validate import validate_cli_profile
+from .utils import chunks
+
+
+def parse_cli_profiles(args):
+    result = {}
+    for chunk in chunks(args, 2):
+        validate_cli_profile(chunk)
+        key, value = chunk
+        result[key[(len("--")) :]] = value
+    return result
 
 
 def _coerce_json(_ctx, _param, values):
@@ -24,6 +35,18 @@ def _coerce_json(_ctx, _param, values):
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")
 
 
+def parse_profiles(_ctx, _param, values):
+    for chunk in chunks(values, 2):
+        if not chunk[0].startswith("--"):
+            raise click.BadParameter(
+                f"All options must start with --, received: {chunk[0]}"
+            )
+        if not len(chunk) == 2:
+            raise click.BadParameter(f"Missing value for option: {chunk[0]}")
+
+    return parse_cli_profiles(values)
+
+
 # GitHub Actions can only pass arguments through environment variables
 # to a Docker process. It also insists on prefixing those values with
 # INPUT_ and capitalizing them.
@@ -32,23 +55,6 @@ def _coerce_json(_ctx, _param, values):
 # variables in place of the command line flag arguments.
 # Note that if both an environment variable and a command line argument are
 # passed, the command line argument will override the environment variable.
-
-
-def parse_profiles(f):
-    @click.pass_context
-    def decorator(ctx, *args, **kwargs):
-        # import inspect
-        # from rich import print
-
-        # ctx_inspect = inspect.getmembers(ctx)
-        # print(ctx_inspect)
-        # print(ctx, args, kwargs)
-        # assert False
-        return ctx.invoke(f, *args, **kwargs)
-        # path = kwargs["path"]
-        # print("PARAMS", args, kwargs)
-
-    return decorator
 
 
 def create_cli(main_fn):
@@ -77,9 +83,7 @@ def create_cli(main_fn):
     """
 
     @click.command(context_settings=dict(ignore_unknown_options=True))
-    @click.argument("path", type=click.Path(exists=True))
-    @click.argument("profiles", nargs=-1, type=click.UNPROCESSED)
-    @parse_profiles
+    @click.option("-p", "--path", required=True, type=click.Path(exists=True))
     @click.option(
         "-o",
         "--out",
@@ -88,13 +92,6 @@ def create_cli(main_fn):
         envvar="INPUT_OUT",
         help="A target file path to write output JSON.",
     )
-    # @click.option(
-    #     "-p",
-    #     "--profile",
-    #     multiple=True,
-    #     envvar="INPUT_PROFILE",
-    #     help="A single profile from the list in profiles.yml.",
-    # )
     @click.option(
         "-s",
         "--secrets",
@@ -103,7 +100,10 @@ def create_cli(main_fn):
         envvar="INPUT_SECRETS",
         help="A JSON string containing a dictionary.",
     )
-    def cli(path, secrets=(), profile=(), out=(), profiles=None):
+    @click.argument(
+        "profiles", nargs=-1, type=click.UNPROCESSED, callback=parse_profiles
+    )
+    def cli(profiles, path=None, secrets=(), out=()):
         """Parse configuration and secrets, merging all values into a single
         output JSON file.
 
@@ -125,6 +125,8 @@ def create_cli(main_fn):
         """
         result = main_fn(path, secrets=secrets, profiles=profiles)
         result_json = json.dumps(result, indent=4)
+
+        print("PROFILES MADE IT", profiles)
 
         click.echo(result_json)
         if out:
