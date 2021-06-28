@@ -42,6 +42,7 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/error_monitor.h>
+#include <fractal/video/transfercapture.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
