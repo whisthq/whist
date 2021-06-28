@@ -183,7 +183,7 @@ def test_buffer_part_full(region_to_ami_map, bulk_instance):
     Tests that we ask for a new instance when there's only a full instance running
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=10, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=10, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 1
 
 
@@ -192,7 +192,7 @@ def test_buffer_good(region_to_ami_map, bulk_instance):
     Tests that we don't ask for a new instance when there's an empty instance running
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
@@ -201,8 +201,8 @@ def test_buffer_with_multiple(region_to_ami_map, bulk_instance):
     Tests that we don't ask for a new instance when we have enough space in multiple instances
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
@@ -211,8 +211,8 @@ def test_buffer_overfull(region_to_ami_map, bulk_instance):
     Tests that we ask to scale down an instance when we have too much free space
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == -1
 
 
@@ -221,8 +221,8 @@ def test_buffer_not_too_full(region_to_ami_map, bulk_instance):
     Tests that we don't ask to scale down an instance when we have some free space
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
@@ -232,9 +232,9 @@ def test_buffer_overfull_split(region_to_ami_map, bulk_instance):
     over several separate instances
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=9, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=1, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=9, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=1, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == -1
 
 
@@ -244,9 +244,9 @@ def test_buffer_not_too_full_split(region_to_ami_map, bulk_instance):
     over several separate instances
     """
     good_ami = region_to_ami_map["us-east-1"]
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=9, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=4, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=9, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=4, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
@@ -256,9 +256,9 @@ def test_buffer_region_sensitive(region_to_ami_map, bulk_instance):
     """
     good_ami_1 = region_to_ami_map["us-east-1"]
     good_ami_2 = region_to_ami_map["us-east-2"]
-    bulk_instance(aws_ami_id=good_ami_1, associated_mandelboxes=9, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami_1, associated_mandelboxes=1, max_containers=10)
-    bulk_instance(aws_ami_id=good_ami_1, associated_mandelboxes=0, max_containers=10)
+    bulk_instance(aws_ami_id=good_ami_1, associated_mandelboxes=9, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami_1, associated_mandelboxes=1, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami_1, associated_mandelboxes=0, mandelbox_capacity=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami_1) == -1
     assert aws_funcs._get_num_new_instances("us-east-2", good_ami_2) == 1
 

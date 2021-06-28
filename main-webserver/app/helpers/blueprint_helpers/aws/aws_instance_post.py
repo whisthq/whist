@@ -125,7 +125,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         instance.mandelbox_capacity - instance.num_running_mandelboxes
         for instance in all_free_instances
     )
-    avg_max_containers = sum(instance.mandelbox_capacity for instance in all_instances) / len(
+    avg_mandelbox_capacity = sum(instance.mandelbox_capacity for instance in all_instances) / len(
         all_instances
     )
 
@@ -135,7 +135,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     if num_free_containers < desired_free_containers:
         return current_app.config["DEFAULT_INSTANCE_BUFFER"]
 
-    if num_free_containers >= (desired_free_containers + avg_max_containers):
+    if num_free_containers >= (desired_free_containers + avg_mandelbox_capacity):
         return -1
 
     return 0

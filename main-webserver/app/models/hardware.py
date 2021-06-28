@@ -74,7 +74,7 @@ class InstancesWithRoomForContainers(db.Model):
         instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         ami_id (string):  What image is the instance running?
-        max_containers (int): How many containers can the instance have?
+        mandelbox_capacity (int): How many containers can the instance have?
         num_running_mandelboxes (int): and how many does it have?
     """
 
