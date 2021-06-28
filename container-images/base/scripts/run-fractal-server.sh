@@ -170,7 +170,7 @@ curl \
 }
 END
 
-echo "Done sending a mandelbox/delete request to the websever. Shutting down the container..."
+echo "Done sending a mandelbox/delete request to the webserver. Shutting down the container..."
 
 # Once the server has exited, we should just shutdown the container so it doesn't hang
 sudo shutdown now

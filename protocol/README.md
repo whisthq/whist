@@ -91,7 +91,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── lodepng.c <- LodePNG external dependency
 │   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc.
 │   │   ├── mac_utils.c <- Mac wrappers
-│   │   ├── mouse.c <- Mutliclient cursor colors
+│   │   ├── mouse.c <- Multiclient cursor colors
 │   │   ├── png.c <- Functions to encode/decode bitmap's as png's
 │   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
 │   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes
