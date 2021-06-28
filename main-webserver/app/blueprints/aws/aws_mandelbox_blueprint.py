@@ -48,7 +48,7 @@ def regions():
 @validate()
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
-        # If the user already has a container running, don't start up a new one
+        # If the user already has a mandelbox running, don't start up a new one
         return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
     instance_name = find_instance(body.region, body.client_commit_hash)
     if instance_name is None:
