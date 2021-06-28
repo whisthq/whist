@@ -155,7 +155,7 @@ Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub pe
 
 ### Continuous Delivery
 
-This is how we push to production. For every push to `prod`, all applications that have a Dockerfile get automatically built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractal/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
+For every push to `dev`, `staging`, or `prod`, all applications that have a Dockerfile get automatically built and pushed to GHCR. These images are then loaded up into AMIs and deployed.
 
 ### Useful Debugging Practices
 
