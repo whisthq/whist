@@ -279,7 +279,7 @@ jobs:
                   code, diff = schema_diff(os.environ["PATH_CURRENT"],
                                            os.environ["PATH_MERGING"])
 
-                  print("CODE AND DIFF, code, diff)
+                  print("CODE AND DIFF", code, diff)
 
                   print(f"::set-output name=code::{code}")
                   with open(os.environ["PATH_DIFF"], "w") as f:
