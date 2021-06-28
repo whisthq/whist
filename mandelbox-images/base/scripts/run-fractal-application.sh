@@ -15,5 +15,5 @@ do
     sleep 0.1
 done
 
-# Start the application that this container runs
+# Start the application that this mandelbox runs
 exec fractal-application
