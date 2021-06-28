@@ -238,7 +238,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
 │   ├── config.py --> General app config and setup utils
 │   ├── constants --> Constants used throughout our program
-│   │   ├── mandelbox_state_values.py --> all possible AWS mandelbox states
 │   │   ├── http_codes.py -->  HTTP response codes we return in our app
 │   │   └── time.py --> useful constants about time (like 60 seconds per minute)
 │   ├── exceptions.py --> exceptions we use throughout the app
