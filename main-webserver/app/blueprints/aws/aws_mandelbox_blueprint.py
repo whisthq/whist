@@ -13,17 +13,17 @@ from app.constants.http_codes import (
     RESOURCE_UNAVAILABLE,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
-from app.helpers.blueprint_helpers.aws.aws_container_assign_post import is_user_active
+from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import RegionToAmi, db
 from app.models.hardware import MandelboxInfo, InstanceInfo
 
-aws_container_bp = Blueprint("aws_container_bp", __name__)
+aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
 
-@aws_container_bp.route("/regions", methods=("GET",))
+@aws_mandelbox_bp.route("/regions", methods=("GET",))
 @log_request
 @jwt_required()
 def regions():
@@ -40,13 +40,13 @@ def regions():
     return jsonify([region.region_name for region in enabled_regions])
 
 
-@aws_container_bp.route("/mandelbox/assign", methods=("POST",))
+@aws_mandelbox_bp.route("/mandelbox/assign", methods=("POST",))
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
 @payment_required
 @validate()
-def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
+def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a container running, don't start up a new one
         return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE

@@ -1,4 +1,4 @@
-from app.helpers.blueprint_helpers.aws.aws_container_assign_post import is_user_active
+from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
 
 
 def test_inactive(bulk_instance):

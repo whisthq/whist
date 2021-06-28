@@ -77,7 +77,7 @@ def logged_event_container_prewarmed(
     )
 
 
-def logged_event_container_assigned(
+def logged_event_mandelbox_assigned(
     container_name, cluster_name, username="unknown", time_taken="unknown"
 ):
     """Logs an event for container assignment.

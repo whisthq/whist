@@ -231,7 +231,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── __init__.py --> initialization code/global preprocessors for the app
 │   ├── blueprints -->  our API endpoints are described here
 │   │   ├── aws
-│   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
+│   │   │   └── aws_mandelbox_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
 │   │   ├── host_service
 │   │   │   └── host_service_blueprint.py --> endpoints that handle host service handshakes
 │   │   ├── mail
@@ -323,7 +323,6 @@ Note that all conftest files contain test fixtures for their respective director
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
-    │   ├── test_aws_container.py --> tests for end-to-end AWS task generation functionality
     │   ├── test_cluster.py --> tests for cluster deletion
     │   ├── test_delete.py
     │   ├── test_info.py
