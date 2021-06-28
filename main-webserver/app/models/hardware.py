@@ -149,8 +149,6 @@ class SupportedAppImages(db.Model):
 
     app_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     logo_url = db.Column(db.String(250), nullable=False)
-    task_definition = db.Column(db.String(250), nullable=False)
-    task_version = db.Column(db.Integer, nullable=True)
     category = db.Column(db.String(250))
     description = db.Column(db.String(250))
     long_description = db.Column(db.String(250))

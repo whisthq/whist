@@ -172,29 +172,6 @@ def region_to_ami_map(app):
     return region_map
 
 
-@pytest.fixture(scope="session")
-def task_def_env(app):
-    """Determine what the environment portion of the task_definition IDs should be set to.
-
-    Tests for production code are run against "prod" AWS resources. Tests for staging code are run
-    against "staging" AWS resources. Tests for "dev" code and local code are run against "dev" AWS
-    resources.
-
-    Returns:
-        Either "dev", "staging", or "prod".
-    """
-
-    task_def_envs = {
-        env_names.PRODUCTION: "prod",
-        env_names.STAGING: "staging",
-        env_names.DEVELOPMENT: "dev",
-        env_names.TESTING: "dev",
-        env_names.LOCAL: "dev",
-    }
-
-    return task_def_envs[app.config["ENVIRONMENT"]]
-
-
 @pytest.fixture
 def make_user():
     """Create a new user for testing purposes.

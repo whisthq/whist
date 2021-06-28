@@ -225,7 +225,7 @@ class DeploymentConfig:
         """Which environment (production, staging, development, local) is the application
         running in?
 
-        Many other values are derived off of this, such as which task_definitions to use.
+        Many other values and behaviors are derived off of this value.
 
         NOTE: As a fallback, the "ENVIRONMENT" key can set to an environment name to
         override the automatically calculated environment. If set, the value of ENVIRONMENT
