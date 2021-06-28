@@ -12,7 +12,6 @@ class InstanceInfo(db.Model):
         cloud_provider_id (string): instance id from AWS console
         location (string): AWS region (i.e. us-east-1)
         instance_type (string): what hardware is the instance running on?
-        auth_token (string): what token does this instance use to auth with the webserver?
         ip (string): the instance's public IP
         nanocpus_remaining (float): CPU that isn't in use
         gpu_vram_remaining_kb (float): GPU that isn't in use
@@ -31,7 +30,6 @@ class InstanceInfo(db.Model):
     location = db.Column(db.String(250), nullable=False)
     creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
     aws_instance_type = db.Column(db.String(250), nullable=False)
-    auth_token = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
     nanocpus_remaining = db.Column(db.Integer, nullable=False, server_default="1024")
     gpu_vram_remaining_kb = db.Column(db.Integer, nullable=False, server_default="1024")
