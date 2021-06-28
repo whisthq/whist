@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Set working dir to fractal/container-images/helper_scripts
+# Set working dir to fractal/mandelbox-images/helper_scripts
 cd "$DIR"
 
 # Unfortunately, python's subprocess module doesn't give us an easy way to run

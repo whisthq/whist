@@ -58,7 +58,7 @@ sudo rm -f /var/lib/ecs/data/*
 # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
 # It gets enabled in base_userdata_template.sh
 
-# Here we pre-pull the desired container-images onto the AMI to speed up container startup.
+# Here we pre-pull the desired mandelbox-images onto the AMI to speed up container startup.
 ghcr_uri=ghcr.io
 echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
 pull_image_base="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"

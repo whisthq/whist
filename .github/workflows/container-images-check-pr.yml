@@ -1,25 +1,25 @@
-# workflows/container-images-check-pr.yml
+# workflows/mandelbox-images-check-pr.yml
 #
 # Container Images: Check PR
-# Check a container-images/protocol PR for Dockerfile linting and Docker images building success.
+# Check a mandelbox-images/protocol PR for Dockerfile linting and Docker images building success.
 
 name: "Container Images: Check PR"
 
 on:
     pull_request:
         paths:
-            - "container-images/**"
-            - "!container-images/README.md"
-            - ".github/workflows/container-images-check-pr.yml"
-            - "!container-images/helper_scripts/run_container_image.sh"
-            - "!container-images/run_local_container_image.sh"
-            - "!container-images/run_remote_container_image.sh"
+            - "mandelbox-images/**"
+            - "!mandelbox-images/README.md"
+            - ".github/workflows/mandelbox-images-check-pr.yml"
+            - "!mandelbox-images/helper_scripts/run_container_image.sh"
+            - "!mandelbox-images/run_local_container_image.sh"
+            - "!mandelbox-images/run_remote_container_image.sh"
     workflow_dispatch:
 
 jobs:
     # Linting
     # Checks for formatting and Dockerfile standards using Hadolint.
-    container-images-lint-dockerfiles:
+    mandelbox-images-lint-dockerfiles:
         name: Linting
         runs-on: ubuntu-20.04
         container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
@@ -35,11 +35,11 @@ jobs:
             # Start from top-level folder to use .hadolint.yaml config
             - name: Check if Container Images Dockerfiles Follow Hadolint Standards
               run: |
-                  hadolint ./container-images/*/Dockerfile.20
-                  hadolint ./container-images/*/*/Dockerfile.20
+                  hadolint ./mandelbox-images/*/Dockerfile.20
+                  hadolint ./mandelbox-images/*/*/Dockerfile.20
 
-    # Linting/formatting python code in container-images
-    container-images-python-scripts-linting:
+    # Linting/formatting python code in mandelbox-images
+    mandelbox-images-python-scripts-linting:
         name: Lint Container Images Python Scripts
         runs-on: ubuntu-20.04
 
@@ -53,11 +53,11 @@ jobs:
                   python-version: 3.8
 
             - name: Install requirements
-              working-directory: container-images
+              working-directory: mandelbox-images
               run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
 
             - name: Check if Code is Linted with Python Black
-              working-directory: container-images
+              working-directory: mandelbox-images
               run: |
                   result=$(black . --check) # Returns 0 if the code is already linted
                   if [ "$result" -ne "0" ]; then
@@ -67,7 +67,7 @@ jobs:
                   fi
 
             - name: Check if Code Matches Pylint Standards
-              working-directory: container-images/helper_scripts
+              working-directory: mandelbox-images/helper_scripts
               run: |
                   # Global pylintrc for fractal/fractal
                   ln -sf ../../pylintrc ./pylintrc
@@ -75,7 +75,7 @@ jobs:
 
     # Docker images building
     # Checks that the Docker images build successfully.
-    container-images-build-images:
+    mandelbox-images-build-images:
         name: Building
         runs-on: ubuntu-20.04
 
@@ -91,5 +91,5 @@ jobs:
                   aws-region: us-east-1
 
             - name: Build Container Images
-              working-directory: container-images
+              working-directory: mandelbox-images
               run: ./build_container_image.sh --all

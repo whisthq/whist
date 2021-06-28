@@ -15,7 +15,7 @@ set -Eeuo pipefail
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# Working directory is fractal/container-images/
+# Working directory is fractal/mandelbox-images/
 cd "$DIR"
 
 # Parameters of the GHCR-stored container image to run

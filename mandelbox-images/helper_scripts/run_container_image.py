@@ -21,7 +21,7 @@ It is used by the scripts `run_local_container_image.sh` and
 """
 
 
-# Set current working directory to fractal/container-images
+# Set current working directory to fractal/mandelbox-images
 def reset_working_directory():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     os.chdir("..")

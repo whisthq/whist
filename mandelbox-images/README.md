@@ -7,7 +7,7 @@ This repository contains the code for containerizing the various applications th
 A tree structure is provided below:
 
 ```
-./container-images
+./mandelbox-images
 ├── base
 │   ├── Dockerfile.20 <- Base container image on which all of our application images depend
 │   ├── config

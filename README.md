@@ -34,7 +34,7 @@ At a high-level, Fractal works the following way:
 - The webserver will then provision a container associated with the specific streamed application/task definition requested.
   - If all existing EC2 instances are at maxed capacity of containers running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/ecs-host-setup` scripts and has the `/ecs-host-service` preinstalled.
 - If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker container for the requested application on the chosen EC2 instance. The Fractal protocol server inside this container image will be started and will notify the webserver that it is ready to stream.
-  - The container images are based off of `/container-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
+  - The container images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
 - Once the webserver receives a confirmation that the container is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
 
 ### Repository Structure
@@ -44,7 +44,7 @@ The Fractal monorepository contains 8 Fractal subrepositories:
 | Subrepository        | Description                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.      |
-| container-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
+| mandelbox-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
 | core-ts              | The Fractal internal TypeScript library of utilities and reusable components.                            |
 | ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates container management.              |
 | ecs-host-setup       | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal containers.     |

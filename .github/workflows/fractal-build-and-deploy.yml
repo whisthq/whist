@@ -151,7 +151,7 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images"
+                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol mandelbox-images"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
@@ -271,14 +271,14 @@ jobs:
               run: ./build_server_protocol.sh Release
 
             - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-              run: echo "apps=$(./container-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+              run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build container images
-              working-directory: container-images
+              working-directory: mandelbox-images
               run: ./build_container_image.sh -o --all
 
             - name: Push container images
-              working-directory: container-images
+              working-directory: mandelbox-images
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
