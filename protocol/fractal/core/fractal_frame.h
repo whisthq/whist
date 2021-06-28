@@ -2,6 +2,7 @@
 #define FRACTAL_FRAME_H
 
 #include "fractal.h"
+#include <fractal/cursor/cursor.h>
 
 /**
  * @brief   VideoFrame struct.
