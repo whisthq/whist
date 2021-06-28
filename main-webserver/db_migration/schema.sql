@@ -281,7 +281,7 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
              LEFT JOIN ( SELECT count(*) AS count,
                     mandelbox_info.instance_name AS cont_inst
                    FROM hardware.mandelbox_info
-                  GROUP BY mandelbox_info.instance_name) containers ON instances.instance_name::text = containers.cont_inst::text) base_table) sub_with_running
+                  GROUP BY mandelbox_info.instance_name) mandelboxes ON instances.instance_name::text = mandelboxes.cont_inst::text) base_table) sub_with_running
   WHERE sub_with_running.num_running_mandelboxes < sub_with_running."mandelbox_capacity"
   ORDER BY sub_with_running.location, sub_with_running.num_running_mandelboxes DESC;
 
