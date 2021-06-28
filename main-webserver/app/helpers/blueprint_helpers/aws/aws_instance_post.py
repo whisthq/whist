@@ -122,10 +122,10 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         InstancesWithRoomForContainers.query.filter_by(location=region, aws_ami_id=ami_id).all()
     )
     num_free_containers = sum(
-        instance.container_capacity - instance.num_running_containers
+        instance.mandelbox_capacity - instance.num_running_mandelboxes
         for instance in all_free_instances
     )
-    avg_max_containers = sum(instance.container_capacity for instance in all_instances) / len(
+    avg_max_containers = sum(instance.mandelbox_capacity for instance in all_instances) / len(
         all_instances
     )
 
@@ -205,7 +205,7 @@ def do_scale_up_if_necessary(
                     cloud_provider_id=f"aws-{instance_ids[0]}",
                     instance_name=base_name + f"-{index}",
                     aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                    container_capacity=base_number_free_containers,
+                    mandelbox_capacity=base_number_free_containers,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
                     status=PRE_CONNECTION,
@@ -237,7 +237,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             # we only want to scale down unused instances
             available_empty_instances = list(
                 InstancesWithRoomForContainers.query.filter_by(
-                    location=region, aws_ami_id=ami, num_running_containers=0
+                    location=region, aws_ami_id=ami, num_running_mandelboxes=0
                 )
                 .limit(abs(num_new))
                 .all()
@@ -250,7 +250,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 instance_containers = InstancesWithRoomForContainers.query.filter_by(
                     instance_name=instance.instance_name
                 ).one_or_none()
-                if instance_containers is None or instance_containers.num_running_containers != 0:
+                if instance_containers is None or instance_containers.num_running_mandelboxes != 0:
                     db.session.commit()
                     continue
                 # We need to modify the status to DRAINING to ensure that we don't assign a new

@@ -65,11 +65,11 @@ class ContainerNotFoundException(_FractalError):
     """
     Raised by any method that fails to find a given container in the db
     Args:
-        container_id (str): the ARN of the container
+        mandelbox_id (str): the ARN of the container
     """
 
-    params = ("container_id",)
-    message = "container_id: {container_id}"
+    params = ("mandelbox_id",)
+    message = "mandelbox_id: {mandelbox_id}"
 
 
 class ClusterNotFoundException(_FractalError):

@@ -209,11 +209,11 @@ SET default_table_access_method = heap;
 
 --
 -- TOC entry 248 (class 1259 OID 16786)
--- Name: container_info; Type: TABLE; Schema: hardware; Owner: -
+-- Name: mandelbox_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
-CREATE TABLE hardware.container_info (
-    container_id character varying NOT NULL,
+CREATE TABLE hardware.mandelbox_info (
+    mandelbox_id character varying NOT NULL,
     user_id character varying NOT NULL,
     instance_name character varying NOT NULL,
     status character varying NOT NULL,
@@ -222,8 +222,8 @@ CREATE TABLE hardware.container_info (
 
 
 
-ALTER TABLE ONLY hardware.container_info
-    ADD CONSTRAINT container_info_pkey PRIMARY KEY (container_id);
+ALTER TABLE ONLY hardware.mandelbox_info
+    ADD CONSTRAINT mandelbox_info_pkey PRIMARY KEY (mandelbox_id);
 --
 -- TOC entry 208 (class 1259 OID 16404)
 -- Name: instance_info; Type: TABLE; Schema: hardware; Owner: -
@@ -236,7 +236,7 @@ CREATE TABLE hardware.instance_info (
     memory_remaining_kb bigint NOT NULL DEFAULT 2000,
     nanocpus_remaining bigint NOT NULL DEFAULT 1024,
     gpu_vram_remaining_kb bigint NOT NULL DEFAULT 1024,
-    container_capacity bigint NOT NULL DEFAULT 0,
+    mandelbox_capacity bigint NOT NULL DEFAULT 0,
     last_updated_utc_unix_ms bigint NOT NULL DEFAULT -1,
     ip character varying NOT NULL,
     aws_ami_id character varying NOT NULL,
@@ -251,7 +251,7 @@ ALTER TABLE ONLY hardware.instance_info
     ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_name);
 
 
-ALTER TABLE ONLY hardware.container_info
+ALTER TABLE ONLY hardware.mandelbox_info
     ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES hardware.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 --
@@ -264,26 +264,26 @@ CREATE VIEW hardware.instances_with_room_for_containers AS
     sub_with_running.aws_ami_id,
     sub_with_running.commit_hash,
     sub_with_running.location,
-    sub_with_running."container_capacity" AS container_capacity,
-    sub_with_running.num_running_containers
+    sub_with_running."mandelbox_capacity" AS mandelbox_capacity,
+    sub_with_running.num_running_mandelboxes
    FROM ( SELECT base_table.instance_name,
             base_table.aws_ami_id,
             base_table.location,
             base_table.commit_hash,
-            base_table."container_capacity",
-            COALESCE(base_table.count, 0::bigint) AS num_running_containers
+            base_table."mandelbox_capacity",
+            COALESCE(base_table.count, 0::bigint) AS num_running_mandelboxes
            FROM (( SELECT instance_info.instance_name,
                     instance_info.aws_ami_id,
                     instance_info.location,
                     instance_info.commit_hash,
-                    instance_info."container_capacity"
+                    instance_info."mandelbox_capacity"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
-                    container_info.instance_name AS cont_inst
-                   FROM hardware.container_info
-                  GROUP BY container_info.instance_name) containers ON instances.instance_name::text = containers.cont_inst::text) base_table) sub_with_running
-  WHERE sub_with_running.num_running_containers < sub_with_running."container_capacity"
-  ORDER BY sub_with_running.location, sub_with_running.num_running_containers DESC;
+                    mandelbox_info.instance_name AS cont_inst
+                   FROM hardware.mandelbox_info
+                  GROUP BY mandelbox_info.instance_name) containers ON instances.instance_name::text = containers.cont_inst::text) base_table) sub_with_running
+  WHERE sub_with_running.num_running_mandelboxes < sub_with_running."mandelbox_capacity"
+  ORDER BY sub_with_running.location, sub_with_running.num_running_mandelboxes DESC;
 
 
 

@@ -13,7 +13,7 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
 from app.factory import create_app
-from app.models import ContainerInfo, db, InstanceInfo, RegionToAmi
+from app.models import MandelboxInfo, db, InstanceInfo, RegionToAmi
 import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
@@ -101,7 +101,7 @@ def bulk_instance():
         associated_containers=0,
         instance_name=None,
         location=None,
-        container_capacity=None,
+        mandelbox_capacity=None,
         **kwargs,
     ):
         """Create a dummy instance for testing.
@@ -113,7 +113,7 @@ def bulk_instance():
                     defaults to random name
             location (Optional[str]): what region to put the instance in
                     defaults to us-east-1
-            container_capacity (Optional[int]): how many containers can the instance hold?
+            mandelbox_capacity (Optional[int]): how many containers can the instance hold?
                 defaults to 10
 
         Yields:
@@ -127,7 +127,7 @@ def bulk_instance():
             cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
             creation_time_utc_unix_ms=int(time.time()),
-            container_capacity=container_capacity if container_capacity is not None else 10,
+            mandelbox_capacity=mandelbox_capacity if mandelbox_capacity is not None else 10,
             ip=kwargs.get("ip", "123.456.789"),
             aws_ami_id=kwargs.get("aws_ami_id", "test"),
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
@@ -139,8 +139,8 @@ def bulk_instance():
         db.session.add(new_instance)
         db.session.commit()
         for _ in range(associated_containers):
-            new_container = ContainerInfo(
-                container_id=str(randint(0, 10000000)),
+            new_container = MandelboxInfo(
+                mandelbox_id=str(randint(0, 10000000)),
                 instance_name=new_instance.instance_name,
                 user_id=kwargs.get("user_for_containers", "test-user"),
                 status="Running",

@@ -18,7 +18,7 @@ from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import RegionToAmi, db
-from app.models.hardware import ContainerInfo, InstanceInfo
+from app.models.hardware import MandelboxInfo, InstanceInfo
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -67,9 +67,9 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
         return jsonify({"ip": "None", "mandelbox_id": "None"}), RESOURCE_UNAVAILABLE
 
     instance = InstanceInfo.query.get(instance_name)
-    container_id = str(uuid.uuid4())
-    obj = ContainerInfo(
-        container_id=container_id,
+    mandelbox_id = str(uuid.uuid4())
+    obj = MandelboxInfo(
+        mandelbox_id=mandelbox_id,
         instance_name=instance.instance_name,
         user_id=body.username,
         status="ALLOCATED",
@@ -87,4 +87,4 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
         )
         scaling_thread.start()
 
-    return jsonify({"ip": instance.ip, "mandelbox_id": container_id}), ACCEPTED
+    return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), ACCEPTED

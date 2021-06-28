@@ -1,4 +1,4 @@
-from app.models import ContainerInfo
+from app.models import MandelboxInfo
 
 
 def is_user_active(username: str) -> bool:
@@ -10,4 +10,4 @@ def is_user_active(username: str) -> bool:
 
     Returns: True if and only if the user has a container in the DB
     """
-    return ContainerInfo.query.filter_by(user_id=username).one_or_none() is not None
+    return MandelboxInfo.query.filter_by(user_id=username).one_or_none() is not None

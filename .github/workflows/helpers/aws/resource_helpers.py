@@ -273,7 +273,7 @@ def get_db_tasks(url, secret, region):
             "--data-raw",
             (
                 '{"query":"query get_tasks($_eq: String = \\"%s\\")'
-                ' { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+                ' { hardware_user_containers(where: {location: {_eq: $_eq}}) { mandelbox_id }}"}'
             )
             % (region),
         ],

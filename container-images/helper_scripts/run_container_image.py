@@ -187,7 +187,7 @@ def write_protocol_timeout(mandelbox_id):
     """
     Takes in a Mandelbox ID, and writes the protocol timeout to the corresponding container.
     """
-    with open(f"/fractal/{mandelbox_id}/containerResourceMappings/timeout", "w") as timeout_file:
+    with open(f"/fractal/{mandelbox_id}/mandelboxResourceMappings/timeout", "w") as timeout_file:
         timeout_file.write(f"{args.protocol_timeout}")
 
 

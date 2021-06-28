@@ -23,19 +23,19 @@ type Querier interface {
 	// DeleteInstanceScan scans the result of an executed DeleteInstanceBatch query.
 	DeleteInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	FindContainersForUser(ctx context.Context, instanceName string, userID string) ([]FindContainersForUserRow, error)
-	// FindContainersForUserBatch enqueues a FindContainersForUser query into batch to be executed
-	// later by the batch.
-	FindContainersForUserBatch(batch *pgx.Batch, instanceName string, userID string)
-	// FindContainersForUserScan scans the result of an executed FindContainersForUserBatch query.
-	FindContainersForUserScan(results pgx.BatchResults) ([]FindContainersForUserRow, error)
-
 	FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error)
 	// FindInstanceByNameBatch enqueues a FindInstanceByName query into batch to be executed
 	// later by the batch.
 	FindInstanceByNameBatch(batch *pgx.Batch, instanceName string)
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
+
+	FindMandelboxesForUser(ctx context.Context, instanceName string, userID string) ([]FindMandelboxesForUserRow, error)
+	// FindMandelboxesForUserBatch enqueues a FindMandelboxesForUser query into batch to be executed
+	// later by the batch.
+	FindMandelboxesForUserBatch(batch *pgx.Batch, instanceName string, userID string)
+	// FindMandelboxesForUserScan scans the result of an executed FindMandelboxesForUserBatch query.
+	FindMandelboxesForUserScan(results pgx.BatchResults) ([]FindMandelboxesForUserRow, error)
 
 	RegisterInstance(ctx context.Context, params RegisterInstanceParams) (pgconn.CommandTag, error)
 	// RegisterInstanceBatch enqueues a RegisterInstance query into batch to be executed
@@ -44,26 +44,19 @@ type Querier interface {
 	// RegisterInstanceScan scans the result of an executed RegisterInstanceBatch query.
 	RegisterInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	RemoveContainer(ctx context.Context, containerID string) (pgconn.CommandTag, error)
-	// RemoveContainerBatch enqueues a RemoveContainer query into batch to be executed
+	RemoveMandelbox(ctx context.Context, mandelboxID string) (pgconn.CommandTag, error)
+	// RemoveMandelboxBatch enqueues a RemoveMandelbox query into batch to be executed
 	// later by the batch.
-	RemoveContainerBatch(batch *pgx.Batch, containerID string)
-	// RemoveContainerScan scans the result of an executed RemoveContainerBatch query.
-	RemoveContainerScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+	RemoveMandelboxBatch(batch *pgx.Batch, mandelboxID string)
+	// RemoveMandelboxScan scans the result of an executed RemoveMandelboxBatch query.
+	RemoveMandelboxScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	RemoveStaleAllocatedContainers(ctx context.Context, params RemoveStaleAllocatedContainersParams) (pgconn.CommandTag, error)
-	// RemoveStaleAllocatedContainersBatch enqueues a RemoveStaleAllocatedContainers query into batch to be executed
+	RemoveStaleAllocatedMandelboxes(ctx context.Context, params RemoveStaleAllocatedMandelboxesParams) (pgconn.CommandTag, error)
+	// RemoveStaleAllocatedMandelboxesBatch enqueues a RemoveStaleAllocatedMandelboxes query into batch to be executed
 	// later by the batch.
-	RemoveStaleAllocatedContainersBatch(batch *pgx.Batch, params RemoveStaleAllocatedContainersParams)
-	// RemoveStaleAllocatedContainersScan scans the result of an executed RemoveStaleAllocatedContainersBatch query.
-	RemoveStaleAllocatedContainersScan(results pgx.BatchResults) (pgconn.CommandTag, error)
-
-	WriteContainerStatus(ctx context.Context, status pgtype.Varchar, containerID string) (pgconn.CommandTag, error)
-	// WriteContainerStatusBatch enqueues a WriteContainerStatus query into batch to be executed
-	// later by the batch.
-	WriteContainerStatusBatch(batch *pgx.Batch, status pgtype.Varchar, containerID string)
-	// WriteContainerStatusScan scans the result of an executed WriteContainerStatusBatch query.
-	WriteContainerStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+	RemoveStaleAllocatedMandelboxesBatch(batch *pgx.Batch, params RemoveStaleAllocatedMandelboxesParams)
+	// RemoveStaleAllocatedMandelboxesScan scans the result of an executed RemoveStaleAllocatedMandelboxesBatch query.
+	RemoveStaleAllocatedMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
@@ -78,6 +71,13 @@ type Querier interface {
 	WriteInstanceStatusBatch(batch *pgx.Batch, status pgtype.Varchar, instanceName string)
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
+	WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error)
+	// WriteMandelboxStatusBatch enqueues a WriteMandelboxStatus query into batch to be executed
+	// later by the batch.
+	WriteMandelboxStatusBatch(batch *pgx.Batch, status pgtype.Varchar, mandelboxID string)
+	// WriteMandelboxStatusScan scans the result of an executed WriteMandelboxStatusBatch query.
+	WriteMandelboxStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
 
 type DBQuerier struct {
@@ -150,29 +150,29 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, deleteInstanceSQL, deleteInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'DeleteInstance': %w", err)
 	}
-	if _, err := p.Prepare(ctx, findContainersForUserSQL, findContainersForUserSQL); err != nil {
-		return fmt.Errorf("prepare query 'FindContainersForUser': %w", err)
-	}
 	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
+	}
+	if _, err := p.Prepare(ctx, findMandelboxesForUserSQL, findMandelboxesForUserSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindMandelboxesForUser': %w", err)
 	}
 	if _, err := p.Prepare(ctx, registerInstanceSQL, registerInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'RegisterInstance': %w", err)
 	}
-	if _, err := p.Prepare(ctx, removeContainerSQL, removeContainerSQL); err != nil {
-		return fmt.Errorf("prepare query 'RemoveContainer': %w", err)
+	if _, err := p.Prepare(ctx, removeMandelboxSQL, removeMandelboxSQL); err != nil {
+		return fmt.Errorf("prepare query 'RemoveMandelbox': %w", err)
 	}
-	if _, err := p.Prepare(ctx, removeStaleAllocatedContainersSQL, removeStaleAllocatedContainersSQL); err != nil {
-		return fmt.Errorf("prepare query 'RemoveStaleAllocatedContainers': %w", err)
-	}
-	if _, err := p.Prepare(ctx, writeContainerStatusSQL, writeContainerStatusSQL); err != nil {
-		return fmt.Errorf("prepare query 'WriteContainerStatus': %w", err)
+	if _, err := p.Prepare(ctx, removeStaleAllocatedMandelboxesSQL, removeStaleAllocatedMandelboxesSQL); err != nil {
+		return fmt.Errorf("prepare query 'RemoveStaleAllocatedMandelboxes': %w", err)
 	}
 	if _, err := p.Prepare(ctx, writeHeartbeatSQL, writeHeartbeatSQL); err != nil {
 		return fmt.Errorf("prepare query 'WriteHeartbeat': %w", err)
 	}
 	if _, err := p.Prepare(ctx, writeInstanceStatusSQL, writeInstanceStatusSQL); err != nil {
 		return fmt.Errorf("prepare query 'WriteInstanceStatus': %w", err)
+	}
+	if _, err := p.Prepare(ctx, writeMandelboxStatusSQL, writeMandelboxStatusSQL); err != nil {
+		return fmt.Errorf("prepare query 'WriteMandelboxStatus': %w", err)
 	}
 	return nil
 }

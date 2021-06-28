@@ -47,7 +47,7 @@ def test_no_find_full_small_instance(bulk_instance):
     """
     Confirms that we don't find a full instance with <10 max
     """
-    _ = bulk_instance(location="us-east-1", container_capacity=5, associated_containers=5)
+    _ = bulk_instance(location="us-east-1", mandelbox_capacity=5, associated_containers=5)
     assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
