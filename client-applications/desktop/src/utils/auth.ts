@@ -23,10 +23,16 @@ const post = configPost(auth0HttpConfig)
 export const authenticationURL = [
   `https://${auth0Domain}/authorize`,
   `?audience=${apiIdentifier}`,
-  "&scope=openid profile offline_access email",
-  "&response_type=code&",
-  `client_id=${clientId}&`,
-  `redirect_uri=${redirectUri}`,
+  // We need to request the admin scope here. If the user is enabled for the admin scope
+  // (e.g. marked as a developer in Auth0), then the returned JWT token will be granted
+  // the admin scope, thus bypassing Stripe checks and granting additional privileges in
+  // the webserver. If the user is not enabled for the admin scope, then the JWT token
+  // will be generated but will not have the admin scope, as documented by Auth0 in
+  // https://auth0.com/docs/scopes#requested-scopes-versus-granted-scopes
+  "&scope=openid profile offline_access email admin",
+  "&response_type=code",
+  `&client_id=${clientId}`,
+  `&redirect_uri=${redirectUri}`,
 ].join("")
 
 // Custom Event Emitter for Auth0 events
