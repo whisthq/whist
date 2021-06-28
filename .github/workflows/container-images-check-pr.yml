@@ -69,12 +69,9 @@ jobs:
             - name: Check if Code Matches Pylint Standards
               working-directory: container-images/helper_scripts
               run: |
-                  # For consistency, just use the same pylintrc for all of our
-                  # python code. This is obviously a hack, and not something we
-                  # want to do in this way in the long term.
-                  # TODO here: https://github.com/fractal/fractal/issues/2111
-                  ln -sf ../../main-webserver/pylintrc ./pylintrc
-                  pylint -j 0 helper_scripts testing_scripts # Returns -1 if and only if code is linted
+                  # Global pylintrc for fractal/fractal
+                  ln -sf ../../pylintrc ./pylintrc
+                  pylint -j 0 helper_scripts testing_scripts # Returns 0 if and only if code is linted
 
     # Docker images building
     # Checks that the Docker images build successfully.
