@@ -39,25 +39,25 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
     # 5sec arbitrarily decided as sufficient timeout when using with_for_update
     set_local_lock_timeout(5)
-    # This condition below is to accomodate the worflow for developers of client_apps
-    # to test their changes without needing to update the development database with
-    # commit_hashes on their local machines.
     # TODO: move the `local_dev` to the mono-repo config as this needs to be a shared secret between
     #  client_app and main-webserver.
-    if current_app.config["ENVIRONMENT"] == DEVELOPMENT and client_commit_hash == "local_dev":
-        avail_instance: Optional[InstanceSorted] = (
-            InstanceSorted.query.filter_by(location=region)
-            .limit(1)
-            .with_for_update(skip_locked=True)
+    if (
+        current_app.config["ENVIRONMENT"] == DEVELOPMENT or current_app.testing
+    ) and client_commit_hash == "local_dev":
+        # This condition is to accomodate the worflow for developers of client_apps
+        # to test their changes without needing to update the development database with
+        # commit_hashes on their local machines.
+        client_commit_hash = (
+            RegionToAmi.query.filter_by(region_name=region, ami_active=True)
             .one_or_none()
+            .client_commit_hash
         )
-    else:
-        avail_instance: Optional[InstanceSorted] = (
-            InstanceSorted.query.filter_by(location=region, commit_hash=client_commit_hash)
-            .limit(1)
-            .with_for_update(skip_locked=True)
-            .one_or_none()
-        )
+    avail_instance: Optional[InstanceSorted] = (
+        InstanceSorted.query.filter_by(location=region, commit_hash=client_commit_hash)
+        .limit(1)
+        .with_for_update(skip_locked=True)
+        .one_or_none()
+    )
     if avail_instance is None:
         # check each replacement region for available containers
         for bundlable_region in bundled_region.get(region, []):
