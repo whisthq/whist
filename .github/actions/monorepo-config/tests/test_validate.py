@@ -15,6 +15,8 @@ def test_must():
     assert callable(result_true), is_fn
     # assert result_true(example), is_true
     assert callable(result_false), is_fn
+
+    assert result_true(example) is None
     # with pytest.raises(validate.ValidationError):
     #     assert result_false(example), is_false
 
@@ -52,7 +54,7 @@ def test_validate():
         must(lambda x: sum(x) == 15, "sum to 15"),
     )
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(validate.ValidationError):
         validate.validate(
             [1, 2, 3, 4, 5],
             must(lambda x: isinstance(x, list), "be a list"),
