@@ -550,8 +550,8 @@ jobs:
                   else
                       echo 'Error: Invalid branch' && false
                   fi
-                  DATABASE_URL = heroku config:get DATABASE_URL --app=HEROKU_APP_NAME
-                  CONFIG_DB_URL = heroku config:get CONFIG_DB_URL --app=HEROKU_APP_NAME
+                  DATABASE_URL = heroku config:get DATABASE_URL --app=${{HEROKU_APP_NAME}}
+                  CONFIG_DB_URL = heroku config:get CONFIG_DB_URL --app=${{HEROKU_APP_NAME}}
                   echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
                   echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
                   echo "CONFIG_DB_URL=$DCONFIG_DB_URL" >> $GITHUB_ENV
