@@ -152,13 +152,13 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .blueprints.aws.aws_container_blueprint import aws_container_bp
+    from .blueprints.aws.aws_mandelbox_blueprint import aws_mandelbox_bp
 
     from .blueprints.mail.mail_blueprint import mail_bp
     from .blueprints.mail.newsletter_blueprint import newsletter_bp
     from payments.stripe_blueprint import stripe_bp
 
-    app.register_blueprint(aws_container_bp)
+    app.register_blueprint(aws_mandelbox_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
     app.register_blueprint(stripe_bp)

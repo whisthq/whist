@@ -1,12 +1,12 @@
 FROM ubuntu:20.04
 ARG uid
 
-# This Docker container builds the Fractal protocol server for Linux Ubuntu 20.04
+# This Dockerfile is used to build the Fractal protocol server for Linux Ubuntu 20.04.
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-# Set protocol builder container environment variables
+# Set protocol builder environment variables
 ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive

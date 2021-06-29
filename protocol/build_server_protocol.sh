@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# This script builds the Fractal protocol server for Linux Ubuntu 20.04
-# This script calls docker-create-builder.sh and docker-run-builder.sh, which build and run the Docker container
-# defined by Dockerfile
+# This script builds the Fractal protocol server for Linux Ubuntu 20.04.
 
 set -Eeuo pipefail
 
