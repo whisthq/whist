@@ -1,8 +1,8 @@
 # Fractal ECS Host Setup
 
-This subfolder contains the scripts to set up AWS EC2 instances for developing Fractal, and for setting up AWS EC2 AMIs (Amazon Machine Images) for our production EC2 instances running Fractal containers for our users.
+This subfolder contains the scripts to set up AWS EC2 instances for developing Fractal, and for setting up AWS EC2 AMIs (Amazon Machine Images) for our production EC2 instances running Fractal mandelboxes for our users.
 
-An AMI is an operating system image, in our case a snapshot of Linux Ubuntu with specific packages, drivers and settings preinstalled and preconfigured, which can be easily loaded onto an EC2 instance instead of using default Linux Ubuntu. We use Fractal-specific AMIs with our EC2 instances as it results in faster deployment (the images are prebuilt) and ensures that all of our EC2 instances run the exact same operating system, which is specifically optimized for running Fractal containers.
+An AMI is an operating system image, in our case a snapshot of Linux Ubuntu with specific packages, drivers and settings preinstalled and preconfigured, which can be easily loaded onto an EC2 instance instead of using default Linux Ubuntu. We use Fractal-specific AMIs with our EC2 instances as it results in faster deployment (the images are prebuilt) and ensures that all of our EC2 instances run the exact same operating system, which is specifically optimized for running Fractal mandelboxes.
 
 The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host for development (by setting up proper NVIDIA drivers and Docker daemon configs and filters), while running `setup_ubuntu20_host.sh` followed by `setup_ubuntu20_ami_host.sh` sets up an EC2 host that can be manually stored as an AMI for programmatic deployment.
 
@@ -10,7 +10,7 @@ The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host 
 
 To set up your Fractal development instance:
 
-- Create an Ubuntu Server 20.04 g3s.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image). Note that the **g3** EC2 instance type is required for GPU compatibility with our containers and streaming technology. Also, note that the `g3s.xlarge` instance type only exists on `us-east-1`, which is why we require personal instances to be in that region.
+- Create an Ubuntu Server 20.04 g3s.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base image). Note that the **g3** EC2 instance type is required for GPU compatibility with our mandelboxes and streaming technology. Also, note that the `g3s.xlarge` instance type only exists on `us-east-1`, which is why we require personal instances to be in that region.
 
 - Add your EC2 instance to the security group **container-tester**, to enable proper networking rules. If you decide to set up your EC2 instance in a different AWS region, you will need to add it to the appropriate security group for that region, which may vary per region.
 
@@ -40,22 +40,22 @@ sudo reboot
 cd ~/fractal/protocol/
 ./build_server_protocol.sh
 
-# build the Fractal base container image
-cd ~/fractal/container-images
-./build_container_image.sh base
+# build the Fractal base image
+cd ~/fractal/mandelbox-images
+./build_mandelbox_image.sh base
 
 # build the Fractal ECS host service
 cd ~/fractal/ecs-host-service
 make run # keep this open in a separate terminal
 
-# run the Fractal base container image
-cd ~/fractal/container-images
-./run_local_container_image.sh base
+# run the Fractal base image
+cd ~/fractal/mandelbox-images
+./run_local_mandelbox_image.sh base
 ```
 
 - If `./setup_ubuntu20_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
-If you are on a high-DPI screen, you can optionally append the above code block with `--dpi=250` (or any other value) to override the default DPI value of 96 for the container.
+If you are on a high-DPI screen, you can optionally append the above code block with `--dpi=250` (or any other value) to override the default DPI value of 96 for the mandelbox.
 
 - Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
 
