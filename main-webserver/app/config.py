@@ -36,12 +36,12 @@ def _callback_webserver_hostname():
     """Return the hostname of the web server with which the protocol server should communicate.
 
     The callback web server will receive pings from the protocol server and will receive the
-    container deletion request when the protocol terminates.
+    mandelbox deletion request when the protocol terminates.
 
 
     If we're launching a streamed application from an instance of the web server running on a local
     development machine, the server is unable to receive pings from the protocol running in the
-    container from which the application is being streamed. Instead, we want to direct all of the
+    mandelbox from which the application is being streamed. Instead, we want to direct all of the
     protocol's communication to the Fractal development server deployment on Heroku.
 
     This function must be called with request context.

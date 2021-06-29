@@ -16,7 +16,7 @@ RUNTIME = "lifetime"
 SPINUP_TIME = "spinup_time"
 SHUTDOWN_TIME = "shutdown_time"
 
-CONTAINER_NAME = "container_name"
+MANDELBOX_NAME = "mandelbox_name"
 CLUSTER_NAME = "cluster_name"
 USER_NAME = "username"
 

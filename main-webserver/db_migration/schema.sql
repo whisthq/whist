@@ -1,10 +1,9 @@
-
 --
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.5 (Ubuntu 12.5-1.pgdg16.04+1)
--- Dumped by pg_dump version 13.2
+-- Dumped from database version 12.5 (Debian 12.5-1.pgdg100+1)
+-- Dumped by pg_dump version 12.7 (Ubuntu 12.7-0ubuntu0.20.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -204,28 +203,7 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
-
-
-
 --
--- TOC entry 248 (class 1259 OID 16786)
--- Name: container_info; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.container_info (
-    container_id character varying NOT NULL,
-    user_id character varying NOT NULL,
-    instance_name character varying NOT NULL,
-    status character varying NOT NULL,
-    creation_time_utc_unix_ms bigint NOT NULL
-);
-
-
-
-ALTER TABLE ONLY hardware.container_info
-    ADD CONSTRAINT container_info_pkey PRIMARY KEY (container_id);
---
--- TOC entry 208 (class 1259 OID 16404)
 -- Name: instance_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -233,11 +211,11 @@ CREATE TABLE hardware.instance_info (
     instance_name character varying NOT NULL,
     cloud_provider_id character varying NOT NULL,
     creation_time_utc_unix_ms bigint NOT NULL,
-    memory_remaining_kb bigint NOT NULL DEFAULT 2000,
-    nanocpus_remaining bigint NOT NULL DEFAULT 1024,
-    gpu_vram_remaining_kb bigint NOT NULL DEFAULT 1024,
-    container_capacity bigint NOT NULL DEFAULT 0,
-    last_updated_utc_unix_ms bigint NOT NULL DEFAULT -1,
+    memory_remaining_kb bigint DEFAULT 2000 NOT NULL,
+    nanocpus_remaining bigint DEFAULT 1024 NOT NULL,
+    gpu_vram_remaining_kb bigint DEFAULT 1024 NOT NULL,
+    mandelbox_capacity bigint DEFAULT 0 NOT NULL,
+    last_updated_utc_unix_ms bigint DEFAULT '-1'::integer NOT NULL,
     ip character varying NOT NULL,
     aws_ami_id character varying NOT NULL,
     location character varying NOT NULL,
@@ -247,52 +225,62 @@ CREATE TABLE hardware.instance_info (
 );
 
 
-ALTER TABLE ONLY hardware.instance_info
-    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_name);
-
-
-ALTER TABLE ONLY hardware.container_info
-    ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES hardware.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
-
 --
--- TOC entry 249 (class 1259 OID 16800)
--- Name: instances_with_room_for_containers; Type: VIEW; Schema: hardware; Owner: -
+-- Name: mandelbox_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
-CREATE VIEW hardware.instances_with_room_for_containers AS
-  SELECT sub_with_running.instance_name,
+CREATE TABLE hardware.mandelbox_info (
+    mandelbox_id character varying NOT NULL,
+    user_id character varying NOT NULL,
+    instance_name character varying NOT NULL,
+    status character varying NOT NULL,
+    creation_time_utc_unix_ms bigint NOT NULL
+);
+
+
+--
+-- Name: instances_with_room_for_mandelboxes; Type: VIEW; Schema: hardware; Owner: -
+--
+
+CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
+ SELECT sub_with_running.instance_name,
     sub_with_running.aws_ami_id,
     sub_with_running.commit_hash,
     sub_with_running.location,
-    sub_with_running."container_capacity" AS container_capacity,
-    sub_with_running.num_running_containers
+    sub_with_running.mandelbox_capacity,
+    sub_with_running.num_running_mandelboxes
    FROM ( SELECT base_table.instance_name,
             base_table.aws_ami_id,
             base_table.location,
             base_table.commit_hash,
-            base_table."container_capacity",
-            COALESCE(base_table.count, 0::bigint) AS num_running_containers
+            base_table.mandelbox_capacity,
+            COALESCE(base_table.count, (0)::bigint) AS num_running_mandelboxes
            FROM (( SELECT instance_info.instance_name,
                     instance_info.aws_ami_id,
                     instance_info.location,
                     instance_info.commit_hash,
-                    instance_info."container_capacity"
+                    instance_info.mandelbox_capacity
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
-                    container_info.instance_name AS cont_inst
-                   FROM hardware.container_info
-                  GROUP BY container_info.instance_name) containers ON instances.instance_name::text = containers.cont_inst::text) base_table) sub_with_running
-  WHERE sub_with_running.num_running_containers < sub_with_running."container_capacity"
-  ORDER BY sub_with_running.location, sub_with_running.num_running_containers DESC;
+                    mandelbox_info.instance_name AS cont_inst
+                   FROM hardware.mandelbox_info
+                  GROUP BY mandelbox_info.instance_name) mandelboxes ON (((instances.instance_name)::text = (mandelboxes.cont_inst)::text))) base_table) sub_with_running
+  WHERE (sub_with_running.num_running_mandelboxes < sub_with_running.mandelbox_capacity)
+  ORDER BY sub_with_running.location, sub_with_running.num_running_mandelboxes DESC;
 
 
+--
+-- Name: instance_sorted; Type: VIEW; Schema: hardware; Owner: -
+--
 
- CREATE VIEW hardware.instance_sorted AS
-    SELECT instance_name, aws_ami_id, commit_hash, location from hardware.instance_info
-    WHERE instance_name IN (select instance_name from hardware.instances_with_room_for_containers)
-    AND last_updated_utc_unix_ms != -1 AND status = 'ACTIVE';
-
-
+CREATE VIEW hardware.instance_sorted AS
+ SELECT instance_info.instance_name,
+    instance_info.aws_ami_id,
+    instance_info.commit_hash,
+    instance_info.location
+   FROM hardware.instance_info
+  WHERE (((instance_info.instance_name)::text IN ( SELECT instances_with_room_for_mandelboxes.instance_name
+           FROM hardware.instances_with_room_for_mandelboxes)) AND (instance_info.last_updated_utc_unix_ms <> '-1'::integer) AND ((instance_info.status)::text = 'ACTIVE'::text));
 
 
 --
@@ -316,17 +304,15 @@ CREATE TABLE hardware.supported_app_images (
     app_id character varying NOT NULL,
     logo_url character varying,
     task_definition character varying,
-    task_version integer DEFAULT NULL,
+    task_version integer,
     category character varying,
     description character varying,
     long_description character varying,
     url character varying,
     tos character varying,
     active boolean NOT NULL,
-    preboot_number float DEFAULT 0.0 NOT NULL
+    preboot_number double precision DEFAULT 0.0 NOT NULL
 );
-
-
 
 
 --
@@ -1008,9 +994,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 );
 
 
-
-
-
 --
 -- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
 --
@@ -1028,6 +1011,21 @@ CREATE TABLE sales.email_templates (
 
 ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval('hdb_catalog.remote_schemas_id_seq'::regclass);
 
+
+--
+-- Name: instance_info instance_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.instance_info
+    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_name);
+
+
+--
+-- Name: mandelbox_info mandelbox_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.mandelbox_info
+    ADD CONSTRAINT mandelbox_info_pkey PRIMARY KEY (mandelbox_id);
 
 
 --
@@ -1052,7 +1050,6 @@ ALTER TABLE ONLY hardware.supported_app_images
 
 ALTER TABLE ONLY hardware.supported_app_images
     ADD CONSTRAINT unique_taskdef UNIQUE (task_definition);
-
 
 
 --
@@ -1263,16 +1260,12 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_state
     ADD CONSTRAINT hdb_pro_state_pkey PRIMARY KEY (id);
 
 
-
 --
 -- Name: email_templates email_templates_pkey; Type: CONSTRAINT; Schema: sales; Owner: -
 --
 
 ALTER TABLE ONLY sales.email_templates
     ADD CONSTRAINT email_templates_pkey PRIMARY KEY (id);
-
-
-
 
 
 --
@@ -1352,6 +1345,12 @@ CREATE TRIGGER event_trigger_table_name_update_trigger AFTER UPDATE ON hdb_catal
 CREATE TRIGGER hdb_schema_update_event_notifier AFTER INSERT OR UPDATE ON hdb_catalog.hdb_schema_update_event FOR EACH ROW EXECUTE FUNCTION hdb_catalog.hdb_schema_update_event_notifier();
 
 
+--
+-- Name: instance_info instance_name_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.instance_info
+    ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES hardware.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1437,3 +1436,4 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 --
 -- PostgreSQL database dump complete
 --
+
