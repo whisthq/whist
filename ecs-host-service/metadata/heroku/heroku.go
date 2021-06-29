@@ -14,6 +14,9 @@ var apiKey string
 
 var client heroku.Client = heroku.Client{Username: email, Password: apiKey}
 
+// GetAppName provides the Heroku app name to use based on the app environment
+// the host service is running on. In a local environment, it defaults to the
+// dev server.
 func GetAppName() string {
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
@@ -28,6 +31,8 @@ func GetAppName() string {
 	}
 }
 
+// GetConfig returns the Heroku environment config for the app returned by
+// GetAppName.
 func GetConfig() (map[string]string, error) {
 	return client.ConfigVarInfo(GetAppName())
 }
