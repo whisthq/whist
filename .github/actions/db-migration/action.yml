@@ -1,0 +1,14 @@
+name: DB Migration Diff
+description: Create a SQL diff of db schemas
+branding:
+  icon: command
+  color: blue
+outputs:
+  code:
+    description: Return code from diff process (0, 1, 2, 3, or 4)
+  diff:
+    description: A string of SQL commands that represent the schema diff
+runs:
+  using: docker
+  image: Dockerfile # note relative to this file (action.yml)
+  post-entrypoint: /root/post-entrypoint.sh

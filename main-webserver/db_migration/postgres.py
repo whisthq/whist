@@ -109,7 +109,15 @@ def is_ready(host=None, port=None, username=None, **kwargs):
     """
     try:
         completed = subprocess.run(
-            ["pg_isready", "--host", host, "--port", str(port), "--username", username],
+            [
+                "pg_isready",
+                "--host",
+                host,
+                "--port",
+                str(port),
+                "--username",
+                username,
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
@@ -182,8 +190,7 @@ def schema_diff_from_urls(db_config_A, db_config_B):
                     ["migra", "--unsafe", url_A, url_B],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    check=True
-                    # text=True,
+                    check=True,
                 )
             except subprocess.CalledProcessError as e:
                 if e.returncode == 2:
