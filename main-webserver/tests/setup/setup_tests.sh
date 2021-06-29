@@ -37,7 +37,7 @@ fi
 # we are running locally. We have a bit of extra work to do, namely:
 # 1. load environment variables telling us about the location of the dev db
 # 2. fetching db data using env variables
-# 3. spinning up test docker containers
+# 3. spinning up test mandelboxes
 # 4. applying schema and inserting data into docker db
 
 # Make sure .env file exists

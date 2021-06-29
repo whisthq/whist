@@ -11,7 +11,7 @@ on:
             - "protocol/**"
             - "!protocol/**/README.md"
             - ".github/workflows/protocol-check-pr.yml"
-            - "container-images/helper_scripts/copy_protocol_build.sh"
+            - "mandelbox-images/helper_scripts/copy_protocol_build.sh"
     workflow_dispatch:
 
 jobs:
@@ -215,5 +215,5 @@ jobs:
             # This ensures that all the build files from build_server_protocol.sh have actually been generated
             - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
-              working-directory: container-images
+              working-directory: mandelbox-images
               run: ./helper_scripts/copy_protocol_build.sh

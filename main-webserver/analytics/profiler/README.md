@@ -36,7 +36,7 @@ celery --app tasks worker --pool gevent --concurrency NUM_WORKERS
 python profiler.py
 ```
 
-To understand the CPU/IO profile of our webserver, use `time.time()` and `time.process_time()` inside a function of choice. The former checks wall time, the latter checks process CPU time. For example, you could profile `assign_container` (in `app/celery/aws_creation`) by adding the following near the start and end of the function:
+To understand the CPU/IO profile of our webserver, use `time.time()` and `time.process_time()` inside a function of choice. The former checks wall time, the latter checks process CPU time. For example, you could profile a function by adding the following near the start and end of the function:
 
 ```
 time_start = time.time()
@@ -58,7 +58,7 @@ Then, you could use our testing framework to execute this function. See the webs
 
 ## Conclusions
 
-We should use gevent as our pooling method. Our tasks are heavily IO-bound (assign container was using CPU only 0.3% of the time). Profiling showed that gevent outperforms prefork when the fraction of time spent doing CPU work is roughly under 15%. Also, we are using NUM_WORKERS = 50 in the docker-compose and production because that outperformed other options under the following parameters:
+We should use gevent as our pooling method. Our tasks are heavily IO-bound (for example, an old request handler was using CPU only 0.3% of the time). Profiling showed that gevent outperforms prefork when the fraction of time spent doing CPU work is roughly under 15%. Also, we are using NUM_WORKERS = 50 in the docker-compose and production because that outperformed other options under the following parameters:
 
 ```
 num_tasks: 500

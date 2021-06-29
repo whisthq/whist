@@ -12,7 +12,7 @@
 
 /.github/               @philippemnoel @rpadaki @npip99
 /client-applications/   @neilyio @mingy98 @philippemnoel
-/container-images/      @djsavvy @rpadaki @philippemnoel
+/mandelbox-images/      @djsavvy @rpadaki @philippemnoel
 /core-ts/               @neilyio @mingy98 @janniezhong
 /ecs-host-service/      @djsavvy @sardination @rpadaki
 /ecs-host-setup/        @rpadaki @djsavvy @philippemnoel
