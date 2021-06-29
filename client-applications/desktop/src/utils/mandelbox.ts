@@ -1,6 +1,4 @@
-import { screen } from "electron"
 import { isEmpty } from "lodash"
-
 import { get, post } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
@@ -12,7 +10,6 @@ import { COMMIT_SHA } from "@app/config/environment"
 // protocol, the default DPI is always 96; this is modified by a scale factor
 // on high-resolution monitors, as they scale up assets to keep sizes
 // consistent with their low-resolution counterparts.
-export const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
 const isLocalEnv = () => {
   const isLocal = appEnvironment === FractalEnvironments.LOCAL
