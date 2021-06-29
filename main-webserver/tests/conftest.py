@@ -95,7 +95,6 @@ def bulk_instance():
         row whose columns are set as arguments to the function.
     """
     instances = []
-    mandelboxes = []
 
     def _instance(
         associated_mandelboxes=0,
@@ -148,16 +147,12 @@ def bulk_instance():
             )
             db.session.add(new_mandelbox)
             db.session.commit()
-            mandelboxes.append(new_mandelbox)
 
         instances.append(new_instance)
 
         return new_instance
 
     yield _instance
-
-    for mandelbox in mandelboxes:
-        db.session.delete(mandelbox)
 
     for instance in instances:
         db.session.delete(instance)
