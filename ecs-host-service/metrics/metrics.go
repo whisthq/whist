@@ -200,7 +200,7 @@ func startCollectionGoroutine(frequency time.Duration) error {
 				latestMetrics, latestErrors = newMetrics, errs
 				latestLock.Unlock()
 
-				logger.Infof("Collected latest metrics: %+v", newMetrics)
+				// logger.Infof("Collected latest metrics: %+v", newMetrics)
 				if len(latestErrors) != 0 {
 					logger.Errorf("Errors collecting latest metrics: %v", latestErrors)
 				}

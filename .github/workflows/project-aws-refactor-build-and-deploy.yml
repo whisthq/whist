@@ -1,48 +1,17 @@
-# workflows/fractal-build-and-deploy.yml
+# workflows/project-aws-refactor-build-and-deploy.yml
 #
-# Fractal: Build & Deploy
-# Build and deploy each of the relevant Fractal projects for our production, staging and dev environments.
+# AWS Refactor Project: Build & Deploy
 
 name: "Fractal: Build & Deploy"
 
 on:
     push:
         branches:
-            - prod
-            - staging
-            - dev
+            - aws-refactor/create-testing-setup
         paths-ignore:
             - "README.md"
             - "**/README.md"
             - ".github/workflows/README.md"
-    workflow_dispatch:
-        inputs:
-            job-name:
-                description: |
-                    The name of the job to run or "all" to trigger all jobs,
-                    "none" to run no jobs, or "filter" to run only those jobs
-                    whose dependency files are different when comparing those
-                    on the chosen branch to those on the branch that normally
-                    corresponds to the target deployment environment.
-                required: true
-                default: "all" # Default to triggering all jobs, for a clean rebuild
-            target:
-                description: |
-                    The target deployment environment to which the chosen ref
-                    should be deployed. The target deployment environment
-                    should be one of "dev", "staging", or "prod". The default
-                    target deployment environment matches the branch that is
-                    being deployed.
-                required: false
-            dry-run:
-                description: |
-                    A boolean indicating whether or not to perform a dry run
-                    deployment. If this boolean is set, code will be built, but
-                    not deployed.
-                required: true
-                # Avoid accidental mistakes by doing dry run deployments by
-                # default
-                default: true
 
 jobs:
     # Configure Jobs
@@ -70,28 +39,32 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            # The workflow will wait up to 15 minutes for other runs of the same workflow on the
-            # same branch to complete.
+            # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
+            # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
+            # twice and the second workflow could finish before the first one, due to variance in startup time, run
+            # commands, etc., introducing a race condition.
+            # Using Turnstyle here makes it so that if there already is a fractal-build-and-deploy.yml workflow running
+            # for a specific branch (i.e. `dev`), the next workflow will wait at least `continue-after-seconds` seconds
+            # before starting to run, which helps ensure that there will not be any race condition between workflows
+            #
             # TODO: Figure out how to better do `concurrency` at the job level and nix this.
             - name: Serialize Workflows with Turnstyle
               uses: softprops/turnstyle@v1
               with:
-                  continue-after-seconds: 900 # Minimum 15 minutes distance between workflows
+                  continue-after-seconds: 900 # Put a minimum of 15 minutes distance between workflows
                   same-branch-only: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Set deploy environment
               id: set-deploy-environment
-              if: ${{ github.event_name == 'push' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
-              uses: ./.github/actions/set-environment
-              with:
-                  # Deploy the git ref corresponding to the event that
-                  # triggered the workflow unless the event that triggered the
-                  # workflow was a manual workflow_dispatch event. In such a
-                  # case, the branch specified by the target input should be
-                  # deployed.
-                  ref: ${{ github.event.inputs.target || github.ref }}
+              run: |
+                  echo "Environment project-aws-refactor set"
+                  echo "::set-output name=branch::project-aws-refactor"
+                  echo "::set-output name=environment::project-aws-refactor"
+                  echo "::set-output name=auth0-domain::fractal-dev.us.auth0.com"
+                  echo "::set-output name=auth0-client-id::6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
+                  echo "::set-output name=auth0-client-secret-key::auth0_gha_client_secret_dev"
 
             - name: Set Sentry environment based on Git Branch
               id: set-sentry-environment
@@ -111,7 +84,7 @@ jobs:
                   echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
                   echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
-            - name: Set webserver URL based on Git Branch (prod, staging, dev)
+            - name: Set webserver URL
               id: set-webserver-url
               run: |
                   # Grab the name of the deployment environment from set-deploy-environment
@@ -123,6 +96,7 @@ jobs:
                   else
                     WEBSERVER_URL=https://dev-server.fractal.co
                   fi
+                  WEBSERVER_URL=https://fractal-project-aws-refactor.herokuapp.com
                   echo "webserver_url is set to: $WEBSERVER_URL"
                   echo "::set-output name=webserver_url::$WEBSERVER_URL"
 
@@ -151,6 +125,8 @@ jobs:
                     # This is only used when filtering
                     COMPARISON_COMMIT="origin/$BRANCH_NAME"
                   fi
+                  JOB_NAME="all"
+                  COMPARISON_COMMIT="${{ github.event.before }}"
 
                   # Store job dependency files
                   declare -A job_dependencies
@@ -232,25 +208,13 @@ jobs:
                   # Feature branches are not deployable.
                   deployable="$([ "$branch" != "$target" ] || echo "1")"
 
-                  if [ "${{ github.event_name }}" = "push" ]; then
-                      # If the workflow was triggered by a push event, the
-                      # dry-run input is not available. We can assert that the
-                      # push event was triggered on either dev, staging, or
-                      # prod, and then set the dry run flag to false.
-                      [[ "$branch" =~ dev|staging|prod ]]
-                      dry_run="false"
-                  else
-                      dry_run="${{ github.event.inputs.dry-run }}"
-
-                      # If we're trying to perform a real deployment, but the
-                      # current configuration is not deployable, abort.
-                      test "$deployable" -o "$dry_run" != "false"
-                  fi
-
                   # Publish the job outputs iff this is not a dry run and
                   # the git branch that we're deploying matches the target
                   # deployment environment.
                   publish="$([ "$deployable" -a "$dry_run" = "false" ] && echo "true" || echo "false")"
+
+                  dry_run="false"
+                  publish="true"
 
                   echo "Publish is set to: $publish"
                   echo "::set-output name=publish::$publish"
@@ -263,7 +227,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -340,6 +304,7 @@ jobs:
               env:
                   HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
                   HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  HEROKU_APP_NAME_OVERRIDE: fractal-project-aws-refactor
                   LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
               working-directory: ecs-host-service
               run: make build
@@ -530,7 +495,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -559,7 +524,7 @@ jobs:
             - name: Restore cached Webserver access token file
               uses: actions/cache@v2
               with:
-                  key: access-token-${{ needs.fractal-publish-build-config.outputs.branch }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+                  key: access-token-dev-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
                   path: ${{ env.TOKEN_FILE }}
 
             # We need to put quotes around this step's run command because it
@@ -592,18 +557,13 @@ jobs:
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               run: |
-                  if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-                      HEROKU_APP_NAME=fractal-dev-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-                      HEROKU_APP_NAME=fractal-staging-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-                      HEROKU_APP_NAME=fractal-prod-server
-                  else
-                      echo 'Error: Invalid branch' && false
-                  fi
-                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+                  HEROKU_APP_NAME=fractal-project-aws-refactor
                   DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
                   CONFIG_DB_URL=$(heroku config:get CONFIG_DB_URL --app=$HEROKU_APP_NAME)
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME"
+                  echo "DATABASE_URL=$DATABASE_URL"
+                  echo "CONFIG_DB_URL=$CONFIG_DB_URL"
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
                   echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
                   echo "CONFIG_DB_URL=$CONFIG_DB_URL" >> $GITHUB_ENV
 
@@ -705,7 +665,7 @@ jobs:
                   elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
                       HEROKU_APP_NAME=fractal-prod-server
                   else
-                      echo 'Error: Invalid branch' && false
+                      HEROKU_APP_NAME=fractal-project-aws-refactor
                   fi
                   echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
@@ -1227,14 +1187,4 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack on Job Error
-              if: failure()
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `fractal-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+    # WE ALSO SKIP DEPLOYING AUTH0 HOOKS AND CREATING A GITHUB TAG
