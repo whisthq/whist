@@ -1,4 +1,4 @@
-from app.helpers.blueprint_helpers.aws.aws_container_assign_post import is_user_active
+from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
 
 
 def test_inactive(bulk_instance):
@@ -11,9 +11,9 @@ def test_inactive(bulk_instance):
 
 def test_inactive_with_others(bulk_instance):
     """
-    tests that even with containers for some user, a different user isn't active
+    tests that even with mandelboxes for some user, a different user isn't active
     """
-    bulk_instance(associated_containers=1)
+    bulk_instance(associated_mandelboxes=1)
     assert not is_user_active("rando_user")
 
 
@@ -21,5 +21,5 @@ def test_active(bulk_instance):
     """
     tests that a given user is detected as active
     """
-    bulk_instance(associated_containers=1, user_for_containers="rando_user")
+    bulk_instance(associated_mandelboxes=1, user_for_mandelboxes="rando_user")
     assert is_user_active("rando_user")
