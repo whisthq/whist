@@ -1,5 +1,8 @@
 #include "nvidia_encode.h"
 
+int get_custom_preset_config(NvidiaEncode* encoder, int bitrate, GUID codec_guid, NV_ENC_PRESET_CONFIG* out_preset_config);
+GUID get_codec_guid(CodecType codec);
+
 void try_free_frame(NvidiaEncoder* encoder) {
     NVENCSTATUS enc_status;
 
@@ -118,14 +121,8 @@ NvidiaEncode* create_nvidia_encoder(int bitrate, CodecType requested_codec,
     }
 
     // Validate the codec requested
-    GUID codec_guid;
-    if (requested_codec == CODEC_TYPE_H265) {
-        encoder->codec_type = CODEC_TYPE_H265;
-        codec_guid = NV_ENC_CODEC_HEVC_GUID;
-    } else {
-        encoder->codec_type = CODEC_TYPE_H264;
-        codec_guid = NV_ENC_CODEC_H264_GUID;
-    }
+    GUID codec_guid = get_codec_guid(requested_codec);
+    encoder->codec_type = requested_codec;
     // status = validateEncodeGUID(encoder, codec_guid);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to validate codec GUID");
@@ -133,28 +130,11 @@ NvidiaEncode* create_nvidia_encoder(int bitrate, CodecType requested_codec,
     }
 
     NV_ENC_PRESET_CONFIG preset_config;
-    memset(&preset_config, 0, sizeof(preset_config));
-
-    preset_config.version = NV_ENC_PRESET_CONFIG_VER;
-    preset_config.presetCfg.version = NV_ENC_CONFIG_VER;
-    status = encoder->p_enc_fn.nvEncGetEncodePresetConfig(
-        encoder->internal_nvidia_encoder, codec_guid, NV_ENC_PRESET_LOW_LATENCY_HP_GUID, &preset_config);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR(
-            "Failed to obtain preset settings, "
-            "status = %d",
-            status);
+    status = get_custom_preset_config(encoder, bitrate, codec_guid, &preset_config);
+    if (status < 0) {
+        LOG_ERROR("custom_preset_config failed");
         return NULL;
     }
-
-    // Set iframe length to basically be infinite
-    preset_config.presetCfg.gopLength = 999999;
-    // Set bitrate
-    preset_config.presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    preset_config.presetCfg.rcParams.averageBitRate = bitrate;
-    // Specify the size of the clientside buffer, 1 * bitrate is recommended
-    preset_config.presetCfg.rcParams.vbvBufferSize = bitrate;
-
     // Initialize the encode session
     NV_ENC_INITIALIZE_PARAMS init_params;
     memset(&init_params, 0, sizeof(init_params));
@@ -167,6 +147,8 @@ NvidiaEncode* create_nvidia_encoder(int bitrate, CodecType requested_codec,
     init_params.frameRateNum = FPS;
     init_params.frameRateDen = 1;
     init_params.enablePTD = 1;
+    // copy the init params into the encoder for reconfiguration
+    memcpy(&encoder->encoder_params, &init_params, sizeof(encoder->encoder_params));
 
     status = encoder->p_enc_fn.nvEncInitializeEncoder(encoder->internal_nvidia_encoder, &init_params);
     if (status != NV_ENC_SUCCESS) {
@@ -248,6 +230,67 @@ void nvidia_encoder_encode(NvidiaEncoder* encoder) {
     encoder->size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;
     encoder->is_iframe = force_iframe || encoder->frame_idx == 0;
+}
+
+GUID get_codec_guid(CodecType codec) {
+    GUID codec_guid;
+    if (codec == CODEC_TYPE_H265) {
+        codec_guid = NV_ENC_CODEC_HEVC_GUID;
+    } else {
+        codec_guid = NV_ENC_CODEC_H264_GUID;
+    }
+    // TODO: should we validate here?
+    return codec_guid;
+}
+
+int get_custom_preset_config(NvidiaEncode* encoder, int bitrate, GUID codec_guid, NV_ENC_PRESET_CONFIG* out_preset_config) {
+    memset(out_preset_config, 0, sizeof(NV_ENC_PRESET_CONFIG));
+
+    out_preset_config->version = NV_ENC_PRESET_CONFIG_VER;
+    out_preset_config->presetCfg.version = NV_ENC_CONFIG_VER;
+    status = encoder->p_enc_fn.nvEncGetEncodePresetConfig(encoder->internal_nvidia_encoder, codec_guid, NV_ENC_PRESET_LOW_LATENCY_HP_GUID, out_preset_config);
+    if (status != NV_ENC_SUCCESS) {
+        LOG_ERROR("Failed to obtain preset settings, status = %d", status);
+        return -1;
+    }
+    // check for bad status
+    out_preset_config->presetCfg.gopLength = 999999;
+    out_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+    out_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
+    out_preset_config->presetCfg.rcParams.vbvBufferSize = bitrate;
+
+    return 0;
+}
+
+int reconfigure_nvidia_encoder(NvidiaEncode* encoder, int bitrate, CodecType codec) {
+    // create reconfigure params
+    NV_ENC_RECONFIGURE_PARAMS reconfigure_params;
+    memset(&reconfigure_params, 0, sizeof(reconfigure_params));
+    reconfigure_params.version = NV_ENC_RECONFIGURE_PARAMS_VER;
+    // copy over init params
+    reconfigure_params.reInitEncodeParams = encoder_params;
+    GUID codec_guid = get_codec_guid(codec);
+    encoder->codec_type = codec;
+    encoder_params.encodeGUID = codec_guid;
+    NV_ENC_PRESET_CONFIG preset_config;
+    int status = get_custom_preset_config(encoder, bitrate, codec_guid, &preset_config);
+    if (status < 0) {
+        LOG_ERROR("Failed to reconfigure encoder!");
+        return status;
+    }
+    reconfigure_params.reInitEncodeParams.encodeConfig = &preset_config.presetCfg;
+    // copy over new init params
+    memcpy(&encoder->encoder_params, &reconfigure_params.reInitEncodeParams, sizeof(encoder->encoder_params));
+    // not sure if we need this, but just in case
+    reconfigure_params.resetEncoder = 0;
+    reconfigure_params.forceIDR = 0;
+    // set encode_config params, since this is the bitrate and codec stuff we really want to change
+    status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder, reconfigure_params);
+    if (status != NV_ENC_SUCCESS) {
+        LOG_ERROR("Failed to reconfigure the encoder, status = %d", status);
+        return -1;
+    }
+    return 0;
 }
 
 void destroy_nvidia_encoder(NvidiaEncode* encoder) {
