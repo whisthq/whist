@@ -1,0 +1,95 @@
+# workflows/mandelbox-images-check-pr.yml
+#
+# Mandelbox Images: Check PR
+# Check a mandelbox-images/protocol PR for Dockerfile linting and Docker images building success.
+
+name: "Mandelbox Images: Check PR"
+
+on:
+    pull_request:
+        paths:
+            - "mandelbox-images/**"
+            - "!mandelbox-images/README.md"
+            - ".github/workflows/mandelbox-images-check-pr.yml"
+            - "!mandelbox-images/helper_scripts/run_mandelbox_image.sh"
+            - "!mandelbox-images/run_local_mandelbox_image.sh"
+            - "!mandelbox-images/run_remote_mandelbox_image.sh"
+    workflow_dispatch:
+
+jobs:
+    # Linting
+    # Checks for formatting and Dockerfile standards using Hadolint.
+    mandelbox-images-lint-dockerfiles:
+        name: Linting
+        runs-on: ubuntu-20.04
+        container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            # Start from top-level folder to use .hadolint.yaml config
+            - name: Check if Development Dockerfiles Follow Hadolint Standards
+              run: hadolint ./**/*Dockerfile
+
+            # Start from top-level folder to use .hadolint.yaml config
+            - name: Check if Mandelbox Dockerfiles Follow Hadolint Standards
+              run: |
+                  hadolint ./mandelbox-images/*/Dockerfile.20
+                  hadolint ./mandelbox-images/*/*/Dockerfile.20
+
+    # Linting/formatting python code in mandelbox-images
+    mandelbox-images-python-scripts-linting:
+        name: Lint Mandelbox-Images Python Scripts
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install requirements
+              working-directory: mandelbox-images
+              run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
+
+            - name: Check if Code is Linted with Python Black
+              working-directory: mandelbox-images
+              run: |
+                  result=$(black . --check) # Returns 0 if the code is already linted
+                  if [ "$result" -ne "0" ]; then
+                    (echo "To pass this check please lint the code with Python Black" && false)
+                  else
+                    (echo "Code is linted with Python Black" && true)
+                  fi
+
+            - name: Check if Code Matches Pylint Standards
+              working-directory: mandelbox-images/helper_scripts
+              run: |
+                  # Global pylintrc for fractal/fractal
+                  ln -sf ../../pylintrc ./pylintrc
+                  pylint -j 0 helper_scripts testing_scripts # Returns 0 if and only if code is linted
+
+    # Docker images building
+    # Checks that the Docker images build successfully.
+    mandelbox-images-build-images:
+        name: Building
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Configure AWS CLI # To get and install GRID driver
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Build Mandelbox Images
+              working-directory: mandelbox-images
+              run: ./build_mandelbox_image.sh --all

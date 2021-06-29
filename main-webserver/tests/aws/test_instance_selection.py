@@ -22,7 +22,7 @@ def test_find_part_full_instance(bulk_instance):
     """
     Confirms that we find an in-use instance
     """
-    instance = bulk_instance(location="us-east-1", associated_containers=3)
+    instance = bulk_instance(location="us-east-1", associated_mandelboxes=3)
     assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
@@ -30,8 +30,8 @@ def test_find_part_full_instance_order(bulk_instance):
     """
     Confirms that we find an in-use instance
     """
-    instance = bulk_instance(location="us-east-1", associated_containers=3)
-    _ = bulk_instance(location="us-east-1", associated_containers=2)
+    instance = bulk_instance(location="us-east-1", associated_mandelboxes=3)
+    _ = bulk_instance(location="us-east-1", associated_mandelboxes=2)
     assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
@@ -39,7 +39,7 @@ def test_no_find_full_instance(bulk_instance):
     """
     Confirms that we don't find a full instance
     """
-    _ = bulk_instance(location="us-east-1", associated_containers=10)
+    _ = bulk_instance(location="us-east-1", associated_mandelboxes=10)
     assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
@@ -47,7 +47,7 @@ def test_no_find_full_small_instance(bulk_instance):
     """
     Confirms that we don't find a full instance with <10 max
     """
-    _ = bulk_instance(location="us-east-1", container_capacity=5, associated_containers=5)
+    _ = bulk_instance(location="us-east-1", mandelbox_capacity=5, associated_mandelboxes=5)
     assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
@@ -66,21 +66,21 @@ def test_assignment_logic(bulk_instance, location):
     these properties are tested in order
     """
     replacement_region = bundled_region[location][0]
-    bulk_instance(associated_containers=10, location=location)
+    bulk_instance(associated_mandelboxes=10, location=location)
     assert (
         find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
     ), f"we assigned an already full instance in the main region, {location}"
-    bulk_instance(associated_containers=10, location=replacement_region)
+    bulk_instance(associated_mandelboxes=10, location=replacement_region)
     assert (
         find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
     ), f"we assigned an already full instance in the secondary region, {replacement_region}"
-    bulk_instance(location=replacement_region, instance_name="replacement-container")
+    bulk_instance(location=replacement_region, instance_name="replacement-mandelbox")
     assert find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is not None, (
         f"we failed to find the available instance "
         f"in the replacement region {replacement_region}"
     )
-    bulk_instance(location=location, instance_name="main-container")
+    bulk_instance(location=location, instance_name="main-mandelbox")
     instance = find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
     assert (
-        instance is not None and instance == "main-container"
+        instance is not None and instance == "main-mandelbox"
     ), f"we failed to find the available instance in the main region {location}"

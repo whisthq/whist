@@ -2,7 +2,7 @@
 
 from ._meta import db
 from .hardware import (
-    ContainerInfo,
+    MandelboxInfo,
     InstanceInfo,
     RegionToAmi,
     SupportedAppImages,

@@ -180,7 +180,6 @@ int xioerror_handler(Display* d) {
         any program exit handling that would normally be expected to
         be handled in another thread must be explicitly handled here.
         Right now, we handle:
-            * SendContainerDestroyMessage
             * quitClients
     */
 
@@ -877,7 +876,7 @@ int multithreaded_manage_clients(void* opaque) {
         if (saved_num_active_clients == 0) {
             connection_id = rand();
 
-            // container exit logic -
+            // mandelbox exit logic -
             //  * clients have connected before but now none are connected
             //  * no clients have connected in `begin_time_to_exit` secs of server being up
             // We don't place this in a lock because:

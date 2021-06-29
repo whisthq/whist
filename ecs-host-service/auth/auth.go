@@ -19,8 +19,8 @@ import (
 
 	"github.com/MicahParks/keyfunc"
 
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
@@ -121,7 +121,7 @@ func Verify(accessToken RawJWT) (jwt.MapClaims, error) {
 
 // VerifyWithUserID verifies that a JWT is valid and corresponds to the user
 // with userID. If valid, the JWT's claims are returned.
-func VerifyWithUserID(accessToken RawJWT, userID fctypes.UserID) (jwt.MapClaims, error) {
+func VerifyWithUserID(accessToken RawJWT, userID types.UserID) (jwt.MapClaims, error) {
 	claims, err := Verify(accessToken)
 	if err != nil {
 		return nil, err

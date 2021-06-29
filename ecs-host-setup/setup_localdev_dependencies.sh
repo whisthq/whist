@@ -12,7 +12,7 @@ cd "$DIR"
 # This part installs things that are ONLY necessary for engineer dev instances, NOT for production instances
 sudo apt-get install -y python3-pip
 cd ..
-find ./container-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
+find ./mandelbox-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
 cd ecs-host-setup
 
 # This part sets up the instance, and is necessary for both engineer dev instances and production instances

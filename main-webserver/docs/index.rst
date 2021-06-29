@@ -21,16 +21,16 @@ Introduction
 
 The Fractal Webserver is responsible for implementing all of Fractal's business logic. Its responsibilities include:
 
-* Access control (lightweigh authentication by interfacing with Auth0, our authentication provider)
+* Access control (lightweight authentication by interfacing with Auth0, our authentication provider)
 * Interfacing our frontend (end user applications) with our cloud infrastructure
 * Streaming sessions management (monitoring active instances, etc.)
 
-In order to fulfill all of its responsibilites, the Fractal Webserver communicates with many other internal and external
+In order to fulfill all of its responsibilities, the Fractal Webserver communicates with many other internal and external
 services. It receives incoming requests from:
 
 * User agents (e.g. the desktop applications, browsers, developer tools such as Postman and cURL)
 * The Fractal Host Service running on Fractal cloud instances
-* Instances of the Fractal protocol server running in Fractal containers on Fractal cloud instances
+* Instances of the Fractal protocol server running in Fractal mandelboxes on Fractal cloud instances
 * GitHub Actions (GHA) workflows, for deployment and testing
 
 It also sends outgoing queries to:
