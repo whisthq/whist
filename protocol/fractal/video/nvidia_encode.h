@@ -21,10 +21,10 @@ typedef struct {
     bool is_iframe;
 } NvidiaEncoder;
 
-NvidiaEncode* create_nvidia_encoder(int bitrate, CodecType requested_codec,
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec,
                           NVFBC_TOGL_SETUP_PARAMS* p_setup_params, int out_width, int out_height);
-int nvidia_encoder_frame_intake(NvidiaEncode* encoder, void* input_buffer, int width, int height);
-void nvidia_encoder_encode(NvidiaEncode* encoder);
-void destroy_nvidia_encoder(NvidiaEncode* encoder);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* input_buffer, int width, int height);
+void nvidia_encoder_encode(NvidiaEncoder* encoder);
+void destroy_nvidia_encoder(NvidiaEncoder* encoder);
 
 #endif
