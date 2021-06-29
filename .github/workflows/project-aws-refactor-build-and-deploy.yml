@@ -510,9 +510,12 @@ jobs:
                   HEROKU_APP_NAME=fractal-project-aws-refactor
                   DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
                   CONFIG_DB_URL=$(heroku config:get CONFIG_DB_URL --app=$HEROKU_APP_NAME)
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME"
+                  echo "DATABASE_URL=$DATABASE_URL"
+                  echo "CONFIG_DB_URL=$CONFIG_DB_URL"
                   echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
                   echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
-                  echo "CONFIG_DB_URL=$DCONFIG_DB_URL" >> $GITHUB_ENV
+                  echo "CONFIG_DB_URL=$CONFIG_DB_URL" >> $GITHUB_ENV
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
