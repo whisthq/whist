@@ -106,7 +106,7 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         if (optopt == (int)'-') return (-1);
         if (!*place) ++optind;
         if (opterr && *ostr != ':')
-            (void)LOG_ERROR("%s: illegal option -- %c\n", progname(nargv[0]), optopt);
+            LOG_ERROR("%s: illegal option -- %c\n", progname(nargv[0]), optopt);
         return (BADCH);
     }
     if (*++oli != ':') { /* don't need argument */
@@ -125,8 +125,7 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         else if (nargc <= ++optind) { /* no arg */
             place = EMSG;
             if ((opterr) && (*ostr != ':'))
-                (void)LOG_ERROR("%s: option requires an argument -- %c\n", progname(nargv[0]),
-                                optopt);
+                LOG_ERROR("%s: option requires an argument -- %c\n", progname(nargv[0]), optopt);
             return (BADARG);
         } else /* white space */
             optarg = nargv[optind];
@@ -151,7 +150,7 @@ getopt2(nargc, nargv, ostr)
 
 	if ((retval = getopt_internal(nargc, nargv, ostr)) == -2) {
 		retval = -1;
-		++optind; 
+		++optind;
 	}
 	return(retval);
 }
@@ -206,13 +205,13 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
                  * indicates no error should be generated
                  */
                 if ((opterr) && (*options != ':'))
-                    (void)LOG_ERROR("%s: option requires an argument -- %s\n", progname(nargv[0]),
-                                    current_argv);
+                    LOG_ERROR("%s: option requires an argument -- %s\n", progname(nargv[0]),
+                              current_argv);
                 return (BADARG);
             }
         } else { /* No matching argument */
             if ((opterr) && (*options != ':'))
-                (void)LOG_ERROR("%s: illegal option -- %s\n", progname(nargv[0]), current_argv);
+                LOG_ERROR("%s: illegal option -- %s\n", progname(nargv[0]), current_argv);
             return (BADCH);
         }
         if (long_options[match].flag) {
