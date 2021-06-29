@@ -83,7 +83,9 @@ def test_assign_active(client, bulk_instance, monkeypatch):
 
 
 @pytest.mark.usefixtures("authorized")
-def test_client_commit_hash_local_dev_override_fail(app, client, bulk_instance, override_environment):
+def test_client_commit_hash_local_dev_override_fail(
+    app, client, bulk_instance, override_environment
+):
     """
     Ensure that in production environment, passing the pre-shared client commit hash for dev enviroment
     returns a status code of RESOURCE_UNAVAILABLE
@@ -104,7 +106,9 @@ def test_client_commit_hash_local_dev_override_fail(app, client, bulk_instance, 
 
 
 @pytest.mark.usefixtures("authorized")
-def test_client_commit_hash_local_dev_override_success(app, client, bulk_instance, override_environment):
+def test_client_commit_hash_local_dev_override_success(
+    app, client, bulk_instance, override_environment
+):
     """
     Ensure that in development environment, passing the pre-shared client commit hash for dev enviroment
     returns a status code of ACCEPTED
