@@ -1,6 +1,6 @@
 # Fractal Protocol
 
-This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a container or a regular computer, and a client computer or mobile device.
+This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a mandelbox, or a regular computer, and a client computer or mobile device.
 
 ## Supported Platforms
 

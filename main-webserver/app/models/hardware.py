@@ -16,7 +16,7 @@ class InstanceInfo(db.Model):
         nanocpus_remaining (float): CPU that isn't in use
         gpu_vram_remaining_kb (float): GPU that isn't in use
         memory_remaining_kb (float): RAM not in use
-        container_capacity (int): how many containers can run at once?
+        mandelbox_capacity (int): how many mandelboxes can run at once?
         last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         creation_time_utc_unix_ms (int):  When was this instance created?
         aws_ami_id (str): what image is this machine based on?
@@ -34,7 +34,7 @@ class InstanceInfo(db.Model):
     nanocpus_remaining = db.Column(db.Integer, nullable=False, server_default="1024")
     gpu_vram_remaining_kb = db.Column(db.Integer, nullable=False, server_default="1024")
     memory_remaining_kb = db.Column(db.Integer, nullable=False, server_default="2000")
-    container_capacity = db.Column(db.Integer, nullable=False, default=0)
+    mandelbox_capacity = db.Column(db.Integer, nullable=False, default=0)
     last_updated_utc_unix_ms = db.Column(db.Integer, nullable=False, server_default="-1")
     aws_ami_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
@@ -46,7 +46,7 @@ class InstanceSorted(db.Model):
     A list of instance IDs and info, for selecting where
     we deploy incoming tasks to.
     Ordered by region (for faster SQL queries) and descending by
-    number of running containers (so we preferentially fill up old
+    number of running mandelboxes (so we preferentially fill up old
     instances rather than creating new ones).
     See tests/aws/test_instance_selection for a bunch of sample instance sort orders.
 
@@ -64,45 +64,45 @@ class InstanceSorted(db.Model):
     commit_hash = db.Column(db.String(40), nullable=False)
 
 
-class InstancesWithRoomForContainers(db.Model):
+class InstancesWithRoomForMandelboxes(db.Model):
     """
-    A map linking instance information to general container information
-    i.e. 'how many containers are running on this instance',
+    A map linking instance information to general mandelbox information
+    i.e. 'how many mandelboxes are running on this instance',
     'how many can be', etc.
 
     Attributes:
         instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         ami_id (string):  What image is the instance running?
-        max_containers (int): How many containers can the instance have?
-        num_running_containers (int): and how many does it have?
+        mandelbox_capacity (int): How many mandelboxes can the instance have?
+        num_running_mandelboxes (int): and how many does it have?
     """
 
-    __tablename__ = "instances_with_room_for_containers"
+    __tablename__ = "instances_with_room_for_mandelboxes"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
     aws_ami_id = db.Column(db.String(250), nullable=False)
-    container_capacity = db.Column(db.Integer)
-    num_running_containers = db.Column(db.Integer)
+    mandelbox_capacity = db.Column(db.Integer)
+    num_running_mandelboxes = db.Column(db.Integer)
 
 
-class ContainerInfo(db.Model):
+class MandelboxInfo(db.Model):
     """
-    Information about individual containers, namely
+    Information about individual mandelboxes, namely
     who's running them and where they're running.
 
     Attributes:
-        container_id (int):  which container is this?
-        instance_name (string): A unique identifier generated randomly to identify the instance.
-        user_id (string): who's running it?
+        mandelbox_id (int): which mandelbox is this?
+        instance_name (string): the instance the mandelbox lives on.
+        user_id (string): who requested it?
         status (string): is it running?
     """
 
-    __tablename__ = "container_info"
+    __tablename__ = "mandelbox_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
-    container_id = db.Column(db.String(250), primary_key=True)
+    mandelbox_id = db.Column(db.String(250), primary_key=True)
     instance_name = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)

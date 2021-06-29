@@ -25,7 +25,7 @@ sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 # Install jq to build JSON
 sudo apt-get install -y jq
 
-# Create list of GPU devices for mounting to containers
+# Create list of GPU devices for mounting to mandelboxes
 DEVICES=""
 for DEVICE_INDEX in {0..64}
 do
@@ -36,15 +36,15 @@ do
 done
 DEVICE_MOUNTS=`printf "$DEVICES"`
 
-# Set IP tables for routing networking from host to containers
+# Set IP tables for routing networking from host to mandelboxes
 sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
 sudo sysctl -p /etc/sysctl.conf
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
 sudo apt-get install -y iptables-persistent
 
-# Disable containers from accessing the instance metadata service on the host.
-# Critical to prevent IAM escalation from within containers while still using ECS.
+# Disable mandelboxes from accessing the instance metadata service on the host.
+# Critical to prevent IAM escalation from within mandelboxes while still using ECS.
 sudo iptables -I DOCKER-USER -i docker0 -d 169.254.169.254 -p tcp -m multiport --dports 80,443 -j DROP
 sudo iptables -I DOCKER-USER -i docker0 -d 169.254.170.2   -p tcp -m multiport --dports 80,443 -j DROP
 
@@ -58,7 +58,7 @@ sudo rm -f /var/lib/ecs/data/*
 # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
 # It gets enabled in base_userdata_template.sh
 
-# Here we pre-pull the desired container-images onto the AMI to speed up container startup.
+# Here we pre-pull the desired mandelbox-images onto the AMI to speed up mandelbox startup.
 ghcr_uri=ghcr.io
 echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
 pull_image_base="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"
