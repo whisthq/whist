@@ -12,8 +12,6 @@ require (
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
-	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
-	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.2 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v20.10.6+incompatible
