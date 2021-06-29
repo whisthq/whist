@@ -1,4 +1,4 @@
-# Fratal Database Migration Workflow
+# Fractal Database Migration Workflow
 
 This subfolder contains all the Python logic to automatically perform database migrations.
 

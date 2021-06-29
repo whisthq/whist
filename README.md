@@ -43,7 +43,7 @@ The Fractal monorepository contains 8 Fractal subrepositories:
 
 | Subrepository        | Description                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
-| client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.      |
+| client-applications  | The client-side Electron-based application users download and use to launch a streamed application.      |
 | container-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
 | core-ts              | The Fractal internal TypeScript library of utilities and reusable components.                            |
 | ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates container management.              |

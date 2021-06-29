@@ -25,7 +25,7 @@ Consider the following situation in which you might find yourself while writing 
 `sum.py`
 
 ```python
-"""Cacluate the total number of COVID-19 cases around the world."""
+"""Calculate the total number of COVID-19 cases around the world."""
 
 import requests
 

@@ -10,7 +10,7 @@ We forked the original `ecs-agent` package to be able to better modify it and in
 
 ## Fractal Changelog
 
-We have added functionality that allows us to, in our task definitions, create and mount a container-specifc directory. To do this, we add a bind mount in the taskdef as follows:
+We have added functionality that allows us to, in our task definitions, create and mount a container-specific directory. To do this, we add a bind mount in the taskdef as follows:
 
 ```
     {
@@ -18,7 +18,7 @@ We have added functionality that allows us to, in our task definitions, create a
       "efsVolumeConfiguration": null,
       "name": "test-container-specific-dir",
       "host": {
-        "sourcePath": "/test/%%FRACTAL_CONTAINER_SPECIFC_DIR_PLACEHOLDER%%"
+        "sourcePath": "/test/%%FRACTAL_CONTAINER_SPECIFIC_DIR_PLACEHOLDER%%"
       },
       "dockerVolumeConfiguration": null
     }
