@@ -61,8 +61,6 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
-        # TODO: move the `local_dev` to the mono-repo config as this needs to be a
-        # shared secret between client_app and main-webserver.
         client_commit_hash = (
             RegionToAmi.query.filter_by(region_name=body.region, ami_active=True)
             .one_or_none()
