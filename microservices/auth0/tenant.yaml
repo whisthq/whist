@@ -167,9 +167,7 @@ databases: []
 connections:
   - name: apple
     strategy: apple
-    enabled_clients:
-      - Fractal
-      - Webserver
+    enabled_clients: []
     is_domain_connection: false
     options:
       kid: D3T9SSLTY5
@@ -183,7 +181,6 @@ connections:
     strategy: google-oauth2
     enabled_clients:
       - Fractal
-      - Webserver
     is_domain_connection: false
     options:
       email: true
