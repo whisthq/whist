@@ -22,5 +22,5 @@ exclude_lines =
 
 ignore_errors = True
 
-[html]
+[xml]
 directory = ./
