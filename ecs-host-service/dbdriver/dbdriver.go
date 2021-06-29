@@ -35,7 +35,11 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 		return utils.MakeError("dbdriver.Initialize() called multiple times!")
 	}
 
-	connStr := getFractalDBConnString()
+	connStr, err := getFractalDBConnString()
+	if err != nil {
+		return err
+	}
+
 	pgxConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return utils.MakeError("Unable to parse database connection string! Error: %s", err)
