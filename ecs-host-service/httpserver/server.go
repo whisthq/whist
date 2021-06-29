@@ -214,6 +214,8 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
+	logger.Info("GOT A HOST SERVICE REQUEST: %s", body)
+
 	// TODO: rename these auth_secrets to something more accurate, like `jwt`s or something.
 
 	// Extract only the auth_secret field from a raw JSON unmarshalling that
