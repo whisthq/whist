@@ -14,9 +14,9 @@ def set_local_lock_timeout(seconds: int):
 
     from sqlalchemy.exc import OperationalError
     try:
-        # this gets the all unassigned containers with a 10 second timeout on the lock
+        # this gets the all unassigned mandelboxes with a 10 second timeout on the lock
         set_local_lock_timeout(10)
-        unassigned_containers = UserContainer.query.with_for_update().filter_by(user_id=None)
+        unassigned_mandelboxes = MandelboxInfo.query.with_for_update().filter_by(user_id=None)
     except OperationalError as oe:
         if "lock timeout" in str(oe):
             # handle lock timeout

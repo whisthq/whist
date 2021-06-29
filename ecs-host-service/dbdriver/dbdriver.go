@@ -84,13 +84,13 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	// ends up finishing off the heartbeat goroutine as well.
 	go heartbeatGoroutine()
 
-	// Start a goroutine that removes stale allocated containers (i.e. containers
-	// that are marked allocated in the database but have not actually been
-	// requested in a while).
+	// Start a goroutine that removes stale allocated mandelboxes (i.e.
+	// mandelboxes that are marked allocated in the database but have not
+	// actually been requested in a while).
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-		removeStaleAllocatedContainersGoroutine(globalCtx)
+		removeStaleAllocatedMandelboxesGoroutine(globalCtx)
 	}()
 
 	return nil

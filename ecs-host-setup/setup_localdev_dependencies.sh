@@ -18,7 +18,7 @@ echo "Installing python dependencies..."
 echo "================================================"
 sudo apt-get install -y python3-pip
 cd ..
-find ./container-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
+find ./mandelbox-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
 cd ecs-host-setup
 
 echo "================================================"

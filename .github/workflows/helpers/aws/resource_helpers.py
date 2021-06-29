@@ -164,25 +164,6 @@ def get_all_aws_clusters(region):
     return all_cluster_arns
 
 
-def get_num_instances(cluster, region):
-    """
-    Gets the number of Container Instances in a specified Cluster
-
-    Args:
-        cluster (str): cluster name (not ARN)
-        region (str): region where cluster is running
-
-    Returns:
-        int: number of instances in the cluster
-    """
-    client = boto3.client("ecs", region_name=region)
-    response = client.describe_clusters(clusters=[cluster])
-
-    instance_count = response["clusters"][0]["registeredContainerInstancesCount"]
-
-    return instance_count
-
-
 def cluster_to_asgs(cluster_arn, region):
     """
     Takes a Cluster ARN and maps it to its Auto Scaling Group(s) via its
@@ -245,42 +226,6 @@ def get_db_clusters(url, secret, region):
     ).communicate()
     clusters = json.loads(clusters)["data"]["hardware_cluster_info"]
     return [list(cluster.values())[0] for cluster in clusters]
-
-
-def get_db_tasks(url, secret, region):
-    """
-    Queries specified db for all tasks in a specified region
-
-    Args:
-        url (str): database url to query
-        secret (str): x-hasura-admin-secret
-        region (str): target region
-
-    Returns:
-        list: list of task ARNs
-    """
-    tasks, _ = subprocess.Popen(
-        [
-            "curl",
-            "-L",
-            "-X",
-            "POST",
-            url,
-            "-H",
-            "Content-Type: application/json",
-            "-H",
-            "x-hasura-admin-secret: %s" % (secret),
-            "--data-raw",
-            (
-                '{"query":"query get_tasks($_eq: String = \\"%s\\")'
-                ' { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
-            )
-            % (region),
-        ],
-        stdout=subprocess.PIPE,
-    ).communicate()
-    tasks = json.loads(tasks)["data"]["hardware_user_containers"]
-    return [list(task.values())[0] for task in tasks]
 
 
 def get_hanging_asgs(region):

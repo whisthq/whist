@@ -52,7 +52,7 @@ def test_success_enabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_s
 def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db):
     """
     `launch_new_ami_buffer` function takes a region name, AMI to ensure that we
-    have preconfigured buffer container capacity(10) with the given AMI.
+    have the preconfigured buffer mandelbox capacity (currently 10) for the given AMI.
 
     When this function gets invoked during AMI upgrade, there won't be any instances
     running with the newer AMIs.
