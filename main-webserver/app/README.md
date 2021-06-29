@@ -42,13 +42,13 @@ Models should exactly mimic the DB tables they're based on (down to column names
 
 # Most important code:
 
-## Container creation flow:
+## Mandelbox creation flow:
 
 TODO: Update this as per new flow.
 
-~~This goes from `app\blueprints\aws\aws_container_blueprint.py` to `app\celery\aws_ecs_creation.py` through `app\helpers\blueprint_helpers\aws\aws_container_post.py`
+~~This goes from `app\blueprints\aws\aws_mandelbox_blueprint.py` to `app\celery\aws_ecs_creation.py` through `app\helpers\blueprint_helpers\aws\aws_mandelbox_assign_post.py`
 and uses `app\helpers\utils\aws\base_ecs_client.py` to handle ECS client operations.~~
 
-## Container status checking:
+## Mandelbox status checking:
 
-~~This goes from `app\blueprints\aws\aws_container_blueprint.py` to `app\celery\aws_ecs_status.py` through `app\helpers\blueprint_helpers\aws\aws_container_post.py`.~~
+~~This goes from `app\blueprints\aws\aws_mandelbox_blueprint.py` to `app\celery\aws_ecs_status.py` through `app\helpers\blueprint_helpers\aws\aws_mandelbox_assign_post.py`.~~

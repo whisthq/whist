@@ -1,40 +1,38 @@
 package main
 
 import (
-	"math"
-	"regexp"
-	"strings"
-
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via Sentry. Instead, use the
 	// fractallogger package imported below as `logger`.
+
 	"context"
 	"io"
 	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/auth"
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry. For the same reason, we make sure not
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
+	"github.com/fractal/fractal/ecs-host-service/auth"
 	"github.com/fractal/fractal/ecs-host-service/dbdriver"
+	"github.com/fractal/fractal/ecs-host-service/httpserver"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/portbindings"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	"github.com/fractal/fractal/ecs-host-service/metadata"
 	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
 	"github.com/fractal/fractal/ecs-host-service/metrics"
-
-	"github.com/fractal/fractal/ecs-host-service/ecsagent"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
-	"github.com/fractal/fractal/ecs-host-service/httpserver"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -63,7 +61,8 @@ func init() {
 	}
 }
 
-// Start the Docker daemon ourselves, to have control over all Docker containers spun
+// Start the Docker daemon ourselves, to have control over all Docker
+// containers running on the host.
 func startDockerDaemon(globalCancel context.CancelFunc) {
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
 	err := cmd.Run()
@@ -72,28 +71,6 @@ func startDockerDaemon(globalCancel context.CancelFunc) {
 	} else {
 		logger.Info("Successfully started the Docker daemon ourselves.")
 	}
-}
-
-// We take ownership of the ECS agent ourselves
-func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
-		exitCode := ecsagent.Main(globalCtx, globalCancel, goroutineTracker)
-
-		// If we got here, then that means that the ecsagent has exited for some
-		// reason (that means the context we passed in was cancelled, or there was
-		// some initialization error). Regardless, we "panic" and cancel the
-		// context if the error is nonzero.
-		if exitCode != 0 {
-			logger.Panicf(globalCancel, "ECS Agent exited with code %d", exitCode)
-		} else {
-			// Don't send error to Sentry
-			globalCancel()
-			logger.Infof("ECS Agent exited with code 0")
-		}
-
-	}()
 }
 
 // Drain and shutdown the host service
@@ -109,12 +86,10 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 }
 
 // ------------------------------------
-// Container event handlers
+// Mandelbox event handlers
 // ------------------------------------
 
-// SpinUpMandelbox is currently only used in the localdev environment, but
-// should now be "production-ready", i.e. create containers with the same (or
-// equivalent) configurations as the ecsagent with our task definitions.
+// SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *httpserver.SpinUpMandelboxRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
@@ -131,20 +106,20 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
-	// Then, verify that we are expecting this user to request a container.
-	err := dbdriver.VerifyAllocatedContainer(req.UserID, req.MandelboxID)
+	// Then, verify that we are expecting this user to request a mandelbox.
+	err := dbdriver.VerifyAllocatedMandelbox(req.UserID, req.MandelboxID)
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
 		return
 	}
 
-	// If so, create the container object.
-	fc := fractalcontainer.New(globalCtx, goroutineTracker, req.MandelboxID)
-	logger.Infof("SpinUpMandelbox(): created FractalContainer object %s", fc.GetFractalID())
+	// If so, create the mandelbox object.
+	fc := mandelbox.New(globalCtx, goroutineTracker, req.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetFractalID())
 
-	// If the creation of the container fails, we want to clean up after it. We
+	// If the creation of the mandelbox fails, we want to clean up after it. We
 	// do this by setting `createFailed` to true until all steps are done, and
-	// closing the container's context on function exit if `createFailed` is
+	// closing the mandelbox's context on function exit if `createFailed` is
 	// still set to true.
 	var createFailed bool = true
 	defer func() {
@@ -153,11 +128,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}()
 
-	// Request port bindings for the container.
+	// Request port bindings for the mandelbox.
 	if err := fc.AssignPortBindings([]portbindings.PortBinding{
-		{ContainerPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
-		{ContainerPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
-		{ContainerPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
 	}); err != nil {
 		logAndReturnError("Error assigning port bindings: %s", err)
 		return
@@ -172,7 +147,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	// Initialize Uinput devices for the container
+	// Initialize Uinput devices for the mandelbox
 	if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
 		logAndReturnError("Error initializing uinput devices: %s", err)
 		return
@@ -180,19 +155,19 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): successfully initialized uinput devices.")
 	devices := fc.GetDeviceMappings()
 
-	// Allocate a TTY for the container
+	// Allocate a TTY for the mandelbox
 	if err := fc.InitializeTTY(); err != nil {
 		logAndReturnError("Error initializing TTY: %s", err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): successfully initialized TTY.")
 
-	appName := fctypes.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
+	appName := types.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
 
 	logger.Infof(`SpinUpMandelbox(): app name: "%s"`, appName)
 	logger.Infof(`SpinUpMandelbox(): app image: "%s"`, req.AppImage)
 
-	// We now create the underlying docker container.
+	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
 	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
@@ -226,7 +201,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/containerResourceMappings:/fractal/resourceMappings:ro", fc.GetFractalID()),
+			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", fc.GetFractalID()),
 			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetFractalID()),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetFractalID()),
@@ -257,9 +232,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			CPUShares: 2,
 			Memory:    6552550944,
 			NanoCPUs:  0,
-			// Don't need to set CgroupParent, since each container is its own task.
+			// Don't need to set CgroupParent, since each mandelbox is its own task.
 			// We're not using anything like AWS services, where we'd want to put
-			// several containers under one limit.
+			// several mandelboxes under one limit.
 			Devices:            devices,
 			KernelMemory:       0,
 			KernelMemoryTCP:    0,
@@ -272,31 +247,28 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			IOMaximumBandwidth: 0,
 		},
 	}
-	// TODO: investigate whether putting all GPUs in all containers (i.e. the default here) is beneficial.
-	containerName := utils.Sprintf("%s-%s", req.AppImage, req.MandelboxID)
+	// TODO: investigate whether putting all GPUs in all mandelboxes (i.e. the default here) is beneficial.
+	mandelboxName := utils.Sprintf("%s-%s", req.AppImage, req.MandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
-	containerName = re.ReplaceAllString(containerName, "-")
+	mandelboxName = re.ReplaceAllString(mandelboxName, "-")
 
-	// TODO: Actually add a non-nil platform argument here once the ecsagent
-	// codebase is deleted. It's probably not necessary or important in any way,
-	// but it might be a "nice to have".
-	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, nil, containerName)
+	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
 		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetFractalID(), err)
 		return
 	}
 
 	logger.Infof("Value returned from ContainerCreate: %#v", dockerBody)
-	dockerID := fctypes.DockerID(dockerBody.ID)
+	dockerID := types.DockerID(dockerBody.ID)
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
 
 	err = fc.RegisterCreation(dockerID, appName)
 	if err != nil {
-		logAndReturnError("Error registering container creation with DockerID %s and AppName %s: %s", dockerID, appName, err)
+		logAndReturnError("Error registering mandelbox creation with DockerID %s and AppName %s: %s", dockerID, appName, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully registered container creation with DockerID %s and AppName %s", dockerID, appName)
+	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with DockerID %s and AppName %s", dockerID, appName)
 
 	if err := fc.WriteResourcesForProtocol(); err != nil {
 		logAndReturnError("Error writing resources for protocol: %s", err)
@@ -306,10 +278,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
-		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, req.MandelboxID, err)
+		logAndReturnError("Error starting mandelbox with dockerID %s and FractalID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully started container %s", containerName)
+	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s", mandelboxName)
 
 	result := httpserver.SpinUpMandelboxRequestResult{
 		HostPortForTCP32262: hostPortForTCP32262,
@@ -318,7 +290,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AesKey:              aesKey,
 	}
 
-	fc.WriteStartValues(req.DPI, "")
+	fc.WriteStartValues(req.DPI)
 	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 	fc.AssignToUser(req.UserID)
 
@@ -326,7 +298,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// TODO: check that the config token is actually good? This might happen
 	// automatically.
 	if err != nil {
-		// Not a fatal error --- we still want to spin up a container, but without
+		// Not a fatal error --- we still want to spin up a mandelbox, but without
 		// app config saving at the end of the session, so we set a blank
 		// encryption token.
 		logger.Error(err)
@@ -335,113 +307,31 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = fc.MarkReady()
 	if err != nil {
-		logAndReturnError("Error marking container as ready: %s", err)
+		logAndReturnError("Error marking mandelbox as ready: %s", err)
 		return
 	}
 
-	err = dbdriver.WriteContainerStatus(req.MandelboxID, dbdriver.ContainerStatusRunning)
+	err = dbdriver.WriteMandelboxStatus(req.MandelboxID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
-		logAndReturnError("Error marking container running: %s", err)
+		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
 	}
 
-	// Mark container creation as successful, preventing cleanup on function
+	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false
 
 	req.ReturnResult(result, nil)
-	logger.Infof("SpinUpMandelbox(): Finished starting up container %s", fc.GetFractalID())
+	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", fc.GetFractalID())
 }
 
-// Handles the set config encryption token request from the client app. Takes
-// the request to the `set_config_encryption_token` endpoint as an argument and
-// returns nil if no errors, and error object if error.
-func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetConfigEncryptionTokenRequest) {
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := utils.MakeError("handleSetConfigEncryptionTokenRequest(): "+fmt, v...)
-		logger.Error(err)
-		req.ReturnResult("", err)
-	}
-
-	// Verify that the request access token is valid for the given userID.
-	if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
-		logAndReturnError("Invalid JWT access token: %s", err)
-		return
-	}
-
-	// Verify that the requested host port is valid
-	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		logAndReturnError("Invalid HostPort for set config encryption token request: %v", req.HostPort)
-		return
-	}
-	hostPort := uint16(req.HostPort)
-
-	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	// Save config encryption token in container struct
-	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
-
-	// If CompleteContainerSetup doesn't verify the client app access token, configs are not retrieved or saved.
-	err = fc.CompleteContainerSetup(req.UserID, req.ClientAppAccessToken, "handleSetConfigEncryptionTokenRequest")
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	req.ReturnResult("", nil)
-}
-
-// Creates a file containing the DPI assigned to a specific container, and make
-// it accessible to that container. Also take the received User ID and retrieve
-// the user's app configs if the User ID is set. We make this function send
-// back the result for the provided request so that we can run in its own
-// goroutine and not block the event loop goroutine.
-func handleStartValuesRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetContainerStartValuesRequest) {
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := utils.MakeError("handleStartValuesRequest(): "+fmt, v...)
-		logger.Error(err)
-		req.ReturnResult("", err)
-	}
-
-	// Verify identifying hostPort value
-	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		logAndReturnError("Invalid HostPort: %v", req.HostPort)
-		return
-	}
-	hostPort := uint16(req.HostPort)
-
-	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	err = fc.WriteStartValues(req.DPI, req.ContainerARN)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	err = fc.CompleteContainerSetup(req.UserID, req.ClientAppAccessToken, fractalcontainer.SetupEndpoint("handleStartValuesRequest"))
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	req.ReturnResult("", nil)
-}
-
-// Handle tasks to be completed when a container dies
-func containerDieHandler(id string) {
-	// Exit if we are not dealing with a Fractal container, or if it has already
+// Handle tasks to be completed when a mandelbox dies
+func mandelboxDieHandler(id string) {
+	// Exit if we are not dealing with a Fractal mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
-	fc, err := fractalcontainer.LookUpByDockerID(fctypes.DockerID(id))
+	fc, err := mandelbox.LookUpByDockerID(types.DockerID(id))
 	if err != nil {
-		logger.Infof("containerDieHandler(): %s", err)
+		logger.Infof("mandelboxDieHandler(): %s", err)
 		return
 	}
 
@@ -452,7 +342,7 @@ func containerDieHandler(id string) {
 // Service shutdown and initialization
 // ---------------------------
 
-// Create the directory used to store the container resource allocations
+// Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/fractal" already exists --- if so, panic, since
@@ -466,7 +356,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	}
 
 	// Create the fractal directory and make it non-root user owned so that
-	// non-root users in containers can access files within (especially user
+	// non-root users in mandelboxes can access files within (especially user
 	// configs). We do this in a deferred function so that any subdirectories
 	// created later in this function are also covered.
 	err := os.MkdirAll(utils.FractalDir, 0777)
@@ -491,7 +381,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	}
 }
 
-// Delete the directory used to store the container resource allocations (e.g.
+// Delete the directory used to store the mandelbox resource allocations (e.g.
 // TTYs) on disk, as well as the directory used to store the SSL certificate we
 // use for the httpserver, and our temporary directory.
 func uninitializeFilesystem() {
@@ -553,7 +443,7 @@ func main() {
 		}
 
 		// Cancel the global context, if it hasn't already been cancelled. Note
-		// that this also cleans up after every container.
+		// that this also cleans up after every mandelbox.
 		globalCancel()
 
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
@@ -613,15 +503,6 @@ func main() {
 	}
 
 	startDockerDaemon(globalCancel)
-
-	// Only start the ECS Agent if we are talking to a dev, staging, or
-	// production webserver.
-	if !metadata.IsLocalEnv() {
-		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", metadata.GetAppEnvironment(), metadata.GetFractalWebserver())
-		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
-	} else {
-		logger.Infof("Running in environment %s, so not starting ecs-agent.", metadata.GetAppEnvironment())
-	}
 
 	// Start main event loop
 	startEventLoop(globalCtx, globalCancel, &goroutineTracker, httpServerEvents)
@@ -704,7 +585,7 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 				}
 				if dockerevent.Action == "die" {
-					containerDieHandler(dockerevent.ID)
+					mandelboxDieHandler(dockerevent.ID)
 				}
 
 			// It may seem silly to just launch goroutines to handle these
@@ -714,12 +595,6 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 			case serverevent := <-httpServerEvents:
 				switch serverevent.(type) {
 				// TODO: actually handle panics in these goroutines
-				case *httpserver.SetContainerStartValuesRequest:
-					go handleStartValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerStartValuesRequest))
-
-				case *httpserver.SetConfigEncryptionTokenRequest:
-					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
-
 				case *httpserver.SpinUpMandelboxRequest:
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
 
