@@ -57,9 +57,8 @@ jobs:
             - name: Build Go Project
               working-directory: ecs-host-service
               env:
-                  DB_URL_DEV: ${{ secrets.DB_URL_DEV }}
-                  DB_URL_STAGING: ${{ secrets.DB_URL_STAGING }}
-                  DB_URL_PROD: ${{ secrets.DB_URL_PROD }}
+                  HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                  HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
                   LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
               run: make build
 
