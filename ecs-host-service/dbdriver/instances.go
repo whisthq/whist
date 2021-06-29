@@ -57,16 +57,16 @@ func registerInstance() error {
 	}
 	instanceType, err := aws.GetInstanceType()
 	if err != nil {
-		return utils.MakeError("Couldn't register container instance: couldn't get AWS Instance type: %s", err)
+		return utils.MakeError("Couldn't register instance: couldn't get AWS Instance type: %s", err)
 	}
 	instanceID, err := aws.GetInstanceID()
 	if err != nil {
-		return utils.MakeError("Couldn't register container instance: couldn't get AWS Instance id: %s", err)
+		return utils.MakeError("Couldn't register instance: couldn't get AWS Instance id: %s", err)
 	}
 
 	latestMetrics, errs := metrics.GetLatest()
 	if len(errs) != 0 {
-		return utils.MakeError("Couldn't register container instance: errors getting metrics: %+v", errs)
+		return utils.MakeError("Couldn't register instance: errors getting metrics: %+v", errs)
 	}
 
 	// Create a transaction to register the instance, since we are querying and
@@ -118,7 +118,7 @@ func registerInstance() error {
 		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
 		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
 		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
-		ContainerCapacity:    4 * latestMetrics.NumberOfGPUs,
+		MandelboxCapacity:    4 * latestMetrics.NumberOfGPUs,
 		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1000),
 		Ip: pgtype.Varchar{
 			String: publicIP4.String(),
@@ -140,7 +140,7 @@ func registerInstance() error {
 }
 
 // MarkDraining marks this instance as draining, causing the webserver
-// to stop assigning new containers here.
+// to stop assigning new mandelboxes here.
 func markDraining() error {
 	if !enabled {
 		return nil
@@ -170,8 +170,8 @@ func markDraining() error {
 
 // unregisterInstance removes the row for the instance from the
 // `hardware.instance_info` table. Note that due to the `delete cascade`
-// constraint on `hardware.container_info` this automatically removes all the
-// containers for the instance as well.
+// constraint on `hardware.mandelbox_info` this automatically removes all the
+// mandelboxes for the instance as well.
 func unregisterInstance() error {
 	if !enabled {
 		return nil

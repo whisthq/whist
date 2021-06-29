@@ -29,7 +29,7 @@ func init() {
 	// add an additional argument to each logging method taking in the current
 	// context. This seems like a lot of work, so we just use a set of global
 	// tags instead, initializing them in InitializeSentry() and not touching
-	// them afterwards. Any container-specific information (which is what I
+	// them afterwards. Any mandelbox-specific information (which is what I
 	// imagine we would use local tags for) we just add in the text of the
 	// respective error message sent to Sentry. Alternatively, we might just be
 	// able to use sentry.WithScope(), but that is future work.

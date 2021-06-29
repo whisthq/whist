@@ -196,9 +196,10 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     current_running_instances = fetch_current_running_instances(current_active_amis_str)
     for active_instance in current_running_instances:
-        # At this point, we should still have the lock that we grabbed when we invoked
-        # the `fetch_current_running_instances` function. Using this lock, we mark the
-        # instances as DRAINING to prevent a container being assigned to the instances.
+        # At this point, we should still have the lock that we grabbed when we
+        # invoked the `fetch_current_running_instances` function. Using this
+        # lock, we mark the instances as DRAINING to prevent a mandelbox from
+        # being assigned to the instances.
         active_instance.status = DRAINING
     db.session.commit()
 
