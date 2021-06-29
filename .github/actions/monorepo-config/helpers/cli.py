@@ -5,16 +5,21 @@
 # input and output as JSON.
 import json
 import click
-from .validate import validate_cli_profile
-from .utils import chunks
+import toolz
 
 
-def parse_cli_profiles(args):
+def parse_cli_profiles(_ctx, _param, args):
     result = {}
-    for chunk in chunks(args, 2):
-        validate_cli_profile(chunk)
+    for chunk in toolz.partition(2, args):
+        if not chunk[0].startswith("--"):
+            raise click.BadParameter(
+                f"All options must start with --, received: {chunk[0]}"
+            )
+        if not len(chunk) == 2:
+            raise click.BadParameter(f"Missing value for option: {chunk[0]}")
         key, value = chunk
-        result[key[(len("--")) :]] = value
+        prefix = len("--")
+        result[key[prefix:]] = value
     return result
 
 
@@ -33,18 +38,6 @@ def _coerce_json(_ctx, _param, values):
         return dicts
     except json.JSONDecodeError as err:
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")
-
-
-def parse_profiles(_ctx, _param, values):
-    for chunk in chunks(values, 2):
-        if not chunk[0].startswith("--"):
-            raise click.BadParameter(
-                f"All options must start with --, received: {chunk[0]}"
-            )
-        if not len(chunk) == 2:
-            raise click.BadParameter(f"Missing value for option: {chunk[0]}")
-
-    return parse_cli_profiles(values)
 
 
 # GitHub Actions can only pass arguments through environment variables
@@ -101,7 +94,10 @@ def create_cli(main_fn):
         help="A JSON string containing a dictionary.",
     )
     @click.argument(
-        "profiles", nargs=-1, type=click.UNPROCESSED, callback=parse_profiles
+        "profiles",
+        nargs=-1,
+        type=click.UNPROCESSED,
+        callback=parse_cli_profiles,
     )
     def cli(profiles, path=None, secrets=(), out=()):
         """Parse configuration and secrets, merging all values into a single
@@ -125,8 +121,6 @@ def create_cli(main_fn):
         """
         result = main_fn(path, secrets=secrets, profiles=profiles)
         result_json = json.dumps(result, indent=4)
-
-        print("PROFILES MADE IT", profiles)
 
         click.echo(result_json)
         if out:

@@ -1,63 +1,139 @@
 #!/usr/bin/env python
 import pytest
-import helpers.validate as validate
+import tests.mock_data as mock_data
+import helpers.validate as valid
+import helpers.utils as utils
 
 
-def test_must():
-    is_fn = "result must be function"
-    # is_true = "result fn must return True if test_fn(value) is not falsey"
-    is_false = "result fn must throw error if test_fn(value) is falsey"
+def test_validate_profiles():
+    profile_map = {"env": ["b", "c"], "os": ["e", "f"]}
 
-    example = True
+    not_string = {"env": [1, 2], "os": "e"}
 
-    result_true = validate.must(lambda x: x is True)
-    result_false = validate.must(lambda x: x is False)
-    assert callable(result_true), is_fn
-    # assert result_true(example), is_true
-    assert callable(result_false), is_fn
+    assert valid.validate_profiles(
+        profile_map, not_string
+    ), "should fail if profile argument has non-string value"
 
-    assert result_true(example) is None
-    # with pytest.raises(validate.ValidationError):
-    #     assert result_false(example), is_false
+    not_in_map_keys = {"env": ["b", "c"], "badkey": ["e", "f"]}
+    assert valid.validate_profiles(
+        profile_map, not_in_map_keys
+    ), "should fail if profile argument has key missing from profiles.yml"
 
+    not_in_map_vals = {"env": "b", "os": "z"}
+    assert valid.validate_profiles(
+        profile_map, not_in_map_vals
+    ), "should fail if profile argument has value missing from profiles.yml"
 
-def test_validate_safe():
-    catches = "result must return list of any Assertion errors thrown"
-    empties = "result should be an empty list if no errors thrown"
-    must = validate.must
+    good_profiles = {"env": "b", "os": "f"}
 
-    result_true = validate.validate_safe(
-        [1, 2, 3, 4, 5],
-        must(lambda x: isinstance(x, list), "be a list"),
-        must(lambda x: len(x) == 5, "length 5"),
-        must(lambda x: sum(x) == 15, "sum to 15"),
-    )
-
-    result_false = validate.validate_safe(
-        [1, 2, 3, 4, 5],
-        must(lambda x: isinstance(x, list), "be a list"),
-        must(lambda x: len(x) == 5, "length 5"),
-        must(lambda x: sum(x) == 20, "sum to 20"),
-    )
-
-    assert len(list(result_true)) == 0, empties
-    assert len(list(result_false)) == 1, catches
+    assert not valid.validate_profiles(
+        profile_map, good_profiles
+    ), "should pass on well-formed profile argument"
 
 
-def test_validate():
-    must = validate.must
+def test_validate_secrets():
+    schema = {"key1": None, "key2": None, "key3": "value3"}
+    not_dict = [{"key1": "value1", "key2": "value2"}]
+    assert valid.validate_secrets(
+        schema, not_dict
+    ), "should fail if secrets argument is not a dictionary"
 
-    validate.validate(
-        [1, 2, 3, 4, 5],
-        must(lambda x: isinstance(x, list), "be a list"),
-        must(lambda x: len(x) == 5, "length 5"),
-        must(lambda x: sum(x) == 15, "sum to 15"),
-    )
+    missing = {"key1": "value1", "key4": "value4"}
+    assert valid.validate_secrets(
+        schema, missing
+    ), "should fail if secrets argument contains key not in config schema"
 
-    with pytest.raises(validate.ValidationError):
-        validate.validate(
-            [1, 2, 3, 4, 5],
-            must(lambda x: isinstance(x, list), "be a list"),
-            must(lambda x: len(x) == 5, "length 5"),
-            must(lambda x: sum(x) == 20, "sum to 20"),
-        )
+    secrets = {"key1": "value1", "key2": "value2"}
+    assert not valid.validate_secrets(
+        schema, secrets
+    ), "should pass with well-formed secrets argument"
+
+
+def test_validate_profile_yaml():
+    is_list = [{"env": ["b", "c"], "os": ["e", "f"]}]
+
+    assert valid.validate_profile_yaml(
+        is_list
+    ), "should fail if not a dictionary"
+
+    not_str_list = {"env": ["b", [1, 2, 3]], "os": ["e", "f"]}
+
+    assert valid.validate_profile_yaml(
+        not_str_list
+    ), "should fail if a child key is not a list of strings"
+
+    not_str_value = {"env": ["b", 1], "os": ["e", "f"]}
+
+    assert valid.validate_profile_yaml(
+        not_str_value
+    ), "should fail if a child key is not a list of strings"
+
+    duplicate_child_value = {"env": ["b", "c"], "os": ["b", "f"]}
+
+    assert valid.validate_profile_yaml(
+        duplicate_child_value
+    ), "should fail if any leaf values are duplicated"
+
+
+def test_validate_schema_yamls():
+    profile_map = {"env": ["b", "c"], "os": ["e", "f"]}
+    not_dict = [
+        [{"a": {"b": {"c": 1}}, "d": {"e": 2}}],
+        {"a": {"b": {"b": 1}}, "x": {"e": 2}},
+    ]
+    assert valid.validate_schema_yamls(
+        profile_map, not_dict
+    ), "should fail if a schema is not a dictionary"
+
+    duplicate_parent_keys = [
+        {"a": {"b": {"c": 1}}, "d": {"e": 2}},
+        {"a": {"b": {"b": 1}}, "x": {"e": 2}},
+    ]
+    name_collision_parent = [
+        {"env": {"b": {"c": 1}}, "d": {"e": 2}},
+        {"a": {"b": {"b": 1}}, "x": {"e": 2}},
+    ]
+
+    name_collision_child = [
+        {"f": {"b": {"c": 1}}, "d": {"e": 2}},
+        {"a": {"b": {"b": 1}}, "x": {"e": 2}},
+    ]
+
+    assert valid.validate_schema_yamls(
+        profile_map, duplicate_parent_keys
+    ), "should fail if a duplicate top-level key is found"
+
+    assert valid.validate_schema_yamls(
+        profile_map, name_collision_parent
+    ), "should fail if a top-level key collides with profile key"
+
+    assert valid.validate_schema_yamls(
+        profile_map, name_collision_child
+    ), "should fail if a top-level key collides with profile key"
+
+    duplicate_desc_keys = [{"a": {"b": {"b": 1}}, "d": {"e": 2}}]
+
+    assert valid.validate_schema_yamls(
+        profile_map, duplicate_desc_keys
+    ), "should fail with a duplicate descendant key"
+
+    missing_key_sets = [
+        {
+            "a": {"b": {"c": 1}},
+            "d": {"f": 2},
+            "m": {"x": 0, "c": 1},
+        }
+    ]
+
+    assert valid.validate_schema_yamls(
+        profile_map, missing_key_sets
+    ), "should fail if any child key set doesn't match any profile map values"
+
+    good_schemas = [
+        {
+            "a": {"b": 3, "c": {"e": 4, "f": 5}},
+            "d": {"e": {"b": 6, "c": 7}, "f": 7},
+        }
+    ]
+
+    assert not valid.validate_schema_yamls(profile_map, good_schemas)

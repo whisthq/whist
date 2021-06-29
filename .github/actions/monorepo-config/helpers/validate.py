@@ -17,158 +17,171 @@
 # helpfully print the name of the failing function along with the error.
 import typing
 import inspect
+import toolz
 from pathlib import Path
-from dataclasses import dataclass
 from .utils import (
-    truncated,
-    truncated_children,
-    is_yml,
-    children,
-    file_exists,
-    dir_exists,
-    is_dir,
-    is_list,
-    is_dict,
-    all_string,
-    all_yml_children,
-    not_empty_dict,
-    child_nested_keys,
-    has_child_path_partial,
-    no_keys_start_with_number,
-    no_keys_start_with_underscore,
-    all_keys_uppercase,
-    all_keys_valid_IEEE_variable,
-    all_items_in_set_partial,
-    all_child_keys_in_set_partial,
+    walk_keys,
+    child_keys,
+    find_matching,
+    find_missing,
+    find_duplicate,
+    find_missing_keys,
+    find_matching_keys,
+    find_duplicate_keys,
 )
-
-# Some common errors that are likely to result from validation mistakes.
-# The errors below will be caught and reported as a group. Other errors will
-# be raised normally.
-PRINT_LIMIT = 100  # truncate message after this many characters.
-
-
-@dataclass
-class ValidationData:
-    got: typing.Any
-    message: str
-    test: typing.Callable
-    exception: typing.Optional[Exception] = None
-
-    def __repr__(self):
-        """
-        Prints out the "must()" function call that triggered the error.
-        Example:
-         helpers.validate.ValidationError: [1, 2, 3, 4, 5] failed validation.
-             Failed test:
-                 must(lambda x: sum(x) == 20, "sum to 20")
-             Received:
-                 [1, 2, 3, 4, 5]
-        """
-        code = inspect.getsource(self.test).strip().strip(",")
-
-        head = f"{self.got} failed validation.\n"
-        fail = f"    Failed test:\n"
-        test = f"        {code}\n"
-        recv = f"    Received:\n"
-        data = f"        {self.got}\n"
-
-        return head + fail + test + recv + data
 
 
 class ValidationError(Exception):
     pass
 
 
-def must(test_fn, msg=None, got=None):
-    def from_value(value):
-        if not test_fn(value):
-            return ValidationData(
-                test=test_fn, message=msg, got=(got or value)
-            )
+def validate_profile_yaml(profile_map):
+    if not isinstance(profile_map, dict):
+        return {
+            "message": "profile map must be a dictionary",
+            "found": profile_map,
+        }
 
-    return from_value
+    groups = profile_map.values()
 
+    for invalid in (g for g in groups if not isinstance(g, (list, tuple))):
+        return {
+            "message": "profile groups should be lists of strings",
+            "found": invalid,
+        }
 
-def validate_safe(i, *validators):
-    for valid_fn in validators:
-        error_data = valid_fn(i)
-        if error_data:
-            yield error_data
+    all_profiles = list(toolz.concat(groups))
 
+    for invalid in (g for g in all_profiles if not isinstance(g, str)):
+        return {
+            "message": "all profiles in groups must be strings",
+            "found": invalid,
+        }
 
-def validate(i, *validators):
-    for error in validate_safe(i, *validators):
-        if error:
-            raise ValidationError(error)
-
-
-def validate_schema_folder(schema_folder_path):
-    validate(
-        schema_folder_path,
-        must(dir_exists, "path must exist"),
-        must(is_dir, "path must be folder"),
-        must(all_yml_children, "folder must contain only '.yml'"),
-    )
+    for duplicate in find_duplicate(all_profiles):
+        return {"message": "no duplicate profile keys", "found": duplicate}
 
 
-def validate_config_folder(config_folder_path):
-    validate(
-        config_folder_path,
-        must(dir_exists, "path must exist"),
-        must(is_dir, "path must be folder"),
-        must(
-            has_child_path_partial("schema"),
-            "schema must be a subfolder of working directory",
-        ),
-        must(
-            has_child_path_partial("profiles.yml"),
-            "profiles.yml must be a file in working directory",
-        ),
-    )
+def validate_schema_yamls(profile_map, schemas):
+    for invalid in (s for s in schemas if not (isinstance(s, dict))):
+        return {
+            "message": "all schemas must be dictionaries",
+            "found": invalid,
+        }
+
+    merged = toolz.merge(*schemas)
+
+    profile_groups = profile_map.keys()
+    profile_sets = [set(v) for v in profile_map.values()]
+    profile_keys = set(item for sublist in profile_sets for item in sublist)
+    reserved = set(toolz.concat([profile_keys, profile_groups]))
+
+    # No duplicate top-level keys
+    for duplicate in find_duplicate_keys(*schemas):
+        return {"message": "no duplicate top-level keys", "found": duplicate}
+
+    # No top-level keys matching profile names or group_names
+    for match in find_matching_keys(reserved, merged):
+        return {"message": "schema/profile name collision", "found": match}
+
+    verified_child = (validate_child(profile_sets, v) for v in merged.values())
+
+    return validate_root(merged) or next(verified_child, None)
 
 
-def validate_profiles(profiles, valid_profiles):
-    validate(
-        profiles,
-        must(
-            all_items_in_set_partial(valid_profiles),
-            f"all profiles must be in {valid_profiles}",
-        ),
-    )
+def validate_root(dct):
+    leaf_paths = list(walk_keys(dct))
+
+    for path in leaf_paths:
+        for duplicate in find_duplicate(path[:-1]):  # drop leaf
+            index = path.index(duplicate)
+            return {
+                "message": "no duplicate parent and child keys",
+                "path": path[:index],
+                "found": duplicate,
+            }
 
 
-def validate_profiles_yaml(profiles):
-    validate(
-        profiles,
-        must(is_list, "profiles.yml must contain only a list"),
-        must(all_string, "profiles.yml must contain only strings"),
-    )
+def validate_child(key_sets, dct, path=()):
+    if not isinstance(dct, dict):
+        return
+
+    keys = list(dct.keys())
+
+    if not any(find_matching([set(keys)], [set(s) for s in key_sets])):
+        return {
+            "message": "no matching profile set",
+            "path": path,
+            "found": keys,
+        }
+
+    for key in keys:
+        if message := validate_child(key_sets, dct[key], [*path, key]):
+            return message
 
 
-# In case schema keys are used as environment variables, we'll only allow
-# uppercase letters, numbers, and underscore. No starting with a number.
-def validate_schema_data(data, valid_profiles):
-    validate(
-        data,
-        must(is_dict, "schema data must be a dict"),
-        must(not_empty_dict, "schema data must not be empty"),
-        must(
-            no_keys_start_with_number,
-            "schema keys cannot start with a number ",
-        ),
-        must(
-            no_keys_start_with_underscore,
-            "schema keys cannot start with an underscore ",
-        ),
-        must(all_keys_uppercase, "schema keys must be uppercase"),
-        must(
-            all_keys_valid_IEEE_variable,
-            "schema key characters can only be A-Z, 0-9, and _",
-        ),
-        must(
-            all_child_keys_in_set_partial(valid_profiles),
-            f"nested schema keys must be one of {valid_profiles}",
-            got=lambda x: set(child_nested_keys(x)),
-        ),
-    )
+def validate_profiles(profile_map, profiles):
+    for group, value in profiles.items():
+        if not isinstance(value, str):
+            return {
+                "message": "profile argument must be string",
+                "found": value,
+            }
+        if group not in profile_map:
+            return {
+                "message": "invalid profile argument, not a profile.yml group",
+                "found": group,
+            }
+        if value not in set(profile_map[group]):
+            return {
+                "message": "invalid profile argument, not a profile.yml value",
+                "found": value,
+            }
+
+
+def validate_secrets(schema, secrets):
+    if not isinstance(secrets, dict):
+        return {
+            "message": "wrong type for secrets map, expected dict",
+            "found": secrets,
+        }
+
+    for missing in find_missing_keys(set(schema.keys()), secrets):
+        return {
+            "message": "key in secrets map not present in config schema",
+            "found": missing,
+        }
+
+
+def validate_inputs(profile_args, profile_yaml, schema_yamls):
+    errors = [
+        validate_profile_yaml(profile_yaml),
+        validate_schema_yamls(profile_yaml, schema_yamls),
+        validate_profiles(profile_yaml, profile_args),
+    ]
+    for error in (e for e in errors if e):
+        return error
+
+
+def validate_schema_path(path):
+    for p in Path(path).iterdir():
+        if p.suffix != ".yml":
+            return {
+                "message": "schema file without .yml extension",
+                "found": str(p),
+            }
+
+
+def validate_profile_path(path):
+    child_names = set(p.name for p in Path(path).iterdir())
+    if "profile.yml" not in child_names:
+        return {"message": "no profile.yml found in config folder"}
+
+
+def validate_paths(dir_path):
+    errors = [
+        validate_profile_path(dir_path),
+        validate_schema_path(dir_path),
+    ]
+    for error in (e for e in errors if e):
+        return error

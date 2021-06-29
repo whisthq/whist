@@ -18,4 +18,5 @@ PyYAML==5.4.1
 rich==10.2.2
 sortedcontainers==2.4.0
 toml==0.10.2
+toolz==0.11.1
 watchdog==2.1.2
