@@ -57,10 +57,9 @@ endif
 build: checkCI
 	$(GOMODTIDY)
 	$(GOGET) github.com/jschaf/pggen/cmd/pggen
-	# Once the ecsagent code is removed, let's generate `./...` instead of just
-	# `dbdriver`.
+	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
-	$(GOGEN) ./dbdriver/...
+	$(GOGEN) ./...
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \

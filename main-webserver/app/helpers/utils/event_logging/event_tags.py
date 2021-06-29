@@ -2,22 +2,22 @@
 more easily than plain string searches
 """
 
-CONTAINER_CREATION = "container-creation"
-CONTAINER_ASSIGNMENT = "container-assignment"
-CONTAINER_DELETION = "container-deletion"
+MANDELBOX_CREATION = "mandelbox-creation"
+MANDELBOX_ASSIGNMENT = "mandelbox-assignment"
+MANDELBOX_DELETION = "mandelbox-deletion"
 
 CLUSTER_CREATION = "cluster-creation"
 CLUSTER_DELETION = "cluster-delection"
 
-CONTAINER_LIFECYCLE = "container-lifecycle"
+MANDELBOX_LIFECYCLE = "mandelbox-lifecycle"
 CLUSTER_LIFECYCLE = "cluster-lifecycle"
 
 _type_tags = {
-    CONTAINER_CREATION,
-    CONTAINER_DELETION,
+    MANDELBOX_CREATION,
+    MANDELBOX_DELETION,
     CLUSTER_CREATION,
     CLUSTER_DELETION,
-    CONTAINER_LIFECYCLE,
+    MANDELBOX_LIFECYCLE,
     CLUSTER_LIFECYCLE,
 }
 
@@ -27,11 +27,11 @@ FAILURE = "failure"
 _status_tags = {SUCCESS, FAILURE}
 
 # these need to be formatted
-# do something like CONTAINER_NAME.format(container_name="my_container")
-# to get "container-name:my_container"
-CONTAINER_NAME = "container-name:{container_name}"
+# do something like MANDELBOX_NAME.format(mandelbox_name="my_mandelbox")
+# to get "mandelbox-name:my_mandelbox"
+MANDELBOX_NAME = "mandelbox-name:{mandelbox_name}"
 CLUSTER_NAME = "cluster-name:{cluster_name}"
-CONTAINER_USER = "container-user:{container_user}"
+MANDELBOX_USER = "mandelbox-user:{mandelbox_user}"
 
 
 def valid_tags(tags):
