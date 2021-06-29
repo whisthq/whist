@@ -1,6 +1,8 @@
 #ifndef NVIDIA_ENCODE_H
 #define NVIDIA_ENCODE_H
 
+#include "nvidia-linux/NvFBCUtils.h"
+#include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
 
 typedef struct {
