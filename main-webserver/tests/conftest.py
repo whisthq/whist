@@ -167,9 +167,33 @@ def bulk_instance():
 
 @pytest.fixture
 def region_to_ami_map(app):
+    """
+    Returns a dict of active <Region:AMI> pairs.
+    """
     all_regions = RegionToAmi.query.all()
     region_map = {region.region_name: region.ami_id for region in all_regions if region.ami_active}
     return region_map
+
+
+@pytest.fixture
+def override_environment(app):
+    """
+    Override the environment temporarily to test environment specific behaviour.
+
+    Example:
+    POST `/mandelbox/assign` requires a client commit hash to be sent for matching the client application
+    to a compatible instance. However, in dev environment, for `/mandelbox/assign` call we accept a pre-shared
+    static client_commit_hash along with the entry in the database to figure out the latest active AMI.
+    """
+    environment_ = None
+
+    def _environment(_value):
+        nonlocal environment_
+        environment_ = app.config["ENVIRONMENT"]
+        app.config["ENVIRONMENT"] = _value
+
+    yield _environment
+    app.config["ENVIRONMENT"] = environment_
 
 
 @pytest.fixture(scope="session")
