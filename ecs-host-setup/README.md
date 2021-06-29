@@ -65,7 +65,7 @@ If you are on a high-DPI screen, you can optionally append the above code block 
 
 To create an AMI:
 
-- Create an Ubuntu Server 20.04 g4dn.4xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage.
+- Create an Ubuntu Server 20.04 g4dn.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage.
 
 - Add your EC2 instance to the relevant production-ready security group(s) for the region you created it in. You can see which security group(s) currently-running production EC2 instances are attached to in the AWS console.
 
