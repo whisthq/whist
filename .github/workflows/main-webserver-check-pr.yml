@@ -143,11 +143,18 @@ jobs:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               run: bash docker/local_deploy.sh --down
 
-            - name: Run Tests on Heroku
+            - name: Run Tests on Heroku via pytest
               working-directory: main-webserver
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }} --cov=./ --cov-report=xml
+
+            - name: Upload Coverage to Codecov
+              uses: codecov/codecov-action@v1
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  fail_ci_if_error: true
+                  verbose: true
 
     # Database Migration
     # Compare the schema of the live database with main-webserver/db-migration/schema.sql, and
