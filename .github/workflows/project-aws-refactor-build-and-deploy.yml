@@ -100,13 +100,14 @@ jobs:
                   # Grab the name of the deployment environment from set-deploy-environment
                   BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
 
-                  if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
-                  # On push to staging/prod, we want to run all jobs
-                    JOB_NAME="all"
-                  else
-                  # On push to dev, we want to filter jobs
-                    JOB_NAME="filter"
-                  fi
+                  #                  if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
+                  #                  # On push to staging/prod, we want to run all jobs
+                  #                    JOB_NAME="all"
+                  #                  else
+                  #                  # On push to dev, we want to filter jobs
+                  #                    JOB_NAME="filter"
+                  #                  fi
+                  JOB_NAME="all"
                   # Store the commit from before the push was made
                   # This is only used when filtering
                   COMPARISON_COMMIT="${{ github.event.before }}"
