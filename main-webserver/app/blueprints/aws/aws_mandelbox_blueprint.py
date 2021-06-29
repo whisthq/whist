@@ -15,6 +15,7 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_n
 from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import RegionToAmi, db
 from app.models.hardware import MandelboxInfo, InstanceInfo
@@ -68,6 +69,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
 
     instance_name = find_instance(body.region, client_commit_hash)
     if instance_name is None:
+        fractal_logger.info(f"body.region: {body.region}, body.client_commit_hash: {body.client_commit_hash}")
 
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
