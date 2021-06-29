@@ -6,13 +6,9 @@ This subfolder contains the code for the Fractal ECS host service, which is resp
 
 ### Building
 
-In order for `go` to successfully download the private repositories that are dependencies of the host service, you'll need to configure your `git` to use `ssh` instead of `https`, like so:
+Before building the service, make sure you've configured (and logged into) the Heroku CLI on your EC2 instance.
 
-```shell
-git config --global url.ssh://git@github.com/.insteadOf https://github.com/
-```
-
-To build the service, install Go via your local package manager, i.e. `brew install go` on macOS, `sudo snap install --classic --channel=1.15/stable go` on Linux, or `choco install golang` on Windows, and then run `make`. Note that the host service is only meant to build on Go versions >= 1.15. Also, be sure to add `~/go/bin` to your `$PATH` variable as follows:
+To build the service, install Go via your local package manager, i.e. `brew install go` on macOS, `sudo snap install --classic --channel=1.16/stable go` on Linux, or `choco install golang` on Windows, and then run `make build`. Note that the host service is only meant to build on Go versions >= 1.16. Also, be sure to add `~/go/bin` to your `$PATH` variable as follows:
 
 ```shell
 PATH=$PATH:~/go/bin
