@@ -124,11 +124,11 @@ jobs:
                       sudo apt-get install -y clang-tidy-6.0 clang-format
                       sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
 
-                      # install coreutils for realpath, and perl
-                      sudo apt-get install -y coreutils perl cppcheck
+                      # install coreutils for realpath, along with other dependencies
+                      sudo apt-get install -y coreutils perl cppcheck doxygen
                   else
                       # llvm for clang-tidy, coreutils for realpath
-                      brew install llvm coreutils perl
+                      brew install llvm coreutils perl doxygen
                       ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
                       ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
                   fi
@@ -208,10 +208,9 @@ jobs:
 
             # Verify that doxygen documentation is well-formed
             - name: Build Protocol Documentation on Linux
-              if: runner.os == 'Linux'
+              if: runner.os == 'Linux' || runner.os == 'macOS'
               working-directory: protocol/build
               run: |
-                  sudo apt-get install doxygen
                   make docs -j
 
             # This tests building the protocol in a container, the same way we do it in production

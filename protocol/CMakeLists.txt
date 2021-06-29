@@ -339,7 +339,7 @@ else()
         DEPENDS FractalClient ${SERV})
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target(docs
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs
