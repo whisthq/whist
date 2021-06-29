@@ -38,7 +38,7 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/utils/window_name.h>
 #include <fractal/core/fractalgetopt.h>
-#include <fractal/utils/encode.h>
+#include <fractal/utils/avpacket_buffer.h>
 #include <fractal/audio/audiocapture.h>
 #include <fractal/audio/audioencode.h>
 #include <fractal/core/fractal.h>

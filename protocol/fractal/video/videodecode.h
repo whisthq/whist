@@ -22,7 +22,7 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
-#include <fractal/utils/decode.h>
+#include <fractal/utils/avpacket_buffer.h>
 
 #define MAX_ENCODED_VIDEO_PACKETS 20
 

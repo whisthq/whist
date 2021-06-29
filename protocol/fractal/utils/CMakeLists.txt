@@ -1,16 +1,14 @@
 add_library(fractalUtils STATIC
         aes.h
         clock.h
-        decode.h
-        encode.h
+        avpacket_buffer.h
         logging.h
         error_monitor.h
         json.h
         window_name.h
         aes.c
         clock.c
-        decode.c
-        encode.c
+        avpacket_buffer.c
         logging.c
         error_monitor.c
         json.c
