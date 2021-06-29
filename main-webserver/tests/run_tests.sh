@@ -52,4 +52,4 @@ export TESTING=true
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN 
 # stored as a Heroku config variable
-bash <(curl -s https://codecov.io/bash)
+(cd .. && bash <(curl -s https://codecov.io/bash))
