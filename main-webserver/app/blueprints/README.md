@@ -12,7 +12,7 @@ This folder contains our account generation and manipulation endpoints, plus log
 
 ## AWS
 
-This folder contains our AWS container creation, deletion, modification and ping endpoints
+This folder contains our AWS mandelbox creation, deletion, modification and ping endpoints
 
 ## Mail
 

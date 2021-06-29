@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script takes a blank EC2 instance and sets it up for running Fractal manually (for development), by
-# configuring Docker and NVIDIA to run Fractal's GPU-enabled containers. This script is all you need if you
+# configuring Docker and NVIDIA to run Fractal's GPU-enabled mandelboxes. This script is all you need if you
 # are setting up an EC2 instance for development, and is part 1/2, with setup_ubuntu20_host_ami.sh, if you
 # are creating a base AMI to run Fractal in production.
 

@@ -1,6 +1,6 @@
 # Fractal Main Webserver
 
-This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our container/virtual machine management. This README contains general set-up information&mdash;for a high-level understanding of the code, read each of the READMEs in the the subdirectories here (`/app`, `/docker`, etc.)
+This repository contains the code for our webserver, which is our REST API and provides backend support for our user interfaces, our internal tools, and our mandelbox/virtual machine management. This README contains general set-up information&mdash;for a high-level understanding of the code, read each of the READMEs in the the subdirectories here (`/app`, `/docker`, etc.)
 
 Our webservers and CD pipeline are hosted on Heroku. Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
 
@@ -139,31 +139,30 @@ To test database specific things, you can make a file `db_manual_test.py` in mai
 
 ```python
 # export the URL of the database as DATABASE_URL
-# if local eph db (launched with docker/local_deploy.sh):
+# if it's a local ephemeral database (launched with docker/local_deploy.sh):
 # export DATABASE_URL=postgres://<USER>@localhost:9999/<DB>
 # You can find USER and DB in docker/.env after retrieving the config
 from app.factory import create_app
-from app.models import UserContainer
+from app.models import MandelboxInfo
+# TODO: is this even correct?
 
 app = create_app()
 
 with app.app_context():
-    base_container = (
-        UserContainer.query.filter(
-            UserContainer.task_definition == "fractal-dev-browsers-chrome",
-            UserContainer.location == "us-east-1",
-            UserContainer.user_id is not None,
+    base_mandelbox = (
+        MandelBox.query.filter(
+            MandelBox.location == "us-east-1",
+            MandelBox.user_id is not None,
         )
-        .filter(UserContainer.cluster.notlike("%test%"))
         .with_for_update()
         .limit(1)
         .first()
     )
 
-    print(base_container)
+    print(base_mandelbox)
 ```
 
-If you need to populate some fake data into the ephemeral db, use TablePlus. Fun fact - this is exactly the code we use to get existing prewarmed containers. This kind of manual testing provides a neat way to quickly test and debug the database logic in isolation.
+If you need to populate some fake data into the ephemeral db, use TablePlus or PgAdmin. This kind of manual testing provides a neat way to quickly test and debug the database logic in isolation.
 
 _Manual Testing - Deployments_
 
@@ -231,7 +230,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── __init__.py --> initialization code/global preprocessors for the app
 │   ├── blueprints -->  our API endpoints are described here
 │   │   ├── aws
-│   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
+│   │   │   └── aws_mandelbox_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
 │   │   ├── host_service
 │   │   │   └── host_service_blueprint.py --> endpoints that handle host service handshakes
 │   │   ├── mail
@@ -239,15 +238,12 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
 │   ├── config.py --> General app config and setup utils
 │   ├── constants --> Constants used throughout our program
-│   │   ├── container_state_values.py --> all possible AWS container states
 │   │   ├── http_codes.py -->  HTTP response codes we return in our app
 │   │   └── time.py --> useful constants about time (like 60 seconds per minute)
 │   ├── exceptions.py --> exceptions we use throughout the app
 │   ├── factory.py -->  general application setup scripts
 │   ├── helpers --> helper utils we use throughout the codebase
 │   │   ├── blueprint_helpers --> any complex synchronous computation that's part of our endpoints
-│   │   │   ├── aws
-│   │   │   │   └── container_state.py --> helpers that retrieve the current state of user containers (for client-app)
 │   │   │   ├── mail
 │   │   │   │   └── mail_post.py --> helpers that generate emails to send to users
 │   │   ├── helpers_tests
@@ -262,7 +258,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── aws_general.py --> a few general utilities for AWS
 │   │       │   ├── aws_resource_integrity.py --> scripts that ensure certain AWS resources exist
 │   │       │   ├── aws_resource_locks.py --> scripts to ensure atomicity on AWS resource use
-│   │       │   ├── base_ecs_client.py -->  The majority of our AWS code lives here -- interfaces to clusters, containers, ASGs, and assorted other AWS endpoints
 │   │       │   ├── base_ec2_client.py -->  Utility libraries for monitoring and orchestrating EC2 instances.
 │   │       │   ├── ecs_deletion.py --> code used for cluster deletion
 │   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
@@ -323,12 +318,10 @@ Note that all conftest files contain test fixtures for their respective director
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
-    │   ├── test_aws_container.py --> tests for end-to-end AWS task generation functionality
     │   ├── test_cluster.py --> tests for cluster deletion
     │   ├── test_delete.py
     │   ├── test_info.py
     │   ├── test_ping.py
-    │   └── test_serialize.py --> tests for serialization of container objects from DB 
     ├── constants --> useful constants for testing
     │   └── settings.py --> pytest settings
     ├── helpers
