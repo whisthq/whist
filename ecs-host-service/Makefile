@@ -20,6 +20,7 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CI ?= false
 HEROKU_USER ?= $(shell heroku auth:whoami)
 HEROKU_APIKEY ?= $(shell heroku auth:token | tail -1)
+HEROKU_APP_NAME_OVERRIDE ?=
 
 all: build
 
@@ -65,6 +66,7 @@ build: checkCI
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 upload: build

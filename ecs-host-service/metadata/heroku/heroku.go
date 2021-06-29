@@ -12,12 +12,21 @@ import (
 var email string
 var apiKey string
 
+// This one is optionally filled in by the linker. If set, it can be used to
+// override the default logic used to determine which Heroku app to connect to.
+var appNameOverride string
+
 var client heroku.Client = heroku.Client{Username: email, Password: apiKey}
 
 // GetAppName provides the Heroku app name to use based on the app environment
-// the host service is running on. In a local environment, it defaults to the
-// dev server.
+// the host service is running on, or the override if provided during build
+// time. In a local environment, it defaults to the dev server.
 func GetAppName() string {
+	// Respect the override if set.
+	if appNameOverride != "" {
+		return appNameOverride
+	}
+
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
 		return "fractal-dev-server"
