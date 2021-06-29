@@ -1,10 +1,10 @@
+import { screen } from "electron"
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
-import { getDPI } from "@app/utils/mandelbox"
 
 export default flow(
   "mandelboxFlow",
@@ -16,11 +16,13 @@ export default flow(
       region?: AWSRegion
     }>
   ) => {
-    const dpi = getDPI()
+    const dpiStream = trigger.pipe(
+      map(() => screen.getPrimaryDisplay().scaleFactor * 96)
+    )
 
     const create = mandelboxCreateFlow(
-      trigger.pipe(
-        map((t) => ({
+      zip(trigger, dpiStream).pipe(
+        map(([t, dpi]) => ({
           sub: t.sub,
           accessToken: t.accessToken,
           dpi: dpi,
@@ -30,8 +32,8 @@ export default flow(
     )
 
     const host = hostSpinUpFlow(
-      zip([trigger, create.success]).pipe(
-        map(([t, c]) => ({
+      zip([trigger, create.success, dpiStream]).pipe(
+        map(([t, c, dpi]) => ({
           ip: c.ip,
           dpi: dpi,
           user_id: t.sub,
