@@ -61,17 +61,6 @@ class ClusterNotIdle(_FractalError):
     message = "Cluster {cluster} in {region} is not idle"
 
 
-class ContainerNotFoundException(_FractalError):
-    """
-    Raised by any method that fails to find a given container in the db
-    Args:
-        container_id (str): the ARN of the container
-    """
-
-    params = ("container_id",)
-    message = "container_id: {container_id}"
-
-
 class ClusterNotFoundException(_FractalError):
     """
     Raised by any method that fails to find a given cluster in the db
@@ -104,7 +93,3 @@ class SendGridException(_FractalError):
 
 class SentryInitializationError(Exception):
     pass
-
-
-class StartValueException(Exception):
-    """Raised when a container fails to send start values (DPI, etc.)"""

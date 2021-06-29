@@ -6,10 +6,8 @@ export class FractalAPI {
         VALIDATE: "/token/validate",
     }
 
-    static CONTAINER = {
-        CREATE: "/container/create",
+    static MANDELBOX = {
         ASSIGN: "/mandelbox/assign",
-        TEST_CREATE: "/aws_container/create_container",
     }
 
     static MAIL = {
