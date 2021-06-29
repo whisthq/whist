@@ -567,9 +567,12 @@ jobs:
 
             - name: Run flask cli to upgrade the AMIs
               env:
+                  AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0_domain }}
                   CONFIG_DB_URL: $CONFIG_DB_URL
                   DATABASE_URL: $DATABASE_URL
                   HEROKU_APP_NAME: $HEROKU_APP_NAME
+                  REDIS_URL: "redis://"
+                  SECRET_KEY: This environment variable's value doesn't matter
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
