@@ -32,6 +32,15 @@ int handler(Display* d, XErrorEvent* a) {
 }
 
 void get_wh(CaptureDevice* device, int* w, int* h) {
+    /*
+        Get the width and height of the display associated with device, and store them in w and h,
+        respectively.
+
+        Arguments:
+            device (CaptureDevice*): device containing the display whose dimensions we are getting
+            w (int*): pointer to store width
+            h (int*): pointer to store hight
+    */
     if (!device) return;
 
     XWindowAttributes window_attributes;
@@ -46,6 +55,17 @@ void get_wh(CaptureDevice* device, int* w, int* h) {
 }
 
 bool is_same_wh(CaptureDevice* device) {
+    /*
+        Determine whether or not the device's width and height agree width actual display width and
+        height.
+
+        Arguments:
+            device (CaptureDevice*): capture device to query
+
+        Returns:
+            (bool): true if width and height agree, false otherwise
+    */
+
     int w, h;
     get_wh(device, &w, &h);
     return device->width == w && device->height == h;
@@ -53,8 +73,28 @@ bool is_same_wh(CaptureDevice* device) {
 
 int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
                           CodecType codec) {
+    /*
+        Create a device that will capture a screen of the specified width, height, and DPI, and
+        encode it at the specified bitrate and codec. This function first attempts to use X11 to set
+        the display's width, height, and DPI, then creates either an NVidia or X11 capture device,
+        with NVidia given priority. Refer to x11nvidiacapture.c for the internal details of the
+        NVidia capture device.
+
+        Arguments:
+            device (CaptureDevice*): the created capture device
+            width (UINT): desired window width
+            height (UNIT): desired window height
+            dpi (UINT): desired window DPI
+            bitrate (int): desired encoder bitrate
+            codec (CodecType): desired encoder codec (H264 or H265)
+
+        Returns:
+            (int): 0 on success, 1 on failure
+    */
+
     if (!device) return -1;
 
+    // attempt to set display width, height, and DPI
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
         LOG_ERROR("ERROR: CreateCaptureDevice display did not open");
@@ -117,6 +157,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         }
     }
 
+    // Create the NVidia capture device is possible; otherwise use X11 capture.
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
     if (create_nvidia_capture_device(&device->nvidia_capture_device) == 0) {
         device->using_nvidia = true;
@@ -179,6 +220,17 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 }
 
 int capture_screen(CaptureDevice* device) {
+    /*
+        Capture the screen using device. If using NVidia, we use the NVidia FBC API to capture the
+        screen, as described in x11nvidiacapture.c. Otherwise, use X11 functions to capture the
+        screen.
+
+        Arguments:
+            device (CaptureDevice*): device used to capture the screen
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
     if (!device) {
         LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
         return -1;
@@ -266,6 +318,16 @@ void destroy_capture_device(CaptureDevice* device) {
 }
 
 void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
+    /*
+        Update the encoder in device to encode at the specified bitrate and codec. Currently, this
+        destroys the current encoder and makes a new one with the new parameters.
+        TODO: Use NVidia's reconfigure API instead.
+
+        Arguments:
+            device (CaptureDevice*): capture device containing the encoder
+            bitrate (int): new bitrate to encode to
+            codec (int): new codec to use
+    */
     if (!device) return;
 
     if (device->using_nvidia) {
