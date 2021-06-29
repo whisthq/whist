@@ -230,28 +230,28 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Build release protocol # No need to run this for debug, just for release
-              working-directory: protocol
-              run: ./build_server_protocol.sh Release
-
-            - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-              run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
-
-            - name: Build mandelbox images
-              working-directory: mandelbox-images
-              run: ./build_mandelbox_image.sh -o --all
-
-            - name: Push mandelbox images
-              working-directory: mandelbox-images
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              env:
-                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-              run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
-                  done
+                  #            - name: Build release protocol # No need to run this for debug, just for release
+                  #              working-directory: protocol
+                  #              run: ./build_server_protocol.sh Release
+                  #
+                  #            - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
+                  #              run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+                  #
+                  #            - name: Build mandelbox images
+                  #              working-directory: mandelbox-images
+                  #              run: ./build_mandelbox_image.sh -o --all
+                  #
+                  #            - name: Push mandelbox images
+                  #              working-directory: mandelbox-images
+                  #              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+                  #              env:
+                  #                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+                  #                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+                  #              run: |
+                  #                  for app in ${{ env.apps }}
+                  #                  do
+                  #                    ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
+                  #                  done
 
             ##########################################################################################
             ########################### Stage 2 - Build ECS Host Service  ############################
@@ -327,7 +327,8 @@ jobs:
                   data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
                   data["github_username"] = "${{ secrets.GHA_USERNAME }}"
                   data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  data["git_hash"] = "${{ env.commit_sha }}"
+                  # data["git_hash"] = "${{ env.commit_sha }}"
+                  data["git_hash"] = "9d95f0a9a06965df6c734a0507ec3e4c3484afec"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
