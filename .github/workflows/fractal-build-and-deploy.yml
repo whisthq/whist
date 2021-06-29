@@ -155,7 +155,7 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images"
+                  job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol mandelbox-images"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
@@ -267,19 +267,19 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Container Infrastructure: Build & Publish Fractal Containers and AMIs
+    # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
     # This job does:
-    # 1- Build and publish the container images to a GitHub Container Registry repository
+    # 1- Build and publish the mandelbox images to a GitHub Container Registry repository
     # 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal ECS Host Service and pre-pulled
-    #    Fractal container images from step 1, to all supported AWS EC2 regions
+    #    Fractal mandelbox images from step 1, to all supported AWS EC2 regions
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-    containers-and-ami-publish-ghcr-and-aws:
-        name: "Container Infrastructure: Build & Publish Fractal Containers and AMIs"
+    mandelboxes-and-amis-publish-ghcr-and-aws:
+        name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelbox Images and AMIs"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         outputs:
             region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
-        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|containers-and-ami-publish-ghcr-and-aws|')
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
 
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
@@ -304,14 +304,14 @@ jobs:
               run: ./build_server_protocol.sh Release
 
             - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-              run: echo "apps=$(./container-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+              run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-            - name: Build container images
-              working-directory: container-images
-              run: ./build_container_image.sh -o --all
+            - name: Build mandelbox images
+              working-directory: mandelbox-images
+              run: ./build_mandelbox_image.sh -o --all
 
-            - name: Push container images
-              working-directory: container-images
+            - name: Push mandelbox images
+              working-directory: mandelbox-images
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
@@ -481,7 +481,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy container images and AMIs in `containers-and-ami-publish-ghcr-and-aws` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelbox images and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -489,14 +489,14 @@ jobs:
 
     # AMI: Kill "Packer Builder" Instances
     # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
-    # Runs unconditionally after containers-and-ami-publish-ghcr-and-aws
+    # Runs unconditionally after mandelboxes-and-amis-publish-ghcr-and-aws
     kill-packer-builder-instances:
         name: "Kill Packer Builder Tagged EC2 Instances"
         runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
-                containers-and-ami-publish-ghcr-and-aws,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         if: always()
         steps:
@@ -539,7 +539,7 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                containers-and-ami-publish-ghcr-and-aws,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: main-webserver-update-fractal-services-${{ github.ref }}
         if: always() && (needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
@@ -587,7 +587,7 @@ jobs:
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
-              run: "flask command ami_upgrade ${{env.commit_hash}} ${{ needs.containers-and-ami-publish-ghcr-and-aws.outputs.region_names }}"
+              run: "flask command ami_upgrade ${{env.commit_hash}} ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_names }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')

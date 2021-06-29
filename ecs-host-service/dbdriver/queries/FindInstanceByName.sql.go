@@ -18,7 +18,7 @@ type FindInstanceByNameRow struct {
 	MemoryRemainingKb     int            `json:"memory_remaining_kb"`
 	NanocpusRemaining     int            `json:"nanocpus_remaining"`
 	GpuVramRemainingKb    int            `json:"gpu_vram_remaining_kb"`
-	ContainerCapacity     int            `json:"container_capacity"`
+	MandelboxCapacity     int            `json:"mandelbox_capacity"`
 	LastUpdatedUtcUnixMs  int            `json:"last_updated_utc_unix_ms"`
 	Ip                    pgtype.Varchar `json:"ip"`
 	AwsAmiID              pgtype.Varchar `json:"aws_ami_id"`
@@ -39,7 +39,7 @@ func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string)
 	items := []FindInstanceByNameRow{}
 	for rows.Next() {
 		var item FindInstanceByNameRow
-		if err := rows.Scan(&item.InstanceName, &item.CloudProviderID, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.ContainerCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
+		if err := rows.Scan(&item.InstanceName, &item.CloudProviderID, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.MandelboxCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
 			return nil, fmt.Errorf("scan FindInstanceByName row: %w", err)
 		}
 		items = append(items, item)
@@ -65,7 +65,7 @@ func (q *DBQuerier) FindInstanceByNameScan(results pgx.BatchResults) ([]FindInst
 	items := []FindInstanceByNameRow{}
 	for rows.Next() {
 		var item FindInstanceByNameRow
-		if err := rows.Scan(&item.InstanceName, &item.CloudProviderID, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.ContainerCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
+		if err := rows.Scan(&item.InstanceName, &item.CloudProviderID, &item.CreationTimeUtcUnixMs, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.GpuVramRemainingKb, &item.MandelboxCapacity, &item.LastUpdatedUtcUnixMs, &item.Ip, &item.AwsAmiID, &item.Location, &item.Status, &item.CommitHash, &item.AwsInstanceType); err != nil {
 			return nil, fmt.Errorf("scan FindInstanceByNameBatch row: %w", err)
 		}
 		items = append(items, item)

@@ -14,7 +14,7 @@ MAX_COLLAPSE_LINES = 5
 # like "default_message()", which combine formatting
 # utilities to produce full title/body/code formatted message.
 #
-# Functions is this file should be small and container very little
+# Functions is this file should be small and contain very little
 # logic. Their purpose is to accept data and return Markdown
 # strings. They do not alter input data or perform any kind
 # of validation.

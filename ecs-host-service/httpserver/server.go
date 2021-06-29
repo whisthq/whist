@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/fractal/fractal/ecs-host-service/auth"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/portbindings"
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
 	"github.com/fractal/fractal/ecs-host-service/metadata"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
@@ -77,112 +77,16 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-// SetContainerStartValuesRequest defines the (unauthenticated) start values
-// endpoint (currently called by the webserver, soon to be removed altogether).
-type SetContainerStartValuesRequest struct {
-	HostPort             int                          `json:"host_port"`              // Port on the host to whose container the start values correspond
-	DPI                  int                          `json:"dpi"`                    // DPI to set for the container
-	UserID               fctypes.UserID               `json:"user_id"`                // User ID of the container user
-	ClientAppAccessToken fctypes.ClientAppAccessToken `json:"client_app_auth_secret"` // User access token for client app verification
-	ContainerARN         string                       `json:"container_ARN"`          // AWS ID of the container
-	resultChan           chan requestResult           // Channel to pass the request result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *SetContainerStartValuesRequest) ReturnResult(result interface{}, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *SetContainerStartValuesRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go
-func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is an PUT request
-	if verifyRequestType(w, r, http.MethodPut) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata SetContainerStartValuesRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
-// SetConfigEncryptionTokenRequest defines the (unauthenticated) set config
-// encryption token endpoint (currently called by the client application, soon
-// to be removed altogether).
-type SetConfigEncryptionTokenRequest struct {
-	HostPort              int                           `json:"host_port"`               // Port on the host to whose container this user corresponds
-	UserID                fctypes.UserID                `json:"user_id"`                 // User to whom token belongs
-	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
-	ClientAppAccessToken  fctypes.ClientAppAccessToken  `json:"client_app_auth_secret"`  // User access token for client app verification
-	JwtAccessToken        auth.RawJWT                   `json:"jwt_access_token"`        // User's JWT access token
-	resultChan            chan requestResult            // Channel to pass the request result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *SetConfigEncryptionTokenRequest) ReturnResult(result interface{}, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *SetConfigEncryptionTokenRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go
-func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is an PUT request
-	if verifyRequestType(w, r, http.MethodPut) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata SetConfigEncryptionTokenRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
 // SpinUpMandelboxRequest defines the (unauthenticated) `spin_up_mandelbox`
-// endpoint. For now, this endpoint is only exposed in the `localdev`
-// environment, and is used by `run_local_container_image.sh`. This endpoint
-// returns the Docker ID of the container. Eventually, as we move off ECS, this
-// endpoint will become the canonical way to start containers.
+// endpoint.
 type SpinUpMandelboxRequest struct {
-	AppImage              string                        `json:"app_image"`               // The image to spin up
-	DPI                   int                           `json:"dpi"`                     // DPI to set for the container
-	UserID                fctypes.UserID                `json:"user_id"`                 // User ID of the container user
-	ConfigEncryptionToken fctypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
-	JwtAccessToken        auth.RawJWT                   `json:"jwt_access_token"`        // User's JWT access token
-	MandelboxID           fctypes.FractalID             `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
-	resultChan            chan requestResult            // Channel to pass the request result between goroutines
+	AppImage              string                      `json:"app_image"`               // The image to spin up
+	DPI                   int                         `json:"dpi"`                     // DPI to set for the mandelbox
+	UserID                types.UserID                `json:"user_id"`                 // User ID of the mandelbox user
+	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JwtAccessToken        auth.RawJWT                 `json:"jwt_access_token"`        // User's JWT access token
+	MandelboxID           types.FractalID             `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
+	resultChan            chan requestResult          // Channel to pass the request result between goroutines
 }
 
 // SpinUpMandelboxRequestResult defines the data returned by the
@@ -208,7 +112,8 @@ func (s *SpinUpMandelboxRequest) createResultChan() {
 	}
 }
 
-// Process an HTTP request to spin up a container, to be handled in ecs-host-service.go
+// processSpinUpMandelboxRequest processes an HTTP request to spin up a
+// mandelbox. It is handled in ecs-host-service.go
 func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
@@ -249,7 +154,8 @@ func (s *DrainAndShutdownRequest) createResultChan() {
 	}
 }
 
-// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go.
+// processDrainAndShutdownRequest processes an HTTP request to drain and
+// shutdown the host service. It is handled in ecs-host-service.go.
 func processDrainAndShutdownRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an POST request
 	if verifyRequestType(w, r, http.MethodPost) != nil {
@@ -377,8 +283,6 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
-	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
 	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
 	mux.HandleFunc("/drain_and_shutdown", createHandler(processDrainAndShutdownRequest))
 
@@ -410,7 +314,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 
 		// This is only necessary since we don't have the ability to subscribe to
 		// database events. In particular, the webserver might mark this host
-		// service as draining after allocating a container on it. If we didn't
+		// service as draining after allocating a mandelbox on it. If we didn't
 		// have this sleep, we would stop accepting requests right away, and the
 		// SpinUpMandelbox request from the client app would error out. We don't
 		// want that, so we accept requests for another 30 seconds. This would be
