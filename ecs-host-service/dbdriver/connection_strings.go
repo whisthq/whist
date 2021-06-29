@@ -21,7 +21,7 @@ func getFractalDBConnString() (string, error) {
 	}
 	result, ok := config["DATABASE_URL"]
 	if !ok {
-		return "", utils.MakeError("Couldn't get DB connection string: couldn't find DATABASE_URL in Heroku environment.", err)
+		return "", utils.MakeError("Couldn't get DB connection string: couldn't find DATABASE_URL in Heroku environment.")
 	}
 
 	return result, nil
