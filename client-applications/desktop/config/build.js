@@ -7,7 +7,7 @@ const { FractalEnvironments } = require("./constants")
 const envOverrides = require("./envOverrides")
 const assert = require("assert").strict
 
-const { appEnvironment = FractalEnvironments.PRODUCTION } = envOverrides
+const { appEnvironment = FractalEnvironments.LOCAL } = envOverrides
 
 // Make sure we have a valid appEnvironment
 assert(
