@@ -1,0 +1,644 @@
+# workflows/project-aws-refactor-build-and-deploy.yml
+#
+# AWS Refactor Project: Build & Deploy
+
+name: "Fractal: Build & Deploy"
+
+on:
+    push:
+        branches:
+            - project/aws-refactor
+            - aws-refactor/create-testing-setup
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
+
+jobs:
+    # Configure Jobs
+    # Detect the branch using regex matching and store as an output to regulate downstream actions.
+    # Access branch with `fractal-publish-build-config.outputs.branch`.
+    fractal-publish-build-config:
+        name: "Configure Jobs"
+        runs-on: ubuntu-20.04
+        outputs:
+            # Deployable branch names are the same as environment names
+            branch: ${{ steps.set-deploy-environment.outputs.environment }}
+            jobs: ${{ steps.detect-jobs.outputs.jobs }}
+            publish: ${{ steps.detect-publish.outputs.publish }}
+            deploy_environment: ${{ steps.set-deploy-environment.outputs.environment }}
+            sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
+            webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
+            auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
+            auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
+            auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # Get the whole git history
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              shell: bash
+              run: ./notifications/setup_notifications.sh
+
+            # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
+            # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
+            # twice and the second workflow could finish before the first one, due to variance in startup time, run
+            # commands, etc., introducing a race condition.
+            # Using Turnstyle here makes it so that if there already is a fractal-build-and-deploy.yml workflow running
+            # for a specific branch (i.e. `dev`), the next workflow will wait at least `continue-after-seconds` seconds
+            # before starting to run, which helps ensure that there will not be any race condition between workflows
+            - name: Make fractal-build-and-deploy.yml Workflows Sequential via Turnstyle
+              uses: softprops/turnstyle@v1
+              with:
+                  continue-after-seconds: 900 # Put a minimum of 15 minutes distance between workflows
+                  same-branch-only: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Set deploy environment
+              id: set-deploy-environment
+              run: |
+                  echo "Environment project-aws-refactor set"
+                  echo "::set-output name=branch::project-aws-refactor"
+                  echo "::set-output name=environment::project-aws-refactor"
+                  echo "::set-output name=auth0-domain::fractal-dev.us.auth0.com"
+                  echo "::set-output name=auth0-client-id::6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
+                  echo "::set-output name=auth0-client-secret-key::auth0_gha_client_secret_dev"
+
+            - name: Set Sentry environment
+              id: set-sentry-environment
+              run: |
+                  # Grab the name of the deployment environment from set-deploy-environment
+                  BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
+
+                  # on dev branch, we don't set Sentry environment as we don't want to
+                  # log to Sentry in development
+                  if [ "$BRANCH_NAME" == "prod" ]; then
+                      SENTRY_ENVIRONMENT=production
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
+                      SENTRY_ENVIRONMENT=staging
+                  else
+                      SENTRY_ENVIRONMENT=""
+                  fi
+                  echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
+                  echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
+
+            - name: Set webserver URL
+              id: set-webserver-url
+              run: |
+                  WEBSERVER_URL=https://fractal-project-aws-refactor.herokuapp.com
+                  echo "webserver_url is set to: $WEBSERVER_URL"
+                  echo "::set-output name=webserver_url::$WEBSERVER_URL"
+
+            # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a |)
+            - name: Detect Job(s)
+              id: detect-jobs
+              run: |
+                  # Grab the name of the deployment environment from set-deploy-environment
+                  BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
+
+                  if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
+                  # On push to staging/prod, we want to run all jobs
+                    JOB_NAME="all"
+                  else
+                  # On push to dev, we want to filter jobs
+                    JOB_NAME="filter"
+                  fi
+                  # Store the commit from before the push was made
+                  # This is only used when filtering
+                  COMPARISON_COMMIT="${{ github.event.before }}"
+
+                  # Store job dependency files
+                  declare -A job_dependencies
+                  # If "" is given, then the whole repo will be a dependency
+                  job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol mandelbox-images"
+                  job_dependencies[main-webserver-update-fractal-services]=" "
+                  job_dependencies[main-webserver-deploy-heroku]="main-webserver"
+                  job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
+                  job_dependencies[microservices-deploy-auth0-hooks]="microservices"
+                  # Files that all jobs depend on
+                  universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
+
+                  if [[ "$JOB_NAME" == "all" ]]; then
+                  # If JOB_NAME=all, then we do indeed run all of jobs in the list
+                    JOB_LIST="${!job_dependencies[@]}"
+                  # If JOB_NAME=filter, then we should filter the job list based on the job's dependencies
+                  elif [[ "$JOB_NAME" == "filter" ]]; then
+                    JOB_LIST=""
+                    for i in "${!job_dependencies[@]}"
+                    do
+                      DEPS="${job_dependencies[$i]}"
+                      # If there are universal_dependencies, include them in the space-separated list
+                      if [[ -n "$universal_dependencies" ]]; then
+                        DEPS="$DEPS $universal_dependencies"
+                      fi
+                      # Replace spaces with |'s, to be used as "OR" in a regex path checker
+                      DEPS=$(echo "$DEPS" | tr ' ' '|')
+                      echo "Checking $i against $DEPS"
+                      # Check if any diff'ed file starts with any of the dependency paths
+                      # || true to prevent set -e failure exit on this line, to silence grep's return code
+                      # We instead, just want to store grep's result in a variable
+                      MATCH=$(git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" -m 1 || true)
+                      if [[ -n "$MATCH" ]]; then
+                        echo "Dependency \"$MATCH\" of job \"$i\" was changed since $COMPARISON_COMMIT"
+                        JOB_LIST="$JOB_LIST $i"
+                      else
+                        echo "No dependency of job \"$i\" was changed"
+                      fi
+                      echo # Newline for easier readability
+                    done
+                  # If JOB_NAME=none, we run exactly no jobs
+                  elif [[ "$JOB_NAME" == "none" ]]; then
+                    JOB_LIST=""
+                  # If we have the name of a job name, we run exactly that job
+                  elif [[ -n "${job_dependencies[$JOB_NAME]}" ]]; then
+                    JOB_LIST="$JOB_NAME"
+                  # Otherwise, an invalid job name was given
+                  else
+                    echo "\"$JOB_NAME\" not a valid job name"
+                    exit 1
+                  fi
+
+                  echo "Jobs that have been selected to run: $JOB_LIST"
+                  # Wrap jobs with |, so that "|job|" matches only that exact job (Without substring problems)
+                  JOB_LIST=$(echo "|$JOB_LIST|" | tr ' ' '|')
+                  echo "::set-output name=jobs::$JOB_LIST"
+
+            - name: Detect Whether to Publish the Job(s) or Not
+              id: detect-publish
+              run: |
+                  # if this workflow was triggered by push, then we want the jobs to publish
+                  if [[ ${{ github.event_name }} == 'push' ]]; then
+                    PUBLISH=true
+                  else
+                    # if running from workflow_dispatch, we use the github input for publishing
+                    PUBLISH=${{ github.event.inputs.publish }}
+                  fi
+
+                  if [[ ! "$PUBLISH" =~ (true|false) ]]; then
+                    echo "\"$PUBLISH\" is an invalid value of input publish, only \"true\" or \"false\" are valid"
+                  fi
+
+                  echo "Publish is set to: $PUBLISH"
+                  echo "::set-output name=publish::$PUBLISH"
+
+            - name: Notify Slack if error
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+    # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
+    # This job does:
+    # 1- Build and publish the mandelbox images to a GitHub Container Registry repository
+    # 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal ECS Host Service and pre-pulled
+    #    Fractal mandelbox images from step 1, to all supported AWS EC2 regions
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
+    mandelboxes-and-amis-publish-ghcr-and-aws:
+        name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelbox Images and AMIs"
+        runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
+        outputs:
+            region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
+
+        env:
+            aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
+            aws_new_ami_instance_type: g3.4xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
+            aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
+            aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
+            aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Configure AWS CLI # To get and install GRID driver
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Build release protocol # No need to run this for debug, just for release
+              working-directory: protocol
+              run: ./build_server_protocol.sh Release
+
+            - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
+              run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
+            - name: Build mandelbox images
+              working-directory: mandelbox-images
+              run: ./build_mandelbox_image.sh -o --all
+
+            - name: Push mandelbox images
+              working-directory: mandelbox-images
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              env:
+                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+              run: |
+                  for app in ${{ env.apps }}
+                  do
+                    ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
+                  done
+
+            ##########################################################################################
+            ########################### Stage 2 - Build ECS Host Service  ############################
+
+            - name: Setup Go environment
+              uses: actions/setup-go@v2.1.3
+              with:
+                  go-version: "1.16"
+
+            - name: Authenticate Go commands with GitHub
+              env:
+                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+              run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
+
+            - name: Build Go project
+              env:
+                  HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                  HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  HEROKU_APP_NAME_OVERRIDE: fractal-project-aws-refactor
+                  LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
+              working-directory: ecs-host-service
+              run: make build
+
+            ##########################################################################################
+            ####################### Stage 3 - Build & Publish AMIs to AWS EC2 ########################
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              shell: bash
+              run: ./notifications/setup_notifications.sh
+
+            - name: Retrieve Current Git Hash as Environment Variable
+              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.aws_new_ami_source_region }}
+
+            - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
+              working-directory: ecs-host-setup
+              run: |
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
+                  if [ "$BRANCH_NAME" == "prod" ]; then
+                    echo 'APP_ENV=PROD' > app_env.env
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
+                    echo 'APP_ENV=STAGING' > app_env.env
+                  else
+                    echo 'APP_ENV=DEV' > app_env.env
+                  fi
+                  echo 'USE_PROD_LOGGING=false' > app_env.env
+
+            - name: Generate packer_vars.json Packer Variables File for Building New AMI
+              working-directory: ecs-host-setup
+              shell: python3 {0}
+              run: |
+                  import json
+                  import datetime
+                  data = {}
+                  data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+                  data["github_username"] = "${{ secrets.GHA_USERNAME }}"
+                  data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  data["git_hash"] = "${{ env.commit_sha }}"
+                  data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+                  data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+                  data["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
+                  data["source_region"] = "${{ env.aws_new_ami_source_region }}"
+                  data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+                  data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+                  data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+                  data["source_ami"] = "${{ env.aws_source_ami_id }}"
+                  # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
+                  # defined as a string of comma-separated values (no spaces) as required by Packer.
+                  data["destination_regions"] = []
+                  fp = open("packer_vars.json", "w")
+                  json.dump(data, fp)
+                  fp.close()
+
+            # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+            # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
+            - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              id: build-new-amis
+              working-directory: ecs-host-setup
+              shell: python3 {0}
+              run: |
+                  import os
+                  import subprocess
+                  import json
+
+                  # stdout will be shared with the subprocess so we can see what is happening
+                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+
+                  # if packer fails, manifest.json does not get created and the entire workflow fails here
+                  assert os.path.exists("manifest.json")
+                  fp = open("manifest.json", "r")
+                  data = json.load(fp)
+                  fp.close()
+                  print(data)
+                  new_ami_ids = data["builds"][0]["artifact_id"]
+                  region_ami_pairs = new_ami_ids.split(",")
+
+                  REGION_TO_AMI_MAP = dict()
+                  for region_ami_pair in region_ami_pairs:
+                    region_name, ami = region_ami_pair.split(":")
+                    REGION_TO_AMI_MAP[region_name] = ami
+
+                  # export REGION_TO_AMI_MAP
+                  # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
+                  # it is best to explain via example:
+                  # >>> data = {'key': "val'ue"} # tricky example because we have single and double quotes
+                  # >>> print(json.dumps(data).replace('"', '\\"'))
+                  # {\"key\": \"val'ue\"} # this is saved as an output
+                  # LATER, when we need to use this output
+                  # >>> data = json.loads("{{ OUTPUT }}") # OUTPUT expands to {\"key\": \"val'ue\"}
+                  # >>> print(data)
+                  # {'key': "val'ue"}
+                  # if I did not add the \, then the json library would get confused by trying to read this:
+                  # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
+                  region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
+
+                  print(f"Region to AMI map is set to {region_to_ami_map_str}")
+                  print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
+
+            ##########################################################################################
+            ############################# Stage 4 - Slack Notifications ##############################
+
+            # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
+            - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  TITLE = ":whale: Mandelbox Images & AMIs deployed :whale:"
+                  BODY = "A PR was merged and triggered automatic Mandelbox Images & AMIs deployment to GHCR and all AWS supported regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+            - name: Notify Slack if error
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelbox images and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+            ##########################################################################################
+
+    # AMI: Kill "Packer Builder" Instances
+    # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
+    # Runs unconditionally after mandelboxes-and-amis-publish-ghcr-and-aws
+    kill-packer-builder-instances:
+        name: "Kill Packer Builder Tagged EC2 Instances"
+        needs:
+            [
+                fractal-publish-build-config,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
+            ]
+        if: always()
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              shell: bash
+              run: ./notifications/setup_notifications.sh
+
+            - name: Install Utility to Kill Lingering AWS Packer Builder Instances
+              run: pip install aws-hashicorp-packer-reaper
+
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Kill All Packer Instances
+              run: |
+                  aws-hashicorp-packer-reaper list
+                  aws-hashicorp-packer-reaper terminate --older-than 45m
+
+            - name: Notify Slack if error
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+    # Uses webserver maintenance mode to update AMIs if new AMIs have been built
+    main-webserver-update-fractal-services:
+        name: "Update Fractal Services using Main Webserver"
+        needs:
+            [
+                fractal-publish-build-config,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
+            ]
+        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Obtain a Fractal access token
+              id: get-token
+              uses: ./.github/actions/generate-auth0-token
+              with:
+                  domain: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
+                  client-id: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
+                  client-secret: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              shell: bash
+              run: ./notifications/setup_notifications.sh
+
+            - name: Install webserver dependencies for running the flask cli
+              working-directory: main-webserver
+              run: pip install -r requirements.txt
+
+            - name: Run flask cli to upgrade the AMIs
+              id: run-main-webserver-cli-ami-upgrade
+              working-directory: main-webserver
+              shell: bash
+              run: "flask command ami_upgrade ${{env.commit_hash}} ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_names }}"
+
+            - name: Notify Slack that AMI upgrade has completed succesfully
+              if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  TITLE = ":hammer_and_wrench: Webserver started Maintenance Mode :hammer_and_wrench:"
+                  BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+            - name: Notify Slack that AMI upgrade has failed
+              if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'failure')
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to upgrade AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+    # Main Webserver: Deploy to Heroku
+    # Push the main-webserver subtree to the appropriate Heroku app.
+    main-webserver-deploy-heroku:
+        name: "Main Webserver: Deploy to Heroku"
+        runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # need to get full history for splitsh-lite
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              shell: bash
+              run: ./notifications/setup_notifications.sh
+
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
+
+            - name: Add Heroku Remote
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              run: |
+                  HEROKU_APP_NAME=fractal-project-aws-refactor
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+
+                  heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
+
+            - name: Install splitsh-lite for Subtree Split
+              run: >
+                  wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
+                  | sudo tar -zxp --directory /usr/local/bin/
+
+            - name: Deploy the webserver atomically
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              shell: bash -e {0}
+              run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
+
+            - name: Notify Slack on database migration
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  import urllib.parse
+                  from notifications.slack_bot import slack_post
+
+                  # This should be set by main-webserver/atomic_deployment.sh
+                  if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
+                    sys.exit(0)
+
+                  GITHUB_SHA = "${{ github.sha }}"
+                  GITHUB_SHA_URL = "https://github.com/fractal/fractal/commit/"
+                  ISSUE_URL = urllib.parse.urljoin(GITHUB_SHA_URL, GITHUB_SHA)
+
+                  BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = f"#alerts-{BRANCH_NAME}"
+
+                  slack_redirect = f"You can take a look the commit here:\n{ISSUE_URL}"
+
+                  title = ":construction: Database migration performed :construction:"
+                  body = (f"A PR was merged and triggered "
+                          + "an automatic schema migration on branch: "
+                          + f"`{BRANCH_NAME}`.\n\n"
+                          + "Check the GitHub Actions logs for details. "
+                          + slack_redirect)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
+
+            - name: Notify Slack on successful deploy
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              shell: python3 {0}
+              run: |
+                  import os
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
+                  TITLE = ":whale: Mandelbox Images & AMIs deployed :whale:"
+                  BODY = f"A PR was merged and triggered automatic Webserver deployment to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+            - name: Notify Slack if error
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `main-webserver-deploy-heroku` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+    # WE SKIP BUILDING CLIENT-APPS AND INSTEAD TEST WITH 'yarn start'
+
+    # WE ALSO SKIP DEPLOYING AUTH0 HOOKS AND CREATING A GITHUB TAG
