@@ -492,6 +492,28 @@ jobs:
                   client-id: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
                   client-secret: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
 
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                  login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                  password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                  login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                  password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
+
+            - name: Set heroku app name and DB URLs
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              run: |
+                  HEROKU_APP_NAME=fractal-project-aws-refactor
+                  DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
+                  CONFIG_DB_URL=$(heroku config:get CONFIG_DB_URL --app=$HEROKU_APP_NAME)
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+                  echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
+                  echo "CONFIG_DB_URL=$DCONFIG_DB_URL" >> $GITHUB_ENV
+
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
@@ -502,6 +524,14 @@ jobs:
               run: pip install -r requirements.txt
 
             - name: Run flask cli to upgrade the AMIs
+              env:
+                  AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0_domain }}
+                  CONFIG_DB_URL: $CONFIG_DB_URL
+                  DATABASE_URL: $DATABASE_URL
+                  HEROKU_APP_NAME: $HEROKU_APP_NAME
+                  REDIS_URL: "redis://"
+                  SECRET_KEY: This environment variable's value doesn't matter
+
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
