@@ -4,6 +4,7 @@ import { values, endsWith } from "lodash"
 
 import { trayIconPath } from "@app/config/files"
 import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
+import { allowPayments } from "@app/utils/constants"
 import { MenuItem } from "electron/main"
 
 // We create the tray here so that it persists throughout the application
@@ -16,26 +17,41 @@ const createNativeImage = () => {
   return image
 }
 
-const rootMenu = [
-  {
-    label: "Billing Information",
-    click: () => {
-      trayEvent.emit("payment")
-    },
-  },
-  {
-    label: "Sign out",
-    click: () => {
-      trayEvent.emit("signout")
-    },
-  },
-  {
-    label: "Quit",
-    click: () => {
-      trayEvent.emit("quit")
-    },
-  },
-]
+const rootMenu = allowPayments
+  ? [
+      {
+        label: "Billing Information",
+        click: () => {
+          trayEvent.emit("payment")
+        },
+      },
+      {
+        label: "Sign out",
+        click: () => {
+          trayEvent.emit("signout")
+        },
+      },
+      {
+        label: "Quit",
+        click: () => {
+          trayEvent.emit("quit")
+        },
+      },
+    ]
+  : [
+      {
+        label: "Sign out",
+        click: () => {
+          trayEvent.emit("signout")
+        },
+      },
+      {
+        label: "Quit",
+        click: () => {
+          trayEvent.emit("quit")
+        },
+      },
+    ]
 
 const regionMenu = [
   {
