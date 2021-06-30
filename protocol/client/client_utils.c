@@ -271,7 +271,7 @@ Public Function Implementations
 ============================
 */
 
-int parse_args(int argc, char *argv[]) {
+int client_parse_args(int argc, char *argv[]) {
     /*
         Parse the arguments passed into the client application
 

@@ -752,7 +752,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    int ret = parse_args(argc, argv);
+    int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
         free_parsed_args();
