@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
     fractal_init_multithreading();
     init_logger();
 
-    int ret = parse_args(argc, argv);
+    int ret = server_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
         return -1;
