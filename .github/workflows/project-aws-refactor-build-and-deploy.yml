@@ -267,7 +267,7 @@ jobs:
                   HEROKU_APP_NAME_OVERRIDE: fractal-project-aws-refactor
                   LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
               working-directory: ecs-host-service
-              run: true # && make build
+              run: make build
 
             ##########################################################################################
             ####################### Stage 3 - Build & Publish AMIs to AWS EC2 ########################
@@ -352,21 +352,21 @@ jobs:
                   import json
 
                   # stdout will be shared with the subprocess so we can see what is happening
-                  # subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
-                  # assert os.path.exists("manifest.json")
-                  # fp = open("manifest.json", "r")
-                  # data = json.load(fp)
-                  # fp.close()
-                  # print(data)
-                  # new_ami_ids = data["builds"][0]["artifact_id"]
-                  # region_ami_pairs = new_ami_ids.split(",")
+                  assert os.path.exists("manifest.json")
+                  fp = open("manifest.json", "r")
+                  data = json.load(fp)
+                  fp.close()
+                  print(data)
+                  new_ami_ids = data["builds"][0]["artifact_id"]
+                  region_ami_pairs = new_ami_ids.split(",")
 
-                  # REGION_TO_AMI_MAP = dict()
-                  # for region_ami_pair in region_ami_pairs:
-                  #   region_name, ami = region_ami_pair.split(":")
-                  #   REGION_TO_AMI_MAP[region_name] = ami
+                  REGION_TO_AMI_MAP = dict()
+                  for region_ami_pair in region_ami_pairs:
+                    region_name, ami = region_ami_pair.split(":")
+                    REGION_TO_AMI_MAP[region_name] = ami
 
                   # export REGION_TO_AMI_MAP
                   # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
@@ -380,9 +380,7 @@ jobs:
                   # {'key': "val'ue"}
                   # if I did not add the \, then the json library would get confused by trying to read this:
                   # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-                  ###### region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
-
-                  region_to_ami_map_str = "{\\\"us-east-1\\\": \\\"ami-0d5f5ffd0ffb312c2\\\"}"
+                  region_to_ami_map_str = json.dumps(REGION_TO_AMI_MAP).replace('"', '\\"')
 
                   print(f"Region to AMI map is set to {region_to_ami_map_str}")
                   print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
