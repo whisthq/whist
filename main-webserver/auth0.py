@@ -20,6 +20,8 @@ Example usage:
 
 """
 
+# TRIVIAL COMMIT FOR CI
+
 import functools
 
 from typing import Callable
