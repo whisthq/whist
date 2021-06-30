@@ -37,3 +37,6 @@ db_setup/db_data.sql
 
 # Sphinx documentation build directory
 docs/_build
+
+# Test coverage database
+.coverage

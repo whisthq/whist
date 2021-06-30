@@ -1,4 +1,4 @@
-# .coverage to control coverage.py
+# .coveragerc to control coverage.py
 [run]
 branch = True
 
@@ -21,6 +21,3 @@ exclude_lines =
     if __name__ == .__main__.:
 
 ignore_errors = True
-
-[xml]
-directory = ./

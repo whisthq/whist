@@ -130,6 +130,10 @@ First, we need to setup a local Redis and Postgres instance. Navigate to `tests/
 
 Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
 
+To generate test coverage statistics, set `COV=1` when running the `run_tests.sh` script. For example:
+
+    /path/to/fractal/main-webserver/tests $ COV=1 bash run_tests.sh
+
 ### Manual Testing
 
 Sometimes, it is helpful to manual test changes that don't neatly fit into the current unit testing / integration testing framework. For example, let's say you want to make sure you properly wrote a database filtering command using the SQLAlchemy ORM. This section briefly describes different kinds of manual testing and how to do them.

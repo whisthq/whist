@@ -46,10 +46,12 @@ fi
 # regardless of in CI or local tests, we set this variable
 export TESTING=true
 
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov=app --cov=auth0 --cov=payments")"
+
 # pass args to pytest, including Codecov flags, and ignore the scripts/ folder as it's irrelevant 
 # to unit/integration testing
-(cd .. && pytest --ignore=scripts/ "$@" --cov=./ --cov-report=xml)
+(cd .. && pytest --ignore=scripts $cov "$@")
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN 
 # stored as a Heroku config variable
-(cd .. && bash <(curl -s https://codecov.io/bash))
+test "$IN_CI" = "false" || (cd .. && bash <(curl -s https://codecov.io/bash))
