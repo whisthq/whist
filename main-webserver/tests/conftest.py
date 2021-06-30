@@ -6,15 +6,12 @@ from random import randint
 import platform
 
 import pytest
-import stripe
 
-from flask import current_app
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
 from app.factory import create_app
 from app.models import MandelboxInfo, db, InstanceInfo, RegionToAmi
-import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
@@ -192,29 +189,6 @@ def override_environment(app):
 
     yield _environment
     app.config["ENVIRONMENT"] = environment_
-
-
-@pytest.fixture(scope="session")
-def task_def_env(app):
-    """Determine what the environment portion of the task_definition IDs should be set to.
-
-    Tests for production code are run against "prod" AWS resources. Tests for staging code are run
-    against "staging" AWS resources. Tests for "dev" code and local code are run against "dev" AWS
-    resources.
-
-    Returns:
-        Either "dev", "staging", or "prod".
-    """
-
-    task_def_envs = {
-        env_names.PRODUCTION: "prod",
-        env_names.STAGING: "staging",
-        env_names.DEVELOPMENT: "dev",
-        env_names.TESTING: "dev",
-        env_names.LOCAL: "dev",
-    }
-
-    return task_def_envs[app.config["ENVIRONMENT"]]
 
 
 @pytest.fixture
