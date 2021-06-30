@@ -140,8 +140,6 @@ export const formatMandelbox = (
       "json.output.port_32263",
       "json.output.port_32273",
       "json.output.secret_key",
-      "json.output.task_definition",
-      "json.output.task_version",
       "json.output.user_id",
       "json.output.last_updated_utc_unix_ms",
     ])
