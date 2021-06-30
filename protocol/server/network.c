@@ -37,7 +37,7 @@ extern volatile int connection_id;
 extern volatile bool exiting;
 extern int sample_rate;
 extern bool client_joined_after_window_name_broadcast;
-extern int begin_time_to_exit;
+int begin_time_to_exit = 60;
 
 int last_input_id = -1;
 
