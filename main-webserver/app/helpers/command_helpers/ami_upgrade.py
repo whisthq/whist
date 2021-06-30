@@ -203,7 +203,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             [region_wise_upgrade_thread, False, (region_name, ami_id)]
         )
         region_wise_upgrade_thread.start()
-
+    threads_succeeded = True
     for region_and_bool_pair in region_wise_upgrade_threads:
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
@@ -215,7 +215,10 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             )
             region_row.protected_from_scale_down = False
             db.session.commit()
-            raise Exception("AMIS failed to upgrade, see logs")
+            threads_succeeded = False
+    if not threads_succeeded:
+        # If any thread here failed, fail the workflow
+        raise Exception("AMIS failed to upgrade, see logs")
 
     current_active_amis_str = [
         current_active_ami.ami_id for current_active_ami in current_active_amis
