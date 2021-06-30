@@ -222,7 +222,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
         if num_new < 0:
             # we only want to scale down unused instances
             available_empty_instances = list(
-                InstancesWithRoomForMandelboxes.query.filter(
+                InstancesWithRoomForMandelboxes.query.filter_by(
                     location=region, aws_ami_id=ami, num_running_mandelboxes=0
                 )
                 .limit(abs(num_new))
