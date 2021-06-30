@@ -1,6 +1,0 @@
-Flask==2.0.1
-celery==5.1.2
-redis==3.5.3
-gevent==21.1.2
-waitress==2.0.0
-dataclasses==0.6
