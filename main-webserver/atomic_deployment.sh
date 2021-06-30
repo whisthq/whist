@@ -65,7 +65,7 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
     # restore that many as opposed to just restoring to 1 dyno
     heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
 
-    # apply diff safely, knowing nothing is happening on webserver
+    # apply diff
     psql --single-transaction --file "${OUT_DIFF}" "${DB_URL}"
 
     echo "Redeploying webserver..."
