@@ -99,7 +99,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
         # test_endpoint create_cluster
         create_cluster_body = dict(
             cluster_name="maintenance-test",
-            instance_type="g3s.xlarge",
+            instance_type="g4dn.xlarge",
             region_name=region_name,
             max_size=1,
             min_size=0,

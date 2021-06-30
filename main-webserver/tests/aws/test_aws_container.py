@@ -53,7 +53,7 @@ def test_create_cluster(client, module_user):
         "/aws_container/create_cluster",
         json=dict(
             cluster_name=cluster_name,
-            instance_type="g3s.xlarge",
+            instance_type="g4dn.xlarge",
             region_name="us-east-1",
             max_size=1,
             min_size=0,
