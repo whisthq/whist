@@ -6,6 +6,7 @@ import (
 	// fractallogger package imported below as `logger`.
 
 	"context"
+	_ "embed"
 	"io"
 	"math/rand"
 	"os"
@@ -624,6 +625,30 @@ func mandelboxDieHandler(id string) {
 // Service shutdown and initialization
 // ---------------------------
 
+//go:embed mandelbox-apparmor-profile
+var appArmorProfile string
+
+// Create and register the AppArmor profile for Docker to use with
+// mandelboxes. These do not persist, so must be done at service
+// startup.
+func initializeAppArmor(globalCancel context.CancelFunc) {
+	cmd := exec.Command("apparmor_parser", "-Kr")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		logger.Panicf(globalCancel, "Unable to attach to process 'stdin' pipe. Error: %v", err)
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, appArmorProfile)
+	}()
+
+	err = cmd.Run()
+	if err != nil {
+		logger.Panicf(globalCancel, "Unable to register AppArmor profile. Error: %v", err)
+	}
+}
+
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
@@ -779,6 +804,8 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 	logger.Infof("Running on instance name: %s", instanceName)
+
+	initializeAppArmor(globalCancel)
 
 	initializeFilesystem(globalCancel)
 
