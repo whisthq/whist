@@ -6,6 +6,7 @@ add_executable(FractalServer
         client.c
         video.c
         audio.c
+        parse_args.c
         main.c
         handle_client_message.c
         network.c
