@@ -272,8 +272,9 @@ def try_scale_down_if_necessary_all_regions() -> None:
     ]
     for region, ami in region_and_ami_list:
         # grab a lock on this region/ami pair
-        RegionToAmi.query.filter_by(region_name=region, ami_id=ami).with_for_update()
-        try_scale_down_if_necessary(region, ami)
+        region_row = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).with_for_update()
+        if not region_row.protected_from_scale_down:
+            try_scale_down_if_necessary(region, ami)
         # and release it after scaling
         db.session.commit()
 
