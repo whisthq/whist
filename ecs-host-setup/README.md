@@ -10,7 +10,7 @@ The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host 
 
 To set up your Fractal development instance:
 
-- Create an Ubuntu Server 20.04 g4dn.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image).
+- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image).
 
   - Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything.
   - Note that the EC2 instance type must be **g4** or **g3** for GPU compatibility with our containers and streaming technology. We use g4 instances in because they have better performance and cost for our purposes.
@@ -68,7 +68,7 @@ If you are on a high-DPI screen, you can optionally append the above code block 
 
 To create an AMI:
 
-- Create an Ubuntu Server 20.04 g4dn.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of persistent, EBS storage in addition to the 225 GB of ephemeral storage.
+- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of persistent, EBS storage in addition to the 125 GB of ephemeral storage.
 
 - Add your EC2 instance to the relevant production-ready security group(s) for the region you created it in. You can see which security group(s) currently-running production EC2 instances are attached to in the AWS console.
 
