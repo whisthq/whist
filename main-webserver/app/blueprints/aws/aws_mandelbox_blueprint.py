@@ -12,6 +12,8 @@ from app.constants.http_codes import (
     ACCEPTED,
     RESOURCE_UNAVAILABLE,
 )
+from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
+from app.constants.env_names import DEVELOPMENT
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.helpers.utils.general.auth import payment_required
@@ -50,7 +52,24 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a mandelbox running, don't start up a new one
         return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
-    instance_name = find_instance(body.region, body.client_commit_hash)
+
+    client_commit_hash = None
+    if (
+        current_app.config["ENVIRONMENT"] == DEVELOPMENT
+        and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE
+    ):
+        # This condition is to accomodate the worflow for developers of client_apps
+        # to test their changes without needing to update the development database with
+        # commit_hashes on their local machines.
+        client_commit_hash = (
+            RegionToAmi.query.filter_by(region_name=body.region, ami_active=True)
+            .one_or_none()
+            .client_commit_hash
+        )
+    else:
+        client_commit_hash = body.client_commit_hash
+
+    instance_name = find_instance(body.region, client_commit_hash)
     if instance_name is None:
 
         if not current_app.testing:
@@ -60,7 +79,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                 target=do_scale_up_if_necessary,
                 args=(
                     body.region,
-                    RegionToAmi.query.get(body.region, body.client_commit_hash).ami_id,
+                    RegionToAmi.query.get(
+                        {"region_name": body.region, "client_commit_hash": client_commit_hash}
+                    ).ami_id,
                 ),
             )
             scaling_thread.start()
