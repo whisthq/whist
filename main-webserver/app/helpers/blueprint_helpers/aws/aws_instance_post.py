@@ -136,7 +136,7 @@ scale_mutex = defaultdict(threading.Lock)
 
 
 def do_scale_up_if_necessary(
-    region: str, ami: str, force_buffer: Optional[int] = 0
+    region: str, ami: str, force_buffer: Optional[int] = 0, **kwargs
 ) -> List[InstanceInfo]:
     """
     Scales up new instances as needed, given a region and AMI to check
@@ -153,7 +153,7 @@ def do_scale_up_if_necessary(
 
     """
     new_instances = []
-    with scale_mutex[f"{region}-{ami}"]:
+    with scale_mutex[f"{region}-{ami}"], kwargs["flask_app"].app_context():
 
         # num_new indicates how many new instances need to be spun up from
         # the ami that is passed in. Usually, we calculate that through

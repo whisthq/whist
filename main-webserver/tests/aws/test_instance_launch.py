@@ -20,7 +20,7 @@ from app.constants.instance_state_values import (
 )
 
 
-def test_fail_disabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_state):
+def test_fail_disabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
     """
     Tests that we won't be able to launch an AMI that is marked as inactive.
     """
@@ -30,11 +30,11 @@ def test_fail_disabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_sta
         randomized_ami = random.choice(all_amis)
         region_name = randomized_ami.region_name
         set_amis_state([randomized_ami], False)
-        do_scale_up_if_necessary(region_name, randomized_ami.ami_id)
+        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, flask_app=app)
         assert len(call_list) == 0
 
 
-def test_success_enabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_state):
+def test_success_enabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
     """
     Tests that we should be able to launch an AMI that is marked as active.
     """
@@ -44,7 +44,7 @@ def test_success_enabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_s
         randomized_ami = random.choice(all_amis)
         region_name = randomized_ami.region_name
         set_amis_state([randomized_ami], True)
-        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, 1)
+        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, 1, flask_app=app)
         assert len(call_list) == 1
         assert call_list[0]["kwargs"]["image_id"] == randomized_ami.ami_id
 
@@ -67,7 +67,7 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
         randomly_picked_ami_id = randomized_ami.ami_id
-        launch_new_ami_buffer(randomized_ami.region_name, randomly_picked_ami_id, app)
+        launch_new_ami_buffer(randomized_ami.region_name, randomly_picked_ami_id, 0, app)
         assert len(call_list) == app.config["DEFAULT_INSTANCE_BUFFER"]
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
