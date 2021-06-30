@@ -102,6 +102,13 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 	trackMandelbox(c)
 
+	// Mount /dev/fuse for in-mandelbox FUSE filesystems to work
+	c.otherDeviceMappings = append(c.otherDeviceMappings, dockercontainer.DeviceMapping{
+		PathOnHost:        "/dev/fuse",
+		PathInContainer:   "/dev/fuse",
+		CgroupPermissions: "rwm", // read, write, mknod (the default)
+	})
+
 	// We start a goroutine that cleans up this Mandelbox as soon as its
 	// context is cancelled. This ensures that we automatically clean up when
 	// either `Close()` is called for this mandelbox, or the global context is
@@ -198,7 +205,7 @@ type mandelboxData struct {
 
 	uinputDevices        *uinputdevices.UinputDevices
 	uinputDeviceMappings []dockercontainer.DeviceMapping
-	// Not currently needed --- this is just here for extensibility
+	// We use this to mount devices like /dev/fuse
 	otherDeviceMappings []dockercontainer.DeviceMapping
 
 	portBindings []portbindings.PortBinding
