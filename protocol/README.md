@@ -87,7 +87,6 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── clock.c <- Clock
 │   │   ├── color.c <- RGB/YUV conversation, and other color helpers
 │   │   ├── error_monitor.c <- our interface submitting breadcrumbs and events to Sentry
-│   │   ├── json.c <- JSON reader implementation
 │   │   ├── lodepng.c <- LodePNG external dependency
 │   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc.
 │   │   ├── mac_utils.c <- Mac wrappers
