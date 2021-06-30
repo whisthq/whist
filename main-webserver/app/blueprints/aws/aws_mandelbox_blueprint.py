@@ -79,7 +79,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                 target=do_scale_up_if_necessary,
                 args=(
                     body.region,
-                    RegionToAmi.query.get(body.region, client_commit_hash).ami_id,
+                    RegionToAmi.query.get(
+                        {"region_name": body.region, "client_commit_hash": client_commit_hash}
+                    ).ami_id,
                 ),
             )
             scaling_thread.start()
