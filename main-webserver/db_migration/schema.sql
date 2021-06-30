@@ -1349,7 +1349,7 @@ CREATE TRIGGER hdb_schema_update_event_notifier AFTER INSERT OR UPDATE ON hdb_ca
 -- Name: instance_info instance_name_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
 --
 
-ALTER TABLE ONLY hardware.instance_info
+ALTER TABLE ONLY hardware.mandelbox_info
     ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES hardware.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 

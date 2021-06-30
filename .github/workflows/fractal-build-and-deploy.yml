@@ -499,7 +499,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Uses webserver maintenance mode to update AMIs if new AMIs have been built
+    # Uses webserver's cli command to update AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
         needs:
