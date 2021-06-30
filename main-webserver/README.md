@@ -318,10 +318,8 @@ Note that all conftest files contain test fixtures for their respective director
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
-    │   ├── test_cluster.py --> tests for cluster deletion
-    │   ├── test_delete.py
-    │   ├── test_info.py
-    │   ├── test_ping.py
+    │   ├── test_instance_scaling
+    │   ├── test_instance_selection.py
     ├── constants --> useful constants for testing
     │   └── settings.py --> pytest settings
     ├── helpers
