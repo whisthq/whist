@@ -62,7 +62,7 @@ Whether you're running tests or the `docker-compose` stack locally, the web serv
 
 **3. Spin Up Local Servers**
 
-Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will create dummy SSL certificates (to get as close to the Redis+TLS setup we have in production) and start the app at `run.py`.
+Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will create dummy SSL certificates and start the app at `run.py`.
 
 ```sh
 bash docker/local_deploy.sh
@@ -123,7 +123,7 @@ You need the CLI utilities `pg_dump` and `psql`. On Mac:
 brew install postgresql
 ```
 
-First, we need to setup a local Redis and Postgres instance. Navigate to `tests/setup` and run `bash setup_tests.sh`. This only has to be run once for as long as you are testing. This script will use `docker-compose` to set up a local db that looks like a fresh version of the remote dev db. It'll be mostly empty except for a few tables. You can use TablePlus to connect to it locally at `localhost:9999`. You can find the username and database (pwd optional) in `docker/.env`. When you are done testing, end the containers with `docker-compose down`. Note: the `setup_tests.sh` script saves SQL scripts to `main-webserver/db-setup`. Delete these once in a while to get an updated pull of the database.
+First, we need to setup a local Postgres instance. Navigate to `tests/setup` and run `bash setup_tests.sh`. This only has to be run once for as long as you are testing. This script will use `docker-compose` to set up a local db that looks like a fresh version of the remote dev db. It'll be mostly empty except for a few tables. You can use TablePlus to connect to it locally at `localhost:9999`. You can find the username and database (pwd optional) in `docker/.env`. When you are done testing, end the containers with `docker-compose down`. Note: the `setup_tests.sh` script saves SQL scripts to `main-webserver/db-setup`. Delete these once in a while to get an updated pull of the database.
 
 ### Testing
 
@@ -318,10 +318,8 @@ Note that all conftest files contain test fixtures for their respective director
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
-    │   ├── test_cluster.py --> tests for cluster deletion
-    │   ├── test_delete.py
-    │   ├── test_info.py
-    │   ├── test_ping.py
+    │   ├── test_instance_scaling.py
+    │   ├── test_instance_selection.py
     ├── constants --> useful constants for testing
     │   └── settings.py --> pytest settings
     ├── helpers
