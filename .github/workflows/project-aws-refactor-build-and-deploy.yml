@@ -308,6 +308,7 @@ jobs:
                   else
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
+                  echo 'APP_ENV=DEV' > app_env.env
                   echo 'USE_PROD_LOGGING=false' > app_env.env
 
             - name: Generate packer_vars.json Packer Variables File for Building New AMI
