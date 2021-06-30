@@ -5,12 +5,14 @@ from flask import current_app
 from sqlalchemy import or_
 
 from app.models import db, RegionToAmi, InstanceInfo
-from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.instance_state_values import InstanceState
 
+
+#  This list allows thread success to be passed back to the main thread.
+#  It is thread-safe because lists in python are thread-safe
 region_wise_upgrade_threads = []
 
 
@@ -172,6 +174,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
 
+    # Redefine the list here to reset it
     region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         region_wise_upgrade_thread = Thread(
@@ -213,5 +216,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     for current_ami in current_active_amis:
         current_ami.ami_active = False
+
+    # Reset the list here to ensure no thread status info leaks
     region_wise_upgrade_threads = []
     db.session.commit()
