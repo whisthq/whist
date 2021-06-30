@@ -318,7 +318,7 @@ Note that all conftest files contain test fixtures for their respective director
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
-    │   ├── test_instance_scaling
+    │   ├── test_instance_scaling.py
     │   ├── test_instance_selection.py
     ├── constants --> useful constants for testing
     │   └── settings.py --> pytest settings
