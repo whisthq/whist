@@ -986,8 +986,8 @@ int init_video_renderer() {
     // Allocate a place to put our YUV image on that screen.
     // Rather than allocating a new texture every time the dimensions change, we instead allocate
     // the texture once and render sub-rectangles of it.
-    pending_texture_update = true;
     replace_texture();
+    pending_texture_update = false;
 
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
