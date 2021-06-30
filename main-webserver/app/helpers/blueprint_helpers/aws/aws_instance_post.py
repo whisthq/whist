@@ -271,7 +271,14 @@ def try_scale_down_if_necessary_all_regions() -> None:
         ).all()
     ]
     for region, ami in region_and_ami_list:
-        try_scale_down_if_necessary(region, ami)
+        if (
+            RegionToAmi.query.filter_by(region_name=region, ami_id=ami)
+            .with_for_update(skip_locked=True)
+            .one_or_none()
+            is not None
+        ):
+            db.session.commit()
+            try_scale_down_if_necessary(region, ami)
 
 
 def repeated_scale_down_harness(time_delay: int, flask_app=current_app) -> None:
