@@ -14,7 +14,7 @@ packet, call nack_packet.
 */
 
 #include <fractal/core/fractal.h>
-#include "network.h"
+#include "client_network.h"
 
 /**
  * @brief 	Audio/video types for ring buffers and frames

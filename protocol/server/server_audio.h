@@ -2,7 +2,7 @@
 #define SERVER_AUDIO_H
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file audio.h
+ * @file server_audio.h
  * @brief This file contains all code that interacts directly with processing
  *        audio on the server.
 ============================

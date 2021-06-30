@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file network.c
+ * @file client_network.c
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.
 ============================
@@ -16,13 +16,11 @@ Includes
 ============================
 */
 
-#include "network.h"
-
 #include <fractal/core/fractal.h>
 #include <fractal/utils/error_monitor.h>
-#include "network.h"
+#include "client_network.h"
 #include "client_utils.h"
-#include "audio.h"
+#include "client_audio.h"
 
 // Init information
 extern char user_email[FRACTAL_ARGS_MAXLEN + 1];

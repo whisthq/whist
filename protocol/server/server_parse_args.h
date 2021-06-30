@@ -2,7 +2,7 @@
 #define SERVER_PARSE_ARGS_H
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file parse_args.h
+ * @file server_parse_args.h
  * @brief This file contains all code that parses the arguments
  *        for the call to the server.
 ============================

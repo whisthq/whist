@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file main.c
+ * @file server_main.c
  * @brief This file contains the main code that runs a Fractal server on a
 Windows or Linux Ubuntu computer.
 ============================
@@ -44,10 +44,10 @@ Includes
 #include <fractal/video/transfercapture.h>
 #include "client.h"
 #include "handle_client_message.h"
-#include "parse_args.h"
-#include "network.h"
-#include "video.h"
-#include "audio.h"
+#include "server_parse_args.h"
+#include "server_network.h"
+#include "server_video.h"
+#include "server_audio.h"
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
