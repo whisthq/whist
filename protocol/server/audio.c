@@ -7,7 +7,8 @@
 Usage
 ============================
 
-send_audio() is called on its own thread and loops repeatedly to capture and send audio.
+multithreaded_send_audio() is called on its own thread and loops repeatedly to capture and send
+audio.
 */
 
 /*
@@ -65,7 +66,7 @@ Public Function Implementations
 ============================
 */
 
-int32_t send_audio(void* opaque) {
+int32_t multithreaded_send_audio(void* opaque) {
     UNUSED(opaque);
     fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_REALTIME);
     int id = 1;
