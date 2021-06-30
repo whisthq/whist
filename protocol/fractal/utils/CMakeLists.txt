@@ -4,14 +4,12 @@ add_library(fractalUtils STATIC
         avpacket_buffer.h
         logging.h
         error_monitor.h
-        json.h
         window_name.h
         aes.c
         clock.c
         avpacket_buffer.c
         logging.c
         error_monitor.c
-        json.c
         window_name.c
         sysinfo.c
         png.c

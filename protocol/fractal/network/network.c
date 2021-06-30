@@ -81,7 +81,6 @@ LOG_INFO("MESSAGE: %s", packet->data); // Will print "Hello this is a message!"
 #endif
 
 #include "../utils/aes.h"
-#include "../utils/json.h"
 
 // Defines
 
