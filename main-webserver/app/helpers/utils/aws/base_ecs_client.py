@@ -1034,7 +1034,7 @@ class ECSClient:
         asg_name = launch_config_info["AutoScalingGroupName"]
         old_launch_config_name = launch_config_info["LaunchConfigurationName"]
         _, new_launch_config_name = self.create_launch_configuration(
-            instance_type="g4dn.4xlarge",
+            instance_type="g4dn.xlarge",
             ami=ami,
             cluster_name=cluster_name,
         )
