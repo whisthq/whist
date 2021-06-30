@@ -310,6 +310,8 @@ jobs:
                   fi
                   echo 'USE_PROD_LOGGING=false' >> app_env.env
 
+                  cat app_env.env
+
             - name: Generate packer_vars.json Packer Variables File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
