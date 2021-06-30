@@ -63,6 +63,7 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
     """
     call_list = hijack_ec2_calls
     monkeypatch.setattr(ami_upgrade, "_poll", function(returns=True))
+    monkeypatch.setattr(ami_upgrade, "region_wise_upgrade_threads", [['thread-id', True, ()]])
     all_amis = RegionToAmi.query.all()
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
