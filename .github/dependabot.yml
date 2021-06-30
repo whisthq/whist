@@ -89,12 +89,6 @@ updates:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
-  - package-ecosystem: "pip"
-    directory: "/main-webserver/analytics" # looks for requirements.txt in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
   - package-ecosystem: "docker"
     directory: "/main-webserver/docker" # looks for Dockerfile in this directory
     schedule:
