@@ -13,6 +13,7 @@ add_executable(FractalClient
         video.c
         sdlscreeninfo.c
         peercursor.c
+        ringbuffer.c
         )
 
 # On Windows during client app packaging, FractalClient should have icon set

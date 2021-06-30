@@ -458,6 +458,11 @@ void destroy_video_decoder_members(VideoDecoder* decoder) {
     av_free(decoder->context);
     av_frame_free(&decoder->sw_frame);
     av_frame_free(&decoder->hw_frame);
+
+    // free the packets
+    for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
+        av_packet_unref(&decoder->packets[i]);
+    }
     av_buffer_unref(&decoder->ref);
 }
 
@@ -518,8 +523,81 @@ void destroy_video_decoder(VideoDecoder* decoder) {
     return;
 }
 
-/// @brief decode a frame using the decoder decoder
-/// @details decode an encoded frame under YUV color format into RGB frame
+int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_size) {
+    /*
+        Send the packets stored in buffer to the decoder. The buffer format should be as described
+       in extract_packets_from_buffer.
+
+        Arguments:
+            decoder (VideoDecoder*): the decoder for decoding
+            buffer (void*): memory containing encoded packets
+            buffer_size (int): size of buffer containing encoded packets
+
+        Returns:
+            (int): 0 on success, -1 on failure
+            */
+
+    int num_packets = extract_packets_from_buffer(buffer, buffer_size, decoder->packets);
+
+    int res;
+    for (int i = 0; i < num_packets; i++) {
+        while ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
+            LOG_WARNING("Failed to avcodec_send_packet! Error %d: %s", res, av_err2str(res));
+            if (!try_next_decoder(decoder)) {
+                destroy_video_decoder(decoder);
+                for (int j = 0; j < num_packets; j++) {
+                    av_packet_unref(&decoder->packets[j]);
+                }
+            }
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int video_decoder_get_frame(VideoDecoder* decoder) {
+    /*
+        Get the next frame from the decoder. If we were using hardware decoding, also move the frame
+       to software. At the end of this function, the decoded frame is always in decoder->sw_frame.
+
+        Arguments:
+            decoder (VideoDecoder*): the decoder we are using for decoding
+
+        Returns:
+            (int): 0 on success (can call this function again), 1 on EAGAIN (must send more input
+       before calling again), -1 on failure
+            */
+    int res;
+    // If frame was computed on the GPU
+    if (decoder->context->hw_frames_ctx) {
+        res = avcodec_receive_frame(decoder->context, decoder->hw_frame);
+        if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            return 1;
+        } else if (res < 0) {
+            LOG_WARNING("Failed to avcodec_receive_frame, error: %s", av_err2str(res));
+            destroy_video_decoder(decoder);
+            return -1;
+        }
+
+        av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+    } else {
+        if (decoder->type != DECODE_TYPE_SOFTWARE) {
+            LOG_ERROR("Decoder cascaded from hardware to software");
+            decoder->type = DECODE_TYPE_SOFTWARE;
+        }
+
+        res = avcodec_receive_frame(decoder->context, decoder->sw_frame);
+        if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            return 1;
+        } else if (res < 0) {
+            LOG_WARNING("Failed to avcodec_receive_frame, error: %s", av_err2str(res));
+            destroy_video_decoder(decoder);
+            return -1;
+        }
+    }
+    return 0;
+}
+
 bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) {
     /*
         Decode a frame, whose encoded data lies in buffer, using decoder, into decoder->sw_frame.

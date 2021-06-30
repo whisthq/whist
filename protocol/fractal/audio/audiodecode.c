@@ -227,9 +227,65 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
     // free the frame
     av_frame_free(&decoder->frame);
 
+    // free the packets
+    for (int i = 0; i < MAX_ENCODED_AUDIO_PACKETS; i++) {
+        av_packet_unref(&decoder->packets[i]);
+    }
+
     // free swr
     swr_free(&decoder->swr_context);
 
     // free the buffer and decoder
     free(decoder);
+}
+
+int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_size) {
+    /*
+        Send the packets stored in buffer to the decoder. The buffer format should be as described
+       in extract_packets_from_buffer.
+
+        Arguments:
+            decoder (AudioDecoder*): the decoder for decoding
+            buffer (void*): memory containing encoded packets
+            buffer_size (int): size of buffer containing encoded packets
+
+        Returns:
+            (int): 0 on success, negative error on failure
+            */
+
+    int num_packets = extract_packets_from_buffer(buffer, buffer_size, decoder->packets);
+
+    int res;
+    for (int i = 0; i < num_packets; i++) {
+        if ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
+            LOG_WARNING("Failed to avcodec_send_packet!, error %d: %s", res, av_err2str(res));
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int audio_decoder_get_frame(AudioDecoder *decoder) {
+    /*
+        Get the next frame from the decoder.
+
+        Arguments:
+            decoder (AudioDecoder*): the decoder we are using for decoding
+
+        Returns:
+            (int): 0 on success (can call this function again), 1 on EAGAIN (must send more input
+       before calling again), -1 on failure
+            */
+    int res = avcodec_receive_frame(decoder->context, decoder->frame);
+    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+        // decoder needs more data or there's nothing left
+        return 1;
+    } else if (res < 0) {
+        // real error
+        LOG_ERROR("Could not decode frame: error '%s'.", av_err2str(res));
+        return -1;
+    } else {
+        // postprocess the frame
+        return 0;
+    }
 }
