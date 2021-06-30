@@ -5,7 +5,9 @@ import pytest
 
 
 from app.models import SupportedAppImages
-from app.constants.http_codes import RESOURCE_UNAVAILABLE
+from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
+from app.constants.http_codes import RESOURCE_UNAVAILABLE, ACCEPTED
+from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
@@ -78,6 +80,52 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     response = client.post("/mandelbox/assign", json=args)
 
     assert response.status_code == RESOURCE_UNAVAILABLE
+
+
+@pytest.mark.usefixtures("authorized")
+def test_client_commit_hash_local_dev_override_fail(
+    app, client, bulk_instance, override_environment
+):
+    """
+    Ensure that in production environment, passing the pre-shared client commit hash for dev enviroment
+    returns a status code of RESOURCE_UNAVAILABLE
+    """
+
+    override_environment(PRODUCTION)
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
+
+    args = {
+        "region": "us-east-1",
+        "username": "test@fractal.co",
+        "dpi": 96,
+        "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
+    }
+    response = client.post("/mandelbox/assign", json=args)
+
+    assert response.status_code == RESOURCE_UNAVAILABLE
+
+
+@pytest.mark.usefixtures("authorized")
+def test_client_commit_hash_local_dev_override_success(
+    app, client, bulk_instance, override_environment
+):
+    """
+    Ensure that in development environment, passing the pre-shared client commit hash for dev enviroment
+    returns a status code of ACCEPTED
+    """
+
+    override_environment(DEVELOPMENT)
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
+
+    args = {
+        "region": "us-east-1",
+        "username": "test@fractal.co",
+        "dpi": 96,
+        "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
+    }
+    response = client.post("/mandelbox/assign", json=args)
+
+    assert response.status_code == ACCEPTED
 
 
 @pytest.mark.skip(reason="The @payment_required() decorator is not implemented yet.")
