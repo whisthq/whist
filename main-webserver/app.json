@@ -3,10 +3,6 @@
     "review": {
       "addons": [
         {
-          "plan": "redisgreen:dev",
-          "as": "REDIS"
-        },
-        {
           "plan": "heroku-postgresql:standard-0",
           "as": "DATABASE",
           "options": {
@@ -31,10 +27,6 @@
     },
     "test": {
       "addons": [
-        {
-          "plan": "heroku-redis:in-dyno",
-          "as": "REDIS"
-        },
         {
           "plan": "heroku-postgresql:standard-0",
           "as": "POSTGRES_EPHEMERAL_DB",
