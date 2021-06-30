@@ -12,8 +12,6 @@ Flask-SendGrid==0.7.1
 Flask-SQLAlchemy==2.5.1
 flask-pydantic==0.8.0
 gevent==21.1.2
-hirefire==1.1
-Jinja2==2.11.3
 logzio-python-handler==3.0.0
 marshmallow-sqlalchemy==0.26.1
 psycopg2-binary==2.9.1
@@ -29,4 +27,3 @@ SQLAlchemy-Utils==0.37.8
 stripe==2.58.0
 waitress==2.0.0
 gevent==21.1.2
-supervisor==4.2.2
