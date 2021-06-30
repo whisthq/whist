@@ -95,7 +95,6 @@ def bulk_instance():
         row whose columns are set as arguments to the function.
     """
     instances = []
-    mandelboxes = []
 
     def _instance(
         associated_mandelboxes=0,
@@ -148,7 +147,6 @@ def bulk_instance():
             )
             db.session.add(new_mandelbox)
             db.session.commit()
-            mandelboxes.append(new_mandelbox)
 
         instances.append(new_instance)
 
@@ -156,20 +154,44 @@ def bulk_instance():
 
     yield _instance
 
-    for mandelbox in mandelboxes:
-        db.session.delete(mandelbox)
-
     for instance in instances:
         db.session.delete(instance)
+    # We only need to delete the instances for cleanup. mandelboxes have a foreign key
+    # relationship with instances on instance_name column and due to cascade on delete/update
+    # the mandelboxes will be deleted on deletion of corresponding instances.
 
     db.session.commit()
 
 
 @pytest.fixture
 def region_to_ami_map(app):
+    """
+    Returns a dict of active <Region:AMI> pairs.
+    """
     all_regions = RegionToAmi.query.all()
     region_map = {region.region_name: region.ami_id for region in all_regions if region.ami_active}
     return region_map
+
+
+@pytest.fixture
+def override_environment(app):
+    """
+    Override the environment temporarily to test environment specific behaviour.
+
+    Example:
+    POST `/mandelbox/assign` requires a client commit hash to be sent for matching the client application
+    to a compatible instance. However, in dev environment, for `/mandelbox/assign` call we accept a pre-shared
+    static client_commit_hash along with the entry in the database to figure out the latest active AMI.
+    """
+    environment_ = None
+
+    def _environment(_value):
+        nonlocal environment_
+        environment_ = app.config["ENVIRONMENT"]
+        app.config["ENVIRONMENT"] = _value
+
+    yield _environment
+    app.config["ENVIRONMENT"] = environment_
 
 
 @pytest.fixture(scope="session")
