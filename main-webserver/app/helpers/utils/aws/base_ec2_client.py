@@ -48,7 +48,7 @@ class EC2Client(CloudClient):
         image_id: str,
         instance_name: str,
         num_instances: int = 1,
-        instance_type: str = "g3.4xlarge",
+        instance_type: str = "g4dn.xlarge",
     ) -> List[str]:
         """
         Starts AWS instances with the given properties, returning once started
