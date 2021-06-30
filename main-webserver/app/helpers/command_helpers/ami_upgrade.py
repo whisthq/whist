@@ -73,8 +73,8 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
             fractal_logger.debug(
                 f"Waiting for instance with name: {new_instance.instance_name} to be marked online"
             )
-            _poll(new_instance.instance_name)
-    region_wise_upgrade_threads[index_in_thread_list][1] = True
+            result = _poll(new_instance.instance_name)
+    region_wise_upgrade_threads[index_in_thread_list][1] = result
 
 
 def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
