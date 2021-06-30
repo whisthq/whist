@@ -201,9 +201,6 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         if not region_and_bool_pair[1]:
             raise Exception("AMIS failed to upgrade, see logs")
 
-    # and release the lock here
-    db.session.commit()
-
     current_active_amis_str = [
         current_active_ami.ami_id for current_active_ami in current_active_amis
     ]  # Fetching the AMI strings for instances running with current/older AMIs.
@@ -216,7 +213,6 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
         active_instance.status = DRAINING
-    db.session.commit()
 
     for active_instance in current_running_instances:
         # At this point, the instance is marked as DRAINING in the database. But we need
