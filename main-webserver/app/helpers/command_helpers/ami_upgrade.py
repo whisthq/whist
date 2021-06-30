@@ -190,7 +190,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             .with_for_update()
             .first()
         )
-        region_row.being_updated = True
+        region_row.ami_being_updated = True
         db.session.commit()
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
@@ -213,7 +213,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
                 .with_for_update()
                 .first()
             )
-            region_row.being_updated = False
+            region_row.ami_being_updated = False
             db.session.commit()
             raise Exception("AMIS failed to upgrade, see logs")
 
@@ -236,7 +236,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
-        new_ami.being_updated = False
+        new_ami.ami_being_updated = False
         new_ami.ami_active = True
 
     for current_ami in current_active_amis:
