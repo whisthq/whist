@@ -530,7 +530,7 @@ jobs:
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
-              run: flask command ami_upgrade "${{ env.GITHUB_SHA }} ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+              run: flask command ami_upgrade "${{ env.commit_sha }} ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
