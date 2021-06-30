@@ -55,7 +55,7 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int parse_args(int argc, char* argv[]);
+int client_parse_args(int argc, char* argv[]);
 
 /**
  * @brief                          Read arguments from the stdin pipe if `using_piped_arguments`

@@ -7,7 +7,7 @@ the server protocol.
 Usage
 ============================
 
-parse_args() checks and parses the args for server/main.c
+server_parse_args() checks and parses the args for server/main.c
 */
 
 /*
@@ -55,7 +55,7 @@ Public Function Implementations
 ============================
 */
 
-int parse_args(int argc, char* argv[]) {
+int server_parse_args(int argc, char* argv[]) {
     // TODO: replace `server` with argv[0]
     const char* usage =
         "Usage: server [OPTION]... IP_ADDRESS\n"

@@ -9,7 +9,7 @@
 Usage
 ============================
 
-parse_args() parses the arguments passed to the call to
+server_parse_args() parses the arguments passed to the call to
 the server.
 */
 
@@ -20,7 +20,7 @@ Public Functions
 */
 
 /**
- * @brief                          parse_args() parses the arguments passed
+ * @brief                          server_parse_args() parses the arguments passed
  *                                 to the call to the server.
  *
  * @param argc                     Length of the argv array
@@ -30,6 +30,6 @@ Public Functions
  * @returns                        Returns 0 on success, -1 on invalid args,
  *                                 and 1 on help or version args.
  */
-int parse_args(int argc, char* argv[]);
+int server_parse_args(int argc, char* argv[]);
 
 #endif  // SERVER_PARSE_ARGS_H
