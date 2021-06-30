@@ -239,6 +239,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 if (
                     instance_mandelboxes is None
                     or instance_mandelboxes.num_running_mandelboxes != 0
+                    or instance_info.status == "PRE_CONNECTION"
                 ):
                     db.session.commit()
                     continue
@@ -271,14 +272,11 @@ def try_scale_down_if_necessary_all_regions() -> None:
         ).all()
     ]
     for region, ami in region_and_ami_list:
-        if (
-            RegionToAmi.query.filter_by(region_name=region, ami_id=ami)
-            .with_for_update(skip_locked=True)
-            .one_or_none()
-            is not None
-        ):
-            db.session.commit()
-            try_scale_down_if_necessary(region, ami)
+        # grab a lock on this region/ami pair
+        RegionToAmi.query.filter_by(region_name=region, ami_id=ami).with_for_update()
+        try_scale_down_if_necessary(region, ami)
+        # and release it after scaling
+        db.session.commit()
 
 
 def repeated_scale_down_harness(time_delay: int, flask_app=current_app) -> None:
