@@ -183,27 +183,23 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec,
     return encoder;
 }
 
-void nvidia_encoder_frame_intake(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registered_resource) {
-    encoder->width = width;
-    encoder->height = height;
-}
-
-int nvidia_encoder_encode(NvidiaEncoder* encoder) {
-    // Try to free the encoder's previous frame
-    try_free_frame(encoder);
-
-    // Map the frame for use by the encoder.
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registered_resource) {
     NV_ENC_MAP_INPUT_RESOURCE map_params = {0};
     map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
-    // USE registered_resource instead of grab_params!
-    map_params.registeredResource = encoder->registered_resources[grab_params.dwTextureIndex];
-    NVENCSTATUS status =
-        encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
+    map_params.registeredResource = registered_resource;
+    status = encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);
         return -1;
     }
     encoder->input_buffer = map_params.mappedResource;
+    encoder->buffer_fmt = map_params.mappedBufferFmt;
+    return 0;
+}
+
+int nvidia_encoder_encode(NvidiaEncoder* encoder) {
+    // Try to free the encoder's previous frame
+    try_free_frame(encoder);
 
     // Fill in the frame encoding information
     NV_ENC_PIC_PARAMS enc_params = {0};
@@ -213,7 +209,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.inputHeight = encoder->height;
     enc_params.inputPitch = encoder->width;
     enc_params.inputBuffer = encoder->input_buffer;
-    enc_params.bufferFmt = map_params.mappedBufferFmt;
+    enc_params.bufferFmt = encoder->buffer_fmt;
     // frame_idx starts at -1, so first frame has idx 0
     enc_params.frameIdx = ++encoder->frame_idx;
     enc_params.outputBitstream = encoder->output_buffer;

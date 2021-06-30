@@ -12,6 +12,7 @@ typedef struct {
     NV_ENC_INITIALIZE_PARAMS encoder_params;
     NV_ENC_INPUT_PTR input_buffer;
     NV_ENC_OUTPUT_PTR output_buffer;
+    NV_ENC_BUFFER_FORMAT buffer_fmt;
     uint32_t frame_idx;
     int width;
     int height;
