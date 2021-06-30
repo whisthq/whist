@@ -1,4 +1,4 @@
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, ForeignKey
 from sqlalchemy.sql.expression import true
 from ._meta import db
 
@@ -103,7 +103,9 @@ class MandelboxInfo(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
     mandelbox_id = db.Column(db.String(250), primary_key=True)
-    instance_name = db.Column(db.String(250), nullable=False)
+    instance_name = db.Column(
+        db.String(250), ForeignKey(InstanceInfo.instance_name), nullable=False
+    )
     user_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
 
