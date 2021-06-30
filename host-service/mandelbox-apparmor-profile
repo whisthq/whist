@@ -1,0 +1,58 @@
+# mandelbox-apparmor-profile
+#
+# The AppArmor profile for mandelboxes, enabling new functionality while maintaining security.
+#
+# Copyright Fractal Computers, Inc. 2021
+#
+# This profile was generated according to fractal/mandelbox-utils:apparmor-dump-profile
+# to match the docker-default profile, and then modified as follows:
+# - Stop denying the `mount` syscall to enable FUSE filesystems in containers
+#
+# This file should be installed using `apparmor_parser`, and the resulting profile
+# should be used by docker via `--security-opt apparmor:mandelbox-apparmor-profile`
+#
+
+#include <tunables/global>
+
+
+profile mandelbox-apparmor-profile flags=(attach_disconnected,mediate_deleted) {
+
+  #include <abstractions/base>
+
+
+  network,
+  capability,
+  file,
+  umount,
+
+  # Host (privileged) processes may send signals to container processes.
+  signal (receive) peer=unconfined,
+  # dockerd may send signals to container processes (for "docker kill").
+  signal (receive) peer=unconfined,
+  # Container processes may send signals amongst themselves.
+  signal (send,receive) peer=mandelbox-apparmor-profile,
+
+
+  deny @{PROC}/* w,   # deny write for all files directly in /proc (not in a subdir)
+  # deny write to files not in /proc/<number>/** or /proc/sys/**
+  deny @{PROC}/{[^1-9],[^1-9][^0-9],[^1-9s][^0-9y][^0-9s],[^1-9][^0-9][^0-9][^0-9]*}/** w,
+  deny @{PROC}/sys/[^k]** w,  # deny /proc/sys except /proc/sys/k* (effectively /proc/sys/kernel)
+  deny @{PROC}/sys/kernel/{?,??,[^s][^h][^m]**} w,  # deny everything except shm* in /proc/sys/kernel/
+  deny @{PROC}/sysrq-trigger rwklx,
+  deny @{PROC}/kcore rwklx,
+
+  deny /sys/[^f]*/** wklx,
+  deny /sys/f[^s]*/** wklx,
+  deny /sys/fs/[^c]*/** wklx,
+  deny /sys/fs/c[^g]*/** wklx,
+  deny /sys/fs/cg[^r]*/** wklx,
+  deny /sys/firmware/** rwklx,
+  deny /sys/kernel/security/** rwklx,
+
+  # Explicitly enable the mount syscall
+  mount,
+
+  # suppress ptrace denials when using 'docker ps' or using 'ps' inside a container
+  ptrace (trace,read,tracedby,readby) peer=mandelbox-apparmor-profile,
+
+}
