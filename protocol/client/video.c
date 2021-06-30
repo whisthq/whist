@@ -183,7 +183,6 @@ void calculate_statistics();
 void skip_to_next_iframe();
 void sync_decoder_parameters(VideoFrame* frame);
 void request_iframe_to_catch_up();
-void render_frame();
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 void update_window_titlebar_color();
 #endif
@@ -193,62 +192,10 @@ Private Function Implementations
 ============================
 */
 
-void render_frame() {
-    // begin rendering the decoded frame
-
-    clock sws_timer;
-    start_timer(&sws_timer);
-
-    // recreate the texture if the video has been resized
-    if (pending_texture_update) {
-        replace_texture();
-        pending_texture_update = false;
-    }
-
-    pending_resize_render = false;
-
-    // appropriately convert the frame and move it into video_context.data
-    finalize_video_context_data();
-
-    // then, update the window titlebar color if we can
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-    update_window_titlebar_color();
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-
-    // The texture object we allocate is larger than the frame (unless
-    // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
-    // frame into the texture.
-    SDL_Rect texture_rect =
-        new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
-    // TODO: wrap this in Fractal update texture
-    int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect, video_context.data[0],
-                                   video_context.linesize[0], video_context.data[1],
-                                   video_context.linesize[1], video_context.data[2],
-                                   video_context.linesize[2]);
-    if (ret == -1) {
-        LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
-    }
-
-    if (!video_context.sws) {
-        // Clear out bits that aren't used from av_alloc_frame
-        memset(video_context.data, 0, sizeof(video_context.data));
-    }
-
-    // Subsection of texture that should be rendered to screen.
-    SDL_Rect output_rect = get_true_render_rect();
-    SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
-
-    if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
-        LOG_ERROR("Failed to render peers.");
-    }
-    // this call takes up to 16 ms: takes 8 ms on average.
-    SDL_RenderPresent(renderer);
-}
-
 void sync_decoder_parameters(VideoFrame* frame) {
     /*
-        Update decoder parameters to match the server's width, height, and codec if the next
-       frame is an iframe.
+        Update decoder parameters to match the server's width, height, and codec if the next frame
+       is an iframe.
 
         Arguments:
             frame (VideoFrame*): next frame to render
@@ -272,9 +219,9 @@ void sync_decoder_parameters(VideoFrame* frame) {
 SDL_Rect get_true_render_rect() {
     /*
         Since RenderCopy scales the texture to the size of the window by default, we use this to
-        truncate the frame to the size of the window to avoid scaling artifacts (blurriness).
-       The frame may be larger than the window because the video encoder rounds the width up to
-       a multiple of 8, and the height to a multiple of 2.
+        truncate the frame to the size of the window to avoid scaling artifacts (blurriness). The
+        frame may be larger than the window because the video encoder rounds the width up to a
+        multiple of 8, and the height to a multiple of 2.
 
         Returns:
             (SDL_Rect): the subsection of the texture we should actually render to the screen
@@ -380,9 +327,9 @@ void request_iframe_to_catch_up() {
 
 void update_cursor(VideoFrame* frame) {
     /*
-      Update the cursor image on the screen. If the cursor hasn't changed since the last frame
-      we received, we don't do anything. Otherwise, we either use the provided bitmap or  update
-      the cursor ID to tell SDL which cursor to render.
+      Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
+      received, we don't do anything. Otherwise, we either use the provided bitmap or  update the
+      cursor ID to tell SDL which cursor to render.
      */
     // Set cursor to frame's desired cursor type
     FractalCursorImage* cursor = get_frame_cursor_image(frame);
@@ -466,8 +413,8 @@ void update_window_titlebar_color() {
 
 int32_t multithreaded_destroy_decoder(void* opaque) {
     /*
-        Destroy the video decoder. This will be run in a separate SDL thread, hence the void*
-       opaque parameter.
+        Destroy the video decoder. This will be run in a separate SDL thread, hence the void* opaque
+       parameter.
 
         Arguments:
             opaque (void*): pointer to a video decoder
@@ -661,8 +608,8 @@ void finalize_video_context_data() {
 
 void replace_texture() {
     /*
-        Destroy the old texture and create a new texture. This function is called during
-       renderer initialization and if the user has finished resizing the window.
+        Destroy the old texture and create a new texture. This function is called during renderer
+        initialization and if the user has finished resizing the window.
     */
 
     // Destroy the old texture
@@ -806,8 +753,8 @@ void calculate_statistics() {
 
 void skip_to_next_iframe() {
     /*
-        Skip to the latest iframe we're received if said iframe is ahead of what we are
-       currently rendering.
+        Skip to the latest iframe we're received if said iframe is ahead of what we are currently
+        rendering.
     */
     // only run if we're not rendering or we haven't rendered anything yet
     if (video_data.last_rendered_id == -1 || !rendering) {
@@ -873,8 +820,8 @@ void update_video() {
         int next_render_id = video_data.last_rendered_id + 1;
         FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
 
-        // When we receive a packet that is a part of the next_render_id, and we have received
-        // every packet for that frame, we set rendering=true
+        // When we receive a packet that is a part of the next_render_id, and we have received every
+        // packet for that frame, we set rendering=true
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 // Now render_context will own the frame_buffer memory block
@@ -886,11 +833,10 @@ void update_video() {
                 FrameData* next_frame_ctx =
                     get_frame_at_id(video_ring_buffer, next_frame_render_id);
 
-                // If the next frame has been received, let's skip the rendering so we can
-                // render the next frame faster. We do this because rendering is synced with
-                // screen refresh, so rendering the backlogged frames requires the client to
-                // wait until the screen refreshes N more times, causing it to fall behind the
-                // server.
+                // If the next frame has been received, let's skip the rendering so we can render
+                // the next frame faster. We do this because rendering is synced with screen
+                // refresh, so rendering the backlogged frames requires the client to wait until the
+                // screen refreshes N more times, causing it to fall behind the server.
                 if (next_frame_ctx->id == next_frame_render_id &&
                     next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
@@ -907,9 +853,9 @@ void update_video() {
                         ctx->last_nacked_index = -1;
                     }
                     int num_nacked = 0;
-                    // TODO: ring buffer nacking function can be used here too. Change the
-                    // nacking function to not hardcode -5. LOG_INFO("************NACKING PACKET
-                    // %d, alive for %f MS", ctx->id, get_timer(ctx->frame_creation_timer));
+                    // TODO: ring buffer nacking function can be used here too. Change the nacking
+                    // function to not hardcode -5. LOG_INFO("************NACKING PACKET %d, alive
+                    // for %f MS", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1;
                          i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
                         if (!ctx->received_indices[i]) {
@@ -1039,8 +985,8 @@ int init_video_renderer() {
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen.
-    // Rather than allocating a new texture every time the dimensions change, we instead
-    // allocate the texture once and render sub-rectangles of it.
+    // Rather than allocating a new texture every time the dimensions change, we instead allocate
+    // the texture once and render sub-rectangles of it.
     replace_texture();
     pending_texture_update = false;
 
@@ -1078,9 +1024,9 @@ int init_video_renderer() {
 
 void log_frame_statistics(VideoFrame* frame) {
     /*
-        Log statistics of the currently rendering frame. If logging is verbose (i.e. LOG_VIDEO
-       is set to true), then we log every single render. If not, we only indicate when frames
-       are rendered more than 25ms after we've received them.
+        Log statistics of the currently rendering frame. If logging is verbose (i.e. LOG_VIDEO is
+        set to true), then we log every single render. If not, we only indicate when frames are
+        rendered more than 25ms after we've received them.
 
         Arguments:
             frame (VideoFrame*): frame we are rendering and logging about
@@ -1174,7 +1120,55 @@ int render_video() {
             // determine if we should be rendering at all or not
             bool render_this_frame = can_render && !skip_render;
             if (render_this_frame) {
-                render_frame();
+                // begin rendering the decoded frame
+
+                clock sws_timer;
+                start_timer(&sws_timer);
+
+                // recreate the texture if the video has been resized
+                if (pending_texture_update) {
+                    replace_texture();
+                    pending_texture_update = false;
+                }
+
+                pending_resize_render = false;
+
+                // appropriately convert the frame and move it into video_context.data
+                finalize_video_context_data();
+
+                // then, update the window titlebar color if we can
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+                update_window_titlebar_color();
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+
+                // The texture object we allocate is larger than the frame (unless
+                // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
+                // frame into the texture.
+                SDL_Rect texture_rect =
+                    new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
+                // TODO: wrap this in Fractal update texture
+                int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
+                                               video_context.data[0], video_context.linesize[0],
+                                               video_context.data[1], video_context.linesize[1],
+                                               video_context.data[2], video_context.linesize[2]);
+                if (ret == -1) {
+                    LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
+                }
+
+                if (!video_context.sws) {
+                    // Clear out bits that aren't used from av_alloc_frame
+                    memset(video_context.data, 0, sizeof(video_context.data));
+                }
+
+                // Subsection of texture that should be rendered to screen.
+                SDL_Rect output_rect = get_true_render_rect();
+                SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
+
+                if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+                    LOG_ERROR("Failed to render peers.");
+                }
+                // this call takes up to 16 ms: takes 8 ms on average.
+                SDL_RenderPresent(renderer);
             }
 
             safe_SDL_UnlockMutex(render_mutex);
