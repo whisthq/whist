@@ -9,7 +9,8 @@
 Usage
 ============================
 
-send_video() is called on its own thread and loops repeatedly to capture and send video.
+multithreaded_send_video() is called on its own thread and loops repeatedly to capture and send
+video.
 */
 
 /*
@@ -23,6 +24,6 @@ Public Functions
  *                                 them if needed, and sends them to the client
  *                                 along with cursor images if necessary
  */
-int32_t send_video(void* opaque);
+int32_t multithreaded_send_video(void* opaque);
 
 #endif  // SERVER_VIDEO_H
