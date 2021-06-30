@@ -279,7 +279,7 @@ jobs:
 
             - name: Push mandelbox images
               working-directory: mandelbox-images
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
@@ -381,7 +381,7 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               id: build-new-amis
               working-directory: ecs-host-setup
               shell: python3 {0}
@@ -429,7 +429,7 @@ jobs:
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -621,7 +621,7 @@ jobs:
                   | sudo tar -zxp --directory /usr/local/bin/
 
             - name: Deploy the webserver atomically
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: bash -e {0}
               run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
@@ -656,7 +656,7 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
 
             - name: Notify Slack on successful deploy
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: python3 {0}
               run: |
                   import os
@@ -931,7 +931,7 @@ jobs:
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
             - name: Update Config Database version with the new version
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'macOS'
+              if: needs.fractal-publish-build-config.outputs.publish == "true" && runner.os == 'macOS'
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
                   ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
@@ -1049,7 +1049,7 @@ jobs:
               run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
             - name: Notify Slack on successful deploy
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: python3 {0}
               run: |
                   import os
@@ -1087,7 +1087,7 @@ jobs:
                 main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
             ]
-        if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: needs.fractal-publish-build-config.outputs.publish == "true" && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
