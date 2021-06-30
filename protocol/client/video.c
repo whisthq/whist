@@ -611,23 +611,20 @@ void replace_texture() {
         initialization and if the user has finished resizing the window.
     */
 
-    if (pending_texture_update) {
-        // Destroy the old texture
-        if (video_context.texture) {
-            SDL_DestroyTexture(video_context.texture);
-        }
-        // Create a new texture
-        SDL_Texture* texture =
-            SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12,
-                              SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-        if (!texture) {
-            LOG_FATAL("SDL: could not create texture - exiting");
-        }
-
-        // Save the new texture over the old one
-        video_context.texture = texture;
-        pending_texture_update = false;
+    // Destroy the old texture
+    if (video_context.texture) {
+        SDL_DestroyTexture(video_context.texture);
     }
+    // Create a new texture
+    SDL_Texture* texture =
+        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING,
+                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+    if (!texture) {
+        LOG_FATAL("SDL: could not create texture - exiting");
+    }
+
+    // Save the new texture over the old one
+    video_context.texture = texture;
 }
 
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
@@ -1126,8 +1123,12 @@ int render_video() {
 
                 clock sws_timer;
                 start_timer(&sws_timer);
+
                 // recreate the texture if the video has been resized
-                replace_texture();
+                if (pending_texture_update) {
+                    replace_texture();
+                    pending_texture_update = false;
+                }
 
                 pending_resize_render = false;
 
