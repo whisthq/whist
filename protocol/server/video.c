@@ -136,7 +136,7 @@ int32_t multithreaded_send_video(void* opaque) {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 #endif
 
-    // Init DXGI Device
+    // Capture Device
     CaptureDevice rdevice;
     CaptureDevice* device = NULL;
 
