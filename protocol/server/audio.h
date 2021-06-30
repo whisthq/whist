@@ -9,7 +9,8 @@
 Usage
 ============================
 
-send_audio() is called on its own thread and loops repeatedly to capture and send audio.
+multithreaded_send_audio() is called on its own thread and loops repeatedly to capture and send
+audio.
 */
 
 /*
@@ -22,6 +23,6 @@ Public Functions
  * @brief                          This loops and collects audio samples, encodes
  *                                 the frames, and sends them to the client
  */
-int32_t send_audio(void* opaque);
+int32_t multithreaded_send_audio(void* opaque);
 
 #endif  // SERVER_AUDIO_H

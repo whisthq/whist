@@ -60,7 +60,6 @@ Includes
 #include <fractal/utils/threads.h>
 #include <fractal/clipboard/clipboard_synchronizer.h>
 #include <fractal/utils/color.h>
-//#include <fractal/cursor/cursor.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>

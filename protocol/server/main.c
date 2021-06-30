@@ -375,8 +375,10 @@ int main(int argc, char* argv[]) {
         fractal_create_thread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
     fractal_sleep(500);
 
-    FractalThread send_video_thread = fractal_create_thread(send_video, "send_video", NULL);
-    FractalThread send_audio_thread = fractal_create_thread(send_audio, "send_audio", NULL);
+    FractalThread send_video_thread =
+        fractal_create_thread(multithreaded_send_video, "multithreaded_send_video", NULL);
+    FractalThread send_audio_thread =
+        fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
     LOG_INFO("Sending video and audio...");
 
     clock totaltime;
