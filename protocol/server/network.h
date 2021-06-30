@@ -13,6 +13,14 @@ Usage
 
 /*
 ============================
+Constants
+============================
+*/
+
+#define CLIENT_PING_TIMEOUT_SEC 3.0
+
+/*
+============================
 Public Functions
 ============================
 */
@@ -141,5 +149,22 @@ int disconnect_client(int id);
  * @returns                        Returns -1 on failure, 0 on success.
  */
 int disconnect_clients(void);
+
+/**
+ * @brief                          Decides whether the server is using stun.
+ *
+ * @returns                        Returns true if server is using stun,
+ *                                 false otherwise.
+ */
+bool get_using_stun();
+
+/**
+ * @brief                          Should be run in its own thread. Loops
+ *                                 and manages connecting to/maintaining client
+ *                                 connections
+ *
+ * @returns                        Returns 0 on completion.
+ */
+int multithreaded_manage_clients(void *opaque);
 
 #endif  // SERVER_NETWORK_H
