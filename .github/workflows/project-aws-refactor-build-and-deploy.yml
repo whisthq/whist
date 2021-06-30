@@ -517,6 +517,9 @@ jobs:
               shell: bash
               run: ./notifications/setup_notifications.sh
 
+            - name: Retrieve Current Git Hash as Environment Variable
+              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
             - name: Install webserver dependencies for running the flask cli
               working-directory: main-webserver
               run: pip install -r requirements.txt
