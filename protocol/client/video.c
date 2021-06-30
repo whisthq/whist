@@ -215,6 +215,7 @@ void sync_decoder_parameters(VideoFrame* frame) {
         }
     }
 }
+
 SDL_Rect get_true_render_rect() {
     /*
         Since RenderCopy scales the texture to the size of the window by default, we use this to
