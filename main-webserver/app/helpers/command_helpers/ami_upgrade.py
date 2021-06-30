@@ -185,7 +185,13 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         # grab a lock here
-        _ = RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id).with_for_update()
+        region_row = (
+            RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
+            .with_for_update()
+            .first()
+        )
+        region_row.being_updated = True
+        db.session.commit()
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
             args=(region_name, ami_id, len(region_wise_upgrade_threads)),
@@ -193,12 +199,22 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             # should be used to fetch the application object to be passed to the thread.
             kwargs={"flask_app": current_app._get_current_object()},
         )
-        region_wise_upgrade_threads.append([region_wise_upgrade_thread, False])
+        region_wise_upgrade_threads.append(
+            [region_wise_upgrade_thread, False, (region_name, ami_id)]
+        )
         region_wise_upgrade_thread.start()
 
     for region_and_bool_pair in region_wise_upgrade_threads:
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
+            region_name, ami_id = region_and_bool_pair[2]
+            region_row = (
+                RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
+                .with_for_update()
+                .first()
+            )
+            region_row.being_updated = False
+            db.session.commit()
             raise Exception("AMIS failed to upgrade, see logs")
 
     current_active_amis_str = [
@@ -220,6 +236,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         mark_instance_for_draining(active_instance)
 
     for new_ami in new_amis:
+        new_ami.being_updated = False
         new_ami.ami_active = True
 
     for current_ami in current_active_amis:
