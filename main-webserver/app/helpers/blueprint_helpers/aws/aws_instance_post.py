@@ -239,7 +239,6 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 if (
                     instance_mandelboxes is None
                     or instance_mandelboxes.num_running_mandelboxes != 0
-                    or instance_info.status == "PRE_CONNECTION"
                 ):
                     db.session.commit()
                     continue
