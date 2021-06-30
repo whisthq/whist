@@ -2,7 +2,7 @@
 #define SERVER_VIDEO_H
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file video.h
+ * @file server_video.h
  * @brief This file contains all code that interacts directly with processing
  *        video on the server.
 ============================
