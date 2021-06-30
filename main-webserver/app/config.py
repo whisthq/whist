@@ -186,7 +186,6 @@ class DeploymentConfig:
     RUNNING_LOCALLY = property(getter("RUNNING_LOCALLY", default=False))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
-    HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
     JWT_DECODE_ALGORITHMS = ["RS256"]
     JWT_DECODE_AUDIENCE = "https://api.fractal.co"
