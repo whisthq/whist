@@ -73,7 +73,7 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
-    new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
+    new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer, flask_app=flask_app)
     for new_instance in new_instances:
         fractal_logger.debug(
             f"Waiting for instance with name: {new_instance.instance_name} to be marked online"
