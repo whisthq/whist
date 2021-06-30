@@ -533,6 +533,7 @@ jobs:
                   DATABASE_URL: ${{ env.DATABASE_URL }}
                   HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
                   SECRET_KEY: "This environment variable's value doesn't matter"
+                  RUNNING_LOCALLY: true
 
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
