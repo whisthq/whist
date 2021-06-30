@@ -1,7 +1,8 @@
 from typing import Dict, Union
+from http import HTTPStatus
+
 from flask import current_app
 
-from app.constants.http_codes import SUCCESS, BAD_REQUEST
 from app.exceptions import SendGridException, TemplateNotFound
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.mail.mail_client import MailClient
@@ -39,6 +40,6 @@ def mail_helper(
     except (SendGridException, TemplateNotFound):
         fractal_logger.exception("Sendgrid failed to send mail")
 
-        return {"verified": False, "status": BAD_REQUEST}
+        return {"verified": False, "status": HTTPStatus.BAD_REQUEST}
 
-    return {"verified": True, "status": SUCCESS}
+    return {"verified": True, "status": HTTPStatus.OK}
