@@ -22,10 +22,13 @@ typedef struct {
 } NvidiaEncoder;
 
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec,
-                                     NVFBC_TOGL_SETUP_PARAMS* p_setup_params, int out_width,
+                                     int out_width,
                                      int out_height);
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* input_buffer, int width, int height);
-void nvidia_encoder_encode(NvidiaEncoder* encoder);
+// To be called by transfer_capture!
+/// This should come from device->registered_resources[grab_params.dwTextureIndex];
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registered_resource);
+// Encode the most recently provided frame from frame_intake
+int nvidia_encoder_encode(NvidiaEncoder* encoder);
 void destroy_nvidia_encoder(NvidiaEncoder* encoder);
 void reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType codec);
 

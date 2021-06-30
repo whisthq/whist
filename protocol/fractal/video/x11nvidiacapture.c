@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <dlfcn.h>
 #include <string.h>
-#include <getopt.h>
 
 #include "x11capture.h"
 #include "x11nvidiacapture.h"
@@ -17,7 +16,6 @@
 #define PRINT_STATUS false
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
-#define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
 /**
  * @brief                          Creates an OpenGL context for use in NvFBC.
@@ -91,8 +89,7 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
-                                 CodecType requested_codec) {
+int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     // 0-initialize everything in the NvidiaCaptureDevice
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 

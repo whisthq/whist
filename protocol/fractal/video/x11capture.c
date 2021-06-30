@@ -328,10 +328,4 @@ void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec)
             bitrate (int): new bitrate to encode to
             codec (int): new codec to use
     */
-    if (!device) return;
-
-    if (device->using_nvidia) {
-        destroy_nvidia_capture_device(&device->nvidia_capture_device);
-        create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec);
-    }
 }
