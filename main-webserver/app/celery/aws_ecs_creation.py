@@ -891,7 +891,7 @@ def prewarm_new_container(
 @maintenance_track_task
 def create_new_cluster(
     cluster_name: Optional[str] = None,
-    instance_type: Optional[str] = "g3.4xlarge",
+    instance_type: Optional[str] = "g4dn.xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",
     region_name: Optional[str] = "us-east-1",
     min_size: Optional[int] = 0,
@@ -927,7 +927,7 @@ def create_new_cluster(
 
 def _create_new_cluster(
     cluster_name: Optional[str] = None,
-    instance_type: Optional[str] = "g3.4xlarge",
+    instance_type: Optional[str] = "g4dn.xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",
     region_name: Optional[str] = "us-east-1",
     min_size: Optional[int] = 0,
