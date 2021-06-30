@@ -222,7 +222,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
         if num_new < 0:
             # we only want to scale down unused instances
             available_empty_instances = list(
-                InstancesWithRoomForMandelboxes.query.filter_by(
+                InstancesWithRoomForMandelboxes.query.filter(
                     location=region, aws_ami_id=ami, num_running_mandelboxes=0
                 )
                 .limit(abs(num_new))
@@ -239,6 +239,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 if (
                     instance_mandelboxes is None
                     or instance_mandelboxes.num_running_mandelboxes != 0
+                    or instance_info.status == "PRE_CONNECTION"
                 ):
                     db.session.commit()
                     continue
