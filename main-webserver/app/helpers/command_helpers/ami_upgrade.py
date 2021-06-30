@@ -184,6 +184,8 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     # Redefine the list here to reset it
     region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
+        # grab a lock here
+        _ = RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id).with_for_update()
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
             args=(region_name, ami_id, len(region_wise_upgrade_threads)),
@@ -198,6 +200,9 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
             raise Exception("AMIS failed to upgrade, see logs")
+
+    # and release the lock here
+    db.session.commit()
 
     current_active_amis_str = [
         current_active_ami.ami_id for current_active_ami in current_active_amis
