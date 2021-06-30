@@ -1035,6 +1035,13 @@ ALTER TABLE ONLY hardware.mandelbox_info
 ALTER TABLE ONLY hardware.region_to_ami
     ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
 
+--
+-- Name: region_to_ami _region_name_ami_id_unique_constraint; Type: CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.region_to_ami
+    ADD CONSTRAINT _region_name_ami_id_unique_constraint UNIQUE (region_name, ami_id);
+
 
 --
 -- Name: supported_app_images supported_app_images_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
@@ -1436,4 +1443,3 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 --
 -- PostgreSQL database dump complete
 --
-
