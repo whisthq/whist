@@ -3,9 +3,9 @@ codecov:
   require_ci_to_pass: yes
 
 coverage:
-  precision: 5
-  round: down
-  range: "0...100"
+  precision: 5       # Number of decimal places, between 0 and 5
+  round: down        # up, down, or nearest
+  range: "70...90"   # First number represents red, and second represents green (default is 70..100)
 
 parsers:
   gcov:
@@ -15,10 +15,10 @@ parsers:
       method: no
       macro: no
 
+ignore:
+  - */.heroku/python/*
+
 comment:
-  layout: "reach,diff,flags,files,footer"
+  layout: "reach, diff, flags, files, footer"
   behavior: default
   require_changes: no
-  
-ignore:
-- ".heroku/python"
