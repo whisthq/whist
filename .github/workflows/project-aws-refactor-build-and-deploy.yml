@@ -100,13 +100,6 @@ jobs:
                   # Grab the name of the deployment environment from set-deploy-environment
                   BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
 
-                  #                  if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
-                  #                  # On push to staging/prod, we want to run all jobs
-                  #                    JOB_NAME="all"
-                  #                  else
-                  #                  # On push to dev, we want to filter jobs
-                  #                    JOB_NAME="filter"
-                  #                  fi
                   JOB_NAME="all"
                   # Store the commit from before the push was made
                   # This is only used when filtering
@@ -214,7 +207,7 @@ jobs:
 
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
-            aws_new_ami_instance_type: g3.4xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
+            aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
             aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
@@ -243,7 +236,7 @@ jobs:
                   #
                   #            - name: Push mandelbox images
                   #              working-directory: mandelbox-images
-                  #              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+                  #              if: needs.fractal-publish-build-config.outputs.publish == "true"
                   #              env:
                   #                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   #                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
@@ -348,7 +341,7 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               id: build-new-amis
               working-directory: ecs-host-setup
               shell: python3 {0}
@@ -396,7 +389,7 @@ jobs:
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -470,7 +463,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Uses webserver maintenance mode to update AMIs if new AMIs have been built
+    # Uses webserver's cli command to update AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
         needs:
@@ -549,7 +542,7 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":hammer_and_wrench: Webserver started Maintenance Mode :hammer_and_wrench:"
+                  TITLE = ":hammer_and_wrench: Webserver started Upgrading AMIs :hammer_and_wrench:"
                   BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -612,7 +605,7 @@ jobs:
                   | sudo tar -zxp --directory /usr/local/bin/
 
             - name: Deploy the webserver atomically
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: bash -e {0}
               run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
@@ -647,7 +640,7 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
 
             - name: Notify Slack on successful deploy
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              if: needs.fractal-publish-build-config.outputs.publish == "true"
               shell: python3 {0}
               run: |
                   import os
