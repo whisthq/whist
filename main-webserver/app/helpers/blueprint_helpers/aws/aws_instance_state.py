@@ -10,8 +10,8 @@ from app.constants.instance_state_values import (
     ACTIVE,
 )
 
-MAX_POLL_ITERATIONS = 90
-POLL_SLEEP_INTERVAL = 10  # seconds
+MAX_POLL_ITERATIONS = 60
+POLL_SLEEP_INTERVAL = 4 # seconds
 
 
 def _poll(instance_name: str) -> bool:
