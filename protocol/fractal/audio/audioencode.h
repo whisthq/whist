@@ -34,6 +34,10 @@ Custom Types
 ============================
 */
 
+// This has been found to be a good number for audio packet size. In practice, with AAC one audio
+// frame is typically about 350-400 bytes, which is only one packet.
+#define MAX_NUM_AUDIO_PACKETS 3
+
 /**
  * @brief       Struct for handling encoding and resampling of audio. the FFmpeg codec and context
  *              handle encoding packets sent through audio_fifo, and audio is resampled from system
@@ -45,11 +49,13 @@ typedef struct AudioEncoder {
     AVCodecContext* context;
     AVFrame* frame;
     AVAudioFifo* audio_fifo;
-    AVPacket packet;
+
+    int num_packets;
+    AVPacket packets[MAX_NUM_AUDIO_PACKETS];
+
     SwrContext* swr_context;
     int frame_count;
     int encoded_frame_size;
-    void* encoded_frame_data;
 } AudioEncoder;
 
 /**

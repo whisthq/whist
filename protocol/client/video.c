@@ -20,6 +20,7 @@ Includes
 
 #include "video.h"
 #include "sdl_utils.h"
+#include "ringbuffer.h"
 
 #include <stdio.h>
 
@@ -100,27 +101,6 @@ Custom Types
 ============================
 */
 
-typedef struct FrameData {
-    char* frame_buffer;
-    int frame_size;
-    int id;
-    int packets_received;
-    int num_packets;
-    bool received_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
-    bool nacked_indicies[LARGEST_FRAME_SIZE / MAX_PAYLOAD_SIZE + 5];
-    bool rendered;
-
-    int num_times_nacked;
-
-    int last_nacked_index;
-
-    clock last_nacked_timer;
-
-    clock last_packet_timer;
-
-    clock frame_creation_timer;
-} FrameData;
-
 struct VideoData {
     FrameData* pending_ctx;
     int frames_received;
@@ -128,15 +108,12 @@ struct VideoData {
     clock frame_timer;
     int last_statistics_id;
     int last_rendered_id;
-    int max_id;
     int most_recent_iframe;
-    int last_received_id;
 
     clock last_iframe_request_timer;
     bool is_waiting_for_iframe;
 
     double target_mbps;
-    int num_nacked;
     clock missing_frame_nack_timer;
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
@@ -174,8 +151,7 @@ SDL_mutex* render_mutex;
 
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
-FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
-BlockAllocator* frame_buffer_allocator;
+RingBuffer* video_ring_buffer;
 
 bool has_video_rendered_yet = false;
 
@@ -281,8 +257,8 @@ int render_video() {
         }
         safe_SDL_UnlockMutex(render_mutex);
 
-        // Cast to Frame* because this variable is not volatile in this section
-        Frame* frame = (Frame*)render_context.frame_buffer;
+        // Cast to VideoFrame* because this variable is not volatile in this section
+        VideoFrame* frame = (VideoFrame*)render_context.frame_buffer;
         PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
@@ -322,195 +298,202 @@ int render_video() {
         clock decode_timer;
         start_timer(&decode_timer);
 
-        if (!video_decoder_decode(video_context.decoder, get_frame_videodata(frame),
-                                  frame->videodata_length)) {
-            LOG_WARNING("Failed to video_decoder_decode!");
-            // Since we're done, we free the frame buffer
-            free_block(frame_buffer_allocator, render_context.frame_buffer);
-            // rendering = false is set to false last,
-            // since that can trigger the next frame render
+        if (video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
+                                       frame->videodata_length) < 0) {
+            LOG_WARNING("Failed to send packets to the decoder!");
             rendering = false;
             return -1;
         }
 
-        // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
-
-        safe_SDL_LockMutex(render_mutex);
-        update_pixel_format();
-
-        bool render_this_frame = can_render && !skip_render;
-
-        if (render_this_frame) {
-            clock sws_timer;
-            start_timer(&sws_timer);
-
-            update_texture();
-            pending_resize_render = false;
-
-            if (video_context.sws) {
-                sws_scale(
-                    video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
-                    video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
-                    video_context.data, video_context.linesize);
-            } else {
-                memcpy(video_context.data, video_context.decoder->sw_frame->data,
-                       sizeof(video_context.data));
-                memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
-                       sizeof(video_context.linesize));
+        int res;
+        // we should only expect this while loop to run once.
+        while ((res = video_decoder_get_frame(video_context.decoder)) == 0) {
+            if (res < 0) {
+                LOG_ERROR("Failed to get next frame from decoder!");
+                rendering = false;
+                return -1;
             }
+
+            // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
+
+            safe_SDL_LockMutex(render_mutex);
+            update_pixel_format();
+
+            bool render_this_frame = can_render && !skip_render;
+
+            if (render_this_frame) {
+                clock sws_timer;
+                start_timer(&sws_timer);
+
+                update_texture();
+                pending_resize_render = false;
+
+                if (video_context.sws) {
+                    sws_scale(video_context.sws,
+                              (uint8_t const* const*)video_context.decoder->sw_frame->data,
+                              video_context.decoder->sw_frame->linesize, 0,
+                              video_context.decoder->height, video_context.data,
+                              video_context.linesize);
+                } else {
+                    memcpy(video_context.data, video_context.decoder->sw_frame->data,
+                           sizeof(video_context.data));
+                    memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
+                           sizeof(video_context.linesize));
+                }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-            FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
-                                             video_context.data[2][0]};
+                FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
+                                                 video_context.data[2][0]};
 
-            FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
+                FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
-            if ((FractalRGBColor*)native_window_color == NULL) {
-                // no window color has been set; create it!
-                FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
-                *new_native_window_color = new_rgb_color;
-                native_window_color = new_native_window_color;
-                native_window_color_update = true;
-            } else if (rgb_compare(new_rgb_color, *(FractalRGBColor*)native_window_color)) {
-                // window color has changed; update it!
-                FractalRGBColor* old_native_window_color = (FractalRGBColor*)native_window_color;
-                FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
-                *new_native_window_color = new_rgb_color;
-                native_window_color = new_native_window_color;
-                free(old_native_window_color);
-                native_window_color_update = true;
-            }
+                if ((FractalRGBColor*)native_window_color == NULL) {
+                    // no window color has been set; create it!
+                    FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+                    *new_native_window_color = new_rgb_color;
+                    native_window_color = new_native_window_color;
+                    native_window_color_update = true;
+                } else if (rgb_compare(new_rgb_color, *(FractalRGBColor*)native_window_color)) {
+                    // window color has changed; update it!
+                    FractalRGBColor* old_native_window_color =
+                        (FractalRGBColor*)native_window_color;
+                    FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+                    *new_native_window_color = new_rgb_color;
+                    native_window_color = new_native_window_color;
+                    free(old_native_window_color);
+                    native_window_color_update = true;
+                }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
-            // The texture object we allocate is larger than the frame (unless
-            // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the frame
-            // into the texture.
-            SDL_Rect texture_rect;
-            texture_rect.x = 0;
-            texture_rect.y = 0;
-            texture_rect.w = video_context.decoder->width;
-            texture_rect.h = video_context.decoder->height;
-            int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
-                                           video_context.data[0], video_context.linesize[0],
-                                           video_context.data[1], video_context.linesize[1],
-                                           video_context.data[2], video_context.linesize[2]);
-            if (ret == -1) {
-                LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
-            }
-
-            if (!video_context.sws) {
-                // Clear out bits that aren't used from av_alloc_frame
-                memset(video_context.data, 0, sizeof(video_context.data));
-            }
-        }
-
-        // Set cursor to frame's desired cursor type
-        FractalCursorImage* cursor = get_frame_cursor_image(frame);
-        // Only update the cursor, if a cursor image is even embedded in the frame at all.
-        if (cursor) {
-            if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
-                if (sdl_cursor) {
-                    SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
-                }
-                if (cursor->using_bmp) {
-                    // use bitmap data to set cursor
-
-                    SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                        cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
-                        sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
-                        CURSORIMAGE_B, CURSORIMAGE_A);
-                    // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
-                    // pre-alpha multplied
-                    sdl_cursor =
-                        SDL_CreateColorCursor(cursor_surface, cursor->bmp_hot_x, cursor->bmp_hot_y);
-                    SDL_FreeSurface(cursor_surface);
-                } else {
-                    // use cursor id to set cursor
-                    sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-                }
-                SDL_SetCursor((SDL_Cursor*)sdl_cursor);
-
-                last_cursor = (FractalCursorID)cursor->cursor_id;
-            }
-
-            if (cursor->cursor_state != cursor_state) {
-                if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                    SDL_SetRelativeMouseMode(SDL_TRUE);
-                } else {
-                    SDL_SetRelativeMouseMode(SDL_FALSE);
+                // The texture object we allocate is larger than the frame (unless
+                // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
+                // frame into the texture.
+                SDL_Rect texture_rect;
+                texture_rect.x = 0;
+                texture_rect.y = 0;
+                texture_rect.w = video_context.decoder->width;
+                texture_rect.h = video_context.decoder->height;
+                int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
+                                               video_context.data[0], video_context.linesize[0],
+                                               video_context.data[1], video_context.linesize[1],
+                                               video_context.data[2], video_context.linesize[2]);
+                if (ret == -1) {
+                    LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
                 }
 
-                cursor_state = cursor->cursor_state;
+                if (!video_context.sws) {
+                    // Clear out bits that aren't used from av_alloc_frame
+                    memset(video_context.data, 0, sizeof(video_context.data));
+                }
             }
-        }
 
-        // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
-        // get_timer(renderContext.client_frame_timer));
-
-        if (render_this_frame) {
-            // Subsection of texture that should be rendered to screen.
-            SDL_Rect output_rect;
-            output_rect.x = 0;
-            output_rect.y = 0;
-            if (output_width <= server_width && server_width <= output_width + 8 &&
-                output_height <= server_height && server_height <= output_height + 2) {
-                // Since RenderCopy scales the texture to the size of the window by default, we use
-                // this to truncate the frame to the size of the window to avoid scaling
-                // artifacts (blurriness). The frame may be larger than the window because the
-                // video encoder rounds the width up to a multiple of 8, and the height to a
-                // multiple of 2.
-                output_rect.w = output_width;
-                output_rect.h = output_height;
-                if (server_width > output_width || server_height > output_height) {
-                    // We failed to force the window dimensions to be multiples of 8, 2 in
-                    // `handle_window_size_changed`
-                    static bool already_sent_message = false;
-                    static long long last_server_dims = -1;
-                    static long long last_output_dims = -1;
-                    if (server_width * 100000LL + server_height != last_server_dims ||
-                        output_width * 100000LL + output_height != last_output_dims) {
-                        // If truncation to/from dimensions have changed, then we should resend
-                        // Truncating message
-                        already_sent_message = false;
+            // Set cursor to frame's desired cursor type
+            FractalCursorImage* cursor = get_frame_cursor_image(frame);
+            // Only update the cursor, if a cursor image is even embedded in the frame at all.
+            if (cursor) {
+                if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
+                    if (sdl_cursor) {
+                        SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
                     }
-                    last_server_dims = server_width * 100000LL + server_height;
-                    last_output_dims = output_width * 100000LL + output_height;
-                    if (!already_sent_message) {
-                        LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width,
-                                    server_height, output_width, output_height);
-                        already_sent_message = true;
+                    if (cursor->using_bmp) {
+                        // use bitmap data to set cursor
+
+                        SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                            cursor->bmp, cursor->bmp_width, cursor->bmp_height,
+                            sizeof(uint32_t) * 8, sizeof(uint32_t) * cursor->bmp_width,
+                            CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+                        // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
+                        // pre-alpha multplied
+                        sdl_cursor = SDL_CreateColorCursor(cursor_surface, cursor->bmp_hot_x,
+                                                           cursor->bmp_hot_y);
+                        SDL_FreeSurface(cursor_surface);
+                    } else {
+                        // use cursor id to set cursor
+                        sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
                     }
+                    SDL_SetCursor((SDL_Cursor*)sdl_cursor);
+
+                    last_cursor = (FractalCursorID)cursor->cursor_id;
                 }
-            } else {
-                // If the condition is false, most likely that means the server has not yet updated
-                // to use the new dimensions, so we render the entire frame. This makes resizing
-                // look more consistent.
-                output_rect.w = server_width;
-                output_rect.h = server_height;
-            }
-            SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
 
-            if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
-                LOG_ERROR("Failed to render peers.");
-            }
-            // this call takes up to 16 ms: takes 8 ms on average.
-            SDL_RenderPresent(renderer);
-        }
+                if (cursor->cursor_state != cursor_state) {
+                    if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+                        SDL_SetRelativeMouseMode(SDL_TRUE);
+                    } else {
+                        SDL_SetRelativeMouseMode(SDL_FALSE);
+                    }
 
-        safe_SDL_UnlockMutex(render_mutex);
+                    cursor_state = cursor->cursor_state;
+                }
+            }
+
+            // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
+            // get_timer(renderContext.client_frame_timer));
+
+            if (render_this_frame) {
+                // Subsection of texture that should be rendered to screen.
+                SDL_Rect output_rect;
+                output_rect.x = 0;
+                output_rect.y = 0;
+                if (output_width <= server_width && server_width <= output_width + 8 &&
+                    output_height <= server_height && server_height <= output_height + 2) {
+                    // Since RenderCopy scales the texture to the size of the window by default, we
+                    // use this to truncate the frame to the size of the window to avoid scaling
+                    // artifacts (blurriness). The frame may be larger than the window because the
+                    // video encoder rounds the width up to a multiple of 8, and the height to a
+                    // multiple of 2.
+                    output_rect.w = output_width;
+                    output_rect.h = output_height;
+                    if (server_width > output_width || server_height > output_height) {
+                        // We failed to force the window dimensions to be multiples of 8, 2 in
+                        // `handle_window_size_changed`
+                        static bool already_sent_message = false;
+                        static long long last_server_dims = -1;
+                        static long long last_output_dims = -1;
+                        if (server_width * 100000LL + server_height != last_server_dims ||
+                            output_width * 100000LL + output_height != last_output_dims) {
+                            // If truncation to/from dimensions have changed, then we should resend
+                            // Truncating message
+                            already_sent_message = false;
+                        }
+                        last_server_dims = server_width * 100000LL + server_height;
+                        last_output_dims = output_width * 100000LL + output_height;
+                        if (!already_sent_message) {
+                            LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width,
+                                        server_height, output_width, output_height);
+                            already_sent_message = true;
+                        }
+                    }
+                } else {
+                    // If the condition is false, most likely that means the server has not yet
+                    // updated to use the new dimensions, so we render the entire frame. This makes
+                    // resizing look more consistent.
+                    output_rect.w = server_width;
+                    output_rect.h = server_height;
+                }
+                SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
+
+                if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
+                    LOG_ERROR("Failed to render peers.");
+                }
+                // this call takes up to 16 ms: takes 8 ms on average.
+                SDL_RenderPresent(renderer);
+            }
+
+            safe_SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", render_context.id, render_context.frame_size,
-                  get_timer(render_context.frame_creation_timer));
+            LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", render_context.id,
+                      render_context.frame_size, get_timer(render_context.frame_creation_timer));
 #endif
 
-        if (frame->is_iframe) {
-            video_data.is_waiting_for_iframe = false;
-        }
+            if (frame->is_iframe) {
+                video_data.is_waiting_for_iframe = false;
+            }
 
-        video_data.last_rendered_id = render_context.id;
-        // Since we're done, we free the frame buffer
-        free_block(frame_buffer_allocator, render_context.frame_buffer);
+            video_data.last_rendered_id = render_context.id;
+        }
+        // Since we're done, we free the render context frame buffer
         has_video_rendered_yet = true;
         // rendering = false is set to false last,
         // since that can trigger the next frame render
@@ -589,34 +572,6 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
 
     gif_frame_index += 1;
     gif_frame_index %= NUMBER_LOADING_FRAMES;
-}
-
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-void video_nack(int id, int index) {
-    /*
-        Send a negative acknowledgement to the server if a video
-        packet is missing
-
-        Arguments:
-            id (int): missing packet ID
-            index (int): missing packet index
-    */
-    // If we can get the server to generate iframes quickly (i.e. about 60 ms), flip
-    // NO_NACKS_DURING_IFRAME to true
-#if NO_NACKS_DURING_IFRAME
-    if (video_data.is_waiting_for_iframe) {
-        return;
-    }
-#endif
-    video_data.num_nacked++;
-    LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_VIDEO_NACK;
-    fmsg.nack_data.id = id;
-    fmsg.nack_data.index = index;
-    send_fmsg(&fmsg);
 }
 
 bool request_iframe() {
@@ -770,10 +725,6 @@ int init_video_renderer() {
         LOG_WARNING("Failed to init peer cursors.");
     }
 
-    // Here we create the frame buffer allocator,
-    // And make it allocate blocks of size LARGEST_FRAME_SIZE
-    frame_buffer_allocator = create_block_allocator(LARGEST_FRAME_SIZE);
-
     can_render = true;
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
@@ -824,26 +775,18 @@ int init_video_renderer() {
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
     video_context.sws = NULL;
+    video_ring_buffer = init_ring_buffer(FRAME_VIDEO, RECV_FRAMES_BUFFER_SIZE);
 
     max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
     video_data.pending_ctx = NULL;
-    video_data.frames_received = 0;
     video_data.bytes_transferred = 0;
     start_timer(&video_data.frame_timer);
     video_data.last_statistics_id = 1;
     video_data.last_rendered_id = 0;
-    video_data.max_id = 0;
     video_data.most_recent_iframe = -1;
-    video_data.last_received_id = -1;
-    start_timer(&video_data.missing_frame_nack_timer);
-    video_data.num_nacked = 0;
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
-
-    for (int i = 0; i < RECV_FRAMES_BUFFER_SIZE; i++) {
-        receiving_frames[i].id = -1;
-    }
 
     // Resize event handling
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
@@ -901,8 +844,8 @@ void update_video() {
         double dropped_rate = 1.0 - receive_rate;
         */
 
-        double nack_per_second = video_data.num_nacked / time;
-        video_data.nack_by_bitrate[video_data.bucket] += video_data.num_nacked;
+        double nack_per_second = video_ring_buffer->num_nacked / time;
+        video_data.nack_by_bitrate[video_data.bucket] += video_ring_buffer->num_nacked;
         video_data.seconds_by_bitrate[video_data.bucket] += time;
 
         LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
@@ -949,11 +892,10 @@ void update_video() {
         max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
 
         LOG_INFO("MBPS3: %d", max_bitrate);
-        video_data.num_nacked = 0;
+        video_ring_buffer->num_nacked = 0;
 
         video_data.bytes_transferred = 0;
-        video_data.frames_received = 0;
-        video_data.last_statistics_id = video_data.max_id;
+        video_data.last_statistics_id = video_ring_buffer->max_id;
         start_timer(&video_data.frame_timer);
     }
 
@@ -967,50 +909,47 @@ void update_video() {
                      video_data.most_recent_iframe);
             // If `last_rendered_id` is further back than the first frame received, start from the
             // first frame received
-            for (int i = max(video_data.last_rendered_id + 1,
-                             video_data.most_recent_iframe - video_data.frames_received + 1);
+            for (int i =
+                     max(video_data.last_rendered_id + 1,
+                         video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
                  i < video_data.most_recent_iframe; i++) {
-                int index = i % RECV_FRAMES_BUFFER_SIZE;
-                if (receiving_frames[index].id == i) {
-                    LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
-                                receiving_frames[index].packets_received,
-                                receiving_frames[index].num_packets);
+                FrameData* frame_data = get_frame_at_id(video_ring_buffer, i);
+                if (frame_data->id == i) {
+                    LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->packets_received,
+                                frame_data->num_packets);
 
-                    for (int j = 0; j < receiving_frames[index].num_packets; j++) {
-                        if (!receiving_frames[index].received_indicies[j]) {
+                    for (int j = 0; j < frame_data->num_packets; j++) {
+                        if (!frame_data->received_indices[j]) {
                             LOG_WARNING("Did not receive ID %d, Index %d", i, j);
                         }
                     }
                 } else {
-                    LOG_WARNING("Bad ID? %d instead of %d", receiving_frames[index].id, i);
+                    LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
                 }
             }
             video_data.last_rendered_id = video_data.most_recent_iframe - 1;
         }
 
         int next_render_id = video_data.last_rendered_id + 1;
-
-        int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
-
-        FrameData* ctx = &receiving_frames[index];
+        FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
 
         // When we receive a packet that is a part of the next_render_id, and we have received every
         // packet for that frame, we set rendering=true
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
                 // LOG_INFO( "Packets: %d %s", ctx->num_packets,
-                // ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
+                // ((VideoFrame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
                 // LOG_INFO("Rendering %d (Age %f)", ctx->id,
                 // get_timer(ctx->frame_creation_timer));
 
                 // Now render_context will own the frame_buffer memory block
                 render_context = *ctx;
-                // So we make sure that ctx->frame_buffer no longer owns the memory block
-                ctx->frame_buffer = NULL;
+                // Tell the ring buffer we're rendering this frame
+                set_rendering(video_ring_buffer, ctx->id);
                 // Get the FrameData for the next frame
                 int next_frame_render_id = next_render_id + 1;
-                int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
-                FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
+                FrameData* next_frame_ctx =
+                    get_frame_at_id(video_ring_buffer, next_frame_render_id);
 
                 // If the next frame has been received, let's skip the rendering so we can render
                 // the next frame faster. We do this because rendering is synced with screen
@@ -1036,15 +975,15 @@ void update_video() {
                     // MS", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1;
                          i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
-                        if (!ctx->received_indicies[i]) {
+                        if (!ctx->received_indices[i]) {
                             num_nacked++;
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
                                 ctx->id, i, ctx->num_packets,
                                 get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
-                            ctx->nacked_indicies[i] = true;
-                            video_nack(ctx->id, i);
+                            ctx->nacked_indices[i] = true;
+                            nack_packet(video_ring_buffer, ctx->id, i);
                         }
                         ctx->last_nacked_index = i;
                     }
@@ -1064,7 +1003,7 @@ void update_video() {
 
             // If we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
 
-            if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
+            if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
                 // old condition, which only checked if we hadn't received any packets in a while:
                 // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
                 // cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
@@ -1083,10 +1022,10 @@ void update_video() {
                 int missing_packets = 0;
                 for (int i = video_data.last_rendered_id + 1;
                      i < video_data.last_rendered_id + MAX_UNSYNCED_FRAMES; i++) {
-                    int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
-                    if (receiving_frames[buffer_index].id == i) {
-                        for (int j = 0; j < receiving_frames[buffer_index].num_packets; j++) {
-                            if (!receiving_frames[buffer_index].received_indicies[j]) {
+                    FrameData* ctx = get_frame_at_id(video_ring_buffer, i);
+                    if (ctx->id == i) {
+                        for (int j = 0; j < ctx->num_packets; j++) {
+                            if (!ctx->received_indices[j]) {
                                 missing_packets++;
                             }
                         }
@@ -1108,7 +1047,8 @@ void update_video() {
         } else {
             // If we're rendering, we might catch up in a bit, so we can be more lenient
             // and will only i-frame if we're MAX_UNSYNCED_FRAMES_RENDER frames behind.
-            if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
+            if (video_ring_buffer->max_id >
+                video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is %d frames ahead of the most recent rendered frame. "
@@ -1145,145 +1085,25 @@ int32_t receive_video(FractalPacket* packet) {
 
     // Find frame in ring buffer that matches the id
     video_data.bytes_transferred += packet->payload_size;
-
-    int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
-
-    FrameData* ctx = &receiving_frames[index];
-
-    // Check if we have to initialize the frame buffer
-    if (packet->id < ctx->id) {
-        LOG_INFO("Old packet received! %d is less than the previous %d", packet->id, ctx->id);
-        return -1;
-    } else if (packet->id > ctx->id) {
-        if (rendering && render_context.id == ctx->id) {
-            LOG_INFO(
-                "Error! Currently rendering an ID that will be overwritten! "
-                "Skipping packet.");
-            return 0;
-        }
-        ctx->id = packet->id;
-        // If the frame buffer doesn't exist yet, we allocate one
-        // in order to hold the frame data
-        if (ctx->frame_buffer == NULL) {
-            char* p = allocate_block(frame_buffer_allocator);
-            ctx->frame_buffer = p;
-        }
-        ctx->packets_received = 0;
-        ctx->num_packets = packet->num_indices;
-        ctx->last_nacked_index = -1;
-        ctx->num_times_nacked = -1;
-        ctx->rendered = false;
-        ctx->frame_size = 0;
-        memset(ctx->received_indicies, 0, sizeof(ctx->received_indicies));
-        memset(ctx->nacked_indicies, 0, sizeof(ctx->nacked_indicies));
-        start_timer(&ctx->last_nacked_timer);
-        start_timer(&ctx->frame_creation_timer);
-        // LOG_INFO("Initialized packet %d!", ctx->id);
+    int res = receive_packet(video_ring_buffer, packet);
+    if (res < 0) {
+        return res;
     } else {
-        // LOG_INFO("Already Started: %d/%d - %f", ctx->packets_received + 1,
-        // ctx->num_packets, get_timer(ctx->client_frame_timer));
-    }
-
-    start_timer(&ctx->last_packet_timer);
-
-    // If we already received this packet, we can skip
-    if (packet->is_a_nack) {
-        if (!ctx->received_indicies[packet->index]) {
-            LOG_INFO("NACK for Video ID %d, Index %d Received!", packet->id, packet->index);
-        } else {
-            LOG_INFO(
-                "NACK for Video ID %d, Index %d Received! But didn't need "
-                "it.",
-                packet->id, packet->index);
-        }
-    } else if (ctx->nacked_indicies[packet->index]) {
-        LOG_INFO(
-            "Received the original Video ID %d Index %d, but we had NACK'ed "
-            "for it.",
-            packet->id, packet->index);
-    }
-
-    // Already received
-    if (ctx->received_indicies[packet->index]) {
-#if LOG_VIDEO
-        LOG_DEBUG(
-            "Skipping duplicate Video ID %d Index %d at time since creation %f "
-            "%s",
-            packet->id, packet->index, get_timer(ctx->frame_creation_timer),
-            packet->is_a_nack ? "(nack)" : "");
-#endif
-        return 0;
-    }
+        FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
+        // If we received all of the packets
+        if (ctx->packets_received == ctx->num_packets) {
+            bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
 
 #if LOG_VIDEO
-    // LOG_INFO("Received Video ID %d Index %d at time since creation %f %s",
-    // packet->id, packet->index, get_timer(ctx->frame_creation_timer),
-    // packet->is_a_nack ? "(nack)" : "");
+            LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
+                     ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
 #endif
 
-    video_data.max_id = max(video_data.max_id, ctx->id);
-
-    ctx->received_indicies[packet->index] = true;
-
-    // nack both for missing packets in this frame, and missing previous frames
-
-    // check if we have jumped 5 indices abruptly - if so, nack the missing packets
-    if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > 6.0 / 1000) {
-        int to_index = packet->index - 5;
-        for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
-            // Nacking index i
-            ctx->last_nacked_index = max(ctx->last_nacked_index, i);
-            if (!ctx->received_indicies[i]) {
-                ctx->nacked_indicies[i] = true;
-                video_nack(packet->id, i);
-                start_timer(&ctx->last_nacked_timer);
-                break;
+            // If it's an I-frame, then just skip right to it, if the id is ahead of
+            // the next to render id
+            if (is_iframe) {
+                video_data.most_recent_iframe = max(video_data.most_recent_iframe, ctx->id);
             }
-        }
-    }
-
-    // check if we have jumped a whole frame - if so, we should nack for index 0 on the missing
-    // frame
-    if (video_data.last_received_id != -1 &&
-        get_timer(video_data.missing_frame_nack_timer) > latency &&
-        video_data.last_received_id < ctx->id - 1) {
-        for (int i = video_data.last_received_id + 1; i < ctx->id; i++) {
-            int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
-            if (receiving_frames[buffer_index].id != i) {
-                LOG_INFO("Missing all packets for frame %d, nacking now for index 0", i);
-                start_timer(&video_data.missing_frame_nack_timer);
-                video_nack(i, 0);
-            }
-        }
-    }
-
-    video_data.last_received_id = ctx->id;
-    ctx->packets_received++;
-
-    // Copy packet data
-    int place = packet->index * MAX_PAYLOAD_SIZE;
-    if (place + packet->payload_size >= LARGEST_FRAME_SIZE) {
-        LOG_WARNING("Packet total payload is too large for buffer!");
-        return -1;
-    }
-    memcpy(ctx->frame_buffer + place, packet->data, packet->payload_size);
-    ctx->frame_size += packet->payload_size;
-
-    // If we received all of the packets
-    if (ctx->packets_received == ctx->num_packets) {
-        bool is_iframe = ((Frame*)ctx->frame_buffer)->is_iframe;
-
-        video_data.frames_received++;
-
-#if LOG_VIDEO
-        LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
-                 ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
-#endif
-
-        // If it's an I-frame, then just skip right to it, if the id is ahead of
-        // the next to render id
-        if (is_iframe) {
-            video_data.most_recent_iframe = max(video_data.most_recent_iframe, ctx->id);
         }
     }
 
@@ -1312,6 +1132,9 @@ void destroy_video() {
         if (destroy_peer_cursors() != 0) {
             LOG_ERROR("Failed to destroy peer cursors.");
         }
+
+        // Destroy the ring buffer
+        destroy_ring_buffer(video_ring_buffer);
     }
 
     SDL_DestroyMutex(render_mutex);

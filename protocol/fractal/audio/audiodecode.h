@@ -29,6 +29,7 @@ audio_decoder_packet_readout.
 #include <libswscale/swscale.h>
 
 #include <fractal/core/fractal.h>
+#include <fractal/utils/avpacket_buffer.h>
 
 /*
 ============================
@@ -37,6 +38,7 @@ Defines
 */
 
 #define MAX_AUDIO_FRAME_SIZE 192000
+#define MAX_ENCODED_AUDIO_PACKETS 3
 
 /*
 ============================
@@ -54,6 +56,7 @@ typedef struct AudioDecoder {
     AVCodecContext* context;
     AVFrame* frame;
     SwrContext* swr_context;
+    AVPacket packets[MAX_ENCODED_AUDIO_PACKETS];
     uint8_t* out_buffer;
 } AudioDecoder;
 
@@ -127,4 +130,27 @@ int audio_decoder_decode_packet(AudioDecoder* decoder, AVPacket* encoded_packet)
  */
 void destroy_audio_decoder(AudioDecoder* decoder);
 
+/**
+ * @brief                           Send the packets contained in buffer into the decoder
+ *
+ * @param decoder                   The decoder we are using for decoding
+ *
+ * @param buffer                    The buffer containing the encoded packets
+ *
+ * @param buffer_size               The size of the buffer containing the frame to decode
+ *
+ * @returns                         0 on success, -1 on failure
+ */
+int audio_decoder_send_packets(AudioDecoder* decoder, void* buffer, int buffer_size);
+
+/**
+ * @brief                           Get the next decoded frame from the decoder, which will be
+ * placed in decoder->sw_frame.
+ *
+ * @param decoder                   The decoder we are using for decoding
+ *
+ * @returns                         0 on success (can call again), 1 on EAGAIN (send more input
+ *                                  before calling again), -1 on failure
+ */
+int audio_decoder_get_frame(AudioDecoder* decoder);
 #endif  // DECODE_H

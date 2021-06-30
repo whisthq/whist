@@ -818,16 +818,15 @@ int video_encoder_encode(VideoEncoder *encoder) {
     // all packets have been received).
     while ((res = video_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
            0) {
-        if (res < 0) {
-            LOG_ERROR("PACKET RETURNED AN ERROR");
-            return -1;
-        }
         encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_ENCODER_PACKETS) {
             LOG_ERROR("TOO MANY PACKETS: REACHED %d", encoder->num_packets);
             return -1;
         }
+    }
+    if (res < 0) {
+        return -1;
     }
 
     // set iframe metadata
@@ -917,6 +916,11 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         av_buffer_unref(&encoder->hw_device_ctx);
     }
 
+    // free packets
+    for (int i = 0; i < MAX_ENCODER_PACKETS; i++) {
+        av_packet_unref(&encoder->packets[i]);
+    }
+
     av_frame_free(&encoder->hw_frame);
     av_frame_free(&encoder->sw_frame);
     av_frame_free(&encoder->filtered_frame);
@@ -998,7 +1002,7 @@ int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
     if (res_encoder == AVERROR(EAGAIN) || res_encoder == AVERROR(EOF)) {
         return 1;
     } else if (res_encoder < 0) {
-        LOG_WARNING("Error getting frame from the encoder: %s", av_err2str(res_encoder));
+        LOG_ERROR("Error getting frame from the encoder: %s", av_err2str(res_encoder));
         return -1;
     }
 

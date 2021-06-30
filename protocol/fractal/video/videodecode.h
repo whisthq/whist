@@ -22,6 +22,15 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
+#include <fractal/utils/avpacket_buffer.h>
+
+#define MAX_ENCODED_VIDEO_PACKETS 20
+
+/*
+============================
+Custom Types
+============================
+*/
 
 /**
  * @brief   Enum indicating the types of decoding we are doing. Type is initially set to
@@ -52,6 +61,7 @@ typedef struct VideoDecoder {
     AVFrame* sw_frame;
     AVFrame* hw_frame;
     AVBufferRef* ref;
+    AVPacket packets[MAX_ENCODED_VIDEO_PACKETS];
     enum AVPixelFormat match_fmt;
     DecodeType type;
     CodecType codec_type;
@@ -98,5 +108,29 @@ void destroy_video_decoder(VideoDecoder* decoder);
  * @returns                        True if it decoded successfully, else False
  */
 bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size);
+
+/**
+ * @brief                           Send the packets contained in buffer into the decoder
+ *
+ * @param decoder                   The decoder we are using for decoding
+ *
+ * @param buffer                    The buffer containing the encoded packets
+ *
+ * @param buffer_size               The size of the buffer containing the frame to decode
+ *
+ * @returns                         0 on success, -1 on failure
+ */
+int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_size);
+
+/**
+ * @brief                           Get the next decoded frame from the decoder, which will be
+ *                                  placed in decoder->sw_frame.
+ *
+ * @param decoder                   The decoder we are using for decoding
+ *
+ * @returns                         0 on success (can call again), 1 on EAGAIN (send more input
+ *                                  before calling again), -1 on failure
+ */
+int video_decoder_get_frame(VideoDecoder* decoder);
 
 #endif  // VIDEO_DECODE_H
