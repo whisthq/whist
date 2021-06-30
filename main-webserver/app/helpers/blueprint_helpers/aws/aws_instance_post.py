@@ -170,10 +170,10 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
-            # TODO: test that we actually get 16 mandelboxes per instance
+            # TODO: test that we actually get 4 mandelboxes per instance
             # Which is savvy's guess as to g4dn.xlarge capacity
             # TODO: Move this value to top-level config when more fleshed out
-            base_number_free_mandelboxes = 16
+            base_number_free_mandelboxes = 4
             for index in range(num_new):
                 instance_ids = client.start_instances(
                     image_id=ami,
