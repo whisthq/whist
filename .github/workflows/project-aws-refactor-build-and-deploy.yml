@@ -534,6 +534,8 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   SECRET_KEY: "This environment variable's value doesn't matter"
                   RUNNING_LOCALLY: true
+                  APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
+                  APP_GIT_COMMIT: ${{ env.commit_sha }}
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
