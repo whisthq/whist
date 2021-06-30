@@ -114,7 +114,7 @@ class RegionToAmi(db.Model):
     """
     This class represents the region_to_ami table in hardware
     it maps region names to the AMIs which should be used
-    for clusters in that region
+    for instances in that region
 
     Attributes:
         region_name: The name of the region to which the AMI corresponds as a string.
