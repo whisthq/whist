@@ -13,6 +13,8 @@ from app.constants.instance_state_values import InstanceState
 
 #  This list allows thread success to be passed back to the main thread.
 #  It is thread-safe because lists in python are thread-safe
+#  It is a list of lists, with each sublist containing a thread and a
+#  boolean demarcating that thread's status
 region_wise_upgrade_threads = []
 
 
