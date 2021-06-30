@@ -41,8 +41,7 @@ fi
 # add env vars to current env. these tell us the host, db, role, pwd
 export $(cat .env | xargs)
 
-#For local deploys, we don't need to launch the bulky `g3.4xlarge` instances.
-export AWS_INSTANCE_TYPE_TO_LAUNCH="g3s.xlarge"
+export AWS_INSTANCE_TYPE_TO_LAUNCH="g4dn.xlarge"
 
 if [ $USE_DEV_DB == true ]; then
     export DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
