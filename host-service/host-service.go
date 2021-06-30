@@ -513,6 +513,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			IOMaximumIOps:      0,
 			IOMaximumBandwidth: 0,
 		},
+		SecurityOpt: []string{
+			"apparmor:mandelbox-apparmor-profile",
+		},
 	}
 	// TODO: investigate whether putting all GPUs in all mandelboxes (i.e. the default here) is beneficial.
 	mandelboxName := utils.Sprintf("%s-%s", req.AppName, req.MandelboxID)
