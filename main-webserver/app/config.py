@@ -184,6 +184,7 @@ class DeploymentConfig:
     AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
     AUTH0_WEBSERVER_CLIENT_ID = property(getter("AUTH0_WEBSERVER_CLIENT_ID"))
     AUTH0_WEBSERVER_CLIENT_SECRET = property(getter("AUTH0_WEBSERVER_CLIENT_SECRET"))
+    RUNNING_LOCALLY = property(getter("RUNNING_LOCALLY", default=False))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
@@ -225,7 +226,7 @@ class DeploymentConfig:
         """Which environment (production, staging, development, local) is the application
         running in?
 
-        Many other values and behaviors are derived off of this value.
+        Many other values are derived off of this, such as which task_definitions to use.
 
         NOTE: As a fallback, the "ENVIRONMENT" key can set to an environment name to
         override the automatically calculated environment. If set, the value of ENVIRONMENT
