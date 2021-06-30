@@ -11,6 +11,8 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_n
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.instance_state_values import InstanceState
 
+region_wise_upgrade_threads = []
+
 
 def insert_new_amis(
     client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]
@@ -43,7 +45,7 @@ def insert_new_amis(
     return new_amis
 
 
-def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
+def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: int, flask_app):
     """
     This function will be invoked from the Flask CLI command to upgrade the AMIs for regions.
     Inserts new AMIs into the RegionToAmi table and blocks until the instance is started, and the
@@ -52,11 +54,13 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
     Args:
         region_name: Name of the region in which new instances neeed to be launched.
         ami_id: AMI for the instances that need to be launched.
+        index_in_thread_list:  which bool in the thread list to set to true for exception tracking
         flask_app: Needed for providing the context need for interacting with the database.
 
     Returns:
         None.
     """
+    global region_wise_upgrade_threads
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
@@ -66,6 +70,7 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
                 f"Waiting for instance with name: {new_instance.instance_name} to be marked online"
             )
             _poll(new_instance.instance_name)
+    region_wise_upgrade_threads[index_in_thread_list][1] = True
 
 
 def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
@@ -159,6 +164,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         Returns:
             None
     """
+    global region_wise_upgrade_threads
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
     for current_active_ami in current_active_amis:
@@ -170,19 +176,18 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     for region_name, ami_id in region_to_ami_id_mapping.items():
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
-            args=(
-                region_name,
-                ami_id,
-            ),
+            args=(region_name, ami_id, len(region_wise_upgrade_threads)),
             # current_app is a proxy for app object, so `_get_current_object` method
             # should be used to fetch the application object to be passed to the thread.
             kwargs={"flask_app": current_app._get_current_object()},
         )
-        region_wise_upgrade_threads.append(region_wise_upgrade_thread)
+        region_wise_upgrade_threads.append([region_wise_upgrade_thread, False])
         region_wise_upgrade_thread.start()
 
-    for region_wise_upgrade_thread in region_wise_upgrade_threads:
-        region_wise_upgrade_thread.join()
+    for region_and_bool_pair in region_wise_upgrade_threads:
+        region_and_bool_pair[0].join()
+        if not region_and_bool_pair[1]:
+            raise Exception("AMIS failed to upgrade, see logs")
 
     current_active_amis_str = [
         current_active_ami.ami_id for current_active_ami in current_active_amis
@@ -208,5 +213,5 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     for current_ami in current_active_amis:
         current_ami.ami_active = False
-
+    region_wise_upgrade_threads = []
     db.session.commit()
