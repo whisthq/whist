@@ -109,7 +109,7 @@ Of course, input must also be sent from client to server. This is handled in the
 └── server
     ├── client.c <- Handle multiclient messages
     ├── handle_client_message.c <- Handle client fmsg's
-    ├── main.c <- Initialite server, receive packets and pass to where it needs to go
+    ├── main.c <- Initialize server, receive packets and pass to where it needs to go
     ├── network.c <- Networking code for multiclient
 ```
 
