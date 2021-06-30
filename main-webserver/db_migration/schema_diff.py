@@ -81,6 +81,14 @@ def schema_diff(path_current, path_merging):
     if code == 0:
         return 0, None
 
+    # In the following steps, we run a schema diff between a "control" DB which
+    # is initialized directly from the SQL file (A), and the "new" DB, which is
+    # our current DB + the new changes in the sql file (B). To pass the test,
+    # the diff between A and B should be empty. That tells us that the "new" DB
+    # will have the exact schema specified by the SQL file. If there's a diff,
+    # it means that some part of the migration isn't being applied properly to
+    # the "new" DB.
+
     # If there's a diff, we need to test it against the current database
     # Create a temporary file for the diff we just generated, so that
     # it can be run as a SQL command script against the current database
