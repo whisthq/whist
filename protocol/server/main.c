@@ -40,8 +40,6 @@ Includes
 #include <fractal/core/fractalgetopt.h>
 #include <fractal/core/fractal.h>
 #include <fractal/input/input.h>
-#include <fractal/network/network.h>
-#include <fractal/utils/aes.h>
 #include <fractal/utils/error_monitor.h>
 #include <fractal/video/transfercapture.h>
 #include "client.h"
@@ -59,15 +57,12 @@ Includes
 #endif
 // Linux shouldn't have this
 
-#define TCP_CONNECTION_WAIT 5000
-#define CLIENT_PING_TIMEOUT_SEC 3.0
-
 // i: means --identifier MUST take an argument
 #define OPTION_STRING "k:i:w:e:t:"
 
 extern Client clients[MAX_NUM_CLIENTS];
 
-static char binary_aes_private_key[16];
+char binary_aes_private_key[16];
 static char hex_aes_private_key[33];
 
 // This variables should stay as arrays - we call sizeof() on them
@@ -87,8 +82,8 @@ static FractalMutex packet_mutex;
 volatile bool wants_iframe;
 volatile bool update_encoder;
 
-static bool client_joined_after_window_name_broadcast = false;
-static int begin_time_to_exit = 60;
+bool client_joined_after_window_name_broadcast = false;
+int begin_time_to_exit = 60;
 // This variable should always be an array - we call sizeof()
 static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
 
@@ -121,9 +116,6 @@ void graceful_exit();
 int xioerror_handler(Display* d);
 void sig_handler(int sig_num);
 #endif
-bool get_using_stun();
-int do_discovery_handshake(SocketContext* context, int* client_id);
-int multithreaded_manage_clients(void* opaque);
 int parse_args(int argc, char* argv[]);
 int main(int argc, char* argv[]);
 
@@ -195,232 +187,6 @@ void sig_handler(int sig_num) {
     }
 }
 #endif
-
-bool get_using_stun() {
-    // decide whether the server is using stun. TODO: pull this and arg parsing into its own file
-    return false;
-}
-
-int do_discovery_handshake(SocketContext* context, int* client_id) {
-    FractalPacket* tcp_packet;
-    clock timer;
-    start_timer(&timer);
-    do {
-        tcp_packet = read_tcp_packet(context, true);
-        fractal_sleep(5);
-    } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
-    // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
-    if (tcp_packet == NULL) {
-        LOG_WARNING("Did not receive discovery request from client.");
-        closesocket(context->socket);
-        return -1;
-    }
-
-    FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
-    int user_id = fcmsg->discoveryRequest.user_id;
-
-    read_lock(&is_active_rwlock);
-    bool found;
-    int ret;
-    if ((ret = try_find_client_id_by_user_id(user_id, &found, client_id)) != 0) {
-        LOG_ERROR(
-            "Failed to try to find client ID by user ID. "
-            " (User ID: %s)",
-            user_id);
-    }
-    if (ret == 0 && found) {
-        read_unlock(&is_active_rwlock);
-        write_lock(&is_active_rwlock);
-        ret = quit_client(*client_id);
-        if (ret != 0) {
-            LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
-        }
-        write_unlock(&is_active_rwlock);
-    } else {
-        ret = get_available_client_id(client_id);
-        if (ret != 0) {
-            LOG_ERROR("Failed to find available client ID.");
-            closesocket(context->socket);
-        }
-        read_unlock(&is_active_rwlock);
-        if (ret != 0) {
-            free_tcp_packet(tcp_packet);
-            return -1;
-        }
-    }
-
-    clients[*client_id].user_id = user_id;
-    LOG_INFO("Found ID for client. (ID: %d)", *client_id);
-
-    // TODO: Should check for is_controlling, but that happens after this function call
-    handle_client_message(fcmsg, *client_id, true);
-    // fcmsg points into tcp_packet, but after this point, we don't use either,
-    // so here we free the tcp packet
-    free_tcp_packet(tcp_packet);
-    fcmsg = NULL;
-    tcp_packet = NULL;
-
-    size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
-
-    FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);
-    memset(fsmsg, 0, sizeof(*fsmsg));
-    fsmsg->type = MESSAGE_DISCOVERY_REPLY;
-
-    FractalDiscoveryReplyMessage* reply_msg = (FractalDiscoveryReplyMessage*)fsmsg->discovery_reply;
-
-    reply_msg->client_id = *client_id;
-    reply_msg->UDP_port = clients[*client_id].UDP_port;
-    reply_msg->TCP_port = clients[*client_id].TCP_port;
-
-    // Set connection ID in error monitor.
-    error_monitor_set_connection_id(connection_id);
-
-    // Send connection ID to client
-    reply_msg->connection_id = connection_id;
-    reply_msg->audio_sample_rate = sample_rate;
-
-    LOG_INFO("Sending discovery packet");
-    LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_tcp_packet(context, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) < 0) {
-        LOG_ERROR("Failed to send send discovery reply message.");
-        closesocket(context->socket);
-        free(fsmsg);
-        return -1;
-    }
-
-    closesocket(context->socket);
-    free(fsmsg);
-    return 0;
-}
-
-int multithreaded_manage_clients(void* opaque) {
-    UNUSED(opaque);
-
-    SocketContext discovery_context;
-    int client_id;
-
-    clock last_update_timer;
-    start_timer(&last_update_timer);
-
-    connection_id = rand();
-
-    double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
-    bool first_client_connected = false;      // set to true once the first client has connected
-    bool disable_timeout = false;
-    if (begin_time_to_exit ==
-        -1) {  // client has `begin_time_to_exit` seconds to connect when the server first goes up.
-               // If the variable is -1, disable auto-exit.
-        disable_timeout = true;
-    }
-    clock first_client_timer;  // start this now and then discard when first client has connected
-    start_timer(&first_client_timer);
-
-    while (!exiting) {
-        read_lock(&is_active_rwlock);
-
-        int saved_num_active_clients = num_active_clients;
-
-        read_unlock(&is_active_rwlock);
-
-        LOG_INFO("Num Active Clients %d", saved_num_active_clients);
-
-        if (saved_num_active_clients == 0) {
-            connection_id = rand();
-
-            // container exit logic -
-            //  * clients have connected before but now none are connected
-            //  * no clients have connected in `begin_time_to_exit` secs of server being up
-            // We don't place this in a lock because:
-            //  * if the first client connects right on the threshold of begin_time_to_exit, it
-            //  doesn't matter if we disconnect
-            //  * if a new client connects right on the threshold of nongraceful_grace_period, it
-            //  doesn't matter if we disconnect
-            //  * if no clients are connected, it isn't possible for another client to nongracefully
-            //  exit and reset the grace period timer
-            if (!disable_timeout &&
-                (first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
-                (!client_exited_nongracefully ||
-                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period))) {
-                exiting = true;
-            }
-        } else {
-            // nongraceful client grace period has ended, but clients are
-            //  connected still - we don't want server to exit yet
-            if (client_exited_nongracefully &&
-                get_timer(last_nongraceful_exit) > nongraceful_grace_period) {
-                client_exited_nongracefully = false;
-            }
-        }
-
-        if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                               get_using_stun(), binary_aes_private_key) < 0) {
-            continue;
-        }
-
-        if (do_discovery_handshake(&discovery_context, &client_id) != 0) {
-            LOG_WARNING("Discovery handshake failed.");
-            continue;
-        }
-
-        LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
-
-        // Client is not in use so we don't need to worry about anyone else
-        // touching it
-        if (connect_client(client_id, get_using_stun(), binary_aes_private_key) != 0) {
-            LOG_WARNING(
-                "Failed to establish connection with client. "
-                "(ID: %d)",
-                client_id);
-            continue;
-        }
-
-        write_lock(&is_active_rwlock);
-
-        LOG_INFO("Client connected. (ID: %d)", client_id);
-
-        // We probably need to lock these. Argh.
-        if (host_id == -1) {
-            host_id = client_id;
-        }
-
-        if (num_active_clients == 0) {
-            // we have went from 0 clients to 1 client, so we have got our first client
-            // this variable should never be set back to false after this
-            first_client_connected = true;
-        }
-        num_active_clients++;
-        client_joined_after_window_name_broadcast = true;
-        /* Make everyone a controller */
-        clients[client_id].is_controlling = true;
-        num_controlling_clients++;
-        // if (num_controlling_clients == 0) {
-        //     clients[client_id].is_controlling = true;
-        //     num_controlling_clients++;
-        // }
-
-        if (clients[client_id].is_controlling) {
-            // Reset input system when a new input controller arrives
-            reset_input();
-        }
-
-        // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this
-        // should as well
-        //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread
-        //  only writes it as false.
-        if (client_exited_nongracefully &&
-            (get_timer(last_nongraceful_exit) > nongraceful_grace_period)) {
-            client_exited_nongracefully = false;
-        }
-
-        start_timer(&(clients[client_id].last_ping));
-
-        clients[client_id].is_active = true;
-
-        write_unlock(&is_active_rwlock);
-    }
-
-    return 0;
-}
 
 int parse_args(int argc, char* argv[]) {
     // TODO: replace `server` with argv[0]
