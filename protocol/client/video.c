@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_video.c
+ * @file video.c
  * @brief This file contains all code that interacts directly with receiving and
  *        processing video packets on the client.
 ============================
@@ -18,7 +18,7 @@ Includes
 ============================
 */
 
-#include "client_video.h"
+#include "video.h"
 #include "sdl_utils.h"
 #include "ringbuffer.h"
 
@@ -29,7 +29,7 @@ Includes
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
-#include "client_network.h"
+#include "network.h"
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false

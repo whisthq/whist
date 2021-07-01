@@ -26,7 +26,7 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/utils/window_name.h>
 #include "client_utils.h"
-#include "client_audio.h"
+#include "audio.h"
 
 #include <stddef.h>
 

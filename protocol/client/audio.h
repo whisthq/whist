@@ -2,7 +2,7 @@
 #define CLIENT_AUDIO_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_audio.h
+ * @file audio.h
  * @brief This file contains all code that interacts directly with processing
  *        audio packets on the client.
 ============================

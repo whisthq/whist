@@ -22,9 +22,9 @@ Includes
 #include <fractal/utils/logging.h>
 #include "sdlscreeninfo.h"
 #include "sdl_utils.h"
-#include "client_audio.h"
+#include "audio.h"
 #include "client_utils.h"
-#include "client_network.h"
+#include "network.h"
 
 // Keyboard state variables
 extern bool alt_pressed;
