@@ -77,6 +77,8 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
         new_instance_names = do_scale_up_if_necessary(
             region_name, ami_id, force_buffer, flask_app=flask_app
         )
+        result = False # Make Pyright stop complaining
+        assert len(new_instance_names) > 0 # This should always hold
         for new_instance_name in new_instance_names:
             fractal_logger.debug(
                 f"Waiting for instance with name: {new_instance_name} to be marked online"
