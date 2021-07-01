@@ -49,7 +49,8 @@ def regions():
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a mandelbox running, don't start up a new one
-        return jsonify({"IP": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
+        fractal_logger.debug("Returning 503 to user f{body.username} because they are already active.")
+        return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     client_commit_hash = None
     if (
@@ -87,6 +88,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                 kwargs={"flask_app": current_app._get_current_object()},
             )
             scaling_thread.start()
+        fractal_logger.debug("Returning 503 to user f{body.username} because we didn't find an instance for them.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     instance = InstanceInfo.query.get(instance_name)
