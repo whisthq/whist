@@ -155,6 +155,7 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     }
 
     // Convert to png
+    // We cannot cast a `int*` to a `size_t*`, so we introduce intermediate `temp_png_size`
     int err;
     size_t temp_png_size;
     if (num_channels == 3) {
