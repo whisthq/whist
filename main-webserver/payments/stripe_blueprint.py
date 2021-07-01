@@ -1,8 +1,9 @@
+from http import HTTPStatus
+
 from flask import Blueprint
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
-from app.constants.http_codes import BAD_REQUEST
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from payments import get_stripe_customer_id
 from payments.stripe_helpers import (
@@ -45,6 +46,6 @@ def customer_portal(**kwargs):
     except:
         return {
             "error": "The request body is incorrectly formatted, or the user is not authorized."
-        }, BAD_REQUEST
+        }, HTTPStatus.BAD_REQUEST
 
     return get_billing_portal_url(customer_id, return_url)

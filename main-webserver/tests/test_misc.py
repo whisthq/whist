@@ -5,6 +5,7 @@ import concurrent.futures
 import platform
 import os
 import signal
+from http import HTTPStatus
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -15,7 +16,6 @@ from app.models import RegionToAmi
 from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from app.constants.http_codes import SUCCESS, RESOURCE_UNAVAILABLE
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
@@ -57,7 +57,7 @@ def test_webserver_sigterm(client):
     """
     # this is a dummy endpoint that we hit to make sure web requests are ok
     resp = client.post("/newsletter/post")
-    assert resp.status_code == SUCCESS
+    assert resp.status_code == HTTPStatus.OK
 
     self_pid = os.getpid()
     os.kill(self_pid, signal.SIGTERM)
@@ -66,28 +66,28 @@ def test_webserver_sigterm(client):
 
     # web requests should be rejected
     resp = client.post("/newsletter/post")
-    assert resp.status_code == RESOURCE_UNAVAILABLE
+    assert resp.status_code == HTTPStatus.SERVICE_UNAVAILABLE
 
     # re-enable web requests
     assert set_web_requests_status(True)
 
     # should be ok
     resp = client.post("/newsletter/post")
-    assert resp.status_code == SUCCESS
+    assert resp.status_code == HTTPStatus.OK
 
 
 def test_rate_limiter(client):
     """
     Test the rate limiter decorator. The first 10 requests should succeed,
-    but the 11th should error out with 429.
+    but the 11th should error out with `TOO_MANY_REQUESTS`.
     """
     for _ in range(10):
         resp = client.post("/newsletter/post")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         g._rate_limiting_complete = False
 
     resp = client.post("/newsletter/post")
-    assert resp.status_code == 429
+    assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
 def test_local_lock_timeout(app):

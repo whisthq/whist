@@ -4,6 +4,7 @@ Install handlers for the flask app. Specifically:
 """
 
 import threading
+from http import HTTPStatus
 
 from flask import Flask
 from flask import (
@@ -13,7 +14,6 @@ from flask import (
 )
 
 from app.helpers.utils.general.logs import fractal_logger
-from app.constants.http_codes import RESOURCE_UNAVAILABLE
 
 # global lock-protected variable indicating whether webserver can process web requests
 _WEB_REQUESTS_ENABLED = True
@@ -85,6 +85,6 @@ def can_process_requests_handler(app: Flask):
             abort(
                 make_response(
                     jsonify({"msg": "Webserver is not processing requests right now."}),
-                    RESOURCE_UNAVAILABLE,
+                    HTTPStatus.SERVICE_UNAVAILABLE,
                 )
             )

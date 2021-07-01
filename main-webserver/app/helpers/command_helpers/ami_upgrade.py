@@ -9,12 +9,7 @@ from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
-from app.constants.instance_state_values import (
-    DRAINING,
-    HOST_SERVICE_UNRESPONSIVE,
-    ACTIVE,
-    PRE_CONNECTION,
-)
+from app.constants.instance_state_values import InstanceState
 
 
 def insert_new_amis(
@@ -94,9 +89,9 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
         requests.post(f"{base_url}/drain_and_shutdown")
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
-        active_instance.status = DRAINING
+        active_instance.status = InstanceState.DRAINING
     except requests.exceptions.RequestException:
-        active_instance.status = HOST_SERVICE_UNRESPONSIVE
+        active_instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
     finally:
         db.session.commit()
 
@@ -120,8 +115,8 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
         db.session.query(InstanceInfo)
         .filter(
             or_(
-                InstanceInfo.status.like(ACTIVE),
-                InstanceInfo.status.like(PRE_CONNECTION),
+                InstanceInfo.status.like(InstanceState.ACTIVE),
+                InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
                 InstanceInfo.aws_ami_id.in_(active_amis),
             )
         )
@@ -200,7 +195,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # invoked the `fetch_current_running_instances` function. Using this
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
-        active_instance.status = DRAINING
+        active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
     for active_instance in current_running_instances:
