@@ -725,13 +725,30 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     out_height = in_height;
 #endif
 
+    // Try our nvidia encoder first
+#if USING_NVIDIA_CAPTURE_AND_ENCODE
+#if USING_SERVERSIDE_SCALE
+    LOG_ERROR(
+        "Cannot create nvidia encoder, does not accept in_width and in_height when using "
+        "serverside scaling");
+#else
+    NvidiaEncoder *nvidia_encoder =
+        create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    if (!nvidia_encoder) {
+        LOG_ERROR("Failed to create nvidia encoder!");
+    }
+#endif
+#endif
+
     VideoEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
     VideoEncoder *encoder = NULL;
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(VideoEncoderCreator); ++i) {
         encoder =
             encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate, codec_type);
+
         if (!encoder) {
             LOG_WARNING("Video encoder: Failed, trying next encoder");
+            encoder = NULL;
         } else {
             LOG_INFO("Video encoder: Success!");
             break;
@@ -743,18 +760,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         return NULL;
     }
 
-#if USING_NVIDIA_CAPTURE_AND_ENCODE
-#if USING_SERVERSIDE_SCALE
-    LOG_ERROR(
-        "Cannot create nvidia encoder, does not accept in_width and in_height when using "
-        "serverside scaling");
-#else
-    encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
-    if (!encoder->nvidia_encoder) {
-        LOG_ERROR("Failed to create nvidia encoder!");
-    }
-#endif
-#endif
+    encoder->nvidia_encoder = nvidia_encoder;
 
     return encoder;
 }
