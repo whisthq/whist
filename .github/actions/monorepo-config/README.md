@@ -37,12 +37,15 @@ python3 .github/actions/monorepo-config/main.py --help
 ```
 
 
-# High-level overview
+## High-level overview
 
-There are three main components that make up the configuration building program:
+There are three main components that make up the configuration building program. Each one "wraps" the one before. Here they are in order:
+
 1. A Python program (`main.py` and `helpers` in this folder)
 2. A Docker environment to install and run the Python program
 3. A GitHub Action that deploys the Docker environment in the GitHub runner
+
+### Python
 
 The Python program has a CLI built with the `click` library. All options are documented with the `--help` flag. `main.py` is the entrypoint to the program. After `pip install -r requirements.txt`, you can `python main.py --help` to see how run the program.
 
@@ -71,3 +74,52 @@ The inputs to the Python program include a "config" path (config folder in monor
 ```
 
 This allows you to pass only the necessary configuration values in your application build. Profiles are optional, and if you don't pass them then your build will receive the original nested data structure.
+
+### Docker
+
+The Dockerfile for this program is small, but it's carefully constructed to allow for a consistent development environment that matches the GitHub Actions runtime.
+
+It's important to know that in GitHub, the Docker "build-time" commands will be run from a working directory relative to the Dockerfile (this folder). At "run-time" (the `ENTRYPOINT` step), the working directory will change to the monorepo root (`fractal/`). It's best to keep your working directory at the monorepo root during development, and run commands like in the examples at the top of this file.
+
+To run tests or enter a shell inside the container, override the `--entrypoint` flag to `docker run`. Example:
+
+```sh
+# run tests onces
+docker run \
+    --rm \
+    --workdir $(pwd) \
+    --volume $(pwd):$(pwd) \
+    --entrypoint pytest \
+    fractal/monorepo-config \
+    .github/actions/monorepo-config
+    
+# run tests and reload on change
+docker run \
+    --rm \
+    --tty \
+    --interactive \
+    --workdir $(pwd) \
+    --volume $(pwd):$(pwd) \
+    --entrypoint pytest-watch \
+    fractal/monorepo-config \
+    .github/actions/monorepo-config
+    --exitfirst \ 
+    --failed-first \
+    --new-first \
+    --showlocals \
+```
+
+
+These are long commands, so don't try to memorize them. Plug them into your favorite task runner or make an alias. Don't forget to first build the image with the command at the top.
+
+Because we're mounting our repo with `--volume`, we don't need to rebuild the image on every code change. We only need to rebuild the image if we invalidate our Dockerfile, such as when we install new dependencies.
+
+### GitHub
+
+Our Docker container container our Python process is deployed in GitHub CI through and Action. This is defined in `action.yml`, and can be called from a CI workflow with the `uses:` syntax.
+
+Because of the limitations of GitHub's Action API, we need to make a couple allowances in `action.yml`. In that file, we define some `inputs` and `outputs` to take in data from a workflow and send back our result. You must give each of the `inputs` a unique name, which poses a problem for us as we allow multiple `secrets` values.  Allowing multiple `secrets` values allows us to merge secrets from different providers, like GitHub and Heroku. So instead of passing `secrets` as the Python program does, the Action `inputs` are `secrets-github` and `secrets-heroku`. We'll have to add new inputs as we add secrets providers.
+
+Another quirk of GitHub Actions is how you communicate between processes. You must `echo` into a string with a strange `"::set-output name=var-name::$(my-data)"` syntax. We don't want this to clog our console output when we're developing, and fortunately GitHub allows a `post-entrypoint` script to run after our standard `entrypoint` finishes.
+
+When you're running locally with `docker run`, you'll execute the Python program inside `entrypoint.sh`. `post-entrypoint.sh` will not run at all locally, it will only run inside the GitHub Actions runner in CI. As the odd output formatting is happening in `post-entrypoint.sh`, we don't need to look at it while running locally.
