@@ -71,11 +71,10 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
-                          CodecType codec) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     /*
-        Create a device that will capture a screen of the specified width, height, and DPI, and
-        encode it at the specified bitrate and codec. This function first attempts to use X11 to set
+        Create a device that will capture a screen of the specified width, height, and DPI.
+        This function first attempts to use X11 to set
         the display's width, height, and DPI, then creates either an NVidia or X11 capture device,
         with NVidia given priority. Refer to x11nvidiacapture.c for the internal details of the
         NVidia capture device.
@@ -85,8 +84,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
             width (UINT): desired window width
             height (UNIT): desired window height
             dpi (UINT): desired window DPI
-            bitrate (int): desired encoder bitrate
-            codec (CodecType): desired encoder codec (H264 or H265)
 
         Returns:
             (int): 0 on success, 1 on failure
@@ -317,15 +314,3 @@ void destroy_capture_device(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
-    /*
-        Update the encoder in device to encode at the specified bitrate and codec. Currently, this
-        destroys the current encoder and makes a new one with the new parameters.
-        TODO: Use NVidia's reconfigure API instead.
-
-        Arguments:
-            device (CaptureDevice*): capture device containing the encoder
-            bitrate (int): new bitrate to encode to
-            codec (int): new codec to use
-    */
-}

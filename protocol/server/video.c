@@ -188,8 +188,7 @@ int32_t multithreaded_send_video(void* opaque) {
             // size. Also for some reason it actually rounds the width to a multiple of 8.
             int true_width = client_width + 7 - ((client_width + 7) % 8);
             int true_height = client_height + 1 - ((client_height + 1) % 2);
-            if (create_capture_device(device, true_width, true_height, client_dpi, current_bitrate,
-                                      client_codec_type) < 0) {
+            if (create_capture_device(device, true_width, true_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
@@ -225,6 +224,10 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // Update encoder with new parameters
         if (update_encoder) {
+            // If this is a new update encoder request, log it
+            if (!pending_encoder) {
+                LOG_INFO("Update encoder request received. Encoder creation queued!");
+            }
             // BEFORE MAKING A NEW ENCODER, WE SHOULD FIRST TRY TO UPDATE bitrate and codec type
             // (current_bitrate, client_codec_type)
             bool update_worked = false;
@@ -254,8 +257,9 @@ int32_t multithreaded_send_video(void* opaque) {
                 } else {
                     // Starting making new encoder. This will set pending_encoder=true, but won't
                     // actually update it yet, we'll still use the old one for a bit
-                    LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate,
-                             max_mbps);
+                    LOG_INFO("Updating Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
+                             device->width, device->height, current_bitrate, max_mbps,
+                             (int)client_codec_type);
                     current_bitrate = (int)(max_mbps * 1024 * 1024);
                     encoder_finished = false;
                     encoder_factory_server_w = device->width;

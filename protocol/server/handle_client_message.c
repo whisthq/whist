@@ -47,8 +47,8 @@ extern volatile double max_mbps;
 extern volatile int client_width;
 extern volatile int client_height;
 extern volatile int client_dpi;
-extern volatile bool update_device;
 extern volatile CodecType client_codec_type;
+extern volatile bool update_device;
 
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
@@ -292,6 +292,7 @@ static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
         client_width = fmsg->dimensions.width;
         client_height = fmsg->dimensions.height;
         client_codec_type = fmsg->dimensions.codec_type;
+        LOG_INFO("CODEC TYPE!!!! %d", client_codec_type);
         client_dpi = fmsg->dimensions.dpi;
         // Update device if knowledge changed
         update_device = true;

@@ -18,12 +18,9 @@ ID3D11Texture2D* create_texture(CaptureDevice* device);
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
-                          CodecType codec) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     // tech debt: don't ignore dpi
     UNUSED(dpi);
-    UNUSED(bitrate);
-    UNUSED(codec);
 
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(CaptureDevice));

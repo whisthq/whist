@@ -2221,6 +2221,8 @@ FractalPacket* read_udp_packet(SocketContext* context) {
                     LOG_WARNING("Unexpected Packet Error: %d", error);
                     break;
             }
+        } else {
+            // Ignore packets of size 0
         }
         return NULL;
     }

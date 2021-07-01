@@ -718,6 +718,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         Returns:
             (VideoEncoder*): the newly created encoder
      */
+
     // setup the AVCodec and AVFormatContext
 #if !USING_SERVERSIDE_SCALE
     out_width = in_width;

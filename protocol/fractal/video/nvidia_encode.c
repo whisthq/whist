@@ -5,8 +5,8 @@
 
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
-int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, GUID codec_guid,
-                             NV_ENC_PRESET_CONFIG* out_preset_config);
+int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
+                             NV_ENC_PRESET_CONFIG* p_preset_config);
 GUID get_codec_guid(CodecType codec);
 
 void try_free_frame(NvidiaEncoder* encoder) {
@@ -71,11 +71,13 @@ void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registere
     }
 }
 
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int out_width,
-                                     int out_height) {
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height) {
     NVENCSTATUS status;
 
+    // Initialize the encoder
     NvidiaEncoder* encoder = malloc(sizeof(NvidiaEncoder));
+    memset(encoder, 0, sizeof(*encoder));
+    encoder->codec_type = codec;
 
     // Set initial frame pointer to NULL, nvidia will overwrite this later with the framebuffer
     // pointer
@@ -130,27 +132,18 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int
         return NULL;
     }
 
-    // Validate the codec requested
-    GUID codec_guid = get_codec_guid(requested_codec);
-    encoder->codec_type = requested_codec;
-    // status = validateEncodeGUID(encoder, codec_guid);
-    // if (status != NV_ENC_SUCCESS) {
-    //     LOG_ERROR("Failed to validate codec GUID");
-    //     return NULL;
-    // }
-
+    // Initialize the preset config
     NV_ENC_PRESET_CONFIG preset_config;
-    status = initialize_preset_config(encoder, bitrate, codec_guid, &preset_config);
+    status = initialize_preset_config(encoder, bitrate, encoder->codec_type, &preset_config);
     if (status < 0) {
         LOG_ERROR("custom_preset_config failed");
         return NULL;
     }
 
     // Initialize the encode session
-    NV_ENC_INITIALIZE_PARAMS init_params;
-    memset(&init_params, 0, sizeof(init_params));
+    NV_ENC_INITIALIZE_PARAMS init_params = {0};
     init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
-    init_params.encodeGUID = codec_guid;
+    init_params.encodeGUID = get_codec_guid(encoder->codec_type);
     init_params.presetGUID = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
     init_params.encodeConfig = &preset_config.presetCfg;
     init_params.encodeWidth = out_width;
@@ -269,31 +262,40 @@ GUID get_codec_guid(CodecType codec) {
     GUID codec_guid;
     if (codec == CODEC_TYPE_H265) {
         codec_guid = NV_ENC_CODEC_HEVC_GUID;
-    } else {
+    } else if (codec == CODEC_TYPE_H264) {
         codec_guid = NV_ENC_CODEC_H264_GUID;
+    } else {
+        LOG_FATAL("Unexpected CodecType: %d", (int)codec);
     }
-    // TODO: should we validate here?
+
+    // Validate the codec requested
+    // status = validateEncodeGUID(encoder, codec_guid);
+    // if (status != NV_ENC_SUCCESS) {
+    //     LOG_ERROR("Failed to validate codec GUID");
+    //     return NULL;
+    // }
+
     return codec_guid;
 }
 
-int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, GUID codec_guid,
-                             NV_ENC_PRESET_CONFIG* out_preset_config) {
-    memset(out_preset_config, 0, sizeof(NV_ENC_PRESET_CONFIG));
+int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
+                             NV_ENC_PRESET_CONFIG* p_preset_config) {
+    memset(p_preset_config, 0, sizeof(*p_preset_config));
 
-    out_preset_config->version = NV_ENC_PRESET_CONFIG_VER;
-    out_preset_config->presetCfg.version = NV_ENC_CONFIG_VER;
+    p_preset_config->version = NV_ENC_PRESET_CONFIG_VER;
+    p_preset_config->presetCfg.version = NV_ENC_CONFIG_VER;
     NVENCSTATUS status = encoder->p_enc_fn.nvEncGetEncodePresetConfig(
-        encoder->internal_nvidia_encoder, codec_guid, NV_ENC_PRESET_LOW_LATENCY_HP_GUID,
-        out_preset_config);
+        encoder->internal_nvidia_encoder, get_codec_guid(codec), NV_ENC_PRESET_LOW_LATENCY_HP_GUID,
+        p_preset_config);
+    // Check for bad status
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to obtain preset settings, status = %d", status);
         return -1;
     }
-    // check for bad status
-    out_preset_config->presetCfg.gopLength = 999999;
-    out_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    out_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
-    out_preset_config->presetCfg.rcParams.vbvBufferSize = bitrate;
+    p_preset_config->presetCfg.gopLength = 999999;
+    p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+    p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
+    p_preset_config->presetCfg.rcParams.vbvBufferSize = bitrate;
 
     return 0;
 }
@@ -319,13 +321,12 @@ int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType co
 
     // Copy over init params
     reconfigure_params.reInitEncodeParams = encoder->encoder_params;
-    GUID codec_guid = get_codec_guid(codec);
     encoder->codec_type = codec;
-    encoder->encoder_params.encodeGUID = codec_guid;
+    encoder->encoder_params.encodeGUID = get_codec_guid(codec);
 
     // Initialize preset_config
     NV_ENC_PRESET_CONFIG preset_config;
-    if (initialize_preset_config(encoder, bitrate, codec_guid, &preset_config) < 0) {
+    if (initialize_preset_config(encoder, bitrate, codec, &preset_config) < 0) {
         LOG_ERROR("Failed to reconfigure encoder!");
         return -1;
     }
