@@ -19,29 +19,11 @@ if [ "$EUID" -eq 0 ]; then
     exit
 fi
 
-# Create directories for ECS agent
-sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
-
-# Install jq to build JSON
-sudo apt-get install -y jq
-
-# Create list of GPU devices for mounting to mandelboxes
-DEVICES=""
-for DEVICE_INDEX in {0..64}
-do
-    DEVICE_PATH="/dev/nvidia${DEVICE_INDEX}"
-    if [ -e "$DEVICE_PATH" ]; then
-        DEVICES="${DEVICES} --device ${DEVICE_PATH}:${DEVICE_PATH} "
-    fi
-done
-DEVICE_MOUNTS=`printf "$DEVICES"`
-
 # Set IP tables for routing networking from host to mandelboxes
 sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
 sudo sysctl -p /etc/sysctl.conf
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
-sudo apt-get install -y iptables-persistent
 
 # Disable mandelboxes from accessing the instance metadata service on the host.
 # Critical to prevent IAM escalation from within mandelboxes while still using ECS.
