@@ -75,7 +75,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     time_spent += get_timer(cpu_transfer_timer);
 
     if (times_measured == 10) {
-        LOG_INFO("Average time transferring dxgi data to encoder frame on CPU: %f",
+        LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
                  time_spent / times_measured);
         times_measured = 0;
         time_spent = 0.0;
