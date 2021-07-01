@@ -45,7 +45,7 @@ export const hostSpinUp = async ({
     "/spin_up_mandelbox",
     `https://${ip}:${HostServicePort}`,
     {
-      app_image: `fractal/${imageEnv()}/browsers/chrome:current-build`,
+      app_image: `ghcr.io/fractal/${imageEnv()}/browsers/chrome:current-build`,
       dpi,
       user_id,
       config_encryption_token,
