@@ -73,7 +73,7 @@
     "electron-builder": "22.10.5",
     "electron-notarize": "github:mingy98/electron-notarize#master",
     "esbuild": "^0.11.18",
-    "eslint": "^7.25.0",
+    "eslint": "^7.29.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-config-standard-with-typescript": "^20.0.0",
@@ -89,7 +89,7 @@
     "rimraf": "^3.0.2",
     "snowpack": "^3.5.2",
     "tailwindcss": "^2.1.2",
-    "typescript": "^4.3.2"
+    "typescript": "^4.3.5"
   },
   "engines": {
     "node": ">=15.x",
