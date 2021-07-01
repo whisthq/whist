@@ -136,8 +136,8 @@ scale_mutex = defaultdict(threading.Lock)
 
 
 def do_scale_up_if_necessary(
-    region: str, ami: str, force_buffer: Optional[int] = 0
-) -> List[InstanceInfo]:
+    region: str, ami: str, force_buffer: Optional[int] = 0, **kwargs
+) -> List[str]:
     """
     Scales up new instances as needed, given a region and AMI to check
     Specifically, if we want to add X instances (_get_num_new_instances
@@ -149,11 +149,11 @@ def do_scale_up_if_necessary(
         force_buffer: this will be used to override the recommendation for
         number of instances to be launched by `_get_num_new_instances`
 
-    Returns: List of database objects representing the instances created.
+    Returns: List of names of the instances created, if any.
 
     """
-    new_instances = []
-    with scale_mutex[f"{region}-{ami}"]:
+    new_instance_names = []
+    with scale_mutex[f"{region}-{ami}"], kwargs["flask_app"].app_context():
 
         # num_new indicates how many new instances need to be spun up from
         # the ami that is passed in. Usually, we calculate that through
@@ -198,10 +198,10 @@ def do_scale_up_if_necessary(
                     commit_hash=ami_obj.client_commit_hash,
                     ip="",  # Will be set by `host_service` once it boots up.
                 )
-                new_instances.append(new_instance)
+                new_instance_names.append(new_instance.instance_name)
                 db.session.add(new_instance)
                 db.session.commit()
-    return new_instances
+    return new_instance_names
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:
@@ -272,7 +272,11 @@ def try_scale_down_if_necessary_all_regions() -> None:
     ]
     for region, ami in region_and_ami_list:
         # grab a lock on this region/ami pair
-        region_row = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).with_for_update()
+        region_row = (
+            RegionToAmi.query.filter_by(region_name=region, ami_id=ami)
+            .with_for_update()
+            .one_or_none()
+        )
         if not region_row.protected_from_scale_down:
             try_scale_down_if_necessary(region, ami)
         # and release it after scaling

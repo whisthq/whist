@@ -69,7 +69,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
 
     instance_name = find_instance(body.region, client_commit_hash)
     if instance_name is None:
-        fractal_logger.info(f"body.region: {body.region}, body.client_commit_hash: {body.client_commit_hash}")
+        fractal_logger.info(
+            f"body.region: {body.region}, body.client_commit_hash: {body.client_commit_hash}"
+        )
 
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
@@ -82,6 +84,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                         {"region_name": body.region, "client_commit_hash": client_commit_hash}
                     ).ami_id,
                 ),
+                kwargs={"flask_app": current_app._get_current_object()},
             )
             scaling_thread.start()
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
@@ -103,7 +106,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # there's usage -- so we call do_scale_up with the location and AMI of the instance
 
         scaling_thread = Thread(
-            target=do_scale_up_if_necessary, args=(instance.location, instance.ami_id)
+            target=do_scale_up_if_necessary,
+            args=(instance.location, instance.ami_id),
+            kwargs={"flask_app": current_app._get_current_object()},
         )
         scaling_thread.start()
 

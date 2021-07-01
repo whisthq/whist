@@ -8,7 +8,7 @@ from app.models import db, RegionToAmi
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
 
-def test_scale_up_single(hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
+def test_scale_up_single(app, hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
     """
     Tests that we successfully scale up a single instance when required.
     Mocks every side-effecting function.
@@ -18,12 +18,12 @@ def test_scale_up_single(hijack_ec2_calls, mock_get_num_new_instances, hijack_db
     us_east_1_image_obj = RegionToAmi.query.filter_by(
         region_name="us-east-1", ami_active=True
     ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id)
+    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id, flask_app=app)
     assert len(call_list) == 1
     assert call_list[0]["kwargs"]["image_id"] == us_east_1_image_obj.ami_id
 
 
-def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
+def test_scale_up_multiple(app, hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
     """
     Tests that we successfully scale up multiple instances when required.
     Mocks every side-effecting function.
@@ -34,7 +34,7 @@ def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_
     us_east_1_image_obj = RegionToAmi.query.filter_by(
         region_name="us-east-1", ami_active=True
     ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id)
+    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id, flask_app=app)
     assert len(call_list) == desired_num
     assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.ami_id for elem in call_list)
 
@@ -274,18 +274,18 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
         call_list.append({"args": args, "kwargs": kwargs})
 
     monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-2")
-    bulk_instance(location="us-east-2", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-2", aws_ami_id="test-ami-2")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9b")
+    bulk_instance(location="us-east-2", aws_ami_id="ami-0a7da7479f37c924a")
+    bulk_instance(location="us-east-2", aws_ami_id="ami-0a7da7479f37c924b")
     aws_funcs.try_scale_down_if_necessary_all_regions()
     assert len(call_list) == 4
     args = [called["args"] for called in call_list]
     assert set(args) == {
-        ("us-east-1", "test-ami-1"),
-        ("us-east-1", "test-ami-2"),
-        ("us-east-2", "test-ami-1"),
-        ("us-east-2", "test-ami-2"),
+        ("us-east-1", "ami-00c40082600650a9a"),
+        ("us-east-1", "ami-00c40082600650a9b"),
+        ("us-east-2", "ami-0a7da7479f37c924a"),
+        ("us-east-2", "ami-0a7da7479f37c924b"),
     }

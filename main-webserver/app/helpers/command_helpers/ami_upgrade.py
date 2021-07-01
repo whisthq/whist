@@ -12,9 +12,10 @@ from app.constants.instance_state_values import InstanceState
 
 
 #  This list allows thread success to be passed back to the main thread.
-#  It is thread-safe because lists in python are thread-safe
-#  It is a list of lists, with each sublist containing a thread and a
-#  boolean demarcating that thread's status
+#  It is thread-safe because lists in python are thread-safe.
+#  It is a list of lists, with each sublist containing a thread, a
+#  boolean demarcating that thread's status (i.e. whether it succeeded), and a
+#  tuple of (region_name, ami_id) associated with that thread.
 region_wise_upgrade_threads = []
 
 
@@ -68,12 +69,16 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
-        new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
-        for new_instance in new_instances:
+        new_instance_names = do_scale_up_if_necessary(
+            region_name, ami_id, force_buffer, flask_app=flask_app
+        )
+        result = False # Make Pyright stop complaining
+        assert len(new_instance_names) > 0 # This should always hold
+        for new_instance_name in new_instance_names:
             fractal_logger.debug(
-                f"Waiting for instance with name: {new_instance.instance_name} to be marked online"
+                f"Waiting for instance with name: {new_instance_name} to be marked online"
             )
-            result = _poll(new_instance.instance_name)
+            result = _poll(new_instance_name)
     region_wise_upgrade_threads[index_in_thread_list][1] = result
 
 
@@ -176,16 +181,15 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
 
-    # Redefine the list here to reset it
-    region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         # grab a lock here
         region_row = (
             RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
             .with_for_update()
-            .first()
+            .one_or_none()
         )
-        region_row.protected_from_scale_down = True
+        if region_row is not None:
+            region_row.protected_from_scale_down = True
         db.session.commit()
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
@@ -206,9 +210,10 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             region_row = (
                 RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
                 .with_for_update()
-                .first()
+                .one_or_none()
             )
-            region_row.protected_from_scale_down = False
+            if region_row is not None:
+                region_row.protected_from_scale_down = False
             db.session.commit()
             threads_succeeded = False
     if not threads_succeeded:
