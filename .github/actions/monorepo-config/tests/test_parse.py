@@ -26,21 +26,15 @@ def test_parse_secrets_profiles():
 
         with pytest.raises(ValidationError):
             # should raise error if secrets key arg not in schema
-            parse.parse(
-                config, secrets={**secrets, "missing": 0}, profiles=profiles
-            )
+            parse.parse(config, secrets={**secrets, "missing": 0}, profiles=profiles)
 
         with pytest.raises(ValidationError):
             # should raise error if profile arg not in profiles.yml
-            parse.parse(
-                config, secrets=secrets, profiles={**profiles, "missing": "x"}
-            )
+            parse.parse(config, secrets=secrets, profiles={**profiles, "missing": "x"})
 
     mock = mock_data.config_simple_fs
     with temporary_fs(mock) as tempdir:
         config = tempdir.joinpath("config")
 
         result = parse.parse(config, profiles=profiles)
-        assert (
-            result == mock_data.config_simple_json_dev
-        ), "invalid output data structure"
+        assert result == mock_data.config_simple_json_dev, "invalid output data structure"

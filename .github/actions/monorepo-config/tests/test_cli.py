@@ -55,21 +55,15 @@ def test_parse_receives_args(mocker):
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(
-            config, profiles={"env": "dev"}, secrets=None
-        )
+        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(
-            config, profiles={"env": "dev"}, secrets=None
-        )
+        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev", "--os", "macos"])
-        mock.assert_called_once_with(
-            config, profiles={"env": "dev", "os": "macos"}, secrets=None
-        )
+        mock.assert_called_once_with(config, profiles={"env": "dev", "os": "macos"}, secrets=None)
         mock.reset_mock()
 
         cli_result(

@@ -57,9 +57,7 @@ config_simple_fs = {
                     },
                 }
             ),
-            "auth.yml": yaml.dump(
-                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
-            ),
+            "auth.yml": yaml.dump({"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}),
             "secret.yml": yaml.dump(
                 {
                     "KEY": {
@@ -171,9 +169,7 @@ config_fs_bad_profiles = {
                     },
                 }
             ),
-            "auth.yml": yaml.dump(
-                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
-            ),
+            "auth.yml": yaml.dump({"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}),
             "secret.yml": yaml.dump(
                 {
                     "KEY": {
@@ -197,9 +193,7 @@ config_secrets_fs = {
     "config": {
         "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
         "schema": {
-            "auth.yml": yaml.dump(
-                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
-            ),
+            "auth.yml": yaml.dump({"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}),
             "secret.yml": yaml.dump(
                 {
                     "KEY": None,
