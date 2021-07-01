@@ -17,7 +17,7 @@ export default flow(
         }>
     ) => {
         const dpiStream = trigger.pipe(
-            map(() => screen.getPrimaryDisplay().scaleFactor * 96)
+            map(() => Math.round(screen.getPrimaryDisplay().scaleFactor * 96))
         )
 
         const create = mandelboxCreateFlow(
