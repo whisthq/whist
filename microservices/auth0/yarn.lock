@@ -147,10 +147,10 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha1-x57Zf380y48robyXkLzDZkdLS3k=
 
-auth0-deploy-cli@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/auth0-deploy-cli/-/auth0-deploy-cli-7.1.0.tgz#c9d0d06357466b1d9d427270db7f82d310d29fbf"
-  integrity sha512-Z+tZc6Hx0BBCVrSofH7F1iex5GyncvKsHph28ie6pvlR97ifqz86pz1+SHUSLEdRlNSeNQr0S1QI079+mquOdw==
+auth0-deploy-cli@^7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/auth0-deploy-cli/-/auth0-deploy-cli-7.1.1.tgz#577463e68b48851af44e808ec4c60aa4a2fcecb2"
+  integrity sha512-6Bn6jFXMraIyKq9R4impMI6MFJhUsgdv971YtHD+6+B0ZRXY9O1F3LlAsFDK6KWYg/3ivLeLBQ4LPRpW4Guglg==
   dependencies:
     ajv "^6.12.6"
     auth0 "^2.35.1"
