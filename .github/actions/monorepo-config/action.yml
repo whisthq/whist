@@ -4,65 +4,47 @@ branding:
   icon: command
   color: blue
 inputs:
-  secrets:
-    description: JSON object of Fractal secrets
-    required: true
+  secrets-github:
+    description: JSON object of GitHub secrets
+    required: false
+  secrets-heroku:
+    description: JSON object of Heroku secrets
+    required: false
+  os:
+    description: Either 'macos', 'win32', or 'linux'
+    required: false
+  deploy:
+    description: Either 'dev', 'staging', or 'production'
+    required: false
 outputs:
   config:
     description: JSON object of Fractal config
-args:
+args: # positional arguments will be passed to entrypoint.sh
+  - --path
+  - config # path to /config folder
   - --secrets
-  - ${{ inputs.secrets }}
-  - config
-# If you want to pass positional arguments to your entrypoint, you need to
-# use the "exec" form that you see below, which takes the form of a JSON array.
-# This is so that the container runs your process directly, as opposed to using
-# a shell. If you pass arguments using the "shell" from (no brackets or quotes),
-# then the positional arguments passed to "docker run ..." will be passed to the
-# shell, not your entrypoint process.
-entrypoint: [python, /root/monorepo-config/main.py]
+  - ${{ inputs.secrets-github }}
+  - --secrets # secrets will be merged
+  - ${{ inputs.secrets-heroku }}
+  - --os
+  - ${{ inputs.os }}
+  - --deploy # empty string will be coerced to None
+  - ${{ inputs.deploy }}
 runs:
   using: docker
-  image: Dockerfile
+  image: Dockerfile # note relative to this file (action.yml)
 
-  # Remember that what you declare here gets passed in to the Docker image
-  # with the inputs map above. Each key in the input map will be capitalized
-  # and prefixed with INPUT_. Look at the bottom of these docs for an example
-  # of the environment.
+  # If you're trying to runs.image a Dockerfile from outside this folder,
+  # note that any Dockerfile in this folder will always silently override
+  # whatever you put in runs.image.
 
-  # The image path fails silently if you get something wrong here. The silent
-  # failure looks like a normal run, it just doesn't load your Dockerfile.
-  #
-  # One more thing... if you have a Dockerfile in the same folder as this file,
-  # that Dockerfile will override whatever you set here. This is undocumented,
-  # but will cost you a lot of time when it bites you.
-  #
-  # The path specified here should be relative to this file, not the top of
-  # the fractal repository. We expect this file to have an ENTRYPOINT
-  # directive, otherwise the args key below will cause an error.
+  # Make sure your Dockerfile is using ENTRYPOINT and not CMD, or else
+  # runs.args will fail silently. Make sure to use the "exec" form.
 
-  # The "run.args" here have different functions based on the rest of your
-  # configuration. If you have ENTRYPOINT set in your Dockerfile, or the
-  # entrypoint: key above, then these will be passed as arguments to the
-  # entrypoint command. If you don't have an entrypoint (or something goes
-  # silenty wrong with your image: key above), then these will perform the
-  # function of the Dockerfile CMD.
-  #
-  # This can lead to some tricky bugs, so be careful. The error you'll get will
-  # be something like "executable file not found in $PATH: unknown". That is
-  # because when run.args: is treated like the Dockerfile CMD, then the first
-  # element of the run.args: array is supposed to be an executable command.
-  #
-  # This overloading of run.args: is unfortunate, particularly because image: can
-  # fail silently, which means that your Dockerfile's ENTRYPOINT won't be
-  # found, which means that run.args: will be treated as a Dockerfile COMMAND as
-  # opposed to arguments. Once again, be careful.
+  # The entire GitHub environment will be passed automatically to the
+  # Docker image. Note the environment is not identical to the environment
+  # of GitHub workflows. An example is below.
 
-  # You don't have to do anything extra to pass this whole environment, as
-  # long as you are using the Docker ENTRYPOINT directive in your dockerfile.
-  # An enviroment like the one below will be available to your process,
-  # including the INPUT_prefixed and capitalized inputs to your Action.
-  #
   # {
   #  'ACTIONS_RUNTIME_TOKEN': '*****'
   #  'ACTIONS_CACHE_URL': 'https://artifactcache.actions.githubusercontent.com',
