@@ -7,6 +7,9 @@ coverage:
   round: down        # up, down, or nearest
   range: "70...90"   # First number represents red, and second represents green (default is 70..100)
 
+fixes:
+  - "::main-webserver/"
+
 parsers:
   gcov:
     branch_detection:
@@ -14,9 +17,6 @@ parsers:
       loop: yes
       method: no
       macro: no
-
-ignore:
-  - */.heroku/python/*
 
 comment:
   layout: "reach, diff, flags, files, footer"
