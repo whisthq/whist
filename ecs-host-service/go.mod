@@ -3,7 +3,7 @@ module github.com/fractal/fractal/ecs-host-service
 go 1.15
 
 require (
-	github.com/MicahParks/keyfunc v0.4.2
+	github.com/MicahParks/keyfunc v0.6.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/Microsoft/hcsshim v0.8.17 // indirect
 	github.com/NVIDIA/go-nvml v0.11.1-0
