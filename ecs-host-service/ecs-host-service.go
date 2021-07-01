@@ -491,6 +491,12 @@ func main() {
 	// Initialize the database driver, if necessary (the `dbdriver`) package
 	// takes care of the "if necessary" part.
 	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+		// If the instance starts up and sees its status as unresponsive, the
+		// webserver doesn't want it anymore so we should shut down.
+		// TODO: make this a bit more robust
+		if strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) && !metadata.IsLocalEnv() {
+			shutdownInstanceOnExit = true
+		}
 		logger.Panic(globalCancel, err)
 	}
 
