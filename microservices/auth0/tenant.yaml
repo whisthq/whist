@@ -109,14 +109,14 @@ clients:
   - name: Postman
     allowed_clients: []
     app_type: native
-    callbacks: []
+    callbacks:
+      - https://oauth.pstmn.io/v1/callback
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
     description: A tool that developers use to test Fractal's APIs.
     grant_types:
-      - password
-      - http://auth0.com/oauth/grant-type/password-realm
+      - authorization_code
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
     jwt_configuration:
@@ -181,6 +181,7 @@ connections:
     strategy: google-oauth2
     enabled_clients:
       - Fractal
+      - Postman
     is_domain_connection: false
     options:
       email: true
@@ -221,6 +222,7 @@ connections:
       google_affiliate_network: false
 tenant:
   default_audience: ""
+  default_directory: ""
   enabled_locales:
     - en
   flags:
