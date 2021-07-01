@@ -362,7 +362,7 @@ CREATE TRIGGER t BEFORE INSERT OR UPDATE OR DELETE ON hardware.instance_info
         FOR EACH ROW EXECUTE PROCEDURE hardware.change_trigger();
 
 CREATE VIEW logging.instance_status_change AS
-(select * from logging.t_history where old_val ->> 'status' <> new_val ->> 'status');
+(select old_val, new_val from logging.t_history where old_val ->> 'status' <> new_val ->> 'status');
 --
 -- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
