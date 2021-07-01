@@ -1,11 +1,11 @@
 # This file represents the allowed "profiles" for our configuration.
-# It's loaded by the configuration parsing program for validation purposes.
-# Maybe someday we can have a fancy static analysis tool that will warn us if
-# we make a typo in our configuration.
-- "lnx"
-- "mac"
-- "win"
-- "local"
-- "dev"
-- "staging"
-- "production"
+
+os:
+  - "linux"
+  - "macos"
+  - "win32"
+deploy:
+  - "local"
+  - "dev"
+  - "staging"
+  - "production"
