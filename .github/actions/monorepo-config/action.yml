@@ -33,6 +33,7 @@ args: # positional arguments will be passed to entrypoint.sh
 runs:
   using: docker
   image: Dockerfile # note relative to this file (action.yml)
+  post-entrypoint: post-entrypoint.sh
 
   # If you're trying to runs.image a Dockerfile from outside this folder,
   # note that any Dockerfile in this folder will always silently override
