@@ -79,7 +79,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 	// Note that the caller won't actually know if the `shutdown` command failed.
 	// This response is just saying that we got the request successfully.
-	defer req.ReturnResult("", nil)
+	defer req.ReturnResult("request successful", nil)
 
 	shutdownInstanceOnExit = true
 	globalCancel()
