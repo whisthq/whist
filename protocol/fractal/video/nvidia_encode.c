@@ -23,14 +23,6 @@ void try_free_frame(NvidiaEncoder* encoder) {
             LOG_FATAL("Failed to unlock bitstream buffer, status = %d", status);
         }
 
-        // Unmap the input buffer
-        status = encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder,
-                                                           encoder->input_buffer);
-        if (status != NV_ENC_SUCCESS) {
-            // FATAL is chosen over ERROR here to prevent
-            // out-of-control runaway memory usage
-            LOG_FATAL("Failed to unmap the resource, memory is leaking! status = %d", status);
-        }
         encoder->frame = NULL;
     }
 }
@@ -235,7 +227,16 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         return -1;
     }
 
-    // Unregister the frame intake
+    // Unmap the input buffer
+    status = encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder,
+                                                       encoder->input_buffer);
+    if (status != NV_ENC_SUCCESS) {
+        // FATAL is chosen over ERROR here to prevent
+        // out-of-control runaway memory usage
+        LOG_FATAL("Failed to unmap the resource, memory is leaking! status = %d", status);
+    }
+
+    // Unregister the input resource
     unregister_resource(encoder, registered_resource);
 
     // Lock the bitstream
