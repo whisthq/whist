@@ -737,6 +737,11 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         }
     }
 
+    if (!encoder) {
+        LOG_ERROR("Video encoder: All encoders failed!");
+        return NULL;
+    }
+
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
 #if USING_SERVERSIDE_SCALE
     LOG_ERROR(
@@ -744,11 +749,13 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         "serverside scaling");
 #else
     encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    if (!encoder->nvidia_encoder) {
+        LOG_ERROR("Failed to create nvidia encoder!");
+    }
 #endif
 #endif
 
-    LOG_ERROR("Video encoder: All encoders failed!");
-    return NULL;
+    return encoder;
 }
 
 int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitch) {

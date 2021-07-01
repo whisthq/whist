@@ -15,7 +15,7 @@ void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder)
         // end the transfer context
         dxgi_cuda_close_transfer_context(device);
     }
-#else // __linux__
+#else  // __linux__
     if (device->capture_is_on_nvidia) {
         if (encoder->nvidia_encoder) {
             // Copy new stuff
@@ -35,19 +35,19 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             // otherwise, do the cpu transfer below
         }
     }
-#endif
-
-#ifdef _WIN32
-    encoder->already_encoded = false;
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
         if (encoder->nvidia_encoder) {
-            nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->nvidia_capture_device.dw_texture, device->nvidia_capture_device.dw_tex_target);
+            nvidia_encoder_frame_intake(encoder->nvidia_encoder,
+                                        device->nvidia_capture_device.dw_texture,
+                                        device->nvidia_capture_device.dw_tex_target);
             encoder->capture_is_on_nvidia = true;
             return 0;
         } else {
             encoder->capture_is_on_nvidia = false;
-            LOG_ERROR("Cannot encoder! If using Nvidia Capture SDK, Then Nvidia Encode API must be used!");
+            LOG_ERROR(
+                "Cannot transfer capture! If using Nvidia Capture SDK, "
+                "then the Nvidia Encode API must be used!");
             return -1;
         }
     } else {
@@ -55,6 +55,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     }
 #endif
 
+    // CPU transfer, if hardware transfer doesn't work
     static int times_measured = 0;
     static double time_spent = 0.0;
 
