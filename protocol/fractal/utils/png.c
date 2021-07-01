@@ -165,7 +165,7 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
 
     deallocate_region(pixel_data_buffer);
 
-    if (temp_png_size > MAX_INT) {
+    if (temp_png_size > INT_MAX) {
         LOG_WARNING("Converted PNG is too large for int");
         return -1;
     }
