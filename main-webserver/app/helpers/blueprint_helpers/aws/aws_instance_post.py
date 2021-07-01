@@ -251,7 +251,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     base_url = (
                         f"https://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
                     )
-                    requests.post(f"{base_url}/drain_and_shutdown")
+                    requests.post(f"{base_url}/drain_and_shutdown", verify=False)
                 except requests.exceptions.RequestException:
                     client = EC2Client(region_name=region)
                     client.stop_instances(

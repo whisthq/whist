@@ -100,7 +100,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
     fractal_logger.info(f"mark_instance_for_draining called for instance {active_instance.instance_name}")
     try:
         base_url = f"https://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-        respobj = requests.post(f"{base_url}/drain_and_shutdown")
+        respobj = requests.post(f"{base_url}/drain_and_shutdown", verify=False)
         fractal_logger.info(f"sent POST request to {base_url}/drain_and_shutdown with response {respobj.json()}")
         respobj.raise_for_status()
         # Host service would be setting the state in the DB once we call the drain endpoint.
