@@ -272,7 +272,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // If using nvidia, then we must destroy the existing encoder first
                     // We can't have two nvidia encoders active or the 2nd attempt to
                     // create one will fail
-                    if (encoder->nvidia_encoder != NULL && encoder != NULL) {
+                    if (encoder != NULL && encoder->nvidia_encoder != NULL) {
                         destroy_video_encoder(encoder);
                         encoder = NULL;
                     }
