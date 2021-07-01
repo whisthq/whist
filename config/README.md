@@ -45,11 +45,11 @@ python .github/actions/monorepo-config/main.py \
 
 ```
 
-Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like "**\*\*\***". We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.
+Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like "\*\*\*\*\*\*\*". We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.
 
 The `--deploy` and `--os` flags are examples of "profiles". Each profile name must be present in `profile.yml` for the command to succeed.
 
-This will output the JSON like you see below. Note the `dev` specific URLs in keys like `AUTH_DOMAIN`, and `macos` specific URLS in keys like `CLIENT_DOWNLOAD`. These would be replaced with `win32`, `linux`, `local`, `staging`, or `production` URLS with different profiles.
+Depending on the data in the YAML files, this might output JSON like you see below. Note the `dev` specific URLs in keys like `AUTH_DOMAIN`, and `macos` specific URLS in keys like `CLIENT_DOWNLOAD`. These would be replaced with `win32`, `linux`, `local`, `staging`, or `production` URLS with different profiles.
 
 ```json
 {
