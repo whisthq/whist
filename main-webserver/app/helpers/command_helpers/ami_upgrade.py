@@ -2,14 +2,13 @@ from threading import Thread
 from typing import Dict, List
 import requests
 from flask import current_app
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from app.models import db, RegionToAmi, InstanceInfo
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.instance_state_values import InstanceState
-
 
 #  This list allows thread success to be passed back to the main thread.
 #  It is thread-safe because lists in python are thread-safe.
@@ -72,8 +71,8 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
         new_instance_names = do_scale_up_if_necessary(
             region_name, ami_id, force_buffer, flask_app=flask_app
         )
-        result = False # Make Pyright stop complaining
-        assert len(new_instance_names) > 0 # This should always hold
+        result = False  # Make Pyright stop complaining
+        assert len(new_instance_names) > 0  # This should always hold
         for new_instance_name in new_instance_names:
             fractal_logger.debug(
                 f"Waiting for instance with name: {new_instance_name} to be marked online"
@@ -128,9 +127,8 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
     return (
         db.session.query(InstanceInfo)
         .filter(
-            or_(
-                InstanceInfo.status.like(InstanceState.ACTIVE),
-                InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
+            and_(
+                or_(InstanceInfo.status.like(InstanceState.ACTIVE), InstanceInfo.status.like(InstanceState.PRE_CONNECTION)),
                 InstanceInfo.aws_ami_id.in_(active_amis),
             )
         )
@@ -231,6 +229,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # invoked the `fetch_current_running_instances` function. Using this
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
+        print(f"draining instance {active_instance.instance_name}")
         active_instance.status = InstanceState.DRAINING.value
     db.session.commit()
 
