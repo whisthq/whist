@@ -18,18 +18,19 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     /*
         Reset the members of ring_buffer except type and size.
     */
-    // reset metadata
-    ring_buffer->currently_rendering_id = -1;
-    ring_buffer->last_received_id = -1;
-    ring_buffer->max_id = -1;
-    ring_buffer->num_nacked = 0;
-    ring_buffer->frames_received = 0;
+    // LOG_DEBUG("Currently rendering ID: %d", ring_buffer->currently_rendering_id);
     // wipe all frames
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
         reset_frame(frame_data);
         destroy_frame_buffer(ring_buffer, frame_data);
     }
+    // reset metadata
+    ring_buffer->currently_rendering_id = -1;
+    ring_buffer->last_received_id = -1;
+    ring_buffer->max_id = -1;
+    ring_buffer->num_nacked = 0;
+    ring_buffer->frames_received = 0;
     start_timer(&ring_buffer->missing_frame_nack_timer);
 }
 
@@ -84,6 +85,7 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
         ring_buffer->frame_buffer_allocator = NULL;
     }
 
+    ring_buffer->currently_rendering_id = -1;
     // set all additional metadata for frames and ring buffer
     reset_ring_buffer(ring_buffer);
     return ring_buffer;
