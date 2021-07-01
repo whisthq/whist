@@ -242,10 +242,10 @@ int capture_screen(CaptureDevice* device) {
             LOG_ERROR("nvidia_capture_screen failed!");
             return ret;
         } else {
-            device->frame_data = device->nvidia_capture_device.frame;
-            device->width = device->nvidia_capture_device.width;
-            device->height = device->nvidia_capture_device.height;
-            device->pitch = device->width * 4;
+            // device->frame_data = device->nvidia_capture_device.frame;
+            // device->width = device->nvidia_capture_device.width;
+            // device->height = device->nvidia_capture_device.height;
+            // device->pitch = device->width * 4;
             device->capture_is_on_nvidia = true;
             return ret;
         }

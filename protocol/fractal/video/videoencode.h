@@ -61,11 +61,8 @@ typedef struct VideoEncoder {
     int gop_size;
     bool is_iframe;
     void* sw_frame_buffer;
-    void* encoded_frame_data;  /// <Pointer to the encoded data
     int encoded_frame_size;    /// <size of encoded frame in bytes
 
-    bool using_capture_encoder;
-    bool already_encoded;
     AVFrame* hw_frame;
     AVFrame* sw_frame;
     AVFrame* filtered_frame;
@@ -73,7 +70,8 @@ typedef struct VideoEncoder {
     EncodeType type;
     CodecType codec_type;
 
-    NvidiaEncoder nvidia_encoder;
+    bool capture_is_on_nvidia;
+    NvidiaEncoder* nvidia_encoder;
 } VideoEncoder;
 
 /*

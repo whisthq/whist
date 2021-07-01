@@ -94,7 +94,6 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
 
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
@@ -351,7 +350,6 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_QSV;
@@ -551,7 +549,6 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
 
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
@@ -742,7 +739,9 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
 #if USING_SERVERSIDE_SCALE
-    LOG_ERROR("Cannot create nvidia encoder, does not accept in_width and in_height when using serverside scaling");
+    LOG_ERROR(
+        "Cannot create nvidia encoder, does not accept in_width and in_height when using "
+        "serverside scaling");
 #else
     encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
 #endif
@@ -793,13 +792,22 @@ int video_encoder_encode(VideoEncoder *encoder) {
         Returns:
             (int): 0 on success, -1 on failure
      */
-    if (encoder->already_encoded) {
-        // If the frame comes already encoded (in the case of nvidia e.g.), then we treat the
-        // encoded frame is one encoded packet.
+    if (encoder->capture_is_on_nvidia) {
+        nvidia_encoder_encode(encoder->nvidia_encoder);
+
+        // Set meta data
+        encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
+        encoder->out_width = encoder->nvidia_encoder->width;
+        encoder->out_height = encoder->nvidia_encoder->height;
+        encoder->codec_type = encoder->nvidia_encoder->codec_type;
+
+        // Construct frame packets
+        encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
         encoder->num_packets = 1;
-        encoder->packets[0].data = encoder->encoded_frame_data;
-        encoder->packets[0].size = encoder->encoded_frame_size;
-        encoder->encoded_frame_size += 2 * sizeof(int);
+        encoder->packets[0].data = encoder->nvidia_encoder->frame;
+        encoder->packets[0].size = encoder->nvidia_encoder->frame_size;
+        encoder->encoded_frame_size += 8;
+
         return 0;
     }
 
@@ -876,7 +884,7 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): Encoder containing the frame
     */
-    if (encoder->already_encoded) {
+    if (encoder->capture_is_on_nvidia) {
         return;
     }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
@@ -892,7 +900,7 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): encoder containing the frame
     */
-    if (encoder->already_encoded) {
+    if (encoder->capture_is_on_nvidia) {
         return;
     }
     encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
@@ -906,6 +914,12 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): encoder to destroy
     */
+
+    // Destroy the nvidia encoder, if any
+    if (encoder->nvidia_encoder) {
+        destroy_nvidia_encoder(encoder->nvidia_encoder);
+    }
+
     // check if encoder encoder exists
     if (encoder == NULL) {
         LOG_INFO("Encoder empty, not destroying anything.");

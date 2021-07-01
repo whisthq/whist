@@ -96,7 +96,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     char output_name[NVFBC_OUTPUT_NAME_LEN];
     uint32_t output_id = 0;
 
-    NVFBCSTATUS fbc_status;
+    NVFBCSTATUS status;
 
     NvFBCUtilsPrintVersions(APP_VERSION);
 
@@ -139,9 +139,9 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     memset(&device->p_fbc_fn, 0, sizeof(device->p_fbc_fn));
     device->p_fbc_fn.dwVersion = NVFBC_VERSION;
 
-    fbc_status = nv_fbc_create_instance_ptr(&device->p_fbc_fn);
-    if (fbc_status != NVFBC_SUCCESS) {
-        LOG_ERROR("Unable to create NvFBC instance (status: %d)", fbc_status);
+    status = nv_fbc_create_instance_ptr(&device->p_fbc_fn);
+    if (status != NVFBC_SUCCESS) {
+        LOG_ERROR("Unable to create NvFBC instance (status: %d)", status);
         return -1;
     }
 
@@ -154,8 +154,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     create_handle_params.glxCtx = glx_ctx;
     create_handle_params.glxFBConfig = glx_fb_config;
 
-    fbc_status = device->p_fbc_fn.nvFBCCreateHandle(&device->fbc_handle, &create_handle_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    status = device->p_fbc_fn.nvFBCCreateHandle(&device->fbc_handle, &create_handle_params);
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
@@ -169,8 +169,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_GET_STATUS_PARAMS status_params = {0};
     status_params.dwVersion = NVFBC_GET_STATUS_PARAMS_VER;
 
-    fbc_status = device->p_fbc_fn.nvFBCGetStatus(device->fbc_handle, &status_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    status = device->p_fbc_fn.nvFBCGetStatus(device->fbc_handle, &status_params);
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
@@ -208,21 +208,22 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     create_capture_params.eTrackingType = NVFBC_TRACKING_DEFAULT;
     create_capture_params.bDisableAutoModesetRecovery = NVFBC_FALSE;
 
-    fbc_status =
+    status =
         device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
+    
     /*
      * Set up the capture session.
      */
     memset(&device->togl_setup_params, 0, sizeof(device->togl_setup_params));
-    togl_setup_params.dwVersion = NVFBC_TOGL_SETUP_PARAMS_VER;
-    togl_setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
+    device->togl_setup_params.dwVersion = NVFBC_TOGL_SETUP_PARAMS_VER;
+    device->togl_setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
 
-    fbc_status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &device->togl_setup_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &device->togl_setup_params);
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
@@ -240,10 +241,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 #define SHOW_DEBUG_FRAMES false
 
 int nvidia_capture_screen(NvidiaCaptureDevice* device) {
-    NVFBCSTATUS fbc_status;
-    NVENCSTATUS enc_status;
-
-    bool force_iframe = false;
+    NVFBCSTATUS status;
 
 #if SHOW_DEBUG_FRAMES
     uint64_t t1, t2;
@@ -291,11 +289,14 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     /*
      * Capture a new frame.
      */
-    fbc_status = device->p_fbc_fn.nvFBCToGLGrabFrame(device->fbc_handle, &grab_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    status = device->p_fbc_fn.nvFBCToGLGrabFrame(device->fbc_handle, &grab_params);
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
+
+    device->dw_texture = device->togl_setup_params.dwTextures[grab_params.dwTextureIndex];
+    device->dw_tex_target = device->togl_setup_params.dwTexTarget;
 
     // If the frame isn't new, just return 0
     if (!frame_info.bIsNewFrame) {
@@ -320,7 +321,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 }
 
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
-    NVFBCSTATUS fbc_status;
+    NVFBCSTATUS status;
 
     /*
      * Destroy capture session, tear down resources.
@@ -328,9 +329,9 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroy_capture_params = {0};
     destroy_capture_params.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
 
-    fbc_status =
+    status =
         device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return;
     }
@@ -341,8 +342,8 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_DESTROY_HANDLE_PARAMS destroy_handle_params = {0};
     destroy_handle_params.dwVersion = NVFBC_DESTROY_HANDLE_PARAMS_VER;
 
-    fbc_status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
-    if (fbc_status != NVFBC_SUCCESS) {
+    status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
+    if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return;
     }

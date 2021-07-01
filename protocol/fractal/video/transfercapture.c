@@ -15,6 +15,12 @@ void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder)
         // end the transfer context
         dxgi_cuda_close_transfer_context(device);
     }
+#else // __linux__
+    if (device->capture_is_on_nvidia) {
+        if (encoder->nvidia_encoder) {
+            // Copy new stuff
+        }
+    }
 #endif
 }
 
@@ -35,16 +41,17 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     encoder->already_encoded = false;
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
-        encoder->encoded_frame_data = device->nvidia_capture_device.frame;
-        encoder->encoded_frame_size = device->nvidia_capture_device.size;
-        encoder->is_iframe = device->nvidia_capture_device.is_iframe;
-        encoder->out_width = device->nvidia_capture_device.width;
-        encoder->out_height = device->nvidia_capture_device.height;
-        encoder->codec_type = device->nvidia_capture_device.codec_type;
-        encoder->already_encoded = true;
-        return 0;
+        if (encoder->nvidia_encoder) {
+            nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->nvidia_capture_device.dw_texture, device->nvidia_capture_device.dw_tex_target);
+            encoder->capture_is_on_nvidia = true;
+            return 0;
+        } else {
+            encoder->capture_is_on_nvidia = false;
+            LOG_ERROR("Cannot encoder! If using Nvidia Capture SDK, Then Nvidia Encode API must be used!");
+            return -1;
+        }
     } else {
-        encoder->already_encoded = false;
+        encoder->capture_is_on_nvidia = false;
     }
 #endif
 
