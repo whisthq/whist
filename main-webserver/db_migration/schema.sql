@@ -261,7 +261,7 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
                     instance_info.commit_hash,
                     instance_info.mandelbox_capacity
                    FROM hardware.instance_info
-                   WHERE (instance_info.status)::text <> 'DRAINING'::text)) instances
+                   WHERE instance_info.status::text <> 'DRAINING'::text) instances
              LEFT JOIN ( SELECT count(*) AS count,
                     mandelbox_info.instance_name AS cont_inst
                    FROM hardware.mandelbox_info
