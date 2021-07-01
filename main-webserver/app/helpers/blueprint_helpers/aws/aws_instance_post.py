@@ -249,7 +249,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 db.session.commit()
                 try:
                     base_url = (
-                        f"http://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                        f"https://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
                     )
                     requests.post(f"{base_url}/drain_and_shutdown")
                 except requests.exceptions.RequestException:
