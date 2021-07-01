@@ -37,14 +37,11 @@ void try_free_frame(NvidiaEncoder* encoder) {
 
 NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_texture,
                                         uint32_t dw_tex_target, int width, int height) {
-    NV_ENC_REGISTER_RESOURCE register_params;
-    NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params;
-
-    memset(&register_params, 0, sizeof(register_params));
-
+    NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params = {0};
     tex_params.texture = dw_texture;
     tex_params.target = dw_tex_target;
 
+    NV_ENC_REGISTER_RESOURCE register_params = {0};
     register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
     register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_OPENGL_TEX;
     register_params.width = width;
@@ -177,10 +174,12 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture,
-                                uint32_t dw_tex_target) {
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
+                                int width, int height) {
     encoder->dw_texture = dw_texture;
     encoder->dw_tex_target = dw_tex_target;
+    encoder->width = width;
+    encoder->height = height;
     return 0;
 }
 
@@ -205,6 +204,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         unregister_resource(encoder, registered_resource);
         return -1;
     }
+    LOG_ERROR("SUCCESSE!!!!!!!!!!!!!!!!!!!!!!!!!!");
     encoder->input_buffer = map_params.mappedResource;
     encoder->buffer_fmt = map_params.mappedBufferFmt;
 

@@ -32,7 +32,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int
 // To be called by transfer_capture!
 /// This should come from device->registered_resources[grab_params.dwTextureIndex];
 int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture,
-                                uint32_t dw_tex_target);
+                                uint32_t dw_tex_target, int width, int height);
 // Encode the most recently provided frame from frame_intake
 int nvidia_encoder_encode(NvidiaEncoder* encoder);
 void destroy_nvidia_encoder(NvidiaEncoder* encoder);

@@ -38,9 +38,9 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
         if (encoder->nvidia_encoder) {
-            nvidia_encoder_frame_intake(encoder->nvidia_encoder,
-                                        device->nvidia_capture_device.dw_texture,
-                                        device->nvidia_capture_device.dw_tex_target);
+            nvidia_encoder_frame_intake(
+                encoder->nvidia_encoder, device->nvidia_capture_device.dw_texture,
+                device->nvidia_capture_device.dw_tex_target, device->width, device->height);
             encoder->capture_is_on_nvidia = true;
             return 0;
         } else {
