@@ -85,7 +85,7 @@
     "fs-extra": "^10.0.0",
     "nodemon": "^2.0.7",
     "postcss": "^8.2.10",
-    "prettier": "^2.2.1",
+    "prettier": "^2.3.2",
     "rimraf": "^3.0.2",
     "snowpack": "^3.5.2",
     "tailwindcss": "^2.1.2",
