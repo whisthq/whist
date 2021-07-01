@@ -274,6 +274,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing resources for protocol: %s", err)
 		return
 	}
+	if err := fc.WriteLocalDevValues(10); err != nil {
+		logAndReturnError("Error writing protocol timeout: %s", err)
+		return
+	}
 	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol.")
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})

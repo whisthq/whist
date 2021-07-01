@@ -140,17 +140,17 @@ func removeStaleAllocatedMandelboxesGoroutine(globalCtx context.Context) {
 	defer logger.Infof("Finished removeStaleAllocatedMandelboxes goroutine.")
 	timerChan := make(chan interface{})
 
-	// Instead of running exactly every 90 seconds, we choose a random time in
-	// the range [95, 105] seconds to prevent waves of hosts repeatedly crowding
+	// Instead of running exactly every 10 seconds, we choose a random time in
+	// the range [9.5, 10.5] seconds to prevent waves of hosts repeatedly crowding
 	// the database.
 	for {
-		sleepTime := 100000 - rand.Intn(10001)
+		sleepTime := 10000 - rand.Intn(1001)
 		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
 
 		select {
 		case <-globalCtx.Done():
 			// Remove allocated stale mandelboxes one last time
-			if err := removeStaleAllocatedMandelboxes(90 * time.Second); err != nil {
+			if err := removeStaleAllocatedMandelboxes(10 * time.Second); err != nil {
 				logger.Error(err)
 			}
 
@@ -162,7 +162,7 @@ func removeStaleAllocatedMandelboxesGoroutine(globalCtx context.Context) {
 			return
 
 		case _ = <-timerChan:
-			if err := removeStaleAllocatedMandelboxes(90 * time.Second); err != nil {
+			if err := removeStaleAllocatedMandelboxes(10 * time.Second); err != nil {
 				logger.Error(err)
 			}
 		}
