@@ -206,6 +206,23 @@ def test_buffer_with_multiple(region_to_ami_map, bulk_instance):
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
+def test_buffer_with_multiple_draining(region_to_ami_map, bulk_instance):
+    """
+    Tests that we don't ask for a new instance when we have enough space in multiple instances
+    and also that draining instances are ignored
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, mandelbox_capacity=10)
+    bulk_instance(aws_ami_id=good_ami, associated_mandelboxes=5, mandelbox_capacity=10)
+    bulk_instance(
+        aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10, status="DRAINING"
+    )
+    bulk_instance(
+        aws_ami_id=good_ami, associated_mandelboxes=0, mandelbox_capacity=10, status="DRAINING"
+    )
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
+
+
 def test_buffer_overfull(region_to_ami_map, bulk_instance):
     """
     Tests that we ask to scale down an instance when we have too much free space
