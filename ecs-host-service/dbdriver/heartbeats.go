@@ -87,10 +87,11 @@ func writeHeartbeat() error {
 		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1000),
 		InstanceName:         string(instanceName),
 	}
-	result, err := q.WriteHeartbeat(context.Background(), params)
+	_, err = q.WriteHeartbeat(context.Background(), params)
 	if err != nil {
 		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
+	// TODO: parse the command tag and error if the result is 0
 	// logger.Infof("Wrote heartbeat %+v with result %s", params, result)
 	return nil
 }
