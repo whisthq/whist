@@ -18,9 +18,7 @@ def parse_cli_profiles(_ctx, _param, args):
     result = {}
     for chunk in toolz.partition(2, args):
         if not chunk[0].startswith("--"):
-            raise click.BadParameter(
-                f"All options must start with --, received: {chunk[0]}"
-            )
+            raise click.BadParameter(f"All options must start with --, received: {chunk[0]}")
         if not len(chunk) == 2:
             raise click.BadParameter(f"Missing value for option: {chunk[0]}")
         key, value = chunk
@@ -40,9 +38,7 @@ def _coerce_json(_ctx, _param, values):
     try:
         dicts = [json.loads(v) for v in values]
         if not all(isinstance(d, dict) for d in dicts):
-            raise click.BadParameter(
-                "All --secrets much be JSON dictionaries."
-            )
+            raise click.BadParameter("All --secrets much be JSON dictionaries.")
         return toolz.merge(*dicts)
     except json.JSONDecodeError as err:
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")

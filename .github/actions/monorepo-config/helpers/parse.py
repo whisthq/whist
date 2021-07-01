@@ -36,8 +36,7 @@ def parse(dir_path, secrets=None, profiles=None):
     # Flatten the loaded dictionaries based on the profiles passed as arguments
     profile_set = set(profiles.values())
     schema = {
-        k: flatten_path_matching(profile_set, v)
-        for k, v in toolz.merge(*schema_yamls).items()
+        k: flatten_path_matching(profile_set, v) for k, v in toolz.merge(*schema_yamls).items()
     }
 
     # If no secrets to merge, return early
@@ -48,8 +47,6 @@ def parse(dir_path, secrets=None, profiles=None):
         raise ValidationError(error)
 
     # Merge secrets arguments into schema dictionary
-    merged = toolz.merge(
-        schema, {k: secrets[k] for k in schema if k in secrets}
-    )
+    merged = toolz.merge(schema, {k: secrets[k] for k in schema if k in secrets})
 
     return dict(sorted(merged.items()))
