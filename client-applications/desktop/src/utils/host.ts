@@ -40,30 +40,19 @@ export const hostSpinUp = async ({
   config_encryption_token: string
   jwt_access_token: string
   mandelbox_id: string
-}) =>
-  (await apiPut(
-    "/spin_up_mandelbox",
-    `https://${ip}:${HostServicePort}`,
-    {
-      app_image: `ghcr.io/fractal/${imageEnv()}/browsers/chrome:current-build`,
-      dpi,
-      user_id,
-      config_encryption_token,
-      jwt_access_token,
-      mandelbox_id,
-    },
-    true
-  )) as {
-    status: number
-    json?: {
-      result?: {
-        port_32262: number
-        port_32263: number
-        port_32273: number
-        aes_key: string
-      }
-    }
+}) => {
+  const endpoint = "/spin_up_mandelbox"
+  const url = `https://${ip}:${HostServicePort}`
+  const body = {
+    app_image: `ghcr.io/fractal/${imageEnv()}/browsers/chrome:current-build`,
+    dpi,
+    user_id,
+    config_encryption_token,
+    jwt_access_token,
+    mandelbox_id,
   }
+  return (await apiPut(endpoint, url, body, true)) as any
+}
 
 export type HostSpinUpResponse = AsyncReturnType<typeof hostSpinUp>
 

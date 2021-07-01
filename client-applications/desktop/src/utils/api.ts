@@ -71,7 +71,7 @@ export const apiPut = async (
         })
         response.on("end", () => {
           const status = response?.statusCode ?? 400
-          const json = JSON.stringify(responseText)
+          const json = JSON.parse(responseText)
           resolve({ json, status, response })
         })
       }
