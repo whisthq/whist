@@ -29,7 +29,7 @@ require (
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/mux v1.8.0
