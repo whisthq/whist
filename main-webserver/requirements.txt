@@ -14,7 +14,7 @@ Flask-SQLAlchemy==2.5.1
 gevent==21.1.2
 hirefire==1.1
 logzio-python-handler==3.0.0
-marshmallow-sqlalchemy==0.26.0
+marshmallow-sqlalchemy==0.26.1
 psycopg2-binary==2.8.6
 PyJWT==2.1.0
 python-dateutil==2.8.1
