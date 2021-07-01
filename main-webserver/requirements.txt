@@ -1,7 +1,7 @@
 better-profanity==0.7.0
 blinker==1.4
 boto3==1.17.22
-celery==5.1.0
+celery==5.1.2
 click==7.1.2
 cryptography==3.4.7
 Flask==1.1.2
