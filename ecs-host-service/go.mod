@@ -10,7 +10,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
 	github.com/aws/aws-sdk-go v1.38.52
 	github.com/aws/aws-sdk-go-v2/config v1.3.0
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.9.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.10.0
 	github.com/awslabs/go-config-generator-for-fluentd-and-fluentbit v0.0.0-20210308162251-8959c62cb8f9
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
