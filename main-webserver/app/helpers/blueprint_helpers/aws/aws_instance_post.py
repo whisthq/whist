@@ -16,7 +16,7 @@ from app.models.hardware import (
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
-from app.constants.instance_state_values import PRE_CONNECTION, DRAINING
+from app.constants.instance_state_values import InstanceState
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -194,7 +194,7 @@ def do_scale_up_if_necessary(
                     mandelbox_capacity=base_number_free_mandelboxes,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time()),
-                    status=PRE_CONNECTION,
+                    status=InstanceState.PRE_CONNECTION,
                     commit_hash=ami_obj.client_commit_hash,
                     ip="",  # Will be set by `host_service` once it boots up.
                 )
@@ -245,7 +245,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 # We need to modify the status to DRAINING to ensure that we don't assign a new
                 # mandelbox to the instance. We need to commit here as we don't want to enter a
                 # deadlock with host service where it tries to modify the instance_info row.
-                instance_info.status = DRAINING
+                instance_info.status = InstanceState.DRAINING
                 db.session.commit()
                 try:
                     base_url = (
