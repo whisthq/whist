@@ -3,6 +3,7 @@
 This folder contains common configuration values that can be re-used across our monorepo.
 
 ## How config works
+
 All the common monorepo configuration is stored in the top-level `/config` folder. We use YAML for our configuration schema, with the schema files located in `/config/schema`. These YAML files are parsed by this program, and transformed into a JSON string containing a single flattened dictionary.
 
 When the configuration program is run inside GitHub Actions, it is passed the "secrets" that GitHub stores for us. It merges these secrets into the final configuration. Multiple sources can be set up for secrets, so that we can pull from other providers, like Auth0 or Heroku.
@@ -11,7 +12,7 @@ The schema files can use nested keys to define "profiles". These profiles are us
 
 "Profiles" refers to one of the sets of keys in "config/profiles.yml". These are used to choose between values like "macos/win32/linux". With a profile of "macos", a config like this:
 
-``` json
+```json
 {
   "PROTOCOL_FILE_NAME": {
     "macos": "_Fractal",
@@ -23,7 +24,7 @@ The schema files can use nested keys to define "profiles". These profiles are us
 
 ...gets flattened to this:
 
-``` json
+```json
 {
   "PROTOCOL_FILE_NAME": "_Fractal"
 }
@@ -43,7 +44,8 @@ python .github/actions/monorepo-config/main.py \
         --os macos \
 
 ```
-Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like "*******". We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.
+
+Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like "**\*\*\***". We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.
 
 The `--deploy` and `--os` flags are examples of "profiles". Each profile name must be present in `profile.yml` for the command to succeed.
 
@@ -67,6 +69,6 @@ This will output the JSON like you see below. Note the `dev` specific URLs in ke
   "PROTOCOL_FILE_NAME": "_Fractal",
   "PROTOCOL_FOLDER_PATH": "../../MacOS",
   "PROTOCOL_LOG_FILE_NAME": "protocol.log",
-  "WEBSERVER": "https://dev-server.fractal.co",
+  "WEBSERVER": "https://dev-server.fractal.co"
 }
 ```

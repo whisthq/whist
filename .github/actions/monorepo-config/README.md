@@ -16,7 +16,7 @@ docker run \
   --rm \
   # set the working directory to the current folder (fractal root)
   --workdir $(pwd) \
-  # mount as volume, allows you to work interactively with the container 
+  # mount as volume, allows you to work interactively with the container
   --volume $(pwd):$(pwd) \
   # reference the image that we tagged in the build step
   fractal/monorepo-config \
@@ -36,7 +36,6 @@ python3 .github/actions/monorepo-config/main.py --help
 # --path config --deploy dev --os win32
 ```
 
-
 ## High-level overview
 
 There are three main components that make up the configuration building program. Each one "wraps" the one before. Here they are in order:
@@ -55,7 +54,7 @@ The inputs to the Python program include a "config" path (config folder in monor
 
 "Profiles" refers to one of the sets of keys in "config/profiles.yml". These are used to choose between values like "macos/win32/linux". With a profile of "macos", a config like this:
 
-``` json
+```json
 {
   "PROTOCOL_FILE_NAME": {
     "macos": "_Fractal",
@@ -67,7 +66,7 @@ The inputs to the Python program include a "config" path (config folder in monor
 
 ...gets flattened to this:
 
-``` json
+```json
 {
   "PROTOCOL_FILE_NAME": "_Fractal"
 }
@@ -92,7 +91,7 @@ docker run \
     --entrypoint pytest \
     fractal/monorepo-config \
     .github/actions/monorepo-config
-    
+
 # run tests and reload on change
 docker run \
     --rm \
@@ -103,12 +102,11 @@ docker run \
     --entrypoint pytest-watch \
     fractal/monorepo-config \
     .github/actions/monorepo-config
-    --exitfirst \ 
+    --exitfirst \
     --failed-first \
     --new-first \
     --showlocals \
 ```
-
 
 These are long commands, so don't try to memorize them. Plug them into your favorite task runner or make an alias. Don't forget to first build the image with the command at the top.
 
@@ -118,7 +116,7 @@ Because we're mounting our repo with `--volume`, we don't need to rebuild the im
 
 Our Docker container container our Python process is deployed in GitHub CI through and Action. This is defined in `action.yml`, and can be called from a CI workflow with the `uses:` syntax.
 
-Because of the limitations of GitHub's Action API, we need to make a couple allowances in `action.yml`. In that file, we define some `inputs` and `outputs` to take in data from a workflow and send back our result. You must give each of the `inputs` a unique name, which poses a problem for us as we allow multiple `secrets` values.  Allowing multiple `secrets` values allows us to merge secrets from different providers, like GitHub and Heroku. So instead of passing `secrets` as the Python program does, the Action `inputs` are `secrets-github` and `secrets-heroku`. We'll have to add new inputs as we add secrets providers.
+Because of the limitations of GitHub's Action API, we need to make a couple allowances in `action.yml`. In that file, we define some `inputs` and `outputs` to take in data from a workflow and send back our result. You must give each of the `inputs` a unique name, which poses a problem for us as we allow multiple `secrets` values. Allowing multiple `secrets` values allows us to merge secrets from different providers, like GitHub and Heroku. So instead of passing `secrets` as the Python program does, the Action `inputs` are `secrets-github` and `secrets-heroku`. We'll have to add new inputs as we add secrets providers.
 
 Another quirk of GitHub Actions is how you communicate between processes. You must `echo` into a string with a strange `"::set-output name=var-name::$(my-data)"` syntax. We don't want this to clog our console output when we're developing, and fortunately GitHub allows a `post-entrypoint` script to run after our standard `entrypoint` finishes.
 
