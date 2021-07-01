@@ -128,7 +128,10 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
         db.session.query(InstanceInfo)
         .filter(
             and_(
-                or_(InstanceInfo.status.like(InstanceState.ACTIVE), InstanceInfo.status.like(InstanceState.PRE_CONNECTION)),
+                or_(
+                    InstanceInfo.status.like(InstanceState.ACTIVE),
+                    InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
+                ),
                 InstanceInfo.aws_ami_id.in_(active_amis),
             )
         )
@@ -230,7 +233,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
         print(f"draining instance {active_instance.instance_name}")
-        active_instance.status = InstanceState.DRAINING.value
+        active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
     for active_instance in current_running_instances:
