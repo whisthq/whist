@@ -143,7 +143,7 @@ jobs:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               run: bash docker/local_deploy.sh --down
 
-            - name: Run Tests on Heroku
+            - name: Run Tests on Heroku via pytest
               working-directory: main-webserver
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
