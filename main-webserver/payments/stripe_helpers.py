@@ -1,12 +1,8 @@
 from typing import Tuple
 from flask import jsonify
+from http import HTTPStatus
 
 import stripe
-
-from app.constants.http_codes import (
-    BAD_REQUEST,
-    SUCCESS,
-)
 
 
 def get_billing_portal_url(customer_id: str, return_url: str) -> Tuple[str, int]:
@@ -24,6 +20,6 @@ def get_billing_portal_url(customer_id: str, return_url: str) -> Tuple[str, int]
         billing_session = stripe.billing_portal.Session.create(
             customer=customer_id, return_url=return_url
         )
-        return jsonify({"url": billing_session.url}), SUCCESS
+        return jsonify({"url": billing_session.url}), HTTPStatus.OK
     except Exception as e:
-        return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
+        return jsonify({"error": {"message": str(e)}}), HTTPStatus.BAD_REQUEST
