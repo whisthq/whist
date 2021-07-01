@@ -7,7 +7,7 @@ import (
 
 func main() {
     p := apparmor.ProfileData{
-        Name: "docker-default",
+        Name: "mandelbox-apparmor-profile",
         DaemonProfile: "unconfined",
     }
     p.GenerateDefault(os.Stdout)

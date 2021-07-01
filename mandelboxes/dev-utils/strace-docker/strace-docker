@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# This script runs strace on any newly-started Docker container
+#
+# Written by Amr S. Abed <AmrAbed@vt.edu>, but heavily modified by Fractal.
+#
+# Last updated June 30, 2021
+
+set -Eeuo pipefail
+
+cd "$(dirname "$0")"
+
+WORKDIR=/var/log/strace-docker
+
+[ ! -d $WORKDIR ] && mkdir $WORKDIR
+
+cd $WORKDIR
+
+declare -A sysdig_pids
+while read timestamp type event id other; do
+    if [[ $type == "container" ]]; then
+        case $event in
+
+            start)
+                sysdig -p "%evt.time %evt.type %evt.info" container.id=${id:0:12} and evt.type!=switch > "$id.sysdig.log" &
+                sysdig_pids["$id"]="$!"
+                ;;
+            die)
+                kill "${sysdig_pids["$id"]}"
+                ;;
+            *)
+                echo "ERROR: Invalid event: $event"
+                exit -1
+        esac
+    fi
+     
+done < <(docker events -f event=start -f event=die)

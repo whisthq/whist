@@ -1,0 +1,29 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+
+# Install inotifywait
+if ! type inotifywait > /dev/null; then
+  apt-get install -y inotify-tools
+fi
+
+# Install Docker
+if ! type docker > /dev/null; then
+  wget -qO- https://get.docker.com/ | sh && usermod -aG docker $USER
+fi
+
+# Install Gawk
+if ! type gawk > /dev/null; then
+  apt-get install -y gawk
+fi
+
+# Install Sysdig
+if ! type sysdig > /dev/null; then
+  curl -s https://s3.amazonaws.com/download.draios.com/stable/install-sysdig | bash
+fi
+
+cp strace-docker /usr/bin
+cp etc/init.d/strace-docker /etc/init.d
+update-rc.d strace-docker defaults
+service strace-docker start
+
