@@ -1,6 +1,7 @@
 from threading import Thread
 import time
 import uuid
+from http import HTTPStatus
 from flask import Blueprint, current_app
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
@@ -8,10 +9,6 @@ from flask_pydantic import validate
 from app.validation import MandelboxAssignBody
 
 from app import fractal_pre_process, log_request
-from app.constants.http_codes import (
-    ACCEPTED,
-    RESOURCE_UNAVAILABLE,
-)
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
@@ -51,7 +48,7 @@ def regions():
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a mandelbox running, don't start up a new one
-        return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
+        return jsonify({"IP": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     client_commit_hash = None
     if (
@@ -85,7 +82,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                 ),
             )
             scaling_thread.start()
-        return jsonify({"ip": "None", "mandelbox_id": "None"}), RESOURCE_UNAVAILABLE
+        return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     instance = InstanceInfo.query.get(instance_name)
     mandelbox_id = str(uuid.uuid4())
@@ -108,4 +105,4 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         )
         scaling_thread.start()
 
-    return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), ACCEPTED
+    return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
