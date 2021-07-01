@@ -19,7 +19,7 @@ psycopg2-binary==2.8.6
 PyJWT==2.1.0
 python-dateutil==2.8.1
 python-dotenv==0.17.1
-python-jose==3.2.0
+python-jose==3.3.0
 pyzipcode==3.0.1
 redis==3.5.3
 requests==2.25.1
