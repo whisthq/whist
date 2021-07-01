@@ -23,7 +23,7 @@ require (
 	github.com/deniswernert/udev v0.0.0-20170418162847-a12666f7b5a1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/docker/docker v20.10.6+incompatible
+	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
 	github.com/getsentry/sentry-go v0.11.0
