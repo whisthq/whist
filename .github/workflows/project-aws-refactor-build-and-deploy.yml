@@ -660,7 +660,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
-                  TITLE = ":whale: Mandelbox Images & AMIs deployed :whale:"
+                  TITLE = ":heroku: Webserver Deployed :heroku:"
                   BODY = f"A PR was merged and triggered automatic Webserver deployment to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
