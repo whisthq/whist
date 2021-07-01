@@ -317,7 +317,49 @@ CREATE TABLE hardware.supported_app_images (
     preboot_number double precision DEFAULT 0.0 NOT NULL
 );
 
+CREATE SCHEMA logging;
+CREATE TABLE logging.t_history (
+        id             serial,
+        tstamp         timestamp DEFAULT now(),
+        schemaname     text,
+        tabname        text,
+        operation      text,
+        who            text DEFAULT current_user,
+        new_val        json,
+        old_val        json
+);
 
+CREATE FUNCTION hardware.change_trigger() RETURNS trigger
+  LANGUAGE 'plpgsql' AS $$
+       BEGIN
+         IF TG_OP = 'INSERT'
+         THEN INSERT INTO logging.t_history (
+                tabname, schemaname, operation, new_val
+              ) VALUES (
+                TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW)
+              );
+           RETURN NEW;
+         ELSIF  TG_OP = 'UPDATE'
+         THEN
+           INSERT INTO logging.t_history (
+             tabname, schemaname, operation, new_val, old_val
+           )
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), row_to_json(OLD));
+           RETURN NEW;
+         ELSIF TG_OP = 'DELETE'
+         THEN
+           INSERT INTO logging.t_history
+             (tabname, schemaname, operation, old_val)
+             VALUES (
+               TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(OLD)
+             );
+             RETURN OLD;
+         END IF;
+       END;
+$$;
+
+CREATE TRIGGER t BEFORE INSERT OR UPDATE OR DELETE ON hardware.instance_info
+        FOR EACH ROW EXECUTE PROCEDURE hardware.change_trigger();
 --
 -- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
