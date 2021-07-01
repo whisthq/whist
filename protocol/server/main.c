@@ -65,7 +65,6 @@ char hex_aes_private_key[33];
 
 // This variables should stay as arrays - we call sizeof() on them
 char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
-char webserver_url[WEBSERVER_URL_MAXLEN + 1];
 
 volatile int connection_id;
 volatile bool exiting;
@@ -340,8 +339,6 @@ int main(int argc, char* argv[]) {
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
-    update_server_status(false, webserver_url, identifier, hex_aes_private_key);
-
     clock startup_time;
     start_timer(&startup_time);
 
@@ -392,8 +389,6 @@ int main(int argc, char* argv[]) {
                 }
                 read_unlock(&is_active_rwlock);
             }
-            update_server_status(num_controlling_clients > 0, webserver_url, identifier,
-                                 hex_aes_private_key);
             start_timer(&ack_timer);
         }
 
