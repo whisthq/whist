@@ -27,7 +27,7 @@ def _poll(instance_name: str) -> bool:
     result = False
 
     for i in range(MAX_POLL_ITERATIONS):
-        if instance.status != str(InstanceState.ACTIVE):
+        if instance.status != str(InstanceState.ACTIVE.value):
             fractal_logger.warning(
                 f"{instance.instance_name} deployment in progress. {i}/{MAX_POLL_ITERATIONS}"
             )
