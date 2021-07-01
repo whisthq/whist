@@ -3,7 +3,7 @@ docker==4.4.4
 migra==3.0.1615968929
 pretty-errors==1.2.21
 toolz==0.11.1
-rich==10.2.2
+rich==10.4.0
 psycopg2==2.9.1
 requests==2.25.1
 stopit==1.1.2
