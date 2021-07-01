@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_main.c
+ * @file main.c
  * @brief This file contains the main code that runs a Fractal client on a
  *        Windows, MacOS or Linux Ubuntu computer.
 ============================
@@ -37,13 +37,13 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/utils/error_monitor.h>
 #include "sdlscreeninfo.h"
-#include "client_audio.h"
+#include "audio.h"
 #include "client_utils.h"
-#include "client_network.h"
+#include "network.h"
 #include "sdl_event_handler.h"
 #include "sdl_utils.h"
 #include "handle_server_message.h"
-#include "client_video.h"
+#include "video.h"
 #include <SDL2/SDL_syswm.h>
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR

@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file server_network.c
+ * @file network.c
  * @brief This file contains server-specific wrappers to low-level network
  *        functions.
 ============================
@@ -23,7 +23,7 @@ Includes
 #include <fractal/utils/aes.h>
 #include <stdio.h>
 
-#include "server_network.h"
+#include "network.h"
 #include "client.h"
 #include "handle_client_message.h"
 

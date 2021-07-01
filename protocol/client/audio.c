@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_audio.c
+ * @file audio.c
  * @brief This file contains all code that interacts directly with processing
  *        audio packets on the client.
 ============================
@@ -18,8 +18,8 @@ Includes
 ============================
 */
 
-#include "client_audio.h"
-#include "client_network.h"
+#include "audio.h"
+#include "network.h"
 #include "ringbuffer.h"
 
 extern bool has_video_rendered_yet;

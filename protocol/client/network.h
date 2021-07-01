@@ -5,7 +5,7 @@
 
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_network.h
+ * @file network.h
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.
 ============================

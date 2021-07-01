@@ -27,7 +27,7 @@ Includes
 #include <string.h>
 
 #include "client_utils.h"
-#include "client_network.h"
+#include "network.h"
 #include <fractal/utils/logging.h>
 #include <fractal/utils/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
