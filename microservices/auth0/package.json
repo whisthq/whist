@@ -16,6 +16,6 @@
   "devDependencies": {
     "lodash": "^4.17.21",
     "yaml": "^1.10.2",
-    "auth0-deploy-cli": "^7.1.0"
+    "auth0-deploy-cli": "^7.1.1"
   }
 }
