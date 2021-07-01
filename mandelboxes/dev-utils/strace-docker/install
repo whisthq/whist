@@ -26,4 +26,3 @@ cp strace-docker /usr/bin
 cp etc/init.d/strace-docker /etc/init.d
 update-rc.d strace-docker defaults
 service strace-docker start
-
