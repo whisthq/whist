@@ -72,7 +72,7 @@
     "electron": "12.0.6",
     "electron-builder": "22.10.5",
     "electron-notarize": "github:mingy98/electron-notarize#master",
-    "esbuild": "^0.11.18",
+    "esbuild": "^0.12.13",
     "eslint": "^7.29.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^16.0.3",
