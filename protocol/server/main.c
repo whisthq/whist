@@ -345,7 +345,7 @@ int main(int argc, char* argv[]) {
     clock startup_time;
     start_timer(&startup_time);
 
-    max_mbps = STARTING_BITRATE;
+    max_mbps = STARTING_BITRATE / (1024.0 * 1024.0);
     wants_iframe = false;
     update_encoder = false;
     exiting = false;
