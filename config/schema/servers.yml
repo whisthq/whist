@@ -12,7 +12,6 @@ CLIENT_DOWNLOAD:
     mac: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
     win: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
 
-# client-applications/desktop/config/contstants.js: FractalWebservers
 WEBSERVER:
   local: "http://127.0.0.1:7730"
   dev: "https://dev-server.fractal.co"
