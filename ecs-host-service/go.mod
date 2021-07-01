@@ -28,6 +28,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-errors/errors v1.4.0 // indirect
+	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/golang/mock v1.5.0
 	github.com/golang/snappy v0.0.3 // indirect
@@ -46,8 +47,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.10.0
-	github.com/prometheus/common v0.25.0 // indirect
+	github.com/prometheus/client_golang v1.11.0
 	github.com/shirou/gopsutil v3.21.5+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
@@ -57,7 +57,6 @@ require (
 	go.etcd.io/bbolt v1.3.5
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
-	golang.org/x/sys v0.0.0-20210601080250-7ecdf8ef093b // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.1.2
 	google.golang.org/genproto v0.0.0-20210601170153-0befbe3492e2 // indirect
