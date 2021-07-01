@@ -235,7 +235,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # invoked the `fetch_current_running_instances` function. Using this
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
-        print(f"Draining instance {active_instance.instance_name} in database only!")
+        fractal_logger.info(f"Draining instance {active_instance.instance_name} in database only!")
         active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
