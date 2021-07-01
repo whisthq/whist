@@ -6,7 +6,6 @@ import pytest
 
 from app.models import SupportedAppImages
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
-from app.constants.http_codes import RESOURCE_UNAVAILABLE, ACCEPTED
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
@@ -79,7 +78,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     }
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.status_code == RESOURCE_UNAVAILABLE
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @pytest.mark.usefixtures("authorized")
@@ -102,7 +101,7 @@ def test_client_commit_hash_local_dev_override_fail(
     }
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.status_code == RESOURCE_UNAVAILABLE
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @pytest.mark.usefixtures("authorized")
@@ -125,7 +124,7 @@ def test_client_commit_hash_local_dev_override_success(
     }
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.status_code == ACCEPTED
+    assert response.status_code == HTTPStatus.ACCEPTED
 
 
 @pytest.mark.skip(reason="The @payment_required() decorator is not implemented yet.")
