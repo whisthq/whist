@@ -97,14 +97,17 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
     Args:
         active_instance: InstanceInfo object for the instance that need to be marked as draining.
     """
+    fractal_logger.info(f"mark_instance_for_draining called for instance {active_instance.instance_name}")
     try:
         base_url = f"http://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
         requests.post(f"{base_url}/drain_and_shutdown")
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = InstanceState.DRAINING
+        fractal_logger.info(f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}")
     except requests.exceptions.RequestException:
         active_instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+        fractal_logger.info(f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}")
     finally:
         db.session.commit()
 
@@ -232,7 +235,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # invoked the `fetch_current_running_instances` function. Using this
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
-        print(f"draining instance {active_instance.instance_name}")
+        print(f"Draining instance {active_instance.instance_name} in database only!")
         active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
