@@ -181,16 +181,15 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
 
-    # Redefine the list here to reset it
-    region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         # grab a lock here
         region_row = (
             RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
             .with_for_update()
-            .first()
+            .one_or_none()
         )
-        region_row.protected_from_scale_down = True
+        if region_row is not None:
+            region_row.protected_from_scale_down = True
         db.session.commit()
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
@@ -211,9 +210,10 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             region_row = (
                 RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
                 .with_for_update()
-                .first()
+                .one_or_none()
             )
-            region_row.protected_from_scale_down = False
+            if region_row is not None:
+                region_row.protected_from_scale_down = False
             db.session.commit()
             threads_succeeded = False
     if not threads_succeeded:

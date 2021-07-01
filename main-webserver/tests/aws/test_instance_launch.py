@@ -63,7 +63,7 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
     """
     call_list = hijack_ec2_calls
     monkeypatch.setattr(ami_upgrade, "_poll", function(returns=True))
-    monkeypatch.setattr(ami_upgrade, "region_wise_upgrade_threads", [['thread-id', True, ()]])
+    monkeypatch.setattr(ami_upgrade, "region_wise_upgrade_threads", [["thread-id-0", True, ()]])
     all_amis = RegionToAmi.query.all()
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
@@ -93,6 +93,12 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
 
     def _mock_launch_new_ami_buffer(*args, **kwargs):
         launch_new_ami_buffer_calls.append({"args": args, "kwargs": kwargs})
+        # region_wise_upgrade_threads is a global variable that stores the
+        # status of each threads's success state, we need to mark this as true
+        # to indicate that the calls to launch_new_ami_buffer have succeded
+        thread_index = args[2]
+        thead_status_index = 1
+        ami_upgrade.region_wise_upgrade_threads[thread_index][thead_status_index] = True
 
     # We are mocking the `launch_new_ami_buffer` to capture the function calls
     # and check args to ensure that we are upgrading the appropriate region

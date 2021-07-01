@@ -274,18 +274,18 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
         call_list.append({"args": args, "kwargs": kwargs})
 
     monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-1", aws_ami_id="test-ami-2")
-    bulk_instance(location="us-east-2", aws_ami_id="test-ami-1")
-    bulk_instance(location="us-east-2", aws_ami_id="test-ami-2")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
+    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9b")
+    bulk_instance(location="us-east-2", aws_ami_id="ami-0a7da7479f37c924a")
+    bulk_instance(location="us-east-2", aws_ami_id="ami-0a7da7479f37c924b")
     aws_funcs.try_scale_down_if_necessary_all_regions()
     assert len(call_list) == 4
     args = [called["args"] for called in call_list]
     assert set(args) == {
-        ("us-east-1", "test-ami-1"),
-        ("us-east-1", "test-ami-2"),
-        ("us-east-2", "test-ami-1"),
-        ("us-east-2", "test-ami-2"),
+        ("us-east-1", "ami-00c40082600650a9a"),
+        ("us-east-1", "ami-00c40082600650a9b"),
+        ("us-east-2", "ami-0a7da7479f37c924a"),
+        ("us-east-2", "ami-0a7da7479f37c924b"),
     }
