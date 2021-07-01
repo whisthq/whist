@@ -313,4 +313,3 @@ void destroy_capture_device(CaptureDevice* device) {
     }
     XCloseDisplay(device->display);
 }
-

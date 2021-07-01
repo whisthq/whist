@@ -12,7 +12,7 @@ typedef struct {
     NVFBC_TOGL_SETUP_PARAMS togl_setup_params;
     uint32_t dw_texture;
     uint32_t dw_tex_target;
-    
+
     int width;
     int height;
 } NvidiaCaptureDevice;

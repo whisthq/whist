@@ -61,7 +61,7 @@ typedef struct VideoEncoder {
     int gop_size;
     bool is_iframe;
     void* sw_frame_buffer;
-    int encoded_frame_size;    /// <size of encoded frame in bytes
+    int encoded_frame_size;  /// <size of encoded frame in bytes
 
     AVFrame* hw_frame;
     AVFrame* sw_frame;

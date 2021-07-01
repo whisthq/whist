@@ -208,13 +208,12 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     create_capture_params.eTrackingType = NVFBC_TRACKING_DEFAULT;
     create_capture_params.bDisableAutoModesetRecovery = NVFBC_FALSE;
 
-    status =
-        device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
+    status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
-    
+
     /*
      * Set up the capture session.
      */
@@ -234,7 +233,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     LOG_INFO(
         "Nvidia Frame capture session started. New frames will be captured when "
         "the display is refreshed or when the mouse cursor moves.");
-    
+
     return 0;
 }
 
