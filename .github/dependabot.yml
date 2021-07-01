@@ -47,12 +47,6 @@ updates:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
-  - package-ecosystem: "docker"
-    directory: "/container-images/creative/blender" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
   - package-ecosystem: "pip"
     directory: "/container-images/helper_scripts" # looks for requirements.txt in this directory
     schedule:
@@ -135,6 +129,15 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
+  ################### Microservices ###################
+
+  - package-ecosystem: "npm"
+    directory: "/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  #####################################################  
   ############## GitHub Workflow Helpers ##############
 
   - package-ecosystem: "pip"
