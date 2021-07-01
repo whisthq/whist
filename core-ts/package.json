@@ -21,7 +21,7 @@
         "@types/node": "^15.6.1",
         "@types/node-fetch": "^2.5.10",
         "@types/nodemon": "^1.19.0",
-        "@typescript-eslint/eslint-plugin": "^4.26.0",
+        "@typescript-eslint/eslint-plugin": "^4.28.1",
         "@typescript-eslint/parser": "^4.26.0",
         "eslint": "^7.27.0",
         "eslint-config-prettier": "^8.3.0",
