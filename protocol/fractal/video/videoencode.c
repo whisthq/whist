@@ -806,6 +806,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
         Returns:
             (int): 0 on success, -1 on failure
      */
+#ifdef __linux__
     if (encoder->capture_is_on_nvidia) {
         nvidia_encoder_encode(encoder->nvidia_encoder);
 
@@ -824,6 +825,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
 
         return 0;
     }
+#endif
 
     if (video_encoder_send_frame(encoder)) {
         LOG_ERROR("Unable to send frame to encoder!");
@@ -930,10 +932,12 @@ void destroy_video_encoder(VideoEncoder *encoder) {
     */
     LOG_INFO("Destroying video encoder...");
 
+#ifdef __linux__
     // Destroy the nvidia encoder, if any
     if (encoder->nvidia_encoder) {
         destroy_nvidia_encoder(encoder->nvidia_encoder);
     }
+#endif
 
     // check if encoder encoder exists
     if (encoder == NULL) {
