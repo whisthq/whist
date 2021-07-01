@@ -350,6 +350,8 @@ int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType co
 }
 
 void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
+    LOG_INFO("Destroying nvidia encoder...");
+
     // Try to free the encoder's frame
     try_free_frame(encoder);
 

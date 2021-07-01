@@ -928,6 +928,7 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): encoder to destroy
     */
+    LOG_INFO("Destroying video encoder...");
 
     // Destroy the nvidia encoder, if any
     if (encoder->nvidia_encoder) {
