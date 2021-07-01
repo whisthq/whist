@@ -16,7 +16,7 @@ void try_free_frame(NvidiaEncoder* encoder) {
     if (encoder->frame != NULL) {
         // Unlock the bitstream
         status = encoder->p_enc_fn.nvEncUnlockBitstream(encoder->internal_nvidia_encoder,
-                                                            encoder->output_buffer);
+                                                        encoder->output_buffer);
         if (status != NV_ENC_SUCCESS) {
             // If LOG_ERROR is ever desired here in the future,
             // make sure to still UnmapInputResource before returning -1
@@ -25,7 +25,7 @@ void try_free_frame(NvidiaEncoder* encoder) {
 
         // Unmap the input buffer
         status = encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder,
-                                                               encoder->input_buffer);
+                                                           encoder->input_buffer);
         if (status != NV_ENC_SUCCESS) {
             // FATAL is chosen over ERROR here to prevent
             // out-of-control runaway memory usage
@@ -35,7 +35,8 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target, int width, int height) {
+NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_texture,
+                                        uint32_t dw_tex_target, int width, int height) {
     NV_ENC_REGISTER_RESOURCE register_params;
     NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params;
 
@@ -52,8 +53,8 @@ NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_text
     register_params.resourceToRegister = &tex_params;
     register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
 
-    NVENCSTATUS status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder,
-                                                        &register_params);
+    NVENCSTATUS status =
+        encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to register texture, status = %d", status);
         return NULL;
@@ -63,16 +64,15 @@ NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_text
 }
 
 void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registered_resource) {
-    NVENCSTATUS status = encoder->p_enc_fn.nvEncUnregisterResource(
-        encoder->internal_nvidia_encoder, registered_resource);
+    NVENCSTATUS status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
+                                                                   registered_resource);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to unregister resource, status = %d", status);
     }
 }
 
-
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int out_width,
-                                    int out_height) {
+                                     int out_height) {
     NVENCSTATUS status;
 
     NvidiaEncoder* encoder = malloc(sizeof(NvidiaEncoder));
@@ -134,10 +134,10 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int
     GUID codec_guid = get_codec_guid(requested_codec);
     encoder->codec_type = requested_codec;
     // status = validateEncodeGUID(encoder, codec_guid);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to validate codec GUID");
-        return NULL;
-    }
+    // if (status != NV_ENC_SUCCESS) {
+    //     LOG_ERROR("Failed to validate codec GUID");
+    //     return NULL;
+    // }
 
     NV_ENC_PRESET_CONFIG preset_config;
     status = initialize_preset_config(encoder, bitrate, codec_guid, &preset_config);
@@ -184,7 +184,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target) {
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture,
+                                uint32_t dw_tex_target) {
     encoder->dw_texture = dw_texture;
     encoder->dw_tex_target = dw_tex_target;
     return 0;
@@ -195,7 +196,8 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     NVENCSTATUS status;
 
     // Register the frame intake
-    NV_ENC_REGISTERED_PTR registered_resource = register_resource(encoder, encoder->dw_texture, encoder->dw_tex_target, encoder->width, encoder->height);
+    NV_ENC_REGISTERED_PTR registered_resource = register_resource(
+        encoder, encoder->dw_texture, encoder->dw_tex_target, encoder->width, encoder->height);
     if (registered_resource == NULL) {
         LOG_ERROR("Failed to register resource!");
         return -1;
@@ -233,8 +235,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     }
 
     // Encode the frame
-    status =
-        encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
+    status = encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
     if (status != NV_ENC_SUCCESS) {
         // TODO: Unmap the frame! Otherwise, memory leaks here
         LOG_ERROR("Failed to encode frame, status = %d", status);
@@ -250,8 +251,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     lock_params.version = NV_ENC_LOCK_BITSTREAM_VER;
     lock_params.outputBitstream = encoder->output_buffer;
 
-    status =
-        encoder->p_enc_fn.nvEncLockBitstream(encoder->internal_nvidia_encoder, &lock_params);
+    status = encoder->p_enc_fn.nvEncLockBitstream(encoder->internal_nvidia_encoder, &lock_params);
     if (status != NV_ENC_SUCCESS) {
         // TODO: Unmap the frame! Otherwise, memory leaks here
         LOG_ERROR("Failed to lock bitstream buffer, status = %d", status);
@@ -339,7 +339,7 @@ int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType co
     reconfigure_params.forceIDR = 0;
     // Set encode_config params, since this is the bitrate and codec stuff we really want to change
     NVENCSTATUS status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder,
-                                                       &reconfigure_params);
+                                                                   &reconfigure_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to reconfigure the encoder, status = %d", status);
         return -1;
@@ -357,15 +357,14 @@ void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     enc_params.version = NV_ENC_PIC_PARAMS_VER;
     enc_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
 
-    status =
-        encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
+    status = encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to flush the encoder, status = %d", status);
     }
 
     if (encoder->output_buffer) {
         status = encoder->p_enc_fn.nvEncDestroyBitstreamBuffer(encoder->internal_nvidia_encoder,
-                                                                   encoder->output_buffer);
+                                                               encoder->output_buffer);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to destroy buffer, status = %d", status);
         }
@@ -375,8 +374,8 @@ void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     // Unregister all the resources that we had registered earlier
     for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
         if (encoder->registered_resources[i]) {
-            status = encoder->p_enc_fn.nvEncUnregisterResource(
-                encoder->internal_nvidia_encoder, encoder->registered_resources[i]);
+            status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
+                                                               encoder->registered_resources[i]);
             if (status != NV_ENC_SUCCESS) {
                 LOG_ERROR("Failed to unregister resource, status = %d", status);
             }

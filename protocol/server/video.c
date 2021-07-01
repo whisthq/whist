@@ -77,9 +77,6 @@ extern volatile bool update_encoder;
 static bool pending_encoder;
 static bool encoder_finished;
 static VideoEncoder* encoder_factory_result = NULL;
-// If we are using nvidia's built in encoder, then we do not need to create a real encoder
-// struct since frames will already be encoded, So we can use this dummy encoder.
-static VideoEncoder dummy_encoder = {0};
 
 static int encoder_factory_server_w;
 static int encoder_factory_server_h;
@@ -114,9 +111,7 @@ int32_t multithreaded_encoder_factory(void* opaque) {
 
 int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
-    if (encoder != &dummy_encoder) {
-        destroy_video_encoder(encoder);
-    }
+    destroy_video_encoder(encoder);
     return 0;
 }
 
@@ -205,42 +200,36 @@ int32_t multithreaded_send_video(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
-            if (device->using_nvidia) {
-                // The frames will already arrive encoded by the GPU, so we do not need to do any
-                // encoding ourselves
-                encoder = &dummy_encoder;
-                memset(encoder, 0, sizeof(VideoEncoder));
-                update_encoder = false;
-            } else {
-                // If an encoder is pending, while capture_device is updating, then we should wait
-                // for it to be created
-                while (pending_encoder) {
-                    if (encoder_finished) {
-                        encoder = encoder_factory_result;
-                        pending_encoder = false;
-                        break;
-                    }
-                    fractal_sleep(1);
+            // If an encoder is pending, while capture_device is updating, then we should wait
+            // for it to be created
+            while (pending_encoder) {
+                if (encoder_finished) {
+                    encoder = encoder_factory_result;
+                    pending_encoder = false;
+                    break;
                 }
-                // If an encoder exists, then we should destroy it since the capture device is being
-                // created now
-                if (encoder) {
-                    fractal_create_thread(multithreaded_destroy_encoder,
-                                          "multithreaded_destroy_encoder", encoder);
-                    encoder = NULL;
-                }
-                // Next, we should update our ffmpeg encoder
-                update_encoder = true;
+                fractal_sleep(1);
             }
+
+            // If an encoder exists, then we should destroy it since
+            // a new capture device is being created
+            if (encoder) {
+                fractal_create_thread(multithreaded_destroy_encoder,
+                                      "multithreaded_destroy_encoder", encoder);
+                encoder = NULL;
+            }
+
+            // Next, we should update our ffmpeg encoder
+            update_encoder = true;
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
-            if (device->using_nvidia) {
-                // If this device uses a device encoder, then we should update it
-                update_capture_encoder(device, current_bitrate, client_codec_type);
-                // We keep the dummy encoder as-is,
-                // the real encoder was just updated with update_capture_encoder
+            // BEFORE MAKING A NEW ENCODER, WE SHOULD FIRST TRY TO UPDATE bitrate and codec type
+            // (current_bitrate, client_codec_type)
+            bool update_worked = false;
+            if (update_worked) {
+                // If we could update the encoder in-place, then we're done updating the encoder
                 update_encoder = false;
             } else {
                 // Keep track of whether or not a new encoder is being used now
