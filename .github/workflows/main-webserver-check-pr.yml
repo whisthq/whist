@@ -232,7 +232,7 @@ jobs:
                   from notifications.github_bot import github_comment_update
 
                   code = int(${{ steps.db-diff.outputs.code }})
-                  diff = int(${{ steps.db-diff.outputs.diff }})
+                  diff = """${{ steps.db-diff.outputs.diff }}"""
 
                   print("MIGRA RETURN CODE:", code)
                   print("MIGRA SQL DIFF:", diff)
@@ -275,5 +275,5 @@ jobs:
                     body,
                     title=title,
                     code=diff,
-                    lang="python",
+                    lang="sql",
                   )

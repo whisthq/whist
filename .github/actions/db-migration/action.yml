@@ -11,4 +11,3 @@ outputs:
 runs:
   using: docker
   image: Dockerfile # note relative to this file (action.yml)
-  post-entrypoint: /root/post-entrypoint.sh

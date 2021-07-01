@@ -42,8 +42,7 @@ RUN pip install -r /root/requirements.txt
 # Our entrypoint will be a series of commands that will start the database
 # server, create databases for the diff process, and then run our python
 # program. Because multiple steps are required, we use an external script.
-RUN chmod +x /root/entrypoint.sh
-RUN chmod +x /root/post-entrypoint.sh
+# RUN chmod +x /root/entrypoint.sh
 
 # The entrypoint script will append any additional arguments to its command.
 # Because we're using the "exec" form of ENTRYPOINT, we can pass additional
@@ -56,5 +55,5 @@ RUN chmod +x /root/post-entrypoint.sh
 # The "exec" form of ENTRYPOINT accepts a CMD list as "default" arguments.
 # If no additional "docker run" arguments are passed, then ENTRYPOINT will
 # use the CMD list below. By default, we run the migration process.
-ENTRYPOINT ["/root/entrypoint.sh"]
+ENTRYPOINT ["python", "/root/entrypoint.py"]
 CMD ["python", "/root/main.py"]
