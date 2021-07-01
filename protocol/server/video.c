@@ -268,6 +268,15 @@ int32_t multithreaded_send_video(void* opaque) {
                     encoder_factory_client_h = (int)client_height;
                     encoder_factory_codec_type = (CodecType)client_codec_type;
                     encoder_factory_current_bitrate = current_bitrate;
+
+                    // If using nvidia, then we must destroy the existing encoder first
+                    // We can't have two nvidia encoders active or the 2nd attempt to
+                    // create one will fail
+                    if (encoder->nvidia_encoder != NULL && encoder != NULL) {
+                        destroy_video_encoder(encoder);
+                        encoder = NULL;
+                    }
+
                     if (encoder == NULL) {
                         // Run on this thread bc we have to wait for it anyway, encoder == NULL
                         multithreaded_encoder_factory(NULL);
@@ -338,10 +347,9 @@ int32_t multithreaded_send_video(void* opaque) {
                 // LOG_INFO("Resending current frame!");
             }
 
-            // transfer the capture of the latest frame from the device to the encoder
-            // This function will DXGI CUDA optimize if possible,
-            // Or do nothing if the device already encoded the capture
-            // with nvidia capture SDK
+            // transfer the capture of the latest frame from the device to the encoder,
+            // This function will try to CUDA/OpenGL optimize the transfer by
+            // only passing a GPU reference rather than copy to/from the CPU
             if (transfer_capture(device, encoder) != 0) {
                 // if there was a failure
                 exiting = true;
