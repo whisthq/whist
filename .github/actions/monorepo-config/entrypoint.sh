@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 # In the GitHub Actions runner, this script will be run with the monorepo
