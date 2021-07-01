@@ -78,12 +78,11 @@ def find_missing_keys(xs, *dcts):
 
 
 def flatten_path_matching(key_set, dct):
+    if not isinstance(dct, dict):
+        return dct
     for key, value in sorted(dct.items()):
         if key in key_set:
-            if isinstance(value, dict):
-                return flatten_path_matching(key_set, value)
-            else:
-                return value
+            return flatten_path_matching(key_set, value)
     return dct
 
 

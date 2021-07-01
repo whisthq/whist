@@ -3,6 +3,7 @@ import pytest
 import itertools
 import toolz
 import helpers.utils as utils
+from functools import partial
 from pathlib import Path
 
 example_dict1 = {
@@ -121,3 +122,19 @@ def test_flatten_path_matching():
     assert result["x"] == 10, "keys in set should be flattened"
     assert result["y"] == d["y"], "keys not in set should not be flattened"
     assert result["z"] == 20, "keys in set should be flattened"
+
+    e = toolz.merge(
+        {"API": None, "KEY": None},
+        {
+            "URL": {
+                "dev": "http://url-dev.com",
+                "prd": "http://url-prd.com",
+                "stg": "http://url-stg.com",
+            }
+        },
+    )
+
+    expected = {"API": None, "KEY": None, "URL": "http://url-dev.com"}
+
+    result = {k: utils.flatten_path_matching({"dev"}, v) for k, v in e.items()}
+    assert result == expected

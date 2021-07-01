@@ -17,12 +17,12 @@ def test_validate_profiles():
     not_in_map_keys = {"env": ["b", "c"], "badkey": ["e", "f"]}
     assert valid.validate_profiles(
         profile_map, not_in_map_keys
-    ), "should fail if profile argument has key missing from profiles.yml"
+    ), "should fail if profile argument has key missing from profile.yml"
 
     not_in_map_vals = {"env": "b", "os": "z"}
     assert valid.validate_profiles(
         profile_map, not_in_map_vals
-    ), "should fail if profile argument has value missing from profiles.yml"
+    ), "should fail if profile argument has value missing from profile.yml"
 
     good_profiles = {"env": "b", "os": "f"}
 

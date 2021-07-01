@@ -18,6 +18,7 @@
 import typing
 import inspect
 import toolz
+from pprint import pformat
 from pathlib import Path
 from .utils import (
     walk_keys,
@@ -30,9 +31,17 @@ from .utils import (
     find_duplicate_keys,
 )
 
+from dataclasses import dataclass
+
 
 class ValidationError(Exception):
-    pass
+    def __init__(self, data):
+        chart = ""
+        message = data.get("message", "Validation error")
+        if data:
+            for key, value in toolz.dissoc(data, "message").items():
+                chart = f"{chart}\n{key} = {value}"
+        super().__init__(f"{message}...{chart}")
 
 
 def validate_profile_yaml(profile_map):
@@ -164,11 +173,13 @@ def validate_inputs(profile_args, profile_yaml, schema_yamls):
 
 
 def validate_schema_path(path):
-    for p in Path(path).iterdir():
+    expected = f"{Path(path).name}/schema"
+    for p in Path(path).joinpath("schema").iterdir():
         if p.suffix != ".yml":
             return {
-                "message": "schema file without .yml extension",
-                "found": str(p),
+                "message": f"file in {expected} without .yml extension",
+                "path": str(path),
+                "found": p.name,
             }
 
 

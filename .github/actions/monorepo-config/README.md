@@ -8,7 +8,7 @@ The program has a CLI built with the `click` library. All options are documented
 
 All the common monorepo configuration is stored in the top-level `/config` folder. We use YAML for our configuration schema, with the schema files located in `/config/schema`. These YAML files are parsed by this program, and transformed into a JSON string containing a single flattened dictionary.
 
-The schema files can use nested keys to define "profiles". These profiles are used to store values that need to change based on the environment, such as operating system or git branch. The list of profiles in use is stored in `config/profiles.yml`.
+The schema files can use nested keys to define "profiles". These profiles are used to store values that need to change based on the environment, such as operating system or git branch. The list of profiles in use is stored in `config/profile.yml`.
 
 When the configuration program is run inside GitHub Actions, it is passed the "secrets" that GitHub stores for us. It merges these secrets into the final configuration. Multiple sources can be set up for secrets, so that we can pull from other providers, like Auth0 or Heroku.
 

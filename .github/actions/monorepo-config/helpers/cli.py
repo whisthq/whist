@@ -9,6 +9,12 @@ import toolz
 
 
 def parse_cli_profiles(_ctx, _param, args):
+    """A helper callback that converts a list of --key value pairs
+    into a dictionary. Example:
+
+    args = ["--os", "macos", "--env", "production"]
+           ... returns => {"os": "macos", "env": "production"}
+    """
     result = {}
     for chunk in toolz.partition(2, args):
         if not chunk[0].startswith("--"):
@@ -20,6 +26,8 @@ def parse_cli_profiles(_ctx, _param, args):
         key, value = chunk
         prefix = len("--")
         result[key[prefix:]] = value
+    if not result:
+        return None
     return result
 
 
@@ -35,19 +43,9 @@ def _coerce_json(_ctx, _param, values):
             raise click.BadParameter(
                 "All --secrets much be JSON dictionaries."
             )
-        return dicts
+        return toolz.merge(*dicts)
     except json.JSONDecodeError as err:
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")
-
-
-# GitHub Actions can only pass arguments through environment variables
-# to a Docker process. It also insists on prefixing those values with
-# INPUT_ and capitalizing them.
-#
-# For this reason, we configure our CLI tool to also accept environment
-# variables in place of the command line flag arguments.
-# Note that if both an environment variable and a command line argument are
-# passed, the command line argument will override the environment variable.
 
 
 def create_cli(main_fn):
@@ -76,13 +74,18 @@ def create_cli(main_fn):
     """
 
     @click.command(context_settings=dict(ignore_unknown_options=True))
-    @click.option("-p", "--path", required=True, type=click.Path(exists=True))
+    @click.option(
+        "-p",
+        "--path",
+        required=True,
+        type=click.Path(exists=True),
+        help="Directory containing 'schema/' and 'profile.yml'",
+    )
     @click.option(
         "-o",
         "--out",
         multiple=True,
         type=click.File("w"),
-        envvar="INPUT_OUT",
         help="A target file path to write output JSON.",
     )
     @click.option(
@@ -90,12 +93,12 @@ def create_cli(main_fn):
         "--secrets",
         multiple=True,
         callback=_coerce_json,
-        envvar="INPUT_SECRETS",
         help="A JSON string containing a dictionary.",
     )
     @click.argument(
         "profiles",
         nargs=-1,
+        metavar="[PROFILES [--key value]] ",
         type=click.UNPROCESSED,
         callback=parse_cli_profiles,
     )
@@ -104,21 +107,30 @@ def create_cli(main_fn):
         output JSON file.
 
         PATH is the path to the config folder, which should contain a file
-        called "profiles.yml", and a folder called "schema".
+        called "profile.yml", and a folder called "schema".
 
-        The output JSON map should be flat with no nested objects. You can
-        control the flattening process by passing --profile arguments. In a
-        nested config map, the key that matches a passed profile will
-        be the one chosen.
+        Multiple arguments are accepted for OPTIONS --secrets and --out.
 
-        All CLI flags can also be passed through environment variables by
-        capitalizing the name and prefixing with INPUT, e.g. INPUT_PROFILE.
-        Pass multiple arguments in a variable by separating with a space.
+        The output JSON map will be flattened according to PROFILE arguments,
+        which should be pairs in the form of [--key value] following the
+        other OPTIONS. If the value is found as a nested key in the config
+        object, it will be flattened. Example:
 
-        ALl CLI flags can be passed multiple times, and the arguments will
-        be merged into the final JSON object. Multiple --out files can be
-        given, and all will be written to.
+        $ python main.py ./config --out "config.json" --os mac --env dev
+
+        {
+
+           "os":  {"macos": "mac-value", "win32": "win-value"}
+
+           "env": {"dev": "dev-value", "production": "production-value"}
+
+        }
+
+        ...flattens to => {"os": "mac-value", "env": "dev-value"}
+
         """
+        # Example above has extra spacing due to behavior of the CLI --help.
+
         result = main_fn(path, secrets=secrets, profiles=profiles)
         result_json = json.dumps(result, indent=4)
 

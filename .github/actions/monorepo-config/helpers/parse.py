@@ -2,6 +2,7 @@
 # files, and merging them with external secrets. We import some helpers
 # for utilities and validation, but the main logic all lives here.
 import toolz
+from functools import partial
 from pathlib import Path
 from .utils import (
     child_keys,
@@ -31,21 +32,22 @@ def parse(dir_path, secrets=None, profiles=None):
         raise ValidationError(error)
 
     # Flatten the loaded dictionaries based on the profiles passed as arguments
-    profile_set = profiles.values()
-    schema = flatten_path_matching(profile_set, toolz.merge(*schema_yamls))
+    profile_set = set(profiles.values())
+    schema = {
+        k: flatten_path_matching(profile_set, v)
+        for k, v in toolz.merge(*schema_yamls).items()
+    }
 
     # If no secrets to merge, return early
     if not secrets:
-        return dict(sorted(schema))
+        return dict(sorted(schema.items()))
 
     if error := validate_secrets(schema, secrets):
         raise ValidationError(error)
 
     # Merge secrets arguments into schema dictionary
-    secrets = toolz.merge(*secrets)
-
     merged = toolz.merge(
         schema, {k: secrets[k] for k in schema if k in secrets}
     )
 
-    return dict(sorted(merged))
+    return dict(sorted(merged.items()))

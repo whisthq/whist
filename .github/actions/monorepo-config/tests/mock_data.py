@@ -30,13 +30,13 @@ example_nested_map = {
 # to the file as a string.
 
 
-# These file system should parse successfully into a configuration
-# object. "profiles.yml" exists, and the "schema" folder containers
+# This file system should parse successfully into a configuration
+# object. "profile.yml" exists, and the "schema" folder contains
 # only ".yml" files. All the schema files only make use of profiles
-# that are described in "profiles.yml".
+# that are described in "profile.yml".
 config_simple_fs = {
     "config": {
-        "profiles.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
         "schema": {
             "web.yml": yaml.dump(
                 {
@@ -150,7 +150,7 @@ config_simple_json_prd = {
 # error.
 config_fs_bad_profiles = {
     "config": {
-        "profiles.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
         "schema": {
             "web.yml": yaml.dump(
                 {
@@ -195,7 +195,7 @@ config_fs_bad_profiles = {
 
 config_secrets_fs = {
     "config": {
-        "profiles.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
         "schema": {
             "auth.yml": yaml.dump(
                 {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
@@ -219,7 +219,7 @@ config_secrets_json = {
 
 config_secrets_profiles_fs = {
     "config": {
-        "profiles.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
         "schema": {
             "web.yml": yaml.dump(
                 {
@@ -232,16 +232,8 @@ config_secrets_profiles_fs = {
             ),
             "secret.yml": yaml.dump(
                 {
-                    "KEY": {
-                        "dev": "key01000",
-                        "stg": "key02000",
-                        "prd": "key03000",
-                    },
-                    "API": {
-                        "dev": "api01000",
-                        "stg": "api02000",
-                        "prd": "api03000",
-                    },
+                    "KEY": None,
+                    "API": None,
                 }
             ),
         },
