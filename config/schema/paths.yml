@@ -24,11 +24,11 @@ CLIENT_PERSISTENCE_FOLDER_NAME:
 CLIENT_LOG_FOLDERNAME: "logs"
 
 PROTOCOL_FILE_NAME:
-  mac: "_Fractal"
-  win: "Fractal.exe"
-  lnx: "Fractal"
+  macos: "_Fractal"
+  win32: "Fractal.exe"
+  linux: "Fractal"
 
 PROTOCOL_FOLDER_PATH:
-  mac: "../../MacOS"
-  win: "../../protocol-build/client"
-  lnx: "../../../protocol-build/client"
+  macos: "../../MacOS"
+  win32: "../../protocol-build/client"
+  linux: "../../../protocol-build/client"

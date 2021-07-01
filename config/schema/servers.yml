@@ -1,16 +1,20 @@
 CLIENT_DOWNLOAD:
   local:
-    mac: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
-    win: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
+    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+    linux:
   dev:
-    mac: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
-    win: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
+    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+    linux: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
   staging:
-    mac: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg"
-    win: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
+    macos: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg"
+    win32: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
+    linux:
   production:
-    mac: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
-    win: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
+    macos: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
+    win32: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
+    linux:
 
 WEBSERVER:
   local: "http://127.0.0.1:7730"
