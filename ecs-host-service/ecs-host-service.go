@@ -491,13 +491,17 @@ func main() {
 	// Initialize the database driver, if necessary (the `dbdriver`) package
 	// takes care of the "if necessary" part.
 	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
-		// If the instance starts up and sees its status as unresponsive, the
-		// webserver doesn't want it anymore so we should shut down.
+		// If the instance starts up and sees its status as unresponsive or
+		// draining, the webserver doesn't want it anymore so we should shut down.
 		// TODO: make this a bit more robust
-		if strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) && !metadata.IsLocalEnv() {
+		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
+			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
+			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down...")
 			shutdownInstanceOnExit = true
+			globalCancel()
+		} else {
+			logger.Panic(globalCancel, err)
 		}
-		logger.Panic(globalCancel, err)
 	}
 
 	// Now we start all the goroutines that actually do work.
