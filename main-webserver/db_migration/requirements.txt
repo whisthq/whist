@@ -4,7 +4,7 @@ migra==3.0.1615968929
 pretty-errors==1.2.21
 toolz==0.11.1
 rich==10.2.2
-psycopg2==2.8.6
+psycopg2==2.9.1
 requests==2.25.1
 stopit==1.1.2
 PyGithub==1.54.1
