@@ -40,8 +40,8 @@ class ValidationError(Exception):
         message = data.get("message", "Validation error")
         if data:
             for key, value in toolz.dissoc(data, "message").items():
-                chart = f"{chart}\n{key} = {value}"
-        super().__init__(f"{message}...{chart}")
+                chart = f"{chart}\n    {key} = {pformat(value)}"
+        super().__init__(f"{message}{chart}")
 
 
 def validate_profile_yaml(profile_map):
@@ -93,9 +93,13 @@ def validate_schema_yamls(profile_map, schemas):
     for match in find_matching_keys(reserved, merged):
         return {"message": "schema/profile name collision", "found": match}
 
-    verified_child = (validate_child(profile_sets, v) for v in merged.values())
+    verified_child = (
+        validate_child(profile_sets, v, path=[k]) for k, v in merged.items()
+    )
 
-    return validate_root(merged) or next(verified_child, None)
+    return validate_root(merged) or next(
+        (i for i in verified_child if i is not None), None
+    )
 
 
 def validate_root(dct):
@@ -119,9 +123,11 @@ def validate_child(key_sets, dct, path=()):
 
     if not any(find_matching([set(keys)], [set(s) for s in key_sets])):
         return {
-            "message": "no matching profile set",
+            "message": "no matching profile set,"
+            + " should match a valid group in profile.yml",
             "path": path,
             "found": keys,
+            "valid": key_sets,
         }
 
     for key in keys:
@@ -135,16 +141,19 @@ def validate_profiles(profile_map, profiles):
             return {
                 "message": "profile argument must be string",
                 "found": value,
+                "valid": profile_map,
             }
         if group not in profile_map:
             return {
                 "message": "invalid profile argument, not a profile.yml group",
                 "found": group,
+                "valid": profile_map,
             }
         if value not in set(profile_map[group]):
             return {
                 "message": "invalid profile argument, not a profile.yml value",
                 "found": value,
+                "valid": profile_map,
             }
 
 
