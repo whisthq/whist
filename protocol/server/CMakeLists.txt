@@ -4,12 +4,12 @@
 
 add_executable(FractalServer
         client.c
-        server_video.c
-        server_audio.c
-        server_parse_args.c
-        server_main.c
+        video.c
+        audio.c
+        parse_args.c
+        main.c
         handle_client_message.c
-        server_network.c
+        network.c
         )
 
 set_target_properties(FractalServer PROPERTIES

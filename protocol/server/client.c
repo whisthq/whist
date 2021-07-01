@@ -17,7 +17,7 @@ Includes
 #include <fractal/utils/mouse.h>
 #include <fractal/utils/rwlock.h>
 #include "client.h"
-#include "server_network.h"
+#include "network.h"
 
 FractalMutex state_lock;
 RWLock is_active_rwlock;

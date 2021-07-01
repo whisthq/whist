@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file server_audio.c
+ * @file audio.c
  * @brief This file contains all code that interacts directly with processing
  *        audio on the server.
 ============================
@@ -39,8 +39,8 @@ Includes
 #include <fractal/audio/audioencode.h>
 #include <fractal/utils/avpacket_buffer.h>
 #include "client.h"
-#include "server_network.h"
-#include "server_audio.h"
+#include "network.h"
+#include "audio.h"
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>

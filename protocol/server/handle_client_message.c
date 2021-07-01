@@ -25,7 +25,7 @@ Includes
 #include <fractal/utils/error_monitor.h>
 #include "client.h"
 #include "handle_client_message.h"
-#include "server_network.h"
+#include "network.h"
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>

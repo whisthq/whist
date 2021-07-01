@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file server_parse_args.c
+ * @file parse_args.c
  * @brief This file contains the code that parses the args for
 the server protocol.
 ============================
@@ -19,8 +19,8 @@ Includes
 #include <fractal/core/fractal.h>
 #include <fractal/core/fractalgetopt.h>
 #include <fractal/utils/error_monitor.h>
-#include "server_parse_args.h"
-#include "server_network.h"
+#include "parse_args.h"
+#include "network.h"
 
 // i: means --identifier MUST take an argument
 #define OPTION_STRING "k:i:w:e:t:"

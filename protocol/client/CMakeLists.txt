@@ -3,14 +3,14 @@
 ]]
 
 add_executable(FractalClient
-        client_main.c
-        client_audio.c
+        main.c
+        audio.c
         client_utils.c
-        client_network.c
+        network.c
         sdl_event_handler.c
         sdl_utils.c
         handle_server_message.c
-        client_video.c
+        video.c
         sdlscreeninfo.c
         peercursor.c
         ringbuffer.c

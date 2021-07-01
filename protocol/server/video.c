@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file server_video.c
+ * @file video.c
  * @brief This file contains all code that interacts directly with processing
  *        video on the server.
 ============================
@@ -40,8 +40,8 @@ Includes
 #include <fractal/video/videoencode.h>
 #include <fractal/utils/avpacket_buffer.h>
 #include "client.h"
-#include "server_network.h"
-#include "server_video.h"
+#include "network.h"
+#include "video.h"
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>

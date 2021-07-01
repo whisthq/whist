@@ -21,7 +21,7 @@ Includes
 
 #include <fractal/core/fractal.h>
 #include "sdlscreeninfo.h"
-#include "client_video.h"
+#include "video.h"
 
 /*
 ============================
