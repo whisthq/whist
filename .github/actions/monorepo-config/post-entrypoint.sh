@@ -1,5 +1,6 @@
 #!/bin/bash
-set -euo pipefail
+
+set -Eeuo pipefail
 
 # To pass a value to the GitHub Actions outputs, you must format it like the
 # string below, where name= is the name of the output as it appears in

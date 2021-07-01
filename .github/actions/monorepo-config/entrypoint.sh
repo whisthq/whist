@@ -1,5 +1,6 @@
 #!/bin/bash
-set -euo pipefail
+
+set -Eeuo pipefail
 
 # In the GitHub Actions runner, this script will be run with the monorepo
 # root as the working directory. Our file path to the Python script must be
