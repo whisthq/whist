@@ -1,3 +1,4 @@
+import sys
 from threading import Thread
 from typing import Dict, List
 import requests
@@ -82,7 +83,7 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
     region_wise_upgrade_threads[index_in_thread_list][1] = result
 
 
-def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
+def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     """
     Marks the instance for draining by calling the drain_and_shutdown endpoint of the host service
     and marks the instance as draining. If the endpoint errors out with an unexpected status code,
@@ -97,8 +98,14 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
 
     Args:
         active_instance: InstanceInfo object for the instance that need to be marked as draining.
+    Returns:
+        job_status: A boolean indicating if we are able to mark the instance as draining by
+        calling the drain_and_shutdown endpoint on host service.
     """
-    fractal_logger.info(f"mark_instance_for_draining called for instance {active_instance.instance_name}")
+    job_status = False
+    fractal_logger.info(
+        f"mark_instance_for_draining called for instance {active_instance.instance_name}"
+    )
     try:
         auth0_client = Auth0Client(
             current_app.config["AUTH0_DOMAIN"],
@@ -112,17 +119,23 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
             json={
                 "auth_secret": auth_token,
             },
-            verify=False
+            verify=False, # SSL verification turned off due to self signed certs on host service.
         )
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = InstanceState.DRAINING
-        fractal_logger.info(f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}")
+        fractal_logger.info(
+            f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}"
+        )
+        job_status = True
     except requests.exceptions.RequestException as error:
         active_instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
-        fractal_logger.error(f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}: {error}")
+        fractal_logger.error(
+            f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}: {error}"
+        )
     finally:
         db.session.commit()
+    return job_status
 
 
 def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo]:
@@ -252,10 +265,17 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
+    active_instances_draining_status = True
     for active_instance in current_running_instances:
         # At this point, the instance is marked as DRAINING in the database. But we need
         # to inform the HOST_SERVICE that we have marked the instance as draining.
-        mark_instance_for_draining(active_instance)
+        active_instance_draining_status = mark_instance_for_draining(active_instance)
+        if active_instance_draining_status is False:
+            # Mark the status for draining all instances as False when marking any instance draining fails.
+            fractal_logger.info(
+                f"Failed to mark instance: {active_instance.instance_name} for draining through host service."
+            )
+            active_instances_draining_status = False
 
     for new_ami in new_amis:
         new_ami.protected_from_scale_down = False
@@ -267,4 +287,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     # Reset the list here to ensure no thread status info leaks
     region_wise_upgrade_threads = []
     db.session.commit()
+
     fractal_logger.info("Finished performing AMI upgrade.")
+    if active_instances_draining_status is False:
+        sys.exit(1)
