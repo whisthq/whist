@@ -42,7 +42,6 @@ RUN pip install -r /root/requirements.txt
 # Our entrypoint will be a series of commands that will start the database
 # server, create databases for the diff process, and then run our python
 # program. Because multiple steps are required, we use an external script.
-# RUN chmod +x /root/entrypoint.sh
 
 # The entrypoint script will append any additional arguments to its command.
 # Because we're using the "exec" form of ENTRYPOINT, we can pass additional
