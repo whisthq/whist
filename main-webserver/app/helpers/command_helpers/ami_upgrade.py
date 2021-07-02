@@ -5,6 +5,7 @@ from flask import current_app
 from sqlalchemy import or_, and_
 
 from app.models import db, RegionToAmi, InstanceInfo
+from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
@@ -99,17 +100,27 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
     """
     fractal_logger.info(f"mark_instance_for_draining called for instance {active_instance.instance_name}")
     try:
+        auth0_client = Auth0Client(
+            current_app.config["AUTH0_DOMAIN"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
+        )
+        auth_token = auth0_client.token().access_token
         base_url = f"https://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-        respobj = requests.post(f"{base_url}/drain_and_shutdown", verify=False)
-        fractal_logger.info(f"sent POST request to {base_url}/drain_and_shutdown with response {respobj.text}")
-        respobj.raise_for_status()
+        requests.post(
+            f"{base_url}/drain_and_shutdown",
+            json={
+                "auth_secret": auth_token,
+            },
+            verify=False
+        )
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = InstanceState.DRAINING
         fractal_logger.info(f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}")
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as error:
         active_instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
-        fractal_logger.info(f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}")
+        fractal_logger.error(f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}: {error}")
     finally:
         db.session.commit()
 

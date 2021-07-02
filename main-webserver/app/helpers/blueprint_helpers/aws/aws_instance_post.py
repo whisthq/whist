@@ -13,9 +13,11 @@ from app.models.hardware import (
     InstanceInfo,
     InstancesWithRoomForMandelboxes,
 )
+from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
+from app.helpers.utils.general.logs import fractal_logger
 from app.constants.instance_state_values import InstanceState
 
 bundled_region = {
@@ -248,15 +250,26 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 instance_info.status = InstanceState.DRAINING
                 db.session.commit()
                 try:
+                    auth0_client = Auth0Client(
+                        current_app.config["AUTH0_DOMAIN"],
+                        current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+                        current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
+                    )
+                    auth_token = auth0_client.token().access_token
                     base_url = (
                         f"https://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
                     )
-                    requests.post(f"{base_url}/drain_and_shutdown", verify=False)
-                except requests.exceptions.RequestException:
-                    client = EC2Client(region_name=region)
-                    client.stop_instances(
-                        ["-".join(instance_info.cloud_provider_id.split("-")[1:])]
+                    requests.post(
+                        f"{base_url}/drain_and_shutdown",
+                        json={
+                            "auth_secret": auth_token,
+                        },
+                        verify=False
                     )
+                except requests.exceptions.RequestException as error:
+                    fractal_logger.error(f"Unable to send drain_and_shutdown request to host service on instance {instance.instance_name}: {error}")
+                    instance_info.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+                    db.session.commit()
 
 
 def try_scale_down_if_necessary_all_regions() -> None:
