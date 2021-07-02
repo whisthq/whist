@@ -13,9 +13,11 @@ from app.models.hardware import (
     InstanceInfo,
     InstancesWithRoomForMandelboxes,
 )
+from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
+from app.helpers.utils.general.logs import fractal_logger
 from app.constants.instance_state_values import InstanceState
 
 bundled_region = {
@@ -136,8 +138,8 @@ scale_mutex = defaultdict(threading.Lock)
 
 
 def do_scale_up_if_necessary(
-    region: str, ami: str, force_buffer: Optional[int] = 0
-) -> List[InstanceInfo]:
+    region: str, ami: str, force_buffer: Optional[int] = 0, **kwargs
+) -> List[str]:
     """
     Scales up new instances as needed, given a region and AMI to check
     Specifically, if we want to add X instances (_get_num_new_instances
@@ -149,11 +151,11 @@ def do_scale_up_if_necessary(
         force_buffer: this will be used to override the recommendation for
         number of instances to be launched by `_get_num_new_instances`
 
-    Returns: List of database objects representing the instances created.
+    Returns: List of names of the instances created, if any.
 
     """
-    new_instances = []
-    with scale_mutex[f"{region}-{ami}"]:
+    new_instance_names = []
+    with scale_mutex[f"{region}-{ami}"], kwargs["flask_app"].app_context():
 
         # num_new indicates how many new instances need to be spun up from
         # the ami that is passed in. Usually, we calculate that through
@@ -170,10 +172,10 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
-            # TODO: test that we actually get 16 mandelboxes per instance
+            # TODO: test that we actually get 4 mandelboxes per instance
             # Which is savvy's guess as to g4dn.xlarge capacity
             # TODO: Move this value to top-level config when more fleshed out
-            base_number_free_mandelboxes = 16
+            base_number_free_mandelboxes = 4
             for index in range(num_new):
                 instance_ids = client.start_instances(
                     image_id=ami,
@@ -198,10 +200,10 @@ def do_scale_up_if_necessary(
                     commit_hash=ami_obj.client_commit_hash,
                     ip="",  # Will be set by `host_service` once it boots up.
                 )
-                new_instances.append(new_instance)
+                new_instance_names.append(new_instance.instance_name)
                 db.session.add(new_instance)
                 db.session.commit()
-    return new_instances
+    return new_instance_names
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:
@@ -248,15 +250,31 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 instance_info.status = InstanceState.DRAINING
                 db.session.commit()
                 try:
+                    auth0_client = Auth0Client(
+                        current_app.config["AUTH0_DOMAIN"],
+                        current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+                        current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
+                    )
+                    auth_token = auth0_client.token().access_token
                     base_url = (
-                        f"http://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                        f"https://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
                     )
-                    requests.post(f"{base_url}/drain_and_shutdown")
-                except requests.exceptions.RequestException:
-                    client = EC2Client(region_name=region)
-                    client.stop_instances(
-                        ["-".join(instance_info.cloud_provider_id.split("-")[1:])]
+                    requests.post(
+                        f"{base_url}/drain_and_shutdown",
+                        json={
+                            "auth_secret": auth_token,
+                        },
+                        verify=False,
                     )
+                except requests.exceptions.RequestException as error:
+                    fractal_logger.error(
+                        (
+                            f"Unable to send drain_and_shutdown request to host service"
+                            f" on instance {instance_info.instance_name}: {error}"
+                        )
+                    )
+                    instance_info.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+                    db.session.commit()
 
 
 def try_scale_down_if_necessary_all_regions() -> None:
@@ -271,7 +289,16 @@ def try_scale_down_if_necessary_all_regions() -> None:
         ).all()
     ]
     for region, ami in region_and_ami_list:
-        try_scale_down_if_necessary(region, ami)
+        # grab a lock on this region/ami pair
+        region_row = (
+            RegionToAmi.query.filter_by(region_name=region, ami_id=ami)
+            .with_for_update()
+            .one_or_none()
+        )
+        if not region_row.protected_from_scale_down:
+            try_scale_down_if_necessary(region, ami)
+        # and release it after scaling
+        db.session.commit()
 
 
 def repeated_scale_down_harness(time_delay: int, flask_app=current_app) -> None:

@@ -45,6 +45,13 @@ CREATE SCHEMA hdb_views;
 
 
 --
+-- Name: logging; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA logging;
+
+
+--
 -- Name: sales; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -77,6 +84,41 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
+-- Name: change_trigger(); Type: FUNCTION; Schema: hardware; Owner: -
+--
+
+CREATE FUNCTION hardware.change_trigger() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+       BEGIN
+         IF TG_OP = 'INSERT'
+         THEN INSERT INTO logging.t_history (
+                tabname, schemaname, operation, new_val
+              ) VALUES (
+                TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW)
+              );
+           RETURN NEW;
+         ELSIF  TG_OP = 'UPDATE'
+         THEN
+           INSERT INTO logging.t_history (
+             tabname, schemaname, operation, new_val, old_val
+           )
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), row_to_json(OLD));
+           RETURN NEW;
+         ELSIF TG_OP = 'DELETE'
+         THEN
+           INSERT INTO logging.t_history
+             (tabname, schemaname, operation, old_val)
+             VALUES (
+               TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(OLD)
+             );
+             RETURN OLD;
+         END IF;
+       END;
+$$;
 
 
 --
@@ -260,7 +302,8 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
                     instance_info.location,
                     instance_info.commit_hash,
                     instance_info.mandelbox_capacity
-                   FROM hardware.instance_info) instances
+                   FROM hardware.instance_info
+                  WHERE (((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text))) instances
              LEFT JOIN ( SELECT count(*) AS count,
                     mandelbox_info.instance_name AS cont_inst
                    FROM hardware.mandelbox_info
@@ -292,7 +335,8 @@ CREATE TABLE hardware.region_to_ami (
     ami_id character varying NOT NULL,
     region_enabled boolean DEFAULT true NOT NULL,
     client_commit_hash character varying NOT NULL,
-    ami_active boolean DEFAULT false NOT NULL
+    ami_active boolean DEFAULT false NOT NULL,
+    protected_from_scale_down boolean DEFAULT false NOT NULL
 );
 
 
@@ -995,6 +1039,54 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
+-- Name: t_history; Type: TABLE; Schema: logging; Owner: -
+--
+
+CREATE TABLE logging.t_history (
+    id integer NOT NULL,
+    tstamp timestamp without time zone DEFAULT now(),
+    schemaname text,
+    tabname text,
+    operation text,
+    who text DEFAULT CURRENT_USER,
+    new_val json,
+    old_val json
+);
+
+
+--
+-- Name: instance_status_change; Type: VIEW; Schema: logging; Owner: -
+--
+
+CREATE VIEW logging.instance_status_change AS
+ SELECT t_history.tstamp,
+    t_history.old_val,
+    t_history.new_val
+   FROM logging.t_history
+  WHERE ((t_history.old_val ->> 'status'::text) <> (t_history.new_val ->> 'status'::text));
+
+
+--
+-- Name: t_history_id_seq; Type: SEQUENCE; Schema: logging; Owner: -
+--
+
+CREATE SEQUENCE logging.t_history_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: t_history_id_seq; Type: SEQUENCE OWNED BY; Schema: logging; Owner: -
+--
+
+ALTER SEQUENCE logging.t_history_id_seq OWNED BY logging.t_history.id;
+
+
+--
 -- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
 --
 
@@ -1010,6 +1102,21 @@ CREATE TABLE sales.email_templates (
 --
 
 ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval('hdb_catalog.remote_schemas_id_seq'::regclass);
+
+
+--
+-- Name: t_history id; Type: DEFAULT; Schema: logging; Owner: -
+--
+
+ALTER TABLE ONLY logging.t_history ALTER COLUMN id SET DEFAULT nextval('logging.t_history_id_seq'::regclass);
+
+
+--
+-- Name: region_to_ami _region_name_ami_id_unique_constraint; Type: CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.region_to_ami
+    ADD CONSTRAINT _region_name_ami_id_unique_constraint UNIQUE (region_name, ami_id);
 
 
 --
@@ -1332,6 +1439,13 @@ CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (
 
 
 --
+-- Name: instance_info t; Type: TRIGGER; Schema: hardware; Owner: -
+--
+
+CREATE TRIGGER t BEFORE INSERT OR DELETE OR UPDATE ON hardware.instance_info FOR EACH ROW EXECUTE FUNCTION hardware.change_trigger();
+
+
+--
 -- Name: hdb_table event_trigger_table_name_update_trigger; Type: TRIGGER; Schema: hdb_catalog; Owner: -
 --
 
@@ -1346,7 +1460,7 @@ CREATE TRIGGER hdb_schema_update_event_notifier AFTER INSERT OR UPDATE ON hdb_ca
 
 
 --
--- Name: instance_info instance_name_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
+-- Name: mandelbox_info instance_name_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
 --
 
 ALTER TABLE ONLY hardware.mandelbox_info
