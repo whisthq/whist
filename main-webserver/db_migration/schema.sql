@@ -405,6 +405,16 @@ $$;
 
 CREATE TRIGGER t BEFORE INSERT OR UPDATE OR DELETE ON hardware.region_to_ami
         FOR EACH ROW EXECUTE PROCEDURE hardware.change_trigger_regions();
+
+CREATE VIEW hardware.ami_status_changes as
+SELECT tstamp,
+       new_val ->> 'ami_id'                              AS ami_changed,
+       Coalesce(new_val ->> 'ami_active', 'deleted')     AS new_status,
+       Coalesce(old_val ->> 'ami_active', 'newly added') AS old_status
+FROM   logging.t_region_history
+WHERE  old_val IS NULL
+        OR new_val IS NULL
+        OR old_val ->> 'ami_active' <> new_val ->> 'ami_active';
 --
 -- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
