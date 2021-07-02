@@ -268,7 +268,10 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     )
                 except requests.exceptions.RequestException as error:
                     fractal_logger.error(
-                        f"Unable to send drain_and_shutdown request to host service on instance {instance.instance_name}: {error}"
+                        (
+                            f"Unable to send drain_and_shutdown request to host service"
+                            f" on instance {instance.instance_name}: {error}"
+                        )
                     )
                     instance_info.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
                     db.session.commit()

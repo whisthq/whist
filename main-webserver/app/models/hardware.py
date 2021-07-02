@@ -125,7 +125,7 @@ class RegionToAmi(db.Model):
             an active versions of the client app'.
         region_enabled: A boolean indicating whether or not users are allowed to deploy tasks in the
             region corresponding to this row.
-        protected_from_scale_down:  A boolean indicating whether the AMI is currently having an initial
+        protected_from_scale_down: A bool indicating whether the AMI is currently having an initial
             buffer spun up for it
 
     Constraints:
