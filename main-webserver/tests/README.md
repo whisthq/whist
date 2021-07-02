@@ -25,7 +25,7 @@ Consider the following situation in which you might find yourself while writing 
 `sum.py`
 
 ```python
-"""Cacluate the total number of COVID-19 cases around the world."""
+"""Calculate the total number of COVID-19 cases around the world."""
 
 import requests
 
@@ -57,7 +57,7 @@ def sum_covid_cases(*countries):
 
 Suppose you want to test your code, but you have to pay for each API request you send. It would be a waste of money to send actual requests to the server from within your tests, but you need to know how your code handles certain responses. In this case, you may want "patch" the return value of `requests.get(...)` with some dummy value. Such a dummy value would have to be an object with an `ok` attribute and an `json` attribute.
 
-Luckily, `pytest` comes with a built-in solution for patching certain parts of your code during testig. The [`monkeypatch`](https://docs.pytest.org/en/stable/reference.html#std-fixture-monkeypatch) test fixture allows you to use dummy data as a substitute for real data during testing. Unfortunately, I don't think the `pytest` documentation does a very good job of explaining just how powerful monkeypatching is.
+Luckily, `pytest` comes with a built-in solution for patching certain parts of your code during testing. The [`monkeypatch`](https://docs.pytest.org/en/stable/reference.html#std-fixture-monkeypatch) test fixture allows you to use dummy data as a substitute for real data during testing. Unfortunately, I don't think the `pytest` documentation does a very good job of explaining just how powerful monkeypatching is.
 
 In order to tap into the full potential of the `monkeypatch` fixture, it's important to have a couple of helper utilities handy.
 

@@ -43,7 +43,7 @@ Note that `yarn update-tenant` may make undesirable changes to `tenant.yaml` or 
 
 `tenants.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop app) or trusted "machine-to-machine" clients such as Github actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn update-tenant`
 
-Here's an example cient configuration:
+Here's an example client configuration:
 
 ```yaml
 - name: Webserver
@@ -71,9 +71,9 @@ Here's an example cient configuration:
   token_endpoint_auth_method: client_secret_post
 ```
 
-Many of these fields are self-explanatoy, but some require more explanation:
+Many of these fields are self-explanatory, but some require more explanation:
 
-- `app_type` indiates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Fractal desktop app, etc.
+- `app_type` indicates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Fractal desktop app, etc.
 - `jwt_configuration.alg` is the algorithm used to sign access tokens for this client. This should be 'RS256' (asymmetric signing algorithm, can be verified with a public key) unless there's a very good reason otherwise.
 - `jwt_configuration.lifetime_in_seconds` is the lifetime (in seconds) of an _access_ token. By default, this is 1 day
 - `refresh_token.token_lifetime` is the _maximum_ lifetime (in seconds) of a _refresh_ token
