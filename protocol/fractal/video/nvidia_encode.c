@@ -205,7 +205,6 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uin
 }
 
 int nvidia_encoder_encode(NvidiaEncoder* encoder) {
-    bool force_iframe = false;
     NVENCSTATUS status;
 
     // Register the frame intake
@@ -241,7 +240,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     // frame_idx starts at -1, so first frame has idx 0
     enc_params.frameIdx = ++encoder->frame_idx;
     enc_params.outputBitstream = encoder->output_buffer;
-    if (force_iframe) {
+    if (encoder->wants_iframe) {
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR;
     }
 
@@ -277,7 +276,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     encoder->frame_size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;
-    encoder->is_iframe = force_iframe || encoder->frame_idx == 0;
+    encoder->is_iframe = encoder->wants_iframe || encoder->frame_idx == 0;
 
     return 0;
 }
@@ -324,7 +323,8 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     return 0;
 }
 
-int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType codec) {
+bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate,
+                                CodecType codec) {
     /*
         Using Nvidia's Reconfigure API, update encoder bitrate and codec without
        destruction/recreation.
@@ -337,6 +337,14 @@ int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType co
         Returns:
             (int): 0 on success, -1 on failure
     */
+
+    // Can't reconfigure width and height, so just exit
+    if (width != encoder->width || height != encoder->height) {
+        return false;
+    }
+
+    NVENCSTATUS status;
+    bool codec_changed = encoder->codec_type != codec;
 
     // Create reconfigure params
     NV_ENC_RECONFIGURE_PARAMS reconfigure_params;
@@ -352,25 +360,34 @@ int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType co
     NV_ENC_PRESET_CONFIG preset_config;
     if (initialize_preset_config(encoder, bitrate, codec, &preset_config) < 0) {
         LOG_ERROR("Failed to reconfigure encoder!");
-        return -1;
+        return false;
     }
     reconfigure_params.reInitEncodeParams.encodeConfig = &preset_config.presetCfg;
 
     // Copy over new init params
-    memcpy(&encoder->encoder_params, &reconfigure_params.reInitEncodeParams,
-           sizeof(encoder->encoder_params));
-    // Not sure if we need this, but just in case
-    reconfigure_params.resetEncoder = 0;
-    reconfigure_params.forceIDR = 0;
+    encoder->encoder_params = reconfigure_params.reInitEncodeParams;
+    // Reset the encoder stream if the codec has changed,
+    // Since the decoder will need an iframe
+    if (codec_changed) {
+        reconfigure_params.resetEncoder = 1;
+        reconfigure_params.forceIDR = 1;
+    } else {
+        reconfigure_params.resetEncoder = 0;
+        reconfigure_params.forceIDR = 0;
+    }
     // Set encode_config params, since this is the bitrate and codec stuff we really want to change
-    NVENCSTATUS status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder,
-                                                                   &reconfigure_params);
+    status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder,
+                                                       &reconfigure_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to reconfigure the encoder, status = %d", status);
-        return -1;
+        return false;
     }
-    return 0;
+    return true;
 }
+
+void nvidia_set_iframe(NvidiaEncoder* encoder) { encoder->wants_iframe = true; }
+
+void nvidia_unset_iframe(NvidiaEncoder* encoder) { encoder->wants_iframe = false; }
 
 void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     LOG_INFO("Destroying nvidia encoder...");

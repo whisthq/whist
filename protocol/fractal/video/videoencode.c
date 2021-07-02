@@ -871,6 +871,20 @@ int video_encoder_encode(VideoEncoder *encoder) {
     return 0;
 }
 
+bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
+                         CodecType codec) {
+    if (encoder->nvidia_encoder) {
+#ifdef __linux__
+        return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate, codec);
+#else
+        return false;
+#endif
+    } else {
+        // Haven't implemented ffmpeg reconfiguring yet
+        return false;
+    }
+}
+
 void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
     /*
         Write all the encoded packets found in encoder into buf, which we assume is large enough to

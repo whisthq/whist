@@ -421,13 +421,11 @@ static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_
     UNUSED(is_controlling);
     LOG_INFO("Request for i-frame found: Creating iframe");
     if (fmsg->reinitialize_encoder) {
+        // Wants to completely reinitialize the encoder
         update_encoder = true;
     } else {
-        if (USING_FFMPEG_IFRAME_FLAG) {
-            wants_iframe = true;
-        } else {
-            update_encoder = true;
-        }
+        // Wants only an iframe
+        wants_iframe = true;
     }
     return 0;
 }

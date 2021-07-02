@@ -228,11 +228,14 @@ int32_t multithreaded_send_video(void* opaque) {
             if (!pending_encoder) {
                 LOG_INFO("Update encoder request received. Encoder creation queued!");
             }
-            // BEFORE MAKING A NEW ENCODER, WE SHOULD FIRST TRY TO UPDATE bitrate and codec type
-            // (current_bitrate, client_codec_type)
-            bool update_worked = false;
-            if (update_worked) {
+            // First, try to simply reconfigure the encoder
+            if (reconfigure_encoder(encoder, device->width, device->height, max_mbps * 1024 * 1024,
+                                    (CodecType)client_codec_type)) {
                 // If we could update the encoder in-place, then we're done updating the encoder
+                LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
+                         device->width, device->height, current_bitrate, max_mbps,
+                         client_codec_type);
+                current_bitrate = (int)(max_mbps * 1024 * 1024);
                 update_encoder = false;
             } else {
                 // Keep track of whether or not a new encoder is being used now
@@ -359,7 +362,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
             if (wants_iframe) {
                 // True I-Frame is WIP
-                LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
                 video_encoder_set_iframe(encoder);
                 wants_iframe = false;
             }

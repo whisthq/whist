@@ -29,6 +29,7 @@ typedef struct {
     uint32_t frame_idx;
     int width;
     int height;
+    bool wants_iframe;
     // Output
     void* frame;
     unsigned int frame_size;
@@ -37,13 +38,19 @@ typedef struct {
 
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int out_width,
                                      int out_height);
-// To be called by transfer_capture!
-/// This should come from device->registered_resources[grab_params.dwTextureIndex];
+// Take in the GPU Texture pointer
 int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
                                 int width, int height);
+// Reconfigure the encoder
+bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate,
+                                CodecType codec);
+// Set next frame to be iframe
+void nvidia_set_iframe(NvidiaEncoder* encoder);
+// Unset next frame to be iframe
+void nvidia_unset_iframe(NvidiaEncoder* encoder);
 // Encode the most recently provided frame from frame_intake
 int nvidia_encoder_encode(NvidiaEncoder* encoder);
+// Destroy the nvidia encoder
 void destroy_nvidia_encoder(NvidiaEncoder* encoder);
-int reconfigure_nvidia_encoder(NvidiaEncoder* encoder, int bitrate, CodecType codec);
 
 #endif

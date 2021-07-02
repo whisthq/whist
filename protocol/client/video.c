@@ -527,8 +527,11 @@ bool request_iframe() {
         FractalClientMessage fmsg = {0};
         fmsg.type = MESSAGE_IFRAME_REQUEST;
         if (video_data.last_rendered_id == 0) {
+            // If we haven't rendered at all, we need a full IDR frame
+            // which includes PPS/SPS data
             fmsg.reinitialize_encoder = true;
         } else {
+            // If we have rendered, we just want a normal iframe
             fmsg.reinitialize_encoder = false;
         }
         send_fmsg(&fmsg);

@@ -139,6 +139,15 @@ int video_encoder_encode(VideoEncoder* encoder);
 void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
 
 /**
+ * @brief                          Reconfigure the encoder
+ *
+ * @param encoder                  The encoder to be updated
+ *
+ * @returns                        0 if the encoder was successfully reconfigured
+ */
+bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate, CodecType codec);
+
+/**
  * @brief                          Set the next frame to be an I-frame
  *
  * @param encoder                  Encoder to be updated
