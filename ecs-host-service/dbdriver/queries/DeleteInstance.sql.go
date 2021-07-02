@@ -30,12 +30,12 @@ type Querier interface {
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 
-	FindMandelboxesForUser(ctx context.Context, instanceName string, userID string) ([]FindMandelboxesForUserRow, error)
-	// FindMandelboxesForUserBatch enqueues a FindMandelboxesForUser query into batch to be executed
+	FindMandelboxByID(ctx context.Context, mandelboxID string) ([]FindMandelboxByIDRow, error)
+	// FindMandelboxByIDBatch enqueues a FindMandelboxByID query into batch to be executed
 	// later by the batch.
-	FindMandelboxesForUserBatch(batch *pgx.Batch, instanceName string, userID string)
-	// FindMandelboxesForUserScan scans the result of an executed FindMandelboxesForUserBatch query.
-	FindMandelboxesForUserScan(results pgx.BatchResults) ([]FindMandelboxesForUserRow, error)
+	FindMandelboxByIDBatch(batch *pgx.Batch, mandelboxID string)
+	// FindMandelboxByIDScan scans the result of an executed FindMandelboxByIDBatch query.
+	FindMandelboxByIDScan(results pgx.BatchResults) ([]FindMandelboxByIDRow, error)
 
 	RegisterInstance(ctx context.Context, params RegisterInstanceParams) (pgconn.CommandTag, error)
 	// RegisterInstanceBatch enqueues a RegisterInstance query into batch to be executed
@@ -153,8 +153,8 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
 	}
-	if _, err := p.Prepare(ctx, findMandelboxesForUserSQL, findMandelboxesForUserSQL); err != nil {
-		return fmt.Errorf("prepare query 'FindMandelboxesForUser': %w", err)
+	if _, err := p.Prepare(ctx, findMandelboxByIDSQL, findMandelboxByIDSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindMandelboxByID': %w", err)
 	}
 	if _, err := p.Prepare(ctx, registerInstanceSQL, registerInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'RegisterInstance': %w", err)
