@@ -28,6 +28,7 @@ const (
 	InstanceStatusPreConnection InstanceStatus = "PRE_CONNECTION"
 	InstanceStatusActive        InstanceStatus = "ACTIVE"
 	InstanceStatusDraining      InstanceStatus = "DRAINING"
+	InstanceStatusUnresponsive  InstanceStatus = "HOST_SERVICE_UNRESPONSIVE"
 )
 
 // database. If the expected row is not found, then it returns an error.
