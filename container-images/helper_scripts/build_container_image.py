@@ -131,8 +131,8 @@ def build_image_path(img_path):
 
 # Get all image_path's with no dependencies
 root_level_images = []
-for image_path, dependency in dependencies.items():
-    if dependency is None:
+for image_path, dependency_of_image in dependencies.items():
+    if dependency_of_image is None:
         root_level_images.append(image_path)
 
 # Build all root_level_images
