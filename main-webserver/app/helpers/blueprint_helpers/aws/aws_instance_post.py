@@ -270,7 +270,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     fractal_logger.error(
                         (
                             f"Unable to send drain_and_shutdown request to host service"
-                            f" on instance {instance.instance_name}: {error}"
+                            f" on instance {instance_info.instance_name}: {error}"
                         )
                     )
                     instance_info.status = InstanceState.HOST_SERVICE_UNRESPONSIVE

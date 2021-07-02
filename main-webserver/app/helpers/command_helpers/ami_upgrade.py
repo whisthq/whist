@@ -289,5 +289,5 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     db.session.commit()
 
     fractal_logger.info("Finished performing AMI upgrade.")
-    if active_instances_draining_status is False:
+    if active_instances_draining_status is False and not current_app.testing:
         sys.exit(1)
