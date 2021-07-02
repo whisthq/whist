@@ -34,7 +34,7 @@
     "aws-sdk": "^2.938.0",
     "classnames": "^2.3.1",
     "electron-store": "^8.0.0",
-    "electron-updater": "4.3.8",
+    "electron-updater": "4.4.0",
     "history": "^4.1.10",
     "json-stringify-safe": "^5.0.1",
     "jwt-decode": "^3.1.2",
