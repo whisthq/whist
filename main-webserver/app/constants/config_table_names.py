@@ -1,4 +1,4 @@
-import app.constants.env_names as env_names
+from app.constants import env_names
 
 PRODUCTION = "production"
 STAGING = "staging"
