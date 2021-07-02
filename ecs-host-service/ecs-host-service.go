@@ -115,7 +115,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// If so, create the mandelbox object.
 	fc := mandelbox.New(globalCtx, goroutineTracker, req.MandelboxID)
-	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetFractalID())
+	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetMandelboxID())
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
 	// do this by setting `createFailed` to true until all steps are done, and
@@ -201,10 +201,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", fc.GetFractalID()),
-			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetFractalID()),
+			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", fc.GetMandelboxID()),
+			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
 			"/run/udev/data:/run/udev/data:ro",
-			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetFractalID()),
+			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetMandelboxID()),
 		},
 		PortBindings: natPortBindings,
 		CapDrop:      strslice.StrSlice{"ALL"},
@@ -254,7 +254,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
-		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetFractalID(), err)
+		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetMandelboxID(), err)
 		return
 	}
 
@@ -282,7 +282,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
-		logAndReturnError("Error starting mandelbox with dockerID %s and FractalID %s: %s", dockerID, req.MandelboxID, err)
+		logAndReturnError("Error starting mandelbox with dockerID %s and MandelboxID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s", mandelboxName)
@@ -326,7 +326,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	createFailed = false
 
 	req.ReturnResult(result, nil)
-	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", fc.GetFractalID())
+	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", fc.GetMandelboxID())
 }
 
 // Handle tasks to be completed when a mandelbox dies
