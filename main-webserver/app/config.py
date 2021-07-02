@@ -363,6 +363,9 @@ class LocalConfig(DeploymentConfig):
     APP_GIT_BRANCH = property(getter("APP_GIT_BRANCH", default="unknown", fetch=False))
     APP_GIT_COMMIT = property(getter("APP_GIT_COMMIT", default="unknown", fetch=False))
     HOST_SERVER = "local-unknown"
+    AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
+    AUTH0_WEBSERVER_CLIENT_ID = property(getter("AUTH0_WEBSERVER_CLIENT_ID"))
+    AUTH0_WEBSERVER_CLIENT_SECRET = property(getter("AUTH0_WEBSERVER_CLIENT_SECRET"))
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))

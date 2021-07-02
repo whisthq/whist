@@ -79,7 +79,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 	// Note that the caller won't actually know if the `shutdown` command failed.
 	// This response is just saying that we got the request successfully.
-	defer req.ReturnResult("", nil)
+	defer req.ReturnResult("request successful", nil)
 
 	shutdownInstanceOnExit = true
 	globalCancel()
@@ -272,6 +272,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	if err := fc.WriteResourcesForProtocol(); err != nil {
 		logAndReturnError("Error writing resources for protocol: %s", err)
+		return
+	}
+	if err := fc.WriteLocalDevValues(10); err != nil {
+		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol.")
@@ -491,7 +495,17 @@ func main() {
 	// Initialize the database driver, if necessary (the `dbdriver`) package
 	// takes care of the "if necessary" part.
 	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
-		logger.Panic(globalCancel, err)
+		// If the instance starts up and sees its status as unresponsive or
+		// draining, the webserver doesn't want it anymore so we should shut down.
+		// TODO: make this a bit more robust
+		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
+			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
+			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down...")
+			shutdownInstanceOnExit = true
+			globalCancel()
+		} else {
+			logger.Panic(globalCancel, err)
+		}
 	}
 
 	// Now we start all the goroutines that actually do work.

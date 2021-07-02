@@ -90,7 +90,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-		removeStaleAllocatedMandelboxesGoroutine(globalCtx)
+		removeStaleMandelboxesGoroutine(globalCtx)
 	}()
 
 	return nil
