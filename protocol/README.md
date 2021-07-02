@@ -79,7 +79,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── input_driver.h -> The following three c files share this h file
 │   │   ├── winapi_input_driver.c <- Windows keyboard/mouse-press code
 │   │   ├── uinput_input_driver.c <- Linux uinput keyboard/mouse-press/touchpad code
-│   │   └── xtest_input_driver.c <- Linux X11 keyoard/mouse-press code
+│   │   └── xtest_input_driver.c <- Linux X11 keyboard/mouse-press code
 │   ├── network
 │   │   └── network.c <- send udp/tcp/http packets.
 │   ├── utils
@@ -91,7 +91,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── lodepng.c <- LodePNG external dependency
 │   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc.
 │   │   ├── mac_utils.c <- Mac wrappers
-│   │   ├── mouse.c <- Mutliclient cursor colors
+│   │   ├── mouse.c <- Multiclient cursor colors
 │   │   ├── png.c <- Functions to encode/decode bitmap's as png's
 │   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
 │   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes
@@ -109,7 +109,7 @@ Of course, input must also be sent from client to server. This is handled in the
 └── server
     ├── client.c <- Handle multiclient messages
     ├── handle_client_message.c <- Handle client fmsg's
-    ├── main.c <- Initialite server, receive packets and pass to where it needs to go
+    ├── main.c <- Initialize server, receive packets and pass to where it needs to go
     ├── network.c <- Networking code for multiclient
 ```
 

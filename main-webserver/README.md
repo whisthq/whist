@@ -6,8 +6,6 @@ This repository contains the code for our webserver, which is our REST API and p
 
 Our webservers and CD pipeline are hosted on Heroku. Our production database is attached as an Heroku Add-On PostgresSQL to the associated webserver in Heroku, `main-webserver`, and has automated backups in place daily at 2 AM PST. See [here](https://devcenter.heroku.com/articles/heroku-postgres-backups#creating-a-backup) for further information.
 
-Our webserver logs are hosted on Datadog [here](https://app.datadoghq.com/logs?cols=core_host%2Ccore_service&from_ts=1593977274176&index=&live=true&messageDisplay=inline&stream_sort=desc&to_ts=1593978174176).
-
 #### Coding Philosophy
 
 Before contributing to this project, please read our in-depth coding philosophy document [here](https://www.notion.so/tryfractal/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
@@ -324,10 +322,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── base_ec2_client.py -->  Utility libraries for monitoring and orchestrating EC2 instances.
 │   │       │   ├── ecs_deletion.py --> code used for cluster deletion
 │   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
-│   │       ├── datadog
-│   │       │   ├── event_tags.py --> code for generating datadog event tags
-│   │       │   ├── event_text.py --> code for generating datadog event content
-│   │       │   └── events.py --> code for storing datadog events/generating them
 │   │       ├── general
 │   │       │   ├── auth.py  --> decorators for authenticating users/devs
 │   │       │   ├── crypto.py --> code for password encryption/hashing

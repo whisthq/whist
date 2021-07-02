@@ -6,7 +6,7 @@ import (
 )
 
 // An AppEnvironment represents either localdev or localdevwithdb (i.e. a dev
-// instance), dev (i.e. talking to the dev websever), staging, or prod
+// instance), dev (i.e. talking to the dev webserver), staging, or prod
 type AppEnvironment string
 
 // Constants for the various AppEnvironments

@@ -13,7 +13,7 @@ Load testing is a valuable tool for discovering complex bugs in our code base. P
 
 # Usage
 
-The primarily user is a Github Actions chronjob workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be run locally against any of our deployed webservers (dev, staging, prod) and review apps.
+The primarily user is a Github Actions cron job workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be run locally against any of our deployed webservers (dev, staging, prod) and review apps.
 
 ## Testing Against Staging
 

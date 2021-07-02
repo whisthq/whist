@@ -100,7 +100,7 @@ def catch_timeout_error(func):
 def catch_auth_error(func):
     """A decorator used to catch HTTP auth errors and format the message
 
-    This function catches the specifc HTTPError emitted by the Requests
+    This function catches the specific HTTPError emitted by the Requests
     library. While it works for any Requests call, the message is formatted
     to help point the user towards their Heroku credentials.
 

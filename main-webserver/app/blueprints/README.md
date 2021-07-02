@@ -1,6 +1,6 @@
 # Module Structure
 
-At the module level, the code is separated between AWS, mail, admin, payment, auth, and celery blueprints (post and get request hendlers)
+At the module level, the code is separated between AWS, mail, admin, payment, auth, and celery blueprints (post and get request handlers)
 
 ## Admin
 
