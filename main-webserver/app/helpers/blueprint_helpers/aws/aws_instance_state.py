@@ -8,8 +8,8 @@ from app.models import (
 from app.helpers.utils.general.logs import fractal_logger
 from app.constants.instance_state_values import InstanceState
 
-MAX_POLL_ITERATIONS = 90
-POLL_SLEEP_INTERVAL = 10  # seconds
+MAX_POLL_ITERATIONS = 120
+POLL_SLEEP_INTERVAL = 5  # seconds
 
 
 def _poll(instance_name: str) -> bool:
@@ -27,7 +27,7 @@ def _poll(instance_name: str) -> bool:
     result = False
 
     for i in range(MAX_POLL_ITERATIONS):
-        if instance.status is not InstanceState.ACTIVE:
+        if instance.status != str(InstanceState.ACTIVE.value):
             fractal_logger.warning(
                 f"{instance.instance_name} deployment in progress. {i}/{MAX_POLL_ITERATIONS}"
             )

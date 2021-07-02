@@ -92,5 +92,8 @@ func writeHeartbeat() error {
 		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `hardware.instance_info`: %s", err)
 	}
 	logger.Infof("Wrote heartbeat %+v with result %s", params, result)
+
+	// TODO: parse the command tag and error if the result is 0
+
 	return nil
 }

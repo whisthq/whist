@@ -101,8 +101,9 @@ def create_app(testing=False):
 
     if not app.testing and not app.config["RUNNING_LOCALLY"]:
         # If we're running in production start the scaling thread in the background
+        # Run every 10 minutes (600 seconds), chosen to be often but not overpoweringly so
         scale_down_bg_thread = threading.Thread(
-            target=repeated_scale_down_harness, args=(300,), kwargs={"flask_app": app}
+            target=repeated_scale_down_harness, args=(600,), kwargs={"flask_app": app}
         )
         scale_down_bg_thread.start()
 
