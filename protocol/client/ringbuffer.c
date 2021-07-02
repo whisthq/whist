@@ -22,6 +22,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
         reset_frame(frame_data);
+        destroy_frame_buffer(ring_buffer, frame_data);
     }
     // reset metadata
     ring_buffer->currently_rendering_id = -1;
@@ -157,7 +158,6 @@ void reset_frame(FrameData* frame_data) {
     frame_data->num_times_nacked = 0;
     // frame_data->rendered = false;
     frame_data->frame_size = 0;
-    destroy_frame_buffer(ring_buffer, frame_data);
 }
 
 void set_rendering(RingBuffer* ring_buffer, int id) {
