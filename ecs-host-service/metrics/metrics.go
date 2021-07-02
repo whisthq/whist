@@ -4,7 +4,6 @@
 package metrics // import "github.com/fractal/fractal/ecs-host-service/metrics"
 
 import (
-	"context"
 	"math/rand"
 	"sync"
 	"time"
@@ -57,7 +56,8 @@ type RuntimeMetrics struct {
 
 	// GPU
 
-	// NumberOfGPUs represents the number of NVIDIA GPUs on the host system.
+	// NumberOfGPUs represents the number of NVIDIA GPUs on the host system. Note
+	// that for now we assume that all GPUs on an instance are homogeneous.
 	NumberOfGPUs int
 
 	// TotalVideoMemoryKB represents the amount of video memory in total across
@@ -117,14 +117,26 @@ type RuntimeMetrics struct {
 	TimeStamp time.Time
 }
 
-// StartCollection starts a goroutine that regularly computes metrics about the
+func init() {
+	err := startCollectionGoroutine(30 * time.Second)
+	if err != nil {
+		// We can safely do a "real" panic in an init function.
+		logger.Panicf(nil, "Error starting metrics collection goroutine: %s", err)
+	}
+}
+
+// As long as this channel is blocking, we should keep collecting metrics. As
+// soon as the channel is closed, we stop collecting metrics.
+var collectionKeepAlive = make(chan interface{}, 1)
+
+// startCollectionGoroutine starts a goroutine that regularly computes metrics about the
 // host and caches the most recent result. This prevents requests for metrics
 // (like average CPU usage) from blocking, since this goroutine can do the
 // blocking instead. The frequency passed must be at least 1.5 seconds to avoid
 // performance issues, and to allow for adding a random jitter to the
 // frequency. Note that you must wait for StartCollection to return
 // successfully before calling any metrics-retrieving functions.
-func StartCollection(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, frequency time.Duration) error {
+func startCollectionGoroutine(frequency time.Duration) error {
 	if frequency < 1500*time.Millisecond {
 		return utils.MakeError("The frequency passed to StartMetricsCollection must be at least one 1.5 seconds to avoid performance issues.")
 	}
@@ -149,9 +161,7 @@ func StartCollection(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// Start the metrics collection goroutine
-	goroutineTracker.Add(1)
 	go func() {
-		defer goroutineTracker.Done()
 		logger.Infof("Starting metrics collection goroutine.")
 		timerChan := make(chan interface{})
 
@@ -162,9 +172,11 @@ func StartCollection(globalCtx context.Context, globalCancel context.CancelFunc,
 			timer := time.AfterFunc(sleepTime, func() { timerChan <- struct{}{} })
 
 			select {
-			case _, _ = <-globalCtx.Done():
-				// The host service is shutting down, it's time to stop collecting
-				// metrics.
+			case _, _ = <-collectionKeepAlive:
+				// If we hit this case, that means that `collectionKeepAlive` was either
+				// closed or written to (it should not be written to), but either way,
+				// it's time to die.
+
 				logger.Infof("Shutting down metrics collection goroutine.")
 
 				// Uninitialize libraries (i.e. NVML).
@@ -172,7 +184,8 @@ func StartCollection(globalCtx context.Context, globalCancel context.CancelFunc,
 					logger.Errorf("Error shutting down NVML library.")
 				}
 
-				// Stop timer to avoid leaking a goroutine.
+				// Stop timer to avoid leaking a goroutine (not that it matters if we're
+				// shutting down, but still).
 				// (https://golang.org/pkg/time/#Timer.Stop)
 				if !timer.Stop() {
 					<-timer.C
@@ -337,4 +350,16 @@ func GetLatest() (RuntimeMetrics, []error) {
 	latestLock.Lock()
 	defer latestLock.Unlock()
 	return latestMetrics, latestErrors
+}
+
+// Close stops the metrics collection goroutine and leaves behind an error for
+// anyone who attempts to access the metrics after it is called.
+func Close() {
+	close(collectionKeepAlive)
+
+	latestLock.Lock()
+	defer latestLock.Unlock()
+	latestErrors = []error{
+		utils.MakeError("Metrics-collection goroutine has been stopped."),
+	}
 }

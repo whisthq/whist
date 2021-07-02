@@ -42,6 +42,7 @@ func heartbeatGoroutine() {
 
 			// Stop timer to avoid leaking a goroutine (not that it matters if we're
 			// shutting down, but still).
+			// (https://golang.org/pkg/time/#Timer.Stop)
 			if !timer.Stop() {
 				<-timer.C
 			}

@@ -1,5 +1,6 @@
 import json
 import logging
+from time import time
 
 from typing import Any, Callable, TypeVar, cast
 from functools import wraps
@@ -25,6 +26,7 @@ def parse_request(view_func: _F) -> _F:
 
     @wraps(view_func)
     def wrapper(*args, **kwargs):
+        start_time = time() * 1000
         received_from = (
             request.headers.getlist("X-Forwarded-For")[0]
             if request.headers.getlist("X-Forwarded-For")
@@ -50,6 +52,8 @@ def parse_request(view_func: _F) -> _F:
         if request.method == "GET":
             kwargs["username"] = request.args.get("username")
 
+        fractal_logger.debug(f"it took {time()*1000 - start_time} ms to parse this request")
+
         return view_func(*args, **kwargs)
 
     return cast(_F, wrapper)
@@ -64,6 +68,7 @@ def log_request(view_func: _F) -> _F:
     @wraps(view_func)
     def wrapper(*args, **kwargs):
         # Don't let a logging failure kill the request processing
+        start_time = time() * 1000
         try:
             # Check the log level before performing expensive computation (like stringifying the
             # body) to avoid wasted computation if it won't be logged.
@@ -96,6 +101,7 @@ def log_request(view_func: _F) -> _F:
                     )
         except:
             fractal_logger.error("Failed to log request", exc_info=True)
+        fractal_logger.debug(f"It took {time()*1000 - start_time} ms to log this request.")
         return view_func(*args, **kwargs)
 
     return cast(_F, wrapper)

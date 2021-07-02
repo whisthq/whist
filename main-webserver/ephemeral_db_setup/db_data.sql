@@ -21,15 +21,15 @@ SET row_security = off;
 --
 
 
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('eu-central-1', 'ami-04e791bf07624272e', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('eu-west-1', 'ami-04b85bdd938419795', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('us-east-1', 'ami-00c40082600650a9a', true, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('us-east-1', 'ami-00c40082600650a9b', true, 'dummy_client_hash_2', false);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('us-east-2', 'ami-0a7da7479f37c924a', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('us-east-2', 'ami-0a7da7479f37c924b', false, 'dummy_client_hash_2', false);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('us-west-1', 'ami-0bb9ea3cf997fb4ec', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('us-west-2', 'ami-0a2e1892cafee19d4', false, 'dummy_client_hash', true);
-INSERT INTO hardware.region_to_ami (region_name, ami_id, region_enabled, client_commit_hash, ami_active) VALUES ('ca-central-1', 'ami-09b2b490cdf85f1f1', false, 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('eu-central-1', 'ami-04e791bf07624272e', 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('eu-west-1', 'ami-04b85bdd938419795', 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-1', 'ami-00c40082600650a9a', 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-1', 'ami-00c40082600650a9b', 'dummy_client_hash_2', false);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-2', 'ami-0a7da7479f37c924a', 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-2', 'ami-0a7da7479f37c924b', 'dummy_client_hash_2', false);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-west-1', 'ami-0bb9ea3cf997fb4ec', 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-west-2', 'ami-0a2e1892cafee19d4', 'dummy_client_hash', true);
+INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('ca-central-1', 'ami-09b2b490cdf85f1f1', 'dummy_client_hash', true);
 
 
 --
@@ -59,4 +59,3 @@ INSERT INTO sales.email_templates (id, url, title) VALUES ('FEEDBACK', 'https://
 --
 -- PostgreSQL database dump complete
 --
-

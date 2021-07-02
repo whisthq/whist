@@ -54,26 +54,24 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 
 	instanceName, err := aws.GetInstanceName()
 	if err != nil {
-		return utils.MakeError("Couldn't verify mandelbox for user %s: couldn't get instance name: %s", userID, err)
+		return utils.MakeError("Couldn't verify mandelbox %s for user %s: couldn't get instance name: %s", mandelboxID, userID, err)
 	}
 
 	q := queries.NewQuerier(tx)
-	rows, err := q.FindMandelboxesForUser(context.Background(), string(instanceName), string(userID))
+	rows, err := q.FindMandelboxByID(context.Background(), string(mandelboxID))
 	if err != nil {
-		return utils.MakeError("Couldn't verify mandelbox for user %s: couldn't verify query: %s", userID, err)
+		return utils.MakeError("Couldn't verify mandelbox %s for user %s: error running query: %s", mandelboxID, userID, err)
 	}
 
 	// We expect that `rows` should contain exactly one, allocated (but not
 	// running) mandelbox with a matching mandelbox ID. Any other state is an
 	// error.
 	if len(rows) == 0 {
-		return utils.MakeError("Couldn't verify mandelbox for user %s: didn't find any mandelbox rows in the database for this user on this instance!", userID)
-	} else if len(rows) > 1 {
-		return utils.MakeError("Couldn't verify mandelbox for user %s: found too many mandelbox rows in the database for this user on this instance! Rows: %#v", userID, rows)
+		return utils.MakeError("Couldn't verify mandelbox %s for user %s: didn't find matching row in the database.", mandelboxID, userID)
 	} else if rows[0].Status.String != string(MandelboxStatusAllocated) {
-		return utils.MakeError(`Couldn't verify mandelbox for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, userID, MandelboxStatusAllocated, rows[0].Status.String)
-	} else if rows[0].MandelboxID.String != string(mandelboxID) {
-		return utils.MakeError(`Couldn't verify mandelbox for user %s: found an allocated mandelbox row in the database, but it has the wrong mandelboxID. Expected "%s", got "%s".`, userID, rows[0].MandelboxID.String, mandelboxID)
+		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, rows[0].Status.String)
+	} else if rows[0].InstanceName.String != string(instanceName) {
+		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName. Expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceName.String, instanceName)
 	}
 
 	// Mark the container as connecting. We can't just use WriteMandelboxStatus
