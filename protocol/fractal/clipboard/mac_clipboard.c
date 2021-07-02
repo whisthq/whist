@@ -212,7 +212,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             char* string_data = safe_malloc(cb->size + 1);
             memset(string_data, 0, cb->size + 1);
             memcpy(string_data, cb->data, cb->size);
-            LOG_INFO("SetClipboard to Text: %s", string_data);
+            LOG_INFO("SetClipboard to Text with size %d", cb->size);
             clipboard_set_string(string_data);
             free(string_data);
             break;
