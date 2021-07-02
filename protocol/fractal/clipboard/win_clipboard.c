@@ -432,16 +432,18 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
         LOG_ERROR("GlobalAlloc failed!");
         return h_mem;
     }
-    LPTSTR lptstr = GlobalLock(h_mem);
+    // We use LPSTR instead of LPTSTR because LPSTR is always equivalent to (char*)
+    //     while LPTSTR can have larger sized characters, leading to size overflows
+    LPSTR lpstr = GlobalLock(h_mem);
 
-    if (lptstr == NULL) {
+    if (lpstr == NULL) {
         LOG_ERROR("get_global_alloc GlobalLock failed! Size %d", alloc_len);
         return h_mem;
     }
 
-    memcpy(lptstr, buf, len);
+    memcpy(lpstr, buf, len);
     if (null_char) {
-        memset(lptstr + len, 0, 1);
+        memset(lpstr + len, 0, 1);
     }
     GlobalUnlock(h_mem);
 
@@ -466,7 +468,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
 
     switch (cb->type) {
         case CLIPBOARD_TEXT:
-            LOG_INFO("SetClipboard to Text: %s", cb->data);
+            LOG_INFO("SetClipboard to Text with size: %d", cb->size);
             if (cb->size > 0) {
                 cf_type = CF_TEXT;
                 h_mem = get_global_alloc(cb->data, cb->size, true);  // add null char at end (true)
