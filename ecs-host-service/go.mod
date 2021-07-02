@@ -8,7 +8,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.17 // indirect
 	github.com/NVIDIA/go-nvml v0.11.1-0
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
-	github.com/aws/aws-sdk-go v1.38.52
+	github.com/aws/aws-sdk-go v1.38.70
 	github.com/aws/aws-sdk-go-v2/config v1.3.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.9.0
 	github.com/awslabs/go-config-generator-for-fluentd-and-fluentbit v0.0.0-20210308162251-8959c62cb8f9
