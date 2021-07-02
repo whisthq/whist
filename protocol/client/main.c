@@ -34,6 +34,7 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
+#include <fractal/utils/metrics.h>
 #include <fractal/utils/logging.h>
 #include <fractal/utils/error_monitor.h>
 #include "sdlscreeninfo.h"
@@ -736,7 +737,7 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
     init_logger();
-
+    init_tracking();
     handle_single_icon_launch_client_app(argc, argv);
 
     init_networking();
@@ -978,6 +979,7 @@ int main(int argc, char* argv[]) {
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
     free_parsed_args();
+    destroy_tracking();
     destroy_logger();
 
     // We must call this after destroying the logger so that all

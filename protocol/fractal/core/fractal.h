@@ -543,6 +543,7 @@ typedef enum FractalExitCode {
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
     unsigned int id;
+    int metrics_id;
     union {
         FractalKeyboardMessage keyboard;                  ///< Keyboard message.
         FractalMouseButtonMessage mouseButton;            ///< Mouse button message.

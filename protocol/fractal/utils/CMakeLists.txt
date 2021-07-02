@@ -6,6 +6,7 @@ add_library(fractalUtils STATIC
         error_monitor.h
         json.h
         window_name.h
+        metrics.h
         aes.c
         clock.c
         avpacket_buffer.c
@@ -16,6 +17,7 @@ add_library(fractalUtils STATIC
         sysinfo.c
         png.c
         lodepng.c
+        metrics.c
         mouse.c
         rwlock.c
         color.c

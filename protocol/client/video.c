@@ -29,6 +29,7 @@ Includes
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
+#include <fractal/utils/metrics.h>
 #include "network.h"
 
 #define USE_HARDWARE true
@@ -1169,6 +1170,10 @@ int render_video() {
                 }
                 // this call takes up to 16 ms: takes 8 ms on average.
                 SDL_RenderPresent(renderer);
+
+                for (int i = 0; i < MAX_NUM_TRACKED_PACKETS && frame->metrics_ids[i] > -1; ++i) {
+                    finish_tracking_packet(frame->metrics_ids[i]);
+                }
             }
 
             safe_SDL_UnlockMutex(render_mutex);

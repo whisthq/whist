@@ -22,6 +22,7 @@ Includes
 */
 
 #include "input_driver.h"
+#include <fractal/utils/metrics.h>
 
 /*
 ============================
@@ -152,6 +153,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
             ret = emit_key_event(input_device, fmsg->keyboard.code, fmsg->keyboard.pressed);
+            track_packet(fmsg->metrics_id);
             break;
         case MESSAGE_MOUSE_MOTION:
             ret = emit_mouse_motion_event(input_device, fmsg->mouseMotion.x, fmsg->mouseMotion.y,

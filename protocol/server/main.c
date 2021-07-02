@@ -40,6 +40,7 @@ Includes
 #include <fractal/core/fractalgetopt.h>
 #include <fractal/core/fractal.h>
 #include <fractal/input/input.h>
+#include <fractal/utils/metrics.h>
 #include <fractal/utils/error_monitor.h>
 #include <fractal/video/transfercapture.h>
 #include "client.h"
@@ -169,6 +170,7 @@ void sig_handler(int sig_num) {
 int main(int argc, char* argv[]) {
     fractal_init_multithreading();
     init_logger();
+    init_tracking();
 
     int ret = server_parse_args(argc, argv);
     if (ret == -1) {
@@ -422,6 +424,7 @@ int main(int argc, char* argv[]) {
     WSACleanup();
 #endif
 
+    destroy_tracking();
     destroy_logger();
     error_monitor_shutdown();
     destroy_clients();

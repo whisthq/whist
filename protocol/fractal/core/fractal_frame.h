@@ -3,6 +3,7 @@
 
 #include "fractal.h"
 #include <fractal/cursor/cursor.h>
+#include <fractal/utils/metrics.h>
 
 /**
  * @brief   VideoFrame struct.
@@ -18,6 +19,8 @@ typedef struct VideoFrame {
     CodecType codec_type;
     bool is_iframe;
     int num_peer_update_msgs;
+
+    int metrics_ids[MAX_NUM_TRACKED_PACKETS];
 
     bool has_cursor;
     int videodata_length;

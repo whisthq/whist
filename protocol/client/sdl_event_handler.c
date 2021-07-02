@@ -20,6 +20,7 @@ Includes
 #include "sdl_event_handler.h"
 
 #include <fractal/utils/logging.h>
+#include <fractal/utils/metrics.h>
 #include "sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "audio.h"
@@ -241,6 +242,7 @@ int handle_key_up_down(SDL_Event *event) {
     fmsg.keyboard.code = keycode;
     fmsg.keyboard.pressed = is_pressed;
     fmsg.keyboard.mod = event->key.keysym.mod;
+    fmsg.metrics_id = track_new_packet();
     send_fmsg(&fmsg);
 
     return 0;

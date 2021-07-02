@@ -492,6 +492,10 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      */
     // grab_params.ppBitStreamBuffer = (void**)&device->frame;
 
+    int* tracked_packets = flush_tracked_packets();
+    memcpy(device->metrics_ids, tracked_packets, sizeof(device->metrics_ids));
+    free(tracked_packets);
+
     /*
      * Capture a new frame.
      */

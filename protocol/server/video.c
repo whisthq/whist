@@ -467,6 +467,10 @@ int32_t multithreaded_send_video(void* opaque) {
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
+                    if (encoder->encoded_frame_size != 0) {
+                        memcpy(frame->metrics_ids, device->nvidia_capture_device.metrics_ids,
+                               sizeof(frame->metrics_ids));
+                    }
 
                     static FractalCursorImage cursor_cache[2];
                     static int last_cursor_id = 0;
