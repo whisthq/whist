@@ -374,7 +374,7 @@ CREATE TABLE logging.t_region_history (
         old_val        json
 );
 
-CREATE FUNCTION hardware.change_trigger() RETURNS trigger
+CREATE FUNCTION hardware.change_trigger_regions() RETURNS trigger
   LANGUAGE 'plpgsql' AS $$
        BEGIN
          IF TG_OP = 'INSERT'
@@ -404,7 +404,7 @@ CREATE FUNCTION hardware.change_trigger() RETURNS trigger
 $$;
 
 CREATE TRIGGER t BEFORE INSERT OR UPDATE OR DELETE ON hardware.region_to_ami
-        FOR EACH ROW EXECUTE PROCEDURE hardware.change_trigger();
+        FOR EACH ROW EXECUTE PROCEDURE hardware.change_trigger_regions();
 --
 -- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
