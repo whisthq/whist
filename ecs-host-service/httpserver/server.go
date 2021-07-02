@@ -85,7 +85,7 @@ type SpinUpMandelboxRequest struct {
 	UserID                types.UserID                `json:"user_id"`                 // User ID of the mandelbox user
 	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        auth.RawJWT                 `json:"jwt_access_token"`        // User's JWT access token
-	MandelboxID           types.FractalID             `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
+	MandelboxID           types.MandelboxID           `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
 	resultChan            chan requestResult          // Channel to pass the request result between goroutines
 }
 

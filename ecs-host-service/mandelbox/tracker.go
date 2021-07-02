@@ -13,21 +13,21 @@ import (
 // _can_ do this because Mandelboxes can only be created using New(), since the
 // underlying datatype is not exported.
 
-var tracker = make(map[types.FractalID]Mandelbox)
+var tracker = make(map[types.MandelboxID]Mandelbox)
 var trackerLock sync.RWMutex
 
 func trackMandelbox(fc Mandelbox) {
 	trackerLock.Lock()
 	defer trackerLock.Unlock()
 
-	tracker[fc.GetFractalID()] = fc
+	tracker[fc.GetMandelboxID()] = fc
 }
 
 func untrackMandelbox(fc Mandelbox) {
 	trackerLock.Lock()
 	defer trackerLock.Unlock()
 
-	delete(tracker, fc.GetFractalID())
+	delete(tracker, fc.GetMandelboxID())
 }
 
 // LookUpByDockerID finds a mandelbox by its Docker ID. Note that this function

@@ -10,6 +10,9 @@ import (
 )
 
 func init() {
+	// Set some options for the Go logging package.
+	log.Default().SetFlags(log.Ldate | log.Lmicroseconds | log.LUTC)
+
 	// The first thing we want to do is to initialize logzio and Sentry so that
 	// we can catch any errors that might occur, or logs if we print them.
 

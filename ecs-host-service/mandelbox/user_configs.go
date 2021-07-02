@@ -44,7 +44,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	}
 
 	if len(c.configEncryptionToken) == 0 {
-		return utils.MakeError("Cannot get user configs for FractalID %s since ConfigEncryptionToken is empty", c.fractalID)
+		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
 	// Retrieve config from s3
@@ -75,7 +75,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		"-pass", "pass:"+string(c.configEncryptionToken), "-pbkdf2")
 	decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 	if err != nil {
-		return utils.MakeError("Could not decrypt config for userID %s and fractalID %s: %s. Output: %s", c.userID, c.GetFractalID(), err, decryptConfigOutput)
+		return utils.MakeError("Could not decrypt config for userID %s and mandelboxID %s: %s. Output: %s", c.userID, c.GetMandelboxID(), err, decryptConfigOutput)
 	}
 	logger.Infof("Decrypted config to %s", decTarPath)
 
@@ -100,12 +100,12 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 // config to s3.
 func (c *mandelboxData) backupUserConfigs() error {
 	if len(c.userID) == 0 {
-		logger.Infof("Cannot save user configs for FractalID %s since UserID is empty.", c.fractalID)
+		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", c.mandelboxID)
 		return nil
 	}
 
 	if len(c.configEncryptionToken) == 0 {
-		return utils.MakeError("Cannot save user configs for FractalID %s since ConfigEncryptionToken is empty", c.fractalID)
+		return utils.MakeError("Cannot save user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
 	configDir := c.getUserConfigDir()
@@ -159,7 +159,7 @@ func (c *mandelboxData) cleanUserConfigDir() {
 }
 
 func (c *mandelboxData) getUserConfigDir() string {
-	return utils.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.fractalID)
+	return utils.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.mandelboxID)
 }
 
 func (c *mandelboxData) getS3ConfigPath() string {
