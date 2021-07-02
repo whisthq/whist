@@ -274,7 +274,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing resources for protocol: %s", err)
 		return
 	}
-	if err := fc.WriteLocalDevValues(10); err != nil {
+	if err := fc.WriteLocalDevValues(30); err != nil {
 		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}
