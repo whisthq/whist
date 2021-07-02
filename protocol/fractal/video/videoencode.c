@@ -873,7 +873,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
 
 bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
                          CodecType codec) {
-    if (encoder->nvidia_encoder) {
+    if (encoder->capture_is_on_nvidia) {
 #ifdef __linux__
         return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate, codec);
 #else
@@ -915,12 +915,14 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
             encoder (VideoEncoder*): Encoder containing the frame
     */
     if (encoder->capture_is_on_nvidia) {
-        return;
+        nvidia_set_iframe(encoder->nvidia_encoder);
+    } else {
+        LOG_ERROR("ffmpeg set_iframe doesn't work very well! This might not work!");
+        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
+        encoder->sw_frame->pts +=
+            encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
+        encoder->sw_frame->key_frame = 1;
     }
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-    encoder->sw_frame->pts +=
-        encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
-    encoder->sw_frame->key_frame = 1;
 }
 
 void video_encoder_unset_iframe(VideoEncoder *encoder) {
@@ -931,10 +933,11 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
             encoder (VideoEncoder*): encoder containing the frame
     */
     if (encoder->capture_is_on_nvidia) {
-        return;
+        nvidia_unset_iframe(encoder->nvidia_encoder);
+    } else {
+        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+        encoder->sw_frame->key_frame = 0;
     }
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-    encoder->sw_frame->key_frame = 0;
 }
 
 void destroy_video_encoder(VideoEncoder *encoder) {
