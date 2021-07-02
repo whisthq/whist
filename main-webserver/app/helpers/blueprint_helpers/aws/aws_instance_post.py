@@ -195,7 +195,7 @@ def do_scale_up_if_necessary(
                     aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                     mandelbox_capacity=base_number_free_mandelboxes,
                     last_updated_utc_unix_ms=-1,
-                    creation_time_utc_unix_ms=int(time.time()),
+                    creation_time_utc_unix_ms=int(time.time() * 1000),
                     status=InstanceState.PRE_CONNECTION,
                     commit_hash=ami_obj.client_commit_hash,
                     ip="",  # Will be set by `host_service` once it boots up.

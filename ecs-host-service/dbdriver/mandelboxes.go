@@ -154,9 +154,9 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
 		InstanceName:                    string(instanceName),
 		AllocatedStatus:                 string(MandelboxStatusAllocated),
-		AllocatedCreationTimeThreshold:  int(time.Now().Add(-1*allocatedAge).UnixNano() / 1000),
+		AllocatedCreationTimeThreshold:  int(time.Now().Add(-1*allocatedAge).UnixNano() / 1_000_000),
 		ConnectingStatus:                string(MandelboxStatusConnecting),
-		ConnectingCreationTimeThreshold: int(time.Now().Add(-1*connectingAge).UnixNano() / 1000),
+		ConnectingCreationTimeThreshold: int(time.Now().Add(-1*connectingAge).UnixNano() / 1_000_000),
 	})
 	if err != nil {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes from database: %s", err)
