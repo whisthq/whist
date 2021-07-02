@@ -123,7 +123,7 @@ def bulk_instance():
             instance_name=inst_name,
             cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
-            creation_time_utc_unix_ms=int(time.time() * 1000),
+            creation_time_utc_unix_ms=kwargs.get("creation_time_utc_unix_ms", time.time() * 1000),
             mandelbox_capacity=mandelbox_capacity if mandelbox_capacity is not None else 10,
             ip=kwargs.get("ip", "123.456.789"),
             aws_ami_id=kwargs.get("aws_ami_id", "test"),

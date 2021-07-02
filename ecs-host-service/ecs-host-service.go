@@ -76,11 +76,11 @@ func startDockerDaemon(globalCancel context.CancelFunc) {
 // createDockerClient creates a docker client. It returns an error if creation
 // failed.
 func createDockerClient() (*dockerclient.Client, error) {
-	if client, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation()); err != nil {
+	client, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation())
+	if err != nil {
 		return nil, utils.MakeError("Error creating new Docker client: %s", err)
-	} else {
-		return client, nil
 	}
+	return client, nil
 }
 
 // "Warm up" Docker. This is necessary because for some reason the first
@@ -161,8 +161,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		defer fc.Close()
 
 		// Assign port bindings for the mandelbox (necessary for
-		// `fc.WriteResourcesForProtocol()`, though we don't need to actually pass
-		// them into the mandelbox)
+		// `fc.WriteMandelboxParams()`, though we don't need to actually pass them
+		// into the mandelbox)
 		if err := fc.AssignPortBindings([]portbindings.PortBinding{
 			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
@@ -177,17 +177,20 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 		devices := fc.GetDeviceMappings()
 
-		// Allocate a TTY
+		// Allocate a TTY and GPU
 		if err := fc.InitializeTTY(); err != nil {
 			return utils.MakeError("Error initializing TTY: %s", err)
+		}
+		if err := fc.AssignGPU(); err != nil {
+			return utils.MakeError("Error assigning GPU: %s", err)
 		}
 
 		aesKey := utils.RandHex(16)
 		config := dockercontainer.Config{
 			Env: []string{
 				utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+				utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 				"NVIDIA_DRIVER_CAPABILITIES=all",
-				"NVIDIA_VISIBLE_DEVICES=all",
 			},
 			Image:        image,
 			AttachStdin:  true,
@@ -255,8 +258,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 		logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
 
-		if err := fc.WriteResourcesForProtocol(); err != nil {
-			return utils.MakeError("Error writing resources for protocol: %s", err)
+		if err := fc.WriteMandelboxParams(); err != nil {
+			return utils.MakeError("Error writing parameters for mandelbox: %s", err)
 		}
 		err = fc.MarkReady()
 		if err != nil {
@@ -383,7 +386,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error initializing TTY: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): successfully initialized TTY.")
+	// Assign a GPU to the mandelbox
+	if err := fc.AssignGPU(); err != nil {
+		logAndReturnError("Error assigning GPU: %s", err)
+		return
+	}
+	logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
 
 	appName := types.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
 
@@ -399,8 +407,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	aesKey := utils.RandHex(16)
 	envs := []string{
 		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
-		"NVIDIA_VISIBLE_DEVICES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
 	}
 	config := dockercontainer.Config{
@@ -493,8 +501,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with DockerID %s and AppName %s", dockerID, appName)
 
-	if err := fc.WriteResourcesForProtocol(); err != nil {
-		logAndReturnError("Error writing resources for protocol: %s", err)
+	if err := fc.WriteMandelboxParams(); err != nil {
+		logAndReturnError("Error writing mandelbox params: %s", err)
 		return
 	}
 	// Let server protocol wait 30 seconds by default before client connects.
@@ -508,7 +516,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol for mandelbox %s", req.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", req.MandelboxID)
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
@@ -696,6 +704,9 @@ func main() {
 		// Remove our row from the database and close out the database driver.
 		dbdriver.Close()
 
+		// Close out our metrics collection.
+		metrics.Close()
+
 		// Drain to our remote logging providers, but don't yet stop recording new
 		// events, in case the shutdown fails.
 		logger.FlushLogzio()
@@ -704,7 +715,13 @@ func main() {
 		logger.Info("Finished host service shutdown procedure. Finally exiting...")
 		if shutdownInstanceOnExit {
 			if err := exec.Command("shutdown", "now").Run(); err != nil {
-				logger.Errorf("Couldn't shut down instance: %s", err)
+				if strings.TrimSpace(err.Error()) == "signal: terminated" {
+					// The instance seems to shut down even when this error is fired, so
+					// we'll just ignore it. We still `logger.Info()` it just in case.
+					logger.Infof("Shutdown command returned 'signal: terminated' error. Ignoring it.")
+				} else {
+					logger.Errorf("Couldn't shut down instance: %s", err)
+				}
 			}
 		}
 
@@ -722,9 +739,6 @@ func main() {
 	if err := dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
 		logger.Panic(globalCancel, err)
 	}
-
-	// Start collecting metrics
-	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
 
 	// Log the instance name we're running on
 	instanceName, err := aws.GetInstanceName()
@@ -754,7 +768,7 @@ func main() {
 		// TODO: make this a bit more robust
 		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
 			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
-			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down...")
+			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down.... Error: %s", err)
 			shutdownInstanceOnExit = true
 			globalCancel()
 		} else {
@@ -775,7 +789,7 @@ func main() {
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	// Wait for either the global context to get cancelled by a worker goroutine,
 	// or for us to receive an interrupt. This needs to be the end of main().

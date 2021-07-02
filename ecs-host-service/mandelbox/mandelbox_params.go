@@ -8,24 +8,29 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
-func (c *mandelboxData) WriteResourcesForProtocol() error {
+func (c *mandelboxData) WriteMandelboxParams() error {
 	var err error
 
 	// Write identifying host port
 	p, err := c.GetIdentifyingHostPort()
 	if err != nil {
-		return utils.MakeError("Couldn't write resources for protocol: %s", err)
+		return utils.MakeError("Couldn't write mandelbox params: %s", err)
 	}
-	err = c.writeResourceMappingToFile("hostPort_for_my_32262_tcp", utils.Sprintf("%d", p))
-	if err != nil {
+	if err = c.writeResourceMappingToFile("hostPort_for_my_32262_tcp", utils.Sprintf("%d", p)); err != nil {
 		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}
 
 	// Write TTY. Note that we use `c.GetTTY()` instead of `c.tty` for the
 	// locking.
-	err = c.writeResourceMappingToFile("tty", utils.Sprintf("%d", c.GetTTY()))
-	if err != nil {
+	if err := c.writeResourceMappingToFile("tty", utils.Sprintf("%d", c.GetTTY())); err != nil {
+		// Don't need to wrap err here because it already contains the relevant info
+		return err
+	}
+
+	// Write GPU Index. Note that we use `c.GetGPU()` instead of `c.tty` for
+	// the locking.
+	if err := c.writeResourceMappingToFile("gpu_index", utils.Sprintf("%d", c.GetGPU())); err != nil {
 		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}

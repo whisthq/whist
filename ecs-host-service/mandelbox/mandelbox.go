@@ -12,6 +12,7 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
+	"github.com/fractal/fractal/ecs-host-service/mandelbox/gpus"
 	"github.com/fractal/fractal/ecs-host-service/mandelbox/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/mandelbox/ttys"
 	"github.com/fractal/fractal/ecs-host-service/mandelbox/types"
@@ -34,6 +35,9 @@ type Mandelbox interface {
 
 	InitializeTTY() error
 	GetTTY() ttys.TTY
+
+	AssignGPU() error
+	GetGPU() gpus.Index
 
 	// RegisterCreation is used to tell us the mapping between Docker IDs,
 	// AppNames, and MandelboxIDs (which are used to track mandelboxes before they
@@ -63,7 +67,7 @@ type Mandelbox interface {
 	// corresponding to port 32262/tcp in the mandelbox, in a directory
 	// accessible only to this mandelbox. These data are special because
 	// they are computed and written when the mandelbox is created.
-	WriteResourcesForProtocol() error
+	WriteMandelboxParams() error
 	// WriteStartValues writes a file containing the DPI assigned to a directory
 	// accessible to only this mandelbox. These data are only known once a
 	// mandelbox is assigned to a user.
@@ -143,6 +147,12 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully freed TTY %v for mandelbox %s", c.tty, c.mandelboxID)
 		c.tty = 0
 
+		if err := gpus.Free(c.gpuIndex); err != nil {
+			logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", c.gpuIndex, c.mandelboxID, err)
+		} else {
+			logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
+		}
+
 		// Clean resource mappings
 		c.cleanResourceMappingDir()
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", c.mandelboxID)
@@ -184,6 +194,7 @@ type mandelboxData struct {
 	appName  types.AppName
 	userID   types.UserID
 	tty      ttys.TTY
+	gpuIndex gpus.Index
 
 	configEncryptionToken types.ConfigEncryptionToken
 	clientAppAccessToken  types.ClientAppAccessToken
@@ -253,6 +264,26 @@ func (c *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.
 func (c *mandelboxData) GetIdentifyingHostPort() (uint16, error) {
 	// Don't lock ourselves, since `c.GetHostPort()` will lock for us.
 	return c.GetHostPort(32262, portbindings.TransportProtocolTCP)
+}
+
+func (c *mandelboxData) AssignGPU() error {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	gpu, err := gpus.Allocate()
+	if err != nil {
+		return err
+	}
+
+	c.gpuIndex = gpu
+	return nil
+}
+
+func (c *mandelboxData) GetGPU() gpus.Index {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+
+	return c.gpuIndex
 }
 
 func (c *mandelboxData) InitializeTTY() error {
