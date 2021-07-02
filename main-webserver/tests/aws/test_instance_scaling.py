@@ -4,7 +4,7 @@ from sys import maxsize
 import requests
 
 from flask import current_app
-from app.models import db, RegionToAmi
+from app.models import db, RegionToAmi, InstanceInfo
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
 
@@ -64,9 +64,7 @@ def test_scale_down_single_available(
         == f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}/drain_and_shutdown"
     )
     db.session.refresh(instance)
-    assert instance.status == "DRAINING"
-    assert len(call_list) == 1
-    assert call_list[0]["args"][1] == ["test_instance"]
+    assert instance.status == "HOST_SERVICE_UNRESPONSIVE"
 
 
 def test_scale_down_single_unavailable(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
@@ -126,8 +124,9 @@ def test_scale_down_multiple_available(hijack_ec2_calls, mock_get_num_new_instan
         instance_list.append(f"test_instance_{instance}")
     mock_get_num_new_instances(-desired_num)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert len(call_list) == desired_num
-    assert set(item["args"][1][0] for item in call_list) == set(instance_list)
+    for instance in instance_list:
+        instance_info = InstanceInfo.query.get(instance)
+        assert instance_info.status == "HOST_SERVICE_UNRESPONSIVE"
 
 
 def test_scale_down_multiple_partial_available(
@@ -141,6 +140,7 @@ def test_scale_down_multiple_partial_available(
     num_inactive = randint(1, desired_num - 1)
     num_active = desired_num - num_inactive
     instance_list = []
+    active_list = []
     for instance in range(num_inactive):
         bulk_instance(instance_name=f"test_instance_{instance}", aws_ami_id="test-AMI")
         instance_list.append(f"test_instance_{instance}")
@@ -150,10 +150,15 @@ def test_scale_down_multiple_partial_available(
             aws_ami_id="test-AMI",
             associated_mandelboxes=1,
         )
+        active_list.append(f"test_active_instance_{instance}")
     mock_get_num_new_instances(-desired_num)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert len(call_list) == num_inactive
-    assert set(item["args"][1][0] for item in call_list) == set(instance_list)
+    for instance in instance_list:
+        instance_info = InstanceInfo.query.get(instance)
+        assert instance_info.status == "HOST_SERVICE_UNRESPONSIVE"
+    for instance in active_list:
+        instance_info = InstanceInfo.query.get(instance)
+        assert instance_info.status == "ACTIVE"
 
 
 def test_buffer_wrong_region():
