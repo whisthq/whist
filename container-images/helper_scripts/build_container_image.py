@@ -106,8 +106,7 @@ def build_image_path(img_path):
     # Take all of the image_paths that depended on this img_path, and save them
     # as the next layer of image_paths to build
     next_layer = []
-    for lhs in dependencies.items():
-        dependency = dependencies[lhs]
+    for lhs, dependency in dependencies.items():
         if dependency and dependency == img_path:
             # Clear out dependencies that used to depend on img_path, as this
             # img_path has just finished building
@@ -132,8 +131,8 @@ def build_image_path(img_path):
 
 # Get all image_path's with no dependencies
 root_level_images = []
-for image_path in dependencies.items():
-    if dependencies[image_path] is None:
+for image_path, dependency in dependencies.items():
+    if dependency is None:
         root_level_images.append(image_path)
 
 # Build all root_level_images
