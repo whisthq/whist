@@ -223,7 +223,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);
         return -1;
     }
-    LOG_ERROR("SUCCESSE!!!!!!!!!!!!!!!!!!!!!!!!!!");
     encoder->input_buffer = map_params.mappedResource;
     encoder->buffer_fmt = map_params.mappedBufferFmt;
 
