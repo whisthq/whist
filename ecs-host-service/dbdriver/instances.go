@@ -133,10 +133,12 @@ func registerInstance() error {
 	})
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Couldn't register instance in database: row went missing!")
 	}
 	tx.Commit(context.Background())
 
-	logger.Infof("Result of registering instance in database: %s", result)
+	logger.Infof("Successfully registered %s instance in database.", instanceName)
 	return nil
 }
 
@@ -164,8 +166,10 @@ func markDraining() error {
 		string(instanceName))
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `hardware.instance_info`: %s", err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Couldn't mark instance as draining: row in database went missing!")
 	}
-	logger.Infof("Marked instance as draining in db with result %s", result)
+	logger.Infof("Successfully marked instance %s as draining in database.", instanceName)
 	return nil
 }
 
@@ -190,8 +194,10 @@ func unregisterInstance() error {
 	result, err := q.DeleteInstance(context.Background(), string(instanceName))
 	if err != nil {
 		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("UnregisterInstnace(): row went missing before we could delete it!")
 	}
-	logger.Infof("UnregisterInstance(): Output from delete command: %s", result)
+	logger.Infof("UnregisterInstance(): delete command successful")
 
 	return nil
 }
