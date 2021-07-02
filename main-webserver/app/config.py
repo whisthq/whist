@@ -202,7 +202,10 @@ class DeploymentConfig:
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     AWS_INSTANCE_TYPE_TO_LAUNCH = property(
         # Having a `fetch=True` can let us dynamically change the instance type to be launched.
-        getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g4dn.xlarge")
+        getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g4dn.12xlarge")
+    )
+    DESIRED_FREE_MANDELBOXES = property(
+        getter("DESIRED_FREE_MANDELBOXES", fetch=True, default=20)
     )
     DEFAULT_INSTANCE_BUFFER = property(
         # This will be as a count to launch new instances when we don't have

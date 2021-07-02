@@ -24,7 +24,6 @@ def _generate_region_to_ami_objs(ami_id, client_commit_hash, is_ami_active):
                 ami_id=ami_id,
                 client_commit_hash=client_commit_hash,
                 ami_active=is_ami_active,
-                region_enabled=True,
             )
         )
     return region_ami_objs

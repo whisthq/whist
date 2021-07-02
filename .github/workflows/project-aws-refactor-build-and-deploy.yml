@@ -247,7 +247,7 @@ jobs:
 
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
-            aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on
+            aws_new_ami_instance_type: g4dn.12xlarge # The AWS EC2 instance type our new AMI gets built on
             aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0f0d31217fb1acc76 # HARDCODED FOR AWS REFACTOR TO SAVE TIME
@@ -324,6 +324,8 @@ jobs:
                   else
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
+                  echo 'USE_PROD_LOGGING=true' >> app_env.env
+                  cat app_env.env
 
             - name: Generate packer_vars.json Packer Variables File for Building New AMI
               working-directory: ecs-host-setup
@@ -348,7 +350,7 @@ jobs:
                   data["source_ami"] = "${{ env.aws_source_ami_id }}"
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
                   # defined as a string of comma-separated values (no spaces) as required by Packer.
-                  data["destination_regions"] = []
+                  data["destination_regions"] = ["us-east-2"]
                   fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()

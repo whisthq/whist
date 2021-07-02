@@ -15,7 +15,10 @@ def test_single() -> None:
     ec2_client = EC2Client("us-east-1")
     up_start = time.time()
     ids = ec2_client.start_instances(
-        "ami-0dd76f917833aac4b", "test-instance", instance_type="t2.micro"
+        # TODO: ami-0dc2d3e4c0f9ebd18 is the id for base linux instance, 
+        # it might approach EOL probably at the end of year 2021 (?)
+        # Figure out a way to get an AMI that doesn't expire..
+        "ami-0dc2d3e4c0f9ebd18", "test-instance", instance_type="t2.micro"
     )
     # it takes a moment for AWS to recognize these instances exist
     time.sleep(5)

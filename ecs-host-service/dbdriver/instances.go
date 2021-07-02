@@ -121,7 +121,7 @@ func RegisterInstance() error {
 		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
 		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
 		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
-		MandelboxCapacity:    4 * latestMetrics.NumberOfGPUs,
+		MandelboxCapacity:    latestMetrics.NumberOfGPUs,
 		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1_000_000),
 		Ip: pgtype.Varchar{
 			String: publicIP4.String(),
