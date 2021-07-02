@@ -43,7 +43,6 @@ def insert_new_amis(
             ami_id=ami_id,
             client_commit_hash=client_commit_hash,
             ami_active=False,
-            region_enabled=True,
         )
         new_amis.append(new_ami)
     db.session.add_all(new_amis)
@@ -106,6 +105,12 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     fractal_logger.info(
         f"mark_instance_for_draining called for instance {active_instance.instance_name}"
     )
+    if str(active_instance.ip) == "":
+        active_instance.status = InstanceState.DRAINING
+        fractal_logger.info(f"instance {active_instance.instance_name} marked as draining")
+        job_status = True
+        db.session.commit()
+        return job_status
     try:
         auth0_client = Auth0Client(
             current_app.config["AUTH0_DOMAIN"],
@@ -139,18 +144,18 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     return job_status
 
 
-def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo]:
+def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[InstanceInfo]:
     """
     Fetches the instances that are either
         ACTIVE - Instances that were launched and have potentially users running their applications on it.
         PRE_CONNECTION - Instances that are launched few instants ago but haven't
                         marked themselves active in the database through host service.
     Args:
-        active_amis -> List of active AMIs before the upgrade started. We will be using this list to differntiate
+        amis_to_exclude -> List of new AMIs from this upgrade. We will be using this list to differentiate
         between the instances launched from new AMIs that we are going to upgrade to and the current/older AMIs.
         We can just mark all the running instances as DRAINING before we start the instances with new AMI but that
         is going to increase the length of our unavailable window for users. This reduces the window by the time
-        it takes to spin up an AWS instance which can be anywhere from seconds to few minutes.
+        it takes to spin up and warm up an AWS instance, which can be several minutes.
     Returns:
         List[InstanceInfo] -> List of instances that are currently running.
     """
@@ -162,7 +167,7 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
                     InstanceInfo.status.like(InstanceState.ACTIVE),
                     InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
                 ),
-                InstanceInfo.aws_ami_id.in_(active_amis),
+                InstanceInfo.aws_ami_id.not_in(amis_to_exclude),
             )
         )
         .with_for_update()
@@ -251,12 +256,12 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # If any thread here failed, fail the workflow
         raise Exception("AMIS failed to upgrade, see logs")
 
-    current_active_amis_str = [
-        current_active_ami.ami_id for current_active_ami in current_active_amis
-    ]  # Fetching the AMI strings for instances running with current/older AMIs.
+    new_amis_str = [
+        new_ami.ami_id for new_ami in new_amis
+    ]  # Fetching the AMI strings for instances running with new AMIs.
     # This will be used to select only the instances with current/older AMIs
 
-    current_running_instances = fetch_current_running_instances(current_active_amis_str)
+    current_running_instances = fetch_current_running_instances(new_amis_str)
     for active_instance in current_running_instances:
         # At this point, we should still have the lock that we grabbed when we
         # invoked the `fetch_current_running_instances` function. Using this
@@ -266,17 +271,17 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
-    active_instances_draining_status = True
+    mark_instance_for_draining_failures = []
     for active_instance in current_running_instances:
         # At this point, the instance is marked as DRAINING in the database. But we need
         # to inform the HOST_SERVICE that we have marked the instance as draining.
         active_instance_draining_status = mark_instance_for_draining(active_instance)
         if active_instance_draining_status is False:
             # Mark the status for draining all instances as False when marking any instance draining fails.
-            fractal_logger.info(
+            fractal_logger.error(
                 f"Failed to mark instance: {active_instance.instance_name} for draining through host service."
             )
-            active_instances_draining_status = False
+            mark_instance_for_draining_failures.append(active_instance.instance_name)
 
     for new_ami in new_amis:
         new_ami.protected_from_scale_down = False
@@ -284,12 +289,15 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     for current_ami in current_active_amis:
         current_ami.ami_active = False
-        current_ami.region_enabled = False
 
     # Reset the list here to ensure no thread status info leaks
     region_wise_upgrade_threads = []
     db.session.commit()
 
     fractal_logger.info("Finished performing AMI upgrade.")
-    if active_instances_draining_status is False and not current_app.testing:
+    if len(mark_instance_for_draining_failures) > 0 and not current_app.testing:
+        for failed_instance in mark_instance_for_draining_failures:
+            fractal_logger.error(
+                f"Failed to mark instance: {failed_instance} as draining through host service"
+            )
         sys.exit(1)

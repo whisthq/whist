@@ -1,7 +1,9 @@
 from random import randint
 from sys import maxsize
+from time import time
 
 import requests
+
 
 from flask import current_app
 from app.models import db, RegionToAmi, InstanceInfo
@@ -180,6 +182,60 @@ def test_scale_down_multiple_partial_available(
         assert instance_info.status == InstanceState.ACTIVE.value
 
 
+def test_lingering_instances(monkeypatch, bulk_instance, region_name):
+    """
+    Tests that lingering_instances properly drains only those instances that are
+    inactive for the specified period of time:
+    2 min for running instances, 15 for preconnected instances
+
+    """
+    call_set = set()
+
+    def _helper(instance):
+        call_set.add(instance.instance_name)
+
+    monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+    bulk_instance(
+        instance_name=f"active_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+    instance_bad_normal = bulk_instance(
+        instance_name=f"inactive_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        last_updated_utc_unix_ms=((time() - 121) * 1000),
+        creation_time_utc_unix_ms=((time() - 121) * 1000),
+    )
+    instance_bad_preconnect = bulk_instance(
+        instance_name=f"inactive_starting_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 1801) * 1000),
+        creation_time_utc_unix_ms=((time() - 1801) * 1000),
+    )
+    bulk_instance(
+        instance_name=f"still starting",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
+    )
+    bulk_instance(
+        instance_name=f"active_starting_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 121) * 1000),
+        creation_time_utc_unix_ms=((time() - 121) * 1000),
+    )
+    aws_funcs.check_and_handle_lingering_instances()
+    assert call_set == {instance_bad_normal.instance_name, instance_bad_preconnect.instance_name}
+
+
 def test_buffer_wrong_region():
     """
     checks that we return -sys.maxsize when we ask about a nonexistent region
@@ -213,41 +269,60 @@ def test_buffer_part_full(bulk_instance, region_ami_pair):
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1
 
 
-def test_buffer_good(bulk_instance, region_ami_pair):
+def test_buffer_good(app, bulk_instance, region_ami_pair):
     """
-    Tests that we don't ask for a new instance when there's an empty instance running
+    Tests that we don't ask for a new instance when there's an empty instance running with capacity
+    to accomodate our desired buffer capacity for mandelboxes
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(aws_ami_id=ami_id, mandelbox_capacity=10, location=region_name)
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    bulk_instance(
+        aws_ami_id=ami_id, mandelbox_capacity=desired_free_mandelboxes, location=region_name
+    )
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
 
 
-def test_buffer_with_multiple(bulk_instance, region_ami_pair):
+def test_buffer_with_multiple(app, bulk_instance, region_ami_pair):
     """
     Tests that we don't ask for a new instance when we have enough space in multiple instances
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=5, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=5, mandelbox_capacity=10, location=region_name
-    )
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+
+    first_instance_buffer = int(desired_free_mandelboxes / 2)
+    second_instance_buffer = desired_free_mandelboxes - first_instance_buffer
+
+    for instance_buffer in [first_instance_buffer, second_instance_buffer]:
+        bulk_instance(
+            aws_ami_id=ami_id,
+            associated_mandelboxes=mandelbox_capacity - instance_buffer,
+            mandelbox_capacity=mandelbox_capacity,
+            location=region_name,
+        )
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
 
 
-def test_buffer_with_multiple_draining(bulk_instance, region_ami_pair):
+def test_buffer_with_multiple_draining(app, bulk_instance, region_ami_pair):
     """
     Tests that we don't ask for a new instance when we have enough space in multiple instances
     and also that draining instances are ignored
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=5, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=5, mandelbox_capacity=10, location=region_name
-    )
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+
+    first_instance_buffer = int(desired_free_mandelboxes / 2)
+    second_instance_buffer = desired_free_mandelboxes - first_instance_buffer
+
+    for instance_buffer in [first_instance_buffer, second_instance_buffer]:
+        bulk_instance(
+            aws_ami_id=ami_id,
+            associated_mandelboxes=mandelbox_capacity - instance_buffer,
+            mandelbox_capacity=mandelbox_capacity,
+            location=region_name,
+        )
+
     bulk_instance(
         aws_ami_id=ami_id,
         associated_mandelboxes=0,
@@ -265,73 +340,132 @@ def test_buffer_with_multiple_draining(bulk_instance, region_ami_pair):
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
 
 
-def test_buffer_overfull(bulk_instance, region_ami_pair):
+def test_buffer_overfull(app, bulk_instance, region_ami_pair):
     """
     Tests that we ask to scale down an instance when we have too much free space
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=0, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=0, mandelbox_capacity=10, location=region_name
-    )
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+    buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
+
+    buffer_capacity_available = 0
+    while True:
+        current_instance_buffer = randint(0, mandelbox_capacity)
+        bulk_instance(
+            aws_ami_id=ami_id,
+            associated_mandelboxes=mandelbox_capacity - current_instance_buffer,
+            mandelbox_capacity=mandelbox_capacity,
+            location=region_name,
+        )
+        buffer_capacity_available += current_instance_buffer
+        # Break out when we allocated more buffer than our threshold.
+        if buffer_capacity_available > buffer_threshold:
+            break
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1
 
 
-def test_buffer_not_too_full(bulk_instance, region_ami_pair):
+def test_buffer_not_too_full(app, bulk_instance, region_ami_pair):
     """
-    Tests that we don't ask to scale down an instance when we have some free space
+    Tests that we don't ask to scale down an instance when we have free space, less than our
+    buffer threshold but equal to / more than our desired free space.
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=5, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=0, mandelbox_capacity=10, location=region_name
-    )
+
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+    buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
+
+    # Here free space is randomly picked from desired free mandelboxes
+    # till our buffer threshold.
+    free_space = randint(desired_free_mandelboxes, buffer_threshold - 1)
+
+    first_instance_buffer = int(free_space / 2)
+    second_instance_buffer = free_space - first_instance_buffer
+
+    for instance_buffer in [first_instance_buffer, second_instance_buffer]:
+        bulk_instance(
+            aws_ami_id=ami_id,
+            associated_mandelboxes=mandelbox_capacity - instance_buffer,
+            mandelbox_capacity=mandelbox_capacity,
+            location=region_name,
+        )
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
 
 
-def test_buffer_overfull_split(bulk_instance, region_ami_pair):
+def test_buffer_overfull_split(app, bulk_instance, region_ami_pair):
     """
     Tests that we ask to scale down an instance when we have too much free space
-    over several separate instances
+    over several separate instances i.e buffer capacity for mandelboxes exceeds our
+    buffer threshold.
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=9, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=1, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=0, mandelbox_capacity=10, location=region_name
-    )
+
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+    buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
+
+    buffer_available = 0
+    while True:
+        current_instance_buffer = randint(0, mandelbox_capacity)
+        bulk_instance(
+            aws_ami_id=ami_id,
+            associated_mandelboxes=mandelbox_capacity - current_instance_buffer,
+            mandelbox_capacity=mandelbox_capacity,
+            location=region_name,
+        )
+        buffer_available += current_instance_buffer
+        # Break out when we allocated more buffer than our threshold.
+        if buffer_available > buffer_threshold:
+            break
+
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1
 
 
-def test_buffer_not_too_full_split(bulk_instance, region_ami_pair):
+def test_buffer_not_too_full_split(app, bulk_instance, region_ami_pair):
     """
     Tests that we don't ask to scale down an instance when we have some free space
-    over several separate instances
+    over several separate instances that doesn't exceed our buffer threshold which
+    equals our desired buffer capacity plus number of mandelboxes each instance can run.
     """
     region_name, ami_id = region_ami_pair
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=9, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=4, mandelbox_capacity=10, location=region_name
-    )
-    bulk_instance(
-        aws_ami_id=ami_id, associated_mandelboxes=0, mandelbox_capacity=10, location=region_name
-    )
+
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+    buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
+
+    buffer_available = 0
+    while True:
+        current_instance_buffer = randint(0, mandelbox_capacity)
+        buffer_available += current_instance_buffer
+        if buffer_available < buffer_threshold:
+            bulk_instance(
+                aws_ami_id=ami_id,
+                associated_mandelboxes=mandelbox_capacity - current_instance_buffer,
+                mandelbox_capacity=mandelbox_capacity,
+                location=region_name,
+            )
+        else:
+            # Here we break out when our buffer capacity is less than buffer threshold but
+            # more than/equal to our desired buffer capacity.
+            # The second condition is not quite obvious as the first one from the code.
+            # Since in each iteration we increase the buffer by `current_instance_buffer`
+            # which can range from 0 to mandelbox capacity, so in the last iteration before
+            # we cross the buffer_threshold, we should be atleast equal to desired_free_mandelboxes.
+            break
+
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
 
 
-def test_buffer_region_sensitive(region_to_ami_map, bulk_instance):
+def test_buffer_region_sensitive(app, bulk_instance):
     """
-    Tests that our buffer is based on region
+    Tests that our buffer is based on region. In this test case, we pick two regions randomly.
+
+    One region will be given more buffer capacity available than buffer_threshold which should result in a recommendation
+    from `_get_num_new_instances` for scale down, returning a value of -1.
+
+    For the other region, we don't spin up any instance so the recommendation from `_get_num_new_instances` should return
+    a configuration value <DEFAULT_INSTANCE_BUFFER>
     """
     randomly_picked_ami_objs = get_random_regions(2)
     assert len(randomly_picked_ami_objs) == 2
@@ -339,30 +473,31 @@ def test_buffer_region_sensitive(region_to_ami_map, bulk_instance):
         (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
     ]
     region_ami_with_buffer, region_ami_without_buffer = region_ami_pairs
-    bulk_instance(
-        aws_ami_id=region_ami_with_buffer[1],
-        associated_mandelboxes=9,
-        mandelbox_capacity=10,
-        location=region_ami_with_buffer[0],
-    )
-    bulk_instance(
-        aws_ami_id=region_ami_with_buffer[1],
-        associated_mandelboxes=1,
-        mandelbox_capacity=10,
-        location=region_ami_with_buffer[0],
-    )
-    bulk_instance(
-        aws_ami_id=region_ami_with_buffer[1],
-        associated_mandelboxes=0,
-        mandelbox_capacity=10,
-        location=region_ami_with_buffer[0],
-    )
+
+    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    mandelbox_capacity = 10
+    buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
+
+    buffer_available = 0
+    while True:
+        current_instance_buffer = randint(0, mandelbox_capacity)
+        bulk_instance(
+            aws_ami_id=region_ami_with_buffer[1],
+            associated_mandelboxes=mandelbox_capacity - current_instance_buffer,
+            mandelbox_capacity=mandelbox_capacity,
+            location=region_ami_with_buffer[0],
+        )
+        buffer_available += current_instance_buffer
+        if buffer_available > buffer_threshold:
+            # Break out when we allocated more buffer than our threshold.
+            break
+
     assert (
         aws_funcs._get_num_new_instances(region_ami_with_buffer[0], region_ami_with_buffer[1]) == -1
     )
     assert (
         aws_funcs._get_num_new_instances(region_ami_without_buffer[0], region_ami_without_buffer[1])
-        == 1
+        == app.config["DEFAULT_INSTANCE_BUFFER"]
     )
 
 
@@ -391,3 +526,13 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
     assert len(call_list) == region_ami_pairs_length
     args = [called["args"] for called in call_list]
     assert set(args) == set(region_ami_pairs)
+
+
+def test_get_num_mandelboxes():
+    # Ensures our get_num_mandelboxes utility works as expected
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.2xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.4xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.8xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.16xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.12xlarge") == 4

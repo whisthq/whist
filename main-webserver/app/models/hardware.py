@@ -82,9 +82,32 @@ class InstancesWithRoomForMandelboxes(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
+    commit_hash = db.Column(db.String(40), nullable=False)
     aws_ami_id = db.Column(db.String(250), nullable=False)
     mandelbox_capacity = db.Column(db.Integer)
     num_running_mandelboxes = db.Column(db.Integer)
+
+
+class LingeringInstances(db.Model):
+    """
+    A view detailing which instances haven't updated recently so we can manually
+    drain them.
+    Specifically, it's all instances that are listed as either  active or preconnection,
+    but that have not updated their status in the db for the specified period of time:
+    2 min for running instances, 15 for preconnected instances
+
+
+    Attributes:
+        instance_name (string): A unique identifier generated randomly to identify the instance.
+        cloud_provider_id (string): What's it called on AWS?
+        status (string):  What's it's most recent status??
+    """
+
+    __tablename__ = "lingering_instances"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
+    cloud_provider_id = db.Column(db.String(250), nullable=False)
+    status = db.Column(db.String(250), nullable=False)
 
 
 class MandelboxInfo(db.Model):
@@ -123,8 +146,6 @@ class RegionToAmi(db.Model):
         client_commit_hash: A string representing the commit hash for the client.
         ami_active: A boolean that will be marked true if this AMI corresponds to
             an active versions of the client app'.
-        region_enabled: A boolean indicating whether or not users are allowed to deploy tasks in the
-            region corresponding to this row.
         protected_from_scale_down: A bool indicating whether the AMI is currently having an initial
             buffer spun up for it
 
@@ -144,7 +165,6 @@ class RegionToAmi(db.Model):
     ami_id = db.Column(db.String(250), nullable=False)
     client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)
     ami_active = db.Column(db.Boolean, nullable=False, server_default=true())
-    region_enabled = db.Column(db.Boolean, nullable=False, server_default=true())
     protected_from_scale_down = db.Column(db.Boolean, nullable=False, server_default=false())
 
 

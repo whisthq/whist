@@ -16,6 +16,7 @@ from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_
 from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.utils.general.logs import fractal_logger
+from app.helpers.utils.metrics.flask_app import app_record_metrics
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import RegionToAmi, db
 from app.models.hardware import MandelboxInfo, InstanceInfo
@@ -33,9 +34,7 @@ def regions():
         A list of strings, where each string is the name of a region.
     """
 
-    enabled_regions = RegionToAmi.query.filter_by(region_enabled=True).distinct(
-        RegionToAmi.region_name
-    )
+    enabled_regions = RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
 
     return jsonify([region.region_name for region in enabled_regions])
 
@@ -47,14 +46,14 @@ def regions():
 @payment_required
 @validate()
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
-    if is_user_active(body.username):
+    start_time = time.time() * 1000
+    care_about_active = False
+    if care_about_active and is_user_active(body.username):
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(
-            "Returning 503 to user f{body.username} because they are already active."
+            f"Returning 503 to user {body.username} because they are already active."
         )
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
-
-    client_commit_hash = None
     if (
         current_app.config["ENVIRONMENT"] == DEVELOPMENT
         and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE
@@ -71,9 +70,14 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         client_commit_hash = body.client_commit_hash
 
     instance_name = find_instance(body.region, client_commit_hash)
+    time_when_instance_found = time.time() * 1000
+    # How long did it take to find an instance?
+    time_to_find_instance = time_when_instance_found - start_time
+    fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
     if instance_name is None:
         fractal_logger.info(
-            f"body.region: {body.region}, body.client_commit_hash: {body.client_commit_hash}"
+            f"No instance found with body.region: {body.region},\
+             body.client_commit_hash: {body.client_commit_hash}"
         )
 
         if not current_app.testing:
@@ -108,18 +112,37 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     )
     db.session.add(obj)
     db.session.commit()
+    time_when_container_created = time.time() * 1000
+    # How long did it take to create a new container row?
+    time_to_create_row = time_when_container_created - time_when_instance_found
+    fractal_logger.debug(f"It took {time_to_create_row} ms to create a container row")
     if not current_app.testing:
         # If we're not testing, we want to scale new instances in the background.
         # Specifically, we want to scale in the region/AMI pair where we know
-        # there's usage -- so we call do_scale_up with the location and AMI of the instance
+        # there's usage -- so we call do_scale_up with the location and AMI of the request
 
         scaling_thread = Thread(
             target=do_scale_up_if_necessary,
-            args=(instance.location, instance.aws_ami_id),
+            args=(
+                body.region,
+                RegionToAmi.query.get(
+                    {"region_name": body.region, "client_commit_hash": client_commit_hash}
+                ).ami_id,
+            ),
             kwargs={
                 "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
             },
         )
         scaling_thread.start()
-
+    # How long did the request take?
+    total_request_time = time.time() * 1000 - start_time
+    fractal_logger.debug(f"In total, this request took {total_request_time} ms to fulfill")
+    app_record_metrics(
+        metrics={
+            "web.time_to_find_instance": time_to_find_instance,
+            "web.time_to_create_row": time_to_create_row,
+            "web.total_request_time": total_request_time,
+        },
+        extra_dims={"task_name": "assign_mandelbox"},
+    )
     return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
