@@ -259,13 +259,14 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                     base_url = (
                         f"https://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
                     )
-                    requests.post(
+                    resp = requests.post(
                         f"{base_url}/drain_and_shutdown",
                         json={
                             "auth_secret": auth_token,
                         },
                         verify=False,
                     )
+                    resp.raise_for_status()
                 except requests.exceptions.RequestException as error:
                     fractal_logger.error(
                         (
