@@ -24,7 +24,7 @@ import (
 // package. Both the ECS agent and higher layers of the host service use this
 // interface.
 type Mandelbox interface {
-	GetFractalID() types.FractalID
+	GetMandelboxID() types.MandelboxID
 
 	AssignToUser(types.UserID)
 	GetUserID() types.UserID
@@ -36,9 +36,9 @@ type Mandelbox interface {
 	GetTTY() ttys.TTY
 
 	// RegisterCreation is used to tell us the mapping between Docker IDs,
-	// AppNames, and FractalIDs (which are used to track mandelboxes before they
+	// AppNames, and MandelboxIDs (which are used to track mandelboxes before they
 	// are actually started, and therefore assigned a Docker runtime ID).
-	// FractalIDs are also used to dynamically provide each mandelbox with a
+	// MandelboxIDs are also used to dynamically provide each mandelbox with a
 	// directory that only that mandelbox has access to).
 	RegisterCreation(types.DockerID, types.AppName) error
 	GetDockerID() types.DockerID
@@ -76,7 +76,7 @@ type Mandelbox interface {
 	// start and accept connections.
 	MarkReady() error
 
-	// Populate the config folder under the mandelbox's FractalID for the
+	// Populate the config folder under the mandelbox's MandelboxID for the
 	// mandelbox's assigned user and running application.
 	PopulateUserConfigs() error
 
@@ -88,14 +88,14 @@ type Mandelbox interface {
 }
 
 // New creates a new Mandelbox given a parent context and a fractal ID.
-func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.FractalID) Mandelbox {
+func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) Mandelbox {
 	// We create a context for this mandelbox specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
 
 	c := &mandelboxData{
 		ctx:                  ctx,
 		cancel:               cancel,
-		fractalID:            fid,
+		mandelboxID:          fid,
 		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
 		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
 	}
@@ -115,12 +115,12 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Fr
 		<-ctx.Done()
 
 		// Mark mandelbox as dying in the database
-		if err := dbdriver.WriteMandelboxStatus(c.fractalID, dbdriver.MandelboxStatusDying); err != nil {
+		if err := dbdriver.WriteMandelboxStatus(c.mandelboxID, dbdriver.MandelboxStatusDying); err != nil {
 			logger.Error(err)
 		}
 
 		untrackMandelbox(c)
-		logger.Infof("Successfully untracked mandelbox %s", c.fractalID)
+		logger.Infof("Successfully untracked mandelbox %s", c.mandelboxID)
 
 		c.rwlock.Lock()
 		defer c.rwlock.Unlock()
@@ -128,38 +128,38 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Fr
 		// Free port bindings
 		portbindings.Free(c.portBindings)
 		c.portBindings = nil
-		logger.Infof("Successfully freed port bindings for mandelbox %s", c.fractalID)
+		logger.Infof("Successfully freed port bindings for mandelbox %s", c.mandelboxID)
 
 		// Free uinput devices
 		c.uinputDevices.Close()
 		c.uinputDevices = nil
 		c.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
-		logger.Infof("Successfully freed uinput devices for mandelbox %s", c.fractalID)
+		logger.Infof("Successfully freed uinput devices for mandelbox %s", c.mandelboxID)
 
 		// Free TTY
 		ttys.Free(c.tty)
-		logger.Infof("Successfully freed TTY %v for mandelbox %s", c.tty, c.fractalID)
+		logger.Infof("Successfully freed TTY %v for mandelbox %s", c.tty, c.mandelboxID)
 		c.tty = 0
 
 		// Clean resource mappings
 		c.cleanResourceMappingDir()
-		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", c.fractalID)
+		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", c.mandelboxID)
 
 		// Backup and clean user config directory.
 		err := c.backupUserConfigs()
 		if err != nil {
-			logger.Errorf("Error backing up user configs for FractalID %s. Error: %s", c.fractalID, err)
+			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", c.mandelboxID, err)
 		} else {
-			logger.Infof("Successfully backed up user configs for FractalID %s", c.fractalID)
+			logger.Infof("Successfully backed up user configs for MandelboxID %s", c.mandelboxID)
 		}
 		c.cleanUserConfigDir()
 
 		// Remove mandelbox from the database altogether
-		if err := dbdriver.RemoveMandelbox(c.fractalID); err != nil {
+		if err := dbdriver.RemoveMandelbox(c.mandelboxID); err != nil {
 			logger.Error(err)
 		}
 
-		logger.Infof("Cleaned up after Mandelbox %s", c.fractalID)
+		logger.Infof("Cleaned up after Mandelbox %s", c.mandelboxID)
 	}()
 
 	return c
@@ -173,7 +173,7 @@ type mandelboxData struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	fractalID types.FractalID
+	mandelboxID types.MandelboxID
 
 	// We use rwlock to protect all the below fields.
 	rwlock sync.RWMutex
@@ -194,9 +194,9 @@ type mandelboxData struct {
 	portBindings []portbindings.PortBinding
 }
 
-// We do not lock here because the fractalID NEVER changes.
-func (c *mandelboxData) GetFractalID() types.FractalID {
-	return c.fractalID
+// We do not lock here because the mandelboxID NEVER changes.
+func (c *mandelboxData) GetMandelboxID() types.MandelboxID {
+	return c.mandelboxID
 }
 
 func (c *mandelboxData) AssignToUser(u types.UserID) {
@@ -245,7 +245,7 @@ func (c *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.
 		}
 	}
 
-	return 0, utils.MakeError("Couldn't GetHostPort(%v, %v) for mandelbox with FractalID %s", mandelboxPort, protocol, c.GetFractalID())
+	return 0, utils.MakeError("Couldn't GetHostPort(%v, %v) for mandelbox with MandelboxID %s", mandelboxPort, protocol, c.GetMandelboxID())
 }
 
 func (c *mandelboxData) GetIdentifyingHostPort() (uint16, error) {
@@ -278,7 +278,7 @@ func (c *mandelboxData) RegisterCreation(d types.DockerID, name types.AppName) e
 	defer c.rwlock.Unlock()
 
 	if len(d) == 0 || len(name) == 0 {
-		return utils.MakeError("RegisterCreation: can't register mandelbox with an empty argument! fractalID: %s, dockerID: %s, name: %s", c.fractalID, d, name)
+		return utils.MakeError("RegisterCreation: can't register mandelbox with an empty argument! mandelboxID: %s, dockerID: %s, name: %s", c.mandelboxID, d, name)
 	}
 
 	c.dockerID = d
@@ -339,11 +339,11 @@ func (c *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 	go func() {
 		defer goroutineTracker.Done()
 
-		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, utils.TempDir+string(c.fractalID)+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, utils.TempDir+string(c.mandelboxID)+"/sockets/uinput.sock")
 		if err != nil {
-			logger.Errorf("SendDeviceFDsOverSocket returned for FractalID %s with error: %s", c.fractalID, err)
+			logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", c.mandelboxID, err)
 		} else {
-			logger.Infof("SendDeviceFDsOverSocket returned successfully for FractalID %s", c.fractalID)
+			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", c.mandelboxID)
 		}
 	}()
 

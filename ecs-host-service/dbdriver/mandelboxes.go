@@ -35,7 +35,7 @@ const (
 // VerifyAllocatedMandelbox verifies that this host service is indeed expecting
 // the provided mandelbox for the given user, and if found marks it as
 // connecting.
-func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.FractalID) error {
+func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID) error {
 	if !enabled {
 		return nil
 	}
@@ -73,7 +73,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.FractalID) 
 	} else if rows[0].Status.String != string(MandelboxStatusAllocated) {
 		return utils.MakeError(`Couldn't verify mandelbox for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, userID, MandelboxStatusAllocated, rows[0].Status.String)
 	} else if rows[0].MandelboxID.String != string(mandelboxID) {
-		return utils.MakeError(`Couldn't verify mandelbox for user %s: found an allocated mandelbox row in the database, but it has the wrong fractalID. Expected "%s", got "%s".`, userID, rows[0].MandelboxID.String, mandelboxID)
+		return utils.MakeError(`Couldn't verify mandelbox for user %s: found an allocated mandelbox row in the database, but it has the wrong mandelboxID. Expected "%s", got "%s".`, userID, rows[0].MandelboxID.String, mandelboxID)
 	}
 
 	// Mark the container as connecting. We can't just use WriteMandelboxStatus
@@ -84,6 +84,8 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.FractalID) 
 	}, string(mandelboxID))
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `hardware.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
 	}
 	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, MandelboxStatusConnecting, result)
 
@@ -94,7 +96,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.FractalID) 
 }
 
 // WriteMandelboxStatus updates a mandelbox's status in the database.
-func WriteMandelboxStatus(mandelboxID types.FractalID, status MandelboxStatus) error {
+func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus) error {
 	if !enabled {
 		return nil
 	}
@@ -109,6 +111,8 @@ func WriteMandelboxStatus(mandelboxID types.FractalID, status MandelboxStatus) e
 	}, string(mandelboxID))
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `hardware.mandelbox_info`: %s", status, mandelboxID, err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", status, mandelboxID)
 	}
 	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, status, result)
 
@@ -116,7 +120,7 @@ func WriteMandelboxStatus(mandelboxID types.FractalID, status MandelboxStatus) e
 }
 
 // RemoveMandelbox removes a mandelbox's row in the database.
-func RemoveMandelbox(mandelboxID types.FractalID) error {
+func RemoveMandelbox(mandelboxID types.MandelboxID) error {
 	if !enabled {
 		return nil
 	}
@@ -128,6 +132,8 @@ func RemoveMandelbox(mandelboxID types.FractalID) error {
 	result, err := q.RemoveMandelbox(context.Background(), string(mandelboxID))
 	if err != nil {
 		return utils.MakeError("Couldn't remove mandelbox %s from database: %s", mandelboxID, err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Tried to remove mandelbox %s from database, but it was already gone!", mandelboxID)
 	}
 	logger.Infof("Removed row in database for mandelbox %s: %s", mandelboxID, result)
 
@@ -161,7 +167,10 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	if err != nil {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes from database: %s", err)
 	}
-	logger.Infof("Removed any stale allocated mandelboxes with result: %s", result)
+	if result.RowsAffected() != 0 {
+		// We avoid logging this every time to avoid polluting the logs.
+		logger.Infof("Removed %v stale mandelboxes", result.RowsAffected())
+	}
 	return nil
 }
 
