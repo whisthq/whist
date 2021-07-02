@@ -155,14 +155,23 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     }
 
     // Convert to png
+    // We cannot cast a `int*` to a `size_t*`, so we introduce intermediate `temp_png_size`
     int err;
+    size_t temp_png_size;
     if (num_channels == 3) {
-        err = lodepng_encode24((unsigned char**)png, (size_t*)png_size, pixel_data_buffer, w, h);
+        err = lodepng_encode24((unsigned char**)png, &temp_png_size, pixel_data_buffer, w, h);
     } else {
-        err = lodepng_encode32((unsigned char**)png, (size_t*)png_size, pixel_data_buffer, w, h);
+        err = lodepng_encode32((unsigned char**)png, &temp_png_size, pixel_data_buffer, w, h);
     }
 
     deallocate_region(pixel_data_buffer);
+
+    if (temp_png_size > INT_MAX) {
+        LOG_WARNING("Converted PNG is too large for int");
+        return -1;
+    }
+
+    *png_size = (int)temp_png_size;
 
     if (err != 0) {
         LOG_WARNING("Failed to encode BMP");

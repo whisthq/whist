@@ -450,11 +450,11 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
 
 void unsafe_set_clipboard(ClipboardData* cb) {
     /*
-        Set the Mac OS clipboard to contain the data from `cb`
+        Set the Windows clipboard to contain the data from `cb`
 
         Arguments:
             cb (ClipboardData*): the clipboard data to load into
-                the Mac OS clipboard
+                the Windows clipboard
     */
 
     if (cb->type == CLIPBOARD_NONE) {
