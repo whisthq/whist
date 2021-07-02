@@ -260,7 +260,9 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
                     instance_info.location,
                     instance_info.commit_hash,
                     instance_info.mandelbox_capacity
-                   FROM hardware.instance_info) instances
+                   FROM hardware.instance_info
+                   WHERE instance_info.status::text <> 'DRAINING'::text
+                   AND instance_info.status::text <> 'HOST_SERVICE_UNRESPONSIVE'::text) instances
              LEFT JOIN ( SELECT count(*) AS count,
                     mandelbox_info.instance_name AS cont_inst
                    FROM hardware.mandelbox_info
@@ -292,7 +294,8 @@ CREATE TABLE hardware.region_to_ami (
     ami_id character varying NOT NULL,
     region_enabled boolean DEFAULT true NOT NULL,
     client_commit_hash character varying NOT NULL,
-    ami_active boolean DEFAULT false NOT NULL
+    ami_active boolean DEFAULT false NOT NULL,
+    protected_from_scale_down boolean DEFAULT false NOT NULL
 );
 
 
@@ -314,7 +317,52 @@ CREATE TABLE hardware.supported_app_images (
     preboot_number double precision DEFAULT 0.0 NOT NULL
 );
 
+CREATE SCHEMA logging;
+CREATE TABLE logging.t_history (
+        id             serial,
+        tstamp         timestamp DEFAULT now(),
+        schemaname     text,
+        tabname        text,
+        operation      text,
+        who            text DEFAULT current_user,
+        new_val        json,
+        old_val        json
+);
 
+CREATE FUNCTION hardware.change_trigger() RETURNS trigger
+  LANGUAGE 'plpgsql' AS $$
+       BEGIN
+         IF TG_OP = 'INSERT'
+         THEN INSERT INTO logging.t_history (
+                tabname, schemaname, operation, new_val
+              ) VALUES (
+                TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW)
+              );
+           RETURN NEW;
+         ELSIF  TG_OP = 'UPDATE'
+         THEN
+           INSERT INTO logging.t_history (
+             tabname, schemaname, operation, new_val, old_val
+           )
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), row_to_json(OLD));
+           RETURN NEW;
+         ELSIF TG_OP = 'DELETE'
+         THEN
+           INSERT INTO logging.t_history
+             (tabname, schemaname, operation, old_val)
+             VALUES (
+               TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(OLD)
+             );
+             RETURN OLD;
+         END IF;
+       END;
+$$;
+
+CREATE TRIGGER t BEFORE INSERT OR UPDATE OR DELETE ON hardware.instance_info
+        FOR EACH ROW EXECUTE PROCEDURE hardware.change_trigger();
+
+CREATE VIEW logging.instance_status_change AS
+(select tstamp, old_val, new_val from logging.t_history where old_val ->> 'status' <> new_val ->> 'status');
 --
 -- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
@@ -1035,6 +1083,13 @@ ALTER TABLE ONLY hardware.mandelbox_info
 ALTER TABLE ONLY hardware.region_to_ami
     ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
 
+--
+-- Name: region_to_ami _region_name_ami_id_unique_constraint; Type: CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.region_to_ami
+    ADD CONSTRAINT _region_name_ami_id_unique_constraint UNIQUE (region_name, ami_id);
+
 
 --
 -- Name: supported_app_images supported_app_images_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
@@ -1436,4 +1491,3 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 --
 -- PostgreSQL database dump complete
 --
-

@@ -15,6 +15,7 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_n
 from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import RegionToAmi, db
 from app.models.hardware import MandelboxInfo, InstanceInfo
@@ -48,7 +49,10 @@ def regions():
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if is_user_active(body.username):
         # If the user already has a mandelbox running, don't start up a new one
-        return jsonify({"IP": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
+        fractal_logger.debug(
+            "Returning 503 to user f{body.username} because they are already active."
+        )
+        return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     client_commit_hash = None
     if (
@@ -68,6 +72,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
 
     instance_name = find_instance(body.region, client_commit_hash)
     if instance_name is None:
+        fractal_logger.info(
+            f"body.region: {body.region}, body.client_commit_hash: {body.client_commit_hash}"
+        )
 
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
@@ -80,8 +87,14 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                         {"region_name": body.region, "client_commit_hash": client_commit_hash}
                     ).ami_id,
                 ),
+                kwargs={
+                    "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
+                },
             )
             scaling_thread.start()
+        fractal_logger.debug(
+            f"Returning 503 to user {body.username} because we didn't find an instance for them."
+        )
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     instance = InstanceInfo.query.get(instance_name)
@@ -101,7 +114,11 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # there's usage -- so we call do_scale_up with the location and AMI of the instance
 
         scaling_thread = Thread(
-            target=do_scale_up_if_necessary, args=(instance.location, instance.ami_id)
+            target=do_scale_up_if_necessary,
+            args=(instance.location, instance.aws_ami_id),
+            kwargs={
+                "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
+            },
         )
         scaling_thread.start()
 
