@@ -87,7 +87,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                         {"region_name": body.region, "client_commit_hash": client_commit_hash}
                     ).ami_id,
                 ),
-                kwargs={"flask_app": current_app._get_current_object()},  # pylint: disable=W0212
+                kwargs={
+                    "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
+                },
             )
             scaling_thread.start()
         fractal_logger.debug(
@@ -114,7 +116,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         scaling_thread = Thread(
             target=do_scale_up_if_necessary,
             args=(instance.location, instance.aws_ami_id),
-            kwargs={"flask_app": current_app._get_current_object()},  # pylint: disable=W0212
+            kwargs={
+                "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
+            },
         )
         scaling_thread.start()
 

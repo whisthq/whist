@@ -58,7 +58,7 @@ def test_scale_down_single_available(
     assert instance.status != "DRAINING"
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert post_list[1]["args"][0] == f"https://{current_app.config['AUTH0_DOMAIN']}/oauth/token"
+    assert post_list[0]["args"][0] == f"https://{current_app.config['AUTH0_DOMAIN']}/oauth/token"
     db.session.refresh(instance)
     assert instance.status == "HOST_SERVICE_UNRESPONSIVE"
 
