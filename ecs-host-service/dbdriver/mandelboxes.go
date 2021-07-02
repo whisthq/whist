@@ -134,14 +134,15 @@ func RemoveMandelbox(mandelboxID types.FractalID) error {
 	return nil
 }
 
-// removeStaleAllocatedMandelboxes removes mandelboxes that have an old creation
-// time but are still marked as allocated.
-func removeStaleAllocatedMandelboxes(age time.Duration) error {
+// removeStaleMandelboxes removes mandelboxes that have an old creation time
+// but are still marked as allocated, or have been marked connecting for too
+// long.
+func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	if !enabled {
 		return nil
 	}
 	if dbpool == nil {
-		return utils.MakeError("removeStaleAllocatedMandelboxes() called but dbdriver is not initialized!")
+		return utils.MakeError("removeStaleMandelboxes() called but dbdriver is not initialized!")
 	}
 
 	instanceName, err := aws.GetInstanceName()
@@ -150,10 +151,12 @@ func removeStaleAllocatedMandelboxes(age time.Duration) error {
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.RemoveStaleAllocatedMandelboxes(context.Background(), queries.RemoveStaleAllocatedMandelboxesParams{
-		InstanceName:          string(instanceName),
-		Status:                string(MandelboxStatusAllocated),
-		CreationTimeThreshold: int(time.Now().Add(-1*age).UnixNano() / 1000),
+	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
+		InstanceName:                    string(instanceName),
+		AllocatedStatus:                 string(MandelboxStatusAllocated),
+		AllocatedCreationTimeThreshold:  int(time.Now().Add(-1*allocatedAge).UnixNano() / 1000),
+		ConnectingStatus:                string(MandelboxStatusConnecting),
+		ConnectingCreationTimeThreshold: int(time.Now().Add(-1*connectingAge).UnixNano() / 1000),
 	})
 	if err != nil {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes from database: %s", err)
@@ -162,8 +165,8 @@ func removeStaleAllocatedMandelboxes(age time.Duration) error {
 	return nil
 }
 
-func removeStaleAllocatedMandelboxesGoroutine(globalCtx context.Context) {
-	defer logger.Infof("Finished removeStaleAllocatedMandelboxes goroutine.")
+func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
+	defer logger.Infof("Finished removeStaleMandelboxes goroutine.")
 	timerChan := make(chan interface{})
 
 	// Instead of running exactly every 10 seconds, we choose a random time in
@@ -176,7 +179,7 @@ func removeStaleAllocatedMandelboxesGoroutine(globalCtx context.Context) {
 		select {
 		case <-globalCtx.Done():
 			// Remove allocated stale mandelboxes one last time
-			if err := removeStaleAllocatedMandelboxes(10 * time.Second); err != nil {
+			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
 				logger.Error(err)
 			}
 
@@ -188,7 +191,7 @@ func removeStaleAllocatedMandelboxesGoroutine(globalCtx context.Context) {
 			return
 
 		case _ = <-timerChan:
-			if err := removeStaleAllocatedMandelboxes(10 * time.Second); err != nil {
+			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
 				logger.Error(err)
 			}
 		}
