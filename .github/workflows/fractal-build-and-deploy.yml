@@ -15,29 +15,28 @@ on:
             - "README.md"
             - "**/README.md"
             - ".github/workflows/README.md"
-# Disabling workflow_dispatch because it currently always fails due to the set-environment action below (see #2883)
-#    workflow_dispatch:
-#        inputs:
-#            # If a specific job-name is given, then we always run exactly that job
-#            # If "all" is given, then we never filter jobs, all jobs are guaranteed to run
-#            # If "filter" is given, then we might filter jobs based on what files have been changed, between
-#            #    the commit this workflow is being run on, and the branch 'branch-name'. Only jobs whose dependency
-#            #    files have been changed, will be triggered
-#            # If "none" is given, then no jobs will run
-#            job-name:
-#                description: "Name of the job to trigger, or 'all' to trigger all jobs."
-#                required: true
-#                default: "all" # Default to triggering all jobs, for a clean rebuild
-#            # Name of the branch to simulate merging against
-#            branch-name:
-#                description: "Branch to run the job as"
-#                required: true
-#                default: "dev" # Avoid accidental production mistakes by making the default deploy on `dev`
-#            # If true, this will deploy the build to our infrastructure
-#            publish:
-#                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
-#                required: true
-#                default: "false" # Avoid accidental mistakes by making the default not publish
+   workflow_dispatch:
+       inputs:
+           # If a specific job-name is given, then we always run exactly that job
+           # If "all" is given, then we never filter jobs, all jobs are guaranteed to run
+           # If "filter" is given, then we might filter jobs based on what files have been changed, between
+           #    the commit this workflow is being run on, and the branch 'branch-name'. Only jobs whose dependency
+           #    files have been changed, will be triggered
+           # If "none" is given, then no jobs will run
+           job-name:
+               description: "Name of the job to trigger, or 'all' to trigger all jobs."
+               required: true
+               default: "all" # Default to triggering all jobs, for a clean rebuild
+           # Name of the branch to simulate merging against
+           branch-name:
+               description: "Branch to run the job as"
+               required: true
+               default: "dev" # Avoid accidental production mistakes by making the default deploy on `dev`
+           # If true, this will deploy the build to our infrastructure
+           publish:
+               description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
+               required: true
+               default: "false" # Avoid accidental mistakes by making the default not publish
 
 jobs:
     # Configure Jobs
