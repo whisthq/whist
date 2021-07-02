@@ -84,7 +84,7 @@ func writeHeartbeat() error {
 		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
 		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
 		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
-		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1000),
+		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1_000_000),
 		InstanceName:         string(instanceName),
 	}
 	result, err := q.WriteHeartbeat(context.Background(), params)
