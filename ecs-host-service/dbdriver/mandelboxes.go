@@ -161,7 +161,10 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	if err != nil {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes from database: %s", err)
 	}
-	logger.Infof("Removed any stale allocated mandelboxes with result: %s", result)
+	if result.RowsAffected() != 0 {
+		// We avoid logging this every time to avoid polluting the logs.
+		logger.Infof("Removed any stale allocated mandelboxes with result: %s", result)
+	}
 	return nil
 }
 
