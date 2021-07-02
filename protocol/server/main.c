@@ -167,7 +167,14 @@ void sig_handler(int sig_num) {
 #endif
 
 void handle_fractal_client_message(FractalClientMessage* fmsg, int id) {
-    // HANDLE FRACTAL CLIENT MESSAGE
+    /*
+        Handles a Fractal client message
+
+        Arguments:
+            fmsg (FractalClientMessage*): the client message being handled
+            id (int): the client ID
+    */
+
     fractal_lock_mutex(state_lock);
     bool is_controlling = clients[id].is_controlling;
     fractal_unlock_mutex(state_lock);
@@ -180,6 +187,14 @@ void handle_fractal_client_message(FractalClientMessage* fmsg, int id) {
 }
 
 void get_fractal_client_messages(bool get_tcp, bool get_udp) {
+    /*
+        Gets all pending Fractal TCP and/or UDP messages
+
+        Arguments:
+            get_tcp (bool): true if we want to get TCP, false otherwise
+            get_udp (bool): true if we want to get UDP, false otherwise
+    */
+
     read_lock(&is_active_rwlock);
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (!clients[id].is_active) continue;
@@ -213,7 +228,7 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
     read_unlock(&is_active_rwlock);
 }
 
-int multithreaded_send_receive_tcp_packets(void* opaque) {
+int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
 
@@ -225,7 +240,7 @@ int multithreaded_send_receive_tcp_packets(void* opaque) {
     */
 
     UNUSED(opaque);
-    LOG_INFO("multithreaded_send_receive_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
+    LOG_INFO("multithreaded_sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
     while (!exiting) {
@@ -343,8 +358,8 @@ int main(int argc, char* argv[]) {
         fractal_create_thread(multithreaded_send_video, "multithreaded_send_video", NULL);
     FractalThread send_audio_thread =
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
-    FractalThread send_receive_tcp_packets_thread = fractal_create_thread(
-        multithreaded_send_receive_tcp_packets, "multithreaded_send_receive_tcp_packets", NULL);
+    FractalThread sync_tcp_packets_thread = fractal_create_thread(
+        multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
     LOG_INFO("Sending video and audio...");
 
     clock totaltime;
@@ -441,7 +456,7 @@ int main(int argc, char* argv[]) {
 
     fractal_wait_thread(send_video_thread, NULL);
     fractal_wait_thread(send_audio_thread, NULL);
-    fractal_wait_thread(send_receive_tcp_packets_thread, NULL);
+    fractal_wait_thread(sync_tcp_packets_thread, NULL);
     fractal_wait_thread(manage_clients_thread, NULL);
 
     fractal_destroy_mutex(packet_mutex);
