@@ -114,13 +114,14 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         )
         auth_token = auth0_client.token().access_token
         base_url = f"https://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-        requests.post(
+        resp = requests.post(
             f"{base_url}/drain_and_shutdown",
             json={
                 "auth_secret": auth_token,
             },
             verify=False,  # SSL verification turned off due to self signed certs on host service.
         )
+        resp.raise_for_status()
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = InstanceState.DRAINING
