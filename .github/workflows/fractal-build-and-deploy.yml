@@ -312,7 +312,7 @@ jobs:
 
             - name: Push mandelbox images
               working-directory: mandelbox-images
-              if: needs.fractal-publish-build-config.outputs.publish == "true"
+              if: needs.fractal-publish-build-config.outputs.publish == 'true'
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
@@ -413,7 +413,7 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
-              if: needs.fractal-publish-build-config.outputs.publish == "true"
+              if: needs.fractal-publish-build-config.outputs.publish == 'true'
               id: build-new-amis
               working-directory: ecs-host-setup
               shell: python3 {0}
@@ -461,7 +461,7 @@ jobs:
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack on Job Successs
-              if: needs.fractal-publish-build-config.outputs.publish == "true"
+              if: needs.fractal-publish-build-config.outputs.publish == 'true'
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -542,7 +542,7 @@ jobs:
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: main-webserver-update-fractal-services-${{ github.ref }}
-        if: always() && (needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
+        if: always() && (needs.mandelboxes-and-ami-publish-ghcr-and-aws.result == 'success')
         env:
             TOKEN_FILE: .access_token
         steps:
@@ -608,22 +608,31 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
+            - name: Retrieve Current Git Hash as Environment Variable
+              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
             - name: Install webserver dependencies for running the flask cli
               working-directory: main-webserver
               run: pip install -r requirements.txt
 
             - name: Run flask cli to upgrade the AMIs
               env:
-                  AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0_domain }}
+                  AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
+                  AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
+                  AUTH0_WEBSERVER_CLIENT_SECRET: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
                   CONFIG_DB_URL: ${{ env.CONFIG_DB_URL }}
                   DATABASE_URL: ${{ env.DATABASE_URL }}
                   HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   SECRET_KEY: "This environment variable's value doesn't matter"
                   RUNNING_LOCALLY: true
+                  APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
+                  APP_GIT_COMMIT: ${{ env.commit_sha }}
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
-              run: "flask command ami_upgrade ${{env.commit_hash}} ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_names }}"
+              run: flask command ami_upgrade ${{ env.commit_sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
@@ -635,7 +644,7 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":bezos: Webserver upgraded AMIs :bezos:"
+                  TITLE = ":bezos: Webserver successfully upgraded AMIs :bezos:"
                   BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
@@ -706,7 +715,7 @@ jobs:
                   | sudo tar -zxp --directory /usr/local/bin/
 
             - name: Deploy the Webserver Atomically & Migrate DB Schema (as needed)
-              if: needs.fractal-publish-build-config.outputs.publish == "true"
+              if: needs.fractal-publish-build-config.outputs.publish == 'true'
               shell: bash -e {0}
               run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
@@ -730,7 +739,7 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=title)
 
             - name: Notify Slack on Successful Webserver Deploy
-              if: needs.fractal-publish-build-config.outputs.publish == "true"
+              if: needs.fractal-publish-build-config.outputs.publish == 'true'
               shell: python3 {0}
               run: |
                   import os
@@ -1017,7 +1026,7 @@ jobs:
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
             - name: Update Config Database version with the new version
-              if: needs.fractal-publish-build-config.outputs.publish == "true" && runner.os == 'macOS'
+              if: needs.fractal-publish-build-config.outputs.publish == 'true' && runner.os == 'macOS'
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
                   ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
@@ -1133,7 +1142,7 @@ jobs:
               run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
             - name: Notify Slack on Job Success
-              if: needs.fractal-publish-build-config.outputs.publish == "true"
+              if: needs.fractal-publish-build-config.outputs.publish == 'true'
               shell: python3 {0}
               run: |
                   import os
@@ -1174,7 +1183,7 @@ jobs:
                 main-webserver-update-fractal-services,
                 client-applications-publish-build-s3,
             ]
-        if: needs.fractal-publish-build-config.outputs.publish == "true" && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2

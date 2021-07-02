@@ -16,7 +16,7 @@ from app.helpers.utils.general.name_generation import generate_name
 from app.constants.instance_state_values import InstanceState
 
 
-def test_fail_disabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_state):
+def test_fail_disabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
     """
     Tests that we won't be able to launch an AMI that is marked as inactive.
     """
@@ -26,11 +26,11 @@ def test_fail_disabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_sta
         randomized_ami = random.choice(all_amis)
         region_name = randomized_ami.region_name
         set_amis_state([randomized_ami], False)
-        do_scale_up_if_necessary(region_name, randomized_ami.ami_id)
+        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, flask_app=app)
         assert len(call_list) == 0
 
 
-def test_success_enabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_state):
+def test_success_enabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
     """
     Tests that we should be able to launch an AMI that is marked as active.
     """
@@ -40,7 +40,7 @@ def test_success_enabled_instance_launch(hijack_ec2_calls, hijack_db, set_amis_s
         randomized_ami = random.choice(all_amis)
         region_name = randomized_ami.region_name
         set_amis_state([randomized_ami], True)
-        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, 1)
+        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, 1, flask_app=app)
         assert len(call_list) == 1
         assert call_list[0]["kwargs"]["image_id"] == randomized_ami.ami_id
 
@@ -59,11 +59,12 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
     """
     call_list = hijack_ec2_calls
     monkeypatch.setattr(ami_upgrade, "_poll", function(returns=True))
+    monkeypatch.setattr(ami_upgrade, "region_wise_upgrade_threads", [["thread-id-0", True, ()]])
     all_amis = RegionToAmi.query.all()
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
         randomly_picked_ami_id = randomized_ami.ami_id
-        launch_new_ami_buffer(randomized_ami.region_name, randomly_picked_ami_id, app)
+        launch_new_ami_buffer(randomized_ami.region_name, randomly_picked_ami_id, 0, app)
         assert len(call_list) == app.config["DEFAULT_INSTANCE_BUFFER"]
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
@@ -88,6 +89,12 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
 
     def _mock_launch_new_ami_buffer(*args, **kwargs):
         launch_new_ami_buffer_calls.append({"args": args, "kwargs": kwargs})
+        # region_wise_upgrade_threads is a global variable that stores the
+        # status of each threads's success state, we need to mark this as true
+        # to indicate that the calls to launch_new_ami_buffer have succeded
+        thread_index = args[2]
+        thead_status_index = 1
+        ami_upgrade.region_wise_upgrade_threads[thread_index][thead_status_index] = True
 
     # We are mocking the `launch_new_ami_buffer` to capture the function calls
     # and check args to ensure that we are upgrading the appropriate region
