@@ -256,3 +256,4 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     # Reset the list here to ensure no thread status info leaks
     region_wise_upgrade_threads = []
     db.session.commit()
+    fractal_logger.info("Finished performing AMI upgrade.")
