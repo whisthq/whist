@@ -84,7 +84,6 @@ FractalThread mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
 int multi_threaded_printf(void* opaque);
 void mprintf(const char* tag, const char* fmt_str, va_list args);
-clock mprintf_timer;
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
