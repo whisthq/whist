@@ -72,7 +72,7 @@ volatile SDL_Window* window;
 volatile char* window_title;
 volatile bool should_update_window_title;
 volatile bool run_receive_packets;
-volatile bool run_send_receive_tcp_packets;
+volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile double latency;
@@ -273,7 +273,7 @@ void update() {
     // End Ping
 }
 
-int send_receive_tcp_packets(void* opaque) {
+int sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
 
@@ -285,16 +285,16 @@ int send_receive_tcp_packets(void* opaque) {
     */
 
     UNUSED(opaque);
-    LOG_INFO("send_receive_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
+    LOG_INFO("sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
-    while (run_send_receive_tcp_packets) {
+    while (run_sync_tcp_packets) {
         // RECEIVE TCP PACKET HANDLER
         // Check if TCP connection is active
         int result = ack(&packet_tcp_context);
         if (result < 0) {
             LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
-            // TODO: Should exit or recover protocol if TCP connection is lost
+            continue;
         }
 
         // Update the last TCP check timer
@@ -861,10 +861,10 @@ int main(int argc, char* argv[]) {
         SDL_Thread* receive_packets_thread =
             SDL_CreateThread(receive_packets, "ReceivePackets", &packet_receive_context);
 
-        // Create thread to send TCP packets
-        run_send_receive_tcp_packets = true;
-        SDL_Thread* send_receive_tcp_packets_thread =
-            SDL_CreateThread(send_receive_tcp_packets, "SendTCPPackets", NULL);
+        // Create thread to send and receive TCP packets
+        run_sync_tcp_packets = true;
+        SDL_Thread* sync_tcp_packets_thread =
+            SDL_CreateThread(sync_tcp_packets, "SendTCPPackets", NULL);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
@@ -948,8 +948,8 @@ int main(int argc, char* argv[]) {
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 
-        run_send_receive_tcp_packets = false;
-        SDL_WaitThread(send_receive_tcp_packets_thread, NULL);
+        run_sync_tcp_packets = false;
+        SDL_WaitThread(sync_tcp_packets_thread, NULL);
         run_receive_packets = false;
         SDL_WaitThread(receive_packets_thread, NULL);
         destroy_audio();
