@@ -98,18 +98,19 @@ jobs:
 
             ###################################################################################
 
+            # Only notify Slack if there was a positive diff, so only if a new documentation publishing event was attempted
             - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && failure() }}
               shell: bash
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"@releases :rotating_light: Failed to deploy \`main-webserver\` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"@releases :rotating_light: Failed to deploy \`main-webserver\` Internal Documentation to \`docs.fractal.co\`, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack (Only on Push/Workflow_dispatch Events)
-              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && success() }}
               shell: bash
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal \`main-webserver\` Internal Documentation Deployed to `docs.fractal.co` Shared Libraries Deployed to Production via Push to Repository `fractal/docs`\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal \`main-webserver\` Internal Documentation Deployed to \`docs.fractal.co\`\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
