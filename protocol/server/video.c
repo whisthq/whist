@@ -334,7 +334,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
             get_timer(last_frame_capture) > 1.0 / MIN_FPS) {
-            // LOG_INFO( "Frame Time: %f\n", get_timer( last_frame_capture ) );
+            LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
 
             start_timer(&last_frame_capture);
 
@@ -344,7 +344,7 @@ int32_t multithreaded_send_video(void* opaque) {
             // If 1/MIN_FPS has passed, but no accumulated_frames have happened,
             // Then we just resend the current frame
             if (accumulated_frames == 0) {
-                // LOG_INFO("Resending current frame!");
+                LOG_INFO("Resending current frame!");
             }
 
             // transfer the capture of the latest frame from the device to the encoder,
@@ -352,6 +352,7 @@ int32_t multithreaded_send_video(void* opaque) {
             // only passing a GPU reference rather than copy to/from the CPU
             if (transfer_capture(device, encoder) != 0) {
                 // if there was a failure
+                LOG_ERROR("transfer_capture failed! Exiting!");
                 exiting = true;
                 break;
             }
