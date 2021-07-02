@@ -46,7 +46,6 @@ def test_scale_down_single_available(
     Tests that we scale down an instance when desired
     tests the correct requests, db, and ec2 calls are made.
     """
-    call_list = hijack_ec2_calls
     post_list = []
 
     def _helper(*args, **kwargs):
@@ -71,11 +70,13 @@ def test_scale_down_single_unavailable(hijack_ec2_calls, mock_get_num_new_instan
     """
     Tests that we don't scale down an instance with running mandelboxes
     """
-    call_list = hijack_ec2_calls
-    bulk_instance(instance_name="test_instance", associated_mandelboxes=1, aws_ami_id="test-AMI")
+    instance = bulk_instance(
+        instance_name="test_instance", associated_mandelboxes=1, aws_ami_id="test-AMI"
+    )
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert len(call_list) == 0
+    db.session.refresh(instance)
+    assert instance.status == "ACTIVE"
 
 
 def test_scale_down_single_wrong_region(
@@ -84,8 +85,7 @@ def test_scale_down_single_wrong_region(
     """
     Tests that we don't scale down an instance in a different region
     """
-    call_list = hijack_ec2_calls
-    bulk_instance(
+    instance = bulk_instance(
         instance_name="test_instance",
         associated_mandelboxes=1,
         aws_ami_id="test-AMI",
@@ -93,15 +93,15 @@ def test_scale_down_single_wrong_region(
     )
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
-    assert len(call_list) == 0
+    db.session.refresh(instance)
+    assert instance.status == "ACTIVE"
 
 
 def test_scale_down_single_wrong_ami(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
     """
     Tests that we don't scale down an instance with a different AMI
     """
-    call_list = hijack_ec2_calls
-    bulk_instance(
+    instance = bulk_instance(
         instance_name="test_instance",
         associated_mandelboxes=1,
         aws_ami_id="test-AMI",
@@ -109,14 +109,14 @@ def test_scale_down_single_wrong_ami(hijack_ec2_calls, mock_get_num_new_instance
     )
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "wrong-AMI")
-    assert len(call_list) == 0
+    db.session.refresh(instance)
+    assert instance.status == "ACTIVE"
 
 
 def test_scale_down_multiple_available(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
     """
     Tests that we scale down multiple instances when desired
     """
-    call_list = hijack_ec2_calls
     desired_num = randint(1, 10)
     instance_list = []
     for instance in range(desired_num):
@@ -135,7 +135,6 @@ def test_scale_down_multiple_partial_available(
     """
     Tests that we only scale down inactive instances
     """
-    call_list = hijack_ec2_calls
     desired_num = randint(2, 10)
     num_inactive = randint(1, desired_num - 1)
     num_active = desired_num - num_inactive
