@@ -76,7 +76,7 @@ static enum AVPixelFormat sws_input_fmt;
 extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
-#define LOG_VIDEO true
+#define LOG_VIDEO false
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 10
 #define MAX_UNSYNCED_FRAMES_RENDER 12
@@ -167,11 +167,13 @@ Private Functions
 
 SDL_Rect get_true_render_rect();
 void update_cursor(VideoFrame* frame);
+int get_next_video_frame();
 SDL_Rect new_sdl_rect(int x, int y, int w, int h);
 int32_t multithreaded_destroy_decoder(void* opaque);
 void update_decoder_parameters(int width, int height, CodecType codec_type);
 void loading_sdl(SDL_Renderer* renderer, int loading_index);
 void log_frame_statistics(VideoFrame* frame);
+void video_nack(int id, int index);
 bool request_iframe();
 void update_sws_context();
 void update_sws_pixel_format();
@@ -215,7 +217,6 @@ void sync_decoder_parameters(VideoFrame* frame) {
         }
     }
 }
-
 SDL_Rect get_true_render_rect() {
     /*
         Since RenderCopy scales the texture to the size of the window by default, we use this to
@@ -515,6 +516,34 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     gif_frame_index %= NUMBER_LOADING_FRAMES;
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+void video_nack(int id, int index) {
+    /*
+        Send a negative acknowledgement to the server if a video
+        packet is missing
+
+        Arguments:
+            id (int): missing packet ID
+            index (int): missing packet index
+    */
+    // If we can get the server to generate iframes quickly (i.e. about 60 ms), flip
+    // NO_NACKS_DURING_IFRAME to true
+#if NO_NACKS_DURING_IFRAME
+    if (video_data.is_waiting_for_iframe) {
+        return;
+    }
+#endif
+    video_data.num_nacked++;
+    LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_VIDEO_NACK;
+    fmsg.nack_data.id = id;
+    fmsg.nack_data.index = index;
+    send_fmsg(&fmsg);
+}
+
 bool request_iframe() {
     /*
         Request an IFrame from the server if too long since last frame
@@ -612,20 +641,23 @@ void replace_texture() {
         initialization and if the user has finished resizing the window.
     */
 
-    // Destroy the old texture
-    if (video_context.texture) {
-        SDL_DestroyTexture(video_context.texture);
-    }
-    // Create a new texture
-    SDL_Texture* texture =
-        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (!texture) {
-        LOG_FATAL("SDL: could not create texture - exiting");
-    }
+    if (pending_texture_update) {
+        // Destroy the old texture
+        if (video_context.texture) {
+            SDL_DestroyTexture(video_context.texture);
+        }
+        // Create a new texture
+        SDL_Texture* texture =
+            SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12,
+                              SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        if (!texture) {
+            LOG_FATAL("SDL: could not create texture - exiting");
+        }
 
-    // Save the new texture over the old one
-    video_context.texture = texture;
+        // Save the new texture over the old one
+        video_context.texture = texture;
+        pending_texture_update = false;
+    }
 }
 
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
@@ -778,7 +810,7 @@ void skip_to_next_iframe() {
                         }
                     }
                 } else {
-                    LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
+                    LOG_WARNING("Bad ID? %d instead of %d", receiving_frames[index].id, i);
                 }
             }
             video_data.last_rendered_id = video_data.most_recent_iframe - 1;
@@ -853,6 +885,9 @@ void update_video() {
                         ctx->last_nacked_index = -1;
                     }
                     int num_nacked = 0;
+                    // TODO: ring buffer nacking function can be used here too. Change the nacking
+                    // function to not hardcode -5. LOG_INFO("************NACKING PACKET %d, alive
+                    // for %f MS", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1;
                          i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
                         if (!ctx->received_indices[i]) {
@@ -984,8 +1019,8 @@ int init_video_renderer() {
     // Allocate a place to put our YUV image on that screen.
     // Rather than allocating a new texture every time the dimensions change, we instead allocate
     // the texture once and render sub-rectangles of it.
+    pending_texture_update = true;
     replace_texture();
-    pending_texture_update = false;
 
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
@@ -1121,12 +1156,8 @@ int render_video() {
 
                 clock sws_timer;
                 start_timer(&sws_timer);
-
                 // recreate the texture if the video has been resized
-                if (pending_texture_update) {
-                    replace_texture();
-                    pending_texture_update = false;
-                }
+                replace_texture();
 
                 pending_resize_render = false;
 

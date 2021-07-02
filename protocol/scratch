@@ -1,0 +1,69 @@
+
+    /*
+     * Map the frame for use by the encoder.
+     */
+    NV_ENC_MAP_INPUT_RESOURCE map_params = {0};
+    map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
+    map_params.registeredResource = device->registered_resources[grab_params.dwTextureIndex];
+    enc_status = device->p_enc_fn.nvEncMapInputResource(device->encoder, &map_params);
+    if (enc_status != NV_ENC_SUCCESS) {
+        LOG_ERROR("Failed to map the resource, status = %d\n", enc_status);
+        return -1;
+    }
+    device->input_buffer = map_params.mappedResource;
+
+    /*
+     * Pre-fill frame encoding information
+     */
+    NV_ENC_PIC_PARAMS enc_params = {0};
+    enc_params.version = NV_ENC_PIC_PARAMS_VER;
+    enc_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
+    enc_params.inputWidth = device->width;
+    enc_params.inputHeight = device->height;
+    enc_params.inputPitch = device->width;
+    enc_params.inputBuffer = device->input_buffer;
+    enc_params.bufferFmt = map_params.mappedBufferFmt;
+    // frame_idx starts at -1, so first frame has idx 0
+    enc_params.frameIdx = ++device->frame_idx;
+    enc_params.outputBitstream = device->output_buffer;
+    if (force_iframe) {
+        enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR;
+    }
+
+    /*
+     * Encode the frame.
+     */
+    enc_status = device->p_enc_fn.nvEncEncodePicture(device->encoder, &enc_params);
+    if (enc_status != NV_ENC_SUCCESS) {
+        // TODO: Unmap the frame! Otherwise, memory leaks here
+        LOG_ERROR("Failed to encode frame, status = %d", enc_status);
+        return -1;
+    }
+
+    /*
+     * Get the bitstream and dump to file.
+     */
+    NV_ENC_LOCK_BITSTREAM lock_params = {0};
+
+    lock_params.version = NV_ENC_LOCK_BITSTREAM_VER;
+    lock_params.outputBitstream = device->output_buffer;
+
+    enc_status = device->p_enc_fn.nvEncLockBitstream(device->encoder, &lock_params);
+    if (enc_status != NV_ENC_SUCCESS) {
+        // TODO: Unmap the frame! Otherwise, memory leaks here
+        LOG_ERROR("Failed to lock bitstream buffer, status = %d", enc_status);
+        return -1;
+    }
+
+    device->size = lock_params.bitstreamSizeInBytes;
+    device->frame = lock_params.bitstreamBufferPtr;
+    device->is_iframe = force_iframe || device->frame_idx == 0;
+
+#if SHOW_DEBUG_FRAMES
+    t2 = NvFBCUtilsGetTimeInMillis();
+
+    LOG_INFO("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms", frameInfo.dwWidth,
+             frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size,
+             encFrameInfo.bIsIFrame ? " (i-frame)" : "",
+             frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long)(t2 - t1));
+#endif
