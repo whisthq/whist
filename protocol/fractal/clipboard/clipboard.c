@@ -135,7 +135,14 @@ void free_clipboard(ClipboardData* cb) {
             cb (ClipboardData*): The clipboard to free
     */
 
+    if (!clipboard_mutex) {
+        LOG_ERROR("init_clipboard not called yet!");
+        return;
+    }
+
+    fractal_lock_mutex(clipboard_mutex);
     unsafe_free_clipboard(cb);
+    fractal_unlock_mutex(clipboard_mutex);
 }
 
 bool has_clipboard_updated() {

@@ -159,7 +159,9 @@ void clipboard_synchronizer_abort_active_clipboard_action() {
 
     // Release the clipboard global
     if (clipboard) {
-        if (updating_get_clipboard) {
+        if (pending_clipboard_push) {
+            // This means that we are actively "getting" the clipboard,
+            //     which is the only case in which we should call `free_clipboard`
             free_clipboard(clipboard);
         } else {
             deallocate_region(clipboard);
