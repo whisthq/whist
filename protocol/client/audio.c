@@ -308,6 +308,9 @@ bool is_valid_audio_frequency() {
 
 int send_next_frame_to_decoder() {
     AudioFrame* frame = (AudioFrame*)audio_render_context.frame_buffer;
+    if (frame == NULL) {
+        LOG_FATAL("Fatal Error! A NULL frame was pulled from the render context!");
+    }
     if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) <
         0) {
         LOG_WARNING("Failed to send packets to decoder!");

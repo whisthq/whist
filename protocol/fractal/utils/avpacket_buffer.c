@@ -41,6 +41,14 @@ int extract_packets_from_buffer(void* buffer, int buffer_size, AVPacket* packets
         Returns:
             (int): 0 on success, -1 on failure
     */
+
+    if (buffer == NULL) {
+        LOG_FATAL("Received a NULL buffer!");
+    }
+    if (buffer_size < 4) {
+        LOG_FATAL("Received a buffer size of %d, too small!", buffer_size);
+    }
+
     // first entry: number of packets
     int* int_buffer = buffer;
     int num_packets = *int_buffer;
