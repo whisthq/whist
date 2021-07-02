@@ -91,7 +91,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             )
             scaling_thread.start()
         fractal_logger.debug(
-            "Returning 503 to user f{body.username} because we didn't find an instance for them."
+            f"Returning 503 to user {body.username} because we didn't find an instance for them."
         )
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
