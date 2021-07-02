@@ -61,6 +61,7 @@ typedef struct RingBuffer {
     int largest_num_packets;
 
     int currently_rendering_id;
+    FrameData currently_rendering_frame;
     int last_received_id;
     int num_nacked;
     int frames_received;
