@@ -168,8 +168,37 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
 
 int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
                                 int width, int height) {
-    encoder->dw_texture = dw_texture;
-    encoder->dw_tex_target = dw_tex_target;
+    int cache_size =
+        sizeof(encoder->registered_resources) / sizeof(encoder->registered_resources[0]);
+    // Check the registered resource cache
+    for (int i = 0; i < cache_size; i++) {
+        InputBufferCacheEntry resource = encoder->registered_resources[i];
+        if (resource.dw_texture == dw_texture && resource.dw_tex_target == dw_tex_target &&
+            resource.width == width && resource.height == height) {
+            encoder->registered_resource = resource.registered_resource;
+            return 0;
+        }
+    }
+    if (encoder->registered_resources[cache_size - 1].registered_resource != NULL) {
+        unregister_resource(encoder,
+                            encoder->registered_resources[cache_size - 1].registered_resource);
+        encoder->registered_resources[cache_size - 1].registered_resource = NULL;
+    }
+    for (int i = cache_size - 1; i > 0; i--) {
+        encoder->registered_resources[i] = encoder->registered_resources[i - 1];
+    }
+    NV_ENC_REGISTERED_PTR registered_resource =
+        register_resource(encoder, dw_texture, dw_tex_target, width, height);
+    if (registered_resource == NULL) {
+        LOG_ERROR("Failed to register resource!");
+        return -1;
+    }
+    encoder->registered_resources[0].dw_texture = dw_texture;
+    encoder->registered_resources[0].dw_tex_target = dw_tex_target;
+    encoder->registered_resources[0].width = width;
+    encoder->registered_resources[0].height = height;
+    encoder->registered_resources[0].registered_resource = registered_resource;
+    encoder->registered_resource = registered_resource;
     encoder->width = width;
     encoder->height = height;
     return 0;
@@ -180,8 +209,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     NVENCSTATUS status;
 
     // Register the frame intake
-    NV_ENC_REGISTERED_PTR registered_resource = register_resource(
-        encoder, encoder->dw_texture, encoder->dw_tex_target, encoder->width, encoder->height);
+    NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resource;
     if (registered_resource == NULL) {
         LOG_ERROR("Failed to register resource!");
         return -1;
@@ -193,7 +221,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     status = encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);
-        unregister_resource(encoder, registered_resource);
         return -1;
     }
     LOG_ERROR("SUCCESSE!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -235,9 +262,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         // out-of-control runaway memory usage
         LOG_FATAL("Failed to unmap the resource, memory is leaking! status = %d", status);
     }
-
-    // Unregister the input resource
-    unregister_resource(encoder, registered_resource);
 
     // Lock the bitstream
     NV_ENC_LOCK_BITSTREAM lock_params = {0};
@@ -376,14 +400,13 @@ void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     }
 
     // Unregister all the resources that we had registered earlier
-    for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
-        if (encoder->registered_resources[i]) {
-            status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
-                                                               encoder->registered_resources[i]);
-            if (status != NV_ENC_SUCCESS) {
-                LOG_ERROR("Failed to unregister resource, status = %d", status);
-            }
-            encoder->registered_resources[i] = NULL;
+    int cache_size =
+        sizeof(encoder->registered_resources) / sizeof(encoder->registered_resources[0]);
+    // Check the registered resource cache
+    for (int i = 0; i < cache_size; i++) {
+        if (encoder->registered_resources[i].registered_resource != NULL) {
+            unregister_resource(encoder, encoder->registered_resources[i].registered_resource);
+            encoder->registered_resources[i].registered_resource = NULL;
         }
     }
 
