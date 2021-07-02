@@ -142,10 +142,16 @@ void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
  * @brief                          Reconfigure the encoder
  *
  * @param encoder                  The encoder to be updated
+ * @param width                    The new width
+ * @param height                   The new height
+ * @param bitrate                  The new bitrate
+ * @param codec                    The new codec
  *
- * @returns                        0 if the encoder was successfully reconfigured
+ * @returns                        0 if the encoder was successfully reconfigured,
+ *                                 -1 if no reconfiguration was possible
  */
-bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate, CodecType codec);
+bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate,
+                         CodecType codec);
 
 /**
  * @brief                          Set the next frame to be an I-frame

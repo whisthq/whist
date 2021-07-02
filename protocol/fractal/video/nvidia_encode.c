@@ -77,6 +77,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     void* lib_enc = dlopen(LIB_ENCODEAPI_NAME, RTLD_NOW);
     if (lib_enc == NULL) {
         LOG_ERROR("Unable to open '%s' (%s)", LIB_ENCODEAPI_NAME, dlerror());
+        free(encoder);
         return NULL;
     }
 
@@ -89,6 +90,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
         (NVENCODEAPICREATEINSTANCEPROC)dlsym(lib_enc, "NvEncodeAPICreateInstance");
     if (nv_encode_api_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvEncodeAPICreateInstance'");
+        free(encoder);
         return NULL;
     }
 
@@ -104,6 +106,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     status = nv_encode_api_create_instance_ptr(&encoder->p_enc_fn);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Unable to create NvEncodeAPI instance (status: %d)", status);
+        free(encoder);
         return NULL;
     }
 
@@ -118,6 +121,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
                                                         &encoder->internal_nvidia_encoder);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to open an encoder session, status = %d", status);
+        free(encoder);
         return NULL;
     }
 
@@ -126,6 +130,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     status = initialize_preset_config(encoder, bitrate, encoder->codec_type, &preset_config);
     if (status < 0) {
         LOG_ERROR("custom_preset_config failed");
+        free(encoder);
         return NULL;
     }
 
@@ -148,6 +153,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
         encoder->p_enc_fn.nvEncInitializeEncoder(encoder->internal_nvidia_encoder, &init_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to initialize the encode session, status = %d", status);
+        free(encoder);
         return NULL;
     }
 
@@ -159,6 +165,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
                                                           &bitstream_buffer_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to create a bitstream buffer, status = %d", status);
+        free(encoder);
         return NULL;
     }
 
@@ -282,7 +289,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 }
 
 GUID get_codec_guid(CodecType codec) {
-    GUID codec_guid;
+    GUID codec_guid = {0};
     if (codec == CODEC_TYPE_H265) {
         codec_guid = NV_ENC_CODEC_HEVC_GUID;
     } else if (codec == CODEC_TYPE_H264) {
