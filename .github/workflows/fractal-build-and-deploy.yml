@@ -17,26 +17,32 @@ on:
             - ".github/workflows/README.md"
     workflow_dispatch:
         inputs:
-            # If a specific job-name is given, then we always run exactly that job
-            # If "all" is given, then we never filter jobs, all jobs are guaranteed to run
-            # If "filter" is given, then we might filter jobs based on what files have been changed, between
-            #    the commit this workflow is being run on, and the branch 'branch-name'. Only jobs whose dependency
-            #    files have been changed, will be triggered
-            # If "none" is given, then no jobs will run
             job-name:
-                description: "Name of the job to trigger, or 'all' to trigger all jobs."
+                description: |
+                    The name of the job to run or "all" to trigger all jobs,
+                    "none" to run no jobs, or "filter" to run only those jobs
+                    whose dependency files are different when comparing those
+                    on the chosen branch to those on the branch that normally
+                    corresponds to the target deployment environment.
                 required: true
                 default: "all" # Default to triggering all jobs, for a clean rebuild
-            # Name of the branch to simulate merging against
-            branch-name:
-                description: "Branch to run the job as"
+            target:
+                description: |
+                    The target deployment environment to which the chosen ref
+                    should be deployed. The target deployment environment
+                    should be one of "dev", "staging", or "prod". The default
+                    target deployment environment matches the branch that is
+                    being deployed.
+                required: false
+            dry-run:
+                description: |
+                    A boolean indicating whether or not to perform a dry run
+                    deployment. If this boolean is set, code will be built, but
+                    not deployed.
                 required: true
-                default: "dev" # Avoid accidental production mistakes by making the default deploy on `dev`
-            # If true, this will deploy the build to our infrastructure
-            publish:
-                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
-                required: true
-                default: "false" # Avoid accidental mistakes by making the default not publish
+                # Avoid accidental mistakes by doing dry run deployments by
+                # default
+                default: true
 
 jobs:
     # Configure Jobs
@@ -76,12 +82,17 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            # TODO: This action does not respect workflow_dispatch inputs, effectively rendering it useless for anything but redeploys.
             - name: Set deploy environment
               id: set-deploy-environment
+              if: ${{ github.event_name == 'push' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
               uses: ./.github/actions/set-environment
               with:
-                  deploy: true
+                  # Deploy the git ref corresponding to the event that
+                  # triggered the workflow unless the event that triggered the
+                  # workflow was a manual workflow_dispatch event. In such a
+                  # case, the branch specified by the target input should be
+                  # deployed.
+                  ref: ${{ github.event.inputs.target || github.ref }}
 
             - name: Set Sentry environment based on Git Branch
               id: set-sentry-environment
@@ -201,20 +212,49 @@ jobs:
             - name: Detect Whether to Publish the Job(s) or Not
               id: detect-publish
               run: |
-                  # if this workflow was triggered by push, then we want the jobs to publish
-                  if [[ ${{ github.event_name }} == 'push' ]]; then
-                    PUBLISH=true
+                  trap 'echo "::error::Command '\''$BASH_COMMAND'\'' exited with code $?"' EXIT
+
+                  ref="${{ github.ref }}"
+                  target="${{ steps.set-deploy-environment.outputs.environment }}"
+
+                  case "$ref" in
+                      *prod|*staging|*dev)
+                          # Get the short branch name for dev, staging, and
+                          # prod by stripping away any leading characters. For
+                          # example, "/refs/heads/dev" becomes "dev".
+                          branch="${ref##*/}" ;;
+                      *)
+                          branch="$ref" ;;
+                  esac
+
+                  # We are only allowed to deploy a branch to its corresponding
+                  # target deployment environment. In other words, we can only
+                  # deploy dev to dev, staging to staging, and prod to prod.
+                  # Feature branches are not deployable.
+                  deployable="$([ "$branch" != "$target" ] || echo "1")"
+
+                  if [ "${{ github.event_name }}" = "push" ]; then
+                      # If the workflow was triggered by a push event, the
+                      # dry-run input is not available. We can assert that the
+                      # push event was triggered on either dev, staging, or
+                      # prod, and then set the dry run flag to false.
+                      [[ "$branch" =~ dev|staging|prod ]]
+                      dry_run="false"
                   else
-                    # if running from workflow_dispatch, we use the github input for publishing
-                    PUBLISH=${{ github.event.inputs.publish }}
+                      dry_run="${{ github.event.inputs.dry-run }}"
+
+                      # If we're trying to perform a real deployment, but the
+                      # current configuration is not deployable, abort.
+                      test "$deployable" -o "$dry_run" != "false"
                   fi
 
-                  if [[ ! "$PUBLISH" =~ (true|false) ]]; then
-                    echo "\"$PUBLISH\" is an invalid value of input publish, only \"true\" or \"false\" are valid"
-                  fi
+                  # Publish the job outputs iff this is not a dry run and
+                  # the git branch that we're deploying matches the target
+                  # deployment environment.
+                  publish="$([ "$deployable" -a "$dry_run" = "false" ] && echo "true" || echo "false")"
 
-                  echo "Publish is set to: $PUBLISH"
-                  echo "::set-output name=publish::$PUBLISH"
+                  echo "Publish is set to: $publish"
+                  echo "::set-output name=publish::$publish"
 
             - name: Notify Slack if error
               if: failure()
