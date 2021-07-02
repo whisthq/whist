@@ -20,8 +20,7 @@ from flask import request
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 
-import app.constants.env_names as env_names
-import app.constants.config_table_names as config_table_names
+from app.constants import config_table_names, env_names
 
 # A _ConfigMatrix instance is a two-dimensional object that resembles a 2x2 matrix and is used to
 # look up Flask application configuration objects. The first dimension maps the strings "deployed"

@@ -17,7 +17,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
-import app.constants.env_names as env_names
+from app.constants import env_names
 
 from auth0 import ScopeError
 from payments import PaymentRequired
@@ -62,7 +62,7 @@ def create_app(testing=False):
         A Flask application instance.
     """
 
-    app = Flask(__name__.split(".")[0])
+    app = Flask(__name__.split(".", maxsplit=1)[0])
 
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
