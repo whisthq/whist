@@ -84,6 +84,8 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.FractalID) 
 	}, string(mandelboxID))
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `hardware.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
 	}
 	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, MandelboxStatusConnecting, result)
 
@@ -109,6 +111,8 @@ func WriteMandelboxStatus(mandelboxID types.FractalID, status MandelboxStatus) e
 	}, string(mandelboxID))
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `hardware.mandelbox_info`: %s", status, mandelboxID, err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", status, mandelboxID)
 	}
 	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, status, result)
 
@@ -128,6 +132,8 @@ func RemoveMandelbox(mandelboxID types.FractalID) error {
 	result, err := q.RemoveMandelbox(context.Background(), string(mandelboxID))
 	if err != nil {
 		return utils.MakeError("Couldn't remove mandelbox %s from database: %s", mandelboxID, err)
+	} else if result.RowsAffected() == 0 {
+		return utils.MakeError("Tried to remove mandelbox %s from database, but it was already gone!", mandelboxID)
 	}
 	logger.Infof("Removed row in database for mandelbox %s: %s", mandelboxID, result)
 
@@ -163,7 +169,7 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	}
 	if result.RowsAffected() != 0 {
 		// We avoid logging this every time to avoid polluting the logs.
-		logger.Infof("Removed any stale allocated mandelboxes with result: %s", result)
+		logger.Infof("Removed %v stale mandelboxes", result.RowsAffected())
 	}
 	return nil
 }
