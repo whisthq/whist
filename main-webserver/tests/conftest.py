@@ -122,7 +122,7 @@ def bulk_instance():
             instance_name=inst_name,
             cloud_provider_id=f"aws-{inst_name}",
             location=location if location is not None else "us-east-1",
-            creation_time_utc_unix_ms=int(time.time()),
+            creation_time_utc_unix_ms=int(time.time() * 1000),
             mandelbox_capacity=mandelbox_capacity if mandelbox_capacity is not None else 10,
             ip=kwargs.get("ip", "123.456.789"),
             aws_ami_id=kwargs.get("aws_ami_id", "test"),
@@ -140,7 +140,7 @@ def bulk_instance():
                 instance_name=new_instance.instance_name,
                 user_id=kwargs.get("user_for_mandelboxes", "test-user"),
                 status="Running",
-                creation_time_utc_unix_ms=int(time.time()),
+                creation_time_utc_unix_ms=int(time.time() * 1000),
             )
             db.session.add(new_mandelbox)
             db.session.commit()
