@@ -229,7 +229,7 @@ jobs:
         name: "Container Infrastructure: Build & Publish Fractal Containers and AMIs"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        concurrency: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+        concurrency: containers-and-ami-publish-ghcr-and-aws-${{ github.ref }}
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
             region_names: ${{ steps.build-new-amis.outputs.region_names }}
@@ -471,7 +471,7 @@ jobs:
                 fractal-publish-build-config,
                 containers-and-ami-publish-ghcr-and-aws,
             ]
-        concurrency: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+        concurrency: ecs-task-definitions-deploy-task-definitions-ecs-${{ github.ref }}
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.containers-and-ami-publish-ghcr-and-aws.outputs.task-definitions-apps-json) }}
@@ -633,7 +633,7 @@ jobs:
                 containers-and-ami-publish-ghcr-and-aws,
                 ecs-task-definitions-deploy-task-definitions-ecs,
             ]
-        concurrency: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+        concurrency: main-webserver-update-fractal-services-${{ github.ref }}
         # run this if either task defs or amis job succeed
         # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
@@ -827,7 +827,7 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        concurrency: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+        concurrency: main-webserver-deploy-heroku-${{ github.ref }}
         needs: [fractal-publish-build-config]
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
@@ -944,7 +944,7 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        concurrency: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+        concurrency: client-applications-publish-build-s3-${{ github.ref }}
         outputs:
             release_version: ${{ steps.generate-release-version.outputs.release_version }}
         needs:
@@ -1269,7 +1269,7 @@ jobs:
     microservices-deploy-auth0-hooks:
         name: "Deploy Auth0 hooks"
         runs-on: ubuntu-20.04
-        concurrency: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+        concurrency: microservices-deploy-auth0-hooks-${{ github.ref }}
         needs: [fractal-publish-build-config]
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-hooks|')
 
