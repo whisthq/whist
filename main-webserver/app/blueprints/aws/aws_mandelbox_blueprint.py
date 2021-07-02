@@ -104,7 +104,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         instance_name=instance.instance_name,
         user_id=body.username,
         status="ALLOCATED",
-        creation_time_utc_unix_ms=int(time.time()),
+        creation_time_utc_unix_ms=int(time.time() * 1000),
     )
     db.session.add(obj)
     db.session.commit()
