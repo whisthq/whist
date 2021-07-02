@@ -1,15 +1,23 @@
+import sys
 from threading import Thread
 from typing import Dict, List
 import requests
 from flask import current_app
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from app.models import db, RegionToAmi, InstanceInfo
-from app.helpers.utils.db.db_utils import set_local_lock_timeout
+from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.instance_state_values import InstanceState
+
+#  This list allows thread success to be passed back to the main thread.
+#  It is thread-safe because lists in python are thread-safe.
+#  It is a list of lists, with each sublist containing a thread, a
+#  boolean demarcating that thread's status (i.e. whether it succeeded), and a
+#  tuple of (region_name, ami_id) associated with that thread.
+region_wise_upgrade_threads = []
 
 
 def insert_new_amis(
@@ -43,7 +51,7 @@ def insert_new_amis(
     return new_amis
 
 
-def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
+def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: int, flask_app):
     """
     This function will be invoked from the Flask CLI command to upgrade the AMIs for regions.
     Inserts new AMIs into the RegionToAmi table and blocks until the instance is started, and the
@@ -52,23 +60,30 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, flask_app):
     Args:
         region_name: Name of the region in which new instances neeed to be launched.
         ami_id: AMI for the instances that need to be launched.
+        index_in_thread_list:  which bool in the thread list to set to true for exception tracking
         flask_app: Needed for providing the context need for interacting with the database.
 
     Returns:
         None.
     """
+    global region_wise_upgrade_threads
     fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
-        new_instances = do_scale_up_if_necessary(region_name, ami_id, force_buffer)
-        for new_instance in new_instances:
+        new_instance_names = do_scale_up_if_necessary(
+            region_name, ami_id, force_buffer, flask_app=flask_app
+        )
+        result = False  # Make Pyright stop complaining
+        assert len(new_instance_names) > 0  # This should always hold
+        for new_instance_name in new_instance_names:
             fractal_logger.debug(
-                f"Waiting for instance with name: {new_instance.instance_name} to be marked online"
+                f"Waiting for instance with name: {new_instance_name} to be marked online"
             )
-            _poll(new_instance.instance_name)
+            result = _poll(new_instance_name)
+    region_wise_upgrade_threads[index_in_thread_list][1] = result
 
 
-def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
+def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     """
     Marks the instance for draining by calling the drain_and_shutdown endpoint of the host service
     and marks the instance as draining. If the endpoint errors out with an unexpected status code,
@@ -83,17 +98,44 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> None:
 
     Args:
         active_instance: InstanceInfo object for the instance that need to be marked as draining.
+    Returns:
+        job_status: A boolean indicating if we are able to mark the instance as draining by
+        calling the drain_and_shutdown endpoint on host service.
     """
+    job_status = False
+    fractal_logger.info(
+        f"mark_instance_for_draining called for instance {active_instance.instance_name}"
+    )
     try:
-        base_url = f"http://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-        requests.post(f"{base_url}/drain_and_shutdown")
+        auth0_client = Auth0Client(
+            current_app.config["AUTH0_DOMAIN"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
+        )
+        auth_token = auth0_client.token().access_token
+        base_url = f"https://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+        requests.post(
+            f"{base_url}/drain_and_shutdown",
+            json={
+                "auth_secret": auth_token,
+            },
+            verify=False, # SSL verification turned off due to self signed certs on host service.
+        )
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
         active_instance.status = InstanceState.DRAINING
-    except requests.exceptions.RequestException:
+        fractal_logger.info(
+            f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}"
+        )
+        job_status = True
+    except requests.exceptions.RequestException as error:
         active_instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+        fractal_logger.error(
+            f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}: {error}"
+        )
     finally:
         db.session.commit()
+    return job_status
 
 
 def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo]:
@@ -114,9 +156,11 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
     return (
         db.session.query(InstanceInfo)
         .filter(
-            or_(
-                InstanceInfo.status.like(InstanceState.ACTIVE),
-                InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
+            and_(
+                or_(
+                    InstanceInfo.status.like(InstanceState.ACTIVE),
+                    InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
+                ),
                 InstanceInfo.aws_ami_id.in_(active_amis),
             )
         )
@@ -159,6 +203,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         Returns:
             None
     """
+    global region_wise_upgrade_threads
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
     for current_active_ami in current_active_amis:
@@ -166,23 +211,44 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
 
-    region_wise_upgrade_threads = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
+        # grab a lock here
+        region_row = (
+            RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
+            .with_for_update()
+            .one_or_none()
+        )
+        if region_row is not None:
+            region_row.protected_from_scale_down = True
+        db.session.commit()
         region_wise_upgrade_thread = Thread(
             target=launch_new_ami_buffer,
-            args=(
-                region_name,
-                ami_id,
-            ),
+            args=(region_name, ami_id, len(region_wise_upgrade_threads)),
             # current_app is a proxy for app object, so `_get_current_object` method
             # should be used to fetch the application object to be passed to the thread.
             kwargs={"flask_app": current_app._get_current_object()},
         )
-        region_wise_upgrade_threads.append(region_wise_upgrade_thread)
+        region_wise_upgrade_threads.append(
+            [region_wise_upgrade_thread, False, (region_name, ami_id)]
+        )
         region_wise_upgrade_thread.start()
-
-    for region_wise_upgrade_thread in region_wise_upgrade_threads:
-        region_wise_upgrade_thread.join()
+    threads_succeeded = True
+    for region_and_bool_pair in region_wise_upgrade_threads:
+        region_and_bool_pair[0].join()
+        if not region_and_bool_pair[1]:
+            region_name, ami_id = region_and_bool_pair[2]
+            region_row = (
+                RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
+                .with_for_update()
+                .one_or_none()
+            )
+            if region_row is not None:
+                region_row.protected_from_scale_down = False
+            db.session.commit()
+            threads_succeeded = False
+    if not threads_succeeded:
+        # If any thread here failed, fail the workflow
+        raise Exception("AMIS failed to upgrade, see logs")
 
     current_active_amis_str = [
         current_active_ami.ami_id for current_active_ami in current_active_amis
@@ -195,18 +261,33 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # invoked the `fetch_current_running_instances` function. Using this
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
+        fractal_logger.info(f"Draining instance {active_instance.instance_name} in database only!")
         active_instance.status = InstanceState.DRAINING
     db.session.commit()
 
+    active_instances_draining_status = True
     for active_instance in current_running_instances:
         # At this point, the instance is marked as DRAINING in the database. But we need
         # to inform the HOST_SERVICE that we have marked the instance as draining.
-        mark_instance_for_draining(active_instance)
+        active_instance_draining_status = mark_instance_for_draining(active_instance)
+        if active_instance_draining_status is False:
+            # Mark the status for draining all instances as False when marking any instance draining fails.
+            fractal_logger.info(
+                f"Failed to mark instance: {active_instance.instance_name} for draining through host service."
+            )
+            active_instances_draining_status = False
 
     for new_ami in new_amis:
+        new_ami.protected_from_scale_down = False
         new_ami.ami_active = True
 
     for current_ami in current_active_amis:
         current_ami.ami_active = False
 
+    # Reset the list here to ensure no thread status info leaks
+    region_wise_upgrade_threads = []
     db.session.commit()
+
+    fractal_logger.info("Finished performing AMI upgrade.")
+    if active_instances_draining_status is False:
+        sys.exit(1)
