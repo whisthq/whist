@@ -87,7 +87,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                         {"region_name": body.region, "client_commit_hash": client_commit_hash}
                     ).ami_id,
                 ),
-                kwargs={"flask_app": current_app._get_current_object()},
+                kwargs={"flask_app": current_app._get_current_object()},  # pylint: disable=W0212
             )
             scaling_thread.start()
         fractal_logger.debug(
