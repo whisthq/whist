@@ -51,12 +51,12 @@ type Querier interface {
 	// RemoveMandelboxScan scans the result of an executed RemoveMandelboxBatch query.
 	RemoveMandelboxScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	RemoveStaleAllocatedMandelboxes(ctx context.Context, params RemoveStaleAllocatedMandelboxesParams) (pgconn.CommandTag, error)
-	// RemoveStaleAllocatedMandelboxesBatch enqueues a RemoveStaleAllocatedMandelboxes query into batch to be executed
+	RemoveStaleMandelboxes(ctx context.Context, params RemoveStaleMandelboxesParams) (pgconn.CommandTag, error)
+	// RemoveStaleMandelboxesBatch enqueues a RemoveStaleMandelboxes query into batch to be executed
 	// later by the batch.
-	RemoveStaleAllocatedMandelboxesBatch(batch *pgx.Batch, params RemoveStaleAllocatedMandelboxesParams)
-	// RemoveStaleAllocatedMandelboxesScan scans the result of an executed RemoveStaleAllocatedMandelboxesBatch query.
-	RemoveStaleAllocatedMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+	RemoveStaleMandelboxesBatch(batch *pgx.Batch, params RemoveStaleMandelboxesParams)
+	// RemoveStaleMandelboxesScan scans the result of an executed RemoveStaleMandelboxesBatch query.
+	RemoveStaleMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
@@ -162,8 +162,8 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, removeMandelboxSQL, removeMandelboxSQL); err != nil {
 		return fmt.Errorf("prepare query 'RemoveMandelbox': %w", err)
 	}
-	if _, err := p.Prepare(ctx, removeStaleAllocatedMandelboxesSQL, removeStaleAllocatedMandelboxesSQL); err != nil {
-		return fmt.Errorf("prepare query 'RemoveStaleAllocatedMandelboxes': %w", err)
+	if _, err := p.Prepare(ctx, removeStaleMandelboxesSQL, removeStaleMandelboxesSQL); err != nil {
+		return fmt.Errorf("prepare query 'RemoveStaleMandelboxes': %w", err)
 	}
 	if _, err := p.Prepare(ctx, writeHeartbeatSQL, writeHeartbeatSQL); err != nil {
 		return fmt.Errorf("prepare query 'WriteHeartbeat': %w", err)
