@@ -57,7 +57,7 @@ updates:
       open-pull-requests-limit: 10
 
     - package-ecosystem: "docker"
-      directory: "/config" # looks for Dockerfile in this directory
+      directory: "/.github/actions/db-migration" # looks for Dockerfile in this directory
       schedule:
           interval: "monthly" # runs on the first day of each month
       ignore:
