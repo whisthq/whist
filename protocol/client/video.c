@@ -1026,7 +1026,8 @@ void log_frame_statistics(VideoFrame* frame) {
     /*
         Log statistics of the currently rendering frame. If logging is verbose (i.e. LOG_VIDEO is
         set to true), then we log every single render. If not, we only indicate when frames are
-        rendered more than 25ms after we've received them.
+        rendered more than 25ms after we've received them, and also log the framerate every 5
+        seconds.
 
         Arguments:
             frame (VideoFrame*): frame we are rendering and logging about
@@ -1049,6 +1050,25 @@ void log_frame_statistics(VideoFrame* frame) {
     if ((int)(get_total_frame_size(frame)) != render_context.frame_size) {
         LOG_INFO("Incorrect Frame Size! %d instead of %d", get_total_frame_size(frame),
                  render_context.frame_size);
+    }
+
+    // Log the framerate
+    static unsigned number_of_frames = 0;
+    static clock time_since_last_fps_log;
+    static bool initialized_fps_logging = false;
+    if (!initialized_fps_logging) {
+        initialized_fps_logging = true;
+        start_timer(&time_since_last_fps_log);
+    }
+
+    if (get_timer(time_since_last_fps_log) > 5) {
+        double fps_log_time = get_timer(time_since_last_fps_log);
+        unsigned fps = (unsigned)(++number_of_frames / fps_log_time);
+        LOG_INFO("Average FPS over the last %.1f seconds was %u", fps_log_time, fps);
+        number_of_frames = 0;
+        start_timer(&time_since_last_fps_log);
+    } else {
+        number_of_frames++;
     }
 }
 
