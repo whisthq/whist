@@ -285,6 +285,9 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     encoder->frame = lock_params.bitstreamBufferPtr;
     encoder->is_iframe = encoder->wants_iframe || encoder->frame_idx == 0;
 
+    // Untrigger iframe
+    encoder->wants_iframe = false;
+
     return 0;
 }
 
@@ -378,6 +381,8 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
     if (codec_changed) {
         reconfigure_params.resetEncoder = 1;
         reconfigure_params.forceIDR = 1;
+        // Let the next frame know that it's an iframe
+        encoder->wants_iframe = true;
     } else {
         reconfigure_params.resetEncoder = 0;
         reconfigure_params.forceIDR = 0;
