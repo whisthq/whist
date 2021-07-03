@@ -248,7 +248,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.frameIdx = ++encoder->frame_idx;
     enc_params.outputBitstream = encoder->output_buffer;
     if (encoder->wants_iframe) {
-        enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR;
+        enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR | NV_ENC_PIC_FLAG_OUTPUT_SPSPPS;
     }
 
     // Encode the frame

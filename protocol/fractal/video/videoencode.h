@@ -154,7 +154,8 @@ bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitra
                          CodecType codec);
 
 /**
- * @brief                          Set the next frame to be an I-frame
+ * @brief                          Set the next frame to be an IDR-frame,
+ *                                 with SPS/PPS headers included as well.
  *
  * @param encoder                  Encoder to be updated
  */

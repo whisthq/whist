@@ -909,7 +909,7 @@ void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
 
 void video_encoder_set_iframe(VideoEncoder *encoder) {
     /*
-        Set the next frame to be an iframe.
+        Set the next frame to be an IDR-frame with SPS/PPS headers.
 
         Arguments:
             encoder (VideoEncoder*): Encoder containing the frame
@@ -935,6 +935,7 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
     if (encoder->capture_is_on_nvidia) {
         nvidia_unset_iframe(encoder->nvidia_encoder);
     } else {
+        LOG_ERROR("ffmpeg unset_iframe doesn't work very well! This might not work!");
         encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
         encoder->sw_frame->key_frame = 0;
     }
