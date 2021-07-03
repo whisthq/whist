@@ -184,18 +184,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            # A non-pull_request event does not have a github.base_ref set
-            # We have to dig into the event object, which has a ref string
-            # such as "refs/heads/dev". We trim "refs/heads/" to get the
-            # substring that is the name of the branch.
-            - name: Set GITHUB_BRANCH Environment Variable
-              run: |
-                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-                      echo "GITHUB_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
-                  else
-                      echo "GITHUB_BRANCH=${{github.base_ref}}" >> $GITHUB_ENV
-                  fi
-
             - name: Log GitHub Context
               shell: python3 {0}
               run: |
@@ -214,82 +202,25 @@ jobs:
                   MATRIX CONTEXT:
                   ${{ toJSON(matrix) }}
                   """
-                  print("GITHUB_BRANCH VARIABLE:")
-                  print(os.environ.get("GITHUB_BRANCH"))
-                  print(context.strip("\n"))
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
               with:
                   python-version: 3.8
 
+            - name: Diff database schema with local schema.sql
+              id: db-diff
+              uses: ./.github/actions/db-migration
+
+            # Need to install this dependency for the notification step.
             - name: Install Python Dependencies
               working-directory: main-webserver
-              run: pip install -r db_migration/requirements.txt
-
-            # Use the name of the branch to determine which database url
-            # to use for the migration
-            # github.base_ref is the name of the branch that is being
-            # "merged into", so we'll use it to choose the Heroku App name
-            - name: Retrieve Branch Database URL from Heroku
-              id: db-url
-              shell: python3 {0}
-              run: |
-                  import os
-                  import sys
-                  sys.path.append(os.environ["PATH_HELPERS"])
-                  from resources import heroku_config
-
-                  base_ref = os.environ["GITHUB_BRANCH"]
-                  appnames = {
-                      "dev":     os.environ["SERVER_DEV"],
-                      "staging": os.environ["SERVER_STAGING"],
-                      "prod":  os.environ["SERVER_PROD"]
-                  }
-                  app = appnames.get(base_ref, appnames.get("dev"))
-
-                  config = heroku_config(app)
-                  db_url = config[os.environ["HEROKU_DB_KEY"]]
-
-                  print(f"::set-output name=url::{db_url}")
-
-            # Writing the "current" database schema to a file here,
-            # as downstream steps use commands that require a file path
-            - name: Dump Current Database Schema to File
-              run: pg_dump --no-owner --no-privileges --schema-only ${{ steps.db-url.outputs.url }} >> $PATH_CURRENT
-
-            # The exit codes for this step will mimic the 'migra' diff tool
-            # that it depends on.
-            #
-            # migra uses the following exit codes:
-            # 0 is successful run, producing no diff (identical schemas)
-            # 1 is error
-            # 2 is successful run, producing a diff (non-identical schemas)
-            # 3 is successful run, but producing no diff, meaning the diff is "unsafe"
-            #
-            # We'll introduce one exit code of our own:
-            # 4 is a successful run, but producing a diff that does not result in
-            #   identical databases upon application.
-            - name: Diff Current and Merging Schema Files
-              id: db-diff
-              shell: python3 {0}
-              run: |
-                  import os
-                  import sys
-                  sys.path.append(os.environ["PATH_SCRIPTS"])
-                  from schema_diff import schema_diff
-
-                  code, diff = schema_diff(os.environ["PATH_CURRENT"],
-                                           os.environ["PATH_MERGING"])
-
-                  print(f"::set-output name=code::{code}")
-                  with open(os.environ["PATH_DIFF"], "w") as f:
-                    f.write(diff or "")
+              run: pip install PyGithub
 
             # Using the workflow notifcation helpers, we'll send out
             # formatted alerts based on the error code response from the
             # previous step.
-            #
+
             # Actual messages are defined in the environment configuration at
             # the top of this job.
             - name: Send Alerts on Diff Result
@@ -297,48 +228,44 @@ jobs:
               run: |
                   import os
                   import sys
-                  sys.path.append(os.environ["PATH_HELPERS"])
+                  sys.path.append(".github/workflows/helpers")
                   from notifications.github_bot import github_comment_update
 
-                  return_code = int(${{ steps.db-diff.outputs.code }})
-                  with open(os.environ["PATH_DIFF"]) as f:
-                      sql_diff = f.read().strip("\n")
+                  code = int(${{ steps.db-diff.outputs.code }})
+                  diff = """${{ steps.db-diff.outputs.diff }}"""
 
-                  print("MIGRA RETURN CODE:", return_code)
-                  print("MIGRA SQL DIFF:", sql_diff)
+                  print("MIGRA RETURN CODE:", code)
+                  print("MIGRA SQL DIFF:", diff)
+
+                  if not os.environ.get("GITHUB_ISSUE"):
+                    print("No GitHub Issue number! Skipping PR notification.")
+                    sys.exit(0)
 
                   github_token = os.environ["GITHUB_TOKEN"]
+                  github_issue = int(os.environ["GITHUB_ISSUE"])
                   github_repo = "fractal/fractal"
 
-                  # If this is no issue number, then we're merging
-                  # and there is nowhere to post to, so quit early
-                  github_issue = int(os.environ["GITHUB_ISSUE"])
-
                   identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
-                  title = None
-                  body = None
 
-                  # handle return code
-                  if return_code == 0:
+                  if code == 0:
                     title = os.environ["TITLE_NO_CHANGES"]
                     body = os.environ["BODY_NO_CHANGES"]
 
-                  elif return_code == 2:
+                  elif code == 2:
                     title = ":construction:" + os.environ["TITLE_SAFE_CHANGES"] + ":construction:"
                     body = os.environ["BODY_SAFE_CHANGES"]
 
-                  elif return_code == 3:
+                  elif code == 3:
                     title = ":exclamation:" + os.environ["TITLE_UNSAFE_CHANGES"] + ":exclamation:"
                     body = os.environ["BODY_UNSAFE_CHANGES"]
 
-                  elif return_code == 4:
+                  elif code == 4:
                     title = ":rotating_light:" + os.environ["TITLE_INVALID_CHANGES"] + ":rotating_light:"
                     body = os.environ["BODY_INVALID_CHANGES"]
 
                   else:
                     title = ":x:" + os.environ["TITLE_ERROR"] + ":x:"
                     body = os.environ["BODY_ERROR"]
-                  # end of handling return code
 
                   github_comment_update(
                     github_token,
@@ -347,10 +274,6 @@ jobs:
                     identifier,
                     body,
                     title=title,
-                    code=sql_diff,
-                    lang="python",
+                    code=diff,
+                    lang="sql",
                   )
-
-                  # these are the valid returns
-                  # step fails here if assertion fails
-                  assert return_code in (0, 2, 3)

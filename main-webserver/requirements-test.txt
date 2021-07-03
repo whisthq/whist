@@ -4,6 +4,7 @@ moto==2.0.1
 progressbar==2.5
 pylint==2.8.3
 pytest==6.2.4
+pytest-cov==2.12.1
 pytest-dotenv==0.5.2
 pytest-flask==1.2.0
 Sphinx==4.0.2

@@ -654,10 +654,18 @@ jobs:
                   wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
                   | sudo tar -zxp --directory /usr/local/bin/
 
+            - name: Diff database schema with local schema.sql
+              id: db-diff
+              uses: ./.github/actions/db-migration
+
             - name: Deploy the webserver atomically
               if: needs.fractal-publish-build-config.outputs.publish == 'true'
               shell: bash -e {0}
-              run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
+              run: >
+                  main-webserver/atomic_deployment.sh
+                  $HEROKU_APP_NAME
+                  ${{ steps.db-diff.outputs.code }}
+                  ${{ steps.db-diff.outputs.diff }}
 
             - name: Notify Slack on database migration
               shell: python3 {0}
