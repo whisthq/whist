@@ -7,6 +7,10 @@ from flask import current_app
 from app.models import db, RegionToAmi, InstanceInfo
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
+from app.constants.instance_state_values import InstanceState
+
+from tests.helpers.utils import get_random_region_name, get_random_regions
+
 
 def test_scale_up_single(app, hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
     """
@@ -15,12 +19,15 @@ def test_scale_up_single(app, hijack_ec2_calls, mock_get_num_new_instances, hija
     """
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(1)
-    us_east_1_image_obj = RegionToAmi.query.filter_by(
-        region_name="us-east-1", ami_active=True
+    random_region_name = get_random_region_name()
+    random_region_image_obj = RegionToAmi.query.filter_by(
+        region_name=random_region_name, ami_active=True
     ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id, flask_app=app)
+    aws_funcs.do_scale_up_if_necessary(
+        random_region_name, random_region_image_obj.ami_id, flask_app=app
+    )
     assert len(call_list) == 1
-    assert call_list[0]["kwargs"]["image_id"] == us_east_1_image_obj.ami_id
+    assert call_list[0]["kwargs"]["image_id"] == random_region_image_obj.ami_id
 
 
 def test_scale_up_multiple(app, hijack_ec2_calls, mock_get_num_new_instances, hijack_db):
@@ -31,10 +38,11 @@ def test_scale_up_multiple(app, hijack_ec2_calls, mock_get_num_new_instances, hi
     desired_num = randint(1, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
+    region_name = get_random_region_name()
     us_east_1_image_obj = RegionToAmi.query.filter_by(
-        region_name="us-east-1", ami_active=True
+        region_name=region_name, ami_active=True
     ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary("us-east-1", us_east_1_image_obj.ami_id, flask_app=app)
+    aws_funcs.do_scale_up_if_necessary(region_name, us_east_1_image_obj.ami_id, flask_app=app)
     assert len(call_list) == desired_num
     assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.ami_id for elem in call_list)
 
@@ -55,12 +63,12 @@ def test_scale_down_single_available(
 
     monkeypatch.setattr(requests, "post", _helper)
     instance = bulk_instance(instance_name="test_instance", aws_ami_id="test-AMI")
-    assert instance.status != "DRAINING"
+    assert instance.status != InstanceState.DRAINING.value
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert post_list[0]["args"][0] == f"https://{current_app.config['AUTH0_DOMAIN']}/oauth/token"
     db.session.refresh(instance)
-    assert instance.status == "HOST_SERVICE_UNRESPONSIVE"
+    assert instance.status == InstanceState.HOST_SERVICE_UNRESPONSIVE.value
 
 
 def test_scale_down_single_unavailable(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
@@ -292,18 +300,17 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
         call_list.append({"args": args, "kwargs": kwargs})
 
     monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
-    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
-    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
-    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9a")
-    bulk_instance(location="us-east-1", aws_ami_id="ami-00c40082600650a9b")
-    bulk_instance(location="us-east-2", aws_ami_id="ami-0a7da7479f37c924a")
-    bulk_instance(location="us-east-2", aws_ami_id="ami-0a7da7479f37c924b")
+    region_ami_pairs_length = 4
+    randomly_picked_ami_objs = get_random_regions(region_ami_pairs_length)
+    region_ami_pairs = [
+        (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
+    ]
+    for region, ami_id in region_ami_pairs:
+        num_instances = randint(1, 10)
+        for _ in range(num_instances):
+            bulk_instance(location=region, aws_ami_id=ami_id)
+
     aws_funcs.try_scale_down_if_necessary_all_regions()
-    assert len(call_list) == 4
+    assert len(call_list) == region_ami_pairs_length
     args = [called["args"] for called in call_list]
-    assert set(args) == {
-        ("us-east-1", "ami-00c40082600650a9a"),
-        ("us-east-1", "ami-00c40082600650a9b"),
-        ("us-east-2", "ami-0a7da7479f37c924a"),
-        ("us-east-2", "ami-0a7da7479f37c924b"),
-    }
+    assert set(args) == set(region_ami_pairs)
