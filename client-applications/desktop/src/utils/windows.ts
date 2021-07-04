@@ -1,7 +1,9 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
  * @file auth.ts
- * @brief This file contains utility functions to create Electron windows.
+ * @brief This file contains utility functions to create Electron windows. This file manages 
+ * creation of renderer process windows. It is called from the main process, and passes all 
+ * the configuration needed to load files into Electron renderer windows.
  */
 
 import path from "path"
