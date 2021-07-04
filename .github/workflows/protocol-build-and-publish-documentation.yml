@@ -121,7 +121,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+            - name: Notify Slack (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && success() }}
               shell: python3 {0}
               run: |
