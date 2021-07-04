@@ -1,3 +1,10 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file auth.ts
+ * @brief This file contains custom RXJS operators that add functionality on top of existing RXJS
+ * operators.
+ */
+
 import {
   Observable,
   ObservableInput,

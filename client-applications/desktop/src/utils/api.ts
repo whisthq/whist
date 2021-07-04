@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file api.ts
+ * @brief This file contains utility functions to make API calls.
+ */
+
 import { configGet, configPost } from "@fractal/core-ts"
 import config from "@app/config/environment"
 import https from "https"

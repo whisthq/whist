@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file dock.ts
+ * @brief This file contains functions to manipulate the MacOS app dock image.
+ */
+
 import { app } from "electron"
 
 export const showAppDock = () => {

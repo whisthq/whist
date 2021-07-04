@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file flows.ts
+ * @brief This file contains utility functions for triggers/flows.
+ */
+
 import { inspect } from "util"
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, tap } from "rxjs/operators"

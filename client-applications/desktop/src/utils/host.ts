@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file host.ts
+ * @brief This file contains utility functions for interacting with the host service.
+ */
+
 import { AsyncReturnType } from "@app/@types/state"
 import { get, apiPut } from "@app/utils/api"
 import { HostServicePort } from "@app/utils/constants"

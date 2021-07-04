@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file logging.ts
+ * @brief This file contains utility functions for logging.
+ */
+
 import { app } from "electron"
 import { truncate } from "lodash"
 import fs from "fs"

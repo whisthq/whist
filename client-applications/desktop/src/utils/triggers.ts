@@ -1,3 +1,9 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file auth.ts
+ * @brief This file defines all the triggers recognized by the main thread.
+ */
+
 export default {
   // App triggers
   appReady: "appReady",

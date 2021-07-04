@@ -1,5 +1,8 @@
-// TODO: This is getting a bit unwieldy. Let's create a way to group related errors, e.g.
-// a "mandelbox error" object.
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file constants.ts
+ * @brief This file contains constant values that are passed around to other parts of the application.
+ */
 
 export const allowPayments = false
 
