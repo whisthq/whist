@@ -3,9 +3,8 @@
  * @file persist.ts
  * @brief This file contains utility functions for interacting with electron-store, which is how
  * we persist data across sessions. This file manages the low-level details of how we'll persist
- * user data in between Electron sessions. From the perspective of the rest of the app, we should\
+ * user data in between Electron sessions. From the perspective of the rest of the app, we should
  * just able to call these functions and not worry about any of the implementation details.
- * 
  * Persistence requires access to the file system, so it can only be used by the main process. Only
  * serializable data can be persisted. Essentially, anything that can be converted to JSON.
  */
