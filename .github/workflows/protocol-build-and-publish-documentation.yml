@@ -35,16 +35,16 @@ jobs:
               with:
                   path: fractal
 
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
             - name: Checkout the fractal/docs Git Repository
               uses: actions/checkout@v2
               with:
                   repository: fractal/docs
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   path: docs
-
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
 
             # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
             - name: Configure AWS S3 CLI
