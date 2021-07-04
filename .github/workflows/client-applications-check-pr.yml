@@ -9,11 +9,11 @@ on:
     pull_request:
         paths:
             - "client-applications/**"
-            - "!client-applications/README.md"
-            - ".github/workflows/client-applications-check-pr.yml"
             - "core-ts/**"
-            - "!core-ts/README.md"
+            - ".github/workflows/client-applications-check-pr.yml"
             - ".github/workflows/core-ts-check-pr.yml"
+            - "!client-applications/README.md"
+            - "!core-ts/README.md"
     workflow_dispatch:
 
 jobs:
