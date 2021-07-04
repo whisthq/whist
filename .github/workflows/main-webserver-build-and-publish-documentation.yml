@@ -42,11 +42,6 @@ jobs:
                   token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
                   path: docs
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
@@ -95,7 +90,7 @@ jobs:
                   # Stage, commit, and push documentation changes
                   git add webserver
                   git commit -F - <<EOF
-                  Update web server documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
+                  Update webserver documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
                   EOF
                   git show --stat
                   git push
@@ -105,16 +100,25 @@ jobs:
             # Only notify Slack if there was a positive diff, so only if a new documentation publishing event was attempted
             - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && failure() }}
-              shell: bash
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"@releases :rotating_light: Failed to deploy \`main-webserver\` Internal Documentation to \`docs.fractal.co\`, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications.slack_bot import slack_post
 
-            - name: Notify Slack (Only on Push/Workflow_dispatch Events)
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-prod"              
+                  BODY = "@releases :rotating_light: Failed to deploy `main-webserver` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+            - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && success() }}
-              shell: bash
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal \`main-webserver\` Internal Documentation Deployed to \`docs.fractal.co\`\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-prod"              
+                  TITLE = ":blue_book: Main-Webserver Internal Documentation Deployed :blue_book:"
+                  BODY = "Fractal `main-webserver` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
