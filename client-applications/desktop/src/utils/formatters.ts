@@ -1,7 +1,7 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
  * @file formatters.ts
- * @brief This file contains observable formatters for our debug logs
+ * @brief This file contains observable formatters for our debug logs.
  */
 
 import { ChildProcess } from "child_process"

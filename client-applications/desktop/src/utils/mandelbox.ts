@@ -1,3 +1,8 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file mandelbox.ts
+ * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
+ */
 import { screen } from "electron"
 import { pick } from "lodash"
 

@@ -1,6 +1,9 @@
-/*
-  This file exists so that the client app can figure out which region is the closest to the user and connect to that cluster.
-*/
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file region.ts
+ * @brief This file contains utility functions for finding the closest AWS region.
+ */
+
 import ping from "ping"
 import { values } from "lodash"
 
