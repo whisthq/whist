@@ -119,7 +119,7 @@ jobs:
                   SLACK_CHANNEL = "#alerts-prod"              
                   BODY = "@releases :rotating_light: Failed to deploy `protocol` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && success() }}
