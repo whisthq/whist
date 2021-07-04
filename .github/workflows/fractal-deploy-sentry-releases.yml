@@ -46,7 +46,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
@@ -105,7 +104,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack on success

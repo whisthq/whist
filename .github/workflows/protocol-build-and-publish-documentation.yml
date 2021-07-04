@@ -1,30 +1,30 @@
-# workflows/main-webserver-build-and-publish-documentation.yml
+# workflows/protocol-build-and-publish-documentation.yml
 #
-# Main Webserver: Build & Publish Documentation
-# Build and conditionally deploy webserver documentation. Although this
+# Protocol: Build & Publish Documentation
+# Build and conditionally deploy protocol documentation. Although this
 # workflow is triggered by both pull requests and pushes, the steps that deploy
 # the built documentation only run when the triggering event is a push.
 
-name: "Main Webserver: Build & Publish Documentation"
+name: "Protocol: Build & Publish Documentation"
 
 on:
     pull_request:
         branches:
             - dev
         paths:
-            - "main-webserver/**"
-            - ".github/workflows/main-webserver-build-and-publish-documentation.yml"
+            - ".github/workflows/protocol-build-and-publish-documentation.yml"
+            - "protocol/**"
     push:
         branches:
             - dev
         paths:
-            - "main-webserver/**"
-            - ".github/workflows/main-webserver-build-and-publish-documentation.yml"
+            - "protocol/**"
+            - ".github/workflows/protocol-build-and-publish-documentation.yml"
     workflow_dispatch:
 
 jobs:
-    main-webserver-build-documentation:
-        name: Build & Publish Webserver Documentation to fractal/docs
+    protocol-build-documentation:
+        name: Build & Publish Protocol Documentation to fractal/docs
         runs-on: ubuntu-20.04
 
         steps:
@@ -46,20 +46,32 @@ jobs:
               working-directory: fractal/.github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            # Install the version of Sphinx specified in main-webserver/requirements-test.txt
-            - name: Install requirements
-              run: |
-                  pip install $(cat fractal/main-webserver/requirements.txt)
-                  pip install $(cat fractal/main-webserver/requirements-test.txt)
+            # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
-            - name: Build the Latest Documentation
-              working-directory: fractal/main-webserver/docs
-              run: sphinx-apidoc -f -o . ../app && make html
+            - name: Install Linux Protocol Dependencies
+              working-directory: fractal/protocol
+              run: |
+                  sudo apt-get update
+                  ./setup-linux-build-environment.sh
+                  sudo apt install coreutils doxygen
+
+            - name: Build Protocol Documentation
+              working-directory: fractal/protocol
+              run: |
+                  cmake -S . -B build
+                  cd build
+                  make -j docs
 
             - name: Diff Old and New Documentation
               id: diff
               run: |
-                  git diff --no-index fractal/main-webserver/docs/_build/html docs/webserver && echo "No changes detected"
+                  git diff --no-index fractal/protocol/build/docs/html docs/protocol && echo "No changes detected"
                   echo "::set-output name=changed::$?"
 
             ###################################################################################
@@ -67,7 +79,7 @@ jobs:
 
             - name: Copy New Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
-              run: rm -r docs/webserver && cp -r fractal/main-webserver/docs/_build/html docs/webserver
+              run: rm -r docs/protocol && cp -r fractal/build/protocol/docs/html docs/protocol
 
             - name: Commit the Documentation Changes to fractal/docs (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
@@ -88,16 +100,15 @@ jobs:
                   EOF
 
                   # Stage, commit, and push documentation changes
-                  git add webserver
+                  git add protocol
                   git commit -F - <<EOF
-                  Update webserver documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
+                  Update protocol documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
                   EOF
                   git show --stat
                   git push
 
             ###################################################################################
 
-            # Only notify Slack if there was a positive diff, so only if a new documentation publishing event was attempted
             - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && failure() }}
               shell: python3 {0}
@@ -106,7 +117,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-prod"              
-                  BODY = "@releases :rotating_light: Failed to deploy `main-webserver` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Failed to deploy `protocol` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -118,7 +129,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-prod"              
-                  TITLE = ":blue_book: Main-Webserver Internal Documentation Deployed :blue_book:"
-                  BODY = "Fractal `main-webserver` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":orange_book: Protocol Internal Documentation Deployed :orange_book:"
+                  BODY = "Fractal `protocol` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

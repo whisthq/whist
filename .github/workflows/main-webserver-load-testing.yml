@@ -29,7 +29,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Configure AWS CLI
