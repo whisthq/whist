@@ -6,11 +6,17 @@
 #include <fractal/core/fractal.h>
 
 typedef struct {
-    NV_ENC_REGISTERED_PTR registered_resource;
-    uint32_t dw_texture;
-    uint32_t dw_tex_target;
+    // Width+Height of the GPU Texture
     int width;
     int height;
+    // GPU pointers to the GPU texture
+    uint32_t dw_texture;
+    uint32_t dw_tex_target;
+    // Encoder's pointer to the GPU texture,
+    // so that the encoder can borrow that texture
+    // This has to be generated from the above 4,
+    // And has to be unregistered after use
+    NV_ENC_REGISTERED_PTR registered_resource;
 } InputBufferCacheEntry;
 
 typedef struct {
@@ -19,7 +25,7 @@ typedef struct {
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
     NV_ENC_REGISTERED_PTR registered_resource;
-    // We'll make the cache a bit bigger to ensure that it still works
+    // We'll make the cache a bit bigger than it needs to be to ensure that it still works
     InputBufferCacheEntry registered_resources[NVFBC_TOGL_TEXTURES_MAX * 2];
 
     NV_ENC_INPUT_PTR input_buffer;
