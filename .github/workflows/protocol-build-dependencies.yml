@@ -55,10 +55,6 @@ jobs:
                   repository: openssl/openssl
                   ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
 
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
-
             # To publish OpenSSL libcrypto.a/libcrypto.lib to AWS S3
             - name: Configure AWS S3 CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -153,6 +149,13 @@ jobs:
                   aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
 
             ###################################################################################
+
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
