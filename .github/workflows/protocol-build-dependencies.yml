@@ -55,6 +55,10 @@ jobs:
                   repository: openssl/openssl
                   ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
 
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
             # To publish OpenSSL libcrypto.a/libcrypto.lib to AWS S3
             - name: Configure AWS S3 CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -78,7 +82,7 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
-                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with O3 flag
+                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with -O3 flag
                   perl Configure VC-WIN64A --release
                   nmake
 
@@ -100,7 +104,7 @@ jobs:
                   # Move it to the right folder for building SDL
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
-                  # configure and build OpenSSL with O3 flag
+                  # configure and build OpenSSL with -O3 flag
                   ./config --release
                   make
 
@@ -110,7 +114,7 @@ jobs:
             - name: Build Fractal OpenSSL on Linux Ubuntu
               if: runner.os == 'Linux'
               run: |
-                  # configure and build OpenSSL with O3 flag
+                  # configure and build OpenSSL with -O3 flag
                   ./config --release
                   make
 
@@ -152,11 +156,15 @@ jobs:
 
             - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-              shell: bash --noprofile --norc -eo pipefail {0}
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \":rotating_light: Failed to Deploy \`OpenSSL libcrypto\` Static Library to AWS S3, Investigate Immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-prod"
+                  BODY = f"@releases :rotating_light: Failed to deploy `OpenSSL libcrypto` Static Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     notify-slack-openssl:
         name: Notify Slack
@@ -164,8 +172,21 @@ jobs:
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
         runs-on: ubuntu-20.04
         steps:
-            - name: Notify Slack
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
+            - name: Notify Slack on Success
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal \`OpenSSL libcrypto\` Static Library Deployed to Production via Upload to AWS S3\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-prod"
+                  TITLE = ":openssl: OpenSSL Libcrypto Static Library Deployed :openssl:"
+                  BODY = f"Fractal `OpenSSL libcrypto` Static Library Deployed to Production via Upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

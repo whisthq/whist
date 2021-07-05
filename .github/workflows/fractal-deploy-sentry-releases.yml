@@ -89,7 +89,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
-                  BODY = f"@releases Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"@releases :rotating_light: Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -106,7 +106,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack on success
+            - name: Notify Slack on Success
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
