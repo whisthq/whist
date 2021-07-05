@@ -44,6 +44,8 @@ Public Functions
  */
 int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
+bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+
 /**
  * @brief                          Capture a bitmap snapshot of the screen
  *
@@ -78,15 +80,5 @@ void release_screen(CaptureDevice* device);
  * @param device                   The capture device to free
  */
 void destroy_capture_device(CaptureDevice* device);
-
-/**
- * @brief                          Updates the capture device parameters,
- *                                 if the capture device is also the encoder
- *
- * @param device                   The Capture device
- * @param bitrate                  The new bitrate to use for encoding
- * @param codec                    The new codec to use for encoding
- */
-void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec);
 
 #endif  // SCREENCAPTURE_H

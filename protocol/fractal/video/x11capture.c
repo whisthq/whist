@@ -216,6 +216,15 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     return 0;
 }
 
+bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
+        return false;
+    }
+
+    return false;
+}
+
 int capture_screen(CaptureDevice* device) {
     /*
         Capture the screen using device. If using NVidia, we use the NVidia FBC API to capture the

@@ -266,6 +266,16 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     return 0;
 }
 
+bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
+        return false;
+    }
+
+    // Can't reconfigure DXGI device yet, so we'll just return false.
+    return false;
+}
+
 void get_bitmap_screenshot(CaptureDevice* device) {
     HDC h_screen_dc = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
     HDC h_memory_dc = CreateCompatibleDC(h_screen_dc);
@@ -471,8 +481,3 @@ void destroy_capture_device(CaptureDevice* device) {
     }
 }
 
-void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
-    UNUSED(device);
-    UNUSED(bitrate);
-    UNUSED(codec);
-}

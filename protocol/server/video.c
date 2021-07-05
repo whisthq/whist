@@ -173,21 +173,43 @@ int32_t multithreaded_send_video(void* opaque) {
         }
 
         // Update device with new parameters
+
+        // YUV pixel format requires the width to be a multiple of 4 and the height to be a
+        // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
+        // implicitly rounded up, but for some reason it looks better if we explicitly set the
+        // size. Also for some reason it actually rounds the width to a multiple of 8.
+        int true_width = client_width + 7 - ((client_width + 7) % 8);
+        int true_height = client_height + 1 - ((client_height + 1) % 2);
+
+        // If we got an update device request, we should update the device
         if (update_device) {
             update_device = false;
 
-            if (device) {
-                destroy_capture_device(device);
-                device = NULL;
-            }
+            LOG_INFO("Received an update capture device request to dimensions %dx%d with DPI %d",
+                     true_width, true_height, client_dpi);
 
+            // If a device already exists, we should reconfigure or destroy it
+            if (device != NULL) {
+                if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+                    // Reconfigured the capture device!
+                    // No need to recreate it, the device has now been updated
+                    LOG_INFO("Successfully reconfigured the capture device");
+                } else {
+                    // Destroying the old capture device so that a new one can be recreated below
+                    LOG_ERROR(
+                        "Failed to reconfigure the capture device! "
+                        "Destroying and recreating the capture device instead!");
+                    destroy_capture_device(device);
+                    device = NULL;
+                }
+            } else {
+                LOG_INFO("No capture device exists yet, creating a new one.");
+            }
+        }
+
+        // If no device is set, we need to create one
+        if (device == NULL) {
             device = &rdevice;
-            // YUV pixel format requires the width to be a multiple of 4 and the height to be a
-            // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
-            // implicitly rounded up, but for some reason it looks better if we explicitly set the
-            // size. Also for some reason it actually rounds the width to a multiple of 8.
-            int true_width = client_width + 7 - ((client_width + 7) % 8);
-            int true_height = client_height + 1 - ((client_height + 1) % 2);
             if (create_capture_device(device, true_width, true_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
@@ -197,7 +219,8 @@ int32_t multithreaded_send_video(void* opaque) {
                 continue;
             }
 
-            LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
+            LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", device->width,
+                     device->height, client_dpi);
 
             // If an encoder is pending, while capture_device is updating, then we should wait
             // for it to be created
