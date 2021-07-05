@@ -230,8 +230,8 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // First, try to simply reconfigure the encoder if an encoder exists
             if (encoder != NULL &&
-                reconfigure_encoder(encoder, device->width, device->height, max_mbps * 1024 * 1024,
-                                    (CodecType)client_codec_type)) {
+                reconfigure_encoder(encoder, device->width, device->height,
+                                    (int)(max_mbps * 1024 * 1024), (CodecType)client_codec_type)) {
                 // If we could update the encoder in-place, then we're done updating the encoder
                 LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
                          device->width, device->height, current_bitrate, max_mbps,
