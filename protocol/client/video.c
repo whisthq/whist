@@ -613,6 +613,7 @@ void replace_texture() {
     // Destroy the old texture
     if (video_context.texture) {
         SDL_DestroyTexture(video_context.texture);
+        video_context.texture = NULL;
     }
     // Create a new texture
     SDL_Texture* texture =
