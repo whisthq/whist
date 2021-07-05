@@ -915,7 +915,11 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
             encoder (VideoEncoder*): Encoder containing the frame
     */
     if (encoder->capture_is_on_nvidia) {
+#ifdef __linux__
         nvidia_set_iframe(encoder->nvidia_encoder);
+#else
+        LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
+#endif
     } else {
         LOG_ERROR("ffmpeg set_iframe doesn't work very well! This might not work!");
         encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
@@ -933,7 +937,11 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
             encoder (VideoEncoder*): encoder containing the frame
     */
     if (encoder->capture_is_on_nvidia) {
+#ifdef __linux__
         nvidia_unset_iframe(encoder->nvidia_encoder);
+#else
+        LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
+#endif
     } else {
         LOG_ERROR("ffmpeg unset_iframe doesn't work very well! This might not work!");
         encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
