@@ -20,14 +20,9 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     */
     // wipe all frames
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
-        // we CANNOT overwrite the currently rendering ID
-        if (i != ring_buffer->currently_rendering_id) {
-            FrameData* frame_data = &ring_buffer->receiving_frames[i];
-            frame_data->id = -1;
-            int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
-            memset(frame_data->received_indices, 0, indices_array_size);
-            memset(frame_data->nacked_indices, 0, indices_array_size);
-        }
+        FrameData* frame_data = &ring_buffer->receiving_frames[i];
+        reset_frame(frame_data);
+        destroy_frame_buffer(ring_buffer, frame_data);
     }
     // reset metadata
     ring_buffer->currently_rendering_id = -1;
@@ -168,20 +163,25 @@ void reset_frame(FrameData* frame_data) {
 void set_rendering(RingBuffer* ring_buffer, int id) {
     /*
         Indicate that the frame with ID id is currently rendering and free the frame buffer for the
-        previously rendering frame. The currently rendered frame will not be overwritten during
-        calls to reset_ring_buffer or receive_packet.
+        previously rendering frame. Ownership of the frame buffer for the rendering frame is
+        transferred to ring_buffer->currently_rendering_frame, allowing us to fully wipe the ring
+        buffer's receiving_frames array if we fall too behind.
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer metadata to change
             id (int): ID of the frame we are currently rendering.
     */
     if (ring_buffer->currently_rendering_id != -1) {
-        FrameData* last_rendered_frame =
-            get_frame_at_id(ring_buffer, ring_buffer->currently_rendering_id);
-        // We are no longer rendering this ID, so we are free to free the frame buffer
-        destroy_frame_buffer(ring_buffer, last_rendered_frame);
+        // destroy the frame buffer of the currently rendering frame
+        destroy_frame_buffer(ring_buffer, &ring_buffer->currently_rendering_frame);
     }
+    // set the currently rendering ID and frame
     ring_buffer->currently_rendering_id = id;
+    FrameData* current_frame = get_frame_at_id(ring_buffer, id);
+    ring_buffer->currently_rendering_frame = *current_frame;
+    // clear the current frame's data
+    current_frame->frame_buffer = NULL;
+    reset_frame(current_frame);
 }
 
 int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
