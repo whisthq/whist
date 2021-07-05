@@ -71,6 +71,47 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
+void update_xrandr(UINT width, UINT height, UINT dpi) {
+    char modename[128];
+    char cmd[1024];
+
+    snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
+
+    char* display_name;
+    runcmd("xrandr --current | grep \" connected\"", &display_name);
+    *strchr(display_name, ' ') = '\0';
+
+    snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd),
+             "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
+             "cut -d' ' -f3-)",
+             modename, width, height);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
+    runcmd(cmd, NULL);
+
+    // For the single-monitor case, we no longer need to do the below; we instead
+    // assume the display server has been created with the correct DPI. The below
+    // approach does not handle this case well because Linux does not yet support
+    // changing DPI on the fly. For getting seamless performance on multi-monitor
+    // setups, we may eventually need to instead get already-running X11
+    // applications to respect DPI changes to the X server.
+
+    // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
+    // snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
+    // runcmd(cmd, NULL);
+    // while this command sets the font DPI setting
+    // snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
+    // runcmd(cmd, NULL);
+
+    free(display_name);
+}
+
 int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     /*
         Create a device that will capture a screen of the specified width, height, and DPI.
@@ -108,44 +149,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     device->first = true;
 
     if (!is_same_wh(device)) {
-        char modename[128];
-        char cmd[1024];
-
-        snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
-
-        char* display_name;
-        runcmd("xrandr --current | grep \" connected\"", &display_name);
-        *strchr(display_name, ' ') = '\0';
-
-        snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd),
-                 "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
-                 "cut -d' ' -f3-)",
-                 modename, width, height);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
-        runcmd(cmd, NULL);
-
-        // For the single-monitor case, we no longer need to do the below; we instead
-        // assume the display server has been created with the correct DPI. The below
-        // approach does not handle this case well because Linux does not yet support
-        // changing DPI on the fly. For getting seamless performance on multi-monitor
-        // setups, we may eventually need to instead get already-running X11
-        // applications to respect DPI changes to the X server.
-
-        // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
-        // snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
-        // runcmd(cmd, NULL);
-        // while this command sets the font DPI setting
-        // snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
-        // runcmd(cmd, NULL);
-
-        free(display_name);
+        update_xrandr(width, height, dpi);
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
@@ -222,7 +226,16 @@ bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, 
         return false;
     }
 
-    return false;
+    if (device->using_nvidia) {
+        // Reconfigure nvidia device
+        update_xrandr(width, height, dpi);
+        device->width = width;
+        device->height = height;
+        return true;
+    } else {
+        // Can't reconfigure X11 device
+        return false;
+    }
 }
 
 int capture_screen(CaptureDevice* device) {
@@ -248,10 +261,16 @@ int capture_screen(CaptureDevice* device) {
             LOG_ERROR("nvidia_capture_screen failed!");
             return ret;
         } else {
-            // device->frame_data = device->nvidia_capture_device.frame;
-            // device->width = device->nvidia_capture_device.width;
-            // device->height = device->nvidia_capture_device.height;
-            // device->pitch = device->width * 4;
+            if (device->width != device->nvidia_capture_device.width) {
+                LOG_ERROR("Device width does not match nvidia capture width!");
+                return -1;
+            }
+            if (device->height != device->nvidia_capture_device.height) {
+                LOG_ERROR("Device width does not match nvidia capture height!");
+                return -1;
+            }
+            device->pitch = 0;
+            device->frame_data = NULL;
             device->capture_is_on_nvidia = true;
             return ret;
         }

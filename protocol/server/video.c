@@ -194,6 +194,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     // Reconfigured the capture device!
                     // No need to recreate it, the device has now been updated
                     LOG_INFO("Successfully reconfigured the capture device");
+                    // We should also update the encoder since the device has been reconfigured
+                    update_encoder = true;
                 } else {
                     // Destroying the old capture device so that a new one can be recreated below
                     LOG_ERROR(
