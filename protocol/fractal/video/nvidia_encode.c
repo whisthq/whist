@@ -287,7 +287,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     status = encoder->p_enc_fn.nvEncLockBitstream(encoder->internal_nvidia_encoder, &lock_params);
     if (status != NV_ENC_SUCCESS) {
-        // TODO: Unmap the frame! Otherwise, memory leaks here
         LOG_ERROR("Failed to lock bitstream buffer, status = %d", status);
         return -1;
     }
