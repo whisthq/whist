@@ -243,6 +243,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     LOG_INFO("multithreaded_sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
+    init_clipboard_synchronizer(false);
+
     while (!exiting) {
         // RECEIVE TCP PACKET HANDLER
         get_fractal_client_messages(true, false);
@@ -278,6 +280,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         // TODO: add file send handler
     }
+
+    destroy_clipboard_synchronizer();
 
     return 0;
 }
@@ -373,7 +377,6 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Receiving packets...");
 
-    init_clipboard_synchronizer(false);
     init_window_name_getter();
 
     clock ack_timer;
@@ -451,7 +454,6 @@ int main(int argc, char* argv[]) {
     }
 
     destroy_input_device(input_device);
-    destroy_clipboard_synchronizer();
     destroy_window_name_getter();
 
     fractal_wait_thread(send_video_thread, NULL);
