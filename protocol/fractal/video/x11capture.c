@@ -150,7 +150,23 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
             (int): 0 on success, 1 on failure
     */
 
-    if (!device) return -1;
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into create_capture_device");
+        return -1;
+    }
+
+    if (width <= 0 || height <= 0) {
+        LOG_ERROR("Invalid width/height of %d/%d", width, height);
+        return -1;
+    }
+    if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT) {
+        LOG_ERROR(
+            "Requested dimensions are too large! "
+            "%dx%d when the maximum is %dx%d! Rounding down.",
+            width, height, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        width = MAX_SCREEN_WIDTH;
+        height = MAX_SCREEN_HEIGHT;
+    }
 
     // attempt to set display width, height, and DPI
     device->display = XOpenDisplay(NULL);
@@ -160,10 +176,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     }
     device->root = DefaultRootWindow(device->display);
 
-    if (width <= 0 || height <= 0) {
-        LOG_ERROR("Invalid width/height of %d/%d", width, height);
-        return -1;
-    }
     device->first = true;
 
     try_update_dimensions(device, width, height, dpi);

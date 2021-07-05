@@ -28,7 +28,6 @@ typedef struct {
     // We'll make the cache a bit bigger than it needs to be to ensure that it still works
     InputBufferCacheEntry registered_resources[NVFBC_TOGL_TEXTURES_MAX * 2];
 
-    NV_ENC_INPUT_PTR input_buffer;
     NV_ENC_OUTPUT_PTR output_buffer;
     NV_ENC_BUFFER_FORMAT buffer_fmt;
     CodecType codec_type;

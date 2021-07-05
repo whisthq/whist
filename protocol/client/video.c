@@ -34,9 +34,6 @@ Includes
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
 
-#define MAX_SCREEN_WIDTH 8192
-#define MAX_SCREEN_HEIGHT 4096
-
 // Global Variables
 extern volatile SDL_Window* window;
 

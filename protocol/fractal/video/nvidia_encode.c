@@ -144,6 +144,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     init_params.encodeConfig = &preset_config.presetCfg;
     init_params.encodeWidth = out_width;
     init_params.encodeHeight = out_height;
+    init_params.maxEncodeWidth = MAX_SCREEN_WIDTH;
+    init_params.maxEncodeHeight = MAX_SCREEN_HEIGHT;
     init_params.frameRateNum = FPS;
     init_params.frameRateDen = 1;
     init_params.enablePTD = 1;
@@ -167,11 +169,10 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
                                                           &bitstream_buffer_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to create a bitstream buffer, status = %d", status);
-        free(encoder);
         return NULL;
     }
-
     encoder->output_buffer = bitstream_buffer_params.bitstreamBuffer;
+
     return encoder;
 }
 
@@ -189,26 +190,33 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uin
     // Check the registered resource cache
     for (int i = 0; i < cache_size; i++) {
         InputBufferCacheEntry resource = encoder->registered_resources[i];
+        // We include a check against registered_resource NULL for validity
         if (resource.dw_texture == dw_texture && resource.dw_tex_target == dw_tex_target &&
-            resource.width == width && resource.height == height) {
+            resource.width == width && resource.height == height &&
+            resource.registered_resource != NULL) {
             encoder->registered_resource = resource.registered_resource;
             return 0;
         }
     }
+    // Unregister the last resource
     if (encoder->registered_resources[cache_size - 1].registered_resource != NULL) {
         unregister_resource(encoder,
                             encoder->registered_resources[cache_size - 1].registered_resource);
         encoder->registered_resources[cache_size - 1].registered_resource = NULL;
     }
+    // Move everything up one, overwriting the last resource
     for (int i = cache_size - 1; i > 0; i--) {
         encoder->registered_resources[i] = encoder->registered_resources[i - 1];
     }
+    // Invalidate the 0th resource, since it was moved to index 1
+    encoder->registered_resources[0].registered_resource = NULL;
     NV_ENC_REGISTERED_PTR registered_resource =
         register_resource(encoder, dw_texture, dw_tex_target, width, height);
     if (registered_resource == NULL) {
         LOG_ERROR("Failed to register resource!");
         return -1;
     }
+    // Overwrite the 0th resource with the newly registered resource
     encoder->registered_resources[0].dw_texture = dw_texture;
     encoder->registered_resources[0].dw_tex_target = dw_tex_target;
     encoder->registered_resources[0].width = width;
@@ -240,7 +248,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);
         return -1;
     }
-    encoder->input_buffer = map_params.mappedResource;
     encoder->buffer_fmt = map_params.mappedBufferFmt;
 
     // Try to free the encoder's previous frame
@@ -253,7 +260,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.inputWidth = encoder->width;
     enc_params.inputHeight = encoder->height;
     enc_params.inputPitch = encoder->width;
-    enc_params.inputBuffer = encoder->input_buffer;
+    enc_params.inputBuffer = map_params.mappedResource;
     enc_params.bufferFmt = encoder->buffer_fmt;
     // frame_idx starts at -1, so first frame has idx 0
     enc_params.frameIdx = ++encoder->frame_idx;
@@ -272,7 +279,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     // Unmap the input buffer
     status = encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder,
-                                                       encoder->input_buffer);
+                                                       map_params.mappedResource);
     if (status != NV_ENC_SUCCESS) {
         // FATAL is chosen over ERROR here to prevent
         // out-of-control runaway memory usage
@@ -365,12 +372,21 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
         width != encoder->width || height != encoder->height || codec != encoder->codec_type;
 
     // Create reconfigure params
-    NV_ENC_RECONFIGURE_PARAMS reconfigure_params;
-    memset(&reconfigure_params, 0, sizeof(reconfigure_params));
+    NV_ENC_RECONFIGURE_PARAMS reconfigure_params = {0};
     reconfigure_params.version = NV_ENC_RECONFIGURE_PARAMS_VER;
 
     // Copy over init params
     reconfigure_params.reInitEncodeParams = encoder->encoder_params;
+
+    // Check that it's possible to reconfigure into those dimensions
+    int max_width = reconfigure_params.reInitEncodeParams.maxEncodeWidth;
+    int max_height = reconfigure_params.reInitEncodeParams.maxEncodeHeight;
+    if (width > max_width || height > max_height) {
+        LOG_ERROR(
+            "Trying to reconfigure into dimensions %dx%d,"
+            "but the max reconfigure dimensions are %dx%d",
+            width, height, max_width, max_height);
+    }
 
     // Initialize preset_config
     NV_ENC_PRESET_CONFIG preset_config;
