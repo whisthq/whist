@@ -27,7 +27,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     }
     // reset metadata
     ring_buffer->currently_rendering_id = -1;
-    ring_buffer->last_received_id = -1;
+    ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
     ring_buffer->num_nacked = 0;
     ring_buffer->frames_received = 0;
@@ -260,12 +260,17 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     // Update framedata metadata + buffer
     ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);
     frame_data->received_indices[packet->index] = true;
-    if (ring_buffer->last_received_id != -1) {
-        nack_missing_frames(ring_buffer, ring_buffer->last_received_id + 1, frame_data->id);
+    if (ring_buffer->last_received_nonnack_id != -1 && !packet->is_a_nack) {
+        // If we receive a normal packet, but that packet has an ID that's significantly
+        // beyond the last received normal packet's ID, then we probably need to nack
+        // for the frames that are in the middle
+        nack_missing_frames(ring_buffer, ring_buffer->last_received_nonnack_id + 1, frame_data->id);
     }
     // -5 because UDP packets can arrive out of order
     nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index - 5);
-    ring_buffer->last_received_id = frame_data->id;
+    if (!packet->is_a_nack) {
+        ring_buffer->last_received_nonnack_id = frame_data->id;
+    }
     frame_data->packets_received++;
     // Copy the packet data
     int place = packet->index * MAX_PAYLOAD_SIZE;
@@ -315,7 +320,8 @@ void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {
 
         */
     if (get_timer(ring_buffer->missing_frame_nack_timer) > 25.0 / 1000) {
-        for (int i = start_id; i < end_id; i++) {
+        // We min to ensure that we don't nack more than 3 times for something like this
+        for (int i = start_id; i < min(start_id + 3, end_id); i++) {
             if (get_frame_at_id(ring_buffer, i)->id != i) {
                 LOG_INFO("Missing all packets for frame %d, NACKing now for index 0", i);
                 start_timer(&ring_buffer->missing_frame_nack_timer);
