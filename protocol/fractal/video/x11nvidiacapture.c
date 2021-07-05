@@ -309,10 +309,8 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 #if SHOW_DEBUG_FRAMES
     t2 = NvFBCUtilsGetTimeInMillis();
 
-    LOG_INFO("New %dx%d frame id %u size %u%s%s grabbed and saved in %llu ms", frameInfo.dwWidth,
-             frameInfo.dwHeight, frameInfo.dwCurrentFrame, device->size,
-             encFrameInfo.bIsIFrame ? " (i-frame)" : "",
-             frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long)(t2 - t1));
+    LOG_INFO("New %dx%d frame or size %u grabbed in %llu ms", device->width, device->height, 0,
+             (unsigned long long)(t2 - t1));
 #endif
 
     // Return with the number of accumulated frames

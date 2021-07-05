@@ -71,7 +71,20 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
-void update_xrandr(UINT width, UINT height, UINT dpi) {
+// Try to update the device to the given width/height/dpi
+// If may fail to set the dimensions, but device->width and device->height
+// will always equal the actual dimensions of the screen
+void try_update_dimensions(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    // TODO: Implement DPI changes
+
+    // Update the device's width/height
+    device->width = width;
+    device->height = height;
+    // If the device's width/height is already correct, just return
+    if (is_same_wh(device)) {
+        return;
+    }
+
     char modename[128];
     char cmd[1024];
 
@@ -110,6 +123,13 @@ void update_xrandr(UINT width, UINT height, UINT dpi) {
     // runcmd(cmd, NULL);
 
     free(display_name);
+
+    // If it's still not the correct dimensions
+    if (!is_same_wh(device)) {
+        LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d");
+        // Get the width/height that the device actually is though
+        get_wh(device, &device->width, &device->height);
+    }
 }
 
 int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
@@ -144,19 +164,9 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         LOG_ERROR("Invalid width/height of %d/%d", width, height);
         return -1;
     }
-    device->width = width;
-    device->height = height;
     device->first = true;
 
-    if (!is_same_wh(device)) {
-        update_xrandr(width, height, dpi);
-
-        // If it's still not the correct dimensions
-        if (!is_same_wh(device)) {
-            LOG_ERROR("Could not force monitor to a given width/height");
-            get_wh(device, &device->width, &device->height);
-        }
-    }
+    try_update_dimensions(device, width, height, dpi);
 
     // Create the NVidia capture device is possible; otherwise use X11 capture.
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
@@ -228,9 +238,7 @@ bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, 
 
     if (device->using_nvidia) {
         // Reconfigure nvidia device
-        update_xrandr(width, height, dpi);
-        device->width = width;
-        device->height = height;
+        try_update_dimensions(device, width, height, dpi);
         return true;
     } else {
         // Can't reconfigure X11 device
@@ -261,12 +269,12 @@ int capture_screen(CaptureDevice* device) {
             LOG_ERROR("nvidia_capture_screen failed!");
             return ret;
         } else {
-            if (device->width != device->nvidia_capture_device.width) {
-                LOG_ERROR("Device width does not match nvidia capture width!");
-                return -1;
-            }
-            if (device->height != device->nvidia_capture_device.height) {
-                LOG_ERROR("Device width does not match nvidia capture height!");
+            if (device->width != device->nvidia_capture_device.width ||
+                device->height != device->nvidia_capture_device.height) {
+                LOG_ERROR(
+                    "Capture Device dimensions %dx%d does not match nvidia dimensions of %dx%d!",
+                    device->width, device->height, device->nvidia_capture_device.width,
+                    device->nvidia_capture_device.height);
                 return -1;
             }
             device->pitch = 0;

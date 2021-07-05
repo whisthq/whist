@@ -67,6 +67,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     NvidiaEncoder* encoder = malloc(sizeof(NvidiaEncoder));
     memset(encoder, 0, sizeof(*encoder));
     encoder->codec_type = codec;
+    encoder->width = out_width;
+    encoder->height = out_height;
 
     // Set initial frame pointer to NULL, nvidia will overwrite this later with the framebuffer
     // pointer
@@ -175,6 +177,13 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
 
 int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
                                 int width, int height) {
+    if (width != encoder->width || height != encoder->height) {
+        LOG_ERROR(
+            "Nvidia Encoder has received a frame_intake of dimensions %dx%d, "
+            "but the Nvidia Encoder is only configured for dimensions %dx%d",
+            width, height, encoder->width, encoder->height);
+        return -1;
+    }
     int cache_size =
         sizeof(encoder->registered_resources) / sizeof(encoder->registered_resources[0]);
     // Check the registered resource cache
@@ -206,8 +215,6 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uin
     encoder->registered_resources[0].height = height;
     encoder->registered_resources[0].registered_resource = registered_resource;
     encoder->registered_resource = registered_resource;
-    encoder->width = width;
-    encoder->height = height;
     return 0;
 }
 
@@ -217,13 +224,17 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     // Register the frame intake
     NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resource;
     if (registered_resource == NULL) {
-        LOG_ERROR("Failed to register resource!");
+        LOG_ERROR(
+            "Failed to register resource! frame_intake must not have been called, or it failed.");
         return -1;
     }
 
     NV_ENC_MAP_INPUT_RESOURCE map_params = {0};
     map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
     map_params.registeredResource = registered_resource;
+    // We've now consumed the registered resource for the purpose of mapping the buffer,
+    // So we'll not clear the encoder's registered resource so as to not use it twice by accident
+    encoder->registered_resource = NULL;
     status = encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);
@@ -348,13 +359,11 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
             (int): 0 on success, -1 on failure
     */
 
-    // Can't reconfigure width and height, so just exit
-    if (width != encoder->width || height != encoder->height) {
-        return false;
-    }
-
     NVENCSTATUS status;
-    bool codec_changed = encoder->codec_type != codec;
+    // If dimensions or codec type changes,
+    // then we need to send an IDR frame
+    bool needs_idr_frame =
+        width != encoder->width || height != encoder->height || codec != encoder->codec_type;
 
     // Create reconfigure params
     NV_ENC_RECONFIGURE_PARAMS reconfigure_params;
@@ -363,8 +372,6 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
 
     // Copy over init params
     reconfigure_params.reInitEncodeParams = encoder->encoder_params;
-    encoder->codec_type = codec;
-    encoder->encoder_params.encodeGUID = get_codec_guid(codec);
 
     // Initialize preset_config
     NV_ENC_PRESET_CONFIG preset_config;
@@ -374,15 +381,17 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
     }
     reconfigure_params.reInitEncodeParams.encodeConfig = &preset_config.presetCfg;
 
-    // Copy over new init params
-    encoder->encoder_params = reconfigure_params.reInitEncodeParams;
+    // Adjust the init params with new configure,
+    // And then copy over these new init params
+    reconfigure_params.reInitEncodeParams.encodeWidth = width;
+    reconfigure_params.reInitEncodeParams.encodeHeight = height;
+    reconfigure_params.reInitEncodeParams.encodeGUID = get_codec_guid(codec);
+    NV_ENC_INITIALIZE_PARAMS new_init_params = reconfigure_params.reInitEncodeParams;
     // Reset the encoder stream if the codec has changed,
     // Since the decoder will need an iframe
-    if (codec_changed) {
+    if (needs_idr_frame) {
         reconfigure_params.resetEncoder = 1;
         reconfigure_params.forceIDR = 1;
-        // Let the next frame know that it's an iframe
-        encoder->wants_iframe = true;
     } else {
         reconfigure_params.resetEncoder = 0;
         reconfigure_params.forceIDR = 0;
@@ -394,6 +403,20 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
         LOG_ERROR("Failed to reconfigure the encoder, status = %d", status);
         return false;
     }
+
+    // Only update the encoder struct here!
+    // Since this is after all possible "return false"'s'
+
+    if (needs_idr_frame) {
+        // Trigger an i-frame on the next iframe
+        encoder->wants_iframe = true;
+    }
+
+    encoder->encoder_params = new_init_params;
+    encoder->codec_type = codec;
+    encoder->width = width;
+    encoder->height = height;
+
     return true;
 }
 

@@ -251,19 +251,29 @@ int32_t multithreaded_send_video(void* opaque) {
         if (update_encoder) {
             // If this is a new update encoder request, log it
             if (!pending_encoder) {
-                LOG_INFO("Update encoder request received. Encoder creation queued!");
+                LOG_INFO("Update encoder request received, will update the encoder now!");
             }
-            // First, try to simply reconfigure the encoder if an encoder exists
-            if (encoder != NULL &&
-                reconfigure_encoder(encoder, device->width, device->height,
-                                    (int)(max_mbps * 1024 * 1024), (CodecType)client_codec_type)) {
-                // If we could update the encoder in-place, then we're done updating the encoder
-                LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
-                         device->width, device->height, current_bitrate, max_mbps,
-                         client_codec_type);
-                current_bitrate = (int)(max_mbps * 1024 * 1024);
-                update_encoder = false;
-            } else {
+
+            // First, try to simply reconfigure the encoder to
+            // handle the update_encoder event
+            if (encoder != NULL) {
+                if (reconfigure_encoder(encoder, device->width, device->height,
+                                        (int)(max_mbps * 1024 * 1024),
+                                        (CodecType)client_codec_type)) {
+                    // If we could update the encoder in-place, then we're done updating the encoder
+                    LOG_INFO(
+                        "Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
+                        device->width, device->height, current_bitrate, max_mbps,
+                        client_codec_type);
+                    current_bitrate = (int)(max_mbps * 1024 * 1024);
+                    update_encoder = false;
+                } else {
+                    LOG_ERROR("Reconfiguration failed! Creating a new encoder!");
+                }
+            }
+
+            // If reconfiguration didn't happen, we still need to update the encoder
+            if (update_encoder) {
                 // Keep track of whether or not a new encoder is being used now
                 bool new_encoder_used = false;
 
@@ -284,12 +294,13 @@ int32_t multithreaded_send_video(void* opaque) {
                         new_encoder_used = true;
                     }
                 } else {
-                    LOG_INFO("Reconfiguration failed! Creating a new encoder!");
                     // Starting making new encoder. This will set pending_encoder=true, but won't
                     // actually update it yet, we'll still use the old one for a bit
-                    LOG_INFO("Updating Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
-                             device->width, device->height, current_bitrate, max_mbps,
-                             (int)client_codec_type);
+                    LOG_INFO(
+                        "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
+                        "Codec %d",
+                        device->width, device->height, current_bitrate, max_mbps,
+                        (int)client_codec_type);
                     current_bitrate = (int)(max_mbps * 1024 * 1024);
                     encoder_finished = false;
                     encoder_factory_server_w = device->width;
@@ -308,7 +319,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     }
 
                     if (encoder == NULL) {
-                        // Run on this thread bc we have to wait for it anyway, encoder == NULL
+                        // Run on this thread bc we have to wait for it anyway since encoder == NULL
                         multithreaded_encoder_factory(NULL);
                         encoder = encoder_factory_result;
                         pending_encoder = false;
