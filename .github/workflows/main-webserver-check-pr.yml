@@ -162,9 +162,6 @@ jobs:
             GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
             HEROKU_DB_KEY: "DATABASE_URL"
             HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }} # needed to retrieve config vars from Heroku
-            SERVER_DEV: "fractal-dev-server"
-            SERVER_STAGING: "fractal-staging-server"
-            SERVER_PROD: "fractal-prod-server"
             PATH_HELPERS: ".github/workflows/helpers"
             PATH_SCRIPTS: "main-webserver/db_migration"
             PATH_CURRENT: "../temporary_db_schema.sql"
@@ -228,8 +225,24 @@ jobs:
               with:
                   python-version: "3.8"
 
+            - name: Determine heroku app name
+              run: |
+                  if [[ ${GITHUB_BASE_REF} == dev ]]; then
+                      HEROKU_APP_NAME=fractal-dev-server
+                  elif [[ ${GITHUB_BASE_REF} == staging ]]; then
+                      HEROKU_APP_NAME=fractal-staging-server
+                  elif [[ ${GITHUB_BASE_REF} == prod ]]; then
+                      HEROKU_APP_NAME=fractal-prod-server
+                  else
+                      echo 'Error: Invalid branch' && false
+                  fi
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+
             - name: Diff database schema with local schema.sql
               id: db-diff
+              env:
+                  HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
               uses: ./.github/actions/db-migration
 
             # Need to install this dependency for the notification step.
