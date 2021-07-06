@@ -629,8 +629,8 @@ jobs:
               run: >
                   main-webserver/atomic_deployment.sh
                   $HEROKU_APP_NAME
-                  ${{ steps.db-diff.outputs.code }}
-                  ${{ steps.db-diff.outputs.diff }}
+                  "${{ steps.db-diff.outputs.code }}"
+                  "${{ steps.db-diff.outputs.diff }}"
 
             - name: Notify Slack on database migration
               shell: python3 {0}
