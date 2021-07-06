@@ -6,6 +6,9 @@ import helpers.utils as utils
 
 
 def test_validate_profiles():
+    """Test the validation functions that verify the structure of a
+    'profile map', which is a dictionary mapping of 'profiles'
+    e.g.(macos, win32, linux) to config values e.g (mac.dmg, win.exe)"""
     profile_map = {"env": ["b", "c"], "os": ["e", "f"]}
 
     not_string = {"env": [1, 2], "os": "e"}
@@ -32,6 +35,9 @@ def test_validate_profiles():
 
 
 def test_validate_secrets():
+    """Test the validation functions that verify the structure of a
+    'secrets map', which is a dictionary mapping of 'secrets'
+    e.g.(HEROKU_API_KEY) to config values"""
     schema = {"key1": None, "key2": None, "key3": "value3"}
     not_dict = [{"key1": "value1", "key2": "value2"}]
     assert valid.validate_secrets(
@@ -50,9 +56,14 @@ def test_validate_secrets():
 
 
 def test_validate_profile_yaml():
+    """Test the validation functions that verify the structure of a
+    'profile.yml', which is a the yaml file in the config folder that
+    list valid profiles for config values."""
     is_list = [{"env": ["b", "c"], "os": ["e", "f"]}]
 
-    assert valid.validate_profile_yaml(is_list), "should fail if not a dictionary"
+    assert valid.validate_profile_yaml(
+        is_list
+    ), "should fail if not a dictionary"
 
     not_str_list = {"env": ["b", [1, 2, 3]], "os": ["e", "f"]}
 
@@ -74,6 +85,9 @@ def test_validate_profile_yaml():
 
 
 def test_validate_schema_yamls():
+    """Test the validation functions that verify the structure of a
+    '.yml' files in the config/schema folder, which is where config values
+    are stored."""
     profile_map = {"env": ["b", "c"], "os": ["e", "f"]}
     not_dict = [
         [{"a": {"b": {"c": 1}}, "d": {"e": 2}}],
