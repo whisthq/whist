@@ -13,7 +13,7 @@ const packageLocal = (env, config) => {
     helpers.configureCodeSigning(false)
 
     // For testing, we just hardcode the environment to dev
-    helpers.setPackagedEnv("dev")
+    helpers.setPackagedEnv("local")
 
     // For package-local, we don't want to increment the version so we use existing version
     helpers.snowpackBuild({
