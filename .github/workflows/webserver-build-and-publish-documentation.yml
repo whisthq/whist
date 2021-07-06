@@ -52,9 +52,10 @@ jobs:
                   pip install $(cat fractal/webserver/requirements.txt)
                   pip install $(cat fractal/webserver/requirements-test.txt)
 
+            # Build Sphinx documentation, treating warnings as errors
             - name: Build the Latest Documentation
               working-directory: fractal/webserver/docs
-              run: sphinx-apidoc -f -o . ../app && make html
+              run: sphinx-apidoc -f -o . ../app && make html SPHINXOPTS="-W"
 
             - name: Diff Old and New Documentation
               id: diff
