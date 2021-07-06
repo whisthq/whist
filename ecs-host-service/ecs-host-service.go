@@ -73,6 +73,123 @@ func startDockerDaemon(globalCancel context.CancelFunc) {
 	}
 }
 
+// createDockerClient creates a docker client. It returns an error if creation
+// failed.
+func createDockerClient() (*dockerclient.Client, error) {
+	if client, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation()); err != nil {
+		return nil, utils.MakeError("Error creating new Docker client: %s", err)
+	} else {
+		return client, nil
+	}
+}
+
+// "Warm up" Docker. This is necessary because for some reason the first
+// ContainerStart call by the host service is taking over a minute.
+// TODO: figure out the root cause of this
+func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) error {
+	imageFilters := dockerfilters.NewArgs(
+		dockerfilters.KeyValuePair{Key: "dangling", Value: "false"},
+	)
+	images, err := client.ImageList(globalCtx, dockertypes.ImageListOptions{All: false, Filters: imageFilters})
+	if err != nil {
+		return err
+	}
+
+	// We've gotta find a suitable image to use for warming up the client. We
+	// prefer images that are most alike to those the host service will actually
+	// be launching, so we use a list of regexes. We prefer matches for earlier
+	// regexes in the list.
+
+	// Note: the following code is theoretically inefficient but practically good
+	// enough, since our data is small and this function is only run once.
+
+	regexes := []string{
+		`ghcr.io/fractal/*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*`,
+		`*fractal*`,
+	}
+
+	findImageByRegex := func(nameRegex string) string {
+		regex := regexp.MustCompile(nameRegex)
+		for _, img := range images {
+			for _, tag := range img.RepoTags {
+				if regex.MatchString(tag) {
+					return tag
+				}
+			}
+		}
+		return ""
+	}
+
+	image := func() string {
+		for _, r := range regexes {
+			if match := findImageByRegex(r); match != "" {
+				return match
+			}
+		}
+		return ""
+	}()
+	if image == "" {
+		return utils.MakeError("Couldn't find a suitable image")
+	}
+
+	// At this point, we've found an image, so we just need to start the container.
+
+	containerName := "host-service-warmup"
+
+	config := dockercontainer.Config{
+		Image:        image,
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		Tty:          true,
+	}
+
+	hostConfig := dockercontainer.HostConfig{
+		CapDrop: strslice.StrSlice{"ALL"},
+		CapAdd: strslice.StrSlice([]string{
+			"SETPCAP",
+			"MKNOD",
+			"AUDIT_WRITE",
+			"CHOWN",
+			"NET_RAW",
+			"DAC_OVERRIDE",
+			"FOWNER",
+			"FSETID",
+			"KILL",
+			"SETGID",
+			"SETUID",
+			"NET_BIND_SERVICE",
+			"SYS_CHROOT",
+			"SETFCAP",
+			// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
+			"SYS_NICE",
+		}),
+	}
+
+	createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
+	if err != nil {
+		return utils.MakeError("Error running `docker create` for %s:\n%s", containerName, err)
+	}
+	logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
+
+	err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
+	if err != nil {
+		return utils.MakeError("Error running `docker start` for %s:\n%s", containerName, err)
+	}
+	logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
+
+	time.Sleep(500 * time.Millisecond)
+
+	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
+	if err != nil {
+		return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
+	}
+	logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
+
+	return nil
+}
+
 // Drain and shutdown the host service
 func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.DrainAndShutdownRequest) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
@@ -516,10 +633,22 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
+	// Start Docker
 	startDockerDaemon(globalCancel)
+	dockerClient, err := createDockerClient()
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+	if err := warmUpDockerClient(globalCtx, dockerClient); err != nil {
+		if metadata.IsLocalEnv() {
+			logger.Errorf("Error warming up docker client (nonfatal because we are running locally): %s", err)
+		} else {
+			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
+		}
+	}
 
 	// Start main event loop
-	startEventLoop(globalCtx, globalCancel, &goroutineTracker, httpServerEvents)
+	startEventLoop(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -535,16 +664,10 @@ func main() {
 	}
 }
 
-func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, httpServerEvents <-chan httpserver.ServerRequest) {
+func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan httpserver.ServerRequest) {
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-
-		// Create docker client
-		dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation())
-		if err != nil {
-			logger.Panicf(globalCancel, "Error creating new Docker client: %v", err)
-		}
 
 		// Create filter for which docker events we care about
 		filters := dockerfilters.NewArgs()
