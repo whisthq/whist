@@ -20,8 +20,6 @@ if [ $IN_CI == true ]; then
     bash setup/setup_tests.sh
     # override DATABASE_URL to the ephemeral db
     export DATABASE_URL=$POSTGRES_DEST_URI
-
-    # REDIS_URL is set by heroku. we don't need to do anything more.
 else
     echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
