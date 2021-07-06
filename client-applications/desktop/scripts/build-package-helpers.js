@@ -211,7 +211,7 @@ module.exports = {
   // electron bundle via `env_overrides.json`. Acceptable arguments:
   // dev|staging|prod
   setPackagedEnv: (e) => {
-    if (e === "dev" || e === "staging" || e === "prod") {
+    if (e === "dev" || e === "staging" || e === "prod" || e === "local") {
       addEnvOverride({ appEnvironment: e })
     } else {
       console.error(`setPackagedEnv passed a bad environment: ${e}`)
