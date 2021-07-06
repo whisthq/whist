@@ -58,7 +58,7 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
 
     echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
 
-elif [ $DIFF_EXIT_CODE == "0" ]; then
+elif [ $MIGRA_EXIT_CODE == "0" ]; then
     echo "No diff. Continuing redeploy."
 
     echo "Redeploying webserver..."
