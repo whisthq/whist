@@ -479,7 +479,7 @@ jobs:
             ############################# Stage 4 - Slack Notifications ##############################
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
-            - name: Notify Slack
+            - name: Notify Slack on Job Successs
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
@@ -605,7 +605,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack
+            - name: Notify Slack on Job Success
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -647,7 +647,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Kill All Packer Instances
+            - name: Kill All Packer Instances Older Than 45 Minutes
               run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
             - name: Notify Slack on Job Error
@@ -666,7 +666,7 @@ jobs:
     # 1. new task definitions if new task defs have been pushed to ECS
     # 2. new AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
-        name: "Update Fractal Services using Main Webserver"
+        name: "Update Fractal Services using Main-Webserver"
         runs-on: ubuntu-20.04
         needs:
             [
@@ -961,7 +961,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -1330,11 +1330,11 @@ jobs:
               with:
                   node-version: 15
 
-            - name: Install development dependencies
+            - name: Install Development Dependencies
               working-directory: microservices/auth0
               run: yarn install
 
-            - name: Deploy changes to the Auth0 tenant
+            - name: Deploy Changes to the Auth0 Tenant
               working-directory: microservices/auth0
               env:
                   AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
@@ -1342,7 +1342,7 @@ jobs:
                   APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
               run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
-            - name: Notify Slack on successful deploy
+            - name: Notify Slack on Job Success
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
@@ -1356,7 +1356,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -1405,7 +1405,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Notify Slack
+            - name: Notify Slack on Job Success
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -1417,7 +1417,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack on Job Errors
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
