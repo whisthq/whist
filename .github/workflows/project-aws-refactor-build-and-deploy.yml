@@ -658,16 +658,18 @@ jobs:
 
             - name: Diff database schema with local schema.sql
               id: db-diff
+              env:
+                  HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
               uses: ./.github/actions/db-migration
 
             - name: Deploy the Webserver Atomically & Migrate DB Schema (as needed)
               if: needs.fractal-publish-build-config.outputs.publish == 'true'
               shell: bash -e {0}
-              run: >
-                  main-webserver/atomic_deployment.sh
-                  $HEROKU_APP_NAME
-                  ${{ steps.db-diff.outputs.code }}
-                  ${{ steps.db-diff.outputs.diff }}
+              env:
+                  HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+              run: |
+                  main-webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
             - name: Notify Slack on Database Migration Performed
               shell: python3 {0}
