@@ -1,4 +1,4 @@
-FROM python:3.9.5
+FROM python:3.9.6
 
 # Note the build-time commands below are run relative to this file. The
 # working directory will change to the monorepo root when ENTRYPOINT is
