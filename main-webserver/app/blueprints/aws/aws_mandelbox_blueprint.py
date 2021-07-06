@@ -79,7 +79,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     )
     if instance_name is None:
         fractal_logger.info(
-            f"Instance chosen with body.region: {body.region},\
+            f"No instance found with body.region: {body.region},\
              body.client_commit_hash: {body.client_commit_hash}"
         )
 
