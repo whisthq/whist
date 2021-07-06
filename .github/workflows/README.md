@@ -57,7 +57,7 @@ jobs:
         runs-on: ubuntu-20.04
 ```
 
-Something to keep in mind when writing jobs, is that neither `cmd` nor `powershell` will fail if a command it runs fails. So, you should explicitly check if any commands you want to succeed, does indeed succeed. If you attach a job with `shell: bash`, then the job will _also_ not fail if any command it runs fails, unless it's the very last command (`cmd`/`powershell` will still not fail, even if the last command fails). If you want bash to fail if _any_ command fails, then you must pass `shell: bash -eo pipefail`. On macOS and Linux Ubuntu GitHub Actions runners, `bash -eo pipefail` will be the default shell. On Windows, `cmd` will be the default shell. For more information, see the [documentation](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#using-a-specific-shell).
+Something to keep in mind when writing jobs, is that neither `cmd` nor `powershell` will fail if a command it runs fails. So, you should explicitly check if any commands you want to succeed, does indeed succeed. If you attach a job with `shell: bash`, then the job will _also_ not fail if any command it runs fails, unless it's the very last command (`cmd`/`powershell` will still not fail, even if the last command fails). If you want bash to fail if _any_ command fails, then you must pass `shell: bash --noprofile --norc -eo pipefail {0}`. On macOS and Linux Ubuntu GitHub Actions runners, `bash --noprofile --norc -eo pipefail {0}` will be the default shell. On Windows, `cmd` will be the default shell. For more information, see the [documentation](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#using-a-specific-shell).
 
 ### Styling
 
