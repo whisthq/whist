@@ -12,19 +12,6 @@ from pathlib import Path
 from click.testing import CliRunner
 from contextlib import contextmanager
 from helpers.utils import temporary_fs
-from tests.generators import schemas, non_dict
-from hypothesis import given, example
-from hypothesis.strategies import (
-    text,
-    just,
-    lists,
-    one_of,
-    dictionaries,
-    composite,
-    integers,
-    sampled_from,
-)
-
 
 runner = CliRunner()
 cli_obj = helpers.cli.create_cli(parse.parse)
@@ -55,15 +42,21 @@ def test_parse_receives_args(mocker):
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
+        mock.assert_called_once_with(
+            config, profiles={"env": "dev"}, secrets=None
+        )
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
+        mock.assert_called_once_with(
+            config, profiles={"env": "dev"}, secrets=None
+        )
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev", "--os", "macos"])
-        mock.assert_called_once_with(config, profiles={"env": "dev", "os": "macos"}, secrets=None)
+        mock.assert_called_once_with(
+            config, profiles={"env": "dev", "os": "macos"}, secrets=None
+        )
         mock.reset_mock()
 
         cli_result(
