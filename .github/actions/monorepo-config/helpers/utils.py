@@ -88,6 +88,20 @@ def flatten_path_matching(key_set, dct):
 
 @contextmanager
 def temporary_fs(tree):
+    """Given a dictionary representing a file system directory structure,
+    return a context manager that creates the corresponding folders and files
+    in Python's temporary file location. All created folders and files will
+    be deleted when the context manager exits.
+
+    The dictionary should take the shape of a tree of nested dictionaries. The
+    "leaves" of the tree (non-dictionary values) will be written to files with
+    their key as the file name, otherwise a folder will be created with the
+    key as the folder name.
+
+    If a "leaf" if of type 'bytes', it will be written to file as bytes.
+    Otherwise, it will be coerced to a string with str() and written to a
+    file as a UTF-8 string.
+    """
     with tempfile.TemporaryDirectory() as tempdir:
 
         for path in walk_keys(tree):
