@@ -619,6 +619,8 @@ jobs:
 
             - name: Diff database schema with local schema.sql
               id: db-diff
+              env:
+                  HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               uses: ./.github/actions/db-migration
 
             - name: Deploy the webserver atomically
