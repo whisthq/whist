@@ -35,6 +35,15 @@ from dataclasses import dataclass
 
 
 class ValidationError(Exception):
+    """A custom error class that is initialized with a validation failure
+    dictionary. Validation failure dictionaries are returned by a validation
+    function when a input does not pass validation. If an input passes,
+    then validation functions return None.
+
+    The only required key in the validation failure dictionary is 'message',
+    which will be come the error message for the exception raised. Other keys
+    will be printed as a dictionary as a part of the error message."""
+
     def __init__(self, data):
         chart = ""
         message = data.get("message", "Validation error")
@@ -93,9 +102,13 @@ def validate_schema_yamls(profile_map, schemas):
     for match in find_matching_keys(reserved, merged):
         return {"message": "schema/profile name collision", "found": match}
 
-    verified_child = (validate_child(profile_sets, v, path=[k]) for k, v in merged.items())
+    verified_child = (
+        validate_child(profile_sets, v, path=[k]) for k, v in merged.items()
+    )
 
-    return validate_root(merged) or next((i for i in verified_child if i is not None), None)
+    return validate_root(merged) or next(
+        (i for i in verified_child if i is not None), None
+    )
 
 
 def validate_root(dct):
@@ -119,7 +132,8 @@ def validate_child(key_sets, dct, path=()):
 
     if not any(find_matching([set(keys)], [set(s) for s in key_sets])):
         return {
-            "message": "no matching profile set," + " should match a valid group in profile.yml",
+            "message": "no matching profile set,"
+            + " should match a valid group in profile.yml",
             "path": path,
             "found": keys,
             "valid": key_sets,
