@@ -47,6 +47,18 @@ updates:
         update-types: ["version-update:semver-patch"]
     open-pull-requests-limit: 10
 
+  - package-ecosystem: "pip"
+    directory: "/.github/actions/monorepo-config" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "docker"
+    directory: "/.github/actions/monorepo-config" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
   #####################################################
   ################ Client-Applications ################
 
