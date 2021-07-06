@@ -235,11 +235,14 @@ class DeploymentConfig:
         NOTE: This assumes the app is running on Heroku. Local configs should override
         this property. If a heroku environment is not being used, this method will fail
         (unless ENVIRONMENT is set).
-            * If Heroku is being used, but the app name is unrecognized, this will default to
-            development since it's assumed that a review app is being used (which is effectively a
-            development deployment).
-            * If Heroku is being used, and the app is in a test environment, then development
-            will be returned as the environment.
+
+        If Heroku is being used, but the app name is unrecognized, this will default to 
+        development since it's assumed that a review app is being used (which is effectively a 
+        development deployment).
+        
+        If Heroku is being used, and the app is in a test environment, then development 
+        will be returned as the environment.
+        
         Returns:
             @see app.constants.env_names
         """
