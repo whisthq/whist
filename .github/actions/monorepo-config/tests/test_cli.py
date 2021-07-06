@@ -31,6 +31,8 @@ def cli_result(cli, args):
 # the helpers.parse.parse function separately, so we can be happy with
 # the test result if parse receives its expected arguments.
 def test_parse_receives_args(mocker):
+    """Test that the parse function receives the expected arguments from
+    the CLI wrapper."""
     mock = mocker.Mock(spec=parse.parse, return_value={"mock": {}})
 
     cli = helpers.cli.create_cli(mock)
@@ -42,21 +44,15 @@ def test_parse_receives_args(mocker):
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(
-            config, profiles={"env": "dev"}, secrets=None
-        )
+        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(
-            config, profiles={"env": "dev"}, secrets=None
-        )
+        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
         mock.reset_mock()
 
         cli_result(cli, ["--path", config, "--env", "dev", "--os", "macos"])
-        mock.assert_called_once_with(
-            config, profiles={"env": "dev", "os": "macos"}, secrets=None
-        )
+        mock.assert_called_once_with(config, profiles={"env": "dev", "os": "macos"}, secrets=None)
         mock.reset_mock()
 
         cli_result(
@@ -89,8 +85,9 @@ def test_parse_receives_args(mocker):
         mock.reset_mock()
 
 
-# We perform a
 def test_cli_out():
+    """Test that the --out parameter of the CLI writes the expected output
+    to file."""
     cli = helpers.cli.create_cli(parse.parse)
     with temporary_fs(mock_data.config_secrets_profiles_fs) as tempdir:
         config = str(tempdir.joinpath("config"))

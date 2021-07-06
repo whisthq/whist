@@ -28,6 +28,9 @@ example_dict3 = {
 
 
 def test_temporary_fs():
+    """Test that the temporary file system creator creates the expected
+    files/folders in the temporary locations, and deletes everything upon
+    exiting."""
     fs_exists = "path should exist in contextmanager"
     fs_delete = "path should not exist outside of contextmanager"
     fs_data = "file at path should contain input data"
@@ -54,6 +57,7 @@ def test_temporary_fs():
 
 
 def test_find_duplicate():
+    """Test that duplicate elements in a list are yielded."""
     xs = [1, 2, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 10, 11]
     dupes = utils.find_duplicate(xs)
     assert next(dupes) == 2
@@ -64,6 +68,7 @@ def test_find_duplicate():
 
 
 def test_find_missing():
+    """Test that missing elements in a list are yielded."""
     s = {"a", "b", "c", "d", "e", "f"}
     xs = ["a", "b", "c", "d", "g", "e", "f", "i"]
     missing = utils.find_missing(s, xs)
@@ -74,6 +79,7 @@ def test_find_missing():
 
 
 def test_find_matching():
+    """Test that elements in a list matching a set are yielded."""
     s = {"a", "b", "c", "d", "e", "f"}
     xs = ["z", "y", "x", "c", "w", "f", "v", "u"]
     matching = utils.find_matching(s, xs)
@@ -84,6 +90,7 @@ def test_find_matching():
 
 
 def test_find_duplicate_keys():
+    """Test that keys in a dict matching another dict are yielded."""
     a = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4}
     b = {"d": 5, "e": 6, "f": 7, "g": 8, "h": 9}
     c = {"h": 5, "i": 6, "j": 7, "k": 8, "l": 9}
@@ -96,6 +103,7 @@ def test_find_duplicate_keys():
 
 
 def test_find_matching_keys():
+    """Test that keys in a dict matching another dict are yielded."""
     a = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4}
     b = {"d": 5, "e": 6, "f": 7, "g": 8, "h": 9}
     c = {"h": 5, "i": 6, "j": 7, "k": 8, "l": 9}
@@ -110,6 +118,8 @@ def test_find_matching_keys():
 
 
 def test_flatten_path_matching():
+    """Test that a dict is flattened so that nested dicts with keys matching
+    a set are replaced with their corresponding value."""
     key_set = {"a", "b", "c"}
     d = {
         "x": {"a": {"b": 10}},

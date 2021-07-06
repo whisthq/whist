@@ -12,6 +12,8 @@ from helpers.validate import ValidationError
 
 
 def test_parse_secrets_profiles():
+    """Test that the parse functions properly validates input data and
+    outputs the expected configuration JSON."""
     mock = mock_data.config_secrets_profiles_fs
     with temporary_fs(mock) as tempdir:
         config = tempdir.joinpath("config")

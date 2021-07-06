@@ -61,9 +61,7 @@ def test_validate_profile_yaml():
     list valid profiles for config values."""
     is_list = [{"env": ["b", "c"], "os": ["e", "f"]}]
 
-    assert valid.validate_profile_yaml(
-        is_list
-    ), "should fail if not a dictionary"
+    assert valid.validate_profile_yaml(is_list), "should fail if not a dictionary"
 
     not_str_list = {"env": ["b", [1, 2, 3]], "os": ["e", "f"]}
 
