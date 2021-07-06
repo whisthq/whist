@@ -24,7 +24,7 @@ runs:
   using: composite
   steps:
     - name: Install the Python requests package
-      shell: bash
+      shell: bash --noprofile --norc -eo pipefail {0}
       run: python3 -m pip install requests
 
     - name: Obtain an access token

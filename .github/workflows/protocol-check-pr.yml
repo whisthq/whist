@@ -85,7 +85,7 @@ jobs:
                   ls $env:CUDA_PATH\include
 
             - name: Register OS Compiler Matchers
-              shell: bash -e {0}
+              shell: bash --noprofile --norc -eo pipefail {0}
               run: |
                   # OS-independent matchers
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
@@ -106,7 +106,6 @@ jobs:
 
             - name: Install Linux/MacOS Client Protocol Dependencies on Linux/MacOS GHA Machines
               if: runner.os == 'Linux' || runner.os == 'macOS'
-              shell: bash -e {0}
               working-directory: protocol
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then

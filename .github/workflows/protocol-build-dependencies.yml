@@ -76,7 +76,7 @@ jobs:
 
             - name: Build Fractal OpenSSL on Windows
               if: runner.os == 'Windows'
-              shell: cmd
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               run: |
                   REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with O3 flag
                   perl Configure VC-WIN64A --release
@@ -87,7 +87,6 @@ jobs:
 
             - name: Build Fractal OpenSSL on macOS
               if: runner.os == 'macOS'
-              shell: bash
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               run: |
@@ -110,7 +109,6 @@ jobs:
 
             - name: Build Fractal OpenSSL on Linux Ubuntu
               if: runner.os == 'Linux'
-              shell: bash
               run: |
                   # configure and build OpenSSL with O3 flag
                   ./config --release
@@ -122,7 +120,7 @@ jobs:
             # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
             - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
               if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-              shell: bash
+              shell: bash --noprofile --norc -eo pipefail {0}
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
                       tar -zcvf ${{ env.linux-tar-name }} libcrypto.a
@@ -138,7 +136,6 @@ jobs:
             # Only run once, as headers are identical on every OS
             - name: Tar OpenSSL headers and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && runner.os == 'Linux'}}
-              shell: bash
               run: |
                   # remove all .h.in unnecessary files
                   find . -name "*.h.in" -type f -delete
@@ -155,7 +152,7 @@ jobs:
 
             - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
               if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-              shell: bash
+              shell: bash --noprofile --norc -eo pipefail {0}
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \":rotating_light: Failed to deploy OpenSSL \`libcrypto\` Static Libraries to AWS S3, investigate immediately :rotating_light:\", \"icon_emoji\": \":fractal:\"}" \
