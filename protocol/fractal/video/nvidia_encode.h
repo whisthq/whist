@@ -41,21 +41,80 @@ typedef struct {
     bool is_iframe;
 } NvidiaEncoder;
 
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType requested_codec, int out_width,
+/**
+ * @brief                          Will create a new nvidia encoder
+ *
+ * @param bitrate                  The bitrate to encode at (In bits per second)
+ * @param codec                    Which codec type (h264 or h265) to use
+ * @param out_width                Width of the output frame
+ * @param out_height               Height of the output frame
+ *
+ * @returns                        The newly created nvidia encoder
+ */
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width,
                                      int out_height);
-// Take in the GPU Texture pointer
+
+/**
+ * @brief                          Will reconfigure an nvidia encoder
+ *
+ * @param encoder                  The nvidia encoder to reconfigure
+ * @param bitrate                  The new bitrate
+ * @param codec                    The new codec
+ * @param out_width                The new output width
+ * @param out_height               The new output height
+ *
+ * @returns                        true on success, false on failure
+ */
+bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_height, int bitrate,
+                                CodecType codec);
+
+/**
+ * @brief                          Put the input data into the nvidia encoder
+ *
+ * @param encoder                  The encoder to encode with
+ * @param dw_texture               The GPU pointers needed to hold the captured frame
+ * @param dw_tex_target            The GPU pointers needed to hold the captured frame
+ * @param width                    The width of the inputted frame
+ * @param height                   The height of the inputted frame
+ *
+ * @returns                        0 on success, else -1
+ *                                 This function will return -1 if width/height do not match
+ *                                 out_width/out_height, as the nvidia encoder does not support
+ *                                 serverside scaling yet.
+ */
 int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
                                 int width, int height);
-// Reconfigure the encoder
-bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate,
-                                CodecType codec);
-// Set next frame to be iframe
+
+/**
+ * @brief                          Set the next frame to be an IDR-frame,
+ *                                 with SPS/PPS headers included as well.
+ *
+ * @param encoder                  Encoder to be updated
+ */
 void nvidia_set_iframe(NvidiaEncoder* encoder);
-// Unset next frame to be iframe
+
+/**
+ * @brief                          Allow the next frame to be either an I-frame
+ *                                 or not an i-frame
+ *
+ * @param encoder                  Encoder to be updated
+ */
 void nvidia_unset_iframe(NvidiaEncoder* encoder);
-// Encode the most recently provided frame from frame_intake
+
+/**
+ * @brief                          Encode the most recently intake'd frame
+ *
+ * @param encoder                  The encoder to encode with
+ *
+ * @returns                        0 on success, else -1
+ */
 int nvidia_encoder_encode(NvidiaEncoder* encoder);
-// Destroy the nvidia encoder
+
+/**
+ * @brief                          Destroy the nvidia encoder
+ *
+ * @param encoder                  The encoder to destroy
+ */
 void destroy_nvidia_encoder(NvidiaEncoder* encoder);
 
 #endif

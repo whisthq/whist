@@ -139,7 +139,7 @@ int video_encoder_encode(VideoEncoder* encoder);
 void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
 
 /**
- * @brief                          Reconfigure the encoder
+ * @brief                          Reconfigure the encoder using new parameters
  *
  * @param encoder                  The encoder to be updated
  * @param width                    The new width

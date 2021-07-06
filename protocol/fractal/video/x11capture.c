@@ -281,6 +281,7 @@ int capture_screen(CaptureDevice* device) {
             LOG_ERROR("nvidia_capture_screen failed!");
             return ret;
         } else {
+            // Ensure that we captured the width/height that we intended to
             if (device->width != device->nvidia_capture_device.width ||
                 device->height != device->nvidia_capture_device.height) {
                 LOG_ERROR(

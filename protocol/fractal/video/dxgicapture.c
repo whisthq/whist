@@ -379,6 +379,8 @@ void release_screenshot(ScreenshotContainer* screenshot) {
 }
 
 int capture_screen(CaptureDevice* device) {
+    // TODO: Verify that width/height haven't changed, if that's even possible?
+
     release_screen(device);
 
     HRESULT hr;

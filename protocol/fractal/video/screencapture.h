@@ -38,16 +38,30 @@ Public Functions
  *                                 device
  * @param width                    Width of the screen to capture, in pixels
  * @param height                   Height of the screen to capture, in pixels
- * @param dpi                      Dots per inch of the screen, in pixels
+ * @param dpi                      Dots per sq inch of the screen, (Where 96 is neutral)
  *
  * @returns                        0 if succeeded, else -1
  */
 int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
+/**
+ * @brief                          Tries to reconfigure the capture device
+ *                                 using the newly provided parameters
+ *
+ * @param device                   The Capture Device to reconfigure
+ * @param width                    New width of the screen to capture, in pixels
+ * @param height                   New height of the screen to capture, in pixels
+ * @param dpi                      New DPI
+ *
+ * @returns                        0 if succeeded, else -1
+ */
 bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen
+ *                                 The width/height of the image is guaranteed to be
+ *                                 the width/height passed into create_/reconfigure_ capture device,
+ *                                 If the screen dimensions changed, then -1 will be returned
  *
  * @param device                   The device used to capture the screen
  *
