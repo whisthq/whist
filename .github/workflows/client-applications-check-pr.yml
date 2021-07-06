@@ -81,7 +81,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Set Deploy Environment Based on Git Branch
-              shell: bash
+              shell: bash --noprofile --norc -eo pipefail {0}
               run: |
                   if [ "${GITHUB_REF##*/}" == "prod" ]; then
                       echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV

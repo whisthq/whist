@@ -64,7 +64,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             # The workflow will wait up to 15 minutes for other runs of the same workflow on
@@ -334,7 +333,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Retrieve Current Git Hash as Environment Variable
@@ -499,7 +497,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Configure AWS CLI
@@ -568,7 +565,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack
@@ -601,7 +597,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
@@ -662,7 +657,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Install webserver scripting dependencies
@@ -846,7 +840,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Authenticate Heroku
@@ -882,9 +875,8 @@ jobs:
                   wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
                   | sudo tar -zxp --directory /usr/local/bin/
 
-            - name: Deploy the webserver atomically
+            - name: Deploy the Webserver Atomically
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              shell: bash -e {0}
               run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
             - name: Notify Slack on database migration
@@ -1030,7 +1022,7 @@ jobs:
 
             - name: Retrieve Desktop App Version from Config Database
               id: generate-release-version
-              shell: bash -e {0}
+              shell: bash --noprofile --norc -eo pipefail {0}
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
                   ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
@@ -1129,7 +1121,7 @@ jobs:
             # Bump the package version in package.json using jq
             - name: Update Package Version
               working-directory: client-applications/desktop
-              shell: bash
+              shell: bash --noprofile --norc -eo pipefail {0}
               run: |
                   mv package.json packageOld.json
                   # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
@@ -1231,7 +1223,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack on success
@@ -1284,7 +1275,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Install Node.js 15
@@ -1350,7 +1340,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Retrieve Today's Date

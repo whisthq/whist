@@ -93,7 +93,6 @@ jobs:
             - name: Start Local Deploy
               if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
-              shell: bash -e {0}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               run: |
@@ -126,7 +125,6 @@ jobs:
             - name: Print debug info on failure
               working-directory: main-webserver
               if: always() && steps.ensure-containers-work.outcome == 'failure'
-              shell: bash -e {0}
               run: |
                   # print logs for us to see what happened
                   echo "------ WEB LOGS ------"
@@ -138,7 +136,6 @@ jobs:
             - name: End Local Deploy
               if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
-              shell: bash -e {0}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               run: bash docker/local_deploy.sh --down

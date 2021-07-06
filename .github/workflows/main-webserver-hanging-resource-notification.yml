@@ -21,7 +21,6 @@ jobs:
 
             - name: Setup Python-based notification and resource modules
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Install boto3
@@ -78,7 +77,6 @@ jobs:
 
             - name: Setup Python-based notification and resource modules
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Install boto3
@@ -125,7 +123,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
@@ -173,7 +170,6 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              shell: bash
               run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack if Hanging Resource Workflow Fails

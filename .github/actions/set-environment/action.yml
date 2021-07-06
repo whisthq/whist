@@ -39,7 +39,7 @@ runs:
   steps:
     - name: Set workflow environment parameters
       id: set-environment
-      shell: bash
+      shell: bash --noprofile --norc -eo pipefail {0}
       run: |
         if [[ ${{ inputs.ref }} =~ prod$ ]]; then
             environment="prod"
