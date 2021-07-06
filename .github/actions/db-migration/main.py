@@ -27,7 +27,7 @@ traceback.install()
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITHUB_ISSUE = os.environ.get("GITHUB_ISSUE")
-GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH")
+HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
 GITHUB_REPO = "fractal/fractal"
 GITHUB_PR_URL = "https://github.com/fractal/fractal/pull/"
 HEROKU_API_TOKEN = os.environ.get("HEROKU_DEVELOPER_API_KEY")
@@ -44,6 +44,7 @@ def db_diff(sql_a, sql_b, db_a="postgresql:///a", db_b="postgresql:///b"):
 
     code, diff = diff_schema(db_a, db_b)
 
+    check_diff = False
     if diff:
         exec_sql(db_a, diff)
 
@@ -55,12 +56,7 @@ def db_diff(sql_a, sql_b, db_a="postgresql:///a", db_b="postgresql:///b"):
 
 
 if __name__ == "__main__":
-    if GITHUB_BRANCH == "prod":
-        config = heroku_config(GITHUB_BRANCH)
-    elif GITHUB_BRANCH == "staging":
-        config = heroku_config(SERVER_STAGING)
-    else:
-        config = heroku_config(SERVER_DEV)
+    config = heroku_config(HEROKU_APP_NAME)
 
     db_url = replace_postgres(config["DATABASE_URL"])
 
