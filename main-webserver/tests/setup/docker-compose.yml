@@ -1,9 +1,3 @@
-redis:
-  # Matches version being used by dev as of 2021-02-26
-  image: redis:6.0.11
-  ports:
-    - "6379:6379"
-
 postgres_db:
   image: postgres:12.5
   ports:
