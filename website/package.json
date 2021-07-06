@@ -58,7 +58,7 @@
         "@types/snowpack-env": "^2.3.3",
         "@typescript-eslint/parser": "^4.28.1",
         "autoprefixer": "^10.2.6",
-        "eslint": "^7.27.0",
+        "eslint": "^7.30.0",
         "eslint-plugin-react": "^7.24.0",
         "postcss": "^8.3.0",
         "postcss-cli": "^8.3.1",
