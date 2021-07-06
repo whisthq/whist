@@ -70,7 +70,7 @@ def container_state(action, **kwargs):
         action (str): The string at the end of the URL which signifies
         which action we want to take. Currently, only the cancel endpoint is provided,
         which allows us to easily cancel a spinning up container and clean up our redux state.
-        
+
     Returns:
         json, int: A json HTTP response and status code.
     """
