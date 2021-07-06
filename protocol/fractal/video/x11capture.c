@@ -32,6 +32,15 @@ int handler(Display* d, XErrorEvent* a) {
 }
 
 void get_wh(CaptureDevice* device, int* w, int* h) {
+    /*
+        Get the width and height of the display associated with device, and store them in w and h,
+        respectively.
+
+        Arguments:
+            device (CaptureDevice*): device containing the display whose dimensions we are getting
+            w (int*): pointer to store width
+            h (int*): pointer to store hight
+    */
     if (!device) return;
 
     XWindowAttributes window_attributes;
@@ -46,15 +55,120 @@ void get_wh(CaptureDevice* device, int* w, int* h) {
 }
 
 bool is_same_wh(CaptureDevice* device) {
+    /*
+        Determine whether or not the device's width and height agree width actual display width and
+        height.
+
+        Arguments:
+            device (CaptureDevice*): capture device to query
+
+        Returns:
+            (bool): true if width and height agree, false otherwise
+    */
+
     int w, h;
     get_wh(device, &w, &h);
     return device->width == w && device->height == h;
 }
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
-                          CodecType codec) {
-    if (!device) return -1;
+// Try to update the device to the given width/height/dpi
+// If may fail to set the dimensions, but device->width and device->height
+// will always equal the actual dimensions of the screen
+void try_update_dimensions(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    // TODO: Implement DPI changes
 
+    // Update the device's width/height
+    device->width = width;
+    device->height = height;
+    // If the device's width/height is already correct, just return
+    if (is_same_wh(device)) {
+        return;
+    }
+
+    char modename[128];
+    char cmd[1024];
+
+    snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
+
+    char* display_name;
+    runcmd("xrandr --current | grep \" connected\"", &display_name);
+    *strchr(display_name, ' ') = '\0';
+
+    snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd),
+             "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
+             "cut -d' ' -f3-)",
+             modename, width, height);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
+    runcmd(cmd, NULL);
+    snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
+    runcmd(cmd, NULL);
+
+    // For the single-monitor case, we no longer need to do the below; we instead
+    // assume the display server has been created with the correct DPI. The below
+    // approach does not handle this case well because Linux does not yet support
+    // changing DPI on the fly. For getting seamless performance on multi-monitor
+    // setups, we may eventually need to instead get already-running X11
+    // applications to respect DPI changes to the X server.
+
+    // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
+    // snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
+    // runcmd(cmd, NULL);
+    // while this command sets the font DPI setting
+    // snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
+    // runcmd(cmd, NULL);
+
+    free(display_name);
+
+    // If it's still not the correct dimensions
+    if (!is_same_wh(device)) {
+        LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d");
+        // Get the width/height that the device actually is though
+        get_wh(device, &device->width, &device->height);
+    }
+}
+
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    /*
+        Create a device that will capture a screen of the specified width, height, and DPI.
+        This function first attempts to use X11 to set
+        the display's width, height, and DPI, then creates either an NVidia or X11 capture device,
+        with NVidia given priority. Refer to x11nvidiacapture.c for the internal details of the
+        NVidia capture device.
+
+        Arguments:
+            device (CaptureDevice*): the created capture device
+            width (UINT): desired window width
+            height (UNIT): desired window height
+            dpi (UINT): desired window DPI
+
+        Returns:
+            (int): 0 on success, 1 on failure
+    */
+
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into create_capture_device");
+        return -1;
+    }
+
+    if (width <= 0 || height <= 0) {
+        LOG_ERROR("Invalid width/height of %d/%d", width, height);
+        return -1;
+    }
+    if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT) {
+        LOG_ERROR(
+            "Requested dimensions are too large! "
+            "%dx%d when the maximum is %dx%d! Rounding down.",
+            width, height, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        width = MAX_SCREEN_WIDTH;
+        height = MAX_SCREEN_HEIGHT;
+    }
+
+    // attempt to set display width, height, and DPI
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
         LOG_ERROR("ERROR: CreateCaptureDevice display did not open");
@@ -62,69 +176,21 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     }
     device->root = DefaultRootWindow(device->display);
 
-    if (width <= 0 || height <= 0) {
-        LOG_ERROR("Invalid width/height of %d/%d", width, height);
-        return -1;
-    }
-    device->width = width;
-    device->height = height;
+    device->first = true;
 
-    if (!is_same_wh(device)) {
-        char modename[128];
-        char cmd[1024];
+    try_update_dimensions(device, width, height, dpi);
 
-        snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
-
-        char* display_name;
-        runcmd("xrandr --current | grep \" connected\"", &display_name);
-        *strchr(display_name, ' ') = '\0';
-
-        snprintf(cmd, sizeof(cmd), "xrandr --delmode %s %s", display_name, modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd),
-                 "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
-                 "cut -d' ' -f3-)",
-                 modename, width, height);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
-        runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
-        runcmd(cmd, NULL);
-
-        // For the single-monitor case, we no longer need to do the below; we instead
-        // assume the display server has been created with the correct DPI. The below
-        // approach does not handle this case well because Linux does not yet support
-        // changing DPI on the fly. For getting seamless performance on multi-monitor
-        // setups, we may eventually need to instead get already-running X11
-        // applications to respect DPI changes to the X server.
-
-        // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
-        // snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
-        // runcmd(cmd, NULL);
-        // while this command sets the font DPI setting
-        // snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
-        // runcmd(cmd, NULL);
-
-        free(display_name);
-
-        // If it's still not the correct dimensions
-        if (!is_same_wh(device)) {
-            LOG_ERROR("Could not force monitor to a given width/height");
-            get_wh(device, &device->width, &device->height);
-        }
-    }
-
-#if USING_GPU_CAPTURE
-    if (create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec) < 0) {
-        device->using_nvidia = false;
-        LOG_ERROR("USING_GPU_CAPTURE defined but unable to use Nvidia Capture SDK!");
-    } else {
+    // Create the NVidia capture device is possible; otherwise use X11 capture.
+#if USING_NVIDIA_CAPTURE_AND_ENCODE
+    if (create_nvidia_capture_device(&device->nvidia_capture_device) == 0) {
         device->using_nvidia = true;
         device->image = NULL;
         LOG_INFO("Using Nvidia Capture SDK!");
         return 0;
+    } else {
+        device->using_nvidia = false;
+        LOG_ERROR("USING_NVIDIA_CAPTURE_AND_ENCODE defined but unable to use Nvidia Capture SDK!");
+        // Cascade to X11 capture below
     }
 #endif
 
@@ -157,13 +223,18 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 
     if (!XShmAttach(device->display, &device->segment)) {
         LOG_ERROR("Error while attaching display");
+        destroy_capture_device(device);
         return -1;
     }
     device->frame_data = device->image->data;
     device->pitch = device->width * 4;
 #else
     device->image = NULL;
-    capture_screen(device);
+    if (capture_screen(device) < 0) {
+        LOG_ERROR("Failed to call capture_screen for the first frame!");
+        destroy_capture_device(device);
+        return -1;
+    }
 #endif
     device->capture_is_on_nvidia = false;
     device->texture_on_gpu = false;
@@ -171,24 +242,60 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     return 0;
 }
 
+bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
+        return false;
+    }
+
+    if (device->using_nvidia) {
+        // Reconfigure nvidia device
+        try_update_dimensions(device, width, height, dpi);
+        return true;
+    } else {
+        // Can't reconfigure X11 device
+        return false;
+    }
+}
+
 int capture_screen(CaptureDevice* device) {
-    if (!device) return -1;
+    /*
+        Capture the screen using device. If using NVidia, we use the NVidia FBC API to capture the
+        screen, as described in x11nvidiacapture.c. Otherwise, use X11 functions to capture the
+        screen.
+
+        Arguments:
+            device (CaptureDevice*): device used to capture the screen
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+    if (!device) {
+        LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
+        return -1;
+    }
 
     if (device->using_nvidia) {
         int ret = nvidia_capture_screen(&device->nvidia_capture_device);
         if (ret < 0) {
+            LOG_ERROR("nvidia_capture_screen failed!");
             return ret;
         } else {
-            device->frame_data = device->nvidia_capture_device.frame;
-            device->width = device->nvidia_capture_device.width;
-            device->height = device->nvidia_capture_device.height;
-            device->pitch = device->width * 4;
+            // Ensure that we captured the width/height that we intended to
+            if (device->width != device->nvidia_capture_device.width ||
+                device->height != device->nvidia_capture_device.height) {
+                LOG_ERROR(
+                    "Capture Device dimensions %dx%d does not match nvidia dimensions of %dx%d!",
+                    device->width, device->height, device->nvidia_capture_device.width,
+                    device->nvidia_capture_device.height);
+                return -1;
+            }
+            device->pitch = 0;
+            device->frame_data = NULL;
             device->capture_is_on_nvidia = true;
             return ret;
         }
     }
-
-    static bool first = true;
 
     XLockDisplay(device->display);
 
@@ -203,8 +310,8 @@ int capture_screen(CaptureDevice* device) {
         }
     }
 
-    if (update || first) {
-        first = false;
+    if (update || device->first) {
+        device->first = false;
 
         XDamageSubtract(device->display, device->damage, None, None);
 
@@ -254,13 +361,4 @@ void destroy_capture_device(CaptureDevice* device) {
         }
     }
     XCloseDisplay(device->display);
-}
-
-void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
-    if (!device) return;
-
-    if (device->using_nvidia) {
-        destroy_nvidia_capture_device(&device->nvidia_capture_device);
-        create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec);
-    }
 }

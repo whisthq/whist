@@ -23,6 +23,7 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
+#include "nvidia_encode.h"
 
 /*
 ============================
@@ -60,17 +61,17 @@ typedef struct VideoEncoder {
     int gop_size;
     bool is_iframe;
     void* sw_frame_buffer;
-    void* encoded_frame_data;  /// <Pointer to the encoded data
-    int encoded_frame_size;    /// <size of encoded frame in bytes
+    int encoded_frame_size;  /// <size of encoded frame in bytes
 
-    bool using_capture_encoder;
-    bool already_encoded;
     AVFrame* hw_frame;
     AVFrame* sw_frame;
     AVFrame* filtered_frame;
 
     EncodeType type;
     CodecType codec_type;
+
+    bool capture_is_on_nvidia;
+    NvidiaEncoder* nvidia_encoder;
 } VideoEncoder;
 
 /*
@@ -138,7 +139,23 @@ int video_encoder_encode(VideoEncoder* encoder);
 void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
 
 /**
- * @brief                          Set the next frame to be an I-frame
+ * @brief                          Reconfigure the encoder using new parameters
+ *
+ * @param encoder                  The encoder to be updated
+ * @param width                    The new width
+ * @param height                   The new height
+ * @param bitrate                  The new bitrate
+ * @param codec                    The new codec
+ *
+ * @returns                        0 if the encoder was successfully reconfigured,
+ *                                 -1 if no reconfiguration was possible
+ */
+bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate,
+                         CodecType codec);
+
+/**
+ * @brief                          Set the next frame to be an IDR-frame,
+ *                                 with SPS/PPS headers included as well.
  *
  * @param encoder                  Encoder to be updated
  */

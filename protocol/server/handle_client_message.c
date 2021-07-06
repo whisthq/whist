@@ -47,8 +47,8 @@ extern volatile double max_mbps;
 extern volatile int client_width;
 extern volatile int client_height;
 extern volatile int client_dpi;
-extern volatile bool update_device;
 extern volatile CodecType client_codec_type;
+extern volatile bool update_device;
 
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
@@ -285,8 +285,9 @@ static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
     UNUSED(client_id);
     if (!is_controlling) return 0;
     // Update knowledge of client monitor dimensions
-    LOG_INFO("Request to use dimensions %dx%d received", fmsg->dimensions.width,
-             fmsg->dimensions.height);
+    LOG_INFO("Request to use codec %d / dimensions %dx%d / dpi %d received",
+             fmsg->dimensions.codec_type, fmsg->dimensions.width, fmsg->dimensions.height,
+             fmsg->dimensions.dpi);
     if (client_width != fmsg->dimensions.width || client_height != fmsg->dimensions.height ||
         client_codec_type != fmsg->dimensions.codec_type || client_dpi != fmsg->dimensions.dpi) {
         client_width = fmsg->dimensions.width;
@@ -295,6 +296,10 @@ static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
         client_dpi = fmsg->dimensions.dpi;
         // Update device if knowledge changed
         update_device = true;
+    } else {
+        LOG_INFO(
+            "No need to update the decoder as the requested parameters are the same as the "
+            "currently chosen parameters");
     }
     return 0;
 }
@@ -420,13 +425,11 @@ static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_
     UNUSED(is_controlling);
     LOG_INFO("Request for i-frame found: Creating iframe");
     if (fmsg->reinitialize_encoder) {
+        // Wants to completely reinitialize the encoder
         update_encoder = true;
     } else {
-        if (USING_FFMPEG_IFRAME_FLAG) {
-            wants_iframe = true;
-        } else {
-            update_encoder = true;
-        }
+        // Wants only an iframe
+        wants_iframe = true;
     }
     return 0;
 }

@@ -49,7 +49,6 @@ extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 
 extern bool skip_taskbar;
 
-extern volatile CodecType codec_type;
 extern bool using_stun;
 
 extern MouseMotionAccumulation mouse_state;
@@ -723,7 +722,7 @@ void send_message_dimensions() {
     fmsg.type = MESSAGE_DIMENSIONS;
     fmsg.dimensions.width = output_width;
     fmsg.dimensions.height = output_height;
-    fmsg.dimensions.codec_type = (CodecType)output_codec_type;
+    fmsg.dimensions.codec_type = output_codec_type;
     int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
     float dpi;
     SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
