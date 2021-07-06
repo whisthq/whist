@@ -125,6 +125,15 @@ echo "================================================"
 sudo cp fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 echo "================================================"
+echo "Updating resource limits..."
+echo "================================================"
+# We use inotify to communicate between mandelboxes and the host service. We
+# use at least one per mandelbox, and Docker itself seems to use quite a few,
+# so we don't want this resource to be a limiting factor.
+sudo sh -c "echo 'fs.inotify.max_user_instances=2048' >> /etc/sysctl.conf" # default=128
+sudo sysctl -p
+
+echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 

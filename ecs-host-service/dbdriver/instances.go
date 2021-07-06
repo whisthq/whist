@@ -31,8 +31,10 @@ const (
 	InstanceStatusUnresponsive  InstanceStatus = "HOST_SERVICE_UNRESPONSIVE"
 )
 
-// database. If the expected row is not found, then it returns an error.
-func registerInstance() error {
+// RegisterInstance registers the instance in the database. If the expected row
+// is not found, then it returns an error. This function also starts the
+// heartbeat goroutine.
+func RegisterInstance() error {
 	if !enabled {
 		return nil
 	}
@@ -72,7 +74,7 @@ func registerInstance() error {
 
 	// Create a transaction to register the instance, since we are querying and
 	// writing separately.
-	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.Serializable})
+	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: unable to begin transaction: %s", err)
 	}
@@ -139,6 +141,14 @@ func registerInstance() error {
 	tx.Commit(context.Background())
 
 	logger.Infof("Successfully registered %s instance in database.", instanceName)
+
+	// Initialize the heartbeat goroutine. Note that this goroutine does not
+	// listen to the global context, and is not tracked by the global
+	// goroutineTracker. This is because we want the heartbeat goroutine to
+	// outlive the global context. Instead, we have the explicit Close(), which
+	// ends up finishing off the heartbeat goroutine as well.
+	go heartbeatGoroutine()
+
 	return nil
 }
 

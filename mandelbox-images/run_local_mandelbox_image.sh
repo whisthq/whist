@@ -18,4 +18,4 @@ cd "$DIR"
 # provided.
 app_path=${1%/}
 image=fractal/$app_path:current-build
-./helper_scripts/run_mandelbox_image.sh "$image" --update-protocol=True "${@:2}"
+./helper_scripts/run_mandelbox_image.sh "$image" --update-protocol "${@:2}"
