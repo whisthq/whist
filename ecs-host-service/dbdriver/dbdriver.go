@@ -22,8 +22,8 @@ var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 // be non-nil if `enabled` is true.
 var dbpool *pgxpool.Pool
 
-// Initialize creates and tests a connection to the database, and registers the
-// instance in the database. It also starts the heartbeat goroutine.
+// Initialize creates and tests a connection to the database. It also starts
+// the goroutine that cleans up stale mandelboxes.
 func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) error {
 	if !enabled {
 		logger.Infof("Running in app environment %s so not enabling database code.", metadata.GetAppEnvironment())
@@ -59,11 +59,6 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}
 	logger.Infof("Successfully connected to the database.")
 
-	// Register the instance with the database
-	if err = registerInstance(); err != nil {
-		return utils.MakeError("Unable to register instance in the database: %s", err)
-	}
-
 	// Start goroutine that marks the host as draining if the global context is
 	// cancelled.
 	goroutineTracker.Add(1)
@@ -77,16 +72,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 		}
 	}()
 
-	// Initialize the heartbeat goroutine. Note that this goroutine does not
-	// listen to the global context, and is not tracked by the global
-	// goroutineTracker. This is because we want the heartbeat goroutine to
-	// outlive the global context. Instead, we have the explicit Close(), which
-	// ends up finishing off the heartbeat goroutine as well.
-	go heartbeatGoroutine()
-
-	// Start a goroutine that removes stale allocated mandelboxes (i.e.
-	// mandelboxes that are marked allocated in the database but have not
-	// actually been requested in a while).
+	// Start a goroutine that removes stale mandelboxes.
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
