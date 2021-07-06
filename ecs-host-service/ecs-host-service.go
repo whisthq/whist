@@ -22,7 +22,6 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/fractal/fractal/ecs-host-service/auth"
 	"github.com/fractal/fractal/ecs-host-service/dbdriver"
@@ -43,9 +42,10 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	dockernat "github.com/docker/go-connections/nat"
 	dockerunits "github.com/docker/go-units"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-var shutdownInstanceOnExit bool = false
+var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
 
 func init() {
 	// Initialize random number generator for all subpackages
@@ -71,6 +71,229 @@ func startDockerDaemon(globalCancel context.CancelFunc) {
 	} else {
 		logger.Info("Successfully started the Docker daemon ourselves.")
 	}
+}
+
+// createDockerClient creates a docker client. It returns an error if creation
+// failed.
+func createDockerClient() (*dockerclient.Client, error) {
+	if client, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation()); err != nil {
+		return nil, utils.MakeError("Error creating new Docker client: %s", err)
+	} else {
+		return client, nil
+	}
+}
+
+// "Warm up" Docker. This is necessary because for some reason the first
+// ContainerStart call by the host service is taking over a minute. Note that
+// this doesn't seem to be happening on personal instances, only
+// dev/staging/prod ones.
+// TODO: figure out the root cause of this
+// Note that we also need to "warm up" Chrome --- for some reason Chrome in the
+// first container on a host is taking almost two minutes to start up and
+// register itself as an X client at the moment. Therefore, we need to write
+// the resources for the protocol in this function too.
+// TODO: figure out the root cause of this too
+// I'd really like to get to the root causes of these issues to avoid the code
+// duplication between this function and SpinUpMandelbox. It doesn't make sense
+// to pollute the code in that function with a flag for warming up, so we have
+// to live with this duplication until we can find and solve the root cause.
+func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, client *dockerclient.Client) error {
+	imageFilters := dockerfilters.NewArgs(
+		dockerfilters.KeyValuePair{Key: "dangling", Value: "false"},
+	)
+	images, err := client.ImageList(globalCtx, dockertypes.ImageListOptions{All: false, Filters: imageFilters})
+	if err != nil {
+		return err
+	}
+
+	// We've gotta find a suitable image to use for warming up the client. We
+	// prefer images that are most alike to those the host service will actually
+	// be launching, so we use a list of regexes. We prefer matches for earlier
+	// regexes in the list.
+
+	// Note: the following code is theoretically inefficient but practically good
+	// enough, since our data is small and this function is only run once.
+
+	// Note that the first image in this list appears on local machines but not
+	// dev/staging/prod ones, so we can use the same regex list in all
+	// environments.
+	regexes := []string{
+		`fractal/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*`,
+		`*fractal*`,
+	}
+
+	findImageByRegex := func(nameRegex string) string {
+		regex := regexp.MustCompile(nameRegex)
+		for _, img := range images {
+			for _, tag := range img.RepoTags {
+				if regex.MatchString(tag) {
+					return tag
+				}
+			}
+		}
+		return ""
+	}
+
+	image := func() string {
+		for _, r := range regexes {
+			if match := findImageByRegex(r); match != "" {
+				return match
+			}
+		}
+		return ""
+	}()
+	if image == "" {
+		return utils.MakeError("Couldn't find a suitable image")
+	}
+
+	// It turns out the second mandelbox (including starting the Fractal
+	// applicaiton) is a bit slow still. Therefore, we do this warmup _twice_.
+	warmupCount := 2
+	for iter := 1; iter <= warmupCount; iter++ {
+		logger.Infof("Staring warmup iteration %v of %v", iter, warmupCount)
+
+		// At this point, we've found an image, so we just need to start the container.
+
+		containerName := "host-service-warmup"
+		fc := mandelbox.New(globalCtx, goroutineTracker, types.MandelboxID(containerName))
+		defer fc.Close()
+
+		// Assign port bindings for the mandelbox (necessary for
+		// `fc.WriteResourcesForProtocol()`, though we don't need to actually pass
+		// them into the mandelbox)
+		if err := fc.AssignPortBindings([]portbindings.PortBinding{
+			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		}); err != nil {
+			return utils.MakeError("Error assigning port bindings: %s", err)
+		}
+
+		// Initialize Uinput devices for the mandelbox (necessary for the `update-xorg-conf` service to work)
+		if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
+			return utils.MakeError("Error initializing uinput devices: %s", err)
+		}
+		devices := fc.GetDeviceMappings()
+
+		// Allocate a TTY
+		if err := fc.InitializeTTY(); err != nil {
+			return utils.MakeError("Error initializing TTY: %s", err)
+		}
+
+		aesKey := utils.RandHex(16)
+		config := dockercontainer.Config{
+			Env: []string{
+				utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+				"NVIDIA_DRIVER_CAPABILITIES=all",
+				"NVIDIA_VISIBLE_DEVICES=all",
+			},
+			Image:        image,
+			AttachStdin:  true,
+			AttachStdout: true,
+			AttachStderr: true,
+			Tty:          true,
+		}
+
+		tmpfs := make(map[string]string)
+		tmpfs["/run"] = "size=52428800"
+		tmpfs["/run/lock"] = "size=52428800"
+
+		hostConfig := dockercontainer.HostConfig{
+			Binds: []string{
+				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
+				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
+				utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
+				"/run/udev/data:/run/udev/data:ro",
+				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
+			},
+			CapDrop: strslice.StrSlice{"ALL"},
+			CapAdd: strslice.StrSlice([]string{
+				"SETPCAP",
+				"MKNOD",
+				"AUDIT_WRITE",
+				"CHOWN",
+				"NET_RAW",
+				"DAC_OVERRIDE",
+				"FOWNER",
+				"FSETID",
+				"KILL",
+				"SETGID",
+				"SETUID",
+				"NET_BIND_SERVICE",
+				"SYS_CHROOT",
+				"SETFCAP",
+				// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
+				"SYS_NICE",
+			}),
+			ShmSize: 2147483648,
+			Tmpfs:   tmpfs,
+			Resources: dockercontainer.Resources{
+				CPUShares: 2,
+				Memory:    6552550944,
+				NanoCPUs:  0,
+				// Don't need to set CgroupParent, since each mandelbox is its own task.
+				// We're not using anything like AWS services, where we'd want to put
+				// several mandelboxes under one limit.
+				Devices:            devices,
+				KernelMemory:       0,
+				KernelMemoryTCP:    0,
+				MemoryReservation:  0,
+				MemorySwap:         0,
+				Ulimits:            []*dockerunits.Ulimit{},
+				CPUCount:           0,
+				CPUPercent:         0,
+				IOMaximumIOps:      0,
+				IOMaximumBandwidth: 0,
+			},
+		}
+
+		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
+		if err != nil {
+			return utils.MakeError("Error running `docker create` for %s:\n%s", containerName, err)
+		}
+		logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
+
+		if err := fc.WriteResourcesForProtocol(); err != nil {
+			return utils.MakeError("Error writing resources for protocol: %s", err)
+		}
+		err = fc.MarkReady()
+		if err != nil {
+			return utils.MakeError("Error marking mandelbox as ready: %s", err)
+		}
+
+		err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
+		if err != nil {
+			return utils.MakeError("Error running `docker start` for %s:\n%s", containerName, err)
+		}
+		logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
+
+		logger.Infof("Waiting for fractal application to warm up...")
+		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+			return utils.MakeError("Error warming up fractal application: %s", err)
+		}
+		logger.Infof("Finished waiting for fractal application to warm up.")
+
+		time.Sleep(5 * time.Second)
+
+		stopTimeout := 30 * time.Second
+		_ = client.ContainerStop(globalCtx, createBody.ID, &stopTimeout)
+		err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
+		if err != nil {
+			return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
+		}
+		logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
+
+		// Close the mandelbox, and wait 5 seconds so we don't pollute the logs with
+		// cleanup after the event loop starts.
+		fc.Close()
+		time.Sleep(5 * time.Second)
+
+		logger.Infof("Finished warmup iteration %v of %v", iter, warmupCount)
+	}
+
+	return nil
 }
 
 // Drain and shutdown the host service
@@ -201,7 +424,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", fc.GetMandelboxID()),
+			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", fc.GetMandelboxID()),
 			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetMandelboxID()),
@@ -274,18 +497,25 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing resources for protocol: %s", err)
 		return
 	}
-	if err := fc.WriteLocalDevValues(10); err != nil {
+	// Let server protocol wait 30 seconds by default before client connects.
+	// However, in a local environment, we set the default to an effectively
+	// infinite value.
+	protocolTimeout := 30
+	if metadata.IsLocalEnv() {
+		protocolTimeout = 999999
+	}
+	if err := fc.WriteProtocolTimeout(protocolTimeout); err != nil {
 		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol.")
+	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol for mandelbox %s", req.MandelboxID)
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
 		logAndReturnError("Error starting mandelbox with dockerID %s and MandelboxID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s", mandelboxName)
+	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, req.MandelboxID)
 
 	result := httpserver.SpinUpMandelboxRequestResult{
 		HostPortForTCP32262: hostPortForTCP32262,
@@ -311,9 +541,16 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = fc.MarkReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox as ready: %s", err)
+		logAndReturnError("Error marking mandelbox %s as ready: %s", req.MandelboxID, err)
 		return
 	}
+
+	logger.Infof("Waiting for fractal application to start up...")
+	if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", req.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+		logAndReturnError("Error warming up fractal application: %s", err)
+		return
+	}
+	logger.Infof("Finished waiting for fractal application to start up.")
 
 	err = dbdriver.WriteMandelboxStatus(req.MandelboxID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
@@ -480,6 +717,12 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", metadata.GetGitCommit())
 
+	// Initialize the database driver, if necessary (the `dbdriver` package
+	// takes care of the "if necessary" part).
+	if err := dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+		logger.Panic(globalCancel, err)
+	}
+
 	// Start collecting metrics
 	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
 
@@ -492,11 +735,22 @@ func main() {
 
 	initializeFilesystem(globalCancel)
 
-	// Initialize the database driver, if necessary (the `dbdriver`) package
-	// takes care of the "if necessary" part.
-	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+	// Start Docker
+	startDockerDaemon(globalCancel)
+	dockerClient, err := createDockerClient()
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+	if !metadata.IsLocalEnv() {
+		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
+			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
+		}
+	}
+
+	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
 		// draining, the webserver doesn't want it anymore so we should shut down.
+
 		// TODO: make this a bit more robust
 		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
 			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
@@ -516,10 +770,8 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	startDockerDaemon(globalCancel)
-
 	// Start main event loop
-	startEventLoop(globalCtx, globalCancel, &goroutineTracker, httpServerEvents)
+	startEventLoop(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -535,16 +787,10 @@ func main() {
 	}
 }
 
-func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, httpServerEvents <-chan httpserver.ServerRequest) {
+func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan httpserver.ServerRequest) {
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-
-		// Create docker client
-		dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation())
-		if err != nil {
-			logger.Panicf(globalCancel, "Error creating new Docker client: %v", err)
-		}
 
 		// Create filter for which docker events we care about
 		filters := dockerfilters.NewArgs()

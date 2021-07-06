@@ -45,7 +45,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 
 	// Create a transaction to register the instance, since we are querying and
 	// writing separately.
-	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.Serializable})
+	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: unable to begin transaction: %s", err)
 	}
