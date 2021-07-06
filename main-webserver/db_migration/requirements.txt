@@ -8,4 +8,4 @@ psycopg2==2.9.1
 requests==2.25.1
 stopit==1.1.2
 PyGithub==1.54.1
-packaging==20.9
+packaging==21.0
