@@ -1062,7 +1062,12 @@ void log_frame_statistics(VideoFrame* frame) {
     }
 
     number_of_frames++;
-    if (get_timer(time_since_last_fps_log) > 5) {
+#if LOG_VIDEO
+#define FPS_LOG_FREQUENCY_IN_SEC 5
+#else
+#define FPS_LOG_FREQUENCY_IN_SEC 30
+#endif
+    if (get_timer(time_since_last_fps_log) > FPS_LOG_FREQUENCY_IN_SEC) {
         double fps_log_time = get_timer(time_since_last_fps_log);
         unsigned fps = (unsigned)(number_of_frames / fps_log_time);
         LOG_INFO("Average FPS over the last %.1f seconds was %u", fps_log_time, fps);
