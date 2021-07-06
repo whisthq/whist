@@ -1,5 +1,6 @@
 {
   "name": "fractal",
+  "productName": "Fractal",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "author": {
@@ -7,7 +8,7 @@
     "name": "Fractal Computers, Inc.",
     "url": "https://www.fractal.co"
   },
-  "description": "Fractal Desktop App",
+  "description": "Fractal Desktop Application",
   "main": "build/dist/main/index.js",
   "homepage": "https://fractal.co",
   "scripts": {
