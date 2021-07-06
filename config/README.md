@@ -10,7 +10,7 @@ When the configuration program is run inside GitHub Actions, it is passed the "s
 
 The schema files can use nested keys to define "profiles". These profiles are used to store values that need to change based on the environment, such as operating system or git branch. The list of profiles in use is stored in `config/profile.yml`.
 
-"Profiles" refers to one of the sets of keys in "config/profiles.yml". These are used to choose between values like "macos/win32/linux". With a profile of "macos", a config like this:
+"Profiles" refers to one of the sets of keys in `config/profiles.yml`. These are used to choose between values like "macos/win32/linux". With a profile of `macos`, a config like this:
 
 ```json
 {
@@ -45,7 +45,7 @@ python .github/actions/monorepo-config/main.py \
 
 ```
 
-Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like "\*\*\*\*\*\*\*". We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.
+Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like `\*\*\*\*\*\*\*`. We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.
 
 The `--deploy` and `--os` flags are examples of "profiles". Each profile name must be present in `profile.yml` for the command to succeed.
 

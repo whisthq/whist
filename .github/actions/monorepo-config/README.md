@@ -46,13 +46,13 @@ There are three main components that make up the configuration building program.
 
 ### Python
 
-The Python program has a CLI built with the `click` library. All options are documented with the `--help` flag. `main.py` is the entrypoint to the program. After `pip install -r requirements.txt`, you can `python main.py --help` to see how run the program.
+The Python program has a CLI built with the `click` library. All options are documented with the `--help` flag. `main.py` is the entrypoint to the program. After `pip install -r requirements.txt`, you can `python main.py --help` to see how to run the program.
 
 The inputs to the Python program include a "config" path (config folder in monorepo root), "secrets", and "profiles".
 
 "Secrets" are one or more JSON dictionaries of values that will be passed in during a CI run. These will be merged with the rest of the configuration.
 
-"Profiles" refers to one of the sets of keys in "config/profiles.yml". These are used to choose between values like "macos/win32/linux". With a profile of "macos", a config like this:
+"Profiles" refers to one of the sets of keys in `config/profiles.yml`. These are used to choose between values like `macos/win32/linux`. With a profile of `macos`, a config like this:
 
 ```json
 {
