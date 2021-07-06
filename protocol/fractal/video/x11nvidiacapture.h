@@ -5,26 +5,46 @@
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
 
-typedef struct NvidiaCaptureDevice {
-    NVFBC_SESSION_HANDLE fbc_handle;
-    NVFBC_API_FUNCTION_LIST p_fbc_fn;
-    NV_ENC_REGISTERED_PTR registered_resources[NVFBC_TOGL_TEXTURES_MAX];
-    void* frame;
-    unsigned int size;
-    bool is_iframe;
+typedef struct {
+    // Width and height of the capture session
     int width;
     int height;
-    CodecType codec_type;
-    // Encoder Stuff
-    NV_ENCODE_API_FUNCTION_LIST p_enc_fn;
-    void* encoder;
-    NV_ENC_INPUT_PTR input_buffer;
-    NV_ENC_OUTPUT_PTR output_buffer;
-    uint32_t frame_idx;
+
+    // Nvidia API structs
+    NVFBC_SESSION_HANDLE fbc_handle;
+    NVFBC_API_FUNCTION_LIST p_fbc_fn;
+    // Contains pointers to the GPU textures that the Nvidia Capture Device will capture into
+    NVFBC_TOGL_SETUP_PARAMS togl_setup_params;
+    // The dwtexture/dwtextarget of the most recently captured frame
+    uint32_t dw_texture;
+    uint32_t dw_tex_target;
 } NvidiaCaptureDevice;
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate, CodecType codec);
+/**
+ * @brief                          Creates an nvidia capture device
+ *
+ * @param device                   Capture device struct to hold the capture
+ *                                 device
+ *
+ * @returns                        0 on success, -1 on failure
+ */
+int create_nvidia_capture_device(NvidiaCaptureDevice* device);
+/**
+ * @brief                          Captures the screen into GPU pointers.
+ *                                 This will also set width/height to the dimensions
+ *                                 of the captured image.
+ *
+ * @param device                   Capture device to capture with
+ *
+ * @returns                        0 on success, -1 on failure
+ */
 int nvidia_capture_screen(NvidiaCaptureDevice* device);
+
+/**
+ * @brief                          Destroy the nvidia capture device
+ *
+ * @param device                   The Capture device to destroy
+ */
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device);
 
 #endif  // CAPTURE_X11NVIDIACAPTURE_H

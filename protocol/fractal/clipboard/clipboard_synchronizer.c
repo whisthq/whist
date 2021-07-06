@@ -62,7 +62,7 @@ FractalMutex clipboard_update_mutex;   // used to protect the global clipboard a
 ClipboardData* clipboard;
 int clipboard_written_bytes = 0;  // number of bytes of clipboard already transmitted
 FractalThread clipboard_synchronizer_thread;
-static bool connected = false;
+static bool is_initialized = false;
 
 bool pending_clipboard_push;
 
@@ -90,7 +90,7 @@ bool is_clipboard_synchronizing() {
                 updateSetClipboard.
     */
 
-    if (!connected) {
+    if (!is_initialized) {
         LOG_ERROR("Tried to is_clipboard_synchronizing, but the clipboard is not initialized");
         return true;
     }
@@ -107,14 +107,12 @@ void init_clipboard_synchronizer(bool is_client) {
 
     LOG_INFO("Initializing clipboard");
 
-    if (connected) {
+    if (is_initialized) {
         LOG_ERROR("Tried to init_clipboard, but the clipboard is already initialized");
         return;
     }
 
     init_clipboard(is_client);
-
-    connected = true;
 
     pending_clipboard_push = false;
     updating_clipboard = false;
@@ -122,6 +120,11 @@ void init_clipboard_synchronizer(bool is_client) {
     clipboard_semaphore = fractal_create_semaphore(0);
     clipboard_update_mutex = fractal_create_mutex();
 
+    // is_initialized = true must be at the bottom,
+    // so that if (!is_initialized) checks work
+    is_initialized = true;
+    // The update loop will happen after is_initialized is set true,
+    // This update loop will exit if is_initialized is false
     clipboard_synchronizer_thread =
         fractal_create_thread(update_clipboard, "update_clipboard", NULL);
 }
@@ -133,16 +136,19 @@ void destroy_clipboard_synchronizer() {
 
     LOG_INFO("Destroying clipboard");
 
-    if (!connected) {
+    if (!is_initialized) {
         LOG_ERROR("Tried to destroy_clipboard, but the clipboard is already destroyed");
         return;
     }
 
-    connected = false;
-
     if (updating_clipboard) {
         LOG_FATAL("Trying to destroy clipboard while the clipboard is being updated");
     }
+
+    is_initialized = false;
+
+    // NOTE: Bad things could happen if initialize_clipboard is run
+    // While destroy_clipboard is running
 
     destroy_clipboard();
 
@@ -186,7 +192,7 @@ bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk) {
             updatable (bool): whether the clipboard can be set right now
     */
 
-    if (!connected) {
+    if (!is_initialized) {
         LOG_ERROR("Tried to set_clipboard, but the clipboard is not initialized");
         return false;
     }
@@ -238,7 +244,7 @@ ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
             cb_chunk (ClipboardData*): pointer to the latest clipboard chunk
     */
 
-    if (!connected) {
+    if (!is_initialized) {
         LOG_ERROR("Tried to get_new_clipboard, but the clipboard is not initialized");
         return NULL;
     }
@@ -303,10 +309,10 @@ int update_clipboard(void* opaque) {
 
     UNUSED(opaque);
 
-    while (connected) {
+    while (is_initialized) {
         fractal_wait_semaphore(clipboard_semaphore);
 
-        if (!connected) {
+        if (!is_initialized) {
             break;
         }
 

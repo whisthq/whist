@@ -34,9 +34,6 @@ Includes
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
 
-#define MAX_SCREEN_WIDTH 8192
-#define MAX_SCREEN_HEIGHT 4096
-
 // Global Variables
 extern volatile SDL_Window* window;
 
@@ -78,8 +75,8 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 
 #define LOG_VIDEO false
 // number of frames ahead we can receive packets for before asking for iframe
-#define MAX_UNSYNCED_FRAMES 10
-#define MAX_UNSYNCED_FRAMES_RENDER 12
+#define MAX_UNSYNCED_FRAMES 4
+#define MAX_UNSYNCED_FRAMES_RENDER 6
 // control whether we ask for iframes on missing too many packets - turned off for now
 #define REQUEST_IFRAME_ON_MISSING_PACKETS false
 
@@ -526,11 +523,9 @@ bool request_iframe() {
     if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
         FractalClientMessage fmsg = {0};
         fmsg.type = MESSAGE_IFRAME_REQUEST;
-        if (video_data.last_rendered_id == 0) {
-            fmsg.reinitialize_encoder = true;
-        } else {
-            fmsg.reinitialize_encoder = false;
-        }
+        // This should give us a full IDR frame,
+        // which includes PPS/SPS data
+        fmsg.reinitialize_encoder = false;
         send_fmsg(&fmsg);
         start_timer(&video_data.last_iframe_request_timer);
         video_data.is_waiting_for_iframe = true;
@@ -615,6 +610,7 @@ void replace_texture() {
     // Destroy the old texture
     if (video_context.texture) {
         SDL_DestroyTexture(video_context.texture);
+        video_context.texture = NULL;
     }
     // Create a new texture
     SDL_Texture* texture =
@@ -853,9 +849,6 @@ void update_video() {
                         ctx->last_nacked_index = -1;
                     }
                     int num_nacked = 0;
-                    // TODO: ring buffer nacking function can be used here too. Change the nacking
-                    // function to not hardcode -5. LOG_INFO("************NACKING PACKET %d, alive
-                    // for %f MS", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1;
                          i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
                         if (!ctx->received_indices[i]) {

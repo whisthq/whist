@@ -18,6 +18,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     /*
         Reset the members of ring_buffer except type and size.
     */
+    // LOG_DEBUG("Currently rendering ID: %d", ring_buffer->currently_rendering_id);
     // wipe all frames
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
@@ -26,7 +27,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     }
     // reset metadata
     ring_buffer->currently_rendering_id = -1;
-    ring_buffer->last_received_id = -1;
+    ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
     ring_buffer->num_nacked = 0;
     ring_buffer->frames_received = 0;
@@ -84,6 +85,7 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
         ring_buffer->frame_buffer_allocator = NULL;
     }
 
+    ring_buffer->currently_rendering_id = -1;
     // set all additional metadata for frames and ring buffer
     reset_ring_buffer(ring_buffer);
     return ring_buffer;
@@ -200,22 +202,35 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
             */
     FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
     bool overwrote_frame = false;
+    // This packet is old, because the current resident already contains packets with a newer ID in
+    // it
     if (packet->id < frame_data->id) {
         LOG_INFO("Old packet (ID %d) received, previous ID %d", packet->id, frame_data->id);
         return -1;
+        // This packet is newer than the resident, so it's time to overwrite the resident
     } else if (packet->id > frame_data->id) {
-        overwrote_frame = (frame_data->id != -1);
-        if (ring_buffer->currently_rendering_id != -1 &&
-            frame_data->id == ring_buffer->currently_rendering_id) {
-            // We cannot overwrite the frame because it's rendering
-            LOG_INFO(
-                "Skipping packet (ID %d) because it would overwrite the currently rendering ID %d",
-                packet->id, ring_buffer->currently_rendering_id);
-            return -1;
-        } else if (frame_data->id > ring_buffer->currently_rendering_id) {
-            // We have received a packet which will overwrite a frame that has not yet rendered.
-            // This implies we are quite behind, so we should wipe the whole ring buffer.
-            reset_ring_buffer(ring_buffer);
+        // Oh no, the resident hasn't been rendered yet!
+        if (frame_data->id != -1) {
+            if (frame_data->id == ring_buffer->currently_rendering_id) {
+                // We cannot overwrite the frame because it's rendering
+                LOG_INFO(
+                    "Skipping packet (ID %d) because it would overwrite the currently rendering "
+                    "frame with ID %d",
+                    packet->id, ring_buffer->currently_rendering_id);
+                return -1;
+            } else if (frame_data->id > ring_buffer->currently_rendering_id) {
+                // If we're currently rendering -1, then any frame data is too far
+                LOG_INFO(
+                    "We received a packet with ID %d, that will overwrite the frame with ID %d!",
+                    packet->id, frame_data->id);
+                LOG_INFO(
+                    "We can't overwrite that frame, since our renderer has only gotten to ID %d!",
+                    ring_buffer->currently_rendering_id);
+                // We have received a packet which will overwrite a frame that needs to be rendered
+                // in the future. This implies we are quite behind, so we should wipe the whole ring
+                // buffer, and probably also request an iframe
+                reset_ring_buffer(ring_buffer);
+            }
         }
         // Now, we can overwrite with no other concerns
         init_frame(ring_buffer, packet->id, packet->num_indices);
@@ -245,12 +260,17 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     // Update framedata metadata + buffer
     ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);
     frame_data->received_indices[packet->index] = true;
-    if (ring_buffer->last_received_id != -1) {
-        nack_missing_frames(ring_buffer, ring_buffer->last_received_id + 1, frame_data->id);
+    if (ring_buffer->last_received_nonnack_id != -1 && !packet->is_a_nack) {
+        // If we receive a normal packet, but that packet has an ID that's significantly
+        // beyond the last received normal packet's ID, then we probably need to nack
+        // for the frames that are in the middle
+        nack_missing_frames(ring_buffer, ring_buffer->last_received_nonnack_id + 1, frame_data->id);
     }
     // -5 because UDP packets can arrive out of order
     nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index - 5);
-    ring_buffer->last_received_id = frame_data->id;
+    if (!packet->is_a_nack) {
+        ring_buffer->last_received_nonnack_id = frame_data->id;
+    }
     frame_data->packets_received++;
     // Copy the packet data
     int place = packet->index * MAX_PAYLOAD_SIZE;
@@ -300,7 +320,8 @@ void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {
 
         */
     if (get_timer(ring_buffer->missing_frame_nack_timer) > 25.0 / 1000) {
-        for (int i = start_id; i < end_id; i++) {
+        // We min to ensure that we don't nack more than 3 times for something like this
+        for (int i = start_id; i < min(start_id + 3, end_id); i++) {
             if (get_frame_at_id(ring_buffer, i)->id != i) {
                 LOG_INFO("Missing all packets for frame %d, NACKing now for index 0", i);
                 start_timer(&ring_buffer->missing_frame_nack_timer);

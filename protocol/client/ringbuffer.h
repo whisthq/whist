@@ -62,7 +62,8 @@ typedef struct RingBuffer {
 
     int currently_rendering_id;
     FrameData currently_rendering_frame;
-    int last_received_id;
+    // The ID of the last received normal packet (Ignoring nacks)
+    int last_received_nonnack_id;
     int num_nacked;
     int frames_received;
     int max_id;

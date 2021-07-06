@@ -489,7 +489,7 @@ int handle_sdl_event(SDL_Event *event) {
             break;
         }
         case SDL_QUIT: {
-            LOG_INFO("Forcefully Quitting...");
+            LOG_INFO("The user triggered a Quit event! FractalClient is now Quitting...");
             exiting = true;
             break;
         }

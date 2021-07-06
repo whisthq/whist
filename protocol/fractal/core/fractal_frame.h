@@ -49,13 +49,8 @@ typedef struct AudioFrame {
  * @param frame                    The frame who's data buffer should be written to
  *
  * @param cursor                   The FractalCursorImage who's cursor data should be embedded in
-<<<<<<< HEAD
  *                                 the given frame. Pass NULL to embed no cursor whatsoever.
  *                                 Default of a 0'ed VideoFrame* is already a NULL cursor.
-=======
- * the given frame. Pass NULL to embed no cursor whatsoever. Default of a 0'ed VideoFrame* is
- * already a NULL cursor.
->>>>>>> a6191011c... bugfixes + formatting
  */
 void set_frame_cursor_image(VideoFrame* frame, FractalCursorImage* cursor);
 

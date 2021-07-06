@@ -102,7 +102,7 @@ Defines
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
-#define USING_GPU_CAPTURE true
+#define USING_NVIDIA_CAPTURE_AND_ENCODE true
 #define USING_SHM true
 
 #endif
@@ -127,6 +127,9 @@ Defines
 
 #define STARTING_BITRATE 10400000
 #define STARTING_BURST_BITRATE 31800000
+
+#define MAX_SCREEN_WIDTH 8192
+#define MAX_SCREEN_HEIGHT 4096
 
 #define AUDIO_BITRATE 128000
 #define FPS 45

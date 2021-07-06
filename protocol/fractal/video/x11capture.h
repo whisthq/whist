@@ -57,6 +57,8 @@ typedef struct CaptureDevice {
     bool using_nvidia;
     NvidiaCaptureDevice nvidia_capture_device;
     bool capture_is_on_nvidia;
+    // True if the first frame is the next to be captured
+    bool first;
 } CaptureDevice;
 
 typedef unsigned int UINT;

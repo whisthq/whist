@@ -77,9 +77,6 @@ extern volatile bool update_encoder;
 static bool pending_encoder;
 static bool encoder_finished;
 static VideoEncoder* encoder_factory_result = NULL;
-// If we are using nvidia's built in encoder, then we do not need to create a real encoder
-// struct since frames will already be encoded, So we can use this dummy encoder.
-static VideoEncoder dummy_encoder = {0};
 
 static int encoder_factory_server_w;
 static int encoder_factory_server_h;
@@ -114,9 +111,7 @@ int32_t multithreaded_encoder_factory(void* opaque) {
 
 int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
-    if (encoder != &dummy_encoder) {
-        destroy_video_encoder(encoder);
-    }
+    destroy_video_encoder(encoder);
     return 0;
 }
 
@@ -178,23 +173,46 @@ int32_t multithreaded_send_video(void* opaque) {
         }
 
         // Update device with new parameters
+
+        // YUV pixel format requires the width to be a multiple of 4 and the height to be a
+        // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
+        // implicitly rounded up, but for some reason it looks better if we explicitly set the
+        // size. Also for some reason it actually rounds the width to a multiple of 8.
+        int true_width = client_width + 7 - ((client_width + 7) % 8);
+        int true_height = client_height + 1 - ((client_height + 1) % 2);
+
+        // If we got an update device request, we should update the device
         if (update_device) {
             update_device = false;
 
-            if (device) {
-                destroy_capture_device(device);
-                device = NULL;
-            }
+            LOG_INFO("Received an update capture device request to dimensions %dx%d with DPI %d",
+                     true_width, true_height, client_dpi);
 
+            // If a device already exists, we should reconfigure or destroy it
+            if (device != NULL) {
+                if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+                    // Reconfigured the capture device!
+                    // No need to recreate it, the device has now been updated
+                    LOG_INFO("Successfully reconfigured the capture device");
+                    // We should also update the encoder since the device has been reconfigured
+                    update_encoder = true;
+                } else {
+                    // Destroying the old capture device so that a new one can be recreated below
+                    LOG_ERROR(
+                        "Failed to reconfigure the capture device! "
+                        "Destroying and recreating the capture device instead!");
+                    destroy_capture_device(device);
+                    device = NULL;
+                }
+            } else {
+                LOG_INFO("No capture device exists yet, creating a new one.");
+            }
+        }
+
+        // If no device is set, we need to create one
+        if (device == NULL) {
             device = &rdevice;
-            // YUV pixel format requires the width to be a multiple of 4 and the height to be a
-            // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
-            // implicitly rounded up, but for some reason it looks better if we explicitly set the
-            // size. Also for some reason it actually rounds the width to a multiple of 8.
-            int true_width = client_width + 7 - ((client_width + 7) % 8);
-            int true_height = client_height + 1 - ((client_height + 1) % 2);
-            if (create_capture_device(device, true_width, true_height, client_dpi, current_bitrate,
-                                      client_codec_type) < 0) {
+            if (create_capture_device(device, true_width, true_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
@@ -203,46 +221,59 @@ int32_t multithreaded_send_video(void* opaque) {
                 continue;
             }
 
-            LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
+            LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", device->width,
+                     device->height, client_dpi);
 
-            if (device->using_nvidia) {
-                // The frames will already arrive encoded by the GPU, so we do not need to do any
-                // encoding ourselves
-                encoder = &dummy_encoder;
-                memset(encoder, 0, sizeof(VideoEncoder));
-                update_encoder = false;
-            } else {
-                // If an encoder is pending, while capture_device is updating, then we should wait
-                // for it to be created
-                while (pending_encoder) {
-                    if (encoder_finished) {
-                        encoder = encoder_factory_result;
-                        pending_encoder = false;
-                        break;
-                    }
-                    fractal_sleep(1);
+            // If an encoder is pending, while capture_device is updating, then we should wait
+            // for it to be created
+            while (pending_encoder) {
+                if (encoder_finished) {
+                    encoder = encoder_factory_result;
+                    pending_encoder = false;
+                    break;
                 }
-                // If an encoder exists, then we should destroy it since the capture device is being
-                // created now
-                if (encoder) {
-                    fractal_create_thread(multithreaded_destroy_encoder,
-                                          "multithreaded_destroy_encoder", encoder);
-                    encoder = NULL;
-                }
-                // Next, we should update our ffmpeg encoder
-                update_encoder = true;
+                fractal_sleep(1);
             }
+
+            // If an encoder exists, then we should destroy it since
+            // a new capture device is being created
+            if (encoder) {
+                fractal_create_thread(multithreaded_destroy_encoder,
+                                      "multithreaded_destroy_encoder", encoder);
+                encoder = NULL;
+            }
+
+            // Next, we should update our ffmpeg encoder
+            update_encoder = true;
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
-            if (device->using_nvidia) {
-                // If this device uses a device encoder, then we should update it
-                update_capture_encoder(device, current_bitrate, client_codec_type);
-                // We keep the dummy encoder as-is,
-                // the real encoder was just updated with update_capture_encoder
-                update_encoder = false;
-            } else {
+            // If this is a new update encoder request, log it
+            if (!pending_encoder) {
+                LOG_INFO("Update encoder request received, will update the encoder now!");
+            }
+
+            // First, try to simply reconfigure the encoder to
+            // handle the update_encoder event
+            if (encoder != NULL) {
+                if (reconfigure_encoder(encoder, device->width, device->height,
+                                        (int)(max_mbps * 1024 * 1024),
+                                        (CodecType)client_codec_type)) {
+                    // If we could update the encoder in-place, then we're done updating the encoder
+                    LOG_INFO(
+                        "Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
+                        device->width, device->height, current_bitrate, max_mbps,
+                        client_codec_type);
+                    current_bitrate = (int)(max_mbps * 1024 * 1024);
+                    update_encoder = false;
+                } else {
+                    LOG_ERROR("Reconfiguration failed! Creating a new encoder!");
+                }
+            }
+
+            // If reconfiguration didn't happen, we still need to update the encoder
+            if (update_encoder) {
                 // Keep track of whether or not a new encoder is being used now
                 bool new_encoder_used = false;
 
@@ -265,8 +296,11 @@ int32_t multithreaded_send_video(void* opaque) {
                 } else {
                     // Starting making new encoder. This will set pending_encoder=true, but won't
                     // actually update it yet, we'll still use the old one for a bit
-                    LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate,
-                             max_mbps);
+                    LOG_INFO(
+                        "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
+                        "Codec %d",
+                        device->width, device->height, current_bitrate, max_mbps,
+                        (int)client_codec_type);
                     current_bitrate = (int)(max_mbps * 1024 * 1024);
                     encoder_finished = false;
                     encoder_factory_server_w = device->width;
@@ -275,8 +309,17 @@ int32_t multithreaded_send_video(void* opaque) {
                     encoder_factory_client_h = (int)client_height;
                     encoder_factory_codec_type = (CodecType)client_codec_type;
                     encoder_factory_current_bitrate = current_bitrate;
+
+                    // If using nvidia, then we must destroy the existing encoder first
+                    // We can't have two nvidia encoders active or the 2nd attempt to
+                    // create one will fail
+                    if (encoder != NULL && encoder->nvidia_encoder != NULL) {
+                        destroy_video_encoder(encoder);
+                        encoder = NULL;
+                    }
+
                     if (encoder == NULL) {
-                        // Run on this thread bc we have to wait for it anyway, encoder == NULL
+                        // Run on this thread bc we have to wait for it anyway since encoder == NULL
                         multithreaded_encoder_factory(NULL);
                         encoder = encoder_factory_result;
                         pending_encoder = false;
@@ -332,7 +375,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // Only if we have a frame to render
         if (accumulated_frames > 0 || wants_iframe ||
             get_timer(last_frame_capture) > 1.0 / MIN_FPS) {
-            // LOG_INFO( "Frame Time: %f\n", get_timer( last_frame_capture ) );
+            // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
 
             start_timer(&last_frame_capture);
 
@@ -345,19 +388,17 @@ int32_t multithreaded_send_video(void* opaque) {
                 // LOG_INFO("Resending current frame!");
             }
 
-            // transfer the capture of the latest frame from the device to the encoder
-            // This function will DXGI CUDA optimize if possible,
-            // Or do nothing if the device already encoded the capture
-            // with nvidia capture SDK
+            // transfer the capture of the latest frame from the device to the encoder,
+            // This function will try to CUDA/OpenGL optimize the transfer by
+            // only passing a GPU reference rather than copy to/from the CPU
             if (transfer_capture(device, encoder) != 0) {
                 // if there was a failure
+                LOG_ERROR("transfer_capture failed! Exiting!");
                 exiting = true;
                 break;
             }
 
             if (wants_iframe) {
-                // True I-Frame is WIP
-                LOG_ERROR("NOT GUARANTEED TO BE TRUE IFRAME");
                 video_encoder_set_iframe(encoder);
                 wants_iframe = false;
             }

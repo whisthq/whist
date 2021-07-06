@@ -94,7 +94,6 @@ VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, i
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
 
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
@@ -351,7 +350,6 @@ VideoEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
     enum AVPixelFormat hw_format = AV_PIX_FMT_QSV;
@@ -551,7 +549,6 @@ VideoEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int 
     encoder->out_height = out_height;
     encoder->codec_type = codec_type;
     encoder->gop_size = GOP_SIZE;
-    encoder->already_encoded = false;
     encoder->frames_since_last_iframe = 0;
 
     enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
@@ -721,27 +718,51 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         Returns:
             (VideoEncoder*): the newly created encoder
      */
+
     // setup the AVCodec and AVFormatContext
 #if !USING_SERVERSIDE_SCALE
     out_width = in_width;
     out_height = in_height;
 #endif
 
+    // Try our nvidia encoder first
+    NvidiaEncoder *nvidia_encoder = NULL;
+#if USING_NVIDIA_CAPTURE_AND_ENCODE
+#if USING_SERVERSIDE_SCALE
+    LOG_ERROR(
+        "Cannot create nvidia encoder, does not accept in_width and in_height when using "
+        "serverside scaling");
+#else
+    nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    if (!nvidia_encoder) {
+        LOG_ERROR("Failed to create nvidia encoder!");
+    }
+#endif
+#endif
+
     VideoEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
-    VideoEncoder *encoder;
+    VideoEncoder *encoder = NULL;
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(VideoEncoderCreator); ++i) {
         encoder =
             encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate, codec_type);
+
         if (!encoder) {
             LOG_WARNING("Video encoder: Failed, trying next encoder");
+            encoder = NULL;
         } else {
             LOG_INFO("Video encoder: Success!");
-            return encoder;
+            break;
         }
     }
 
-    LOG_ERROR("Video encoder: All encoders failed!");
-    return NULL;
+    if (!encoder) {
+        LOG_ERROR("Video encoder: All encoders failed!");
+        return NULL;
+    }
+
+    encoder->nvidia_encoder = nvidia_encoder;
+
+    return encoder;
 }
 
 int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitch) {
@@ -785,15 +806,26 @@ int video_encoder_encode(VideoEncoder *encoder) {
         Returns:
             (int): 0 on success, -1 on failure
      */
-    if (encoder->already_encoded) {
-        // If the frame comes already encoded (in the case of nvidia e.g.), then we treat the
-        // encoded frame is one encoded packet.
+#ifdef __linux__
+    if (encoder->capture_is_on_nvidia) {
+        nvidia_encoder_encode(encoder->nvidia_encoder);
+
+        // Set meta data
+        encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
+        encoder->out_width = encoder->nvidia_encoder->width;
+        encoder->out_height = encoder->nvidia_encoder->height;
+        encoder->codec_type = encoder->nvidia_encoder->codec_type;
+
+        // Construct frame packets
+        encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
         encoder->num_packets = 1;
-        encoder->packets[0].data = encoder->encoded_frame_data;
-        encoder->packets[0].size = encoder->encoded_frame_size;
-        encoder->encoded_frame_size += 2 * sizeof(int);
+        encoder->packets[0].data = encoder->nvidia_encoder->frame;
+        encoder->packets[0].size = encoder->nvidia_encoder->frame_size;
+        encoder->encoded_frame_size += 8;
+
         return 0;
     }
+#endif
 
     if (video_encoder_send_frame(encoder)) {
         LOG_ERROR("Unable to send frame to encoder!");
@@ -839,6 +871,20 @@ int video_encoder_encode(VideoEncoder *encoder) {
     return 0;
 }
 
+bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
+                         CodecType codec) {
+    if (encoder->capture_is_on_nvidia) {
+#ifdef __linux__
+        return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate, codec);
+#else
+        return false;
+#endif
+    } else {
+        // Haven't implemented ffmpeg reconfiguring yet
+        return false;
+    }
+}
+
 void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
     /*
         Write all the encoded packets found in encoder into buf, which we assume is large enough to
@@ -863,18 +909,24 @@ void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
 
 void video_encoder_set_iframe(VideoEncoder *encoder) {
     /*
-        Set the next frame to be an iframe.
+        Set the next frame to be an IDR-frame with SPS/PPS headers.
 
         Arguments:
             encoder (VideoEncoder*): Encoder containing the frame
     */
-    if (encoder->already_encoded) {
-        return;
+    if (encoder->capture_is_on_nvidia) {
+#ifdef __linux__
+        nvidia_set_iframe(encoder->nvidia_encoder);
+#else
+        LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
+#endif
+    } else {
+        LOG_ERROR("ffmpeg set_iframe doesn't work very well! This might not work!");
+        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
+        encoder->sw_frame->pts +=
+            encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
+        encoder->sw_frame->key_frame = 1;
     }
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-    encoder->sw_frame->pts +=
-        encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
-    encoder->sw_frame->key_frame = 1;
 }
 
 void video_encoder_unset_iframe(VideoEncoder *encoder) {
@@ -884,11 +936,17 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): encoder containing the frame
     */
-    if (encoder->already_encoded) {
-        return;
+    if (encoder->capture_is_on_nvidia) {
+#ifdef __linux__
+        nvidia_unset_iframe(encoder->nvidia_encoder);
+#else
+        LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
+#endif
+    } else {
+        LOG_ERROR("ffmpeg unset_iframe doesn't work very well! This might not work!");
+        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+        encoder->sw_frame->key_frame = 0;
     }
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-    encoder->sw_frame->key_frame = 0;
 }
 
 void destroy_video_encoder(VideoEncoder *encoder) {
@@ -898,6 +956,15 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): encoder to destroy
     */
+    LOG_INFO("Destroying video encoder...");
+
+#ifdef __linux__
+    // Destroy the nvidia encoder, if any
+    if (encoder->nvidia_encoder) {
+        destroy_nvidia_encoder(encoder->nvidia_encoder);
+    }
+#endif
+
     // check if encoder encoder exists
     if (encoder == NULL) {
         LOG_INFO("Encoder empty, not destroying anything.");

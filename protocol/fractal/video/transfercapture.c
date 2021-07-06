@@ -15,6 +15,12 @@ void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder)
         // end the transfer context
         dxgi_cuda_close_transfer_context(device);
     }
+#else  // __linux__
+    if (device->capture_is_on_nvidia) {
+        if (encoder->nvidia_encoder) {
+            // Copy new stuff
+        }
+    }
 #endif
 }
 
@@ -29,25 +35,27 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             // otherwise, do the cpu transfer below
         }
     }
-#endif
-
-#ifdef _WIN32
-    encoder->already_encoded = false;
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
-        encoder->encoded_frame_data = device->nvidia_capture_device.frame;
-        encoder->encoded_frame_size = device->nvidia_capture_device.size;
-        encoder->is_iframe = device->nvidia_capture_device.is_iframe;
-        encoder->out_width = device->nvidia_capture_device.width;
-        encoder->out_height = device->nvidia_capture_device.height;
-        encoder->codec_type = device->nvidia_capture_device.codec_type;
-        encoder->already_encoded = true;
-        return 0;
+        if (encoder->nvidia_encoder) {
+            nvidia_encoder_frame_intake(
+                encoder->nvidia_encoder, device->nvidia_capture_device.dw_texture,
+                device->nvidia_capture_device.dw_tex_target, device->width, device->height);
+            encoder->capture_is_on_nvidia = true;
+            return 0;
+        } else {
+            encoder->capture_is_on_nvidia = false;
+            LOG_ERROR(
+                "Cannot transfer capture! If using Nvidia Capture SDK, "
+                "then the Nvidia Encode API must be used!");
+            return -1;
+        }
     } else {
-        encoder->already_encoded = false;
+        encoder->capture_is_on_nvidia = false;
     }
 #endif
 
+    // CPU transfer, if hardware transfer doesn't work
     static int times_measured = 0;
     static double time_spent = 0.0;
 
@@ -67,7 +75,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     time_spent += get_timer(cpu_transfer_timer);
 
     if (times_measured == 10) {
-        LOG_INFO("Average time transferring dxgi data to encoder frame on CPU: %f",
+        LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
                  time_spent / times_measured);
         times_measured = 0;
         time_spent = 0.0;

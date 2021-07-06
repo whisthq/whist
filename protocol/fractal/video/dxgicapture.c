@@ -18,12 +18,29 @@ ID3D11Texture2D* create_texture(CaptureDevice* device);
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
-                          CodecType codec) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    // TODO: Make a wrapper that calls dxgi/x11 so that the below
+    // check stay in sync with x11capture.c
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into create_capture_device");
+        return -1;
+    }
+
+    if (width <= 0 || height <= 0) {
+        LOG_ERROR("Invalid width/height of %d/%d", width, height);
+        return -1;
+    }
+    if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT) {
+        LOG_ERROR(
+            "Requested dimensions are too large! "
+            "%dx%d when the maximum is %dx%d! Rounding down.",
+            width, height, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        width = MAX_SCREEN_WIDTH;
+        height = MAX_SCREEN_HEIGHT;
+    }
+
     // tech debt: don't ignore dpi
     UNUSED(dpi);
-    UNUSED(bitrate);
-    UNUSED(codec);
 
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(CaptureDevice));
@@ -269,6 +286,16 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     return 0;
 }
 
+bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+    if (device == NULL) {
+        LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
+        return false;
+    }
+
+    // Can't reconfigure DXGI device yet, so we'll just return false.
+    return false;
+}
+
 void get_bitmap_screenshot(CaptureDevice* device) {
     HDC h_screen_dc = CreateDCW(device->monitorInfo.szDevice, NULL, NULL, NULL);
     HDC h_memory_dc = CreateCompatibleDC(h_screen_dc);
@@ -352,6 +379,8 @@ void release_screenshot(ScreenshotContainer* screenshot) {
 }
 
 int capture_screen(CaptureDevice* device) {
+    // TODO: Verify that width/height haven't changed, if that's even possible?
+
     release_screen(device);
 
     HRESULT hr;
@@ -472,10 +501,4 @@ void destroy_capture_device(CaptureDevice* device) {
         free(device->hardware);
         device->hardware = NULL;
     }
-}
-
-void update_capture_encoder(CaptureDevice* device, int bitrate, CodecType codec) {
-    UNUSED(device);
-    UNUSED(bitrate);
-    UNUSED(codec);
 }
