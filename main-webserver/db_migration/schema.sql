@@ -347,8 +347,6 @@ CREATE TABLE hardware.region_to_ami (
 CREATE TABLE hardware.supported_app_images (
     app_id character varying NOT NULL,
     logo_url character varying,
-    task_definition character varying,
-    task_version integer,
     category character varying,
     description character varying,
     long_description character varying,
@@ -1149,14 +1147,6 @@ ALTER TABLE ONLY hardware.region_to_ami
 
 ALTER TABLE ONLY hardware.supported_app_images
     ADD CONSTRAINT supported_app_images_pkey PRIMARY KEY (app_id);
-
-
---
--- Name: supported_app_images unique_taskdef; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.supported_app_images
-    ADD CONSTRAINT unique_taskdef UNIQUE (task_definition);
 
 
 --
