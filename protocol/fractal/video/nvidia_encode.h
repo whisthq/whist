@@ -51,8 +51,7 @@ typedef struct {
  *
  * @returns                        The newly created nvidia encoder
  */
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width,
-                                     int out_height);
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder
