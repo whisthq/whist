@@ -2,19 +2,19 @@ CLIENT_DOWNLOAD:
   local:
     macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
     win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
-    linux:
+    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
   dev:
     macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
     win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
   staging:
     macos: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg"
     win32: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
-    linux:
+    linux: "https://fractal-chromium-linux-staging.amazonaws.com/Fractal.AppImage"
   production:
     macos: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
     win32: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
-    linux:
+    linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Fractal.AppImage"
 
 WEBSERVER:
   local: "http://127.0.0.1:7730"
