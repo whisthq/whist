@@ -23,6 +23,12 @@ updates:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
+  - package-ecosystem: "/.github/actions/monorepo-config"
+    directory: "/container-images/base" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
   #####################################################
   ################ Client-Applications ################
 
