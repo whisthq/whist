@@ -562,10 +562,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@typeform/embed@^1.8.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.10.0.tgz#df3d835045ca971901ce071d18c510e1b4fc3d88"
-  integrity sha512-ibMR0Y8AIXaIw2PpjpiiKbq51C3UwYN2XIFog/1jGLKlZmfphQTmxZq6mN3gMXnWj8kkz3BABdqLzeXZ5hO9yA==
+"@typeform/embed@^1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.11.0.tgz#201ef33a8524b65dc490b3fd66761fed0772450a"
+  integrity sha512-mdu/9UX1AnH7oAxDpCn3tkFPz77d6o0yQjB9L8m35OtBR194cDDfJVfPDz7kEBKDUay6hUG0cKzg8KrqyWyfpw==
 
 "@types/classnames@^2.3.1":
   version "2.3.1"
