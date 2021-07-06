@@ -5,7 +5,7 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-const packageNotarize = (env, config, version) => {
+const packageNotarize = (env, config, version, commit) => {
   // If we're passed a --config CLI argument, we'll use that as the JSON
   // config value. If no --config argument, we'll build the config ourselves.
   if (!config) config = helpers.buildConfig({ deploy: "dev" })
@@ -26,7 +26,7 @@ const packageNotarize = (env, config, version) => {
     "AMPLITUDE_KEY",
   ])
 
-  helpers.snowpackBuild({ ...env, CONFIG: config, VERSION: version })
+  helpers.snowpackBuild({ ...env, CONFIG: config, VERSION: version, COMMIT_SHA: commit })
   helpers.electronBuild()
 }
 
@@ -48,7 +48,13 @@ if (require.main === module) {
       requiresArg: true,
       demandOption: true,
     })
+    .option("commit", {
+      description: "Set the commit hash of the current branch",
+      type: "string",
+      requiresArg: true,
+      demandOption: true,
+    })
     .help().argv
 
-  packageNotarize({}, argv.config, argv.version)
+  packageNotarize({}, argv.config, argv.version, argv.commit)
 }
