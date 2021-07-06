@@ -51,10 +51,10 @@ def actionify(name, data):
 run("pg_ctlcluster 13 main start".split(), check=True)
 run(["psql", "--quiet", "--command", "create database a;"], check=True)
 run(["psql", "--quiet", "--command", "create database b;"], check=True)
-result = run(argv[1:], capture_output=True, check=False)
+result = run(argv[1:], text=True, capture_output=True, check=False)
 
 code = result.returncode
-diff = result.stdout.decode("utf-8")
+diff = result.stdout
 
 if os.environ.get("CI"):
     # We're running in CI through a GitHub Action, which means we
@@ -84,4 +84,10 @@ if code == 3:
 if code == 4:
     exit(0)
 
+# We haven't exited yet, which means we got a return code we did
+# not expect (e.g. Migra exits with 1 if there was an error).
+# For any unexpected return code, we'll print stdout/stderr so
+# we can see what's going on,
+print(result.stderr)
+print(result.stdout)
 exit(result.returncode)
