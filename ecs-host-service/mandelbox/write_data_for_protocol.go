@@ -57,7 +57,7 @@ func (c *mandelboxData) MarkReady() error {
 }
 
 func (c *mandelboxData) getResourceMappingDir() string {
-	return utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.FractalDir, c.fractalID)
+	return utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.FractalDir, c.mandelboxID)
 }
 
 func (c *mandelboxData) createResourceMappingDir() error {
