@@ -72,7 +72,7 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 fractal_server_pid=$!
 
 # Wait for either fractal-application or FractalServer to exit (both backgrounded processes)
-wait -n
+wait -n $fractal_server_pid $fractal_application_runuser_pid $fractal_application_pid
 echo "Either FractalServer or fractal-application exited with code $?"
 echo "FractalServer PID: $fractal_server_pid"
 echo "runuser fractal-application PID: $fractal_application_runuser_pid"
