@@ -23,8 +23,8 @@ def app():
     """
 
     _app = Flask(__name__)
-    _app.secret_key = "secret"
     _app.test_client_class = FractalAPITestClient
+    _app.config["JWT_SECRET_KEY"] = "secret"
     _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.fractal.co/stripe_customer_id"
 
     @_app.errorhandler(PaymentRequired)

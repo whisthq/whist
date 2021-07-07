@@ -187,11 +187,11 @@ class DeploymentConfig:
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
-    JWT_DECODE_ALGORITHMS = ["RS256"]
+    JWT_ALGORITHM = "RS256"
+    JWT_DECODE_ALGORITHMS = ("RS256",)
     JWT_DECODE_AUDIENCE = "https://api.fractal.co"
     JWT_QUERY_STRING_NAME = "access_token"
     JWT_TOKEN_LOCATION = ("headers", "query_string")
-    SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SILENCED_ENDPOINTS = ("/status", "/ping")
@@ -390,7 +390,9 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
 
         AUTH0_DOMAIN = None
         JWT_DECODE_AUDIENCE = None
-        JWT_DECODE_ALGORITHMS = ["HS256"]
+        JWT_ALGORITHM = "HS256"
+        JWT_DECODE_ALGORITHMS = ("HS256",)
+        JWT_SECRET_KEY = "secret"
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
         SENTRY_DSN = ""
 
