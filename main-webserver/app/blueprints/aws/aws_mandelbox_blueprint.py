@@ -16,6 +16,7 @@ from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_
 from app.helpers.utils.general.auth import payment_required
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.utils.general.logs import fractal_logger
+from app.helpers.utils.metrics.flask_app import app_record_metrics
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import RegionToAmi, db
 from app.models.hardware import MandelboxInfo, InstanceInfo
@@ -50,7 +51,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     start_time = time.time() * 1000
     is_active = is_user_active(body.username)
     time_at_activity = time.time() * 1000
-    fractal_logger.debug(f"Checking user activity took {time_at_activity-start_time} ms")
+    time_for_activity = time_at_activity - start_time
+    fractal_logger.debug(f"Checking user activity took {time_for_activity} ms")
     if is_active:
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(
@@ -74,9 +76,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
 
     instance_name = find_instance(body.region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
-    fractal_logger.debug(
-        f"It took {time_when_instance_found-time_at_activity} ms to find an instance."
-    )
+    time_to_find_instance = time_when_instance_found - time_at_activity
+    fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
     if instance_name is None:
         fractal_logger.info(
             f"No instance found with body.region: {body.region},\
@@ -116,10 +117,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     db.session.add(obj)
     db.session.commit()
     time_when_container_created = time.time() * 1000
-    fractal_logger.debug(
-        f"It took {time_when_container_created-time_when_instance_found}\
-         ms to create a container row"
-    )
+    time_to_create_row = time_when_container_created - time_when_instance_found
+    fractal_logger.debug(f"It took {time_to_create_row} ms to create a container row")
     if not current_app.testing:
         # If we're not testing, we want to scale new instances in the background.
         # Specifically, we want to scale in the region/AMI pair where we know
@@ -134,5 +133,15 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         )
         scaling_thread.start()
 
-    fractal_logger.debug(f"In total, this request took {time.time()*1000-start_time} ms to fulfill")
+    total_request_time = time.time() * 1000 - start_time
+    fractal_logger.debug(f"In total, this request took {total_request_time} ms to fulfill")
+    app_record_metrics(
+        metrics={
+            "web.time_for_activity": time_for_activity,
+            "web.time_to_find_instance": time_to_find_instance,
+            "web.time_to_create_row": time_to_create_row,
+            "web.total_request_time": total_request_time,
+        },
+        extra_dims={"task_name": "assign_mandelbox"},
+    )
     return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
