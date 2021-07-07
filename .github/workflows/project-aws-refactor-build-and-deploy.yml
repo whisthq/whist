@@ -322,7 +322,7 @@ jobs:
                   data["github_username"] = "${{ secrets.GHA_USERNAME }}"
                   data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
                   # data["git_hash"] = "${{ env.commit_sha }}"
-                  data["git_hash"] = "9d95f0a9a06965df6c734a0507ec3e4c3484afec"
+                  data["git_hash"] = "a1492b1d0dd023fcdd5bff0e0c17d2bb9a926012"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
