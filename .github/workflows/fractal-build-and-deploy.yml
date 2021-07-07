@@ -1364,7 +1364,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
