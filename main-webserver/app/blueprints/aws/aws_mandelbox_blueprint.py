@@ -47,10 +47,10 @@ def regions():
 @payment_required
 @validate()
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
-    start_time = time.time()
+    start_time = time.time() * 1000
     is_active = is_user_active(body.username)
-    time_at_activity = time.time()
-    fractal_logger.debug(f"Checking user activity took {time_at_activity-start_time} seconds")
+    time_at_activity = time.time() * 1000
+    fractal_logger.debug(f"Checking user activity took {time_at_activity-start_time} ms")
     if is_active:
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(
@@ -73,9 +73,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         client_commit_hash = body.client_commit_hash
 
     instance_name = find_instance(body.region, client_commit_hash)
-    time_when_instance_found = time.time()
+    time_when_instance_found = time.time() * 1000
     fractal_logger.debug(
-        f"It took {time_when_instance_found-time_at_activity} seconds to find an instance."
+        f"It took {time_when_instance_found-time_at_activity} ms to find an instance."
     )
     if instance_name is None:
         fractal_logger.info(
@@ -115,10 +115,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     )
     db.session.add(obj)
     db.session.commit()
-    time_when_container_created = time.time()
+    time_when_container_created = time.time() * 1000
     fractal_logger.debug(
         f"It took {time_when_container_created-time_when_instance_found}\
-         seconds to create a container row"
+         ms to create a container row"
     )
     if not current_app.testing:
         # If we're not testing, we want to scale new instances in the background.
@@ -134,5 +134,5 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         )
         scaling_thread.start()
 
-    fractal_logger.debug(f"In total, this request took {time.time()-start_time} seconds to fulfill")
+    fractal_logger.debug(f"In total, this request took {time.time()*1000-start_time} ms to fulfill")
     return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
