@@ -47,7 +47,7 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
 
     # apply diff safely, knowing nothing is happening on webserver
     # by passing "-" to --file, we can stream sql commands through stdin
-    "${SQL_DIFF_STRING}" | psql --single-transaction --file "-" "${DB_URL}"
+    echo "${SQL_DIFF_STRING}" | psql --single-transaction --file "-" "${DB_URL}"
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
