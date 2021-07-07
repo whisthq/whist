@@ -52,16 +52,16 @@ done
 fractal_application_pid=$(cat $FRACTAL_APPLICATION_PID_FILE)
 rm $FRACTAL_APPLICATION_PID_FILE
 
-echo "Now sleeping until there are X clients..."
-
-# Wait until the application has created its display before launching FractalServer.
-#    This prevents a black no input window from appearing when a user connects.
-until [ $(xlsclients -display :10 | wc -l) != 0 ]
-do
-    sleep 0.1
-done
-
-echo "Done sleeping until there are X clients..."
+# echo "Now sleeping until there are X clients..."
+#
+# # Wait until the application has created its display before launching FractalServer.
+# #    This prevents a black no input window from appearing when a user connects.
+# until [ $(xlsclients -display :10 | wc -l) != 0 ]
+# do
+#     sleep 0.1
+# done
+#
+# echo "Done sleeping until there are X clients..."
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
