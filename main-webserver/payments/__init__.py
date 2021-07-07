@@ -103,6 +103,8 @@ def payment_required(view_func):
         if not has_scope("admin"):
             check_payment()
 
+        # Note that this uses print since we don't want to import fractal_logger
+        # Since the payments and main webserver codebases are intentionally separate
         print(f"It took {time()*1000 - start_time} ms to check payment for this user")
         return view_func(*args, **kwargs)
 
