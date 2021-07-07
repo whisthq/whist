@@ -51,6 +51,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     start_time = time.time() * 1000
     is_active = is_user_active(body.username)
     time_at_activity = time.time() * 1000
+    # How long did it take to see if the user was active?
     time_for_activity = time_at_activity - start_time
     fractal_logger.debug(f"Checking user activity took {time_for_activity} ms")
     if is_active:
@@ -76,6 +77,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
 
     instance_name = find_instance(body.region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
+    # How long did it take to find an instance?
     time_to_find_instance = time_when_instance_found - time_at_activity
     fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
     if instance_name is None:
@@ -117,6 +119,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     db.session.add(obj)
     db.session.commit()
     time_when_container_created = time.time() * 1000
+    # How long did it take to create a new container row?
     time_to_create_row = time_when_container_created - time_when_instance_found
     fractal_logger.debug(f"It took {time_to_create_row} ms to create a container row")
     if not current_app.testing:
@@ -132,7 +135,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             },
         )
         scaling_thread.start()
-
+    # How long did the request take?
     total_request_time = time.time() * 1000 - start_time
     fractal_logger.debug(f"In total, this request took {total_request_time} ms to fulfill")
     app_record_metrics(
