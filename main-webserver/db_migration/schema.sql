@@ -1127,7 +1127,20 @@ CREATE VIEW logging.instance_status_change AS
    FROM logging.t_instance_history
   WHERE ((t_instance_history.old_val ->> 'status'::text) <> (t_instance_history.new_val ->> 'status'::text));
 
-
+CREATE VIEW hardware.instance_status_changes AS
+SELECT tstamp                                                             AS
+       timestamp,
+       COALESCE(new_val ->> 'instance_name', old_val ->> 'instance_name') AS
+       instance_name,
+       COALESCE(new_val ->> 'status', 'deleted')                          AS
+       new_status,
+       COALESCE(old_val ->> 'status', 'newly added')                      AS
+       old_status
+FROM   logging.t_instance_history
+WHERE  new_val IS NULL
+        OR old_val IS NULL
+        OR new_val ->> 'status' <> old_val ->> 'status'
+ORDER  BY timestamp ASC;
 --
 -- Name: t_instance_history_id_seq; Type: SEQUENCE; Schema: logging; Owner: -
 --
@@ -1638,4 +1651,3 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 --
 -- PostgreSQL database dump complete
 --
-
