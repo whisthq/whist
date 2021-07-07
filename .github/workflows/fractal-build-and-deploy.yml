@@ -1372,7 +1372,7 @@ jobs:
     # Create a GitHub Tag when promoting to the `prod` branch
     # Runs if the entire deployment succeeds and the promotion is running on `prod`
     fractal-create-github-release-tag:
-        name: "Create GitHub Prod Release Tag"
+        name: "Create GitHub Release Tag"
         runs-on: ubuntu-20.04
         needs:
             [
