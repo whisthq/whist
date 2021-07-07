@@ -621,6 +621,7 @@ jobs:
               id: db-diff
               env:
                   HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
               uses: ./.github/actions/db-migration
 
             - name: Deploy the webserver atomically
