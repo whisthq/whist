@@ -44,6 +44,7 @@ def db_diff(sql_a, sql_b, db_a="postgresql:///a", db_b="postgresql:///b"):
 
     code, diff = diff_schema(db_a, db_b)
 
+    check_diff = False
     if diff:
         exec_sql(db_a, diff)
 
