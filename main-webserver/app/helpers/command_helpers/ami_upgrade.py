@@ -292,5 +292,7 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
     fractal_logger.info("Finished performing AMI upgrade.")
     if len(mark_instance_for_draining_failures) > 0 and not current_app.testing:
         for failed_instance in mark_instance_for_draining_failures:
-            fractal_logger.error(f"Failed to mark instance: {failed_instance} as draining through host service")
+            fractal_logger.error(
+                f"Failed to mark instance: {failed_instance} as draining through host service"
+            )
         sys.exit(1)
