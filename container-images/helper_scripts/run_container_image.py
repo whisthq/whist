@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # For usage, run this script with `--help`.
 
 import argparse
@@ -36,6 +38,25 @@ parser.add_argument(
     default="fractal/base:current-build",
 )
 parser.add_argument(
+    "--host-address",
+    help="IP address of the host service to send the request. Defaults to '127.0.0.1'.",
+    default="127.0.0.1",
+)
+parser.add_argument(
+    "--host-port",
+    help="Port which the host service is listening to. Defaults to '4678'.",
+    default="4678",
+)
+parser.add_argument(
+    "--no-verify-tls",
+    action="store-true",
+    help=(
+        "This flag skips TLS verification for requests to the host service. Not "
+        "passing this flag means that this script will verify against the "
+        "certificate '/fractalprivate/cert.pem'. By default, this flag is disabled."
+    ),
+)
+parser.add_argument(
     "--update-protocol",
     type=bool,
     default=False,
@@ -44,7 +65,8 @@ parser.add_argument(
         "the running container. Not passing in this flag causes the container to use "
         "the version of the server protocol already built into its image. By "
         "default, run_local_container_image.sh enables this flag, but "
-        "run_remote_container_image.sh does not."
+        "run_remote_container_image.sh does not. This flag cannot be used in conjunction "
+        "with '--host-address', as the container does not run locally in that case."
     ),
 )
 parser.add_argument(
@@ -79,10 +101,10 @@ args = parser.parse_args()
 
 
 # Define some helper functions and variables
-docker_client = docker.from_env()
-HOST_SERVICE_URL = "https://127.0.0.1:4678/"
+HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
 HOST_SERVICE_AUTH_SECRET = "testwebserverauthsecretdev"
 HOST_SERVICE_CERT_PATH = "/fractalprivate/cert.pem"
+local_host_service = args.host_address == "127.0.0.1"
 protocol_build_path = os.path.abspath("../protocol/build-docker/server/build64")
 container_server_path = os.path.abspath("/usr/share/fractal/bin")
 PortBindings = namedtuple(
@@ -101,10 +123,13 @@ def ensure_root_privileges():
 
 
 def get_public_ipv4_addr():
-    respobj = requests.get(url="https://ipinfo.io")
-    response = respobj.json()
-    respobj.raise_for_status()
-    return response["ip"]
+    if local_host_service:
+        respobj = requests.get(url="https://ipinfo.io")
+        response = respobj.json()
+        respobj.raise_for_status()
+        return response["ip"]
+    else:
+        return args.host_address
 
 
 def ensure_host_service_is_running():
@@ -156,7 +181,8 @@ def send_spin_up_mandelbox_request():
         "user_id": args.user_id,
         "config_encryption_token": args.user_config_encryption_token,
     }
-    respobj = requests.put(url=url, json=payload, verify=HOST_SERVICE_CERT_PATH)
+    tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
+    respobj = requests.put(url=url, json=payload, verify=tls_verification)
     response = respobj.json()
     print(f"Response from host service: {response}")
     respobj.raise_for_status()
@@ -167,15 +193,7 @@ def send_spin_up_mandelbox_request():
     key = response["result"]["aes_key"]
     resulting_fractal_id = response["result"]["fractal_id"]
 
-    # Find the Container object corresponding to the container that was just created
-    matching_containers = docker_client.containers.list(
-        filters={
-            "publish": f"{host_port_32262tcp}/tcp",
-        }
-    )
-    assert len(matching_containers) == 1
     return (
-        matching_containers[0],
         PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
         resulting_fractal_id,
@@ -192,17 +210,37 @@ def write_protocol_timeout(fractalid):
 
 if __name__ == "__main__":
     # pylint: disable=line-too-long
-    ensure_root_privileges()
-    ensure_host_service_is_running()
-    container, host_ports, aeskey, fractal_id = send_spin_up_mandelbox_request()
-    if args.update_protocol:
-        copy_locally_built_protocol(container)
+    if local_host_service:
+        # This is running locally on the same machine as the host service, so
+        # we will need root privileges and can easily check whether the host
+        # service is up.
+        ensure_root_privileges()
+        ensure_host_service_is_running()
 
-    try:
-        write_protocol_timeout(fractal_id)
-    except Exception as err:
-        kill_container(container)
-        raise err
+    host_ports, aeskey, fractal_id = send_spin_up_mandelbox_request()
+
+    if local_host_service:
+        # This is running locally on the same machine as the host service, so
+        # we can safely use the Docker client and copy files to the mandelbox.
+        docker_client = docker.from_env()
+
+        # Find the Container object corresponding to the container that was just created
+        matching_containers = docker_client.containers.list(
+            filters={
+                "publish": f"{host_ports.host_port_32262tcp}/tcp",
+            }
+        )
+
+        assert len(matching_containers) == 1
+        container = matching_containers[0]
+
+        if args.update_protocol:
+            copy_locally_built_protocol(container)
+        try:
+            write_protocol_timeout(fractal_id)
+        except Exception as err:
+            kill_container(container)
+            raise err
 
     print(
         f"""Successfully started container with identifying hostPort {host_ports.host_port_32262tcp}.
@@ -210,12 +248,15 @@ To connect to this container using the client protocol, run one of the following
 
     windows:        .\\build\\fclient.bat {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
     linux/macos:    ./fclient {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
-
-Name of resulting container:
-{container.name}
-Docker ID of resulting container:"""
+"""
     )
 
-    # Note that ./run_container_image.sh relies on the dockerID being printed
-    # alone on the last line of the output of this script!!
-    print(f"{container.id}")
+    if local_host_service:
+        print(
+            f"""Name of resulting container:
+{container.name}
+Docker ID of resulting container:"""
+        )
+        # Note that ./run_container_image.sh relies on the dockerID being printed
+        # alone on the last line of the output of this script!!
+        print(f"{container.id}")
