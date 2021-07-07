@@ -69,7 +69,7 @@ Run the following to do a local deployment. If you are on Windows, you should ru
 bash docker/local_deploy.sh
 ```
 
-If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer or opening the Docker desktop app; if the app opens successfully, then the issue should go away. You can optionally pass the argument `--use-dev-db`. Only do this if you absolutely need the dev db. Generally speaking, you should be able to recreate any resource on dev dbs in your ephemeral db. If you do this, please explain in `#webserver` why the ephemeral db did not meet your needs so we can improve it.
+If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer or opening the Docker desktop app; if the app opens successfully, then the issue should go away.
 
 Review `docker/docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running. When you're done, end the containers with `bash docker/local_deploy.sh --down`.
 
