@@ -1,0 +1,91 @@
+# workflows/gha-obtain-webserver-authorization.yml
+#
+# GitHub Actions: Obtain Authorization to Call Fractal's API
+# Obtain authorization from Auth0 for all Workflows to call Fractal's API. This
+# Workflow performs an OAuth 2.0 Client Credentials exchange with one of our
+# Auth0-hosted authorization servers (tenants). The tenant-issued access token
+# is cached so that other Workflows can use it to make authorized requests to
+# Fractal's API.
+
+name: "GitHub Actions: Obtain Authorization to Call Fractal's API"
+
+on:
+    schedule:
+        # Schedule this Workflow to run twice daily: 20 minutes before noon and
+        # and 20 minutes before midnight UTC.
+        - cron: "40 11/12 * * *"
+    workflow_dispatch:
+
+jobs:
+    gha-obtain-webserver-authorization:
+        name: Obtain and Cache a Webserver Access Token
+        runs-on: ubuntu-20.04
+        env:
+            TOKEN_FILE: .access_token
+        steps:
+            - name: Checkout git repository
+              uses: actions/checkout@v2
+
+            - name: Configure job environment
+              id: environment
+              uses: ./.github/actions/set-environment
+
+            # Just before the beginning of each 12-hour period P (starting from
+            # UNIX epoch time), we want to obtain a new Fractal API access
+            # token for GHA to use until the current time no longer falls into
+            # P. This Workflow is scheduled to run 20 minutes before P begins,
+            # so if the Workflow is triggered by a schedule event (i.e. not a
+            # workflow_dispatch event, which is the only other type of event
+            # that can trigger this Workflow, we want to add ~20 minutes to the
+            # current time before formatting the target date, which will become
+            # a substring of the cache key with which the access token for use
+            # during P will be stored. Here, we add 30 minutes to the current
+            # time, just to make sure the target timestamp is well within P.
+            # Otherwise, (i.e. in case the Workflow was triggered by a manual
+            # workflow_dispatch event), we simply format the current date.
+            - name: Format the target date
+              id: date
+              run: |
+                  # Set the offset variable to 1800 s (30 min) if the Workflow
+                  # was triggered by an event other than workflow_dispatch.
+                  # Otherwise, leave it unset.
+                  offset="$([ "${{ github.event_name }}" = "workflow_dispatch" ] || echo 1800)"
+
+                  # Calculate the timestamp that will be formatted and added to
+                  # the new access token's cache key by shifting the current
+                  # UNIX timestamp by the value of the offset variable (or zero
+                  # if the offset variable is null).
+                  timestamp="$(( "$(date -u "+%s")" + "${offset:-0}" ))"
+
+                  echo "::set-output name=date::$(date --date="@$timestamp" "+%Y%m%d%p")"
+
+            - name: Prepare to cache the access token
+              uses: actions/cache@v2
+              with:
+                  # We have to be clever about how we name our cache key.
+                  # Caches are immutable; once we create a cache, we cannot
+                  # change it. The cache key contains the name of the
+                  # environment in order to associate the access token with a
+                  # particular Auth0 tenant. The key contains an identifier
+                  # representing the 12-hour period during which the token
+                  # should be used because access tokens have expiration dates
+                  # and we have to periodically obtain new tokens so we're not
+                  # stuck trying to use the expired ones. Finally, it contains
+                  # an arbitrary value that we control. We can change this
+                  # value to quickly invalidate the cache in an emergency.
+                  key: access-token-${{ steps.environment.outputs.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+                  path: ${{ env.TOKEN_FILE }}
+
+            # Perform a Client Credentials exchange with one of our Auth0-
+            # hosted authorization servers in order to obtain an access token
+            # that can be used to make authorized requests to Fractal's API.
+            - name: Obtain authorization to call Fractal's API
+              id: token
+              uses: ./.github/actions/generate-auth0-token
+              with:
+                  domain: ${{ steps.environment.outputs.auth0-domain }}
+                  client-id: ${{ steps.environment.outputs.auth0-client-id }}
+                  client-secret: ${{ secrets[steps.environment.outputs.auth0-client-secret-key] }}
+
+            - name: Cache the access token
+              run: echo "${{ steps.token.outputs.access-token }}" > "$TOKEN_FILE"
