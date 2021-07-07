@@ -215,20 +215,16 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
             overwrote_frame = true;
             if (frame_data->id > ring_buffer->currently_rendering_id) {
                 // We have received a packet which will overwrite a frame that needs to be rendered
-                // in the future. This implies that either we have a clean ring buffer, so we should
-                // just keep overwriting until video/audio is initialized, or that we are quite
-                // behind, so we should wipe the whole ring buffer, and probably also request an
-                // iframe
+                // in the future. In other words, the ring buffer is full, so we should wipe the
+                // whole ring buffer.
                 LOG_INFO(
                     "We received a packet with ID %d, that will overwrite the frame with ID %d!",
                     packet->id, frame_data->id);
-                if (ring_buffer->currently_rendering_id != -1) {
-                    LOG_INFO(
-                        "We can't overwrite that frame, since our renderer has only gotten to ID "
-                        "%d!",
-                        ring_buffer->currently_rendering_id);
-                    reset_ring_buffer(ring_buffer);
-                }
+                LOG_INFO(
+                    "We can't overwrite that frame, since our renderer has only gotten to ID "
+                    "%d!",
+                    ring_buffer->currently_rendering_id);
+                reset_ring_buffer(ring_buffer);
             }
         }
         // Now, we can overwrite with no other concerns
