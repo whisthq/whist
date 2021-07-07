@@ -209,26 +209,21 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         return -1;
         // This packet is newer than the resident, so it's time to overwrite the resident
     } else if (packet->id > frame_data->id) {
-        // Oh no, the resident hasn't been rendered yet!
         if (frame_data->id != -1) {
-            if (frame_data->id == ring_buffer->currently_rendering_id) {
-                // We cannot overwrite the frame because it's rendering
-                LOG_INFO(
-                    "Skipping packet (ID %d) because it would overwrite the currently rendering "
-                    "frame with ID %d",
-                    packet->id, ring_buffer->currently_rendering_id);
-                return -1;
-            } else if (frame_data->id > ring_buffer->currently_rendering_id) {
-                // If we're currently rendering -1, then any frame data is too far
+            // We can overwrite no matter what, since the currently rendering frame has already been
+            // copied to currently_rendering_frame.
+            overwrote_frame = true;
+            if (frame_data->id > ring_buffer->currently_rendering_id) {
+                // We have received a packet which will overwrite a frame that needs to be rendered
+                // in the future. In other words, the ring buffer is full, so we should wipe the
+                // whole ring buffer.
                 LOG_INFO(
                     "We received a packet with ID %d, that will overwrite the frame with ID %d!",
                     packet->id, frame_data->id);
                 LOG_INFO(
-                    "We can't overwrite that frame, since our renderer has only gotten to ID %d!",
+                    "We can't overwrite that frame, since our renderer has only gotten to ID "
+                    "%d!",
                     ring_buffer->currently_rendering_id);
-                // We have received a packet which will overwrite a frame that needs to be rendered
-                // in the future. This implies we are quite behind, so we should wipe the whole ring
-                // buffer, and probably also request an iframe
                 reset_ring_buffer(ring_buffer);
             }
         }
