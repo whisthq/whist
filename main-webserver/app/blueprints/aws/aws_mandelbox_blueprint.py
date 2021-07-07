@@ -47,14 +47,16 @@ def regions():
 @payment_required
 @validate()
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
-    if is_user_active(body.username):
+    start_time = time.time() * 1000
+    is_active = is_user_active(body.username)
+    time_at_activity = time.time() * 1000
+    fractal_logger.debug(f"Checking user activity took {time_at_activity-start_time} ms")
+    if is_active:
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(
-            "Returning 503 to user f{body.username} because they are already active."
+            f"Returning 503 to user {body.username} because they are already active."
         )
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
-
-    client_commit_hash = None
     if (
         current_app.config["ENVIRONMENT"] == DEVELOPMENT
         and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE
@@ -71,9 +73,14 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         client_commit_hash = body.client_commit_hash
 
     instance_name = find_instance(body.region, client_commit_hash)
+    time_when_instance_found = time.time() * 1000
+    fractal_logger.debug(
+        f"It took {time_when_instance_found-time_at_activity} ms to find an instance."
+    )
     if instance_name is None:
         fractal_logger.info(
-            f"body.region: {body.region}, body.client_commit_hash: {body.client_commit_hash}"
+            f"No instance found with body.region: {body.region},\
+             body.client_commit_hash: {body.client_commit_hash}"
         )
 
         if not current_app.testing:
@@ -108,6 +115,11 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     )
     db.session.add(obj)
     db.session.commit()
+    time_when_container_created = time.time() * 1000
+    fractal_logger.debug(
+        f"It took {time_when_container_created-time_when_instance_found}\
+         ms to create a container row"
+    )
     if not current_app.testing:
         # If we're not testing, we want to scale new instances in the background.
         # Specifically, we want to scale in the region/AMI pair where we know
@@ -122,4 +134,5 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         )
         scaling_thread.start()
 
+    fractal_logger.debug(f"In total, this request took {time.time()*1000-start_time} ms to fulfill")
     return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
