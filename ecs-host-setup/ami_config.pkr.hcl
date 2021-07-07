@@ -116,6 +116,20 @@ build {
     source      = "../ecs-host-service/build/ecs-host-service"
   }
 
+  provisioner "shell" {
+    inline = ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh"]
+  }
+
+  provisioner "shell" {
+    expect_disconnect = "true"
+    inline            = ["sudo reboot"]
+  }
+
+  provisioner "shell" {
+    inline       = ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_ami_host.sh ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash}", "cd ..", "rm -rf ecs-host-setup"]
+    pause_before = "10s"
+  }
+
   post-processor "manifest" {
     output     = "manifest.json"
     strip_path = true
