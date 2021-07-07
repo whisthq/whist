@@ -60,7 +60,8 @@ jobs:
     main-webserver-check-pr-testing-heroku:
         name: Heroku Testing
         runs-on: ubuntu-20.04
-
+        env:
+            TOKEN_FILE: .access_token
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -78,14 +79,33 @@ jobs:
               with:
                   ref: ${{ github.base_ref }} # The git ref of the target branch
 
-            - name: Obtain a Fractal access token
+            - name: Format the current date
+              id: date
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
+              run: echo "::set-output name=date::$(date -u "+%Y%m%d%p")"
+
+            - name: Restore cached Webserver access token
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
+              uses: actions/cache@v2
+              with:
+                  key: access-token-${{ steps.set-environment.outputs.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+                  path: ${{ env.TOKEN_FILE }}
+
+            # We need to put quotes around this step's run command because it
+            # contains the special YAML characters [, ], and &. We check for the
+            # existence of $TOKEN_FILE before reading it to ensure that the
+            # command line returns 1 on failure. If the command was just
+            #
+            #     echo "::set-output name=access-token::$(cat $TOKEN_FILE)
+            #
+            # the step would succeed even if $TOKEN_FILE didn't exist because
+            # cat "$TOKEN_FILE" runs in a subshell and its exit status has no
+            # effect on the parent shell, in which the -e (errexit) option is
+            # set.
+            - name: Read cached Webserver access token
               id: get-token
               if: ${{ steps.set-environment.outputs.environment == 'dev' }}
-              uses: ./.github/actions/generate-auth0-token
-              with:
-                  domain: ${{ steps.set-environment.outputs.auth0-domain }}
-                  client-id: ${{ steps.set-environment.outputs.auth0-client-id }}
-                  client-secret: ${{ secrets[steps.set-environment.outputs.auth0-client-secret-key] }}
+              run: '[ -f "$TOKEN_FILE" ] && echo "::set-output name=access-token::$(cat "$TOKEN_FILE")"'
 
             - name: Install webserver scripting dependencies
               if: ${{ steps.set-environment.outputs.environment == 'dev' }}

@@ -679,29 +679,36 @@ jobs:
         # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
         # later, when we actually update amis, we make sure they were published
         if: always() && (needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
+        env:
+            TOKEN_FILE: .access_token
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Obtain a Fractal Auth0 Access Token
-              id: get-token
-              uses: ./.github/actions/generate-auth0-token
+            - name: Format the current date
+              id: date
+              run: echo "::set-output name=date::$(date -u "+%Y%m%d%p")"
+
+            - name: Restore cached Webserver access token file
+              uses: actions/cache@v2
               with:
-                  domain: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
-                  client-id: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
-                  client-secret: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
+                  key: access-token-${{ needs.fractal-publish-build-config.outputs.branch }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+                  path: ${{ env.TOKEN_FILE }}
 
-            - name: Notify Slack on Failure to Retrieve Auth0 Access Token
-              if: always() && steps.get-token.outcome == 'failure'
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to retrieve Auth0 Access Token in `main-webserver-update-fractal-services` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+            # We need to put quotes around this step's run command because it
+            # contains the special YAML characters [, ], and &. We check for the
+            # existence of $TOKEN_FILE before reading it to ensure that the
+            # command line returns 1 on failure. If the command was just
+            #
+            #     echo "::set-output name=access-token::$(cat $TOKEN_FILE)
+            #
+            # the step would succeed even if $TOKEN_FILE didn't exist because
+            # cat "$TOKEN_FILE" runs in a subshell and its exit status has no
+            # effect on the parent shell, in which the -e (errexit) option is
+            # set.
+            - name: Read cached Webserver access token
+              id: get-token
+              run: '[ -f "$TOKEN_FILE" ] && echo "::set-output name=access-token::$(cat "$TOKEN_FILE")"'
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
@@ -993,8 +1000,8 @@ jobs:
             ]
         # Only run client-apps deployment if none of the previous steps failed
         if: |
-            always() && 
-            (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) && 
+            always() &&
+            (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
             (needs.main-webserver-deploy-heroku.result != 'failure') &&
             (needs.microservices-deploy-auth0-rules.result != 'failure') &&
             (needs.containers-and-ami-publish-ghcr-and-aws.result != 'failure') &&
