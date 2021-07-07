@@ -40,7 +40,20 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
     OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Start the application that this mandelbox runs
+# This function is called whenever the script exits, whether that is because we
+# reach the end of this file (because either FractalServer or the Fractal
+# application died), or there was an error somewhere else in the script.
+function cleanup {
+    echo "cleanup() called! Shutting down the mandelbox..."
+
+    # Make sure we shutdown the mandelbox when this script exits
+    sudo shutdown now
+}
+
+# Make sure `cleanup` gets called on script exit.
+trap cleanup EXIT ERR
+
+# Start the application that this mandelbox runs.
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
 fractal_application_runuser_pid=$!
 
@@ -66,18 +79,21 @@ echo "Done sleeping until there are X clients..."
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-# Allow the command to fail without the script exiting, since we want to send logs/clean up the mandelbox.
 # The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
 /usr/share/fractal/FractalServer $OPTIONS > >(tee $LOG_FILENAME) &
 fractal_server_pid=$!
 
-# Wait for either fractal-application or FractalServer to exit (both backgrounded processes)
-wait -n $fractal_server_pid $fractal_application_runuser_pid $fractal_application_pid
+# Wait for either fractal-application or FractalServer to exit (both backgrounded processes).
+
+# TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_
+# application exited with the `-p` flag to `wait`.
+wait -n
+
 echo "Either FractalServer or fractal-application exited with code $?"
 echo "FractalServer PID: $fractal_server_pid"
 echo "runuser fractal-application PID: $fractal_application_runuser_pid"
 echo "fractal-application PID: $fractal_application_pid"
-echo "Remaining jobs: $(jobs -p)"
+echo "Remaining job PIDs: $(jobs -p)"
 
 # Kill whatever is still running of FractalServer and fractal-application, with SIGTERM.
 kill $fractal_application_pid ||:
@@ -87,7 +103,6 @@ kill $fractal_server_pid ||:
 # Firefox, for instance, exits with a nonzero code on SIGTERM).
 wait $fractal_application_runuser_pid ||:
 
-echo "Both fractal-application and FractalServer have exited"
+echo "Both fractal-application and FractalServer have exited."
 
-# Once the server has exited, we should just shutdown the mandelbox so it doesn't hang
-sudo shutdown now
+# We now pass control over to `cleanup`, since we've reached the end of the script.
