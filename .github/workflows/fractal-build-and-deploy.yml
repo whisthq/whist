@@ -211,7 +211,7 @@ jobs:
             - name: Detect Whether to Publish the Job(s) or Not
               id: detect-publish
               run: |
-                  trap 'echo "::error::Command '\''$BASH_COMMAND'\'' exited with code $?"' EXIT
+                  trap 'echo "::error::Command '\''$BASH_COMMAND'\'' exited with code $?"' ERR
 
                   ref="${{ github.ref }}"
                   target="${{ steps.set-deploy-environment.outputs.environment }}"
