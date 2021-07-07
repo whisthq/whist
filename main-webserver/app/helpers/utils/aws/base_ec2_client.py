@@ -36,7 +36,10 @@ class EC2Client(CloudClient):
         key_id: Optional[str] = None,
         access_key: Optional[str] = None,
     ):
-        self.ec2_client = boto3.client(
+        #  We create a new session here to preserve BOTO3 thread safety
+        #  See https://github.com/boto/boto3/issues/1592
+        boto_session = boto3.session.Session()
+        self.ec2_client = boto_session.client(
             "ec2",
             aws_access_key_id=key_id,
             aws_secret_access_key=access_key,
