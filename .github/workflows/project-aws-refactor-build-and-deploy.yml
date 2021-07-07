@@ -259,7 +259,7 @@ jobs:
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
               run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
 
-            - name: Build Go project
+            - name: Build Host Service
               env:
                   HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
                   HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
