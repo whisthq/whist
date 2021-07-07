@@ -159,7 +159,7 @@ jobs:
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
-                  job_dependencies[microservices-deploy-auth0-hooks]="microservices"
+                  job_dependencies[microservices-deploy-auth0-rules]="microservices"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -255,7 +255,7 @@ jobs:
                   echo "Publish is set to: $publish"
                   echo "::set-output name=publish::$publish"
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -263,7 +263,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -479,7 +479,7 @@ jobs:
             ############################# Stage 4 - Slack Notifications ##############################
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
-            - name: Notify Slack
+            - name: Notify Slack on Job Successs
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
@@ -487,12 +487,12 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":whale: Container Images & AMIs deployed :whale:"
-                  BODY = "A PR was merged and triggered automatic Container Images & AMIs deployment to GHCR and all AWS supported regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":whale: Container Images & AMIs Deployed :whale:"
+                  BODY = "Container Images & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -500,7 +500,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy container images and AMIs in `containers-and-ami-publish-ghcr-and-aws` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy container images and AMIs in `containers-and-ami-publish-ghcr-and-aws` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -508,7 +508,7 @@ jobs:
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and publish-images-ghcr succeeds.
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and containers-and-ami-publish-ghcr-and-aws succeeds.
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
@@ -573,7 +573,7 @@ jobs:
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -581,7 +581,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy ECS task definitions in `ecs-task-definitions-deploy-task-definitions-ecs` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy ECS task definitions in `ecs-task-definitions-deploy-task-definitions-ecs` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -590,13 +590,13 @@ jobs:
     # Runs if deploy-task-definitions-ecs succeeds.
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
+        runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
                 ecs-task-definitions-deploy-task-definitions-ecs,
             ]
         if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -605,15 +605,15 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack
+            - name: Notify Slack on Job Success
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":spiral_note_pad: ECS Task Definitions rendered and deployed :spiral_note_pad:"
-                  BODY = "A PR was merged and triggered automatic ECS Task Definitions deployment to all AWS supported regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":spiral_note_pad: ECS Task Definitions Deployed :spiral_note_pad:"
+                  BODY = "ECS Task Definitions deployed to all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -622,13 +622,13 @@ jobs:
     # Runs unconditionally after containers-and-ami-publish-ghcr-and-aws
     kill-packer-builder-instances:
         name: "Kill Packer Builder Tagged EC2 Instances"
+        runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
                 containers-and-ami-publish-ghcr-and-aws,
             ]
         if: always()
-        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -647,12 +647,10 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Kill All Packer Instances
-              run: |
-                  aws-hashicorp-packer-reaper list
-                  aws-hashicorp-packer-reaper terminate --older-than 45m
+            - name: Kill All Packer Instances Older Than 45 Minutes
+              run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -660,7 +658,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -668,7 +666,8 @@ jobs:
     # 1. new task definitions if new task defs have been pushed to ECS
     # 2. new AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
-        name: "Update Fractal Services using Main Webserver"
+        name: "Update Fractal Services using Main-Webserver"
+        runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
@@ -679,13 +678,12 @@ jobs:
         # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
         # later, when we actually update amis, we make sure they were published
-        if: always() && ( needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.containers-and-ami-publish-ghcr-and-aws.result == 'success' )
-        runs-on: ubuntu-20.04
+        if: always() && (needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.containers-and-ami-publish-ghcr-and-aws.result == 'success')
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Obtain a Fractal access token
+            - name: Obtain a Fractal Auth0 Access Token
               id: get-token
               uses: ./.github/actions/generate-auth0-token
               with:
@@ -693,11 +691,23 @@ jobs:
                   client-id: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
                   client-secret: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
 
+            - name: Notify Slack on Failure to Retrieve Auth0 Access Token
+              if: always() && steps.get-token.outcome == 'failure'
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to retrieve Auth0 Access Token in `main-webserver-update-fractal-services` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Install webserver scripting dependencies
+            - name: Install Webserver Scripting Dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
@@ -725,12 +735,12 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":hammer_and_wrench: Webserver started Maintenance Mode :hammer_and_wrench:"
-                  BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to start maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":hammer_and_wrench: Webserver Started Maintenance Mode :hammer_and_wrench:"
+                  BODY = f"Webserver at {WEBSERVER_URL} started maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack on failure to start Maintenance Mode
+            - name: Notify Slack on Failure to Start Maintenance Mode
               if: always() && steps.start-maintenance-mode.outcome == 'failure'
               shell: python3 {0}
               run: |
@@ -739,12 +749,12 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to start maintenance mode in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to start maintenance mode in `main-webserver-update-fractal-services` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             # this must be run before ami update, because that prewarms a container running the new task version
-            - name: Update webserver task definitions if new ones were published
+            - name: Update Webserver Task Definitions if new ones were published
               id: update-webserver-taskdefs
               if: needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success'
               working-directory: main-webserver
@@ -759,7 +769,7 @@ jobs:
                   # Try to update taskdefs. Errors if request/celery task fails.
                   update_taskdefs(WEBSERVER_URL, TOKEN)
 
-            - name: Notify Slack on failure to update webserver task definition
+            - name: Notify Slack on Failure to Update Webserver Task Definitions
               if: always() && steps.update-webserver-taskdefs.outcome == 'failure'
               shell: python3 {0}
               run: |
@@ -768,7 +778,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to update webserver task definitons in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to update webserver task definitons in `main-webserver-update-fractal-services` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -814,7 +824,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to update webserver AMIs in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to update webserver AMIs in `main-webserver-update-fractal-services` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -834,7 +844,7 @@ jobs:
                   # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
                   end_maintenance(WEBSERVER_URL, TOKEN)
 
-            - name: Notify Slack ended maintenance mode
+            - name: Notify Slack Ended Maintenance Mode
               if: always() && steps.end-maintenance-mode.outcome == 'success'
               shell: python3 {0}
               run: |
@@ -844,12 +854,12 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":hammer_and_wrench: Webserver ended Maintenance Mode :hammer_and_wrench:"
-                  BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to end maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":hammer_and_wrench: Webserver Ended Maintenance Mode :hammer_and_wrench:"
+                  BODY = f"Webserver at {WEBSERVER_URL} ended maintenance mode on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack on failure to end maintenance mode
+            - name: Notify Slack on Failure to End Maintenance Mode
               if: always() && steps.end-maintenance-mode.outcome == 'failure'
               shell: python3 {0}
               run: |
@@ -858,7 +868,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to end maintenance mode in `main-webserver-update-fractal-services` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to end maintenance mode in `main-webserver-update-fractal-services` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -913,11 +923,11 @@ jobs:
                   wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
                   | sudo tar -zxp --directory /usr/local/bin/
 
-            - name: Deploy the Webserver Atomically
+            - name: Deploy the Webserver Atomically & Migrate DB Schema (as needed)
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
-            - name: Notify Slack on database migration
+            - name: Notify Slack on Database Migration Performed
               shell: python3 {0}
               run: |
                   import os
@@ -929,25 +939,14 @@ jobs:
                   if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
                     sys.exit(0)
 
-                  GITHUB_SHA = "${{ github.sha }}"
-                  GITHUB_SHA_URL = "https://github.com/fractal/fractal/commit/"
-                  ISSUE_URL = urllib.parse.urljoin(GITHUB_SHA_URL, GITHUB_SHA)
-
-                  BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = f"#alerts-{BRANCH_NAME}"
+                  TITLE = ":construction: Database Migration Performed :construction:"
+                  BODY = f"Database Schema Migration performed on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_redirect = f"You can take a look the commit here:\n{ISSUE_URL}"
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=title)
 
-                  title = ":construction: Database migration performed :construction:"
-                  body = (f"A PR was merged and triggered "
-                          + "an automatic schema migration on branch: "
-                          + f"`{BRANCH_NAME}`.\n\n"
-                          + "Check the GitHub Actions logs for details. "
-                          + slack_redirect)
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
-
-            - name: Notify Slack on successful deploy
+            - name: Notify Slack on Successful Webserver Deploy
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
@@ -958,11 +957,11 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
                   TITLE = ":heroku: Webserver Deployed :heroku:"
-                  BODY = f"A PR was merged and triggered automatic Webserver deployment to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"Webserver deployed to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -970,7 +969,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `main-webserver-deploy-heroku` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `main-webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -987,9 +986,20 @@ jobs:
             [
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
+                microservices-deploy-auth0-rules,
+                containers-and-ami-publish-ghcr-and-aws,
+                ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
             ]
-        if: always() && (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|'))
+        # Only run client-apps deployment if none of the previous steps failed
+        if: |
+            always() && 
+            (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) && 
+            (needs.main-webserver-deploy-heroku.result != 'failure') &&
+            (needs.microservices-deploy-auth0-rules.result != 'failure') &&
+            (needs.containers-and-ami-publish-ghcr-and-aws.result != 'failure') &&
+            (needs.ecs-task-definitions-deploy-task-definitions-ecs.result != 'failure') &&
+            (needs.main-webserver-update-fractal-services.result != 'failure')
 
         strategy:
             matrix:
@@ -1033,9 +1043,8 @@ jobs:
               if: runner.os == 'Windows'
               uses: ilammy/msvc-dev-cmd@v1
 
-            ############################# Windows Configuration Steps END #############################
-
-            ############################# Unix Configuration Steps START #############################
+            #############################################################################################
+            ############################### Unix Configuration Steps START ##############################
 
             - name: Install macOS Codesigning Certificates on macOS GHA Machine
               if: runner.os == 'macOS'
@@ -1056,7 +1065,8 @@ jobs:
               working-directory: protocol
               run: ./setup-linux-build-environment.sh
 
-            ############################# Unix Configuration Steps END #############################
+            #############################################################################################
+            #################################### Publish Steps START ####################################
 
             - name: Retrieve Desktop App Version from Config Database
               id: generate-release-version
@@ -1263,7 +1273,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack on success
+            - name: Notify Slack on Job Success
               shell: python3 {0}
               if: needs.client-applications-publish-build-s3.result == 'success'
               run: |
@@ -1280,12 +1290,12 @@ jobs:
                   else:
                     WEBSITE_URL = "https://dev.fractal.co"
 
-                  TITLE = ":electron: Windows/macOS Electron Applications deployed :electron:"
-                  BODY = f"A PR was merged and triggered automatic Windows/macOS Electron applications deployment via upload to AWS S3 on branch: `{BRANCH_NAME}`. You can download them from {WEBSITE_URL}. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":electron: Windows & macOS Applications Deployed :electron:"
+                  BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `{BRANCH_NAME}` - You can download them from {WEBSITE_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: needs.client-applications-publish-build-s3.result == 'failure'
               shell: python3 {0}
               run: |
@@ -1297,15 +1307,15 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Auth0 Hooks: Build & Deploy Auth0 Hooks to Auth0 Tenant
-    # Build and deploy the Auth0 hooks to the Fractal Auth0 Tenant platform, with
+    # Auth0 Rules: Build & Deploy Auth0 Rules to Auth0 Tenant
+    # Build and deploy the Auth0 rules to the Fractal Auth0 Tenant platform, with
     # which our client-application interfaces with authenticating users through Auth0
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-    microservices-deploy-auth0-hooks:
-        name: "Deploy Auth0 hooks"
+    microservices-deploy-auth0-rules:
+        name: "Deploy Auth0 Rules"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-hooks|')
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-rules|')
 
         steps:
             - name: Checkout Git Repository
@@ -1320,11 +1330,11 @@ jobs:
               with:
                   node-version: 15
 
-            - name: Install development dependencies
+            - name: Install Development Dependencies
               working-directory: microservices/auth0
               run: yarn install
 
-            - name: Deploy changes to the Auth0 tenant
+            - name: Deploy Changes to the Auth0 Tenant
               working-directory: microservices/auth0
               env:
                   AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
@@ -1332,7 +1342,7 @@ jobs:
                   APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
               run: yarn run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
-            - name: Notify Slack on successful deploy
+            - name: Notify Slack on Job Success
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
@@ -1341,12 +1351,12 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":auth0: Auth0 Hooks Deployed to Auth0 Tenant :auth0:"
-                  BODY = f"A PR was merged and triggered automatic build and deployment of Auth0 Hooks to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":auth0: Auth0 Rules Deployed :auth0:"
+                  BODY = f"Auth0 Rules deployed to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -1354,7 +1364,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-hooks` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -1362,14 +1372,17 @@ jobs:
     # Create a GitHub Tag when promoting to the `prod` branch
     # Runs if the entire deployment succeeds and the promotion is running on `prod`
     fractal-create-github-release-tag:
-        name: "Create GitHub Prod Release Tag"
+        name: "Create GitHub Release Tag"
         runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
-                client-applications-publish-build-s3,
                 main-webserver-deploy-heroku,
+                microservices-deploy-auth0-rules,
+                containers-and-ami-publish-ghcr-and-aws,
+                ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
+                client-applications-publish-build-s3,
             ]
         if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
@@ -1392,7 +1405,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Notify Slack
+            - name: Notify Slack on Job Success
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -1400,11 +1413,11 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
                   TITLE = ":github: Fractal GitHub Release Completed :github:"
-                  BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` on Branch `${{ needs.fractal-publish-build-config.outputs.branch }}` Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-            - name: Notify Slack if error
+            - name: Notify Slack on Job Error
               if: failure()
               shell: python3 {0}
               run: |
@@ -1412,6 +1425,6 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `fractal-create-github-release-tag` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `fractal-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
