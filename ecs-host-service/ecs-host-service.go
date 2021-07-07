@@ -138,6 +138,10 @@ func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) 
 	containerName := "host-service-warmup"
 
 	config := dockercontainer.Config{
+		Env: []string{
+			"NVIDIA_DRIVER_CAPABILITIES=all",
+			"NVIDIA_VISIBLE_DEVICES=all",
+		},
 		Image:        image,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -145,7 +149,15 @@ func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) 
 		Tty:          true,
 	}
 
+	tmpfs := make(map[string]string)
+	tmpfs["/run"] = "size=52428800"
+	tmpfs["/run/lock"] = "size=52428800"
+
 	hostConfig := dockercontainer.HostConfig{
+		Binds: []string{
+			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
+			"/run/udev/data:/run/udev/data:ro",
+		},
 		CapDrop: strslice.StrSlice{"ALL"},
 		CapAdd: strslice.StrSlice([]string{
 			"SETPCAP",
@@ -165,6 +177,25 @@ func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) 
 			// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
 			"SYS_NICE",
 		}),
+		ShmSize: 2147483648,
+		Tmpfs:   tmpfs,
+		Resources: dockercontainer.Resources{
+			CPUShares: 2,
+			Memory:    6552550944,
+			NanoCPUs:  0,
+			// Don't need to set CgroupParent, since each mandelbox is its own task.
+			// We're not using anything like AWS services, where we'd want to put
+			// several mandelboxes under one limit.
+			KernelMemory:       0,
+			KernelMemoryTCP:    0,
+			MemoryReservation:  0,
+			MemorySwap:         0,
+			Ulimits:            []*dockerunits.Ulimit{},
+			CPUCount:           0,
+			CPUPercent:         0,
+			IOMaximumIOps:      0,
+			IOMaximumBandwidth: 0,
+		},
 	}
 
 	createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
