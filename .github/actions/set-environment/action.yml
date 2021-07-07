@@ -13,14 +13,6 @@ inputs:
       configure the workflow.
     required: false
     default: ${{ github.ref }}
-  deploy:
-    description: |
-      A boolean that indicates whether or not only "deployable" git refs
-      (i.e. dev, staging, and prod) should be considered valid. The
-      action will fail if it receives a non-deployable git ref as input
-      and this flag is set.
-    required: false
-    default: false
 outputs:
   environment:
     description: Either "dev", "staging", or "prod"
@@ -49,13 +41,10 @@ runs:
             environment="staging"
             auth0_domain="fractal-staging.us.auth0.com"
             auth0_client_id="2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5"
-        elif [[ ${{ inputs.ref }} =~ dev$ || "${{ inputs.deploy }}" == false ]]; then
+        else
             environment="dev"
             auth0_domain="fractal-dev.us.auth0.com"
             auth0_client_id="6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
-        else
-            echo "You may not deploy ${{ inputs.ref }}"
-            exit 1
         fi
 
         echo "Environment $environment set"
