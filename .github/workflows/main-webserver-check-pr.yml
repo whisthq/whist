@@ -30,7 +30,7 @@ jobs:
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
               with:
-                  python-version: 3.8
+                  python-version: "3.8"
 
             - name: Install Dependencies
               working-directory: main-webserver
@@ -68,7 +68,7 @@ jobs:
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
               with:
-                  python-version: 3.8
+                  python-version: "3.8"
 
             - name: Set the workflow's environment parameters
               id: set-environment
@@ -237,7 +237,7 @@ jobs:
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
               with:
-                  python-version: 3.8
+                  python-version: "3.8"
 
             - name: Install Python Dependencies
               working-directory: main-webserver
