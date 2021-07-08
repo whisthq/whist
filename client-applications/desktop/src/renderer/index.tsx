@@ -9,11 +9,21 @@ import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
 
 import Update from "@app/renderer/pages/update"
-import Error from "@app/renderer/pages/error"
+import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error/error"
 import Signout from "@app/renderer/pages/signout"
 
-import { WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
-import { fractalError } from "@app/utils/error"
+import {
+  WindowHashUpdate,
+  WindowHashSignout,
+  allowPayments,
+} from "@app/utils/constants"
+import {
+  fractalError,
+  NO_PAYMENT_ERROR,
+  UNAUTHORIZED_ERROR,
+  AUTH_ERROR,
+  NAVIGATION_ERROR,
+} from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
 
@@ -34,26 +44,65 @@ const show = chain(window.location.search.substring(1))
 
 const RootComponent = () => {
   const [, setMainState] = useMainState()
+  const relaunch = () =>
+    setMainState({
+      trigger: { name: TRIGGER.relaunchAction, payload: Date.now() },
+    })
+
+  const showPaymentWindow = () =>
+    setMainState({
+      trigger: { name: TRIGGER.showPaymentWindow, payload: null },
+    })
+
   const clearCache = () =>
     setMainState({ trigger: { name: TRIGGER.clearCacheAction, payload: null } })
 
+  const showSignoutWindow = () =>
+    setMainState({
+      trigger: { name: TRIGGER.showSignoutWindow, payload: null },
+    })
+
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={clearCache} />
-  if (keys(fractalError).includes(show))
+  if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
-      <Error
+      <TwoButtonError
         title={fractalError[show].title}
         text={fractalError[show].text}
-        primaryButtonText={fractalError[show].primaryButton}
-        secondaryButtonText={fractalError[show].secondaryButton}
+        primaryButtonText="Update Payment"
+        secondaryButtonText="Sign Out"
+        onPrimary={showPaymentWindow}
+        onSecondary={showSignoutWindow}
+      />
+    )
+  if ([UNAUTHORIZED_ERROR, AUTH_ERROR, NAVIGATION_ERROR].includes(show))
+    return (
+      <OneButtonError
+        title={fractalError[show].title}
+        text={fractalError[show].text}
+        primaryButtonText="Sign Out"
+        onPrimary={showSignoutWindow}
+      />
+    )
+  if (keys(fractalError).includes(show))
+    return (
+      <TwoButtonError
+        title={fractalError[show].title}
+        text={fractalError[show].text}
+        primaryButtonText="Try Again"
+        secondaryButtonText="Sign Out"
+        onPrimary={relaunch}
+        onSecondary={showSignoutWindow}
       />
     )
   return (
-    <Error
+    <TwoButtonError
       title={fractalError.NAVIGATION_ERROR.title}
       text={fractalError.NAVIGATION_ERROR.text}
-      primaryButtonText={fractalError.NAVIGATION_ERROR.primaryButton}
-      secondaryButtonText={fractalError.NAVIGATION_ERROR.secondaryButton}
+      primaryButtonText="Try Again"
+      secondaryButtonText="Sign Out"
+      onPrimary={relaunch}
+      onSecondary={showSignoutWindow}
     />
   )
 }
