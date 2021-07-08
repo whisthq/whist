@@ -73,7 +73,6 @@ static enum AVPixelFormat sws_input_fmt;
 extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
-#define LOG_VIDEO false
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 4
 #define MAX_UNSYNCED_FRAMES_RENDER 6
