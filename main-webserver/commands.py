@@ -12,6 +12,7 @@ from flask import Blueprint
 
 
 from app.helpers.command_helpers.ami_upgrade import perform_upgrade
+from tests.helpers.data.test_data_generator import populate_test_data
 
 # Blueprint for registering the functions under 'command'
 # Reference: https://flask.palletsprojects.com/en/2.0.x/cli/#registering-commands-with-blueprints
@@ -21,6 +22,8 @@ command_bp = Blueprint("command", __name__)
 
 
 # Registering custom command https://flask.palletsprojects.com/en/2.0.x/cli/#custom-commands
+
+
 # This function upgrades the AMIs for given client hash and the region.
 # Can be invoked through `flask command ami_upgrade <client_commit_hash> <region_to_ami_id_mapping_str>`
 @command_bp.cli.command("ami_upgrade")
@@ -42,3 +45,16 @@ def ami_upgrade(
     region_to_ami_id_mapping = loads(region_to_ami_id_mapping_str)
 
     perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
+
+
+# This function generates data required for running the test cases and populates it in the database.
+# Can be invoked through `flask command generate_test_data`
+@command_bp.cli.command("generate_test_data")
+def _generate_test_data():
+    """
+    Args:
+        None
+    Returns:
+        None
+    """
+    populate_test_data()
