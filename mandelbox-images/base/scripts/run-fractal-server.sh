@@ -75,6 +75,7 @@ do
 done
 
 echo "Done sleeping until there are X clients..."
+echo "done" > $FRACTAL_MAPPINGS_DIR/done_sleeping_until_X_clients
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"

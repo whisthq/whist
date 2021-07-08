@@ -193,7 +193,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", containerName),
+			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
 			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
@@ -259,9 +259,25 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	}
 	logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
 
-	logger.Infof("Starting sleep to let Chrome warmup...")
-	time.Sleep(2 * time.Minute)
-	logger.Infof("Finished sleep to let Chrome warmup...")
+	logger.Infof("Starting sleep to let Chrome warm up...")
+
+	// Sleep for at most 3 minutes waiting for Chrome to start
+	chromeStarted := false
+	for i := 0; i < 180; i++ {
+		if _, err := os.Stat(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/done_sleeping_until_X_clients", containerName)); os.IsNotExist(err) {
+			time.Sleep(1 * time.Second)
+		} else if err != nil {
+			return utils.MakeError("Error waiting for chrome to warm up: %s", err)
+		} else {
+			chromeStarted = true
+			break
+		}
+	}
+	if !chromeStarted {
+		return utils.MakeError("Chrome did not warm up successfully within the allowed time.")
+	}
+
+	logger.Infof("Finished sleep to let Chrome warm up...")
 
 	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
 	if err != nil {
@@ -404,7 +420,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", fc.GetMandelboxID()),
+			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", fc.GetMandelboxID()),
 			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetMandelboxID()),
@@ -481,14 +497,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol.")
+	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol for mandelbox %s", req.MandelboxID)
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
 		logAndReturnError("Error starting mandelbox with dockerID %s and MandelboxID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s", mandelboxName)
+	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, req.MandelboxID)
 
 	result := httpserver.SpinUpMandelboxRequestResult{
 		HostPortForTCP32262: hostPortForTCP32262,
@@ -514,9 +530,29 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = fc.MarkReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox as ready: %s", err)
+		logAndReturnError("Error marking mandelbox %s as ready: %s", req.MandelboxID, err)
 		return
 	}
+
+	// Sleep for at most 30 seconds waiting for fractal application to start
+	// TODO: make this block, not poll
+	appStarted := false
+	for i := 0; i < 120; i++ {
+		if _, err := os.Stat(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/done_sleeping_until_X_clients", req.MandelboxID)); os.IsNotExist(err) {
+			time.Sleep(time.Second / 4)
+		} else if err != nil {
+			logAndReturnError("Error waiting for fractal application in mandelbox %s to start: %s", req.MandelboxID, err)
+			return
+		} else {
+			appStarted = true
+			break
+		}
+	}
+	if !appStarted {
+		logAndReturnError("Fractal application for mandelbox %s did not start successfully within the allowed time.", req.MandelboxID)
+		return
+	}
+	logger.Infof("Finished waiting for fractal application in mandelbox %s to start up", req.MandelboxID)
 
 	err = dbdriver.WriteMandelboxStatus(req.MandelboxID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
