@@ -16,7 +16,7 @@ from app.models import RegionToAmi
 from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, REGION_NAMES
 
 
 def test_callback_webserver_hostname_localhost():
@@ -90,7 +90,7 @@ def test_rate_limiter(client):
     assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
-def test_local_lock_timeout(app):
+def test_local_lock_timeout(app, region_name):
     """
     Test the function `set_local_lock_timeout` by running concurrent threads that try to grab
     the lock. One should time out.
@@ -101,7 +101,7 @@ def test_local_lock_timeout(app):
             with app.app_context():
                 set_local_lock_timeout(lock_timeout)
                 _ = RegionToAmi.query.with_for_update().get(
-                    ("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING)
+                    (region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
                 )
                 fractal_logger.info("Got lock and data")
                 time.sleep(hold_time)
@@ -136,6 +136,5 @@ def test_regions(client):
     """Ensure that regions are returned by the /regions endpoint if they are allwed regions."""
 
     response = client.get("/regions")
-    region_set = ["us-east-1", "us-west-1", "us-west-2", "ca-central-1", "us-east-2"]
 
-    assert any(item in region_set for item in response.json)
+    assert any(item in REGION_NAMES for item in response.json)
