@@ -695,8 +695,20 @@ func main() {
 
 	initializeFilesystem(globalCancel)
 
-	// Initialize the database driver, if necessary (the `dbdriver`) package
-	// takes care of the "if necessary" part.
+	// Start Docker
+	startDockerDaemon(globalCancel)
+	dockerClient, err := createDockerClient()
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+	if !metadata.IsLocalEnv() {
+		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
+			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
+		}
+	}
+
+	// Initialize the database driver, if necessary (the `dbdriver` package
+	// takes care of the "if necessary" part).
 	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
 		// draining, the webserver doesn't want it anymore so we should shut down.
@@ -717,18 +729,6 @@ func main() {
 	httpServerEvents, err := httpserver.Start(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil {
 		logger.Panic(globalCancel, err)
-	}
-
-	// Start Docker
-	startDockerDaemon(globalCancel)
-	dockerClient, err := createDockerClient()
-	if err != nil {
-		logger.Panic(globalCancel, err)
-	}
-	if !metadata.IsLocalEnv() {
-		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
-			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
-		}
 	}
 
 	// Start main event loop
