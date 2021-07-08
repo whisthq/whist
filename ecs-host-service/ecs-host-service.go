@@ -245,6 +245,10 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	if err := fc.WriteResourcesForProtocol(); err != nil {
 		return utils.MakeError("Error writing resources for protocol: %s", err)
 	}
+	err = fc.MarkReady()
+	if err != nil {
+		return utils.MakeError("Error marking mandelbox as ready: %s", err)
+	}
 
 	err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
 	if err != nil {
