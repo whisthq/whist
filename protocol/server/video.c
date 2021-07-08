@@ -537,10 +537,11 @@ int32_t multithreaded_send_video(void* opaque) {
                     write_packets_to_buffer(encoder->num_packets, encoder->packets,
                                             (void*)get_frame_videodata(frame));
 
-                    // LOG_INFO("Sent video packet %d (Size: %d) %s", id,
-                    // encoder->encoded_frame_size, frame->is_iframe ?
-                    // "(I-frame)" :
-                    // "");
+#if LOG_VIDEO
+                    LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
+                             frame->is_iframe ? "(I-frame)" : "");
+#endif  // LOG_VIDEO
+
                     PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
 
                     size_t num_msgs;
