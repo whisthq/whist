@@ -30,10 +30,8 @@ def test_find_part_full_instance_order(bulk_instance, region_name):
     """
     Confirms that we find an in-use instance
     """
-    instance = bulk_instance(location=region_name, associated_mandelboxes=1)
+    instance = bulk_instance(location=region_name, associated_mandelboxes=3)
     _ = bulk_instance(location=region_name, associated_mandelboxes=2)
-    __ = bulk_instance(location=region_name, associated_mandelboxes=2)
-    ___ = bulk_instance(location=region_name, associated_mandelboxes=2)
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
