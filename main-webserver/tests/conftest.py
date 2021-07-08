@@ -18,6 +18,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from tests.client import FractalAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from tests.helpers.utils import get_random_regions, get_random_region_name, get_random_region_names
 
 
 @pytest.fixture(scope="session")
@@ -168,6 +169,35 @@ def region_to_ami_map(app):
     all_regions = RegionToAmi.query.all()
     region_map = {region.region_name: region.ami_id for region in all_regions if region.ami_active}
     return region_map
+
+
+@pytest.fixture
+def region_ami_pair():
+    """
+    Returns a randomly picked region and corresponding ami_id
+    """
+    region_ami_pair = get_random_regions(1)
+    if region_ami_pair is not None:
+        return region_ami_pair[0].region_name, region_ami_pair[0].ami_id
+
+
+@pytest.fixture
+def region_names():
+    """
+    Returns two randomly picked regions. The function call to `get_random_region_names`
+    can be supplied with argument to return more than two but at this moment the test cases
+    don't require more than two region names at once.
+    """
+    return get_random_region_names()
+
+
+@pytest.fixture
+def region_name():
+    """
+    Returns a randomly picked region
+    """
+    region_name = get_random_region_name()
+    return region_name
 
 
 @pytest.fixture
