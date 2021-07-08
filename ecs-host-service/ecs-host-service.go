@@ -261,9 +261,9 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 	logger.Infof("Starting sleep to let Chrome warm up...")
 
-	// Sleep for at most 3 minutes waiting for Chrome to start
+	// Sleep for at most 4 minutes waiting for Chrome to start
 	chromeStarted := false
-	for i := 0; i < 180; i++ {
+	for i := 0; i < 240; i++ {
 		if _, err := os.Stat(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/done_sleeping_until_X_clients", containerName)); os.IsNotExist(err) {
 			time.Sleep(1 * time.Second)
 		} else if err != nil {
