@@ -719,6 +719,12 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", metadata.GetGitCommit())
 
+	// Initialize the database driver, if necessary (the `dbdriver` package
+	// takes care of the "if necessary" part).
+	if err := dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+		logger.Panic(globalCancel, err)
+	}
+
 	// Start collecting metrics
 	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
 
@@ -743,11 +749,10 @@ func main() {
 		}
 	}
 
-	// Initialize the database driver, if necessary (the `dbdriver` package
-	// takes care of the "if necessary" part).
-	if err = dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
+	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
 		// draining, the webserver doesn't want it anymore so we should shut down.
+
 		// TODO: make this a bit more robust
 		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
 			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
