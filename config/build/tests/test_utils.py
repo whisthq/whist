@@ -122,6 +122,7 @@ def test_flatten_path_matching():
     a set are replaced with their corresponding value."""
     key_set = {"a", "b", "c"}
     d = {
+        "v": {"z": {"c": 30}},
         "x": {"a": {"b": 10}},
         "y": {"z": {"w": 15}},
         "z": {"c": {"a": 20}},
@@ -129,6 +130,7 @@ def test_flatten_path_matching():
 
     result = {k: utils.flatten_path_matching(key_set, v) for k, v in d.items()}
 
+    assert result["v"] == {"z": 30}, "nested keys should be flattened"
     assert result["x"] == 10, "keys in set should be flattened"
     assert result["y"] == d["y"], "keys not in set should not be flattened"
     assert result["z"] == 20, "keys in set should be flattened"

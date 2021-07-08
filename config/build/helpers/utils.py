@@ -80,10 +80,11 @@ def find_missing_keys(xs, *dcts):
 def flatten_path_matching(key_set, dct):
     if not isinstance(dct, dict):
         return dct
-    for key, value in sorted(dct.items()):
+    result = {k: flatten_path_matching(key_set, v) for k, v in dct.items()}
+    for key, value in sorted(result.items()):
         if key in key_set:
-            return flatten_path_matching(key_set, value)
-    return dct
+            return value
+    return result
 
 
 @contextmanager
