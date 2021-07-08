@@ -150,7 +150,9 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	fc := mandelbox.New(globalCtx, goroutineTracker, types.MandelboxID(containerName))
 	defer fc.Close()
 
-	// Assign port bindings for the mandelbox (necessary for `fc.WriteResourcesForProtocol()`)
+	// Assign port bindings for the mandelbox (necessary for
+	// `fc.WriteResourcesForProtocol()`, though we don't need to actually pass
+	// them into the mandelbox)
 	if err := fc.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
@@ -159,13 +161,21 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		return utils.MakeError("Error assigning port bindings: %s", err)
 	}
 
+	// Initialize Uinput devices for the mandelbox (necessary for the `update-xorg-conf` service to work)
+	if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
+		return utils.MakeError("Error initializing uinput devices: %s", err)
+	}
+	devices := fc.GetDeviceMappings()
+
 	// Allocate a TTY
 	if err := fc.InitializeTTY(); err != nil {
 		return utils.MakeError("Error initializing TTY: %s", err)
 	}
 
+	aesKey := utils.RandHex(16)
 	config := dockercontainer.Config{
 		Env: []string{
+			utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
 			"NVIDIA_DRIVER_CAPABILITIES=all",
 			"NVIDIA_VISIBLE_DEVICES=all",
 		},
@@ -213,6 +223,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			// Don't need to set CgroupParent, since each mandelbox is its own task.
 			// We're not using anything like AWS services, where we'd want to put
 			// several mandelboxes under one limit.
+			Devices:            devices,
 			KernelMemory:       0,
 			KernelMemoryTCP:    0,
 			MemoryReservation:  0,
