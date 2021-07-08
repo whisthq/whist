@@ -6,49 +6,49 @@
 name: Set Workflow Environment
 description: Retrieve values of environment-specific workflow parameters
 inputs:
-  ref:
-    description: |
-      Workflow environment is a function of git ref. This input can be
-      used to specify a particular git ref that should be used to
-      configure the workflow.
-    required: false
-    default: ${{ github.ref }}
+    ref:
+        description: |
+            Workflow environment is a function of git ref. This input can be
+            used to specify a particular git ref that should be used to
+            configure the workflow.
+        required: false
+        default: ${{ github.ref }}
 outputs:
-  environment:
-    description: Either "dev", "staging", or "prod"
-    value: ${{ steps.set-environment.outputs.environment }}
-  auth0-domain:
-    description: The environment-specific Auth0 tenant's domain
-    value: ${{ steps.set-environment.outputs.auth0-domain }}
-  auth0-client-id:
-    description: The ID of the GHA client registered to the Auth0 tenant
-    value: ${{ steps.set-environment.outputs.auth0-client-id }}
-  auth0-client-secret-key:
-    description: The name of the secret containing the GHA client secret
-    value: ${{ steps.set-environment.outputs.auth0-client-secret-key }}
+    environment:
+        description: Either "dev", "staging", or "prod"
+        value: ${{ steps.set-environment.outputs.environment }}
+    auth0-domain:
+        description: The environment-specific Auth0 tenant's domain
+        value: ${{ steps.set-environment.outputs.auth0-domain }}
+    auth0-client-id:
+        description: The ID of the GHA client registered to the Auth0 tenant
+        value: ${{ steps.set-environment.outputs.auth0-client-id }}
+    auth0-client-secret-key:
+        description: The name of the secret containing the GHA client secret
+        value: ${{ steps.set-environment.outputs.auth0-client-secret-key }}
 runs:
-  using: composite
-  steps:
-    - name: Set workflow environment parameters
-      id: set-environment
-      shell: bash --noprofile --norc -eo pipefail {0}
-      run: |
-        if [[ ${{ inputs.ref }} =~ prod$ ]]; then
-            environment="prod"
-            auth0_domain="fractal-prod.us.auth0.com"
-            auth0_client_id="dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX"
-        elif [[ ${{ inputs.ref }} =~ staging$ ]]; then
-            environment="staging"
-            auth0_domain="fractal-staging.us.auth0.com"
-            auth0_client_id="2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5"
-        else
-            environment="dev"
-            auth0_domain="fractal-dev.us.auth0.com"
-            auth0_client_id="6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
-        fi
+    using: composite
+    steps:
+        - name: Set workflow environment parameters
+          id: set-environment
+          shell: bash --noprofile --norc -eo pipefail {0}
+          run: |
+              if [[ ${{ inputs.ref }} =~ prod$ ]]; then
+                  environment="prod"
+                  auth0_domain="fractal-prod.us.auth0.com"
+                  auth0_client_id="dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX"
+              elif [[ ${{ inputs.ref }} =~ staging$ ]]; then
+                  environment="staging"
+                  auth0_domain="fractal-staging.us.auth0.com"
+                  auth0_client_id="2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5"
+              else
+                  environment="dev"
+                  auth0_domain="fractal-dev.us.auth0.com"
+                  auth0_client_id="6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
+              fi
 
-        echo "Environment $environment set"
-        echo "::set-output name=environment::$environment"
-        echo "::set-output name=auth0-domain::$auth0_domain"
-        echo "::set-output name=auth0-client-id::$auth0_client_id"
-        echo "::set-output name=auth0-client-secret-key::auth0_gha_client_secret_$environment"
+              echo "Environment $environment set"
+              echo "::set-output name=environment::$environment"
+              echo "::set-output name=auth0-domain::$auth0_domain"
+              echo "::set-output name=auth0-client-id::$auth0_client_id"
+              echo "::set-output name=auth0-client-secret-key::auth0_gha_client_secret_$environment"
