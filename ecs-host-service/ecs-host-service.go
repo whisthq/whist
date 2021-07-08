@@ -45,7 +45,7 @@ import (
 	dockerunits "github.com/docker/go-units"
 )
 
-var shutdownInstanceOnExit bool = false
+var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
 
 func init() {
 	// Initialize random number generator for all subpackages
