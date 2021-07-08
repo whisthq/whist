@@ -78,7 +78,7 @@ For GitHub Actions reasons, it's good to get in the habit of running this progra
 ```sh
 python .github/actions/monorepo-config/main.py \
         --path config \
-        --secrets '{"APPLE_API_KEY_ID": "a-really-secret-value"}'
+        --secrets '{"APPLE_API_KEY_ID": "a-really-secret-value"}' \
         --deploy dev \
         --os macos \
 
