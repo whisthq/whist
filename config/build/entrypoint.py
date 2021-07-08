@@ -40,14 +40,9 @@ def actionify(name, data):
     return f"::set-output name={name}::{escaped}"
 
 
-# We're installing postgres-13 in our docker file. The version in the
-# command below needs to match.
-
-# These commands start a postgres server, creates two databases, and then
-# runs the arguments to this script as a process.
-
 # The fractal/config folder will get copied to /root inside the container.
 # We'll run the build/main.py and pass it the /root as the --path.
+# We pull any extra CLI arguments from sys.argv, and pass it to the subprocess.
 result = run(
     ["python", "/root/build/main.py", "--path", "/root", *argv[1:]],
     text=True,
@@ -61,12 +56,9 @@ if os.environ.get("CI"):
     # We're running in CI through a GitHub Action, which means we
     # won't be using the stdout from this process. We need to
     # print the special set-output string to use the result.
-    # This can also be done in a post-entrypoint.sh if these
-    # headers ever get in the way, but we keep it here now for
-    # simplicity.
     print(actionify("config", config))
 else:
-    # If we're not in CI, we may want to use the stdout directy,
+    # We're not in CI, and we may want to use the stdout directly,
     # so we won't print any headers.
     print(config)
 
