@@ -363,7 +363,7 @@ jobs:
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
               with:
-                  python-version: 3.8
+                  python-version: "3.8"
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
@@ -1021,7 +1021,7 @@ jobs:
             - name: Install Node.js 15
               uses: actions/setup-node@v2.2.0
               with:
-                  node-version: 15
+                  node-version: "15"
 
             # Necessary for Electron to upload packaged applications to AWS S3
             - name: Configure AWS S3 CLI
@@ -1328,7 +1328,7 @@ jobs:
             - name: Install Node.js 15
               uses: actions/setup-node@v2.2.0
               with:
-                  node-version: 15
+                  node-version: "15"
 
             - name: Install Development Dependencies
               working-directory: microservices/auth0

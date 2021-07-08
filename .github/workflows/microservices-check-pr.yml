@@ -83,7 +83,7 @@ jobs:
             - name: Install Node.js 15
               uses: actions/setup-node@v2.2.0
               with:
-                  node-version: 15
+                  node-version: "15"
 
             - name: Install Dependencies
               working-directory: microservices/auth0
