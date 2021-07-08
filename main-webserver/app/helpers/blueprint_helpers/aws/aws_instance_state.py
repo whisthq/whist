@@ -8,7 +8,7 @@ from app.models import (
 from app.helpers.utils.general.logs import fractal_logger
 from app.constants.instance_state_values import InstanceState
 
-MAX_POLL_ITERATIONS = 120
+MAX_POLL_ITERATIONS = 180
 POLL_SLEEP_INTERVAL = 5  # seconds
 
 
