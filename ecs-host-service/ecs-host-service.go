@@ -239,13 +239,19 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	}
 	logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
 
+	logger.Infof("Starting sleep to let Chrome warmup...")
 	time.Sleep(2 * time.Minute)
+	logger.Infof("Finished sleep to let Chrome warmup...")
 
 	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
 	}
 	logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
+
+	// Close, and wait 5 seconds so we don't pollute the logs with cleanup after the event loop starts.
+	fc.Close()
+	time.Sleep(5 * time.Second)
 
 	return nil
 }
