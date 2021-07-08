@@ -193,7 +193,10 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
+			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings:ro", containerName),
+			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
 			"/run/udev/data:/run/udev/data:ro",
+			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
 		},
 		CapDrop: strslice.StrSlice{"ALL"},
 		CapAdd: strslice.StrSlice([]string{
