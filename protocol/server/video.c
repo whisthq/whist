@@ -235,14 +235,6 @@ int32_t multithreaded_send_video(void* opaque) {
                 fractal_sleep(1);
             }
 
-            // If an encoder exists, then we should destroy it since
-            // a new capture device is being created
-            if (encoder) {
-                fractal_create_thread(multithreaded_destroy_encoder,
-                                      "multithreaded_destroy_encoder", encoder);
-                encoder = NULL;
-            }
-
             // Next, we should update our ffmpeg encoder
             update_encoder = true;
         }
