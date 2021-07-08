@@ -4,7 +4,7 @@ from app.models import RegionToAmi
 
 def get_random_regions(count=2):
     """
-    Returns a randomly picked region to AMI objects from RegionToAmi table 
+    Returns a randomly picked region to AMI objects from RegionToAmi table
     with ami_active flag marked as true
     Args:
         count: Number of random region objects to return
@@ -36,11 +36,11 @@ def get_random_region_names(count=2):
 
 def get_random_region_name():
     """
-        Returns a single randomly picked region name which has an active AMI
-        Args:
-            None
-        Returns:
-            A random region name or None
+    Returns a single randomly picked region name which has an active AMI
+    Args:
+        None
+    Returns:
+        A random region name or None
     """
     random_region = get_random_region_names(1)
     if random_region is not None:
