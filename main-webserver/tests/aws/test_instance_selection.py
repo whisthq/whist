@@ -3,52 +3,52 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance, b
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
-def test_empty_instances():
+def test_empty_instances(region_name):
     """
     Confirms that we don't find any instances on a fresh db
     """
-    assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
-def test_find_initial_instance(bulk_instance):
+def test_find_initial_instance(bulk_instance, region_name):
     """
     Confirms that we find an empty instance
     """
-    instance = bulk_instance(location="us-east-1")
-    assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    instance = bulk_instance(location=region_name)
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
-def test_find_part_full_instance(bulk_instance):
+def test_find_part_full_instance(bulk_instance, region_name):
     """
     Confirms that we find an in-use instance
     """
-    instance = bulk_instance(location="us-east-1", associated_mandelboxes=3)
-    assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    instance = bulk_instance(location=region_name, associated_mandelboxes=3)
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
-def test_find_part_full_instance_order(bulk_instance):
+def test_find_part_full_instance_order(bulk_instance, region_name):
     """
     Confirms that we find an in-use instance
     """
-    instance = bulk_instance(location="us-east-1", associated_mandelboxes=3)
-    _ = bulk_instance(location="us-east-1", associated_mandelboxes=2)
-    assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    instance = bulk_instance(location=region_name, associated_mandelboxes=3)
+    _ = bulk_instance(location=region_name, associated_mandelboxes=2)
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
-def test_no_find_full_instance(bulk_instance):
+def test_no_find_full_instance(bulk_instance, region_name):
     """
     Confirms that we don't find a full instance
     """
-    _ = bulk_instance(location="us-east-1", associated_mandelboxes=10)
-    assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    _ = bulk_instance(location=region_name, associated_mandelboxes=10)
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
-def test_no_find_full_small_instance(bulk_instance):
+def test_no_find_full_small_instance(bulk_instance, region_name):
     """
     Confirms that we don't find a full instance with <10 max
     """
-    _ = bulk_instance(location="us-east-1", mandelbox_capacity=5, associated_mandelboxes=5)
-    assert find_instance("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    _ = bulk_instance(location=region_name, mandelbox_capacity=5, associated_mandelboxes=5)
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
 @pytest.mark.parametrize(
