@@ -40,19 +40,25 @@ def test_parse_receives_args(mocker):
         config = str(tempdir.joinpath("config"))
 
         cli_result(cli, ["--path", config])
-        mock.assert_called_once_with(config, profiles=None, secrets=None)
+        mock.assert_called_once_with(config, profiles={}, secrets={})
         mock.reset_mock()
 
-        cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
+        cli_result(cli, ["--path", config, "--deploy", "dev"])
+        mock.assert_called_once_with(
+            config, profiles={"deploy": "dev"}, secrets={}
+        )
         mock.reset_mock()
 
-        cli_result(cli, ["--path", config, "--env", "dev"])
-        mock.assert_called_once_with(config, profiles={"env": "dev"}, secrets=None)
+        cli_result(cli, ["--path", config, "--deploy", "dev"])
+        mock.assert_called_once_with(
+            config, profiles={"deploy": "dev"}, secrets={}
+        )
         mock.reset_mock()
 
-        cli_result(cli, ["--path", config, "--env", "dev", "--os", "macos"])
-        mock.assert_called_once_with(config, profiles={"env": "dev", "os": "macos"}, secrets=None)
+        cli_result(cli, ["--path", config, "--deploy", "dev", "--os", "macos"])
+        mock.assert_called_once_with(
+            config, profiles={"deploy": "dev", "os": "macos"}, secrets={}
+        )
         mock.reset_mock()
 
         cli_result(
@@ -60,13 +66,11 @@ def test_parse_receives_args(mocker):
             [
                 "--path",
                 config,
-                "--out",
-                str(tempdir.joinpath("outfile")),
                 "--secrets",
                 json.dumps({"KEY": "secret001", "API": "secret002"}),
                 "--secrets",
                 json.dumps({"WEB": "secret003", "COM": "secret004"}),
-                "--env",
+                "--deploy",
                 "dev",
                 "--os",
                 "macos",
@@ -74,7 +78,7 @@ def test_parse_receives_args(mocker):
         )
         mock.assert_called_once_with(
             config,
-            profiles={"env": "dev", "os": "macos"},
+            profiles={"deploy": "dev", "os": "macos"},
             secrets={
                 "KEY": "secret001",
                 "API": "secret002",
@@ -83,35 +87,3 @@ def test_parse_receives_args(mocker):
             },
         )
         mock.reset_mock()
-
-
-def test_cli_out():
-    """Test that the --out parameter of the CLI writes the expected output
-    to file."""
-    cli = helpers.cli.create_cli(parse.parse)
-    with temporary_fs(mock_data.config_secrets_profiles_fs) as tempdir:
-        config = str(tempdir.joinpath("config"))
-        outfile = tempdir.joinpath("outfile")
-        expected = {
-            "URL": "http://url-dev.com",
-            "KEY": "secretKEY",
-            "API": "secretAPI",
-        }
-        assert expected == json.loads(
-            cli_result(
-                cli,
-                [
-                    "--path",
-                    config,
-                    "--out",
-                    outfile,
-                    "--env",
-                    "dev",
-                    "--secrets",
-                    json.dumps({"KEY": "secretKEY", "API": "secretAPI"}),
-                ],
-            )
-        )
-
-        with open(outfile) as f:
-            assert expected == json.load(f)

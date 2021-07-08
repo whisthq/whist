@@ -9,25 +9,25 @@ def test_validate_profiles():
     """Test the validation functions that verify the structure of a
     'profile map', which is a dictionary mapping of 'profiles'
     e.g.(macos, win32, linux) to config values e.g (mac.dmg, win.exe)"""
-    profile_map = {"env": ["b", "c"], "os": ["e", "f"]}
+    profile_map = {"deploy": ["b", "c"], "os": ["e", "f"]}
 
-    not_string = {"env": [1, 2], "os": "e"}
+    not_string = {"deploy": [1, 2], "os": "e"}
 
     assert valid.validate_profiles(
         profile_map, not_string
     ), "should fail if profile argument has non-string value"
 
-    not_in_map_keys = {"env": ["b", "c"], "badkey": ["e", "f"]}
+    not_in_map_keys = {"deploy": ["b", "c"], "badkey": ["e", "f"]}
     assert valid.validate_profiles(
         profile_map, not_in_map_keys
     ), "should fail if profile argument has key missing from profile.yml"
 
-    not_in_map_vals = {"env": "b", "os": "z"}
+    not_in_map_vals = {"deploy": "b", "os": "z"}
     assert valid.validate_profiles(
         profile_map, not_in_map_vals
     ), "should fail if profile argument has value missing from profile.yml"
 
-    good_profiles = {"env": "b", "os": "f"}
+    good_profiles = {"deploy": "b", "os": "f"}
 
     assert not valid.validate_profiles(
         profile_map, good_profiles
@@ -59,23 +59,25 @@ def test_validate_profile_yaml():
     """Test the validation functions that verify the structure of a
     'profile.yml', which is a the yaml file in the config folder that
     list valid profiles for config values."""
-    is_list = [{"env": ["b", "c"], "os": ["e", "f"]}]
+    is_list = [{"deploy": ["b", "c"], "os": ["e", "f"]}]
 
-    assert valid.validate_profile_yaml(is_list), "should fail if not a dictionary"
+    assert valid.validate_profile_yaml(
+        is_list
+    ), "should fail if not a dictionary"
 
-    not_str_list = {"env": ["b", [1, 2, 3]], "os": ["e", "f"]}
+    not_str_list = {"deploy": ["b", [1, 2, 3]], "os": ["e", "f"]}
 
     assert valid.validate_profile_yaml(
         not_str_list
     ), "should fail if a child key is not a list of strings"
 
-    not_str_value = {"env": ["b", 1], "os": ["e", "f"]}
+    not_str_value = {"deploy": ["b", 1], "os": ["e", "f"]}
 
     assert valid.validate_profile_yaml(
         not_str_value
     ), "should fail if a child key is not a list of strings"
 
-    duplicate_child_value = {"env": ["b", "c"], "os": ["b", "f"]}
+    duplicate_child_value = {"deploy": ["b", "c"], "os": ["b", "f"]}
 
     assert valid.validate_profile_yaml(
         duplicate_child_value
@@ -86,7 +88,7 @@ def test_validate_schema_yamls():
     """Test the validation functions that verify the structure of a
     '.yml' files in the config/schema folder, which is where config values
     are stored."""
-    profile_map = {"env": ["b", "c"], "os": ["e", "f"]}
+    profile_map = {"deploy": ["b", "c"], "os": ["e", "f"]}
     not_dict = [
         [{"a": {"b": {"c": 1}}, "d": {"e": 2}}],
         {"a": {"b": {"b": 1}}, "x": {"e": 2}},
@@ -100,7 +102,7 @@ def test_validate_schema_yamls():
         {"a": {"b": {"b": 1}}, "x": {"e": 2}},
     ]
     name_collision_parent = [
-        {"env": {"b": {"c": 1}}, "d": {"e": 2}},
+        {"deploy": {"b": {"c": 1}}, "d": {"e": 2}},
         {"a": {"b": {"b": 1}}, "x": {"e": 2}},
     ]
 
