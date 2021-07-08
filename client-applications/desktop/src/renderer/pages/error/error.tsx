@@ -111,7 +111,7 @@ export const TwoButtonError = (props: {
         />
       </div>
       <button
-        className="mx-auto mb-9 py-2 bg-none border-none text-gray outline-none"
+        className="mx-auto mb-6 py-2 bg-none border-none text-gray outline-none"
         onClick={props.onSecondary}
         style={{ outline: "none" }}
       >
