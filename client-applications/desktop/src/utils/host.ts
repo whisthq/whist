@@ -20,9 +20,9 @@ import { appEnvironment, FractalEnvironments } from "../../config/configs"
 const imageEnv = () => {
     switch (appEnvironment) {
         case FractalEnvironments.LOCAL:
-            return "dev"
+            return "project-aws-refactor"
         case FractalEnvironments.DEVELOPMENT:
-            return "dev"
+            return "project-aws-refactor"
         case FractalEnvironments.STAGING:
             return "staging"
         case FractalEnvironments.PRODUCTION:
