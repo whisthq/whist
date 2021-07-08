@@ -24,8 +24,8 @@ Any additional arguments will be passed on to the Python CLI for the configurati
 # View CLI documentation and options.
 docker run fractal/config --help
 
-# Flatten config to use macos values.
-docker run fractal/config --os macos
+# Flatten config to use macos + dev values.
+docker run fractal/config --os macos --deploy dev
 ```
 
 You can override the `--entrypoint` to inspect the container or to run tests.
