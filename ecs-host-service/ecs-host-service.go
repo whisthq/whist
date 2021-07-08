@@ -84,7 +84,9 @@ func createDockerClient() (*dockerclient.Client, error) {
 }
 
 // "Warm up" Docker. This is necessary because for some reason the first
-// ContainerStart call by the host service is taking over a minute.
+// ContainerStart call by the host service is taking over a minute. Note that
+// this doesn't seem to be happening on personal instances, only
+// dev/staging/prod ones.
 // TODO: figure out the root cause of this
 // Note that we also need to "warm up" Chrome --- for some reason Chrome in the
 // first container on a host is taking almost two minutes to start up and
@@ -705,10 +707,8 @@ func main() {
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
-	if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
-		if metadata.IsLocalEnv() {
-			logger.Errorf("Error warming up docker client (nonfatal because we are running locally): %s", err)
-		} else {
+	if !metadata.IsLocalEnv() {
+		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
 			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
 		}
 	}
