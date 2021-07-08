@@ -35,10 +35,6 @@ jobs:
             - name: Install Prettier
               run: npm install -g prettier
 
-            - name: Check if Workflows are Formatted
-              working-directory: .github/workflows
-              run: prettier --check "*.{yml,yaml}" # workflows have to be in /workflows folder
-
-            - name: Check if Actions are Formatted
-              working-directory: .github/actions
+            - name: Check Workflow and Action formatting
+              working-directory: .github
               run: prettier --check "**/*.{yml,yaml}"
