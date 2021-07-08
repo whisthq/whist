@@ -2,6 +2,32 @@
 
 This folder contains common configuration values that can be re-used across our monorepo.
 
+## How to run the config builder
+
+The whole config process is containerized, so you'll need Docker installed. The commands below assume a working directory of `config`, which is the same folder as this README.
+
+First, build the image with the tag `fractal/config`.
+
+```sh
+docker build --tag fractal/config .
+```
+
+Then, run the configuration builder. You should expect to see the config map printed to stdout as a large JSON object.
+
+```sh
+docker run fractal/config
+```
+
+Any additional arguments will be passed on to the Python CLI for the configuration builder.
+
+```sh
+# View CLI documentation and options.
+docker run fractal/config --help
+
+# Flatten config to use macos values.
+docker run fractal/config --os macos
+```
+
 ## How config works
 
 All the common monorepo configuration is stored in the top-level `/config` folder. We use YAML for our configuration schema, with the schema files located in `/config/schema`. These YAML files are parsed by this program, and transformed into a JSON string containing a single flattened dictionary.
