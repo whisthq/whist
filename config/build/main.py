@@ -17,4 +17,4 @@ if __name__ == "__main__":
     # We create and call the CLI in two steps for testing purposes. It allows
     # us to pass a mock parse function in our unit tests.
     cli = create_cli(parse)
-    cli(None)  # Pass an argument to quiet the linter. It's ignored.
+    cli()
