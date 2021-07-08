@@ -28,6 +28,19 @@ docker run fractal/config --help
 docker run fractal/config --os macos
 ```
 
+You can override the `--entrypoint` to inspect the container or to run tests.
+
+```sh
+# Enter into a bash shell.
+docker run -it --entrypoint /bin/bash fractal/config
+
+# Run tests using pytest.
+# Note that the config folder is copied over to /root inside the container.
+# We pass to "pytest" the path of the /root/build folder as an argument.
+# Docker syntax requires entrypoint arguments to follow the image name.
+docker run --entrypoint pytest fractal/config /root/build
+```
+
 ## How config works
 
 All the common monorepo configuration is stored in the top-level `/config` folder. We use YAML for our configuration schema, with the schema files located in `/config/schema`. These YAML files are parsed by this program, and transformed into a JSON string containing a single flattened dictionary.
