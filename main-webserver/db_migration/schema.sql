@@ -101,7 +101,7 @@ CREATE FUNCTION hardware.change_trigger() RETURNS trigger
                 TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW)
               );
            RETURN NEW;
-         ELSIF  TG_OP = 'UPDATE'
+         ELSIF  TG_OP = 'UPDATE' AND NEW.status <> OLD.status
          THEN
            INSERT INTO logging.t_instance_history (
              tabname, schemaname, operation, new_val, old_val
