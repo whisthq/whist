@@ -8,6 +8,7 @@ from app.models import SupportedAppImages
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from tests.helpers.utils import get_random_region_name
 
 
 @pytest.mark.usefixtures("authorized")
@@ -44,7 +45,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     )
 
     args = {
-        "region": "us-east-1",
+        "region": get_random_region_name(),
         "username": "test@fractal.co",
         "dpi": 96,
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
@@ -71,7 +72,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     )
 
     args = {
-        "region": "us-east-1",
+        "region": get_random_region_name(),
         "username": "test@fractal.co",
         "dpi": 96,
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
@@ -91,10 +92,11 @@ def test_client_commit_hash_local_dev_override_fail(
     """
 
     override_environment(PRODUCTION)
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
+    region_name = get_random_region_name()
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_name)
 
     args = {
-        "region": "us-east-1",
+        "region": region_name,
         "username": "test@fractal.co",
         "dpi": 96,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
@@ -114,10 +116,11 @@ def test_client_commit_hash_local_dev_override_success(
     """
 
     override_environment(DEVELOPMENT)
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
+    region_name = get_random_region_name()
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_name)
 
     args = {
-        "region": "us-east-1",
+        "region": region_name,
         "username": "test@fractal.co",
         "dpi": 96,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
@@ -144,7 +147,7 @@ def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed)
         json={
             "username": user,
             "app": "Google Chrome",
-            "region": "us-east-1",
+            "region": get_random_region_name(),
         },
     )
 
