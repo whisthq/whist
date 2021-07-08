@@ -86,7 +86,16 @@ func createDockerClient() (*dockerclient.Client, error) {
 // "Warm up" Docker. This is necessary because for some reason the first
 // ContainerStart call by the host service is taking over a minute.
 // TODO: figure out the root cause of this
-func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) error {
+// Note that we also need to "warm up" Chrome --- for some reason Chrome in the
+// first container on a host is taking almost two minutes to start up and
+// register itself as an X client at the moment. Therefore, we need to write
+// the resources for the protocol in this function too.
+// TODO: figure out the root cause of this too
+// I'd really like to get to the root causes of these issues to avoid the code
+// duplication between this function and SpinUpMandelbox. It doesn't make sense
+// to pollute the code in that function with a flag for warming up, so we have
+// to live with this duplication until we can find and solve the root cause.
+func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, client *dockerclient.Client) error {
 	imageFilters := dockerfilters.NewArgs(
 		dockerfilters.KeyValuePair{Key: "dangling", Value: "false"},
 	)
@@ -136,6 +145,22 @@ func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) 
 	// At this point, we've found an image, so we just need to start the container.
 
 	containerName := "host-service-warmup"
+	fc := mandelbox.New(globalCtx, goroutineTracker, types.MandelboxID(containerName))
+	defer fc.Close()
+
+	// Assign port bindings for the mandelbox (necessary for `fc.WriteResourcesForProtocol()`)
+	if err := fc.AssignPortBindings([]portbindings.PortBinding{
+		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+	}); err != nil {
+		return utils.MakeError("Error assigning port bindings: %s", err)
+	}
+
+	// Allocate a TTY
+	if err := fc.InitializeTTY(); err != nil {
+		return utils.MakeError("Error initializing TTY: %s", err)
+	}
 
 	config := dockercontainer.Config{
 		Env: []string{
@@ -204,13 +229,17 @@ func warmUpDockerClient(globalCtx context.Context, client *dockerclient.Client) 
 	}
 	logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
 
+	if err := fc.WriteResourcesForProtocol(); err != nil {
+		return utils.MakeError("Error writing resources for protocol: %s", err)
+	}
+
 	err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
 	if err != nil {
 		return utils.MakeError("Error running `docker start` for %s:\n%s", containerName, err)
 	}
 	logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(2 * time.Minute)
 
 	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
 	if err != nil {
@@ -670,7 +699,7 @@ func main() {
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
-	if err := warmUpDockerClient(globalCtx, dockerClient); err != nil {
+	if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
 		if metadata.IsLocalEnv() {
 			logger.Errorf("Error warming up docker client (nonfatal because we are running locally): %s", err)
 		} else {
