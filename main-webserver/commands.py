@@ -47,8 +47,8 @@ def ami_upgrade(
     perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
 
 
-# This function upgrades the AMIs for given client hash and the region.
-# Can be invoked through `flask command ami_upgrade <client_commit_hash> <region_to_ami_id_mapping_str>`
+# This function generates data required for running the test cases and populates it in the database.
+# Can be invoked through `flask command generate_test_data`
 @command_bp.cli.command("generate_test_data")
 def _generate_test_data():
     """
