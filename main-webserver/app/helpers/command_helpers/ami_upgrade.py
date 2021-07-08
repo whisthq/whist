@@ -139,18 +139,18 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     return job_status
 
 
-def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo]:
+def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[InstanceInfo]:
     """
     Fetches the instances that are either
         ACTIVE - Instances that were launched and have potentially users running their applications on it.
         PRE_CONNECTION - Instances that are launched few instants ago but haven't
                         marked themselves active in the database through host service.
     Args:
-        active_amis -> List of active AMIs before the upgrade started. We will be using this list to differntiate
+        amis_to_exclude -> List of new AMIs from this upgrade. We will be using this list to differentiate
         between the instances launched from new AMIs that we are going to upgrade to and the current/older AMIs.
         We can just mark all the running instances as DRAINING before we start the instances with new AMI but that
         is going to increase the length of our unavailable window for users. This reduces the window by the time
-        it takes to spin up an AWS instance which can be anywhere from seconds to few minutes.
+        it takes to spin up and warm up an AWS instance, which can be several minutes.
     Returns:
         List[InstanceInfo] -> List of instances that are currently running.
     """
@@ -162,7 +162,7 @@ def fetch_current_running_instances(active_amis: List[str]) -> List[InstanceInfo
                     InstanceInfo.status.like(InstanceState.ACTIVE),
                     InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
                 ),
-                InstanceInfo.aws_ami_id.in_(active_amis),
+                InstanceInfo.aws_ami_id.not_in(amis_to_exclude),
             )
         )
         .with_for_update()
@@ -251,12 +251,12 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
         # If any thread here failed, fail the workflow
         raise Exception("AMIS failed to upgrade, see logs")
 
-    current_active_amis_str = [
-        current_active_ami.ami_id for current_active_ami in current_active_amis
-    ]  # Fetching the AMI strings for instances running with current/older AMIs.
+    new_amis_str = [
+        new_ami.ami_id for new_ami in new_amis
+    ]  # Fetching the AMI strings for instances running with new AMIs.
     # This will be used to select only the instances with current/older AMIs
 
-    current_running_instances = fetch_current_running_instances(current_active_amis_str)
+    current_running_instances = fetch_current_running_instances(new_amis_str)
     for active_instance in current_running_instances:
         # At this point, we should still have the lock that we grabbed when we
         # invoked the `fetch_current_running_instances` function. Using this
