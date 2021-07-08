@@ -1,10 +1,9 @@
 from random import sample
-import re
 from app.models import RegionToAmi
 
 
 def get_random_regions(count=2):
-    all_regions = RegionToAmi.query.filter().all()
+    all_regions = RegionToAmi.query.filter_by(ami_active=True).all()
     if len(all_regions) >= count:
         randomly_picked_regions = sample(all_regions, k=count)
         return randomly_picked_regions
@@ -26,7 +25,6 @@ def get_random_region_names(count=2):
 
 def get_random_region_name():
     random_region = get_random_region_names(1)
-    print(random_region)
     if random_region is not None:
         return random_region[0]
     else:

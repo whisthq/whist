@@ -90,7 +90,7 @@ def test_rate_limiter(client):
     assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
-def test_local_lock_timeout(app):
+def test_local_lock_timeout(app, region_name):
     """
     Test the function `set_local_lock_timeout` by running concurrent threads that try to grab
     the lock. One should time out.
@@ -101,7 +101,7 @@ def test_local_lock_timeout(app):
             with app.app_context():
                 set_local_lock_timeout(lock_timeout)
                 _ = RegionToAmi.query.with_for_update().get(
-                    ("us-east-1", CLIENT_COMMIT_HASH_FOR_TESTING)
+                    (region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
                 )
                 fractal_logger.info("Got lock and data")
                 time.sleep(hold_time)
