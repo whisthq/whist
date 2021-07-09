@@ -212,25 +212,27 @@ if __name__ == "__main__":
         ensure_root_privileges()
         ensure_host_service_is_running()
 
-    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
-
-    if local_host_service:
         # This is running locally on the same machine as the host service, so
         # we can safely use the Docker client and copy files to the mandelbox.
         docker_client = docker.from_env()
 
+        if args.update_protocol:
+            init_mandelbox = docker_client.containers.create(image=args.image, auto_remove=True)
+            copy_locally_built_protocol(init_mandelbox)
+            args.image = f"{args.image}-updated-protocol"
+            init_mandelbox.commit(args.image)
+
+    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
+
+    if local_host_service:
         # Find the Container object corresponding to the container that was just created
         matching_containers = docker_client.containers.list(
             filters={
                 "publish": f"{host_ports.host_port_32262tcp}/tcp",
             }
         )
-
         assert len(matching_containers) == 1
         container = matching_containers[0]
-
-        if args.update_protocol:
-            copy_locally_built_protocol(container)
 
     print(
         f"""Successfully started mandelbox with identifying hostPort {host_ports.host_port_32262tcp}.
