@@ -201,7 +201,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_CREATE_CAPTURE_SESSION_PARAMS create_capture_params = {0};
     NVFBC_SIZE frame_size = {0, 0};
     create_capture_params.dwVersion = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
-    create_capture_params.eCaptureType = NVFBC_CAPTURE_TO_GL;
+    create_capture_params.eCaptureType = NVFBC_CAPTURE_TO_CUDA;
     create_capture_params.bWithCursor = NVFBC_FALSE;
     create_capture_params.frameSize = frame_size;
     create_capture_params.bRoundFrameSize = NVFBC_TRUE;
@@ -217,11 +217,11 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     /*
      * Set up the capture session.
      */
-    memset(&device->togl_setup_params, 0, sizeof(device->togl_setup_params));
-    device->togl_setup_params.dwVersion = NVFBC_TOGL_SETUP_PARAMS_VER;
-    device->togl_setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
+    NVFBC_TOCUDA_SETUP_PARAMS setup_params = {0};
+    setup_params.dwVersion = NVFBC_TOCUDA_SETUP_PARAMS_VER;
+    setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
 
-    status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &device->togl_setup_params);
+    status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, setup_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
@@ -247,10 +247,10 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     t1 = NvFBCUtilsGetTimeInMillis();
 #endif
 
-    NVFBC_TOGL_GRAB_FRAME_PARAMS grab_params = {0};
+    NVFBC_TOCUDA_GRAB_FRAME_PARAMS grab_params = {0};
     NVFBC_FRAME_GRAB_INFO frame_info = {0};
 
-    grab_params.dwVersion = NVFBC_TOGL_GRAB_FRAME_PARAMS_VER;
+    grab_params.dwVersion = NVFBC_TOCUDA_GRAB_FRAME_PARAMS_VER;
 
     /*
      * Use blocking calls.
@@ -258,7 +258,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      * The application will wait for new frames.  New frames are generated
      * when the mouse cursor moves or when the screen if refreshed.
      */
-    grab_params.dwFlags = NVFBC_TOGL_GRAB_FLAGS_NOWAIT;
+    grab_params.dwFlags = NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT;
 
     /*
      * This structure will contain information about the captured frame.
@@ -288,14 +288,13 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     /*
      * Capture a new frame.
      */
-    status = device->p_fbc_fn.nvFBCToGLGrabFrame(device->fbc_handle, &grab_params);
+    status = device->p_fbc_fn.nvFBCToCudaGrabFrame(device->fbc_handle, &grab_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
 
-    device->dw_texture = device->togl_setup_params.dwTextures[grab_params.dwTextureIndex];
-    device->dw_tex_target = device->togl_setup_params.dwTexTarget;
+    device->p_gpu_texture = grab_params.pCUDADeviceBuffer;
 
     // If the frame isn't new, just return 0
     if (!frame_info.bIsNewFrame) {

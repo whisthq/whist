@@ -27,19 +27,14 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_texture,
-                                        uint32_t dw_tex_target, int width, int height) {
-    NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params = {0};
-    tex_params.texture = dw_texture;
-    tex_params.target = dw_tex_target;
-
+NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, void* p_gpu_texture, int width, int height) {
     NV_ENC_REGISTER_RESOURCE register_params = {0};
     register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
-    register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_OPENGL_TEX;
+    register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_CUDADEVICEPTR;
     register_params.width = width;
     register_params.height = height;
     register_params.pitch = width;
-    register_params.resourceToRegister = &tex_params;
+    register_params.resourceToRegister = p_gpu_texture;
     register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
 
     NVENCSTATUS status =
@@ -117,7 +112,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
 
     encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     encode_session_params.apiVersion = NVENCAPI_VERSION;
-    encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_OPENGL;
+    encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
 
     status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params,
                                                         &encoder->internal_nvidia_encoder);
@@ -176,7 +171,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture,
                                 int width, int height) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
@@ -191,7 +186,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uin
     for (int i = 0; i < cache_size; i++) {
         InputBufferCacheEntry resource = encoder->registered_resources[i];
         // We include a check against registered_resource NULL for validity
-        if (resource.dw_texture == dw_texture && resource.dw_tex_target == dw_tex_target &&
+        if (resource.p_gpu_texture == p_gpu_texture &&
             resource.width == width && resource.height == height &&
             resource.registered_resource != NULL) {
             encoder->registered_resource = resource.registered_resource;
@@ -211,14 +206,13 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uin
     // Invalidate the 0th resource, since it was moved to index 1
     encoder->registered_resources[0].registered_resource = NULL;
     NV_ENC_REGISTERED_PTR registered_resource =
-        register_resource(encoder, dw_texture, dw_tex_target, width, height);
+        register_resource(encoder, p_gpu_texture, width, height);
     if (registered_resource == NULL) {
         LOG_ERROR("Failed to register resource!");
         return -1;
     }
     // Overwrite the 0th resource with the newly registered resource
-    encoder->registered_resources[0].dw_texture = dw_texture;
-    encoder->registered_resources[0].dw_tex_target = dw_tex_target;
+    encoder->registered_resources[0].p_gpu_texture = p_gpu_texture;
     encoder->registered_resources[0].width = width;
     encoder->registered_resources[0].height = height;
     encoder->registered_resources[0].registered_resource = registered_resource;

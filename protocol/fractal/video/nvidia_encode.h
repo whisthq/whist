@@ -9,9 +9,8 @@ typedef struct {
     // Width+Height of the GPU Texture
     int width;
     int height;
-    // GPU pointers to the GPU texture
-    uint32_t dw_texture;
-    uint32_t dw_tex_target;
+    // GPU pointer to the GPU texture
+    void* p_gpu_texture;
     // Encoder's pointer to the GPU texture,
     // so that the encoder can borrow that texture
     // This has to be generated from the above 4,
@@ -81,8 +80,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
-                                int width, int height);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture, int width, int height);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,
