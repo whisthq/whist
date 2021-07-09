@@ -35,6 +35,7 @@ Includes
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>
+#include <fractal/utils/log_statistic.h>
 #include <fractal/utils/error_monitor.h>
 #include "sdlscreeninfo.h"
 #include "audio.h"
@@ -730,6 +731,7 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
     init_logger();
+    init_statistic_logger();
 
     handle_single_icon_launch_client_app(argc, argv);
 

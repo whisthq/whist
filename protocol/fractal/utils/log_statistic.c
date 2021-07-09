@@ -25,7 +25,9 @@ Includes
 
 #define MAX_DIFFERENT_STATISTICS 64
 #define MAX_KEY_LENGTH 128
-#define PRINTING_FREQUENCY_IN_SEC 5
+#define PRINTING_FREQUENCY_IN_SEC 10
+
+#define LOG_STATISTICS true
 
 static FractalMutex log_statistic_mutex;
 
@@ -62,6 +64,7 @@ Private Function Implementations
 */
 
 void unsafe_print_statistics() {
+#ifdef LOG_STATISTICS
     if (all_statistics[0].count == 0) {
         // There are no statistics to print currently
         fractal_unlock_mutex(log_statistic_mutex);
@@ -80,6 +83,7 @@ void unsafe_print_statistics() {
     }
 
     start_timer(&print_statistic_clock);
+#endif
 }
 
 /*
