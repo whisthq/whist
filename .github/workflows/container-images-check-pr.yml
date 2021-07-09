@@ -29,10 +29,6 @@ jobs:
               uses: actions/checkout@v2
 
             # Start from top-level folder to use .hadolint.yaml config
-            - name: Check if Development Dockerfiles Follow Hadolint Standards
-              run: hadolint ./**/*Dockerfile
-
-            # Start from top-level folder to use .hadolint.yaml config
             - name: Check if Container Images Dockerfiles Follow Hadolint Standards
               run: |
                   hadolint ./container-images/*/Dockerfile.20
