@@ -46,8 +46,6 @@ fi
 function cleanup {
     echo "cleanup() called! Shutting down the mandelbox..."
 
-    sleep 100
-
     # Make sure we shutdown the mandelbox when this script exits
     sudo shutdown now
 }
@@ -78,6 +76,7 @@ done
 
 echo "Done sleeping until there are X clients..."
 echo "done" > $FRACTAL_MAPPINGS_DIR/done_sleeping_until_X_clients
+sync
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
