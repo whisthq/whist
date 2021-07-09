@@ -372,7 +372,6 @@ int multithreaded_manage_clients(void *opaque) {
 
     connection_id = rand();
 
-    double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
     bool disable_timeout = false;
     if (begin_time_to_exit ==
@@ -401,22 +400,9 @@ int multithreaded_manage_clients(void *opaque) {
             // We don't place this in a lock because:
             //  * if the first client connects right on the threshold of begin_time_to_exit, it
             //  doesn't matter if we disconnect
-            //  * if a new client connects right on the threshold of nongraceful_grace_period, it
-            //  doesn't matter if we disconnect
-            //  * if no clients are connected, it isn't possible for another client to nongracefully
-            //  exit and reset the grace period timer
             if (!disable_timeout &&
-                (first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
-                (!client_exited_nongracefully ||
-                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period))) {
+                (first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit))) {
                 exiting = true;
-            }
-        } else {
-            // nongraceful client grace period has ended, but clients are
-            //  connected still - we don't want server to exit yet
-            if (client_exited_nongracefully &&
-                get_timer(last_nongraceful_exit) > nongraceful_grace_period) {
-                client_exited_nongracefully = false;
             }
         }
 
@@ -469,15 +455,6 @@ int multithreaded_manage_clients(void *opaque) {
         if (clients[client_id].is_controlling) {
             // Reset input system when a new input controller arrives
             reset_input();
-        }
-
-        // reapTimedOutClients is called within a writeLock(&is_active_rwlock) and therefore this
-        // should as well
-        //  reapTimedOutClients only ever writes client_exited_nongracefully as true. This thread
-        //  only writes it as false.
-        if (client_exited_nongracefully &&
-            (get_timer(last_nongraceful_exit) > nongraceful_grace_period)) {
-            client_exited_nongracefully = false;
         }
 
         start_timer(&(clients[client_id].last_ping));

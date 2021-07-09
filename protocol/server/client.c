@@ -28,10 +28,6 @@ int num_controlling_clients = 0;
 int num_active_clients = 0;
 int host_id = -1;
 
-volatile bool client_exited_nongracefully =
-    false;  // set to true after a nongraceful exit (only exit logic can set to false)
-volatile clock last_nongraceful_exit;  // start this after every nongraceful exit
-
 /*
 ============================
 Public Functions
@@ -183,9 +179,6 @@ int reap_timed_out_clients(double timeout) {
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active && get_timer(clients[id].last_ping) > timeout) {
             LOG_INFO("Dropping client ID: %d", id);
-            // indicate that a client has exited nongracefully and is being reaped
-            client_exited_nongracefully = true;
-            start_timer((clock *)&last_nongraceful_exit);
             if (quit_client(id) != 0) {
                 LOG_ERROR("Failed to quit client. (ID: %d)", id);
                 ret = -1;
