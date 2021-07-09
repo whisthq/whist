@@ -265,6 +265,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	}
 	logger.Infof("Finished waiting for fractal application to warm up.")
 
+	time.Sleep(30 * time.Second)
+
 	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
