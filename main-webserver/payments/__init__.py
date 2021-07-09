@@ -100,7 +100,7 @@ def payment_required(view_func):
         start_time = time() * 1000
         verify_jwt_in_request()
 
-        if not has_scope("admin"):
+        if not has_scope("admin") and current_app.config["ENVIRONMENT"] != "development":
             check_payment()
 
         # Note that this uses print since we don't want to import fractal_logger
