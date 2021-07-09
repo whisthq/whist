@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Usage: ./build_container_image.py [image_paths...] [-o] [--all]
 # If -o is passed in, docker build will output to standard output
 # If --all is passed in, all image paths in the repo will be built
