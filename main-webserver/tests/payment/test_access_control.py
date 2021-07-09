@@ -26,6 +26,7 @@ def app():
     _app.test_client_class = FractalAPITestClient
     _app.config["JWT_SECRET_KEY"] = "secret"
     _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.fractal.co/stripe_customer_id"
+    _app.config["ENVIRONMENT"] = "TESTING"
 
     @_app.errorhandler(PaymentRequired)
     def _handle_payment_required(_error):
