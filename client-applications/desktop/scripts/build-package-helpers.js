@@ -228,6 +228,14 @@ module.exports = {
         }
     },
 
+    // Function that removes env_overrides.json. It is used after the packaging
+    // process is complete to prevent environment pollution of future builds and
+    // `yarn start` events.
+    removeEnvOverridesFile: () => {
+        console.log(`Removing file ${envOverrideFile}`)
+        rimrafSync(envOverrideFile)
+    },
+
     // Function that stores the provided environment variables as key:value pairs
     // in `env_overrides.json`. This function is used to populate the client app
     // configuration with secrets we don't want to store in version control.
