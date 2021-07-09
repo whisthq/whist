@@ -543,7 +543,6 @@ jobs:
             ]
         concurrency: main-webserver-update-fractal-services-${{ github.ref }}
         if: always() && (needs.mandelboxes-and-ami-publish-ghcr-and-aws.result == 'success')
-        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -644,6 +643,14 @@ jobs:
 
             - name: Notify Slack that AMI upgrade has failed
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'failure')
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
                   BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to upgrade AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
