@@ -76,7 +76,7 @@ done
 
 echo "Done sleeping until there are X clients..."
 echo "done" > $FRACTAL_MAPPINGS_DIR/done_sleeping_until_X_clients
-sync
+sync # Necessary so that even if the container exits very soon the host service sees the file written.
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"

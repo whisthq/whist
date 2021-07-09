@@ -114,6 +114,9 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// Note: the following code is theoretically inefficient but practically good
 	// enough, since our data is small and this function is only run once.
 
+	// Note that the first image in this list appears on local machines but not
+	// dev/staging/prod ones, so we can use the same regex list in all
+	// environments.
 	regexes := []string{
 		`fractal/browsers/chrome:current-build`,
 		`ghcr.io/fractal/*/browsers/chrome:current-build`,
