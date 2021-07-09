@@ -49,7 +49,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--no-verify-tls",
-    action="store-true",
+    action="store_true",
     help=(
         "This flag skips TLS verification for requests to the host service. Not "
         "passing this flag means that this script will verify against the "
