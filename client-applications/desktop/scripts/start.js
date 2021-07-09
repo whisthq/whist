@@ -6,7 +6,10 @@ const yargs = require("yargs")
 const start = (env, ..._args) => {
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
+
   helpers.snowpackDev({ ...env, VERSION: helpers.getCurrentClientAppVersion() })
+
+  helpers.removeEnvOverridesFile()
 }
 
 module.exports = start
