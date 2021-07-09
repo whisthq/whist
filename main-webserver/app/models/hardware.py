@@ -82,6 +82,7 @@ class InstancesWithRoomForMandelboxes(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_name = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250), nullable=False)
+    commit_hash = db.Column(db.String(40), nullable=False)
     aws_ami_id = db.Column(db.String(250), nullable=False)
     mandelbox_capacity = db.Column(db.Integer)
     num_running_mandelboxes = db.Column(db.Integer)

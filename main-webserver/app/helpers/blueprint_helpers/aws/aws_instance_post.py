@@ -6,6 +6,7 @@ from sys import maxsize
 from typing import List, Optional
 import requests
 from flask import current_app
+from sqlalchemy import and_
 from app.models.hardware import (
     db,
     InstanceSorted,
@@ -59,32 +60,47 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     Returns: either a good instance name or None
 
     """
-    # 5sec arbitrarily decided as sufficient timeout when using with_for_update
-    set_local_lock_timeout(5)
-    avail_instance: Optional[InstanceSorted] = (
-        InstanceSorted.query.filter_by(location=region, commit_hash=client_commit_hash)
+    regions_to_search = bundled_region.get(region, []) + [region]
+    # InstancesWithRoomForMandelboxes is sorted in DESC with number of mandelboxes running, So doing a
+    # query with limit of 1 returns the instance with max occupancy which can improve resource utilization.
+    instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
+        InstancesWithRoomForMandelboxes.query.filter_by(
+            commit_hash=client_commit_hash, location=region
+        )
         .limit(1)
-        .with_for_update(skip_locked=True)
         .one_or_none()
     )
-    if avail_instance is None:
-        # check each replacement region for available mandelboxes
-        for bundlable_region in bundled_region.get(region, []):
-            # 5sec arbitrarily decided as sufficient timeout when using with_for_update
-            set_local_lock_timeout(5)
-            avail_instance = (
-                InstanceSorted.query.filter_by(
-                    location=bundlable_region, commit_hash=client_commit_hash
-                )
-                .limit(1)
-                .with_for_update(skip_locked=True)
-                .one_or_none()
+    if instance_with_max_mandelboxes is None:
+        # If we are unable to find the instance in the required region, let's try to find an instance in nearby AZ
+        # that doesn't impact the user experience too much.
+        instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
+            InstancesWithRoomForMandelboxes.query.filter(
+                InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
             )
-            if avail_instance is not None:
-                break
-    if avail_instance is None:
-        return avail_instance
-    return avail_instance.instance_name
+            .filter_by(commit_hash=client_commit_hash)
+            .limit(1)
+            .one_or_none()
+        )
+    if instance_with_max_mandelboxes is None:
+        return None
+    else:
+        # 5sec arbitrarily decided as sufficient timeout when using with_for_update
+        set_local_lock_timeout(5)
+        # We are locking InstanceSorted row to ensure that we are not assigning a user/mandelbox
+        # to an instance that might be marked as DRAINING. With the locking, the instance will be
+        # marked as DRAINING after the assignment is complete but not during the assignment.
+        avail_instance: Optional[InstanceSorted] = (
+            InstanceSorted.query.filter_by(
+                instance_name=instance_with_max_mandelboxes.instance_name
+            )
+            .with_for_update(skip_locked=True)
+            .one_or_none()
+        )
+        # The instance that was available earlier might be lost before we try to grab a lock.
+        if avail_instance is None:
+            return None
+        else:
+            return avail_instance.instance_name
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
