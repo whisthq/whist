@@ -125,11 +125,11 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
      */
     GLXContext glx_ctx;
     GLXFBConfig glx_fb_config;
-    NVFBC_BOOL fbc_bool = gl_init(&glx_ctx, &glx_fb_config);
-    if (fbc_bool != NVFBC_TRUE) {
-        LOG_ERROR("Failed to initialized OpenGL!");
-        return -1;
-    }
+    // NVFBC_BOOL fbc_bool = gl_init(&glx_ctx, &glx_fb_config);
+    // if (fbc_bool != NVFBC_TRUE) {
+    //    LOG_ERROR("Failed to initialized OpenGL!");
+    //    return -1;
+    //}
 
     /*
      * Create an NvFBC instance.
@@ -150,9 +150,6 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
      */
     NVFBC_CREATE_HANDLE_PARAMS create_handle_params = {0};
     create_handle_params.dwVersion = NVFBC_CREATE_HANDLE_PARAMS_VER;
-    create_handle_params.bExternallyManagedContext = NVFBC_TRUE;
-    create_handle_params.glxCtx = glx_ctx;
-    create_handle_params.glxFBConfig = glx_fb_config;
 
     status = device->p_fbc_fn.nvFBCCreateHandle(&device->fbc_handle, &create_handle_params);
     if (status != NVFBC_SUCCESS) {
@@ -171,7 +168,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 
     status = device->p_fbc_fn.nvFBCGetStatus(device->fbc_handle, &status_params);
     if (status != NVFBC_SUCCESS) {
-        LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        LOG_ERROR("Nvidia Error: %d %s", status,
+                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
 
@@ -201,7 +199,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_CREATE_CAPTURE_SESSION_PARAMS create_capture_params = {0};
     NVFBC_SIZE frame_size = {0, 0};
     create_capture_params.dwVersion = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
-    create_capture_params.eCaptureType = NVFBC_CAPTURE_TO_CUDA;
+    create_capture_params.eCaptureType = NVFBC_CAPTURE_SHARED_CUDA;
     create_capture_params.bWithCursor = NVFBC_FALSE;
     create_capture_params.frameSize = frame_size;
     create_capture_params.bRoundFrameSize = NVFBC_TRUE;
@@ -210,7 +208,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 
     status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (status != NVFBC_SUCCESS) {
-        LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        LOG_ERROR("Nvidia Error: %d %s", status,
+                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
 
@@ -221,9 +220,10 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     setup_params.dwVersion = NVFBC_TOCUDA_SETUP_PARAMS_VER;
     setup_params.eBufferFormat = NVFBC_BUFFER_FORMAT_NV12;
 
-    status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, setup_params);
+    status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, &setup_params);
     if (status != NVFBC_SUCCESS) {
-        LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        LOG_ERROR("Nvidia Error: %d %s", status,
+                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
 
