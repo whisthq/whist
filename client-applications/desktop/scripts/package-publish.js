@@ -37,6 +37,8 @@ const packageNotarize = (env, version, environment, commit) => {
   }
 
   helpers.electronPublish(getBucketName())
+
+  helpers.removeEnvOverridesFile()
 }
 
 module.exports = packageNotarize

@@ -24,6 +24,8 @@ const packageNotarize = (env, version, commit, ..._args) => {
 
   helpers.snowpackBuild({ ...env, VERSION: version, COMMIT_SHA: commit })
   helpers.electronBuild()
+
+  helpers.removeEnvOverridesFile()
 }
 
 module.exports = packageNotarize
