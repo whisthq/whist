@@ -4,7 +4,11 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-const packageNotarize = (env, version, environment) => {
+const packageNotarize = (env, config, version, environment) => {
+  // If we're passed a --config CLI argument, we'll use that as the JSON
+  // config value. If no --config argument, we'll build the config ourselves.
+  if (!config) config = helpers.buildConfig({ deploy: environment })
+
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
@@ -18,7 +22,7 @@ const packageNotarize = (env, version, environment) => {
     "AMPLITUDE_KEY",
   ])
 
-  helpers.snowpackBuild({ ...env, VERSION: version })
+  helpers.snowpackBuild({ ...env, CONFIG: config, VERSION: version })
 
   const getBucketName = () => {
     let osStr
@@ -45,6 +49,10 @@ if (require.main === module) {
   // Get required args
   const argv = yargs(process.argv.slice(2))
     .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
+    .option("config", {
+      description: "The JSON object output from fractal/config",
+      type: "string",
+    })
     .option("version", {
       description:
         "Set the version number of the client app to be published. Must be greater than the current version in the S3 bucket for autoupdate to work.",
@@ -61,5 +69,5 @@ if (require.main === module) {
     })
     .help().argv
 
-  packageNotarize({}, argv.version, argv.environment)
+  packageNotarize({}, argv.config, argv.version, argv.environment)
 }

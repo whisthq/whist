@@ -1,6 +1,7 @@
 // This file contains helper functions for building, packaging, and publishing the client application.
 
 const { execCommand } = require("./execCommand")
+const { execSync } = require("child_process")
 const { sync: rimrafSync } = require("rimraf")
 const fs = require("fs")
 const fse = require("fs-extra")
@@ -39,8 +40,40 @@ const addEnvOverride = (envs) => {
   fs.writeFileSync(envOverrideFile, envString)
 }
 
+const configOS = () => {
+  if (process.platform === "win32") return "win32"
+  if (process.platform === "darwin") return "macos"
+  return "linux"
+}
+
 module.exports = {
   // Build the protocol and copy it into the expected location
+  buildConfig: (params = {}) => {
+    // Build the docker image from fractal/config/Dockerfile
+    // When the --quiet flag is used, then the stdout of docker build
+    // will be the sha256 hash of the image.
+    const imageTag = "fractal/config"
+    console.log(`Building ${imageTag} Docker image`)
+    const build = `docker build --tag ${imageTag} ../../config`
+    execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
+
+    // Using the params argument, we'll build some strings that pass options
+    // to the config CLI. Everything should be coerced to JSON strings first.
+    const os = `--os ${JSON.stringify(params.os ?? configOS())}`
+    const secrets = params.secrets
+      ? `--secrets ${JSON.stringify(params.secrets)}`
+      : ""
+    const deploy = params.deploy
+      ? `--deploy ${JSON.stringify(params.deploy)}`
+      : ""
+    console.log(`Parsing config with: ${secrets} ${os} ${deploy}`)
+
+    // Pass the sha256 hash of the image to docker run, removing the created
+    // container afterwards. The output of these will be a JSON string
+    // of the config object.
+    const run = `docker run --rm ${imageTag} ${secrets} ${os} ${deploy}`
+    return execSync(run, { encoding: "utf-8", stdio: "pipe" })
+  },
   buildAndCopyProtocol: () => {
     console.log("Building the protocol...")
     const cmakeBuildDir = "build-clientapp"
