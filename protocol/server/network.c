@@ -372,7 +372,7 @@ int multithreaded_manage_clients(void *opaque) {
 
     connection_id = rand();
 
-    bool first_client_connected = false;      // set to true once the first client has connected
+    bool first_client_connected = false;  // set to true once the first client has connected
     bool disable_timeout = false;
     if (begin_time_to_exit ==
         -1) {  // client has `begin_time_to_exit` seconds to connect when the server first goes up.
