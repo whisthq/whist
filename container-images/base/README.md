@@ -36,7 +36,7 @@ You can run `systemctl status` to see all the running services in the container.
 
 `journalctl` shows all the systemd logs. If you run `journalctl` in a Bash shell inside a container, you'll be able to see the logs of a running server protocol, which is useful for debugging.
 
-`/usr/share/fractal/log.txt` contains the Fractal protocol logs. They can also be found in the systemd logs with `journalctl | grep FractalServer`.
+`/usr/share/fractal/server.log` contains the Fractal protocol logs. They can also be found in the systemd logs with `journalctl | grep FractalServer`.
 
 `/testing_scripts` contains some little test scripts that can help debug problems on the host machine.
 
