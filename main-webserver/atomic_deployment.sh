@@ -21,7 +21,7 @@ cd "$DIR/.."
 
 HEROKU_APP_NAME=${1}
 MIGRA_EXIT_CODE=${2}
-SQL_DIFF_STRING=${3}
+SQL_DIFF_STRING="${3}"
 
 # if true, a future step will send a slack notification
 echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
