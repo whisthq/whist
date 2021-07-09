@@ -4,26 +4,6 @@
 #include "dxgicudatransfercapture.h"
 #endif
 
-void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
-#ifdef _WIN32
-    // If we're encoding using NVENC, we will want the dxgi cuda transfer context to be available
-    if (encoder->type == NVENC_ENCODE) {
-        // initialize the transfer context
-        dxgi_cuda_start_transfer_context(device);
-    } else if (device->dxgi_cuda_available) {
-        // Otherwise, we can close the transfer context
-        // end the transfer context
-        dxgi_cuda_close_transfer_context(device);
-    }
-#else  // __linux__
-    if (device->capture_is_on_nvidia) {
-        if (encoder->nvidia_encoder) {
-          nvidia_start
-        }
-    }
-#endif
-}
-
 int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
 #ifdef _WIN32
     // If we're encoding using NVENC, we will want the dxgi cuda transfer context to be available
@@ -36,7 +16,7 @@ int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
         if (encoder->nvidia_encoder) {
-          return nvidia_start_transfer_context(device->nvidia_capture_device, encoder->internal_nvidia_encoder);
+          return nvidia_start_transfer_context(device->nvidia_capture_device, encoder->nvidia_encoder);
         }
     }
     return 0;
@@ -55,7 +35,7 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
         if (encoder->nvidia_encoder) {
-          return nvidia_close_transfer_context(encoder->internal_nvidia_encoder);
+          return nvidia_close_transfer_context(encoder->nvidia_encoder);
         }
     }
     return 0;

@@ -11,6 +11,7 @@ typedef struct {
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
     NV_ENC_REGISTERED_PTR registered_resources[NVFBC_TOGL_TEXTURES_MAX];
+    NV_ENC_REGISTERED_PTR registered_resource;
 
     NV_ENC_OUTPUT_PTR output_buffer;
     NV_ENC_BUFFER_FORMAT buffer_fmt;
@@ -65,7 +66,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index,
                                 int width, int height);
 
 /**
