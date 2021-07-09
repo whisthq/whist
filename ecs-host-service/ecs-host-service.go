@@ -115,6 +115,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// enough, since our data is small and this function is only run once.
 
 	regexes := []string{
+		`fractal/browsers/chrome:current-build`,
 		`ghcr.io/fractal/*/browsers/chrome:current-build`,
 		`ghcr.io/fractal/*`,
 		`*fractal*`,
