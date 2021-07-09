@@ -16,6 +16,65 @@
 #define PRINT_STATUS false
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
+#define LIB_CUDA_NAME  "libcuda.so.1"
+
+/*
+ * CUDA entry points
+ */
+typedef CUresult (* CUINITPROC) (unsigned int Flags);
+typedef CUresult (* CUDEVICEGETPROC) (CUdevice *device, int ordinal);
+typedef CUresult (* CUCTXCREATEV2PROC) (CUcontext *pctx, unsigned int flags, CUdevice dev);
+typedef CUresult (* CUMEMCPYDTOHV2PROC) (void *dstHost, CUdeviceptr srcDevice, size_t ByteCount);
+
+static CUINITPROC cuInit_ptr = NULL;
+static CUDEVICEGETPROC cuDeviceGet_ptr = NULL;
+static CUCTXCREATEV2PROC cuCtxCreate_v2_ptr = NULL;
+static CUMEMCPYDTOHV2PROC cuMemcpyDtoH_v2_ptr = NULL;
+
+/**
+ * Dynamically opens the CUDA library and resolves the symbols that are
+ * needed for this application.
+ *
+ * \param [out] libCUDA
+ *   A pointer to the opened CUDA library.
+ *
+ * \return
+ *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
+ */
+static NVFBC_BOOL cuda_load_library(void *libCUDA)
+{
+    libCUDA = dlopen(LIB_CUDA_NAME, RTLD_NOW);
+    if (libCUDA == NULL) {
+        fprintf(stderr, "Unable to open '%s'\n", LIB_CUDA_NAME);
+        return NVFBC_FALSE;
+    }
+
+    cuInit_ptr = (CUINITPROC) dlsym(libCUDA, "cuInit");
+    if (cuInit_ptr == NULL) {
+        fprintf(stderr, "Unable to resolve symbol 'cuInit'\n");
+        return NVFBC_FALSE;
+    }
+
+    cuDeviceGet_ptr = (CUDEVICEGETPROC) dlsym(libCUDA, "cuDeviceGet");
+    if (cuDeviceGet_ptr == NULL) {
+        fprintf(stderr, "Unable to resolve symbol 'cuDeviceGet'\n");
+        return NVFBC_FALSE;
+    }
+
+    cuCtxCreate_v2_ptr = (CUCTXCREATEV2PROC) dlsym(libCUDA, "cuCtxCreate_v2");
+    if (cuCtxCreate_v2_ptr == NULL) {
+        fprintf(stderr, "Unable to resolve symbol 'cuCtxCreate_v2'\n");
+        return NVFBC_FALSE;
+    }
+
+    cuMemcpyDtoH_v2_ptr = (CUMEMCPYDTOHV2PROC) dlsym(libCUDA, "cuMemcpyDtoH_v2");
+    if (cuMemcpyDtoH_v2_ptr == NULL) {
+        fprintf(stderr, "Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
+        return NVFBC_FALSE;
+    }
+
+    return NVFBC_TRUE;
+}
 
 /**
  * @brief                          Creates an OpenGL context for use in NvFBC.
@@ -89,6 +148,32 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
+static NVFBC_BOOL cuda_init(CUcontext *cuCtx)
+{
+    CUresult cuRes;
+    CUdevice cuDev;
+
+    cuRes = cuInit_ptr(0);
+    if (cuRes != CUDA_SUCCESS) {
+        fprintf(stderr, "Unable to initialize CUDA (result: %d)\n", cuRes);
+        return NVFBC_FALSE;
+    }
+
+    cuRes = cuDeviceGet_ptr(&cuDev, 0);
+    if (cuRes != CUDA_SUCCESS) {
+        fprintf(stderr, "Unable to get CUDA device (result: %d)\n", cuRes);
+        return NVFBC_FALSE;
+    }
+
+    cuRes = cuCtxCreate_v2_ptr(cuCtx, CU_CTX_SCHED_AUTO, cuDev);
+    if (cuRes != CUDA_SUCCESS) {
+        fprintf(stderr, "Unable to create CUDA context (result: %d)\n", cuRes);
+        return NVFBC_FALSE;
+    }
+
+    return NVFBC_TRUE;
+}
+
 int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     // 0-initialize everything in the NvidiaCaptureDevice
     memset(device, 0, sizeof(NvidiaCaptureDevice));
@@ -130,6 +215,25 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     //    LOG_ERROR("Failed to initialized OpenGL!");
     //    return -1;
     //}
+
+    /*
+     * Initialize CUDA.
+     */
+
+    CUcontext cuCtx;
+    void*libCUDA = NULL;
+
+    NVFBC_BOOL fbc_bool = cuda_load_library(libCUDA);
+    if (fbc_bool != NVFBC_TRUE) {
+        LOG_ERROR("Failed to load CUDA library!");
+        return -1;
+    }
+
+    fbc_bool = cuda_init(&cuCtx);
+    if (fbc_bool != NVFBC_TRUE) {
+        LOG_ERROR("Failed to initialize CUDA!");
+        return -1;
+    }
 
     /*
      * Create an NvFBC instance.

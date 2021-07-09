@@ -3,6 +3,7 @@
 
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/nvEncodeAPI.h"
+#include "nvidia-linux/cuda_drvapi_dynlink_cuda.h"
 #include <fractal/core/fractal.h>
 
 typedef struct {
