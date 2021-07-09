@@ -43,9 +43,9 @@ func (c *mandelboxData) WriteStartValues(dpi int) error {
 	return nil
 }
 
-func (c *mandelboxData) WriteLocalDevValues(protocolTimeout int) error {
+func (c *mandelboxData) WriteProtocolTimeout(seconds int) error {
 	// Write timeout
-	if err := c.writeResourceMappingToFile("timeout", utils.Sprintf("%v", protocolTimeout)); err != nil {
+	if err := c.writeResourceMappingToFile("timeout", utils.Sprintf("%v", seconds)); err != nil {
 		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}
