@@ -10,7 +10,7 @@ on:
         paths:
             - "README.md"
             - "**/README.md"
-            - ".github/workflows/README.md"
+            - ".github/**/README.md"
             - ".github/workflows/readmes-linting.yml"
     workflow_dispatch:
 
