@@ -59,8 +59,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--update-protocol",
-    type=bool,
-    default=False,
+    action="store_true",
     help=(
         "This flag causes the locally-built server protocol to be copied into "
         "the running mandelbox. Not passing in this flag causes the mandelbox to use "
