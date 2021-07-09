@@ -98,7 +98,7 @@ def payment_required(view_func):
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()
 
-        if not has_scope("admin"):
+        if not has_scope("admin") and current_app.config["ENVIRONMENT"] != "development":
             check_payment()
 
         return view_func(*args, **kwargs)
