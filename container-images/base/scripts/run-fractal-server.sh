@@ -16,7 +16,7 @@ WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
-LOG_FILENAME=/usr/share/fractal/log.txt
+LOG_FILENAME=/usr/share/fractal/server.log
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -111,7 +111,7 @@ fi
 #   sender: "server" because these are server protocol logs
 #   identifier: "$CONTAINER_ID" because this endpoint wants task ARN
 #   secret_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
-#   logs: Appropriately JSON-sanitize `log.txt`
+#   logs: Appropriately JSON-sanitized `server.log`
 # JSON Response:
 #   ID: the ID for the task for uploading logs; we need this to finish before container delete
 LOGS_TASK_ID=$(curl \
