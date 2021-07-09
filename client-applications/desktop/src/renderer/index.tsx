@@ -71,8 +71,8 @@ const RootComponent = () => {
         text={fractalError[show].text}
         primaryButtonText="Update Payment"
         secondaryButtonText="Sign Out"
-        onPrimary={showPaymentWindow}
-        onSecondary={showSignoutWindow}
+        onPrimaryClick={showPaymentWindow}
+        onSecondaryClick={showSignoutWindow}
       />
     )
   if ([UNAUTHORIZED_ERROR, AUTH_ERROR, NAVIGATION_ERROR].includes(show))
@@ -81,7 +81,7 @@ const RootComponent = () => {
         title={fractalError[show].title}
         text={fractalError[show].text}
         primaryButtonText="Sign Out"
-        onPrimary={showSignoutWindow}
+        onPrimaryClick={showSignoutWindow}
       />
     )
   if (keys(fractalError).includes(show))
@@ -91,8 +91,8 @@ const RootComponent = () => {
         text={fractalError[show].text}
         primaryButtonText="Try Again"
         secondaryButtonText="Sign Out"
-        onPrimary={relaunch}
-        onSecondary={showSignoutWindow}
+        onPrimaryClick={relaunch}
+        onSecondaryClick={showSignoutWindow}
       />
     )
   return (
@@ -101,8 +101,8 @@ const RootComponent = () => {
       text={fractalError.NAVIGATION_ERROR.text}
       primaryButtonText="Try Again"
       secondaryButtonText="Sign Out"
-      onPrimary={relaunch}
-      onSecondary={showSignoutWindow}
+      onPrimaryClick={relaunch}
+      onSecondaryClick={showSignoutWindow}
     />
   )
 }

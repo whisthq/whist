@@ -24,7 +24,7 @@ export const OneButtonError = (props: {
   title: string
   text: string
   primaryButtonText: string
-  onPrimary: () => void
+  onPrimaryClick: () => void
 }) => {
   /*
         Description:
@@ -39,7 +39,7 @@ export const OneButtonError = (props: {
   const [processing, setProcessing] = useState(false)
   const onClick = () => {
     setProcessing(true)
-    props.onPrimary()
+    props.onPrimaryClick()
   }
   return (
     <div
@@ -70,8 +70,8 @@ export const TwoButtonError = (props: {
   text: string
   primaryButtonText: string
   secondaryButtonText: string
-  onPrimary: () => void
-  onSecondary: () => void
+  onPrimaryClick: () => void
+  onSecondaryClick: () => void
 }) => {
   /*
         Description:
@@ -88,7 +88,7 @@ export const TwoButtonError = (props: {
   const [processing, setProcessing] = useState(false)
   const onClick = () => {
     setProcessing(true)
-    props.onPrimary()
+    props.onPrimaryClick()
   }
   return (
     <div
@@ -112,7 +112,7 @@ export const TwoButtonError = (props: {
       </div>
       <button
         className="mx-auto mb-6 py-2 bg-none border-none text-gray outline-none"
-        onClick={props.onSecondary}
+        onClick={props.onSecondaryClick}
         style={{ outline: "none" }}
       >
         {props.secondaryButtonText}
