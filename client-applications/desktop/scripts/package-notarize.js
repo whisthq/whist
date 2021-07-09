@@ -33,6 +33,8 @@ const packageNotarize = (env, config, version, commit) => {
         COMMIT_SHA: commit,
     })
     helpers.electronBuild()
+
+    helpers.removeEnvOverridesFile()
 }
 
 module.exports = packageNotarize
