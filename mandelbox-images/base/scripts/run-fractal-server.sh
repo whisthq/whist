@@ -46,6 +46,8 @@ fi
 function cleanup {
     echo "cleanup() called! Shutting down the mandelbox..."
 
+    sleep 100
+
     # Make sure we shutdown the mandelbox when this script exits
     sudo shutdown now
 }
