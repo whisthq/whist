@@ -6,6 +6,7 @@
 import json
 import click
 import toolz
+from pathlib import Path
 
 
 def parse_cli_profiles(_ctx, _param, args):
@@ -18,7 +19,9 @@ def parse_cli_profiles(_ctx, _param, args):
     result = {}
     for chunk in toolz.partition(2, args):
         if not chunk[0].startswith("--"):
-            raise click.BadParameter(f"All options must start with --, received: {chunk[0]}")
+            raise click.BadParameter(
+                f"All options must start with --, received: {chunk[0]}"
+            )
         if not len(chunk) == 2:
             raise click.BadParameter(f"Missing value for option: {chunk[0]}")
         key, value = chunk
@@ -38,7 +41,9 @@ def _coerce_json(_ctx, _param, values):
     try:
         dicts = [json.loads(v) for v in values]
         if not all(isinstance(d, dict) for d in dicts):
-            raise click.BadParameter("All --secrets much be JSON dictionaries.")
+            raise click.BadParameter(
+                "All --secrets much be JSON dictionaries."
+            )
         return toolz.merge(*dicts)
     except json.JSONDecodeError as err:
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")
@@ -71,69 +76,69 @@ def create_cli(main_fn):
 
     @click.command(context_settings=dict(ignore_unknown_options=True))
     @click.option(
-        "-p",
         "--path",
-        required=True,
+        default=Path(__file__).joinpath("../../../").resolve(),
         type=click.Path(exists=True),
-        help="Directory containing 'schema/' and 'profile.yml'",
+        help=(
+            "Directory containing 'schema/' and 'profile.yml'"
+            + ", defaults to 'config'"
+        ),
     )
     @click.option(
-        "-o",
-        "--out",
-        multiple=True,
-        type=click.File("w"),
-        help="A target file path to write output JSON.",
-    )
-    @click.option(
-        "-s",
         "--secrets",
         multiple=True,
         callback=_coerce_json,
         help="A JSON string containing a dictionary.",
     )
-    @click.argument(
-        "profiles",
-        nargs=-1,
-        metavar="[PROFILES [--key value]] ",
-        type=click.UNPROCESSED,
-        callback=parse_cli_profiles,
+    @click.option(
+        "--os",
+        type=click.Choice(["macos", "win32", "linux"], case_sensitive=False),
+        help="A choice of 'os', must be declared in config/profile.yml",
     )
-    def cli(profiles, path=None, secrets=(), out=()):
+    @click.option(
+        "--deploy",
+        type=click.Choice(
+            ["local", "dev", "staging", "production"], case_sensitive=False
+        ),
+        help="A choice of 'deploy', must be declared in config/profile.yml",
+    )
+    def cli(path=None, secrets=None, deploy=None, os=None):
         """Parse configuration and secrets, merging all values into a single
         output JSON file.
 
-        PATH is the path to the config folder, which should contain a file
-        called "profile.yml", and a folder called "schema".
-
-        Multiple arguments are accepted for OPTIONS --secrets and --out.
+        Multiple arguments are accepted for --secrets. Each arguments should
+        be a JSON map that will be merged with the final config map. All keys
+        in --secrets must already be present in a .yml from the config/schema
+        folder.
 
         The output JSON map will be flattened according to PROFILE arguments,
         which should be pairs in the form of [--key value] following the
         other OPTIONS. If the value is found as a nested key in the config
         object, it will be flattened. Example:
 
-        $ python main.py ./config --out "config.json" --os mac --env dev
+        $ python main.py --os mac --deploy dev
 
         {
 
-           "os":  {"macos": "mac-value", "win32": "win-value"}
+           "key1":  {"macos": "mac-value", "win32": "win-value"}
 
-           "env": {"dev": "dev-value", "production": "production-value"}
+           "key2":  {"dev": "dev-value", "production": "production-value"}
 
         }
 
-        ...flattens to => {"os": "mac-value", "env": "dev-value"}
+        ...flattens to => {"key1": "mac-value", "key2": "dev-value"}
 
         """
         # Example above has extra spacing due to behavior of the CLI --help.
+        profiles = {}
+        if os:
+            profiles["os"] = os
+        if deploy:
+            profiles["deploy"] = deploy
 
-        result = main_fn(path, secrets=secrets, profiles=profiles)
+        result = main_fn(path, secrets=secrets or {}, profiles=profiles)
         result_json = json.dumps(result, indent=4)
 
         click.echo(result_json)
-        if out:
-            for writer in out:
-                writer.write(result_json)
-                writer.write("\n")
 
     return cli

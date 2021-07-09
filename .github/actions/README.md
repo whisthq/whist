@@ -10,17 +10,17 @@ Note that in order to call a custom Action in a workflow, the repository must be
 name: My Workflow
 on: push
 jobs:
-  call-my-action:
-    name: Call my custom GitHub Action
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.ref }} # Use this input to specify the exact ref to checkout
+    call-my-action:
+        name: Call my custom GitHub Action
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout the repository
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ github.ref }} # Use this input to specify the exact ref to checkout
 
-      - name: Call my Action
-        uses: ./.github/actions/my-action
+            - name: Call my Action
+              uses: ./.github/actions/my-action
 ```
 
 When writing custom Actions, please adhere to the style guidelines described in `.github/workflows/README.md`.

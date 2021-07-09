@@ -2,6 +2,45 @@
 
 This folder contains common configuration values that can be re-used across our monorepo.
 
+## How to run the config builder
+
+The whole config process is containerized, so you'll need Docker installed. The commands below assume a working directory of `config`, which is the same folder as this README.
+
+First, build the image with the tag `fractal/config`.
+
+```sh
+docker build --tag fractal/config .
+```
+
+Then, run the configuration builder. You should expect to see the config map printed to stdout as a large JSON object.
+
+```sh
+docker run fractal/config
+```
+
+Any additional arguments will be passed on to the Python CLI for the configuration builder.
+
+```sh
+# View CLI documentation and options.
+docker run fractal/config --help
+
+# Flatten config to use macos + dev values.
+docker run fractal/config --os macos --deploy dev
+```
+
+You can override the `--entrypoint` to inspect the container or to run tests.
+
+```sh
+# Enter into a bash shell.
+docker run -it --entrypoint /bin/bash fractal/config
+
+# Run tests using pytest.
+# Note that the config folder is copied over to /root inside the container.
+# We pass to "pytest" the path of the /root/build folder as an argument.
+# Docker syntax requires entrypoint arguments to follow the image name.
+docker run --entrypoint pytest fractal/config /root/build
+```
+
 ## How config works
 
 All the common monorepo configuration is stored in the top-level `/config` folder. We use YAML for our configuration schema, with the schema files located in `/config/schema`. These YAML files are parsed by this program, and transformed into a JSON string containing a single flattened dictionary.
@@ -39,7 +78,7 @@ For GitHub Actions reasons, it's good to get in the habit of running this progra
 ```sh
 python .github/actions/monorepo-config/main.py \
         --path config \
-        --secrets '{"APPLE_API_KEY_ID": "a-really-secret-value"}'
+        --secrets '{"APPLE_API_KEY_ID": "a-really-secret-value"}' \
         --deploy dev \
         --os macos \
 
