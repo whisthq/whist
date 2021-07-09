@@ -67,9 +67,6 @@ extern int num_controlling_clients;
 extern int num_active_clients;
 extern int host_id;
 
-extern volatile bool client_exited_nongracefully;
-extern volatile clock last_nongraceful_exit;
-
 /*
 ============================
 Public Functions
