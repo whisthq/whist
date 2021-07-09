@@ -16,7 +16,7 @@ pytest==6.2.4
 pytest-mock==3.6.1
 pytest-watch==4.2.0
 PyYAML==5.4.1
-rich==10.2.2
+rich==10.5.0
 sortedcontainers==2.4.0
 toml==0.10.2
 toolz==0.11.1
