@@ -2,6 +2,7 @@ package utils // import "github.com/fractal/fractal/ecs-host-service/utils"
 
 import (
 	"context"
+	"log"
 	"path"
 	"time"
 
@@ -60,6 +61,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 			if !ok {
 				return MakeError("fsnotify.Watcher events channel closed.")
 			}
+			log.Printf("REMOVE ME. WATCHED EVENT: %+v", ev)
 			// Check if it's a creation event that matches the filename we expect
 			if ev.Op&fsnotify.Create == fsnotify.Create && ev.Name == targetFileName {
 				return nil
