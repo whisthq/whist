@@ -69,9 +69,9 @@ export const protocolLaunch = async () => {
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
     // options are for [stdin, stdout, stderr]. pipe creates a pipe, ignore will ignore the
-    // output. We only pipe stdin since that's how we send args to the protocol. Meanwhile,
-    // we will write stdout to the log file client.log.
-    stdio: ["pipe", protocolLogFile, "ignore"],
+    // output. We pipe stdin since that's how we send args to the protocol. We pipe stdout
+    // and later use that pipe to write logs to `protocol.log` and potentially stdout.
+    stdio: ["pipe", "pipe", "ignore"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading
@@ -85,6 +85,12 @@ export const protocolLaunch = async () => {
         cwd: path.join(protocolFolder, "../.."),
       }),
   })
+
+  protocol.stdout.pipe(protocolLogFile)
+  if (process.env.SHOW_PROTOCOL_LOGS === "true") {
+    // If this is true, also pipe to stdout
+    protocol.stdout.pipe(process.stdout)
+  }
 
   // On MacOS, hide the app dock
   hideAppDock()
