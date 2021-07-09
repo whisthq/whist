@@ -23,7 +23,7 @@ export default flow(
     const create = mandelboxCreateFlow(
       zip(trigger, dpiStream).pipe(
         map(([t, dpi]) => ({
-          sub: t.subClaim,
+          subClaim: t.subClaim,
           accessToken: t.accessToken,
           dpi: dpi,
           region: t.region,

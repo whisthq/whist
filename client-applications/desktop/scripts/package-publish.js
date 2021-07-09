@@ -22,7 +22,12 @@ const packageNotarize = (env, config, version, environment, commit) => {
     "AMPLITUDE_KEY",
   ])
 
-  helpers.snowpackBuild({ ...env, CONFIG: config, VERSION: version, COMMIT_SHA: commit })
+  helpers.snowpackBuild({
+    ...env,
+    CONFIG: config,
+    VERSION: version,
+    COMMIT_SHA: commit,
+  })
 
   const getBucketName = () => {
     let osStr
@@ -41,6 +46,8 @@ const packageNotarize = (env, config, version, environment, commit) => {
   }
 
   helpers.electronPublish(getBucketName())
+
+  helpers.removeEnvOverridesFile()
 }
 
 module.exports = packageNotarize

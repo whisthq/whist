@@ -46,12 +46,7 @@ export const mandelboxCreate = async (
   region?: AWSRegion
 ) => {
   region = region ?? (await regionGet(subClaim, accessToken))
-  const response = await mandelboxRequest(
-    subClaim,
-    accessToken,
-    region,
-    dpi
-  )
+  const response = await mandelboxRequest(subClaim, accessToken, region, dpi)
   return response
 }
 
