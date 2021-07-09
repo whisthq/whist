@@ -26,12 +26,10 @@ def actionify(name, data):
     """Given a string name and any type of data, return a string
     formatted for printing to a GitHub runner's a Workflow or Action
     output.
-
     The name will become the name of the output, and the data will
     be coerced to a string and become the value. Note that for the
     value to be accessible from a Workflow, it must be registered in
     the "outputs" section of an Action or a Workflow job step.
-
     Any \n, \r, and % characters will be escaped, and automatically
     un-escaped by the GitHub runner.
     """
@@ -51,10 +49,10 @@ def actionify(name, data):
 run("pg_ctlcluster 13 main start".split(), check=True)
 run(["psql", "--quiet", "--command", "create database a;"], check=True)
 run(["psql", "--quiet", "--command", "create database b;"], check=True)
-result = run(argv[1:], capture_output=True, check=False)
+result = run(argv[1:], text=True, capture_output=True, check=False)
 
 code = result.returncode
-diff = result.stdout.decode("utf-8")
+diff = result.stdout
 
 if os.environ.get("CI"):
     # We're running in CI through a GitHub Action, which means we
@@ -84,4 +82,10 @@ if code == 3:
 if code == 4:
     exit(0)
 
+# We haven't exited yet, which means we got a return code we did
+# not expect (e.g. Migra exits with 1 if there was an error).
+# For any unexpected return code, we'll print stdout/stderr so
+# we can see what's going on,
+print(result.stderr)
+print(result.stdout)
 exit(result.returncode)
