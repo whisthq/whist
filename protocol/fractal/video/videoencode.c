@@ -958,18 +958,18 @@ void destroy_video_encoder(VideoEncoder *encoder) {
     */
     LOG_INFO("Destroying video encoder...");
 
+    // Check if encoder exists
+    if (encoder == NULL) {
+        LOG_INFO("Encoder empty, not destroying anything.");
+        return;
+    }
+
 #ifdef __linux__
     // Destroy the nvidia encoder, if any
     if (encoder->nvidia_encoder) {
         destroy_nvidia_encoder(encoder->nvidia_encoder);
     }
 #endif
-
-    // check if encoder encoder exists
-    if (encoder == NULL) {
-        LOG_INFO("Encoder empty, not destroying anything.");
-        return;
-    }
 
     if (encoder->context) {
         avcodec_free_context(&encoder->context);
