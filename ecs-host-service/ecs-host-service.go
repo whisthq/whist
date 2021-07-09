@@ -480,7 +480,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing resources for protocol: %s", err)
 		return
 	}
-	if err := fc.WriteLocalDevValues(30); err != nil {
+	// Let server protocol wait 30 seconds by default before client connects.
+	// However, in a local environment, we set the default to an effectively
+	// infinite value.
+	protocolTimeout := 30
+	if metadata.IsLocalEnv() {
+		protocolTimeout = 999999
+	}
+	if err := fc.WriteProtocolTimeout(protocolTimeout); err != nil {
 		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}

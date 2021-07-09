@@ -77,15 +77,6 @@ parser.add_argument(
     help="DPI to use for the X server inside the mandelbox. Defaults to 96.",
 )
 parser.add_argument(
-    "--protocol-timeout",
-    type=int,
-    default=60,
-    help=(
-        "This arg sets the timeout for the protocol server inside the "
-        "mandelbox, in seconds. Defaults to 60."
-    ),
-)
-parser.add_argument(
     "--user-id",
     default="run_mandelbox_image_user",
     help="User ID to use for config retrieval. Defaults to 'run_mandelbox_image_user'.",
@@ -173,16 +164,17 @@ def copy_locally_built_protocol(cont):
     cont.put_archive(mandelbox_server_path, fileobj.getvalue())
 
 
-def send_spin_up_mandelbox_request():
+def send_spin_up_mandelbox_request(mandelbox_id):
     """
     Sends the host service a SpinUpMandelbox request and returns a Container
     object corresponding to that mandelbox, along with its identifying host
-    port (i.e. host port corresponding to tcp/32262 in the mandelbox),
-    aeskey, and mandelboxID.
+    port (i.e. host port corresponding to tcp/32262 in the mandelbox) and
+    aeskey.
+
+    Args: mandelbox_id: the id of the mandelbox to create
     """
     print("Sending SpinUpMandelbox request to host service!")
     url = HOST_SERVICE_URL + "spin_up_mandelbox"
-    mandelbox_id = secrets.token_hex(30)
     payload = {
         "app_image": args.image,
         "dpi": args.dpi,
@@ -205,20 +197,14 @@ def send_spin_up_mandelbox_request():
     return (
         PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
-        mandelbox_id,
     )
-
-
-def write_protocol_timeout(mandelbox_id):
-    """
-    Takes in a Mandelbox ID, and writes the protocol timeout to the corresponding mandelbox.
-    """
-    with open(f"/fractal/{mandelbox_id}/mandelboxResourceMappings/timeout", "w") as timeout_file:
-        timeout_file.write(f"{args.protocol_timeout}")
 
 
 if __name__ == "__main__":
     # pylint: disable=line-too-long
+
+    mandelboxid = secrets.token_hex(30)
+
     if local_host_service:
         # This is running locally on the same machine as the host service, so
         # we will need root privileges and can easily check whether the host
@@ -226,7 +212,7 @@ if __name__ == "__main__":
         ensure_root_privileges()
         ensure_host_service_is_running()
 
-    host_ports, aeskey, fractal_id = send_spin_up_mandelbox_request()
+    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
 
     if local_host_service:
         # This is running locally on the same machine as the host service, so
@@ -245,11 +231,6 @@ if __name__ == "__main__":
 
         if args.update_protocol:
             copy_locally_built_protocol(container)
-        try:
-            write_protocol_timeout(fractal_id)
-        except Exception as err:
-            kill_container(container)
-            raise err
 
     print(
         f"""Successfully started mandelbox with identifying hostPort {host_ports.host_port_32262tcp}.

@@ -68,10 +68,10 @@ type Mandelbox interface {
 	// accessible to only this mandelbox. These data are only known once a
 	// mandelbox is assigned to a user.
 	WriteStartValues(dpi int) error
-	// WriteLocalDevValues writes files containing the timeout assigned
-	// to a directory accessible to only this mandelbox. This only happens
-	// on local dev.
-	WriteLocalDevValues(protocolTimeout int) error
+	// WriteProtocolTimeout writes a file containing the protocol timeout (i.e.
+	// how long it will wait for a connection) to a directory accessible to only
+	// this mandelbox.
+	WriteProtocolTimeout(protocolTimeout int) error
 	// MarkReady tells the protocol inside the mandelbox that it is ready to
 	// start and accept connections.
 	MarkReady() error
