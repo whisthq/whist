@@ -295,7 +295,6 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     }
 
     device->dw_texture = device->togl_setup_params.dwTextures[grab_params.dwTextureIndex];
-    device->dw_tex_target = device->togl_setup_params.dwTexTarget;
 
     // If the frame isn't new, just return 0
     if (!frame_info.bIsNewFrame) {

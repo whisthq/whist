@@ -176,7 +176,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uint32_t dw_tex_target,
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index,
                                 int width, int height) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
@@ -185,45 +185,14 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture, uin
             width, height, encoder->width, encoder->height);
         return -1;
     }
-    int cache_size =
-        sizeof(encoder->registered_resources) / sizeof(encoder->registered_resources[0]);
-    // Check the registered resource cache
-    for (int i = 0; i < cache_size; i++) {
-        InputBufferCacheEntry resource = encoder->registered_resources[i];
-        // We include a check against registered_resource NULL for validity
-        if (resource.dw_texture == dw_texture && resource.dw_tex_target == dw_tex_target &&
-            resource.width == width && resource.height == height &&
-            resource.registered_resource != NULL) {
-            encoder->registered_resource = resource.registered_resource;
-            return 0;
-        }
+    NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resources[dw_texture_index];
+    if (registered_resource) {
+      encoder->registered_resource = registered_resource;
+      return 0;
+    } else {
+      LOG_ERROR("Device captured to texture at index %d, but encoder resource is NULL!", dw_texture_index);
+      return -1;
     }
-    // Unregister the last resource
-    if (encoder->registered_resources[cache_size - 1].registered_resource != NULL) {
-        unregister_resource(encoder,
-                            encoder->registered_resources[cache_size - 1].registered_resource);
-        encoder->registered_resources[cache_size - 1].registered_resource = NULL;
-    }
-    // Move everything up one, overwriting the last resource
-    for (int i = cache_size - 1; i > 0; i--) {
-        encoder->registered_resources[i] = encoder->registered_resources[i - 1];
-    }
-    // Invalidate the 0th resource, since it was moved to index 1
-    encoder->registered_resources[0].registered_resource = NULL;
-    NV_ENC_REGISTERED_PTR registered_resource =
-        register_resource(encoder, dw_texture, dw_tex_target, width, height);
-    if (registered_resource == NULL) {
-        LOG_ERROR("Failed to register resource!");
-        return -1;
-    }
-    // Overwrite the 0th resource with the newly registered resource
-    encoder->registered_resources[0].dw_texture = dw_texture;
-    encoder->registered_resources[0].dw_tex_target = dw_tex_target;
-    encoder->registered_resources[0].width = width;
-    encoder->registered_resources[0].height = height;
-    encoder->registered_resources[0].registered_resource = registered_resource;
-    encoder->registered_resource = registered_resource;
-    return 0;
 }
 
 int nvidia_encoder_encode(NvidiaEncoder* encoder) {
@@ -233,7 +202,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resource;
     if (registered_resource == NULL) {
         LOG_ERROR(
-            "Failed to register resource! frame_intake must not have been called, or it failed.");
+            "Frame intake failed! No resource to map and encode");
         return -1;
     }
 
@@ -463,17 +432,6 @@ void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
             LOG_ERROR("Failed to destroy buffer, status = %d", status);
         }
         encoder->output_buffer = NULL;
-    }
-
-    // Unregister all the resources that we had registered earlier
-    int cache_size =
-        sizeof(encoder->registered_resources) / sizeof(encoder->registered_resources[0]);
-    // Check the registered resource cache
-    for (int i = 0; i < cache_size; i++) {
-        if (encoder->registered_resources[i].registered_resource != NULL) {
-            unregister_resource(encoder, encoder->registered_resources[i].registered_resource);
-            encoder->registered_resources[i].registered_resource = NULL;
-        }
     }
 
     // Destroy the encode session

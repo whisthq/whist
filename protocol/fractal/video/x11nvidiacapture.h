@@ -17,7 +17,6 @@ typedef struct {
     NVFBC_TOGL_SETUP_PARAMS togl_setup_params;
     // The dwtexture/dwtextarget of the most recently captured frame
     uint32_t dw_texture;
-    uint32_t dw_tex_target;
 } NvidiaCaptureDevice;
 
 /**
