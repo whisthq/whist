@@ -22,6 +22,8 @@ const packageLocal = (env, config) => {
     VERSION: helpers.getCurrentClientAppVersion(),
   })
   helpers.electronBuild()
+
+  helpers.removeEnvOverridesFile()
 }
 
 module.exports = packageLocal

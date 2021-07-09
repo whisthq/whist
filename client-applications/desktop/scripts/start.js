@@ -4,6 +4,8 @@ const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
 const start = (env, config) => {
+  helpers.removeEnvOverridesFile()
+
   // If we're passed a --config CLI argument, we'll use that as the JSON
   // config value. If no --config argument, we'll build the config ourselves.
   if (!config) config = helpers.buildConfig({ deploy: "local" })
