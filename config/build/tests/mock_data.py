@@ -36,7 +36,7 @@ example_nested_map = {
 # that are described in "profile.yml".
 config_simple_fs = {
     "config": {
-        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"deploy": ["dev", "stg", "prd"]}),
         "schema": {
             "web.yml": yaml.dump(
                 {
@@ -57,7 +57,9 @@ config_simple_fs = {
                     },
                 }
             ),
-            "auth.yml": yaml.dump({"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}),
+            "auth.yml": yaml.dump(
+                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
+            ),
             "secret.yml": yaml.dump(
                 {
                     "KEY": {
@@ -148,7 +150,7 @@ config_simple_json_prd = {
 # error.
 config_fs_bad_profiles = {
     "config": {
-        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"deploy": ["dev", "stg", "prd"]}),
         "schema": {
             "web.yml": yaml.dump(
                 {
@@ -169,7 +171,9 @@ config_fs_bad_profiles = {
                     },
                 }
             ),
-            "auth.yml": yaml.dump({"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}),
+            "auth.yml": yaml.dump(
+                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
+            ),
             "secret.yml": yaml.dump(
                 {
                     "KEY": {
@@ -191,9 +195,11 @@ config_fs_bad_profiles = {
 
 config_secrets_fs = {
     "config": {
-        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"deploy": ["dev", "stg", "prd"]}),
         "schema": {
-            "auth.yml": yaml.dump({"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}),
+            "auth.yml": yaml.dump(
+                {"SERVER": "102.347.188", "TOKEN": "tokenla98hddjhh2jjd"}
+            ),
             "secret.yml": yaml.dump(
                 {
                     "KEY": None,
@@ -213,7 +219,7 @@ config_secrets_json = {
 
 config_secrets_profiles_fs = {
     "config": {
-        "profile.yml": yaml.dump({"env": ["dev", "stg", "prd"]}),
+        "profile.yml": yaml.dump({"deploy": ["dev", "stg", "prd"]}),
         "schema": {
             "web.yml": yaml.dump(
                 {
