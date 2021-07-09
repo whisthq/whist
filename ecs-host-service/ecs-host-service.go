@@ -22,7 +22,6 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/fractal/fractal/ecs-host-service/auth"
 	"github.com/fractal/fractal/ecs-host-service/dbdriver"
@@ -43,6 +42,7 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	dockernat "github.com/docker/go-connections/nat"
 	dockerunits "github.com/docker/go-units"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
@@ -259,25 +259,11 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	}
 	logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
 
-	logger.Infof("Starting sleep to let Chrome warm up...")
-
-	// Sleep for at most 4 minutes waiting for Chrome to start
-	chromeStarted := false
-	for i := 0; i < 240; i++ {
-		if _, err := os.Stat(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/done_sleeping_until_X_clients", containerName)); os.IsNotExist(err) {
-			time.Sleep(1 * time.Second)
-		} else if err != nil {
-			return utils.MakeError("Error waiting for chrome to warm up: %s", err)
-		} else {
-			chromeStarted = true
-			break
-		}
+	logger.Infof("Waiting for fractal application to warm up...")
+	if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+		return utils.MakeError("Error warming up fractal application: %s", err)
 	}
-	if !chromeStarted {
-		return utils.MakeError("Chrome did not warm up successfully within the allowed time.")
-	}
-
-	logger.Infof("Finished sleep to let Chrome warm up...")
+	logger.Infof("Finished waiting for fractal application to warm up.")
 
 	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
 	if err != nil {
@@ -285,7 +271,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	}
 	logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
 
-	// Close, and wait 5 seconds so we don't pollute the logs with cleanup after the event loop starts.
+	// Close the mandelbox, and wait 5 seconds so we don't pollute the logs with
+	// cleanup after the event loop starts.
 	fc.Close()
 	time.Sleep(5 * time.Second)
 
@@ -534,25 +521,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	// Sleep for at most 30 seconds waiting for fractal application to start
-	// TODO: make this block, not poll
-	appStarted := false
-	for i := 0; i < 120; i++ {
-		if _, err := os.Stat(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/done_sleeping_until_X_clients", req.MandelboxID)); os.IsNotExist(err) {
-			time.Sleep(time.Second / 4)
-		} else if err != nil {
-			logAndReturnError("Error waiting for fractal application in mandelbox %s to start: %s", req.MandelboxID, err)
-			return
-		} else {
-			appStarted = true
-			break
-		}
-	}
-	if !appStarted {
-		logAndReturnError("Fractal application for mandelbox %s did not start successfully within the allowed time.", req.MandelboxID)
+	logger.Infof("Waiting for fractal application to start up...")
+	if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", req.MandelboxID), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+		logAndReturnError("Error warming up fractal application: %s", err)
 		return
 	}
-	logger.Infof("Finished waiting for fractal application in mandelbox %s to start up", req.MandelboxID)
+	logger.Infof("Finished waiting for fractal application to start up.")
 
 	err = dbdriver.WriteMandelboxStatus(req.MandelboxID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
