@@ -81,6 +81,7 @@ class EC2Client(CloudClient):
             ],
             "UserData": userdata_template,
             "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
+            "InstanceInitiatedShutdownBehavior": "terminate",
         }
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
