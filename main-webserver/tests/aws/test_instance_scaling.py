@@ -391,3 +391,11 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
     assert len(call_list) == region_ami_pairs_length
     args = [called["args"] for called in call_list]
     assert set(args) == set(region_ami_pairs)
+
+
+def test_get_num_mandelboxes():
+    # Ensures our get_num_mandelboxes utility works as expected
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.xlarge") == 2
+    for i in range(1, 5):
+        new_string = f"g4dn.{2**i}xlarge"
+        assert aws_funcs.get_base_free_mandelboxes(new_string) == 2 ** (i + 1)
