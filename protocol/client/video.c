@@ -1087,6 +1087,11 @@ int render_video() {
         return -1;
     }
 
+    // If the window is minimized, we don't need to render this frame
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+        return -1;
+    }
+
     SDL_Renderer* renderer = video_context.renderer;
 
     if (rendering) {
