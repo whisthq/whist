@@ -878,7 +878,7 @@ int main(int argc, char* argv[]) {
         while (connected && !exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
             // Check if the window is minimized. If it is, we can just sleep for a bit and then
             // check again
-            if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+            if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
                 // Even though the window is minized, we still need to handle SDL events or else the
                 // application will permanently hang
                 if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {

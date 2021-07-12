@@ -1088,7 +1088,7 @@ int render_video() {
     }
 
     // If the window is minimized, we don't need to render this frame
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+    if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
         return -1;
     }
 
