@@ -30,16 +30,30 @@ Public Functions
 */
 
 /**
- * @brief                         Initialize or reinitialize the transfer context,
- *                                if it is needed for the given (device, encoder) pair.
- *                                This should be called when either the (device),
- *                                or the (encoder) changes.
+ * @brief                         Initialize the transfer context between (device) and (encoder).
+ *                                Call this when we have changed resolution or recreated one of the
+ *                                device or encoder.
  *
  * @param device                  The capture device being used
  *
  * @param encoder                 The encoder being used
+ *
+ * @returns                       0 on success, -1 on failure
  */
-void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
+int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
+
+/**
+ * @brief                         Close the transfer context between (device) and (encoder). Call
+ *                                this when we have changed resolution or recreated one of the
+ *                                device or encoder.
+ *
+ * @param device                  The capture device being used
+ *
+ * @param encoder                 The encoder being used
+ *
+ * @returns                       0 on success, -1 on failure
+ */
+int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
 
 /**
  * @brief                         Transfer the texture stored in the capture
