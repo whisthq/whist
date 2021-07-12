@@ -4,12 +4,14 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
  * @file nvidiatransfercapture.h
- * @brief This code handles the data transfer, i.e. resource registration, from a video capture device to a
- *        video encoder via Nvidia's FBC and Video Codec SDKs.
+ * @brief This code handles the data transfer, i.e. resource registration, from a video capture
+ *        device to a video encoder via Nvidia's FBC and Video Codec SDKs.
 ============================
 Usage
 ============================
-When updating the device or encoder during a resolution change, or recreating the device or encoder, call close_transfer_context to unregister any old resources, then start_transfer_context to register new resources. Not unregistering resources can result in memory leaks and other strange behavior!
+When updating the device or encoder during a resolution change, or recreating the device or encoder,
+call close_transfer_context to unregister any old resources, then start_transfer_context to register
+new resources. Not unregistering resources can result in memory leaks and other strange behavior!
 */
 
 /*
