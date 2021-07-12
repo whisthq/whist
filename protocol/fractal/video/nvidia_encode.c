@@ -55,7 +55,7 @@ void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registere
     }
 }
 
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height) {
+NvidiaEncoder* create_nvidia_encoder(void* p_cuda_context, int bitrate, CodecType codec, int out_width, int out_height) {
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -113,6 +113,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     encode_session_params.apiVersion = NVENCAPI_VERSION;
     encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
+    encode_session_params.device = *p_cuda_context;
 
     status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params,
                                                         &encoder->internal_nvidia_encoder);

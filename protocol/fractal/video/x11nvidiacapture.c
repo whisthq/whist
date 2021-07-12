@@ -174,7 +174,7 @@ static NVFBC_BOOL cuda_init(CUcontext *cuCtx)
     return NVFBC_TRUE;
 }
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
+int create_nvidia_capture_device(void* p_cuda_context, NvidiaCaptureDevice* device) {
     // 0-initialize everything in the NvidiaCaptureDevice
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 
@@ -220,8 +220,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
      * Initialize CUDA.
      */
 
-    CUcontext cuCtx;
-    void*libCUDA = NULL;
+    // CUcontext cuCtx;
+    void* libCUDA = NULL;
 
     NVFBC_BOOL fbc_bool = cuda_load_library(libCUDA);
     if (fbc_bool != NVFBC_TRUE) {
@@ -229,7 +229,8 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
         return -1;
     }
 
-    fbc_bool = cuda_init(&cuCtx);
+    // fbc_bool = cuda_init(&cuCtx);
+    fbc_bool = cuda_init((CUContext*)(p_cuda_context));
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialize CUDA!");
         return -1;

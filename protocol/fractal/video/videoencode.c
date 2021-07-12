@@ -25,6 +25,8 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 
+extern volatile void* cuda_context;
+
 #define GOP_SIZE 99999
 #define MIN_NVENC_WIDTH 33
 #define MIN_NVENC_HEIGHT 17
@@ -701,7 +703,7 @@ Public Function Implementations
 ============================
 */
 
-VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
+VideoEncoder *create_video_encoder(void* p_cuda_context, int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
     /*
         Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,
@@ -733,7 +735,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         "Cannot create nvidia encoder, does not accept in_width and in_height when using "
         "serverside scaling");
 #else
-    nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    nvidia_encoder = create_nvidia_encoder(p_cuda_context, bitrate, codec_type, out_width, out_height);
     if (!nvidia_encoder) {
         LOG_ERROR("Failed to create nvidia encoder!");
     }
