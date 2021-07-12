@@ -515,6 +515,13 @@ int32_t multithreaded_send_video(void* opaque) {
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
+                    if (accumulated_frames == 0) {
+                        // This frame is just a repeat of the frame before it
+                        frame->is_repeated_frame = true;
+                    } else {
+                        // This is a new frame that is different from the one before it
+                        frame->is_repeated_frame = false;
+                    }
 
                     static FractalCursorImage cursor_cache[2];
                     static int last_cursor_id = 0;
