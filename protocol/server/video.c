@@ -335,6 +335,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         if (!transfer_context_active) {
             start_transfer_context(device, encoder);
+            transfer_context_active = true;
         }
 
         // SENDING LOGIC:
