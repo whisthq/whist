@@ -369,6 +369,8 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      */
     grab_params.pFrameGrabInfo = &frame_info;
 
+    grab_params.pCUDADeviceBuffer = device->p_gpu_texture;
+
     /*
      * This structure will contain information about the encoding of
      * the captured frame.
@@ -397,8 +399,6 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
-
-    device->p_gpu_texture = grab_params.pCUDADeviceBuffer;
 
     // If the frame isn't new, just return 0
     if (!frame_info.bIsNewFrame) {
