@@ -65,8 +65,10 @@ int nvidia_close_transfer_context(NvidiaEncoder* encoder) {
                 encoder->internal_nvidia_encoder, encoder->registered_resources[i]);
             if (status != NV_ENC_SUCCESS) {
                 LOG_ERROR("Failed to unregister resource, status = %d", status);
+                return -1;
             }
             encoder->registered_resources[i] = NULL;
         }
     }
+    return 0;
 }
