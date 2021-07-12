@@ -1,5 +1,4 @@
 module.exports = {
-    mode: "jit",
     purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
     experimental: {
         darkModeVariant: true,
@@ -23,12 +22,6 @@ module.exports = {
                 mint: {
                     DEFAULT: "#00FFA2",
                     light: "#c9ffeb",
-                },
-                gray: {
-                    lighter: "#efeff0",
-                    light: "#a09d9d",
-                    DEFAULT: "#312d2c",
-                    dark: "#111111",
                 },
                 red: {
                     DEFAULT: "#B91C1C",
