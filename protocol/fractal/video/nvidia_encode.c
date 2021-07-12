@@ -176,8 +176,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index,
-                                int width, int height) {
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index, int width,
+                                int height) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
             "Nvidia Encoder has received a frame_intake of dimensions %dx%d, "
@@ -187,11 +187,12 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_inde
     }
     NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resources[dw_texture_index];
     if (registered_resource) {
-      encoder->registered_resource = registered_resource;
-      return 0;
+        encoder->registered_resource = registered_resource;
+        return 0;
     } else {
-      LOG_ERROR("Device captured to texture at index %d, but encoder resource is NULL!", dw_texture_index);
-      return -1;
+        LOG_ERROR("Device captured to texture at index %d, but encoder resource is NULL!",
+                  dw_texture_index);
+        return -1;
     }
 }
 
@@ -201,8 +202,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     // Register the frame intake
     NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resource;
     if (registered_resource == NULL) {
-        LOG_ERROR(
-            "Frame intake failed! No resource to map and encode");
+        LOG_ERROR("Frame intake failed! No resource to map and encode");
         return -1;
     }
 

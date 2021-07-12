@@ -56,8 +56,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  * @brief                          Put the input data into the nvidia encoder
  *
  * @param encoder                  The encoder to encode with
- * @param dw_texture               The GPU pointers needed to hold the captured frame
- * @param dw_tex_target            The GPU pointers needed to hold the captured frame
+ * @param dw_texture_index         The index into registered_resources corresponding to the frame
  * @param width                    The width of the inputted frame
  * @param height                   The height of the inputted frame
  *
@@ -66,8 +65,8 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index,
-                                int width, int height);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index, int width,
+                                int height);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,
