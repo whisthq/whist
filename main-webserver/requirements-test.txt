@@ -8,4 +8,4 @@ pytest-cov==2.12.1
 pytest-celery==0.0.0
 pytest-dotenv==0.5.2
 pytest-flask==1.2.0
-Sphinx==4.0.2
+Sphinx==4.1.0
