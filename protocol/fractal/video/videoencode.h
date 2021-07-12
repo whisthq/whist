@@ -97,7 +97,7 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
+VideoEncoder* create_video_encoder(void** p_cuda_context, int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type);
 
 /**

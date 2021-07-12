@@ -230,7 +230,7 @@ int create_nvidia_capture_device(void** p_cuda_context, NvidiaCaptureDevice* dev
     }
 
     // fbc_bool = cuda_init(&cuCtx);
-    fbc_bool = cuda_init((CUContext*)(p_cuda_context));
+    fbc_bool = cuda_init((CUcontext*)(p_cuda_context));
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialize CUDA!");
         return -1;
@@ -370,7 +370,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
      */
     grab_params.pFrameGrabInfo = &frame_info;
 
-    grab_params.pCUDADeviceBuffer = device->p_gpu_texture;
+    grab_params.pCUDADeviceBuffer = &device->p_gpu_texture;
 
     /*
      * This structure will contain information about the encoding of

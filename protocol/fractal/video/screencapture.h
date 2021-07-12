@@ -42,7 +42,7 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(void** p_cuda_context, CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
 /**
  * @brief                          Tries to reconfigure the capture device
