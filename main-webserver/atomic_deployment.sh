@@ -21,7 +21,7 @@ cd "$DIR/.."
 
 HEROKU_APP_NAME=${1}
 MIGRA_EXIT_CODE=${2}
-SQL_DIFF_STRING="${3}"
+SQL_DIFF_STRING=${3}
 
 # if true, a future step will send a slack notification
 echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
@@ -39,15 +39,16 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
     # a diff exists, now apply it atomically by first pausing the webserver
 
     echo "Migra SQL diff:"
-    echo "${SQL_DIFF_STRING}"
+    echo ${SQL_DIFF_STRING}
 
     # stop webserver. TODO: parse how many dynos exist currently and
     # restore that many as opposed to just restoring to 1 dyno
     heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
 
-    # apply diff safely, knowing nothing is happening on webserver
-    # by passing "-" to --file, we can stream sql commands through stdin
-    echo "${SQL_DIFF_STRING}" | psql -v ON_ERROR_STOP=1 --single-transaction --file "-" "${DB_URL}"
+    # Apply diff safely, knowing nothing is happening on webserver.  Note that
+    # we don't put quotes around SQL_DIFF_STRING to prevent. `$function$` from
+    # turning into `$`.
+    echo ${SQL_DIFF_STRING} | psql -v ON_ERROR_STOP=1 --single-transaction "${DB_URL}"
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema

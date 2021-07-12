@@ -37,6 +37,10 @@ def actionify(name, data):
     escaped = re.sub("%", "%25", escaped)
     escaped = re.sub("\n", "%0A", escaped)
     escaped = re.sub("\r", "%0D", escaped)
+    # We also need to do some escaping of single-quotes because the output of
+    # this script is sent to the deployment script, via GHA, wrapped in single
+    # quotes.
+    escaped = re.sub("'", "'\\''", escaped)
     return f"::set-output name={name}::{escaped}"
 
 
