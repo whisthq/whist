@@ -445,7 +445,7 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
     video_context.decoder = decoder;
-
+    pending_sws_update = true;
     sws_input_fmt = AV_PIX_FMT_NONE;
 
     server_width = width;
@@ -1258,7 +1258,6 @@ void set_video_active_resizing(bool is_resizing) {
     } else {
         safe_SDL_LockMutex(render_mutex);
         can_render = false;
-        pending_resize_render = true;
         safe_SDL_UnlockMutex(render_mutex);
 
         for (int i = 0; pending_resize_render && (i < 10); ++i) {
