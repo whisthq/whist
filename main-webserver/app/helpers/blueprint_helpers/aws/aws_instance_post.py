@@ -27,6 +27,26 @@ bundled_region = {
     "us-west-2": ["us-west-1"],
 }
 
+type_to_number_map = {
+    "g4dn.xlarge": 2,
+    "g4dn.2xlarge": 4,
+    "g4dn.4xlarge": 8,
+    "g4dn.8xlarge": 16,
+    "g4dn.16xlarge": 32,
+}
+
+
+def get_base_free_mandelboxes(instance_type: str) -> int:
+    """
+    Returns the number of containers an instance of this type can hold
+    Args:
+        instance_type: Which type of instance this is
+
+    Returns:
+        How many containers can it hold
+    """
+    return type_to_number_map[instance_type]
+
 
 def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
@@ -172,10 +192,10 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=f"ec2-{region}")
-            # TODO: test that we actually get 4 mandelboxes per instance
-            # Which is savvy's guess as to g4dn.xlarge capacity
-            # TODO: Move this value to top-level config when more fleshed out
-            base_number_free_mandelboxes = 4
+            # TODO: test that the simple num_cpu/2 heuristic is accurate
+            base_number_free_mandelboxes = get_base_free_mandelboxes(
+                current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
+            )
             for index in range(num_new):
                 instance_ids = client.start_instances(
                     image_id=ami,
