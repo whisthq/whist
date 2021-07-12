@@ -1,12 +1,12 @@
-import React from "react";
-import { FaApple, FaWindows } from "react-icons/fa";
+import React from 'react'
+import { FaApple, FaWindows } from 'react-icons/fa'
 
 import {
   FractalButton,
-  FractalButtonState,
-} from "@app/pages/home/components/button";
-import { ScreenSize } from "@app/shared/constants/screenSizes";
-import { withContext } from "@app/shared/utils/context";
+  FractalButtonState
+} from '@app/pages/home/components/button'
+import { ScreenSize } from '@app/shared/constants/screenSizes'
+import { withContext } from '@app/shared/utils/context'
 
 export const ActionPrompt = () => {
   /*
@@ -15,7 +15,7 @@ export const ActionPrompt = () => {
         Arguments:
             none
     */
-  const { width } = withContext();
+  const { width } = withContext()
 
   return (
     <div className="mt-48 text-center">
@@ -59,7 +59,7 @@ export const ActionPrompt = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ActionPrompt;
+export default ActionPrompt
