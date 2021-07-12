@@ -27,7 +27,7 @@ int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
     }
     return 0;
 #else  // __linux__
-    if (device->capture_is_on_nvidia) {
+    if (device->using_nvidia) {
         if (encoder->nvidia_encoder) {
             return nvidia_start_transfer_context(&device->nvidia_capture_device,
                                                  encoder->nvidia_encoder);
@@ -58,7 +58,7 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
     }
     return 0;
 #else  // __linux__
-    if (device->capture_is_on_nvidia) {
+    if (device->using_nvidia) {
         if (encoder->nvidia_encoder) {
             return nvidia_close_transfer_context(encoder->nvidia_encoder);
         }

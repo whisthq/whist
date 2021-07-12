@@ -54,8 +54,10 @@ typedef struct CaptureDevice {
     int event;
     bool texture_on_gpu;
     bool released;
+    // True if the capture device successfully initialized
     bool using_nvidia;
     NvidiaCaptureDevice nvidia_capture_device;
+    // False until the first capture_screen call succeeds
     bool capture_is_on_nvidia;
     // True if the first frame is the next to be captured
     bool first;
