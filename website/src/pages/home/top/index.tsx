@@ -1,21 +1,22 @@
-import React from "react";
-import FadeIn from "react-fade-in";
-import { TypeWriter } from "@app/shared/components/typewriter";
+import React from 'react'
+import FadeIn from 'react-fade-in'
+import { TypeWriter } from '@app/shared/components/typewriter'
+import { Link } from 'react-scroll'
 
-import { withContext } from "@app/shared/utils/context";
-import { ScreenSize } from "@app/shared/constants/screenSizes";
-import Geometric from "./geometric";
-import YoutubeLogo from "@app/assets/icons/youtubeLogo.svg";
-import NotionLogo from "@app/assets/icons/notionLogo.svg";
-import ShopifyLogo from "@app/assets/icons/shopifyLogo.svg";
-import AirtableLogo from "@app/assets/icons/airtableLogo.svg";
-import FigmaLogo from "@app/assets/icons/figmaLogo.svg";
-import GoogleDriveLogo from "@app/assets/icons/googleDriveLogo.svg";
+import { withContext } from '@app/shared/utils/context'
+import { ScreenSize } from '@app/shared/constants/screenSizes'
+import Geometric from './geometric'
+import YoutubeLogo from '@app/assets/icons/youtubeLogo.svg'
+import NotionLogo from '@app/assets/icons/notionLogo.svg'
+import ShopifyLogo from '@app/assets/icons/shopifyLogo.svg'
+import AirtableLogo from '@app/assets/icons/airtableLogo.svg'
+import FigmaLogo from '@app/assets/icons/figmaLogo.svg'
+import GoogleDriveLogo from '@app/assets/icons/googleDriveLogo.svg'
 
 import {
   FractalButton,
-  FractalButtonState,
-} from "@app/pages/home/components/button";
+  FractalButtonState
+} from '@app/pages/home/components/button'
 
 const SymmetricGeometric = (props: any) => (
   <FadeIn>
@@ -23,7 +24,7 @@ const SymmetricGeometric = (props: any) => (
       className={props.className}
       style={{
         top: 400,
-        left: 425,
+        left: 425
       }}
     >
       <Geometric
@@ -36,7 +37,7 @@ const SymmetricGeometric = (props: any) => (
       className={props.className}
       style={{
         top: 400,
-        right: -840,
+        right: -840
       }}
     >
       <Geometric
@@ -46,7 +47,7 @@ const SymmetricGeometric = (props: any) => (
       />
     </div>
   </FadeIn>
-);
+)
 
 export const Top = () => {
   /*
@@ -54,10 +55,10 @@ export const Top = () => {
 
         Arguments: none
     */
-  const { width } = withContext();
-  const hovering = false;
+  const { width } = withContext()
+  const hovering = false
 
-  const adjectives = ["faster", "lighter", "private"];
+  const adjectives = ['faster', 'lighter', 'private']
 
   return (
     <div>
@@ -89,7 +90,11 @@ export const Top = () => {
             </p>
             <FractalButton
               className="mt-12"
-              contents="DOWNLOAD NOW"
+              contents={
+                <Link to="download" spy={true} smooth={true}>
+                  DOWNLOAD NOW
+                </Link>
+              }
               state={FractalButtonState.DEFAULT}
             />
           </div>
@@ -99,11 +104,11 @@ export const Top = () => {
             <img
               src={YoutubeLogo}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 45 : 25,
                 top: width > ScreenSize.MEDIUM ? 170 : 125,
                 width: width > ScreenSize.MEDIUM ? 70 : 50,
-                opacity: hovering ? 0.15 : 0.25,
+                opacity: hovering ? 0.15 : 0.25
               }}
               className="animate-bounce"
               alt="youtube"
@@ -111,12 +116,12 @@ export const Top = () => {
             <img
               src={FigmaLogo}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 250 : 150,
                 top: width > ScreenSize.MEDIUM ? 80 : 50,
                 width: width > ScreenSize.MEDIUM ? 40 : 30,
                 opacity: hovering ? 0.15 : 0.25,
-                animationDelay: "0.9s",
+                animationDelay: '0.9s'
               }}
               className="animate-bounce"
               alt="figma"
@@ -124,12 +129,12 @@ export const Top = () => {
             <img
               src={NotionLogo}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 170 : 150,
                 top: width > ScreenSize.MEDIUM ? 280 : 175,
                 width: width > ScreenSize.MEDIUM ? 45 : 35,
                 opacity: hovering ? 0.15 : 0.25,
-                animationDelay: "0.5s",
+                animationDelay: '0.5s'
               }}
               className="animate-bounce"
               alt="instagram"
@@ -137,12 +142,12 @@ export const Top = () => {
             <img
               src={ShopifyLogo}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 370 : 220,
                 width: width > ScreenSize.MEDIUM ? 50 : 35,
                 top: width > ScreenSize.MEDIUM ? 210 : 110,
                 opacity: hovering ? 0.15 : 0.25,
-                animationDelay: "0.2s",
+                animationDelay: '0.2s'
               }}
               className="animate-bounce"
               alt="facebook"
@@ -150,12 +155,12 @@ export const Top = () => {
             <img
               src={GoogleDriveLogo}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 450 : 30,
                 top: width > ScreenSize.MEDIUM ? 60 : 210,
                 width: width > ScreenSize.MEDIUM ? 50 : 35,
                 opacity: hovering ? 0.15 : 0.25,
-                animationDelay: "0.7s",
+                animationDelay: '0.7s'
               }}
               className="animate-bounce"
               alt="gmail"
@@ -163,12 +168,12 @@ export const Top = () => {
             <img
               src={AirtableLogo}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 500 : 240,
                 top: width > ScreenSize.MEDIUM ? 350 : 240,
                 width: width > ScreenSize.MEDIUM ? 50 : 35,
                 opacity: hovering ? 0.15 : 0.2,
-                animationDelay: "0.1s",
+                animationDelay: '0.1s'
               }}
               className="animate-bounce"
               alt="reddit"
@@ -177,7 +182,7 @@ export const Top = () => {
         </FadeIn>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Top;
+export default Top

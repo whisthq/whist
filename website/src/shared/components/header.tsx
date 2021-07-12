@@ -1,6 +1,5 @@
 import React, { useState, ReactNode } from 'react'
 import { withClass } from '@app/shared/utils/withClass'
-import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 import history from '@app/shared/utils/history'
 import classNames from 'classnames'
 import {
@@ -123,7 +122,6 @@ const Header = (props: {
                 </div>
             </ScreenFull>
         </div>
-        <DarkModeIcon/>
         </div>
   )
 }
