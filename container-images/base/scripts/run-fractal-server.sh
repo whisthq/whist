@@ -17,8 +17,6 @@ SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 LOG_FILENAME=/usr/share/fractal/server.log
-export NVFBC_LOG_LEVEL=3
-export NVFBC_LOG_FILE=/usr/share/fractal/nvfbc.log
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
