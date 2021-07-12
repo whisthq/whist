@@ -195,20 +195,23 @@ int32_t multithreaded_send_video(void* opaque) {
                     close_transfer_context(device, encoder);
                     transfer_context_active = false;
                 }
-                if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
-                    // Reconfigured the capture device!
-                    // No need to recreate it, the device has now been updated
-                    LOG_INFO("Successfully reconfigured the capture device");
-                    // We should also update the encoder since the device has been reconfigured
-                    update_encoder = true;
-                } else {
-                    // Destroying the old capture device so that a new one can be recreated below
-                    LOG_ERROR(
-                        "Failed to reconfigure the capture device! "
-                        "Destroying and recreating the capture device instead!");
-                    destroy_capture_device(device);
-                    device = NULL;
-                }
+                // if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+                //    // Reconfigured the capture device!
+                //    // No need to recreate it, the device has now been updated
+                //    LOG_INFO("Successfully reconfigured the capture device");
+                //    // We should also update the encoder since the device has been reconfigured
+                //    update_encoder = true;
+                // } else {
+                //    // Destroying the old capture device so that a new one can be recreated below
+                //    LOG_ERROR(
+                //        "Failed to reconfigure the capture device! "
+                //        "Destroying and recreating the capture device instead!");
+
+                // For the time being, we have disabled the reconfigure functionality because
+                // of some weirdness happening in vkCreateDevice()
+                destroy_capture_device(device);
+                device = NULL;
+                // }
             } else {
                 LOG_INFO("No capture device exists yet, creating a new one.");
             }
