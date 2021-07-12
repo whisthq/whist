@@ -703,7 +703,7 @@ Public Function Implementations
 ============================
 */
 
-VideoEncoder *create_video_encoder(void* p_cuda_context, int in_width, int in_height, int out_width, int out_height,
+VideoEncoder *create_video_encoder(void** p_cuda_context, int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
     /*
         Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,

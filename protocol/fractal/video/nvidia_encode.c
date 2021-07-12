@@ -55,7 +55,7 @@ void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registere
     }
 }
 
-NvidiaEncoder* create_nvidia_encoder(void* p_cuda_context, int bitrate, CodecType codec, int out_width, int out_height) {
+NvidiaEncoder* create_nvidia_encoder(void** p_cuda_context, int bitrate, CodecType codec, int out_width, int out_height) {
     NVENCSTATUS status;
 
     // Initialize the encoder

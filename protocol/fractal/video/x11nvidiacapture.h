@@ -26,7 +26,7 @@ typedef struct {
  *
  * @returns                        0 on success, -1 on failure
  */
-int create_nvidia_capture_device(void* p_cuda_context, NvidiaCaptureDevice* device);
+int create_nvidia_capture_device(void** p_cuda_context, NvidiaCaptureDevice* device);
 /**
  * @brief                          Captures the screen into GPU pointers.
  *                                 This will also set width/height to the dimensions

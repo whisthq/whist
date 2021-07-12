@@ -174,7 +174,7 @@ static NVFBC_BOOL cuda_init(CUcontext *cuCtx)
     return NVFBC_TRUE;
 }
 
-int create_nvidia_capture_device(void* p_cuda_context, NvidiaCaptureDevice* device) {
+int create_nvidia_capture_device(void** p_cuda_context, NvidiaCaptureDevice* device) {
     // 0-initialize everything in the NvidiaCaptureDevice
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 
