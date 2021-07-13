@@ -28,11 +28,12 @@ bundled_region = {
 }
 
 type_to_number_map = {
-    "g4dn.xlarge": 2,
-    "g4dn.2xlarge": 4,
-    "g4dn.4xlarge": 8,
-    "g4dn.8xlarge": 16,
-    "g4dn.16xlarge": 32,
+    "g4dn.xlarge": 1,
+    "g4dn.2xlarge": 1,
+    "g4dn.4xlarge": 1,
+    "g4dn.8xlarge": 1,
+    "g4dn.16xlarge": 1,
+    "g4dn.12xlarge": 4,
 }
 
 
