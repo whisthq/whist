@@ -148,141 +148,150 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		return utils.MakeError("Couldn't find a suitable image")
 	}
 
-	// At this point, we've found an image, so we just need to start the container.
+	// It turns out the second mandelbox (including starting the Fractal
+	// applicaiton) is a bit slow still. Therefore, we do this warmup _twice_.
+	warmupCount := 2
+	for iter := 1; iter <= warmupCount; iter++ {
+		logger.Infof("Staring warmup iteration %v of %v", iter, warmupCount)
 
-	containerName := "host-service-warmup"
-	fc := mandelbox.New(globalCtx, goroutineTracker, types.MandelboxID(containerName))
-	defer fc.Close()
+		// At this point, we've found an image, so we just need to start the container.
 
-	// Assign port bindings for the mandelbox (necessary for
-	// `fc.WriteResourcesForProtocol()`, though we don't need to actually pass
-	// them into the mandelbox)
-	if err := fc.AssignPortBindings([]portbindings.PortBinding{
-		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
-		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
-		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
-	}); err != nil {
-		return utils.MakeError("Error assigning port bindings: %s", err)
+		containerName := "host-service-warmup"
+		fc := mandelbox.New(globalCtx, goroutineTracker, types.MandelboxID(containerName))
+		defer fc.Close()
+
+		// Assign port bindings for the mandelbox (necessary for
+		// `fc.WriteResourcesForProtocol()`, though we don't need to actually pass
+		// them into the mandelbox)
+		if err := fc.AssignPortBindings([]portbindings.PortBinding{
+			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		}); err != nil {
+			return utils.MakeError("Error assigning port bindings: %s", err)
+		}
+
+		// Initialize Uinput devices for the mandelbox (necessary for the `update-xorg-conf` service to work)
+		if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
+			return utils.MakeError("Error initializing uinput devices: %s", err)
+		}
+		devices := fc.GetDeviceMappings()
+
+		// Allocate a TTY
+		if err := fc.InitializeTTY(); err != nil {
+			return utils.MakeError("Error initializing TTY: %s", err)
+		}
+
+		aesKey := utils.RandHex(16)
+		config := dockercontainer.Config{
+			Env: []string{
+				utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+				"NVIDIA_DRIVER_CAPABILITIES=all",
+				"NVIDIA_VISIBLE_DEVICES=all",
+			},
+			Image:        image,
+			AttachStdin:  true,
+			AttachStdout: true,
+			AttachStderr: true,
+			Tty:          true,
+		}
+
+		tmpfs := make(map[string]string)
+		tmpfs["/run"] = "size=52428800"
+		tmpfs["/run/lock"] = "size=52428800"
+
+		hostConfig := dockercontainer.HostConfig{
+			Binds: []string{
+				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
+				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
+				utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
+				"/run/udev/data:/run/udev/data:ro",
+				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
+			},
+			CapDrop: strslice.StrSlice{"ALL"},
+			CapAdd: strslice.StrSlice([]string{
+				"SETPCAP",
+				"MKNOD",
+				"AUDIT_WRITE",
+				"CHOWN",
+				"NET_RAW",
+				"DAC_OVERRIDE",
+				"FOWNER",
+				"FSETID",
+				"KILL",
+				"SETGID",
+				"SETUID",
+				"NET_BIND_SERVICE",
+				"SYS_CHROOT",
+				"SETFCAP",
+				// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
+				"SYS_NICE",
+			}),
+			ShmSize: 2147483648,
+			Tmpfs:   tmpfs,
+			Resources: dockercontainer.Resources{
+				CPUShares: 2,
+				Memory:    6552550944,
+				NanoCPUs:  0,
+				// Don't need to set CgroupParent, since each mandelbox is its own task.
+				// We're not using anything like AWS services, where we'd want to put
+				// several mandelboxes under one limit.
+				Devices:            devices,
+				KernelMemory:       0,
+				KernelMemoryTCP:    0,
+				MemoryReservation:  0,
+				MemorySwap:         0,
+				Ulimits:            []*dockerunits.Ulimit{},
+				CPUCount:           0,
+				CPUPercent:         0,
+				IOMaximumIOps:      0,
+				IOMaximumBandwidth: 0,
+			},
+		}
+
+		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
+		if err != nil {
+			return utils.MakeError("Error running `docker create` for %s:\n%s", containerName, err)
+		}
+		logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
+
+		if err := fc.WriteResourcesForProtocol(); err != nil {
+			return utils.MakeError("Error writing resources for protocol: %s", err)
+		}
+		err = fc.MarkReady()
+		if err != nil {
+			return utils.MakeError("Error marking mandelbox as ready: %s", err)
+		}
+
+		err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
+		if err != nil {
+			return utils.MakeError("Error running `docker start` for %s:\n%s", containerName, err)
+		}
+		logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
+
+		logger.Infof("Waiting for fractal application to warm up...")
+		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+			return utils.MakeError("Error warming up fractal application: %s", err)
+		}
+		logger.Infof("Finished waiting for fractal application to warm up.")
+
+		time.Sleep(5 * time.Second)
+
+		stopTimeout := 30 * time.Second
+		_ = client.ContainerStop(globalCtx, createBody.ID, &stopTimeout)
+		err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
+		if err != nil {
+			return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
+		}
+		logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
+
+		// Close the mandelbox, and wait 5 seconds so we don't pollute the logs with
+		// cleanup after the event loop starts.
+		fc.Close()
+		time.Sleep(5 * time.Second)
+
+		logger.Infof("Finished warmup iteration %v of %v", iter, warmupCount)
 	}
-
-	// Initialize Uinput devices for the mandelbox (necessary for the `update-xorg-conf` service to work)
-	if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
-		return utils.MakeError("Error initializing uinput devices: %s", err)
-	}
-	devices := fc.GetDeviceMappings()
-
-	// Allocate a TTY
-	if err := fc.InitializeTTY(); err != nil {
-		return utils.MakeError("Error initializing TTY: %s", err)
-	}
-
-	aesKey := utils.RandHex(16)
-	config := dockercontainer.Config{
-		Env: []string{
-			utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
-			"NVIDIA_DRIVER_CAPABILITIES=all",
-			"NVIDIA_VISIBLE_DEVICES=all",
-		},
-		Image:        image,
-		AttachStdin:  true,
-		AttachStdout: true,
-		AttachStderr: true,
-		Tty:          true,
-	}
-
-	tmpfs := make(map[string]string)
-	tmpfs["/run"] = "size=52428800"
-	tmpfs["/run/lock"] = "size=52428800"
-
-	hostConfig := dockercontainer.HostConfig{
-		Binds: []string{
-			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
-			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
-			"/run/udev/data:/run/udev/data:ro",
-			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
-		},
-		CapDrop: strslice.StrSlice{"ALL"},
-		CapAdd: strslice.StrSlice([]string{
-			"SETPCAP",
-			"MKNOD",
-			"AUDIT_WRITE",
-			"CHOWN",
-			"NET_RAW",
-			"DAC_OVERRIDE",
-			"FOWNER",
-			"FSETID",
-			"KILL",
-			"SETGID",
-			"SETUID",
-			"NET_BIND_SERVICE",
-			"SYS_CHROOT",
-			"SETFCAP",
-			// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
-			"SYS_NICE",
-		}),
-		ShmSize: 2147483648,
-		Tmpfs:   tmpfs,
-		Resources: dockercontainer.Resources{
-			CPUShares: 2,
-			Memory:    6552550944,
-			NanoCPUs:  0,
-			// Don't need to set CgroupParent, since each mandelbox is its own task.
-			// We're not using anything like AWS services, where we'd want to put
-			// several mandelboxes under one limit.
-			Devices:            devices,
-			KernelMemory:       0,
-			KernelMemoryTCP:    0,
-			MemoryReservation:  0,
-			MemorySwap:         0,
-			Ulimits:            []*dockerunits.Ulimit{},
-			CPUCount:           0,
-			CPUPercent:         0,
-			IOMaximumIOps:      0,
-			IOMaximumBandwidth: 0,
-		},
-	}
-
-	createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
-	if err != nil {
-		return utils.MakeError("Error running `docker create` for %s:\n%s", containerName, err)
-	}
-	logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
-
-	if err := fc.WriteResourcesForProtocol(); err != nil {
-		return utils.MakeError("Error writing resources for protocol: %s", err)
-	}
-	err = fc.MarkReady()
-	if err != nil {
-		return utils.MakeError("Error marking mandelbox as ready: %s", err)
-	}
-
-	err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
-	if err != nil {
-		return utils.MakeError("Error running `docker start` for %s:\n%s", containerName, err)
-	}
-	logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
-
-	logger.Infof("Waiting for fractal application to warm up...")
-	if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
-		return utils.MakeError("Error warming up fractal application: %s", err)
-	}
-	logger.Infof("Finished waiting for fractal application to warm up.")
-
-	time.Sleep(5 * time.Second)
-
-	stopTimeout := 30 * time.Second
-	_ = client.ContainerStop(globalCtx, createBody.ID, &stopTimeout)
-	err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
-	if err != nil {
-		return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
-	}
-	logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
-
-	// Close the mandelbox, and wait 5 seconds so we don't pollute the logs with
-	// cleanup after the event loop starts.
-	fc.Close()
-	time.Sleep(5 * time.Second)
 
 	return nil
 }
