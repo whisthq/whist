@@ -10,8 +10,8 @@ import {
 import { store } from "@app/utils/persist"
 
 export default flow<{
-  email: string
-  sub: string
+  userEmail: string
+  subClaim: string
   accessToken: string
   refreshToken: string
   configToken?: string

@@ -18,14 +18,14 @@ import { flow, fork } from "@app/utils/flows"
 import { some, pick } from "lodash"
 
 const hostServiceInfoRequest = flow<{
-  sub: string
+  subClaim: string
   accessToken: string
   configToken: string
 }>("hostServiceInfoRequest", (trigger) =>
   fork(
     trigger.pipe(
-      switchMap(({ sub, accessToken }) =>
-        from(hostServiceInfo(sub, accessToken))
+      switchMap(({ subClaim, accessToken }) =>
+        from(hostServiceInfo(subClaim, accessToken))
       )
     ),
     {
@@ -40,7 +40,7 @@ const hostServiceInfoRequest = flow<{
 )
 
 const hostPollingInner = flow<{
-  sub: string
+  subClaim: string
   accessToken: string
   configToken: string
 }>("hostPollingInner", (trigger) => {
@@ -57,7 +57,7 @@ const hostPollingInner = flow<{
 })
 
 const hostInfoFlow = flow<{
-  sub: string
+  subClaim: string
   accessToken: string
   configToken: string
 }>("hostInfoFlow", (trigger) => {
@@ -89,7 +89,7 @@ const hostConfigFlow = flow<{
   mandelboxIP: string
   mandelboxPort: number
   mandelboxSecret: string
-  sub: string
+  subClaim: string
   configToken: string
   accessToken: string
 }>("hostConfigFlow", (trigger) =>
@@ -100,7 +100,7 @@ const hostConfigFlow = flow<{
           mandelboxIP,
           mandelboxPort,
           mandelboxSecret,
-          sub,
+          subClaim,
           configToken,
           accessToken,
         }) =>
@@ -109,7 +109,7 @@ const hostConfigFlow = flow<{
               mandelboxIP,
               mandelboxPort,
               mandelboxSecret,
-              sub,
+              subClaim,
               configToken,
               accessToken
             )
@@ -126,7 +126,7 @@ const hostConfigFlow = flow<{
 )
 
 export default flow<{
-  sub: string
+  subClaim: string
   accessToken: string
   configToken: string
 }>("hostServiceFlow", (trigger) => {
@@ -135,7 +135,7 @@ export default flow<{
   const config = hostConfigFlow(
     zip(trigger, info.success).pipe(
       map(([t, i]) => ({
-        ...pick(t, ["sub", "configToken", "accessToken"]),
+        ...pick(t, ["subClaim", "configToken", "accessToken"]),
         ...pick(i, ["mandelboxIP", "mandelboxPort", "mandelboxSecret"]),
       }))
     )

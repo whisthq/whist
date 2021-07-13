@@ -78,9 +78,9 @@ fromTrigger("notPersisted").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
+fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
   createProtocolWindow().catch((err) => console.error(err))
-  createTray(x.email)
+  createTray(x.userEmail)
 })
 
 fromTrigger("windowsAllClosed")

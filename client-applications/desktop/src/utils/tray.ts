@@ -77,13 +77,13 @@ export const destroyTray = () => {
   tray?.destroy()
 }
 
-export const createTray = (email: string) => {
+export const createTray = (userEmail: string) => {
   // We should only have one tray at any given time
   if (tray != null) destroyTray()
 
   tray = new Tray(createNativeImage())
   // If the user is a @fractal.co developer, then allow them to toggle regions for testing
-  const template = endsWith(email, "@fractal.co")
+  const template = endsWith(userEmail, "@fractal.co")
     ? [...rootMenu, ...regionMenu]
     : [...rootMenu]
   const menu = Menu.buildFromTemplate(template)

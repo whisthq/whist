@@ -62,21 +62,21 @@ const localLog = (
   title: string,
   data: object,
   level: LogLevel,
-  email: string
+  userEmail: string
 ) => {
-  const logs = formatLogs(`${title} -- ${email}`, data, level)
+  const logs = formatLogs(`${title} -- ${userEmail}`, data, level)
 
   if (!app.isPackaged) console.log(logs)
 
   logFile.write(logs)
 }
 
-const amplitudeLog = async (title: string, data: object, email: string) => {
-  if (email !== "") {
+const amplitudeLog = async (title: string, data: object, userEmail: string) => {
+  if (userEmail !== "") {
     await amplitude.logEvent({
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
-      user_id: email,
+      user_id: userEmail,
       event_properties: { data: util.inspect(data) },
     })
   }
@@ -91,26 +91,24 @@ export const logBase = async (title: string, data: object, level: LogLevel) => {
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
-  const email = persistGet("email") ?? ""
+  const userEmail = persistGet("userEmail") ?? ""
 
-  await amplitudeLog(title, data, email)
-  localLog(title, data, level, email)
+  await amplitudeLog(title, data, userEmail)
+  localLog(title, data, level, userEmail)
 }
 
 export const uploadToS3 = async () => {
   /*
   Description:
       Uploads a local file to S3
-  Arguments:
-      email (string): user email of the logged in user
   Returns:
       Response from the s3 upload
   */
-  const email = persistGet("email") ?? ""
+  const userEmail = persistGet("userEmail") ?? ""
 
-  if (email === "") return
+  if (userEmail === "") return
 
-  const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
+  const s3FileName = `CLIENT_${userEmail}_${new Date().getTime()}.txt`
 
   await logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
 

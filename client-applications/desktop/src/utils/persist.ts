@@ -26,8 +26,8 @@ const cache = {
   accessToken: store.get(`${appEnvironment as string}-accessToken`) ?? "",
   configToken: store.get(`${appEnvironment as string}-configToken`) ?? "",
   refreshToken: store.get(`${appEnvironment as string}-refreshToken`) ?? "",
-  email: store.get(`${appEnvironment as string}-email`) ?? "",
-  sub: store.get(`${appEnvironment as string}-sub`) ?? "",
+  userEmail: store.get(`${appEnvironment as string}-userEmail`) ?? "",
+  subClaim: store.get(`${appEnvironment as string}-subClaim`) ?? "",
 } as Cache
 
 export const emitCache = () => {
