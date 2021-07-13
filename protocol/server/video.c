@@ -216,7 +216,8 @@ int32_t multithreaded_send_video(void* opaque) {
         // If no device is set, we need to create one
         if (device == NULL) {
             device = &rdevice;
-            if (create_capture_device(device, true_width, true_height, client_dpi, (void**)&cuda_context) < 0) {
+            if (create_capture_device(device, true_width, true_height, client_dpi,
+                                      (void**)&cuda_context) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;

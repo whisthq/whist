@@ -27,7 +27,8 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, void* p_gpu_texture, int width, int height) {
+NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, void* p_gpu_texture, int width,
+                                        int height) {
     NV_ENC_REGISTER_RESOURCE register_params = {0};
     register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
     register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_CUDADEVICEPTR;
@@ -55,7 +56,8 @@ void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registere
     }
 }
 
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height, void** p_cuda_context) {
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
+                                     void** p_cuda_context) {
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -172,8 +174,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture,
-                                int width, int height) {
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture, int width,
+                                int height) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
             "Nvidia Encoder has received a frame_intake of dimensions %dx%d, "
@@ -187,9 +189,8 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture,
     for (int i = 0; i < cache_size; i++) {
         InputBufferCacheEntry resource = encoder->registered_resources[i];
         // We include a check against registered_resource NULL for validity
-        if (resource.p_gpu_texture == p_gpu_texture &&
-            resource.width == width && resource.height == height &&
-            resource.registered_resource != NULL) {
+        if (resource.p_gpu_texture == p_gpu_texture && resource.width == width &&
+            resource.height == height && resource.registered_resource != NULL) {
             encoder->registered_resource = resource.registered_resource;
             return 0;
         }

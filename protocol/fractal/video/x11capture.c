@@ -132,7 +132,8 @@ void try_update_dimensions(CaptureDevice* device, UINT width, UINT height, UINT 
     }
 }
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, void** p_cuda_context) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi,
+                          void** p_cuda_context) {
     /*
         Create a device that will capture a screen of the specified width, height, and DPI.
         This function first attempts to use X11 to set

@@ -6,7 +6,6 @@
 
 #include "x11capture.h"
 #include "x11nvidiacapture.h"
-#include <GL/glx.h>
 
 // NOTE: Using Nvidia Capture SDK 8.0.4
 // Please bump this comment if a newer Nvidia Capture SDK is going to be used
@@ -16,15 +15,15 @@
 #define PRINT_STATUS false
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
-#define LIB_CUDA_NAME  "libcuda.so.1"
+#define LIB_CUDA_NAME "libcuda.so.1"
 
 /*
  * CUDA entry points
  */
-typedef CUresult (* CUINITPROC) (unsigned int Flags);
-typedef CUresult (* CUDEVICEGETPROC) (CUdevice *device, int ordinal);
-typedef CUresult (* CUCTXCREATEV2PROC) (CUcontext *pctx, unsigned int flags, CUdevice dev);
-typedef CUresult (* CUMEMCPYDTOHV2PROC) (void *dstHost, CUdeviceptr srcDevice, size_t ByteCount);
+typedef CUresult (*CUINITPROC)(unsigned int Flags);
+typedef CUresult (*CUDEVICEGETPROC)(CUdevice* device, int ordinal);
+typedef CUresult (*CUCTXCREATEV2PROC)(CUcontext* pctx, unsigned int flags, CUdevice dev);
+typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount);
 
 static CUINITPROC cuInit_ptr = NULL;
 static CUDEVICEGETPROC cuDeviceGet_ptr = NULL;
@@ -41,33 +40,32 @@ static CUMEMCPYDTOHV2PROC cuMemcpyDtoH_v2_ptr = NULL;
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-static NVFBC_BOOL cuda_load_library(void *libCUDA)
-{
+static NVFBC_BOOL cuda_load_library(void* libCUDA) {
     libCUDA = dlopen(LIB_CUDA_NAME, RTLD_NOW);
     if (libCUDA == NULL) {
         fprintf(stderr, "Unable to open '%s'\n", LIB_CUDA_NAME);
         return NVFBC_FALSE;
     }
 
-    cuInit_ptr = (CUINITPROC) dlsym(libCUDA, "cuInit");
+    cuInit_ptr = (CUINITPROC)dlsym(libCUDA, "cuInit");
     if (cuInit_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuInit'\n");
         return NVFBC_FALSE;
     }
 
-    cuDeviceGet_ptr = (CUDEVICEGETPROC) dlsym(libCUDA, "cuDeviceGet");
+    cuDeviceGet_ptr = (CUDEVICEGETPROC)dlsym(libCUDA, "cuDeviceGet");
     if (cuDeviceGet_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuDeviceGet'\n");
         return NVFBC_FALSE;
     }
 
-    cuCtxCreate_v2_ptr = (CUCTXCREATEV2PROC) dlsym(libCUDA, "cuCtxCreate_v2");
+    cuCtxCreate_v2_ptr = (CUCTXCREATEV2PROC)dlsym(libCUDA, "cuCtxCreate_v2");
     if (cuCtxCreate_v2_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuCtxCreate_v2'\n");
         return NVFBC_FALSE;
     }
 
-    cuMemcpyDtoH_v2_ptr = (CUMEMCPYDTOHV2PROC) dlsym(libCUDA, "cuMemcpyDtoH_v2");
+    cuMemcpyDtoH_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(libCUDA, "cuMemcpyDtoH_v2");
     if (cuMemcpyDtoH_v2_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
         return NVFBC_FALSE;
@@ -85,8 +83,7 @@ static NVFBC_BOOL cuda_load_library(void *libCUDA)
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-static NVFBC_BOOL cuda_init(CUcontext *cuCtx)
-{
+static NVFBC_BOOL cuda_init(CUcontext* cuCtx) {
     CUresult cuRes;
     CUdevice cuDev;
 
@@ -153,7 +150,6 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, void** p_cuda_cont
         LOG_ERROR("Unable to resolve symbol 'NvFBCCreateInstance'");
         return -1;
     }
-
 
     /*
      * Initialize CUDA.
