@@ -395,7 +395,9 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
 
 def test_get_num_mandelboxes():
     # Ensures our get_num_mandelboxes utility works as expected
-    assert aws_funcs.get_base_free_mandelboxes("g4dn.xlarge") == 2
-    for i in range(1, 5):
-        new_string = f"g4dn.{2**i}xlarge"
-        assert aws_funcs.get_base_free_mandelboxes(new_string) == 2 ** (i + 1)
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.2xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.4xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.8xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.16xlarge") == 1
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.12xlarge") == 4
