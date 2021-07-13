@@ -77,77 +77,14 @@ static NVFBC_BOOL cuda_load_library(void *libCUDA)
 }
 
 /**
- * @brief                          Creates an OpenGL context for use in NvFBC.
- *                                 NvFBC needs an OpenGL context to work with,
- *                                 since it will capture frames into an OpenGL Texture.
+ * Initializes CUDA and creates a CUDA context.
  *
- * @param glx_ctx                  Pointer to the glx context to fill in
+ * \param [in] cuCtx
+ *   A pointer to the created CUDA context.
  *
- * @param glx_fb_config            Pointer to the framebuffer config to fill in
- *
- * @returns                        NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
+ * \return
+ *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
-    int attribs[] = {GLX_DRAWABLE_TYPE,
-                     GLX_PIXMAP_BIT | GLX_WINDOW_BIT,
-                     GLX_BIND_TO_TEXTURE_RGBA_EXT,
-                     1,
-                     GLX_BIND_TO_TEXTURE_TARGETS_EXT,
-                     GLX_TEXTURE_2D_BIT_EXT,
-                     None};
-
-    // I don't really know what's going on in this function,
-    // ideally Nvidia should've put this in their NvFBCUtils.c file,
-    // but they didn't so I just copied this function from their examples.
-    // All that matters is that this opens the X11 Display,
-    // and makes an OpenGL Context out of it
-
-    // Get the X11 Display that the OpenGL Context will refer to
-    Display* dpy = XOpenDisplay(NULL);
-    if (dpy == None) {
-        fprintf(stderr, "Unable to open display\n");
-        return NVFBC_FALSE;
-    }
-
-    int n;
-    GLXFBConfig* fb_configs = glXChooseFBConfig(dpy, DefaultScreen(dpy), attribs, &n);
-    if (!fb_configs) {
-        fprintf(stderr, "Unable to find FB configs\n");
-        return NVFBC_FALSE;
-    }
-
-    *glx_ctx = glXCreateNewContext(dpy, fb_configs[0], GLX_RGBA_TYPE, None, True);
-    if (*glx_ctx == None) {
-        fprintf(stderr, "Unable to create GL context\n");
-        return NVFBC_FALSE;
-    }
-
-    Pixmap pixmap =
-        XCreatePixmap(dpy, XDefaultRootWindow(dpy), 1, 1, DisplayPlanes(dpy, XDefaultScreen(dpy)));
-    if (pixmap == None) {
-        fprintf(stderr, "Unable to create pixmap\n");
-        return NVFBC_FALSE;
-    }
-
-    GLXPixmap glx_pixmap = glXCreatePixmap(dpy, fb_configs[0], pixmap, NULL);
-    if (glx_pixmap == None) {
-        fprintf(stderr, "Unable to create GLX pixmap\n");
-        return NVFBC_FALSE;
-    }
-
-    Bool res = glXMakeCurrent(dpy, glx_pixmap, *glx_ctx);
-    if (!res) {
-        fprintf(stderr, "Unable to make context current\n");
-        return NVFBC_FALSE;
-    }
-
-    *glx_fb_config = fb_configs[0];
-
-    XFree(fb_configs);
-
-    return NVFBC_TRUE;
-}
-
 static NVFBC_BOOL cuda_init(CUcontext *cuCtx)
 {
     CUresult cuRes;
@@ -174,7 +111,19 @@ static NVFBC_BOOL cuda_init(CUcontext *cuCtx)
     return NVFBC_TRUE;
 }
 
-int create_nvidia_capture_device(void** p_cuda_context, NvidiaCaptureDevice* device) {
+int create_nvidia_capture_device(NvidiaCaptureDevice* device, void** p_cuda_context) {
+    /*
+        Creates an nvidia capture device
+
+        Arguments:
+            device (NvidiaCaptureDevice*): Capture device struct to hold the capture
+                device
+            p_cuda_context (void**): pointer to the CUDA context
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
     // 0-initialize everything in the NvidiaCaptureDevice
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 
@@ -205,22 +154,10 @@ int create_nvidia_capture_device(void** p_cuda_context, NvidiaCaptureDevice* dev
         return -1;
     }
 
-    /*
-     * Initialize OpenGL.
-     */
-    GLXContext glx_ctx;
-    GLXFBConfig glx_fb_config;
-    // NVFBC_BOOL fbc_bool = gl_init(&glx_ctx, &glx_fb_config);
-    // if (fbc_bool != NVFBC_TRUE) {
-    //    LOG_ERROR("Failed to initialized OpenGL!");
-    //    return -1;
-    //}
 
     /*
      * Initialize CUDA.
      */
-
-    // CUcontext cuCtx;
     void* libCUDA = NULL;
 
     NVFBC_BOOL fbc_bool = cuda_load_library(libCUDA);
@@ -229,7 +166,6 @@ int create_nvidia_capture_device(void** p_cuda_context, NvidiaCaptureDevice* dev
         return -1;
     }
 
-    // fbc_bool = cuda_init(&cuCtx);
     fbc_bool = cuda_init((CUcontext*)(p_cuda_context));
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialize CUDA!");

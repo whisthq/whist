@@ -77,6 +77,8 @@ extern volatile bool update_encoder;
 static bool pending_encoder;
 static bool encoder_finished;
 static VideoEncoder* encoder_factory_result = NULL;
+
+// CUDA context used to set up encoder and capture device
 volatile void* cuda_context;
 
 static int encoder_factory_server_w;
@@ -104,9 +106,9 @@ Private Function Implementations
 int32_t multithreaded_encoder_factory(void* opaque) {
     UNUSED(opaque);
     encoder_factory_result = create_video_encoder(
-        (void**)&cuda_context,
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
-        encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
+        encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type,
+        (void**)&cuda_context);
     encoder_finished = true;
     return 0;
 }
@@ -214,7 +216,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // If no device is set, we need to create one
         if (device == NULL) {
             device = &rdevice;
-            if (create_capture_device((void**)&cuda_context, device, true_width, true_height, client_dpi) < 0) {
+            if (create_capture_device(device, true_width, true_height, client_dpi, (void**)&cuda_context) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;

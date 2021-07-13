@@ -47,10 +47,11 @@ typedef struct {
  * @param codec                    Which codec type (h264 or h265) to use
  * @param out_width                Width of the output frame
  * @param out_height               Height of the output frame
+ * @param p_cuda_context           Pointer to the CUDA context
  *
  * @returns                        The newly created nvidia encoder
  */
-NvidiaEncoder* create_nvidia_encoder(void** p_cuda_context, int bitrate, CodecType codec, int out_width, int out_height);
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height, void** p_cuda_context);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder
