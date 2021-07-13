@@ -38,6 +38,9 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# List of warnings to silence
+suppress_warnings = ['epub.unknown_project_files']
+
 
 # -- Options for HTML output -------------------------------------------------
 
