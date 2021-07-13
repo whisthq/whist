@@ -67,6 +67,7 @@ class EC2Client(CloudClient):
         # rather than having some complex launch config, just make the AWS instance
         # parameters at call time
         kwargs = {
+            "KeyName": "savvy-test-us-east-1-keypair",
             "ImageId": image_id,
             "InstanceType": instance_type,
             "MaxCount": num_instances,
