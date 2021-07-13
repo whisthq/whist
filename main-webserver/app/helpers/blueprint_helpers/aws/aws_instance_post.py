@@ -113,9 +113,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
      negative infinity).
 
      At the moment, our scaling algorithm is
-     - 'if we have less than 10 mandelboxes in a valid AMI/region pair,
+     - 'if we have less than 20 mandelboxes in a valid AMI/region pair,
      make a new instance'
-     - 'Else, if we have a full instance of extra space more than 10, try to
+     - 'Else, if we have a full instance of extra space more than 20, try to
      stop an instance'
      - 'Else, we're fine'.
     Args:
@@ -155,7 +155,8 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     )
 
     # And then figure out how many instances we need to spin up/purge to get 20 free total
-    desired_free_mandelboxes = 20
+    # Check config DB for the correct value for the environment.
+    desired_free_mandelboxes = current_app.config["DESIRED_FREE_MANDELBOXES"]
 
     if num_free_mandelboxes < desired_free_mandelboxes:
         return current_app.config["DEFAULT_INSTANCE_BUFFER"]
