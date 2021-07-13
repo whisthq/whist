@@ -9,8 +9,10 @@ sure that the environment variable `FLASK_ENV` is set such that `flask` runs the
 instantiated in this module (e.g. `FLASK_ENV=entry`). Read more about Flask application discovery
 here: https://flask.palletsprojects.com/en/1.1.x/cli/?highlight=cli#application-discovery
 """
+
 import os
 import platform
+import sys
 
 from app.factory import create_app
 from app.celery_utils import make_celery
@@ -29,7 +31,7 @@ celery.set_default()
 # enable web requests
 if not set_web_requests_status(True):
     fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
-    os.sys.exit(1)
+    sys.exit(1)
 
 # enable the web signal handler. This should work on OSX and Linux.
 if "windows" in platform.platform().lower():

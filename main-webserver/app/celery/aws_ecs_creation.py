@@ -658,11 +658,11 @@ def _assign_container(
     try:
         _pass_start_values_to_instance(base_container, client_app_auth_secret)
     except StartValueException:
-        num_tries += 1
+        num_tries += 1  # type: ignore[operator]
         if num_tries <= MAX_PASS_START_VALUES_RETRIES:
             return _clean_tasks_and_create_new_container(
                 base_container,
-                task_version,
+                task_version,  # type: ignore[arg-type]
                 webserver_url,
                 num_tries,
             )
