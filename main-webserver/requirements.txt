@@ -13,11 +13,11 @@ Flask-SendGrid==0.7.1
 Flask-SQLAlchemy==2.5.1
 gevent==21.1.2
 hirefire==1.1
+Jinja2==2.11.3
 logzio-python-handler==3.0.0
 marshmallow-sqlalchemy==0.26.1
 psycopg2-binary==2.9.1
 PyJWT==2.1.0
-python-dateutil==2.8.1
 python-dotenv==0.18.0
 python-jose==3.3.0
 pyzipcode==3.0.1

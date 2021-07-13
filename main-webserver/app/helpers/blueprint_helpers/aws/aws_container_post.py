@@ -114,7 +114,7 @@ def preprocess_task_info(app: str) -> Tuple[str, int, str, Optional[str]]:
     raise BadAppError("No Matching App Found")
 
 
-def protocol_info(address: str, port: int, aeskey: str) -> Tuple[str, int]:
+def protocol_info(address: str, port: int, aeskey: str) -> Tuple[Optional[str], int]:
     """Returns information, which is consumed by the protocol, to the client.
 
     Arguments:
