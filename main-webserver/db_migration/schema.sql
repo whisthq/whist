@@ -108,6 +108,9 @@ CREATE FUNCTION hardware.change_trigger() RETURNS trigger
            )
            VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), row_to_json(OLD));
            RETURN NEW;
+         ELSIF  TG_OP = 'UPDATE'
+         THEN
+           RETURN NEW;
          ELSIF TG_OP = 'DELETE'
          THEN
            INSERT INTO logging.t_instance_history
