@@ -22,7 +22,7 @@ Example usage:
 
 import functools
 
-from typing import Callable
+from typing import Any, Callable
 
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
 
@@ -46,7 +46,7 @@ def has_scope(scope: str) -> bool:
     return scope in get_jwt().get("scope", "").split()
 
 
-def scope_required(scope: str) -> Callable:
+def scope_required(scope: str) -> Callable[..., Any]:
     """Allow a user to access a decorated endpoint if their access token has the proper scope.
 
     Instructions for writing custom authorization decorators can be found here:
@@ -60,9 +60,9 @@ def scope_required(scope: str) -> Callable:
         A decorator that can be applied to a Flask view function to enforce authentication.
     """
 
-    def view_decorator(view_func):
+    def view_decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(view_func)
-        def decorated_view(*args, **kwargs):
+        def decorated_view(*args: Any, **kwargs: Any) -> Any:
             verify_jwt_in_request()
 
             if not has_scope(scope):
