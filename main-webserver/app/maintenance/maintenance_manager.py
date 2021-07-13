@@ -33,7 +33,7 @@ _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
 _REDIS_MAINTENANCE_KEY = "WEBSERVER_MAINTENANCE_MODE"
 _REDIS_TASKS_KEY = "WEBSERVER_TASKS"
 
-_REDIS_CONN: Optional[redis.Redis] = None
+_REDIS_CONN: redis.Redis
 
 
 def maintenance_init_redis_conn(redis_uri: str):
@@ -72,7 +72,7 @@ def check_if_maintenance() -> bool:
     # not modifying data. it is posisble for maintenance to start right after
     # the check happens; that is handled through task tracking and failing out
     # celery tasks that try to start during maintenance
-    return _REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY)
+    return bool(_REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY))
 
 
 def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:

@@ -1,6 +1,6 @@
 import math
 import datetime
-from typing import Optional
+from typing import Dict, Optional
 
 from celery import shared_task, current_task
 from flask import current_app
@@ -27,7 +27,7 @@ def update_cluster(
     webserver_url: str,
     region_name: Optional[str] = "us-east-1",
     ami: Optional[str] = None,
-) -> None:
+) -> Dict[str, str]:
     """
     Updates a specific cluster to use a new AMI
 
