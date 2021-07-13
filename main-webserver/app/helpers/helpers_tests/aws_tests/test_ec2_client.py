@@ -15,7 +15,7 @@ def test_single() -> None:
     ec2_client = EC2Client("us-east-1")
     up_start = time.time()
     ids = ec2_client.start_instances(
-        "ami-037b96e43364db32c", "test-instance", instance_type="t2.micro"
+        "ami-0dd76f917833aac4b", "test-instance", instance_type="t2.micro"
     )
     # it takes a moment for AWS to recognize these instances exist
     time.sleep(5)
