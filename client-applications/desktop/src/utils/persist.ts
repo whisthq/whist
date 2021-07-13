@@ -13,6 +13,8 @@ import Store from "electron-store"
 import events from "events"
 import { isEmpty, pickBy, keys } from "lodash"
 
+import { appEnvironment } from "../../config/configs"
+
 export const store = new Store({ watch: true })
 export const persisted = new events.EventEmitter()
 
@@ -21,11 +23,11 @@ interface Cache {
 }
 
 const cache = {
-  accessToken: store.get("accessToken") ?? "",
-  configToken: store.get("configToken") ?? "",
-  refreshToken: store.get("refreshToken") ?? "",
-  email: store.get("email") ?? "",
-  sub: store.get("sub") ?? "",
+  accessToken: store.get(`${appEnvironment as string}-accessToken`) ?? "",
+  configToken: store.get(`${appEnvironment as string}-configToken`) ?? "",
+  refreshToken: store.get(`${appEnvironment as string}-refreshToken`) ?? "",
+  email: store.get(`${appEnvironment as string}-email`) ?? "",
+  sub: store.get(`${appEnvironment as string}-sub`) ?? "",
 } as Cache
 
 export const emitCache = () => {
@@ -37,7 +39,7 @@ export const emitCache = () => {
 }
 
 export const persist = (key: string, value: string) => {
-  store.set(key, value)
+  store.set(`${appEnvironment as string}-${key}`, value)
 }
 
 export const persistClear = (args?: { exclude?: string[] }) => {
@@ -45,7 +47,7 @@ export const persistClear = (args?: { exclude?: string[] }) => {
   keys(cache).forEach((key) => {
     if (!excludedSet.has(key)) {
       // Delete key if not in excluded
-      store.delete(key)
+      store.delete(`${appEnvironment as string}-${key}`)
     }
   })
 }
