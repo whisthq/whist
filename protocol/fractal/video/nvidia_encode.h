@@ -72,8 +72,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  * @brief                          Put the input data into the nvidia encoder
  *
  * @param encoder                  The encoder to encode with
- * @param dw_texture               The GPU pointers needed to hold the captured frame
- * @param dw_tex_target            The GPU pointers needed to hold the captured frame
+ * @param p_gpu_texture            The GPU pointer needed to hold the captured frame
  * @param width                    The width of the inputted frame
  * @param height                   The height of the inputted frame
  *
