@@ -696,6 +696,9 @@ func main() {
 		// Remove our row from the database and close out the database driver.
 		dbdriver.Close()
 
+		// Close out our metrics collection.
+		metrics.Close()
+
 		// Drain to our remote logging providers, but don't yet stop recording new
 		// events, in case the shutdown fails.
 		logger.FlushLogzio()
@@ -722,9 +725,6 @@ func main() {
 	if err := dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker); err != nil {
 		logger.Panic(globalCancel, err)
 	}
-
-	// Start collecting metrics
-	metrics.StartCollection(globalCtx, globalCancel, &goroutineTracker, 30*time.Second)
 
 	// Log the instance name we're running on
 	instanceName, err := aws.GetInstanceName()
