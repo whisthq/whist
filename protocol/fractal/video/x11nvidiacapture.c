@@ -20,53 +20,53 @@
 /*
  * CUDA entry points
  */
-typedef CUresult (*CUINITPROC)(unsigned int Flags);
+typedef CUresult (*CUINITPROC)(unsigned int flags);
 typedef CUresult (*CUDEVICEGETPROC)(CUdevice* device, int ordinal);
 typedef CUresult (*CUCTXCREATEV2PROC)(CUcontext* pctx, unsigned int flags, CUdevice dev);
-typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount);
+typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dst_host, CUdeviceptr src_device, size_t byte_count);
 
-static CUINITPROC cuInit_ptr = NULL;
-static CUDEVICEGETPROC cuDeviceGet_ptr = NULL;
-static CUCTXCREATEV2PROC cuCtxCreate_v2_ptr = NULL;
-static CUMEMCPYDTOHV2PROC cuMemcpyDtoH_v2_ptr = NULL;
+static CUINITPROC cu_init_ptr = NULL;
+static CUDEVICEGETPROC cu_device_get_ptr = NULL;
+static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
+static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 
 /**
  * Dynamically opens the CUDA library and resolves the symbols that are
  * needed for this application.
  *
- * \param [out] libCUDA
+ * \param [out] lib_cuda
  *   A pointer to the opened CUDA library.
  *
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-static NVFBC_BOOL cuda_load_library(void* libCUDA) {
-    libCUDA = dlopen(LIB_CUDA_NAME, RTLD_NOW);
-    if (libCUDA == NULL) {
+static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
+    lib_cuda = dlopen(LIB_CUDA_NAME, RTLD_NOW);
+    if (lib_cuda == NULL) {
         fprintf(stderr, "Unable to open '%s'\n", LIB_CUDA_NAME);
         return NVFBC_FALSE;
     }
 
-    cuInit_ptr = (CUINITPROC)dlsym(libCUDA, "cuInit");
-    if (cuInit_ptr == NULL) {
+    cu_init_ptr = (CUINITPROC)dlsym(lib_cuda, "cuInit");
+    if (cu_init_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuInit'\n");
         return NVFBC_FALSE;
     }
 
-    cuDeviceGet_ptr = (CUDEVICEGETPROC)dlsym(libCUDA, "cuDeviceGet");
-    if (cuDeviceGet_ptr == NULL) {
+    cu_device_get_ptr = (CUDEVICEGETPROC)dlsym(lib_cuda, "cuDeviceGet");
+    if (cu_device_get_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuDeviceGet'\n");
         return NVFBC_FALSE;
     }
 
-    cuCtxCreate_v2_ptr = (CUCTXCREATEV2PROC)dlsym(libCUDA, "cuCtxCreate_v2");
-    if (cuCtxCreate_v2_ptr == NULL) {
+    cu_ctx_create_v2_ptr = (CUCTXCREATEV2PROC)dlsym(lib_cuda, "cuCtxCreate_v2");
+    if (cu_ctx_create_v2_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuCtxCreate_v2'\n");
         return NVFBC_FALSE;
     }
 
-    cuMemcpyDtoH_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(libCUDA, "cuMemcpyDtoH_v2");
-    if (cuMemcpyDtoH_v2_ptr == NULL) {
+    cu_memcpy_dtoh_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(lib_cuda, "cuMemcpyDtoH_v2");
+    if (cu_memcpy_dtoh_v2_ptr == NULL) {
         fprintf(stderr, "Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
         return NVFBC_FALSE;
     }
@@ -77,31 +77,31 @@ static NVFBC_BOOL cuda_load_library(void* libCUDA) {
 /**
  * Initializes CUDA and creates a CUDA context.
  *
- * \param [in] cuCtx
+ * \param [in] cu_ctx
  *   A pointer to the created CUDA context.
  *
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-static NVFBC_BOOL cuda_init(CUcontext* cuCtx) {
-    CUresult cuRes;
-    CUdevice cuDev;
+static NVFBC_BOOL cuda_init(CUcontext* cu_ctx) {
+    CUresult cu_res;
+    CUdevice cu_dev;
 
-    cuRes = cuInit_ptr(0);
-    if (cuRes != CUDA_SUCCESS) {
-        fprintf(stderr, "Unable to initialize CUDA (result: %d)\n", cuRes);
+    cu_res = cu_init_ptr(0);
+    if (cu_res != CUDA_SUCCESS) {
+        fprintf(stderr, "Unable to initialize CUDA (result: %d)\n", cu_res);
         return NVFBC_FALSE;
     }
 
-    cuRes = cuDeviceGet_ptr(&cuDev, 0);
-    if (cuRes != CUDA_SUCCESS) {
-        fprintf(stderr, "Unable to get CUDA device (result: %d)\n", cuRes);
+    cu_res = cu_device_get_ptr(&cu_dev, 0);
+    if (cu_res != CUDA_SUCCESS) {
+        fprintf(stderr, "Unable to get CUDA device (result: %d)\n", cu_res);
         return NVFBC_FALSE;
     }
 
-    cuRes = cuCtxCreate_v2_ptr(cuCtx, CU_CTX_SCHED_AUTO, cuDev);
-    if (cuRes != CUDA_SUCCESS) {
-        fprintf(stderr, "Unable to create CUDA context (result: %d)\n", cuRes);
+    cu_res = cu_ctx_create_v2_ptr(cu_ctx, CU_CTX_SCHED_AUTO, cu_dev);
+    if (cu_res != CUDA_SUCCESS) {
+        fprintf(stderr, "Unable to create CUDA context (result: %d)\n", cu_res);
         return NVFBC_FALSE;
     }
 
@@ -154,9 +154,9 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, void** p_cuda_cont
     /*
      * Initialize CUDA.
      */
-    void* libCUDA = NULL;
+    void* lib_cuda = NULL;
 
-    NVFBC_BOOL fbc_bool = cuda_load_library(libCUDA);
+    NVFBC_BOOL fbc_bool = cuda_load_library(lib_cuda);
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to load CUDA library!");
         return -1;
