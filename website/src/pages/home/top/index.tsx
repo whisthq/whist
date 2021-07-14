@@ -1,6 +1,7 @@
 import React from 'react'
 import FadeIn from 'react-fade-in'
 import { TypeWriter } from '@app/shared/components/typewriter'
+import { Link } from 'react-scroll'
 
 import { withContext } from '@app/shared/utils/context'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
@@ -12,7 +13,10 @@ import AirtableLogo from '@app/assets/icons/airtableLogo.svg'
 import FigmaLogo from '@app/assets/icons/figmaLogo.svg'
 import GoogleDriveLogo from '@app/assets/icons/googleDriveLogo.svg'
 
-import Typeform from '@app/pages/home/components/typeform'
+import {
+  FractalButton,
+  FractalButtonState
+} from '@app/pages/home/components/button'
 
 const SymmetricGeometric = (props: any) => (
   <FadeIn>
@@ -84,7 +88,13 @@ export const Top = () => {
               Fractal is a supercharged version of Chrome that runs in the
               cloud.
             </p>
-            <Typeform text="JOIN WAITLIST" />
+            <Link to="download" spy={true} smooth={true}>
+              <FractalButton
+                className="mt-12"
+                contents="DOWNLOAD NOW"
+                state={FractalButtonState.DEFAULT}
+              />
+            </Link>
           </div>
         </FadeIn>
         <FadeIn delay={width > ScreenSize.MEDIUM ? 1900 : 200}>

@@ -5,7 +5,6 @@ import classNames from 'classnames'
 
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 import { withContext } from '@app/shared/utils/context'
-import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 
 const TermsOfService = () => {
   const { width } = withContext()
@@ -17,7 +16,6 @@ const TermsOfService = () => {
           dark ? 'dark bg-blue-darkest' : 'bg-white'
         )}
           style={{ overflowX: 'hidden' }} id="top">
-              <DarkModeIcon/>
             <div
                 className= "dark:text-gray-300"
                 style={{
