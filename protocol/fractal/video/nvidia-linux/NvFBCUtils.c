@@ -31,7 +31,6 @@
 #include <sys/time.h>
 
 #include "NvFBCUtils.h"
-#include <fractal/core/fractal.h>
 
 #define BITMAP_ROW_SIZE(width) (((width * Bpp) + 3) & ~3)
 #define BITMAP_INDEX(x, y, rowSize) ((y * rowSize) + (x * Bpp))
@@ -115,13 +114,13 @@ static int NvFBCUtilsSaveBitmap(const char *filename,
     FILE *fd = NULL;
 
     if (data == NULL) {
-        LOG_ERROR("%s: There is no data to write", __FUNCTION__);
+        fprintf(stderr, "%s: There is no data to write\n", __FUNCTION__);
         return 1;
     }
 
     fd = fopen(filename, "wb");
     if (fd == NULL) {
-        LOG_ERROR("%s: Unable to open file '%s'", __FUNCTION__, filename);
+        fprintf(stderr, "%s: Unable to open file '%s'\n", __FUNCTION__, filename);
         return 1;
     }
 
@@ -386,7 +385,7 @@ int NvFBCUtilsSaveFrame(NVFBC_BUFFER_FORMAT format,
         case NVFBC_BUFFER_FORMAT_YUV444P:
             return NvFBCUtilsSaveYUVPlanar(format, filename, data, width, height);
         default:
-            LOG_ERROR("%s: Unknown buffer format", __FUNCTION__);
+            fprintf(stderr, "%s: Unknown buffer format\n", __FUNCTION__);
             return 1;
     }
 }
@@ -411,32 +410,32 @@ void NvFBCUtilsPrintStatus(NVFBC_GET_STATUS_PARAMS *status)
         return;
     }
 
-    LOG_INFO("Status:");
-    LOG_INFO("- NvFBC library API version: %u.%u",
+    printf("Status:\n");
+    printf("- NvFBC library API version: %u.%u\n",
            status->dwNvFBCVersion >> 8 & 0xf,
            status->dwNvFBCVersion & 0xf);
-    LOG_INFO("- This system supports FBC: %s",
+    printf("- This system supports FBC: %s\n",
            status->bIsCapturePossible ? "Yes" : "No");
-    LOG_INFO("- Curently capturing: %s",
+    printf("- Curently capturing: %s\n",
            status->bCurrentlyCapturing ? "Yes" : "No");
-    LOG_INFO("- Can create an FBC instance: %s",
+    printf("- Can create an FBC instance: %s\n",
            status->bCanCreateNow ? "Yes" : "No");
-    LOG_INFO("- X screen (framebuffer) size: %ux%u",
+    printf("- X screen (framebuffer) size: %ux%u\n",
            status->screenSize.w, status->screenSize.h);
-    LOG_INFO("- XrandR extension available: %s",
+    printf("- XrandR extension available: %s\n",
            status->bXRandRAvailable ? "Yes" : "No");
 
     if (status->bXRandRAvailable) {
         int i;
 
-        LOG_INFO("- Connected RandR outputs with CRTC:");
+        printf("- Connected RandR outputs with CRTC:\n");
 
-        for (i = 0; i < (int)status->dwOutputNum; i++) {
+        for (i = 0; i < status->dwOutputNum; i++) {
             NVFBC_RANDR_OUTPUT_INFO output;
 
             output = status->outputs[i];
 
-            LOG_INFO("  * '%s' (id: 0x%x), CRTC: %ux%u+%u+%u",
+            printf("  * '%s' (id: 0x%x), CRTC: %ux%u+%u+%u\n",
                    output.name, output.dwId,
                    output.trackedBox.w, output.trackedBox.h,
                    output.trackedBox.x, output.trackedBox.y);
@@ -474,7 +473,7 @@ uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs,
         return 0;
     }
 
-    for (i = 0; i < (int)outputNum; i++) {
+    for (i = 0; i < outputNum; i++) {
         if (!strcasecmp(outputs[i].name, outputName)) {
             outputId = outputs[i].dwId;
             break;
@@ -486,7 +485,7 @@ uint32_t NvFBCUtilsGetOutputId(NVFBC_RANDR_OUTPUT_INFO *outputs,
 
 void NvFBCUtilsPrintVersions(const unsigned int appVersion)
 {
-    LOG_INFO("Application version: %u", appVersion);
-    LOG_INFO("NvFBC API version: %u.%u", NVFBC_VERSION_MAJOR, NVFBC_VERSION_MINOR);
-    LOG_INFO("");
+    printf("Application version: %u\n", appVersion);
+    printf("NvFBC API version: %u.%u\n", NVFBC_VERSION_MAJOR, NVFBC_VERSION_MINOR);
+    printf("\n");
 }
