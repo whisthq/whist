@@ -94,12 +94,11 @@ Public Functions
  * @param bitrate                  The number of bits per second that this
  *                                 encoder will encode to
  * @param codec_type               Which codec type (h264 or h265) to use
- * @param p_cuda_context           Pointer to the CUDA context
  *
  * @returns                        The newly created encoder
  */
 VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                   int bitrate, CodecType codec_type, void** p_cuda_context);
+                                   int bitrate, CodecType codec_type);
 
 /**
  * @brief                          Put the input data into a software frame, and

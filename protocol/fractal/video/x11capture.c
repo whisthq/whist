@@ -132,8 +132,7 @@ void try_update_dimensions(CaptureDevice* device, UINT width, UINT height, UINT 
     }
 }
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi,
-                          void** p_cuda_context) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     /*
         Create a device that will capture a screen of the specified width, height, and DPI.
         This function first attempts to use X11 to set
@@ -146,7 +145,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
             width (UINT): desired window width
             height (UNIT): desired window height
             dpi (UINT): desired window DPI
-            p_cuda_context (void**): pointer to the CUDA context
 
         Returns:
             (int): 0 on success, 1 on failure
@@ -184,7 +182,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 
     // Create the NVidia capture device is possible; otherwise use X11 capture.
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
-    if (create_nvidia_capture_device(&device->nvidia_capture_device, p_cuda_context) == 0) {
+    if (create_nvidia_capture_device(&device->nvidia_capture_device) == 0) {
         device->using_nvidia = true;
         device->image = NULL;
         LOG_INFO("Using Nvidia Capture SDK!");

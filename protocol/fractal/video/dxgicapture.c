@@ -18,10 +18,7 @@ ID3D11Texture2D* create_texture(CaptureDevice* device);
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi,
-                          void** p_cuda_context) {
-    UNUSED(p_cuda_context);
-
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
     // TODO: Make a wrapper that calls dxgi/x11 so that the below
     // check stay in sync with x11capture.c
     if (device == NULL) {

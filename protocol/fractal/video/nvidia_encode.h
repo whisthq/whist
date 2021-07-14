@@ -4,6 +4,7 @@
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
+#include "cudacontext.h"
 
 typedef struct {
     // Width+Height of the GPU Texture
@@ -47,12 +48,10 @@ typedef struct {
  * @param codec                    Which codec type (h264 or h265) to use
  * @param out_width                Width of the output frame
  * @param out_height               Height of the output frame
- * @param p_cuda_context           Pointer to the CUDA context
  *
  * @returns                        The newly created nvidia encoder
  */
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
-                                     void** p_cuda_context);
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder

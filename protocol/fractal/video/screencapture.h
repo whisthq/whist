@@ -39,12 +39,10 @@ Public Functions
  * @param width                    Width of the screen to capture, in pixels
  * @param height                   Height of the screen to capture, in pixels
  * @param dpi                      Dots per sq inch of the screen, (Where 96 is neutral)
- * @param p_cuda_context           Pointer to the CUDA context
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi,
-                          void** p_cuda_context);
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
 
 /**
  * @brief                          Tries to reconfigure the capture device
