@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#include <NvFBC.h>
+#include "NvFBC.h"
 
 #ifdef __cplusplus
 extern "C" {
