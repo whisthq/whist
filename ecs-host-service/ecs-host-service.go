@@ -161,8 +161,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		defer fc.Close()
 
 		// Assign port bindings for the mandelbox (necessary for
-		// `fc.WriteResourcesForProtocol()`, though we don't need to actually pass
-		// them into the mandelbox)
+		// `fc.WriteMandelboxParams()`, though we don't need to actually pass them
+		// into the mandelbox)
 		if err := fc.AssignPortBindings([]portbindings.PortBinding{
 			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
@@ -177,17 +177,20 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 		devices := fc.GetDeviceMappings()
 
-		// Allocate a TTY
+		// Allocate a TTY and GPU
 		if err := fc.InitializeTTY(); err != nil {
 			return utils.MakeError("Error initializing TTY: %s", err)
+		}
+		if err := fc.AssignGPU(); err != nil {
+			return utils.MakeError("Error assigning GPU: %s", err)
 		}
 
 		aesKey := utils.RandHex(16)
 		config := dockercontainer.Config{
 			Env: []string{
 				utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+				utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 				"NVIDIA_DRIVER_CAPABILITIES=all",
-				"NVIDIA_VISIBLE_DEVICES=all",
 			},
 			Image:        image,
 			AttachStdin:  true,
@@ -255,8 +258,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 		logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
 
-		if err := fc.WriteResourcesForProtocol(); err != nil {
-			return utils.MakeError("Error writing resources for protocol: %s", err)
+		if err := fc.WriteMandelboxParams(); err != nil {
+			return utils.MakeError("Error writing parameters for mandelbox: %s", err)
 		}
 		err = fc.MarkReady()
 		if err != nil {
@@ -383,7 +386,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error initializing TTY: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): successfully initialized TTY.")
+	// Assign a GPU to the mandelbox
+	if err := fc.AssignGPU(); err != nil {
+		logAndReturnError("Error assigning GPU: %s", err)
+		return
+	}
+	logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
 
 	appName := types.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
 
@@ -399,8 +407,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	aesKey := utils.RandHex(16)
 	envs := []string{
 		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
-		"NVIDIA_VISIBLE_DEVICES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
 	}
 	config := dockercontainer.Config{
@@ -493,8 +501,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with DockerID %s and AppName %s", dockerID, appName)
 
-	if err := fc.WriteResourcesForProtocol(); err != nil {
-		logAndReturnError("Error writing resources for protocol: %s", err)
+	if err := fc.WriteMandelboxParams(); err != nil {
+		logAndReturnError("Error writing mandelbox params: %s", err)
 		return
 	}
 	// Let server protocol wait 30 seconds by default before client connects.
@@ -508,7 +516,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error writing protocol timeout: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol for mandelbox %s", req.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", req.MandelboxID)
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
