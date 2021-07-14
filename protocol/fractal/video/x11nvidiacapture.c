@@ -63,7 +63,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
      * Initialize CUDA.
      */
 
-    NVFBC_BOOL fbc_bool = cuda_init(*get_active_cuda_context_ptr());
+    NVFBC_BOOL fbc_bool = cuda_init(get_active_cuda_context_ptr());
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialize CUDA!");
         return -1;
