@@ -516,7 +516,9 @@ int32_t multithreaded_send_video(void* opaque) {
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
                     if (accumulated_frames == 0) {
-                        // This frame is just a repeat of the frame before it
+                        // `accumulated_frames` is the number of new frames collected since the last
+                        // frame sent. If this is 0, then this frame is just a repeat of the frame
+                        // before it (which we're sending to keep the framerate above MIN_FPS).
                         frame->is_repeated_frame = true;
                     } else {
                         // This is a new frame that is different from the one before it

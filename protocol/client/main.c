@@ -877,7 +877,10 @@ int main(int argc, char* argv[]) {
         // there are no events queued
         while (connected && !exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
             // Check if the window is minimized. If it is, we can just sleep for a bit and then
-            // check again
+            // check again.
+            // NOTE: internally within SDL, the window flags are maintained and updated upon
+            // catching a window event, and `SDL_GetWindowFlags()` simply returns those stored
+            // flags, so this is an efficient call
             if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
                 // Even though the window is minized, we still need to handle SDL events or else the
                 // application will permanently hang
@@ -887,6 +890,8 @@ int main(int argc, char* argv[]) {
                     break;
                 }
 
+                // This 50ms sleep is an arbitrary length that seems not to have noticeable latency
+                // effects while still reducing CPU strain while the window is minimized
                 fractal_sleep(50);
                 continue;
             }

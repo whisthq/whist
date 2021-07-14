@@ -1088,6 +1088,9 @@ int render_video() {
     }
 
     // If the window is minimized, we don't need to render this frame
+    // NOTE: internally within SDL, the window flags are maintained and updated upon
+    // catching a window event, and `SDL_GetWindowFlags()` simply returns those stored
+    // flags, so this is an efficient call
     if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
         return -1;
     }
