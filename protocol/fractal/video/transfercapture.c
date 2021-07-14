@@ -2,25 +2,68 @@
 #include "screencapture.h"
 #ifdef _WIN32
 #include "dxgicudatransfercapture.h"
+#else
+#include "nvidiatransfercapture.h"
 #endif
 
-void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
+int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
+    /*
+        Initialize the transfer context between the given device and encoder. Call this during
+        resolution changes and creation of one of the device or encoder.
+
+        Arguments:
+            device (CaptureDevice*): device handling screen capturing
+            encoder (VideoEncoder*): encoder encoding captured frames
+
+        Returns:
+            0 on success, -1 on failure.
+    */
 #ifdef _WIN32
     // If we're encoding using NVENC, we will want the dxgi cuda transfer context to be available
+    // TODO: not sure what the behavior should be if not NVENC?
     if (encoder->type == NVENC_ENCODE) {
         // initialize the transfer context
-        dxgi_cuda_start_transfer_context(device);
-    } else if (device->dxgi_cuda_available) {
-        // Otherwise, we can close the transfer context
-        // end the transfer context
-        dxgi_cuda_close_transfer_context(device);
+        return dxgi_cuda_start_transfer_context(device);
     }
+    return 0;
 #else  // __linux__
-    if (device->capture_is_on_nvidia) {
+    if (device->using_nvidia) {
         if (encoder->nvidia_encoder) {
-            // Copy new stuff
+            return nvidia_start_transfer_context(&device->nvidia_capture_device,
+                                                 encoder->nvidia_encoder);
         }
     }
+    return 0;
+#endif
+}
+
+int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
+    /*
+        Close the transfer context between the given device and encoder. Call this when the
+        resolution has changed and during destruction of device or encoder.
+
+        Arguments:
+            device (CaptureDevice*): device handling screen capturing
+            encoder (VideoEncoder*): encoder encoding captured frames
+
+        Returns:
+            0 on success, -1 on failure.
+    */
+#ifdef _WIN32
+    // If we're encoding using NVENC, we will want the dxgi cuda transfer context to be available
+    // TODO: not sure what the behavior should be if not cuda?
+    if (device->dxgi_cuda_available) {
+        // initialize the transfer context
+        return dxgi_cuda_close_transfer_context(device);
+    }
+    return 0;
+#else  // __linux__
+    if (device->using_nvidia) {
+        if (encoder->nvidia_encoder) {
+            return nvidia_close_transfer_context(encoder->nvidia_encoder);
+        }
+    }
+    return 0;
 #endif
 }
 
@@ -38,9 +81,9 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
 #else  // __linux__
     if (device->capture_is_on_nvidia) {
         if (encoder->nvidia_encoder) {
-            nvidia_encoder_frame_intake(
-                encoder->nvidia_encoder, device->nvidia_capture_device.dw_texture,
-                device->nvidia_capture_device.dw_tex_target, device->width, device->height);
+            nvidia_encoder_frame_intake(encoder->nvidia_encoder,
+                                        device->nvidia_capture_device.dw_texture_index,
+                                        device->width, device->height);
             encoder->capture_is_on_nvidia = true;
             return 0;
         } else {

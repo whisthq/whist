@@ -15,9 +15,8 @@ typedef struct {
     NVFBC_API_FUNCTION_LIST p_fbc_fn;
     // Contains pointers to the GPU textures that the Nvidia Capture Device will capture into
     NVFBC_TOGL_SETUP_PARAMS togl_setup_params;
-    // The dwtexture/dwtextarget of the most recently captured frame
-    uint32_t dw_texture;
-    uint32_t dw_tex_target;
+    // TODO: document
+    uint32_t dw_texture_index;
 } NvidiaCaptureDevice;
 
 /**
