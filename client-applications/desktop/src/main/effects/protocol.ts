@@ -13,6 +13,7 @@ import { fromTrigger } from "@app/utils/flows"
 
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful mandelbox status response.
+
 fromTrigger("mandelboxFlowSuccess").subscribe(
   (info: {
     mandelboxIP: string
