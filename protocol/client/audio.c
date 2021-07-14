@@ -434,8 +434,8 @@ void update_audio() {
 
     catchup_audio();
 
-    // Return if there's nothing to play
-    if (last_played_id == -1) {
+    // Return if there's nothing to play or if last_played_id > max_id (eg ring buffer reset)
+    if (last_played_id == -1 || last_played_id > audio_ring_buffer->max_id) {
         return;
     }
 
