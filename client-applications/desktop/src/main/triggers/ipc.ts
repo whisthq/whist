@@ -20,7 +20,7 @@ import TRIGGER from "@app/utils/triggers"
 // it might have a shape like so:
 //
 // {
-//     email: ...,
+//     userEmail: ...,
 //     password: ...,
 //     loginRequest: [...],
 // }

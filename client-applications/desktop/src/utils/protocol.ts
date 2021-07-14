@@ -10,10 +10,8 @@ import { app } from "electron"
 import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
-import config, {
-  getLoggingBaseFilePath,
-  loggingFiles,
-} from "@app/config/environment"
+import config, { loggingFiles } from "@app/config/environment"
+import { electronLogPath } from "@app/utils/logging"
 import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 export let childProcess: ChildProcess | undefined
@@ -54,10 +52,10 @@ export const protocolLaunch = async () => {
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
 
   // Create a pipe to the protocol logs file
-  const loggingBaseFilePath = getLoggingBaseFilePath()
-  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
+  if (!fs.existsSync(electronLogPath))
+    fs.mkdirSync(electronLogPath, { recursive: true })
   const protocolLogFile = fs.createWriteStream(
-    path.join(loggingBaseFilePath, loggingFiles.protocol)
+    path.join(electronLogPath, loggingFiles.protocol)
   )
 
   // In order to pipe a child process to this stream, we must wait until an underlying file

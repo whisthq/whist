@@ -13,20 +13,22 @@ import AWS from "aws-sdk"
 import * as Amplitude from "@amplitude/node"
 
 import config, {
-  getLoggingBaseFilePath,
+  loggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
 
+app.setPath("userData", loggingBaseFilePath)
+
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 const sessionID = new Date().getTime()
+export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
-  const loggingBaseFilePath = getLoggingBaseFilePath()
-  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
-  const logPath = path.join(loggingBaseFilePath, loggingFiles.client)
+  fs.mkdirSync(electronLogPath, { recursive: true })
+  const logPath = path.join(electronLogPath, loggingFiles.client)
   return fs.createWriteStream(logPath)
 }
 
@@ -62,21 +64,21 @@ const localLog = (
   title: string,
   data: object,
   level: LogLevel,
-  email: string
+  userEmail: string
 ) => {
-  const logs = formatLogs(`${title} -- ${email}`, data, level)
+  const logs = formatLogs(`${title} -- ${userEmail}`, data, level)
 
   if (!app.isPackaged) console.log(logs)
 
   logFile.write(logs)
 }
 
-const amplitudeLog = async (title: string, data: object, email: string) => {
-  if (email !== "") {
+const amplitudeLog = async (title: string, data: object, userEmail: string) => {
+  if (userEmail !== "") {
     await amplitude.logEvent({
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
-      user_id: email,
+      user_id: userEmail,
       event_properties: { data: util.inspect(data) },
     })
   }
@@ -91,26 +93,24 @@ export const logBase = async (title: string, data: object, level: LogLevel) => {
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
-  const email = persistGet("email") ?? ""
+  const userEmail = persistGet("userEmail") ?? ""
 
-  await amplitudeLog(title, data, email)
-  localLog(title, data, level, email)
+  await amplitudeLog(title, data, userEmail)
+  localLog(title, data, level, userEmail)
 }
 
 export const uploadToS3 = async () => {
   /*
   Description:
       Uploads a local file to S3
-  Arguments:
-      email (string): user email of the logged in user
   Returns:
       Response from the s3 upload
   */
-  const email = persistGet("email") ?? ""
+  const userEmail = persistGet("userEmail") ?? ""
 
-  if (email === "") return
+  if (userEmail === "") return
 
-  const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
+  const s3FileName = `CLIENT_${userEmail}_${new Date().getTime()}.txt`
 
   await logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
 
@@ -143,7 +143,7 @@ export const uploadToS3 = async () => {
     })
   }
 
-  const logLocation = path.join(getLoggingBaseFilePath(), loggingFiles.protocol)
+  const logLocation = path.join(electronLogPath, loggingFiles.protocol)
 
   if (fs.existsSync(logLocation)) {
     await uploadHelper(logLocation)

@@ -48,25 +48,25 @@ export const auth0Event = new events.EventEmitter()
 const extractTokens = (response: Record<string, string>) => {
   /*
   Description:
-    Helper function that takes an Auth0 response and extracts a {email, sub, accessToken, refreshToken} object
+    Helper function that takes an Auth0 response and extracts a {userEmail, subClaim, accessToken, refreshToken} object
   Arguments:
     Response (Record): Auth0 response object
   Returns:
-    {email, sub, accessToken, refreshToken}
+    {userEmail, subClaim, accessToken, refreshToken}
   */
   try {
     const profile: Record<string, string> = jwtDecode(response.id_token ?? "")
     const { sub, email } = profile
     return {
-      sub,
-      email,
+      subClaim: sub,
+      userEmail: email,
       refreshToken: response.refresh_token,
       accessToken: response.access_token,
     }
   } catch {
     return {
-      sub: null,
-      email: null,
+      subClaim: null,
+      userEmail: null,
       refreshToken: null,
       accessToken: null,
     }
@@ -76,11 +76,11 @@ const extractTokens = (response: Record<string, string>) => {
 export const generateRefreshedAuthInfo = async (refreshToken: string) => {
   /*
   Description:
-    Given a valid Auth0 refresh token, generates a new {email, sub, accessToken, refreshToken} object
+    Given a valid Auth0 refresh token, generates a new {userEmail, subClaim, accessToken, refreshToken} object
   Arguments:
     refreshToken (string): Refresh token
   Returns:
-    {email, sub, accessToken, refreshToken}
+    {userEmail, subClaim, accessToken, refreshToken}
   */
 
   const response = await post({
@@ -99,11 +99,11 @@ export const generateRefreshedAuthInfo = async (refreshToken: string) => {
 export const authInfo = async (callbackURL: string) => {
   /*
   Description:
-    Given a callback URL, generates an {email, sub, accessToken, refreshToken} response
+    Given a callback URL, generates an {userEmail, subClaim, accessToken, refreshToken} response
   Arguments:
     callbackURL (string): Callback URL
   Returns:
-    {email, sub, accessToken, refreshToken}
+    {userEmail, subClaim, accessToken, refreshToken}
   */
 
   const url = new URL(callbackURL)
@@ -138,8 +138,8 @@ export const generateRandomConfigToken = () => {
 }
 
 export const authInfoValid = (authInfo: {
-  sub: string
-  email: string
+  subClaim: string
+  userEmail: string
   accessToken: string
   refreshToken: string
 }) => {
