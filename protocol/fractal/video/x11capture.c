@@ -159,6 +159,16 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         LOG_ERROR("Invalid width/height of %d/%d", width, height);
         return -1;
     }
+    if (width < MIN_SCREEN_WIDTH) {
+        LOG_ERROR("Requested width too small: %d when the minimum is %d! Rounding up.", width,
+                  MIN_SCREEN_WIDTH);
+        width = MIN_SCREEN_WIDTH;
+    }
+    if (height < MIN_SCREEN_HEIGHT) {
+        LOG_ERROR("Requested height too small: %d when the minimum is %d! Rounding up.", height,
+                  MIN_SCREEN_HEIGHT);
+        height = MIN_SCREEN_HEIGHT;
+    }
     if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT) {
         LOG_ERROR(
             "Requested dimensions are too large! "

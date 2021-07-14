@@ -165,6 +165,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
     pending_encoder = false;
     encoder_finished = false;
+    bool transfer_context_active = false;
 
     while (!exiting) {
         if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
@@ -190,20 +191,27 @@ int32_t multithreaded_send_video(void* opaque) {
 
             // If a device already exists, we should reconfigure or destroy it
             if (device != NULL) {
-                if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
-                    // Reconfigured the capture device!
-                    // No need to recreate it, the device has now been updated
-                    LOG_INFO("Successfully reconfigured the capture device");
-                    // We should also update the encoder since the device has been reconfigured
-                    update_encoder = true;
-                } else {
-                    // Destroying the old capture device so that a new one can be recreated below
-                    LOG_ERROR(
-                        "Failed to reconfigure the capture device! "
-                        "Destroying and recreating the capture device instead!");
-                    destroy_capture_device(device);
-                    device = NULL;
+                if (transfer_context_active) {
+                    close_transfer_context(device, encoder);
+                    transfer_context_active = false;
                 }
+                // if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+                //    // Reconfigured the capture device!
+                //    // No need to recreate it, the device has now been updated
+                //    LOG_INFO("Successfully reconfigured the capture device");
+                //    // We should also update the encoder since the device has been reconfigured
+                //    update_encoder = true;
+                // } else {
+                //    // Destroying the old capture device so that a new one can be recreated below
+                //    LOG_ERROR(
+                //        "Failed to reconfigure the capture device! "
+                //        "Destroying and recreating the capture device instead!");
+
+                // For the time being, we have disabled the reconfigure functionality because
+                // of some weirdness happening in vkCreateDevice()
+                destroy_capture_device(device);
+                device = NULL;
+                // }
             } else {
                 LOG_INFO("No capture device exists yet, creating a new one.");
             }
@@ -266,9 +274,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
             // If reconfiguration didn't happen, we still need to update the encoder
             if (update_encoder) {
-                // Keep track of whether or not a new encoder is being used now
-                bool new_encoder_used = false;
-
                 // Otherwise, this capture device must use an external encoder,
                 // so we should start making it in our encoder factory
                 if (pending_encoder) {
@@ -276,14 +281,16 @@ int32_t multithreaded_send_video(void* opaque) {
                         // Once encoder_finished, we'll destroy the old one that we've been using,
                         // and replace it with the result of multithreaded_encoder_factory
                         if (encoder) {
+                            if (transfer_context_active) {
+                                close_transfer_context(device, encoder);
+                                transfer_context_active = false;
+                            }
                             fractal_create_thread(multithreaded_destroy_encoder,
                                                   "multithreaded_destroy_encoder", encoder);
                         }
                         encoder = encoder_factory_result;
                         pending_encoder = false;
                         update_encoder = false;
-
-                        new_encoder_used = true;
                     }
                 } else {
                     // Starting making new encoder. This will set pending_encoder=true, but won't
@@ -306,6 +313,10 @@ int32_t multithreaded_send_video(void* opaque) {
                     // We can't have two nvidia encoders active or the 2nd attempt to
                     // create one will fail
                     if (encoder != NULL && encoder->nvidia_encoder != NULL) {
+                        if (transfer_context_active) {
+                            close_transfer_context(device, encoder);
+                            transfer_context_active = false;
+                        }
                         destroy_video_encoder(encoder);
                         encoder = NULL;
                     }
@@ -316,21 +327,18 @@ int32_t multithreaded_send_video(void* opaque) {
                         encoder = encoder_factory_result;
                         pending_encoder = false;
                         update_encoder = false;
-
-                        new_encoder_used = true;
                     } else {
                         fractal_create_thread(multithreaded_encoder_factory,
                                               "multithreaded_encoder_factory", NULL);
                         pending_encoder = true;
                     }
                 }
-
-                // Reinitializes the internal context that handles transferring from device to
-                // encoder.
-                if (new_encoder_used) {
-                    reinitialize_transfer_context(device, encoder);
-                }
             }
+        }
+
+        if (!transfer_context_active) {
+            start_transfer_context(device, encoder);
+            transfer_context_active = true;
         }
 
         // SENDING LOGIC:
@@ -352,7 +360,8 @@ int32_t multithreaded_send_video(void* opaque) {
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
             LOG_WARNING("Failed to capture screen");
-
+            transfer_context_active = false;
+            close_transfer_context(device, encoder);
             destroy_capture_device(device);
             device = NULL;
             update_device = true;
