@@ -101,7 +101,7 @@ const mandelboxFlow  = flow(
   "mandelboxFlow", // flow name usually matches the variable
   (
     trigger: Observable<{ // flows take a single argument, which is always
-      sub: string         // a observable containing named parameters.
+      subClaim: string         // a observable containing named parameters.
       accessToken: string // We need to "unwrap" this observable inside
       configToken: string // of the flow to make use of its arguments.
       region?: AWSRegion
@@ -111,7 +111,7 @@ const mandelboxFlow  = flow(
     // "map", which is like Array.map() in that it applies a function to
     // each element in the sequence.
     const create = mandelboxCreateFlow(
-      trigger.pipe(map((t) => pick(t, ["sub", "accessToken", "region"])))
+      trigger.pipe(map((t) => pick(t, ["subClaim", "accessToken", "region"])))
     ) // create will have a value of:
       // {
       //   success: Observable<ServerResponse>
@@ -135,7 +135,7 @@ const mandelboxFlow  = flow(
 
     const host = hostServiceFlow(
       zip([trigger, create.success]).pipe(
-        map(([t, _c]) => pick(t, ["sub", "accessToken", "configToken"]))
+        map(([t, _c]) => pick(t, ["subClaim", "accessToken", "configToken"]))
       ) // We sometimes do these "map" calls when we're passing inputs
     )   // to flows when we need to "shuffle around" arguments to fit
         // a flow's function signature.

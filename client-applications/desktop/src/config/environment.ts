@@ -1,4 +1,5 @@
 import { app } from "electron"
+import path from "path"
 
 import {
   appEnvironment,
@@ -48,8 +49,13 @@ export const config =
     ? getDevelopmentConfig()
     : getProductionConfig()
 
-export default config
+const { deployEnv } = config
+const appPath = app.getPath("userData")
+
+export const loggingBaseFilePath = path.join(appPath, deployEnv)
 
 // Re-exporting
 export { FractalEnvironments } from "../../config/constants"
-export { getLoggingBaseFilePath, loggingFiles } from "../../config/paths"
+export { loggingFiles } from "../../config/paths"
+
+export default config

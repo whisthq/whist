@@ -13,14 +13,14 @@ export default flow(
   "mandelboxFlow",
   (
     trigger: Observable<{
-      sub: string
+      subClaim: string
       accessToken: string
       configToken: string
       region?: AWSRegion
     }>
   ) => {
     const create = mandelboxCreateFlow(
-      trigger.pipe(map((t) => pick(t, ["sub", "accessToken", "region"])))
+      trigger.pipe(map((t) => pick(t, ["subClaim", "accessToken", "region"])))
     )
 
     const polling = mandelboxPollingFlow(
@@ -34,7 +34,7 @@ export default flow(
 
     const host = hostServiceFlow(
       zip([trigger, create.success]).pipe(
-        map(([t, _c]) => pick(t, ["sub", "accessToken", "configToken"]))
+        map(([t, _c]) => pick(t, ["subClaim", "accessToken", "configToken"]))
       )
     )
 

@@ -27,12 +27,12 @@ const auth = authFlow(
 // Observable that fires when Fractal is ready to be launched
 const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
   map((x: object) => ({
-    ...x, // { sub, accessToken, configToken }
+    ...x, // { subClaim, accessToken, configToken }
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
   })),
   take(1)
 ) as Observable<{
-  sub: string
+  subClaim: string
   accessToken: string
   configToken: string
   region?: AWSRegion

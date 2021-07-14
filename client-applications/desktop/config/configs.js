@@ -16,7 +16,6 @@ const {
 const {
   protocolName,
   protocolFolder,
-  getLoggingBaseFilePath,
   loggingFiles,
   userDataFolderNames,
   buildRoot,
@@ -133,7 +132,6 @@ module.exports = {
   appEnvironment,
   iconName,
   configs,
-  getLoggingBaseFilePath,
   loggingFiles,
   userDataFolderNames,
   FractalNodeEnvironments,
