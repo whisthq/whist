@@ -6,16 +6,24 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Retrieve mandelbox parameters
+FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+GPU_INDEX_FILENAME=gpu_index
+GPU_INDEX=$(cat $FRACTAL_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
+
+echo "Using GPU Index ${GPU_INDEX}"
+
 # Retrieve the Fractal NVIDIA display config
 XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf"
 if [ ! -f ${XCONFIG} ]; then
-    echo "Xconfig at location ${XONFIG} not found (or is not a file)"
+    echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
     exit 1
 fi
 
 # Retrieve the current NVIDIA BusID and the new NVIDIA BusID
 OLDBUSID=`awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG}`
-NEWBUSID=`nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}'`
+# Note that we need to add 1 to GPU_INDEX since `tail` and `head` are 1-indexed.
+NEWBUSID=`nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}' | tail +$(($GPU_INDEX+1)) | head -n1`
 
 # Update the current NVIDIA BusID to the new NVIDIA BusID
 if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then

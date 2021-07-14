@@ -56,7 +56,8 @@ type RuntimeMetrics struct {
 
 	// GPU
 
-	// NumberOfGPUs represents the number of NVIDIA GPUs on the host system.
+	// NumberOfGPUs represents the number of NVIDIA GPUs on the host system. Note
+	// that for now we assume that all GPUs on an instance are homogeneous.
 	NumberOfGPUs int
 
 	// TotalVideoMemoryKB represents the amount of video memory in total across
