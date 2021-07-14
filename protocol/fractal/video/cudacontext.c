@@ -1,6 +1,29 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file cudacontext.c
+ * @brief This file contains the code to create a CUDA context
+============================
+Usage
+============================
+The CUDA context is required for the NVIDIA encoder. First call
+`cuda_init()` and then use the initialized CUDA context by
+calling `get_active_cuda_context_ptr()`.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include <dlfcn.h>
 
 #include "cudacontext.h"
+
+/*
+============================
+Defines
+============================
+*/
 
 #define LIB_CUDA_NAME "libcuda.so.1"
 
@@ -18,6 +41,12 @@ static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 
 CUcontext active_cuda_context = NULL;
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 /**
  * Dynamically opens the CUDA library and resolves the symbols that are
@@ -63,16 +92,19 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
     return NVFBC_TRUE;
 }
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 /**
  * Initializes CUDA and creates a CUDA context.
- *
- * \param [in] cu_ctx
- *   A pointer to the created CUDA context.
  *
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-NVFBC_BOOL cuda_init(CUcontext* cu_ctx) {
+NVFBC_BOOL cuda_init() {
     void* lib_cuda = NULL;
     if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
         LOG_ERROR("Failed to load CUDA library!");
@@ -94,7 +126,7 @@ NVFBC_BOOL cuda_init(CUcontext* cu_ctx) {
         return NVFBC_FALSE;
     }
 
-    cu_res = cu_ctx_create_v2_ptr(cu_ctx, CU_CTX_SCHED_AUTO, cu_dev);
+    cu_res = cu_ctx_create_v2_ptr(&active_cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
     if (cu_res != CUDA_SUCCESS) {
         LOG_ERROR("Unable to create CUDA context (result: %d)\n", cu_res);
         return NVFBC_FALSE;
@@ -104,5 +136,12 @@ NVFBC_BOOL cuda_init(CUcontext* cu_ctx) {
 }
 
 CUcontext* get_active_cuda_context_ptr() {
+    /*
+        Return a pointer to the active CUDA context.
+
+        Returns:
+            (CUcontext*): pointer to the active CUDA context
+    */
+
     return &active_cuda_context;
 }
