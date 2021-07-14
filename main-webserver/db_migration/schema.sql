@@ -333,6 +333,17 @@ CREATE TABLE hardware.instance_info (
     aws_instance_type character varying NOT NULL
 );
 
+--
+-- Name: lingering_instances; Type: VIEW; Schema: hardware; Owner: -
+--
+CREATE VIEW hardware.lingering_instances as SELECT instance_name,
+       cloud_provider_id,
+       status
+FROM   hardware.instance_info
+WHERE  ( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
+       >
+       3600000;
+
 
 --
 -- Name: mandelbox_info; Type: TABLE; Schema: hardware; Owner: -
