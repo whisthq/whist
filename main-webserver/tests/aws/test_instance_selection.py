@@ -1,3 +1,4 @@
+from random import randint
 import pytest
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance, bundled_region
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
@@ -28,11 +29,19 @@ def test_find_part_full_instance(bulk_instance, region_name):
 
 def test_find_part_full_instance_order(bulk_instance, region_name):
     """
-    Confirms that we find an in-use instance
+    Confirms that we find an in-use instance with max occupancy
     """
-    instance = bulk_instance(location=region_name, associated_mandelboxes=3)
-    _ = bulk_instance(location=region_name, associated_mandelboxes=2)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    max_occupancy = 7
+    instance_with_max_occupancy = bulk_instance(
+        location=region_name, associated_mandelboxes=max_occupancy
+    )
+    for _ in range(10):
+        # Generating multiple instances with occupancy less than our max_occupied instance
+        bulk_instance(location=region_name, associated_mandelboxes=randint(0, max_occupancy - 1))
+    assert (
+        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
+        == instance_with_max_occupancy.instance_name
+    )
 
 
 def test_no_find_full_instance(bulk_instance, region_name):
