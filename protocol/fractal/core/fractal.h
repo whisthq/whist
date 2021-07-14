@@ -129,6 +129,7 @@ Defines
 #define STARTING_BITRATE 10400000
 #define STARTING_BURST_BITRATE 31800000
 
+// 16:10 aspect ratio for minimum screen, which is the Mac aspect ratio
 #define MIN_SCREEN_WIDTH 480
 #define MIN_SCREEN_HEIGHT 300
 #define MAX_SCREEN_WIDTH 8192
