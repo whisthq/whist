@@ -173,7 +173,8 @@ void catchup_audio() {
 
     // if nothing has played yet, or if we've fallen far behind (because of a disconnect)
     if ((last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) ||
-        audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES) {
+        (last_played_id != -1 &&
+         audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES)) {
         last_played_id = audio_ring_buffer->max_id - 1;
     }
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
