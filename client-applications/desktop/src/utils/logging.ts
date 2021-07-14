@@ -13,20 +13,22 @@ import AWS from "aws-sdk"
 import * as Amplitude from "@amplitude/node"
 
 import config, {
-  getLoggingBaseFilePath,
+  loggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
 
+app.setPath("userData", loggingBaseFilePath)
+
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 const sessionID = new Date().getTime()
+export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
-  const loggingBaseFilePath = getLoggingBaseFilePath()
-  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
-  const logPath = path.join(loggingBaseFilePath, loggingFiles.client)
+  fs.mkdirSync(electronLogPath, { recursive: true })
+  const logPath = path.join(electronLogPath, loggingFiles.client)
   return fs.createWriteStream(logPath)
 }
 
@@ -141,7 +143,7 @@ export const uploadToS3 = async () => {
     })
   }
 
-  const logLocation = path.join(getLoggingBaseFilePath(), loggingFiles.protocol)
+  const logLocation = path.join(electronLogPath, loggingFiles.protocol)
 
   if (fs.existsSync(logLocation)) {
     await uploadHelper(logLocation)

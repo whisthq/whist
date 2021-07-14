@@ -8,7 +8,6 @@ import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take, takeUntil } from "rxjs/operators"
 import { merge } from "rxjs"
-import path from "path"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -23,18 +22,9 @@ import {
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
-import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
 import { protocolStreamKill } from "@app/utils/protocol"
-
-// Set custom app data folder based on environment
-fromTrigger("appReady").subscribe(() => {
-  const { deployEnv } = config
-  const appPath = app.getPath("userData")
-  const newPath = path.join(appPath, deployEnv)
-  app.setPath("userData", newPath)
-})
 
 // Apply autoupdate config
 fromTrigger("appReady")

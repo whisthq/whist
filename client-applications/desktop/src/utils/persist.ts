@@ -9,11 +9,15 @@
  * serializable data can be persisted. Essentially, anything that can be converted to JSON.
  */
 
+import { app } from "electron"
 import Store from "electron-store"
 import events from "events"
 import { isEmpty, pickBy, keys } from "lodash"
 
 import { appEnvironment } from "../../config/configs"
+import { loggingBaseFilePath } from "@app/config/environment"
+
+app.setPath("userData", loggingBaseFilePath)
 
 export const store = new Store({ watch: true })
 export const persisted = new events.EventEmitter()
