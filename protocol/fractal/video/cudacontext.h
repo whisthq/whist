@@ -34,7 +34,6 @@ Public Functions
  */
 NVFBC_BOOL cuda_init();
 
-
 /**
  * @brief                          Returns a pointer to the active CUDA context.
  *
