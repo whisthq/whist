@@ -40,17 +40,21 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
             disabled(boolean): If true, button cannot be clicked
     */
 
-    <button
-        className={classNames(
-          'text-md rounded bg-blue text-white duration-500 focus:outline-none py-4 font-body font-semibold',
-          'transition-colors',
-          props.className
-        )}
-        onClick={props.onClick}
-        disabled={props.disabled}
-    >
-        {props.contents}
-    </button>
+  <button
+    className={classNames(
+      'text-md rounded text-white duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold border-gray',
+      'transition-colors',
+      props.className
+    )}
+    onClick={props.onClick}
+    disabled={props.disabled}
+    style={{
+      background: 'rgba(255,255,255,0.1)',
+      border: '1px solid rgba(255,255,255,.1)'
+    }}
+  >
+    {props.contents}
+  </button>
 )
 
 export const FractalButton: FC<FractalButtonProps> = (
@@ -74,13 +78,10 @@ export const FractalButton: FC<FractalButtonProps> = (
 
   const disabledClassName = classNames(
     props.className,
-    'opacity-50 cursor-default'
+    'opacity-50 pointer-events-none'
   )
 
-  const enabledClassName = classNames(
-    props.className,
-    'hover:bg-mint hover:text-gray'
-  )
+  const enabledClassName = classNames(props.className)
 
   switch (state) {
     case FractalButtonState.DISABLED: {
@@ -94,13 +95,13 @@ export const FractalButton: FC<FractalButtonProps> = (
       const processingButtonProps = Object.assign(baseButtonProps, {
         className: disabledClassName,
         contents: (
-                    <>
-                        <FontAwesomeIcon
-                            icon={faCircleNotch}
-                            spin
-                            className="text-white mt-1"
-                        />
-                    </>
+          <>
+            <FontAwesomeIcon
+              icon={faCircleNotch}
+              spin
+              className="text-white mt-1"
+            />
+          </>
         ),
         onClick: doNothing
       })
