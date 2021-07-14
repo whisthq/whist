@@ -733,8 +733,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         "Cannot create nvidia encoder, does not accept in_width and in_height when using "
         "serverside scaling");
 #else
-    nvidia_encoder =
-        create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
     if (!nvidia_encoder) {
         LOG_ERROR("Failed to create nvidia encoder!");
     }
