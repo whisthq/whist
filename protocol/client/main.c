@@ -773,6 +773,8 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Failed to initialize SDL");
     }
 
+    // set the window minimum size
+    SDL_SetMinimumWindowSize(window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
     // Make sure that ctrl+click is processed as a right click on Mac
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
 
