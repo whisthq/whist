@@ -340,9 +340,11 @@ CREATE VIEW hardware.lingering_instances as SELECT instance_name,
        cloud_provider_id,
        status
 FROM   hardware.instance_info
-WHERE  ( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
+WHERE  (( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
        >
-       3600000;
+       120000 AND status <> 'PRE_CONNECTION') OR ( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
+       >
+       900000;
 
 
 --
