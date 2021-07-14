@@ -51,5 +51,8 @@ export const fractalError = {
     text: "We were unable to ping our servers, which is likely a result of weak Internet.",
   },
 } as {
-  [key: string]: { title: string; text: string }
+  [key: string]: {
+    title: string
+    text: string
+  }
 }
