@@ -39,7 +39,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # List of warnings to silence
-suppress_warnings = ['epub.unknown_project_files']
+suppress_warnings = ["epub.unknown_project_files"]
 
 
 # -- Options for HTML output -------------------------------------------------
