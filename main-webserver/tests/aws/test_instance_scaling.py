@@ -1,7 +1,9 @@
 from random import randint
 from sys import maxsize
+from time import time
 
 import requests
+
 
 from flask import current_app
 from app.models import db, RegionToAmi, InstanceInfo
@@ -178,6 +180,49 @@ def test_scale_down_multiple_partial_available(
     for instance in active_list:
         instance_info = InstanceInfo.query.get(instance)
         assert instance_info.status == InstanceState.ACTIVE.value
+
+
+def test_lingering_instances(monkeypatch, bulk_instance, region_name):
+    """
+    Tests that lingering_instances properly drains only those instances that are
+    inactive for the specified period of time:
+    2 min for running instances, 15 for preconnected instances
+
+    """
+    call_set = set()
+
+    def _helper(instance):
+        call_set.add(instance.instance_name)
+
+    monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+    bulk_instance(
+        instance_name=f"active_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        last_updated_utc_unix_ms=time() * 1000,
+    )
+    instance_bad_normal = bulk_instance(
+        instance_name=f"inactive_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        last_updated_utc_unix_ms=((time() - 121) * 1000),
+    )
+    instance_bad_preconnect = bulk_instance(
+        instance_name=f"inactive_starting_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 1801) * 1000),
+    )
+    bulk_instance(
+        instance_name=f"active_starting_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 121) * 1000),
+    )
+    aws_funcs.check_and_handle_lingering_instances()
+    assert call_set == {instance_bad_normal.instance_name, instance_bad_preconnect.instance_name}
 
 
 def test_buffer_wrong_region():
@@ -390,12 +435,12 @@ def test_buffer_not_too_full_split(app, bulk_instance, region_ami_pair):
                 location=region_name,
             )
         else:
-        # Here we break out when our buffer capacity is less than buffer threshold but 
-        # more than/equal to our desired buffer capacity. 
-        # The second condition is not quite obvious as the first one from the code. 
-        # Since in each iteration we increase the buffer by `current_instance_buffer` 
-        # which can range from 0 to mandelbox capacity, so in the last iteration before 
-        # we cross the buffer_threshold, we should be atleast equal to desired_free_mandelboxes.
+            # Here we break out when our buffer capacity is less than buffer threshold but
+            # more than/equal to our desired buffer capacity.
+            # The second condition is not quite obvious as the first one from the code.
+            # Since in each iteration we increase the buffer by `current_instance_buffer`
+            # which can range from 0 to mandelbox capacity, so in the last iteration before
+            # we cross the buffer_threshold, we should be atleast equal to desired_free_mandelboxes.
             break
 
     assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
@@ -433,7 +478,7 @@ def test_buffer_region_sensitive(app, bulk_instance):
         )
         buffer_available += current_instance_buffer
         if buffer_available > buffer_threshold:
-        # Break out when we allocated more buffer than our threshold.
+            # Break out when we allocated more buffer than our threshold.
             break
 
     assert (

@@ -344,7 +344,8 @@ WHERE  (( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_m
        >
        120000 AND status <> 'PRE_CONNECTION') OR ( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
        >
-       900000;
+       900000
+       AND status <> 'DRAINING' AND status <> 'HOST_SERVICE_UNRESPONSIVE';
 
 
 --
