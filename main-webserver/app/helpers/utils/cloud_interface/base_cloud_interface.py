@@ -13,7 +13,7 @@ class CloudClient(metaclass=abc.ABCMeta):
         image_id: str,
         instance_name: str,
         num_instances: int = 1,
-        instance_type: str = "g4dn.2xlarge",
+        instance_type: str = "g4dn.12xlarge",
     ) -> List[str]:
         """
         Starts AWS instances with the given properties, not returning until they're
