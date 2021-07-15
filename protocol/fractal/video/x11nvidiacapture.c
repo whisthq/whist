@@ -313,7 +313,8 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 #endif
 
     // Return with the number of accumulated frames
-    return frame_info.dwMissedFrames + 1;
+    // NOTE: Can only do on SDK 8.0.4
+    return 1;
 }
 
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
