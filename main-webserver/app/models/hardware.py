@@ -92,6 +92,10 @@ class LingeringInstances(db.Model):
     """
     A view detailing which instances haven't updated recently so we can manually
     drain them.
+    Specifically, it's all instances that are listed as either  active or preconnection,
+    but that have not updated their status in the db for the specified period of time:
+    2 min for running instances, 15 for preconnected instances
+
 
     Attributes:
         instance_name (string): A unique identifier generated randomly to identify the instance.
