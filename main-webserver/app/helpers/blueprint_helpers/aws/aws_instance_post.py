@@ -3,16 +3,16 @@ import time
 
 from collections import defaultdict
 from sys import maxsize
-from typing import List, Optional
+from typing import Any, List, Optional, Dict
 import requests
 from flask import current_app
-from sqlalchemy import and_
 from app.models.hardware import (
     db,
     InstanceSorted,
     RegionToAmi,
     InstanceInfo,
     InstancesWithRoomForMandelboxes,
+    LingeringInstances,
 )
 from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
@@ -61,8 +61,10 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
 
     """
     regions_to_search = bundled_region.get(region, []) + [region]
-    # InstancesWithRoomForMandelboxes is sorted in DESC with number of mandelboxes running, So doing a
-    # query with limit of 1 returns the instance with max occupancy which can improve resource utilization.
+    # InstancesWithRoomForMandelboxes is sorted in DESC
+    # with number of mandelboxes running, So doing a
+    # query with limit of 1 returns the instance with max
+    # occupancy which can improve resource utilization.
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
         InstancesWithRoomForMandelboxes.query.filter_by(
             commit_hash=client_commit_hash, location=region
@@ -71,7 +73,8 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         .one_or_none()
     )
     if instance_with_max_mandelboxes is None:
-        # If we are unable to find the instance in the required region, let's try to find an instance in nearby AZ
+        # If we are unable to find the instance in the required region,
+        # let's try to find an instance in nearby AZ
         # that doesn't impact the user experience too much.
         instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
             InstancesWithRoomForMandelboxes.query.filter(
@@ -172,11 +175,11 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 # as needed.
 # Note that this only works if we have 1 web process,
 # Multiprocess support will require DB synchronization/locking
-scale_mutex = defaultdict(threading.Lock)
+scale_mutex: Dict[str, threading.Lock] = defaultdict(threading.Lock)
 
 
 def do_scale_up_if_necessary(
-    region: str, ami: str, force_buffer: Optional[int] = 0, **kwargs
+    region: str, ami: str, force_buffer: Optional[int] = 0, **kwargs: Any
 ) -> List[str]:
     """
     Scales up new instances as needed, given a region and AMI to check
@@ -200,7 +203,7 @@ def do_scale_up_if_necessary(
         # invoking `_get_num_new_instances` function. However, we can chose to
         # ignore that recommendation by passing in the `force_buffer` value.
         num_new = 0
-        if force_buffer > 0:
+        if force_buffer is not None and force_buffer > 0:
             num_new = force_buffer
         else:
             num_new = _get_num_new_instances(region, ami)
@@ -244,6 +247,49 @@ def do_scale_up_if_necessary(
     return new_instance_names
 
 
+def drain_instance(instance: InstanceInfo) -> None:
+    """
+    Attempts to drain an instance, logging an error and marking unresponsive
+    if it cannot be drained.
+    Args:
+        instance: The instance to drain
+
+    Returns:
+        None
+
+    """
+    # We need to modify the status to DRAINING to ensure that we don't assign a new
+    # mandelbox to the instance. We need to commit here as we don't want to enter a
+    # deadlock with host service where it tries to modify the instance_info row.
+    instance.status = InstanceState.DRAINING
+    db.session.commit()
+    try:
+        auth0_client = Auth0Client(
+            current_app.config["AUTH0_DOMAIN"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+            current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
+        )
+        auth_token = auth0_client.token().access_token
+        base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+        resp = requests.post(
+            f"{base_url}/drain_and_shutdown",
+            json={
+                "auth_secret": auth_token,
+            },
+            verify=False,
+        )
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as error:
+        fractal_logger.error(
+            (
+                f"Unable to send drain_and_shutdown request to host service"
+                f" on instance {instance.instance_name}: {error}"
+            )
+        )
+        instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+        db.session.commit()
+
+
 def try_scale_down_if_necessary(region: str, ami: str) -> None:
     """
     Scales down new instances as needed, given a region and AMI to check
@@ -282,38 +328,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 ):
                     db.session.commit()
                     continue
-                # We need to modify the status to DRAINING to ensure that we don't assign a new
-                # mandelbox to the instance. We need to commit here as we don't want to enter a
-                # deadlock with host service where it tries to modify the instance_info row.
-                instance_info.status = InstanceState.DRAINING
-                db.session.commit()
-                try:
-                    auth0_client = Auth0Client(
-                        current_app.config["AUTH0_DOMAIN"],
-                        current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
-                        current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
-                    )
-                    auth_token = auth0_client.token().access_token
-                    base_url = (
-                        f"https://{instance_info.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-                    )
-                    resp = requests.post(
-                        f"{base_url}/drain_and_shutdown",
-                        json={
-                            "auth_secret": auth_token,
-                        },
-                        verify=False,
-                    )
-                    resp.raise_for_status()
-                except requests.exceptions.RequestException as error:
-                    fractal_logger.error(
-                        (
-                            f"Unable to send drain_and_shutdown request to host service"
-                            f" on instance {instance_info.instance_name}: {error}"
-                        )
-                    )
-                    instance_info.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
-                    db.session.commit()
+                drain_instance(instance_info)
 
 
 def try_scale_down_if_necessary_all_regions() -> None:
@@ -340,7 +355,21 @@ def try_scale_down_if_necessary_all_regions() -> None:
         db.session.commit()
 
 
-def repeated_scale_down_harness(time_delay: int, flask_app=current_app) -> None:
+def check_and_handle_lingering_instances() -> None:
+    """
+    Drains all lingering instances when called.
+    Returns:
+        None
+
+    """
+    lingering_instances = [instance.instance_name for instance in LingeringInstances.query.all()]
+    for instance_name in lingering_instances:
+        set_local_lock_timeout(5)
+        instance_info = InstanceInfo.query.with_for_update().get(instance_name)
+        drain_instance(instance_info)
+
+
+def repeated_scale_down_harness(time_delay: int, flask_app: Any=current_app) -> None:
     """
     checks scaling every time_delay seconds.
     NOTE:  this function keeps looping and will
