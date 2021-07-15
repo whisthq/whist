@@ -5,7 +5,7 @@ flask CLI - https://flask.palletsprojects.com/en/2.0.x/cli/
 
 """
 from json import loads
-
+from typing import Dict
 
 import click
 from flask import Blueprint
@@ -42,7 +42,7 @@ def ami_upgrade(
     Returns:
         None
     """
-    region_to_ami_id_mapping = loads(region_to_ami_id_mapping_str)
+    region_to_ami_id_mapping: Dict[str, str] = loads(region_to_ami_id_mapping_str)
 
     perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
 
