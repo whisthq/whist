@@ -11,7 +11,6 @@ typedef struct {
     void* internal_nvidia_encoder;
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
-    NV_ENC_REGISTERED_PTR registered_resources[NVFBC_TOGL_TEXTURES_MAX];
     NV_ENC_REGISTERED_PTR registered_resource;
 
     NV_ENC_OUTPUT_PTR output_buffer;
