@@ -1,8 +1,13 @@
 // Package the app for local testing using snowpack and electron-builder
 
+const yargs = require("yargs")
 const helpers = require("./build-package-helpers")
 
-const packageLocal = (env, ..._args) => {
+const packageLocal = (env, config) => {
+  // If we're passed a --config CLI argument, we'll use that as the JSON
+  // config value. If no --config argument, we'll build the config ourselves.
+  if (!config) config = helpers.buildConfig({ deploy: "dev" })
+
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
   helpers.configureCodeSigning(false)
@@ -13,6 +18,7 @@ const packageLocal = (env, ..._args) => {
   // For package-local, we don't want to increment the version so we use existing version
   helpers.snowpackBuild({
     ...env,
+    CONFIG: config,
     VERSION: helpers.getCurrentClientAppVersion(),
   })
   helpers.electronBuild()
@@ -21,5 +27,14 @@ const packageLocal = (env, ..._args) => {
 module.exports = packageLocal
 
 if (require.main === module) {
-  packageLocal()
+  // We require the version argument for notarization-level testing so that at
+  // least some of our argument handling is covered by CI as well.
+  const argv = yargs(process.argv.slice(2))
+    .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
+    .option("config", {
+      description: "The JSON object output from fractal/config",
+      type: "string",
+    })
+    .help().argv
+  packageLocal({}, argv.config)
 }
