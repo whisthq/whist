@@ -4,7 +4,7 @@
  * This file contains the interface constants, structure definitions and
  * function prototypes defining the NvFBC API for Linux.
  *
- * Copyright (c) 2013-2020, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2013-2018, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+
 #ifndef _NVFBC_H_
 #define _NVFBC_H_
 
@@ -33,8 +34,8 @@
 /*!
  * \mainpage NVIDIA Framebuffer Capture (NvFBC) for Linux.
  *
- * NvFBC is a high performance, low latency API to capture the framebuffer of
- * an X server screen.
+ * NvFBC is a high performance, low latency API to capture and optionally
+ * compress the framebuffer of an X server screen.
  *
  * The output from NvFBC captures everything that would be visible if we were
  * directly looking at the monitor.  This includes window manager decoration,
@@ -51,14 +52,15 @@
  * package:
  *
  * - OpenGL core >= 4.2:
- *   Required.  NvFBC relies on OpenGL to perform frame capture and
+ *   Mandatory.  NvFBC relies on OpenGL to perform frame capture and
  *   post-processing.
  *
- * - Vulkan 1.1:
- *   Required.
- *
  * - libcuda.so.1 >= 5.5:
- *   Optional. Used for capture to video memory with CUDA interop.
+ *   Optional. Used for capture to video memory with CUDA interop and capture
+ *   to HW compressed frames.
+ *
+ * - libnvidia-encode.so.1 >= 5.0:
+ *   Optional. Used for capture to HW compressed frames.
  *
  * The following requirements must be installed separately depending on the
  * Linux distribution being used:
@@ -67,12 +69,12 @@
  *   Optional.  Used for RandR output tracking.
  *
  * - libX11-xcb.so.1 >= 1.2:
- *   Required.  NvFBC uses a mix of Xlib and XCB.  Xlib is needed to use GLX,
+ *   Mandatory.  NvFBC uses a mix of Xlib and XCB.  Xlib is needed to use GLX,
  *   XCB is needed to make NvFBC more resilient against X server terminations
  *   while a capture session is active.
  *
  * - libxcb.so.1 >= 1.3:
- *   Required.  See above.
+ *   Mandatory.  See above.
  *
  * - xorg-server >= 1.3:
  *   Optional.  Required for push model to work properly.
@@ -149,92 +151,9 @@
  *   enables debugging logs, setting it to "3" enables both.
  * - Logs are printed to stdout or to the file pointed by the NVFBC_LOG_FILE
  *   environment variable.
- * - Added 'ulTimestampUs' to NVFBC_FRAME_GRAB_INFO.
+ * - Added 'dwTimestampUs' to NVFBC_FRAME_GRAB_INFO.
  * - Added 'dwSamplingRateMs' to NVFBC_CREATE_CAPTURE_SESSION_PARAMS.
  * - Added 'bPushModel' to NVFBC_CREATE_CAPTURE_SESSION_PARAMS.
- *
- * NvFBC Linux API version 1.7
- * - Retired the NVFBC_CAPTURE_TO_HW_ENCODER interface.
- *   This interface has been deprecated since NvFBC 1.2 and has received no
- *   updates or new features since. We recommend using the NVIDIA Video Codec
- *   SDK to encode NvFBC frames.
- *   See: https://developer.nvidia.com/nvidia-video-codec-sdk
- * - Added a 'Capture Modes' section to those headers.
- * - Added a 'Post Processing' section to those headers.
- * - Added an 'Environment Variables' section to those headers.
- * - Added 'bInModeset' to NVFBC_GET_STATUS_PARAMS.
- * - Added 'bAllowDirectCapture' to NVFBC_CREATE_CAPTURE_SESSION_PARAMS.
- * - Added 'bDirectCaptured' to NVFBC_FRAME_GRAB_INFO.
- * - Added 'bRequiredPostProcessing' to NVFBC_FRAME_GRAB_INFO.
- */
-
-/*!
- * \defgroup FBC_MODES Capture Modes
- *
- * When creating a capture session, NvFBC instantiates a capture subsystem
- * living in the NVIDIA X driver.
- *
- * This subsystem listens for damage events coming from applications then
- * generates (composites) frames for NvFBC when new content is available.
- *
- * This capture server can operate on a timer where it periodically checks if
- * there are any pending damage events, or it can generate frames as soon as it
- * receives a new damage event.
- * See NVFBC_CREATE_CAPTURE_SESSION_PARAMS::dwSamplingRateMs,
- * and NVFBC_CREATE_CAPTURE_SESSION_PARAMS::bPushModel.
- *
- * NvFBC can also attach itself to a fullscreen unoccluded application and have
- * it copy its frames directly into a buffer owned by NvFBC upon present. This
- * mode bypasses the X server.
- * See NVFBC_CREATE_CAPTURE_SESSION_PARAMS::bAllowDirectCapture.
- *
- * NvFBC is designed to capture frames with as few copies as possible. The
- * NVIDIA X driver composites frames directly into the NvFBC buffers, and
- * direct capture copies frames directly into these buffers as well.
- *
- * Depending on the configuration of a capture session, an extra copy (rendering
- * pass) may be needed. See the 'Post Processing' section.
- */
-
-/*!
- * \defgroup FBC_PP Post Processing
- *
- * Depending on the configuration of a capture session, NvFBC might require to
- * do post processing on frames.
- *
- * Post processing is required for the following reasons:
- * - NvFBC needs to do a pixel format conversion.
- * - Diffmaps are requested.
- * - Capture to system memory is requested.
- *
- * NvFBC needs to do a conversion if the requested pixel format does not match
- * the native format. The native format is NVFBC_BUFFER_FORMAT_BGRA.
- *
- * Note: post processing is *not* required for frame scaling and frame cropping.
- *
- * Skipping post processing can reduce capture latency. An application can know
- * whether post processing was required by checking
- * NVFBC_FRAME_GRAB_INFO::bRequiredPostProcessing.
- */
-
-/*!
- * \defgroup FBC_ENVVAR Environment Variables
- *
- * Below are the environment variables supported by NvFBC:
- *
- * - NVFBC_LOG_LEVEL
- *   Bitfield where the first bit enables debug logs and the second bit enables
- *   performance logs. Both can be enabled by setting this envvar to 3.
- *
- * - NVFBC_LOG_FILE
- *   Write all NvFBC logs to the given file.
- *
- * - NVFBC_FORCE_ALLOW_DIRECT_CAPTURE
- *   Used to override NVFBC_CREATE_CAPTURE_SESSION_PARAMS::bAllowDirectCapture.
- *
- * - NVFBC_FORCE_POST_PROCESSING
- *   Used to force the post processing step, even if it could be skipped.
- *   See the 'Post Processing' section.
  */
 
 /*!
@@ -260,7 +179,7 @@ extern "C" {
 /*!
  * NvFBC API minor version.
  */
-#define NVFBC_VERSION_MINOR 7
+#define NVFBC_VERSION_MINOR 6
 
 /*!
  * NvFBC API version.
@@ -375,10 +294,6 @@ typedef enum _NVFBCSTATUS
      * was set to NVFBC_TRUE.
      */
     NVFBC_ERR_MUST_RECREATE   = 16,
-    /*!
-     * This indicates a Vulkan error.
-     */
-    NVFBC_ERR_VULKAN          = 17,
 } NVFBCSTATUS;
 
 /*!
@@ -417,13 +332,16 @@ typedef enum _NVFBC_CAPTURE_TYPE
      */
     NVFBC_CAPTURE_SHARED_CUDA,
     /*!
-     * Retired. Do not use.
+     * \deprecated Capture HW compressed frames to a buffer in system memory.
+     *
+     * Using the HW encoder relies on the CUDA interop.  Therefore, CUDA must
+     * be installed on the system.
      */
-    /* NVFBC_CAPTURE_TO_HW_ENCODER, */
+    NVFBC_CAPTURE_TO_HW_ENCODER,
     /*!
      * Capture frames to an OpenGL buffer in video memory.
      */
-    NVFBC_CAPTURE_TO_GL = 3,
+    NVFBC_CAPTURE_TO_GL,
 } NVFBC_CAPTURE_TYPE;
 
 /*!
@@ -496,13 +414,10 @@ typedef enum _NVFBC_BUFFER_FORMAT
      */
     NVFBC_BUFFER_FORMAT_RGBA,
     /*!
-     * Native format. No pixel conversion needed.
-     * BGRA8888 byte-order format. 32 bpp.
+     * Data will be converted to BGRA8888 byte-order format. 32 bpp.
      */
     NVFBC_BUFFER_FORMAT_BGRA,
 } NVFBC_BUFFER_FORMAT;
-
-#define NVFBC_BUFFER_FORMAT_YUV420P NVFBC_BUFFER_FORMAT_NV12
 
 /*!
  * Handle used to identify an NvFBC session.
@@ -620,25 +535,6 @@ typedef struct _NVFBC_FRAME_GRAB_INFO
      * server.
      */
     uint64_t ulTimestampUs;
-    /*
-     * [out] Number of frames generated since the last capture.
-     *
-     * This can help applications tell whether they missed frames or there
-     * were no frames generated by the server since the last capture.
-     */
-    uint32_t dwMissedFrames;
-    /*
-     * [out] Whether the captured frame required post processing.
-     *
-     * See the 'Post Processing' section.
-     */
-    NVFBC_BOOL bRequiredPostProcessing;
-    /*
-     * [out] Whether this frame was obtained via direct capture.
-     *
-     * See NVFBC_CREATE_CAPTURE_SESSION_PARAMS::bAllowDirectCapture.
-     */
-    NVFBC_BOOL bDirectCapture;
 } NVFBC_FRAME_GRAB_INFO;
 
 /*!
@@ -810,22 +706,12 @@ typedef struct _NVFBC_GET_STATUS_PARAMS
      * [out] Version of the NvFBC library running on this system.
      */
     uint32_t dwNvFBCVersion;
-    /*!
-     * [out] Whether the X server is currently in modeset.
-     *
-     * When the X server is in modeset, it must give up all its video
-     * memory allocations. It is not possible to create a capture
-     * session until the modeset is over.
-     *
-     * Note that VT-switches are considered modesets.
-     */
-    NVFBC_BOOL bInModeset;
 } NVFBC_GET_STATUS_PARAMS;
 
 /*!
  * NVFBC_GET_STATUS_PARAMS structure version.
  */
-#define NVFBC_GET_STATUS_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_GET_STATUS_PARAMS, 2)
+#define NVFBC_GET_STATUS_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_GET_STATUS_PARAMS, 1)
 
 /*!
  * Defines parameters for the ::NvFBCCreateCaptureSession() API call.
@@ -839,9 +725,10 @@ typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS
     /*!
      * [in] Desired capture type.
      *
-     * Note that when specyfing ::NVFBC_CAPTURE_SHARED_CUDA NvFBC will try to
-     * dlopen() the corresponding libraries.  This means that NvFBC can run on
-     * a system without the CUDA library since it does not link against them.
+     * Note that when specyfing ::NVFBC_CAPTURE_SHARED_CUDA or
+     * ::NVFBC_CAPTURE_TO_HW_ENCODER NvFBC will try to dlopen() the
+     * corresponding libraries.  This means that NvFBC can run on a system
+     * without CUDA or HW encoder libraries since it does not link against them.
      */
     NVFBC_CAPTURE_TYPE eCaptureType;
     /*!
@@ -881,7 +768,7 @@ typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS
      *
      * NvFBC is able to detect when a modeset event occured and can automatically
      * re-create a capture session with the same settings as before, then resume
-     * its frame capture session transparently.
+     * its frame capture seemlessly.
      *
      * This option allows to disable this behavior.  NVFBC_ERR_MUST_RECREATE
      * will be returned in that case.
@@ -891,9 +778,6 @@ typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS
      *
      * For example: an application using the ToGL interface needs to register
      * resources with EncodeAPI prior to encoding frames.
-     *
-     * Note that during modeset recovery, NvFBC will try to re-create the
-     * capture session every second until it succeeds.
      */
     NVFBC_BOOL bDisableAutoModesetRecovery;
     /*!
@@ -948,52 +832,12 @@ typedef struct _NVFBC_CREATE_CAPTURE_SESSION_PARAMS
      * GPU loads.
      */
     NVFBC_BOOL bPushModel;
-    /*!
-     * [in] Allow direct capture
-     *
-     * Direct capture allows NvFBC to attach itself to a fullscreen graphics
-     * application. Whenever that application presents a frame, it makes a copy
-     * of it directly into a buffer owned by NvFBC thus bypassing the X server.
-     *
-     * When direct capture is *not* enabled, the NVIDIA X driver generates a
-     * frame for NvFBC when it receives a damage event from an application if push
-     * model is enabled, or periodically checks if there are any pending damage
-     * events otherwise (see NVFBC_CREATE_CAPTURE_SESSION_PARAMS::dwSamplingRateMs).
-     *
-     * Direct capture is possible under the following conditions:
-     * - Direct capture is allowed
-     * - Push model is enabled (see NVFBC_CREATE_CAPTURE_SESSION_PARAMS::bPushModel)
-     * - The mouse cursor is not composited (see NVFBC_CREATE_CAPTURE_SESSION_PARAMS::bWithCursor)
-     * - No viewport transformation is required. This happens when the remote
-     *   desktop is e.g. rotated.
-     *
-     * When direct capture is possible, NvFBC will automatically attach itself
-     * to a fullscreen unoccluded application, if such exists.
-     *
-     * Notes:
-     * - This includes compositing desktops such as GNOME (e.g., gnome-shell
-     *   is the fullscreen unoccluded application).
-     * - There can be only one fullscreen unoccluded application at a time.
-     * - The NVIDIA X driver monitors which application qualifies or no
-     *   longer qualifies.
-     *
-     * For example, if a fullscreen application is launched in GNOME, NvFBC will
-     * detach from gnome-shell and attach to that application.
-     *
-     * Attaching and detaching happens automatically from the perspective of an
-     * NvFBC client. When detaching from an application, the X driver will
-     * transparently resume generating frames for NvFBC.
-     *
-     * An application can know whether a given frame was obtained through
-     * direct capture by checking NVFBC_FRAME_GRAB_INFO::bDirectCapture.
-     */
-    NVFBC_BOOL bAllowDirectCapture;
 } NVFBC_CREATE_CAPTURE_SESSION_PARAMS;
 
 /*!
  * NVFBC_CREATE_CAPTURE_SESSION_PARAMS structure version.
  */
-#define NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_CREATE_CAPTURE_SESSION_PARAMS, 6)
+#define NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_CREATE_CAPTURE_SESSION_PARAMS, 5)
 
 /*!
  * Defines parameters for the ::NvFBCDestroyCaptureSession() API call.
@@ -1516,6 +1360,701 @@ typedef struct _NVFBC_TOGL_GRAB_FRAME_PARAMS
 /*! @} FBC_STRUCT */
 
 /*!
+ * \defgroup FBC_DEPRECATED_STRUCT Deprecated Structure Definition
+ *
+ * These definitions are deprecated and should not be used anymore.  However,
+ * NvFBC ensures backward compatibility.
+ *
+ * Deprecated structures point to the new ones at a specific structure version.
+ *
+ * @{
+ */
+
+/*!
+ * \deprecated Defines flags that can be used when capturing HW encoded
+ * compressed frames to system memory.
+ */
+typedef enum
+{
+    /*!
+     * Default, capturing waits for a new frame or mouse move.
+     */
+    NVFBC_TOHWENC_GRAB_FLAGS_NOFLAGS       = 0,
+    /*!
+     * Capturing does not wait for a new frame nor a mouse move.
+     *
+     * It is therefore possible to capture the same frame multiple times.
+     * When this occurs, the dwCurrentFrame parameter of the
+     * NVFBC_FRAME_GRAB_INFO structure is not incremented.
+     */
+    NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT        = (1 << 0),
+} NVFBC_TOHWENC_GRAB_FLAGS;
+
+/*!
+ * \deprecated Defines encoder presets.
+ */
+typedef enum
+{
+    /*!
+     * Use for fastest encoding, with suboptimal quality
+     */
+    NVFBC_HWENC_PRESET_LOW_LATENCY_HP = 0,
+    /*!
+     * Use for better overall quality, compromising on encoding speed.
+     */
+    NVFBC_HWENC_PRESET_LOW_LATENCY_HQ,
+    /*!
+     * Use for better quality than NVFBC_HWENC_PRESET_LOW_LATENCY_HP and
+     * higher speed than NVFBC_HWENC_PRESET_LOW_LATENCY_HQ.
+     */
+    NVFBC_HWENC_PRESET_LOW_LATENCY_DEFAULT,
+    /*!
+     * Use for lossless encoding at higher performance.
+     * Currently supported only when NVFBC_HWENC_CONFIG::eRateControl is
+     * set to NVFBC_HWENC_PARAMS_RC_CONSTQP.  If this preset is used,
+     * NVFBC_HWENC_CONFIG::dwProfile is forced to 244.
+     *
+     * Available on Maxwell GPUs onwards and only with the H.264 codec.
+     */
+    NVFBC_HWENC_PRESET_LOSSLESS_HP,
+} NVFBC_HWENC_PRESET;
+
+/*!
+ * \deprecated Defines encoder rate control modes.
+ */
+typedef enum _NVFBC_HWENC_PARAMS_RC_MODE
+{
+    /*!
+     * Constant QP mode.
+     */
+    NVFBC_HWENC_PARAMS_RC_CONSTQP = 0,
+    /*!
+     * Variable bitrate mode.
+     */
+    NVFBC_HWENC_PARAMS_RC_VBR,
+    /*!
+     * Constant bitrate mode.
+     */
+    NVFBC_HWENC_PARAMS_RC_CBR,
+    /*!
+     * Multi pass encoding optimized for image quality and works best with
+     * single frame VBV buffer size.
+     */
+    NVFBC_HWENC_PARAMS_RC_2_PASS_QUALITY,
+    /*!
+     * Multi pass encoding optimized for maintaining frame size and works best
+     * with single frame VBV buffer size.
+     */
+    NVFBC_HWENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP,
+    /*!
+     * Deprecated. Use NVFBC_HWENC_PARAMS_RC_CBR instead.
+     */
+    NVFBC_HWENC_PARAMS_RC_CBR_IFRAME_2_PASS,
+} NVFBC_HWENC_PARAMS_RC_MODE;
+
+/*!
+ * \deprecated Defines encoder flags.
+ */
+typedef enum
+{
+    /*!
+     * Encodes the current frame as an IDR picture.
+     */
+    NVFBC_HWENC_PARAM_FLAG_FORCEIDR           = (1 << 0),
+    /*!
+     * Indicates change in bitrate from current frame onwards.
+     */
+    NVFBC_HWENC_PARAM_FLAG_DYN_BITRATE_CHANGE = (1 << 1),
+} NVFBC_HWENC_PARAM_FLAGS;
+
+/*!
+ * \deprecated Defines slicing modes.
+ */
+typedef enum
+{
+    /*!
+     * Disable slicing mode.
+     */
+    NVFBC_HWENC_SLICING_MODE_DISABLED = 0,
+    /*!
+     * Picture will be divided into slices of n MBs,
+     * where n = dwSlicingModeParam.
+     */
+    NVFBC_HWENC_SLICING_MODE_FIXED_NUM_MBS,
+    /*!
+     * Picture will be divided into slices of n Bytes,
+     * where n = dwSlicingModeParam.
+     */
+    NVFBC_HWENC_SLICING_MODE_FIXED_NUM_BYTES,
+    /*!
+     * Picture will be divided into slices of n rows of MBs,
+     * where n = dwSlicingModeParam.
+     */
+    NVFBC_HWENC_SLICING_MODE_FIXED_NUM_MB_ROWS,
+    /*!
+     * Picture will be divided into n+1 slices, where n = dwSlicingModeParam.
+     */
+    NVFBC_HWENC_SLICING_MODE_FIXED_NUM_SLICES,
+} NVFBC_HWENC_SLICING_MODE;
+
+/*!
+ * \deprecated Defines video codecs.
+ */
+typedef enum
+{
+    /*!
+     * H.264 codec.
+     */
+    NVFBC_HWENC_CODEC_H264 = 0,
+    /*!
+     * H.265/HEVC codec.
+     */
+    NVFBC_HWENC_CODEC_HEVC,
+} NVFBC_HWENC_CODEC;
+
+/*!
+ * \deprecated Maximum number of reference frames.
+ */
+#define NVFBC_MAX_REF_FRAMES 0x10
+
+/*!
+ * \deprecated Describes HW encoder configuration.
+ */
+typedef struct _NVFBC_HWENC_CONFIG
+{
+    /*!
+     * [in] Sets to NVFBC_HWENC_CONFIG_VER.
+     */
+    uint32_t dwVersion;
+    /*!
+     * [in] Codec profile that the HW encoder should use for video encoding.
+     *
+     * For the H.264 codec:
+     *   0: Autoselect appropriate codec profile.
+     *  66: Baseline (fastest encode/decode times, lowest image quality,
+     *      lowest bitrate)
+     *  77: Main (balanced encode/decode times, image)
+     * 100: High (slowest encode/decode times, highest image quality, highest
+     *      bitrate)
+     * 244: High, used for lossless and YUV444P encoding
+     *
+     * For the H.265/HEVC codec:
+     *   1: Main profile
+     */
+    uint32_t dwProfile;
+    /*!
+     * [in] Frame rate numerator.
+     *
+     * Encoding frame rate = dwFrameRateNum/dwFrameRateDen.
+     *
+     * For example, the "33333" in 33333/1000 (for a frame rate of 33.333 fps).
+     *
+     * This is not related to rate at which frames are grabbed.
+     */
+    uint32_t dwFrameRateNum;
+    /*!
+     * [in] Frame rate denominator.
+     *
+     * Encoding frame rate = dwFrameRateNum/dwFrameRateDen.
+     *
+     * For example, the "1000" in 33333/1000 (for a frame rate of 33.333 fps).
+     *
+     * This is not related to rate at which frames are grabbed.
+     */
+    uint32_t dwFrameRateDen;
+    /*!
+     * [in] Target Average bitrate.
+     *
+     * HW Encoder will try to achieve this bitrate during video encoding.
+     *
+     * This is the only bitrate setting useful for Constant Bit Rate RateControl
+     * mode.
+     */
+    uint32_t dwAvgBitRate;
+    /*!
+     * [in] Maximum bitrate that the HW encoder can hit while encoding video
+     * in VBR [variable bit rate mode].
+     */
+    uint32_t dwPeakBitRate;
+    /*!
+     * [in] Number of pictures in a GOP.
+     *
+     * Every GOP begins with an I frame, so this is the same as I-frame
+     * interval.
+     */
+    uint32_t dwGOPLength;
+    /*!
+     * [in] QP value to be used for rate control in ConstQP mode.
+     */
+    uint32_t dwQP;
+    /*!
+     * [in] Rate Control Mode to be used by the HW encoder.
+     */
+    NVFBC_HWENC_PARAMS_RC_MODE eRateControl;
+    /*!
+     * [in] Specifies the encoding preset used for fine tuning for encoding
+     * parameters.
+     */
+    NVFBC_HWENC_PRESET ePresetConfig;
+    /*!
+     * [in] Enables out of band generation of SPS, PPS headers.
+     *
+     * The frame header can be queried using NvFBCToHwEncGetHeader().
+     */
+    NVFBC_BOOL bOutBandSPSPPS;
+    /*!
+     * [in] Allows to use the flag ::NVFBC_HWENC_PARAM_FLAG_FORCEIDR.
+     */
+    NVFBC_BOOL bIntraFrameOnRequest;
+    /*!
+     * [in] Enable this if client wants to specify maxRCQP[].
+     */
+    NVFBC_BOOL bUseMaxRCQP;
+    /*!
+     * [in] Enables gradual decoder refresh or intra-refresh.
+     * If the GOP structure uses B frames this will be ignored.
+     */
+    NVFBC_BOOL bEnableIntraRefresh;
+    /*!
+     * [in] Refer to enum ::NVFBC_HWENC_SLICING_MODE for usage.
+     */
+    NVFBC_HWENC_SLICING_MODE dwSlicingMode;
+    /*!
+     * [in] Refer to enum ::NVFBC_HWENC_SLICING_MODE for usage.
+     */
+    uint32_t dwSlicingModeParam;
+    /*!
+     * [in]: VBV buffer size can be used to cap the frame size of encoded
+     * bitstream, reducing the need for buffering at decoder end.
+     *
+     * For lowest latency,
+     * VBV buffersize = single frame size = channel bitrate/frame rate.
+     *
+     * I-frame size may be larger than P or B frames.
+     * Overridden by NvFBC in case of
+     * NVFBC_HWENC_PARAMS_RC_2_PASS_QUALITY or
+     * NVFBC_HWENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP rate control modes.
+     */
+    uint32_t dwVBVBufferSize;
+    /*!
+     * [in] Number of bits to buffer at the decoder end. For lowest latency,
+     * set to be equal to dwVBVBufferSize.
+     *
+     * Overridden by NvFBC in case of
+     * NVFBC_HWENC_PARAMS_RC_2_PASS_QUALITY or
+     * NVFBC_HWENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP rate control modes.
+     */
+    uint32_t dwVBVInitialDelay;
+    /*!
+     * [in] maxQP[0] = max QP for P frame, maxRCQP[1] = max QP for B frame,
+     * maxRCQP[2] = max QP for I frame respectively.
+     */
+    uint32_t maxRCQP[3];
+    /*!
+     * [in] This is used to specify the DPB size used for encoding.
+     *
+     * Setting this to 0 will allow encoder to use the default DPB size.
+     * Low latency applications are recommended to use a large DPB size
+     * (recommended size is 16) so that it allows clients to invalidate
+     * corrupt frames and use older frames for reference to improve error
+     * resiliency.
+     */
+    uint32_t dwMaxNumRefFrames;
+    /*!
+     * [in] Enables returning the mean squared error (MSE) per channel in
+     * ::NVFBC_TOHWENC_GRAB_FRAME_PARAMS.
+     *
+     * NOTE: Enabling this bit will affect performance severly; set it only if
+     * the caller wants to evaluate quality of encoder.
+     */
+    NVFBC_BOOL bEnableMSE;
+    /*!
+     * [in] Enables adaptive quantization.
+     *
+     * Currently supported only when NVFBC_HWENC_CONFIG::eRateControl
+     * is set to NVFBC_HWENC_PARAMS_RC_2_PASS_QUALITY or
+     * NVFBC_HWENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP.
+     */
+    NVFBC_BOOL bEnableAQ;
+    /*!
+     * [in] Input format.
+     *
+     * Must be set to NVFBC_BUFFER_FORMAT_YUV420P or NVFBC_BUFFER_FORMAT_YUV444P.
+     *
+     * If set to NVFBC_BUFFER_FORMAT_YUV444P,
+     * NVFBC_HWENC_CONFIG::dwProfile is forced to 244.  Bitrate should be
+     * manually set ~20-30% higher than what is set otherwise for
+     * NVFBC_BUFFER_FORMAT_YUV420P.
+     *
+     * NVFBC_BUFFER_FORMAT_YUV444 is available on Maxwell GPUs onwards and is
+     * only supported with the H.264 codec.
+     */
+    NVFBC_BUFFER_FORMAT eInputBufferFormat;
+
+    /*!
+     * [in] Codec used to encode frames.
+     */
+    NVFBC_HWENC_CODEC codec;
+} NVFBC_HWENC_CONFIG;
+
+/*!
+ * \deprecated NVFBC_HWENC_CONFIG structure version.
+ */
+#define NVFBC_HWENC_CONFIG_VER NVFBC_STRUCT_VERSION(NVFBC_HWENC_CONFIG, 5)
+
+/*!
+ * \deprecated Describes encode parameters.
+ */
+typedef struct _NVFBC_HWENC_ENCODE_PARAMS
+{
+    /*!
+     * [in] Set to NVFBC_HWENC_ENCODE_PARAMS_VER.
+     */
+    uint32_t dwVersion;
+    /*!
+     * [in] Specifies bit-wise OR`ed encode param flags.
+     * See ::NVFBC_HWENC_PARAM_FLAGS enum.
+     */
+    uint32_t dwEncodeParamFlags;
+    /*!
+     * [in] Specifies the new average bit rate to be used from this frame
+     * onwards.
+     */
+    uint32_t dwNewAvgBitRate;
+    /*!
+     * [in] Specifies the new peak bit rate to be used from this frame onwards.
+     */
+    uint32_t dwNewPeakBitRate;
+    /*!
+     * [in] Specifies the new VBV buffer size to be used from this frame
+     *onwards. Client is expected to pass new appropriate VBV values.
+     */
+    uint32_t dwNewVBVBufferSize;
+    /*!
+     * [in] Specifies the new VBV initial delay to be used from this frame
+     * onwards. Client is expected to pass new appropriate VBV values.
+     */
+    uint32_t dwNewVBVInitialDelay;
+    /*!
+     * [in] Input timestamp to be associated with this input picture.
+     */
+    uint64_t ulCaptureTimeStamp;
+    /*!
+     * [in] Specifies an array of timestamps of the encoder references which
+     * the client wants to invalidate.
+     */
+    uint64_t ulInvalidFrameTimeStamp[NVFBC_MAX_REF_FRAMES];
+    /*!
+     * [in] Enable this if client wants encoder reference frames to be
+     * invalidated.
+     *
+     * Ignored if Intra-Refresh is enabled for the session.
+     */
+    NVFBC_BOOL bInvalidateReferenceFrames;
+    /*!
+     * [in] Enable this if the client wants to force Intra Refresh with intra
+     * refresh period dwIntraRefreshCnt.
+     */
+    NVFBC_BOOL bStartIntraRefresh;
+    /*!
+     * [in] Enable this if client wants to re-encode previous most recently
+     * captured frame with different encoding params, NvFBC will not capture
+     * new frame.
+     *
+     * If no frame has been captured yet, this option is ignored.
+     *
+     * Setting this option ignores blocking calls.
+     */
+    NVFBC_BOOL bReEncodePrevFrame;
+    /*!
+     * [in] Specifies number of encoder references which the client wants to
+     * invalidate
+     */
+    uint32_t dwNumRefFramesToInvalidate;
+    /*!
+     * [in] Specifies the number of frames over which intra refresh will happen,
+     * if bStartIntraRefresh is set.
+     */
+    uint32_t dwIntraRefreshCnt;
+} NVFBC_HWENC_ENCODE_PARAMS;
+
+/*!
+ * \deprecated NVFBC_HWENC_ENCODE_PARAMS structure version.
+ */
+#define NVFBC_HWENC_ENCODE_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_HWENC_ENCODE_PARAMS, 1)
+
+/*!
+ * \deprecated Describes an encoded frame.
+ */
+typedef struct _NVFBC_HWENC_FRAME_INFO
+{
+    /*!
+     * [out] Is NVFBC_TRUE if the current frame is an I-frame.
+     */
+    NVFBC_BOOL bIsIFrame;
+    /*!
+     * [out] Size of bitstream produced, in bytes.
+     */
+    uint32_t dwByteSize;
+    /*!
+     * [out] Timestamp associated with the encoded frame.
+     */
+    uint64_t ulTimeStamp;
+} NVFBC_HWENC_FRAME_INFO;
+
+/*!
+ * \deprecated NVFBC_HWENC_FRAME_INFO structure version.
+ */
+#define NVFBC_HWENC_FRAME_INFO_VER NVFBC_STRUCT_VERSION(NVFBC_HWENC_FRAME_INFO, 1)
+
+/*!
+ * \deprecated Defines parameters for the ToHwGetCaps() API call.
+ */
+typedef struct _NVFBC_TOHWENC_GET_CAPS_PARAMS
+{
+    /*!
+     * [in] Must be set to NVFBC_TOHWENC_GET_CAPS_PARAMS_VER.
+     */
+    uint32_t dwVersion;
+    /*!
+     * [in] Codec against which the capabilities are queried.
+     */
+    NVFBC_HWENC_CODEC codec;
+    /*!
+     * [out] Whether the requested codec is supported.
+     *
+     * Note: If the codec is not supported, the rest of the structure will
+     * stay untouched.
+     */
+    NVFBC_BOOL bCodecSupported;
+    /*!
+     * [out] Whether ::NVFBC_BUFFER_FORMAT_YUV444P is supported.
+     */
+    NVFBC_BOOL bYUV444;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PRESET_LOSSLESS_HP is supported.
+     */
+    NVFBC_BOOL bLossless;
+    /*!
+     * [out] Maximum frame width supported.
+     */
+    uint32_t dwMaxWidth;
+    /*!
+     * [out] Maximum frame height supported.
+     */
+    uint32_t dwMaxHeight;
+    /*!
+     * [out] Maximum frame size in MB.
+     */
+    uint32_t dwMaxMB;
+    /*!
+     * [out] Maximum aggregate throughput in MB/s.
+     */
+    uint32_t dwMaxMBPerSec;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PARAMS_RC_CONSTQP is supported.
+     */
+    NVFBC_BOOL bRcConstQP;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PARAMS_RC_VBR is supported.
+     */
+    NVFBC_BOOL bRcVbr;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PARAMS_RC_CBR is supported.
+     */
+    NVFBC_BOOL bRcCbr;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PARAMS_RC_2_PASS_QUALITY is supported.
+     */
+    NVFBC_BOOL bRc2PassQuality;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP is supported.
+     */
+    NVFBC_BOOL bRc2PassFramesizeCap;
+    /*!
+     * [out] Whether dynamic resolution change is supported.
+     */
+    NVFBC_BOOL bDynResChange;
+    /*!
+     * [out] Whether ::NVFBC_HWENC_PARAM_FLAG_DYN_BITRATE_CHANGE is supported.
+     */
+    NVFBC_BOOL bDynBitrateChange;
+    /*!
+     * [out] Whether NVFBC_HWENC_CONFIG::bEnableIntraRefresh is supported.
+     */
+    NVFBC_BOOL bIntraRefresh;
+    /*!
+     * [out] Whether custom VBV buffer size is supported.
+     */
+    NVFBC_BOOL bCustomVBVBufSize;
+} NVFBC_TOHWENC_GET_CAPS_PARAMS;
+
+/*!
+ * \deprecated NVFBC_TOHWENC_GET_CAPS_PARAMS structure version.
+ */
+#define NVFBC_TOHWENC_GET_CAPS_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOHWENC_GET_CAPS_PARAMS, 1)
+
+/*!
+ * \deprecated Defines parameters for the ToHwEncSetUp() API call.
+ */
+typedef struct _NVFBC_TOHWENC_SETUP_PARAMS
+{
+    /*!
+     * [in] Must be set to NVFBC_TOHWENC_SETUP_PARAMS_VER.
+     */
+    uint32_t dwVersion;
+    /*!
+     * [in] HW encoder initial configuration parameters.
+     */
+    NVFBC_HWENC_CONFIG *pEncodeConfig;
+} NVFBC_TOHWENC_SETUP_PARAMS;
+
+/*!
+ * \deprecated NVFBC_TOHWENC_SETUP_PARAMS structure version.
+ */
+#define NVFBC_TOHWENC_SETUP_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOHWENC_SETUP_PARAMS, 1)
+
+/*!
+ * \deprecated Defines parameters for the ::NvFBCToHwEncGrabFrame() API call.
+ */
+typedef struct _NVFBC_TOHWENC_GRAB_FRAME_PARAMS
+{
+    /*!
+     * [in] Must be set to NVFBC_TOHWENC_GRAB_FRAME_PARAMS_VER.
+     */
+    uint32_t dwVersion;
+    /*!
+     * [in] Flags defining the behavior of this frame capture.
+     */
+    uint32_t dwFlags;
+    /*!
+     * [out] Information about the captured frame.
+     *
+     * Can be NULL.
+     */
+    NVFBC_FRAME_GRAB_INFO *pFrameGrabInfo;
+    /*!
+     * [out] Pointer to a pointer to a bitstream buffer in system memory.
+     *
+     * The application does not need to allocate memory for this buffer.  It
+     * does not need to free this buffer either.
+     *
+     * NvFBC will write encoded bitstream data in the buffer.
+     *
+     * The content of this buffer cannot be used while capturing a new frame.
+     * If an application wants to behave that way, it must copy this buffer
+     * beforehand.
+     *
+     * The size of this buffer is returned in the dwByteSize field of the
+     * ::NVFBC_FRAME_GRAB_INFO structure.
+     */
+    void **ppBitStreamBuffer;
+    /*!
+     * [in] Pointer to a structure containing per-frame configuration
+     * parameters for the HW encoder.
+     */
+    NVFBC_HWENC_ENCODE_PARAMS *pEncodeParams;
+    /*!
+     * [out] Pointer to a structure containing data about the captured frame.
+     */
+    NVFBC_HWENC_FRAME_INFO *pEncFrameInfo;
+    /*!
+     * [in] Must be set to NVFBC_HWENC_FRAME_INFO_VER.
+     */
+    uint32_t dwEncFrameInfoVer;
+    /*!
+     * [out] Mean squared error used to evaluate quality.
+     * Set the bEnableMSE flag in ::NVFBC_HWENC_CONFIG to enable
+     * getting MSE values per channel (Y, U, V).
+     */
+    uint32_t dwMSE[3];
+} NVFBC_TOHWENC_GRAB_FRAME_PARAMS;
+
+/*!
+ * \deprecated NVFBC_TOHWENC_GRAB_FRAME_PARAMS structure version.
+ */
+#define NVFBC_TOHWENC_GRAB_FRAME_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOHWENC_GRAB_FRAME_PARAMS, 2)
+
+/*!
+ * \deprecated Defines parameters for the ::NvFBCToHwEncGetHeader() API call.
+ */
+typedef struct _NVFBC_TOHWENC_GET_HEADER_PARAMS
+{
+    /*!
+     * [in] Must be set to NVFBC_TOHWENC_GET_HEADER_PARAMS_VER.
+     */
+    uint32_t dwVersion;
+    /*!
+     * [out] Contains size in bytes of the SPS/PPS header data written by the
+     * HW encoder.
+     */
+    uint32_t dwByteSize;
+    /*!
+     * [out] Pointer to a client allocated buffer. NvFBC HW encoder
+     * writes SPS/PPS data to this buffer.
+     */
+    uint8_t *pBuffer;
+} NVFBC_TOHWENC_GET_HEADER_PARAMS;
+
+/*!
+ * \deprecated NVFBC_TOHWENC_GET_HEADER_PARAMS structure version.
+ */
+#define NVFBC_TOHWENC_GET_HEADER_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOHWENC_GET_HEADER_PARAMS, 1)
+
+#define NVFBC_CAPTURE_TO_H264_HW_ENCODER NVFBC_CAPTURE_TO_HW_ENCODER
+
+#define NVFBC_TOH264_GRAB_FLAGS_NOFLAGS NVFBC_TOHWENC_GRAB_FLAGS_NOFLAGS
+#define NVFBC_TOH264_GRAB_FLAGS_NOWAIT NVFBC_TOHWENC_GRAB_FLAGS_NOWAIT
+#define NVFBC_TOH264_GRAB_FLAGS NVFBC_TOHWENC_GRAB_FLAGS
+
+#define NVFBC_H264_PRESET_LOW_LATENCY_HP NVFBC_HWENC_PRESET_LOW_LATENCY_HP
+#define NVFBC_H264_PRESET_LOW_LATENCY_HQ NVFBC_HWENC_PRESET_LOW_LATENCY_HQ
+#define NVFBC_H264_PRESET_LOW_LATENCY_DEFAULT NVFBC_HWENC_PRESET_LOW_LATENCY_DEFAULT
+#define NVFBC_H264_PRESET_LOSSLESS_HP NVFBC_HWENC_PRESET_LOSSLESS_HP
+#define NVFBC_H264_PRESET NVFBC_HWENC_PRESET
+
+#define NVFBC_H264_ENC_PARAMS_RC_CONSTQP NVFBC_HWENC_PARAMS_RC_CONSTQP
+#define NVFBC_H264_ENC_PARAMS_RC_VBR NVFBC_HWENC_PARAMS_RC_VBR
+#define NVFBC_H264_ENC_PARAMS_RC_CBR NVFBC_HWENC_PARAMS_RC_CBR
+#define NVFBC_H264_ENC_PARAMS_RC_2_PASS_QUALITY NVFBC_HWENC_PARAMS_RC_2_PASS_QUALITY
+#define NVFBC_H264_ENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP NVFBC_HWENC_PARAMS_RC_2_PASS_FRAMESIZE_CAP
+#define NVFBC_H264_RATE_CONTROL_CBR_IFRAME_2_PASS NVFBC_HWENC_PARAMS_RC_CBR_IFRAME_2_PASS
+#define NVFBC_H264_ENC_PARAMS_RC_MODE NVFBC_HWENC_PARAMS_RC_MODE
+
+#define NVFBC_H264_ENC_PARAM_FLAG_FORCEIDR NVFBC_HWENC_PARAM_FLAG_FORCEIDR
+#define NVFBC_H264_ENC_PARAM_FLAG_DYN_BITRATE_CHANGE NVFBC_HWENC_PARAM_FLAG_DYN_BITRATE_CHANGE
+#define NVFBC_H264_ENC_PARAM_FLAGS NVFBC_HWENC_PARAM_FLAGS
+
+#define NVFBC_H264_ENC_SLICING_MODE_DISABLED NVFBC_HWENC_SLICING_MODE_DISABLED
+#define NVFBC_H264_ENC_SLICING_MODE_FIXED_NUM_MBS NVFBC_HWENC_SLICING_MODE_FIXED_NUM_MBS
+#define NVFBC_H264_ENC_SLICING_MODE_FIXED_NUM_BYTES NVFBC_HWENC_SLICING_MODE_FIXED_NUM_BYTES
+#define NVFBC_H264_ENC_SLICING_MODE_FIXED_NUM_MB_ROWS NVFBC_HWENC_SLICING_MODE_FIXED_NUM_MB_ROWS
+#define NVFBC_H264_ENC_SLICING_MODE_FIXED_NUM_SLICES NVFBC_HWENC_SLICING_MODE_FIXED_NUM_SLICES
+#define NVFBC_H264_ENC_SLICING_MODE NVFBC_HWENC_SLICING_MODE
+
+#define NVFBC_H264_HW_ENC_CONFIG NVFBC_HWENC_CONFIG
+#define NVFBC_H264_HW_ENC_CONFIG_VER NVFBC_STRUCT_VERSION(NVFBC_H264_HW_ENC_CONFIG, 4)
+
+#define NVFBC_H264_HW_ENC_ENCODE_PARAMS NVFBC_HWENC_ENCODE_PARAMS
+#define NVFBC_H264_HW_ENC_ENCODE_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_H264_HW_ENC_ENCODE_PARAMS, 1)
+
+#define NVFBC_H264_HW_ENC_FRAME_INFO NVFBC_HWENC_FRAME_INFO
+#define NVFBC_H264_HW_ENC_FRAME_INFO_VER NVFBC_STRUCT_VERSION(NVFBC_H264_HW_ENC_FRAME_INFO, 1)
+
+#define NVFBC_TOH264_SETUP_PARAMS NVFBC_TOHWENC_SETUP_PARAMS
+#define NVFBC_TOH264_SETUP_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOH264_SETUP_PARAMS, 1)
+
+#define NVFBC_TOH264_GRAB_FRAME_PARAMS NVFBC_TOHWENC_GRAB_FRAME_PARAMS
+#define NVFBC_TOH264_GRAB_FRAME_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOH264_GRAB_FRAME_PARAMS, 2)
+
+#define NVFBC_TOH264_GET_HEADER_PARAMS NVFBC_TOHWENC_GET_HEADER_PARAMS
+#define NVFBC_TOH264_GET_HEADER_PARAMS_VER NVFBC_STRUCT_VERSION(NVFBC_TOH264_GET_HEADER_PARAMS, 1)
+
+#define NVFBC_BUFFER_FORMAT_YUV420P NVFBC_BUFFER_FORMAT_NV12
+
+/*! @} FBC_DEPRECATED_STRUCT */
+
+/*!
  * \defgroup FBC_FUNC API Entry Points
  *
  * Entry points are thread-safe and can be called concurrently.
@@ -1685,8 +2224,9 @@ NVFBCSTATUS NVFBCAPI NvFBCReleaseContext(const NVFBC_SESSION_HANDLE sessionHandl
  * video memory with CUDA interop, or H.264 compressed frames in system memory).
  *
  * Not all types are supported on all systems.  Also, it is possible to use
- * NvFBC without having the CUDA library.  In this case, requesting a capture
- * session of the concerned type will return an error.
+ * NvFBC without having the CUDA library or HW encoder library.  In this
+ * case, requesting a capture session of the concerned type will return an
+ * error.
  *
  * After this function returns, the display driver will start generating frames
  * that can be captured using the corresponding API call.
@@ -1708,7 +2248,7 @@ NVFBCSTATUS NVFBCAPI NvFBCReleaseContext(const NVFBC_SESSION_HANDLE sessionHandl
  *   ::NVFBC_ERR_GLX \n
  *   ::NVFBC_ERR_GL \n
  *   ::NVFBC_ERR_CUDA \n
- *   ::NVFBC_ERR_MUST_RECREATE \n
+ *   ::NVFBC_ERR_ENCODER \n
  *   ::NVFBC_ERR_INTERNAL
  */
 NVFBCSTATUS NVFBCAPI NvFBCCreateCaptureSession(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_CREATE_CAPTURE_SESSION_PARAMS *pParams);
@@ -1803,7 +2343,6 @@ NVFBCSTATUS NVFBCAPI NvFBCToSysSetUp(const NVFBC_SESSION_HANDLE sessionHandle, N
  *   ::NVFBC_ERR_INVALID_PTR \n
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X \n
- *   ::NVFBC_ERR_MUST_RECREATE \n
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToSysSetUp
  */
@@ -1832,6 +2371,7 @@ NVFBCSTATUS NVFBCAPI NvFBCToSysGrabFrame(const NVFBC_SESSION_HANDLE sessionHandl
  *   ::NVFBC_ERR_CONTEXT \n
  *   ::NVFBC_ERR_UNSUPPORTED \n
  *   ::NVFBC_ERR_GL \n
+ *   ::NVFBC_ERR_MUST_RECREATE \n
  *   ::NVFBC_ERR_X
  */
 NVFBCSTATUS NVFBCAPI NvFBCToCudaSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_SETUP_PARAMS *pParams);
@@ -1859,7 +2399,6 @@ NVFBCSTATUS NVFBCAPI NvFBCToCudaSetUp(const NVFBC_SESSION_HANDLE sessionHandle, 
  *   ::NVFBC_ERR_CUDA \n
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X \n
- *   ::NVFBC_ERR_MUST_RECREATE \n
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToCudaSetUp
  */
@@ -1888,6 +2427,7 @@ NVFBCSTATUS NVFBCAPI NvFBCToCudaGrabFrame(const NVFBC_SESSION_HANDLE sessionHand
  *   ::NVFBC_ERR_CONTEXT \n
  *   ::NVFBC_ERR_UNSUPPORTED \n
  *   ::NVFBC_ERR_GL \n
+ *   ::NVFBC_ERR_MUST_RECREATE \n
  *   ::NVFBC_ERR_X
  */
 NVFBCSTATUS NVFBCAPI NvFBCToGLSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_SETUP_PARAMS *pParams);
@@ -1914,11 +2454,204 @@ NVFBCSTATUS NVFBCAPI NvFBCToGLSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NV
  *   ::NVFBC_ERR_INVALID_PTR \n
  *   ::NVFBC_ERR_INTERNAL \n
  *   ::NVFBC_ERR_X \n
- *   ::NVFBC_ERR_MUST_RECREATE \n
  *   \see NvFBCCreateCaptureSession \n
  *   \see NvFBCToCudaSetUp
  */
 NVFBCSTATUS NVFBCAPI NvFBCToGLGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_GRAB_FRAME_PARAMS *pParams);
+
+/*!
+ * \deprecated \see NvFBCToHwEncSetUp
+ *
+ * \brief Sets up a capture to H.264 compressed frames in system memory.
+ *
+ * This function configures how the capture to H.264 compressed frames in
+ * system memory should behave.  It can be called anytime and several times
+ * after the capture session has been created.  However, it must be called at
+ * least once prior to start capturing frames.
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ *
+ * \param [in] pParams
+ *   ::NVFBC_TOH264_SETUP_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_UNSUPPORTED \n
+ *   ::NVFBC_ERR_GL \n
+ *   ::NVFBC_ERR_MUST_RECREATE \n
+ *   ::NVFBC_ERR_X
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToH264SetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_SETUP_PARAMS *pParams);
+
+/*!
+ * \deprecated \see NvFBCToHwEncGrabFrame
+ *
+ * \brief Captures a H.264 compressed frame to a bitstream in system memory.
+ *
+ * This function triggers a H.264 compressed frame capture to a bitstream in
+ * system memory.
+ *
+ * Note about changes of resolution: \see NvFBCToSysGrabFrame
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ * \param [in] pParams
+ *   ::NVFBC_TOH264_GRAB_FRAME_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_INVALID_PTR \n
+ *   ::NVFBC_ERR_CUDA \n
+ *   ::NVFBC_ERR_ENCODER \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_X \n
+ *   \see NvFBCCreateCaptureSession \n
+ *   \see NvFBCToH264SetUp
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToH264GrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GRAB_FRAME_PARAMS *pParams);
+
+/*!
+ * \deprecated \see NvFBCToHwEncGetHeader
+ *
+ * \brief Gets SPS/PPS headers
+ *
+ * This function returns the Sequence Parameter Set and Picture Parameter Sets
+ * for the current frame.
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ * \param [in] pParams
+ *   ::NVFBC_TOH264_GET_HEADER_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_INVALID_PTR \n
+ *   ::NVFBC_ERR_ENCODER \n
+ *   ::NVFBC_ERR_MUST_RECREATE
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToH264GetHeader(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GET_HEADER_PARAMS *pParams);
+
+/*!
+ * \deprecated Queries HW encoder capabilities for a given codec.
+ *
+ * This function can be used to figure out how to configure the HW encoder.
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ *
+ * \param [in] pParams
+ *   ::NVFBC_TOHWENC_GET_CAPS_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_INVALID_PARAM \n
+ *   ::NVFBC_ERR_ENCODER
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetCaps(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_CAPS_PARAMS *pParams);
+
+/*!
+ * \deprecated Sets up a capture to HW compressed frames in system memory.
+ *
+ * This function configures how the capture to compressed frames in
+ * system memory should behave.  It can be called anytime and several times
+ * after the capture session has been created.  However, it must be called at
+ * least once prior to start capturing frames.
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ *
+ * \param [in] pParams
+ *   ::NVFBC_TOHWENC_SETUP_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_UNSUPPORTED \n
+ *   ::NVFBC_ERR_GL \n
+ *   ::NVFBC_ERR_CUDA \n
+ *   ::NVFBC_ERR_INVALID_PARAM \n
+ *   ::NVFBC_ERR_ENCODER \n
+ *   ::NVFBC_ERR_X
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncSetUp(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_SETUP_PARAMS *pParams);
+
+/*!
+ * \deprecated Captures a HW compressed frame to a bitstream in system memory.
+ *
+ * This function triggers a compressed frame capture to a bitstream in
+ * system memory.
+ *
+ * Note about changes of resolution: \see NvFBCToSysGrabFrame
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ * \param [in] pParams
+ *   ::NVFBC_TOHWENC_GRAB_FRAME_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_INVALID_PTR \n
+ *   ::NVFBC_ERR_CUDA \n
+ *   ::NVFBC_ERR_ENCODER \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_X \n
+ *   \see NvFBCCreateCaptureSession \n
+ *   \see NvFBCToHwEncSetUp
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncGrabFrame(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GRAB_FRAME_PARAMS *pParams);
+
+/*!
+ * \deprecated Gets SPS/PPS headers
+ *
+ * This function returns the Sequence Parameter Set and Picture Parameter Sets
+ * for the current frame.
+ *
+ * \param [in] sessionHandle
+ *   FBC session handle.
+ * \param [in] pParams
+ *   ::NVFBC_TOHWENC_GET_HEADER_PARAMS
+ *
+ * \return
+ *   ::NVFBC_SUCCESS \n
+ *   ::NVFBC_ERR_INVALID_HANDLE \n
+ *   ::NVFBC_ERR_API_VERSION \n
+ *   ::NVFBC_ERR_BAD_REQUEST \n
+ *   ::NVFBC_ERR_INTERNAL \n
+ *   ::NVFBC_ERR_CONTEXT \n
+ *   ::NVFBC_ERR_INVALID_PTR \n
+ *   ::NVFBC_ERR_ENCODER \n
+ *   ::NVFBC_ERR_MUST_RECREATE \n
+ *   ::NVFBC_ERR_X
+ */
+NVFBCSTATUS NVFBCAPI NvFBCToHwEncGetHeader(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_HEADER_PARAMS *pParams);
 
 /*!
  * \cond FBC_PFN
@@ -1937,9 +2670,15 @@ typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOSYSSETUP)(const NVFBC_SESSION_HANDLE sess
 typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOSYSGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOSYS_GRAB_FRAME_PARAMS *pParams);
 typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOCUDASETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_SETUP_PARAMS *pParams);
 typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOCUDAGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOCUDA_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOH264SETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOH264GRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOH264GETHEADER)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOH264_GET_HEADER_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCGETCAPS)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_CAPS_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCSETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_SETUP_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GRAB_FRAME_PARAMS *pParams);
+typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOHWENCGETHEADER)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOHWENC_GET_HEADER_PARAMS *pParams);
 typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOGLSETUP)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_SETUP_PARAMS *pParams);
 typedef NVFBCSTATUS (NVFBCAPI* PNVFBCTOGLGRABFRAME)(const NVFBC_SESSION_HANDLE sessionHandle, NVFBC_TOGL_GRAB_FRAME_PARAMS *pParams);
-
 /// \endcond
 
 /*! @} FBC_FUNC */
@@ -1962,15 +2701,15 @@ typedef struct
     PNVFBCTOSYSGRABFRAME                      nvFBCToSysGrabFrame;        //!< [out] Pointer to ::NvFBCToSysGrabFrame().
     PNVFBCTOCUDASETUP                         nvFBCToCudaSetUp;           //!< [out] Pointer to ::NvFBCToCudaSetUp().
     PNVFBCTOCUDAGRABFRAME                     nvFBCToCudaGrabFrame;       //!< [out] Pointer to ::NvFBCToCudaGrabFrame().
-    void*                                     pad1;                       //!< [out] Retired. Do not use.
-    void*                                     pad2;                       //!< [out] Retired. Do not use.
-    void*                                     pad3;                       //!< [out] Retired. Do not use.
+    PNVFBCTOH264SETUP                         nvFBCToH264SetUp;           //!< [out] Pointer to ::NvFBCToH264SetUp().
+    PNVFBCTOH264GRABFRAME                     nvFBCToH264GrabFrame;       //!< [out] Pointer to ::NvFBCToH264GrabFrame().
+    PNVFBCTOH264GETHEADER                     nvFBCToH264GetHeader;       //!< [out] Pointer to ::NvFBCToH264GetHeader().
     PNVFBCBINDCONTEXT                         nvFBCBindContext;           //!< [out] Pointer to ::NvFBCBindContext().
     PNVFBCRELEASECONTEXT                      nvFBCReleaseContext;        //!< [out] Pointer to ::NvFBCReleaseContext().
-    void*                                     pad4;                       //!< [out] Retired. Do not use.
-    void*                                     pad5;                       //!< [out] Retired. Do not use.
-    void*                                     pad6;                       //!< [out] Retired. Do not use.
-    void*                                     pad7;                       //!< [out] Retired. Do not use.
+    PNVFBCTOHWENCSETUP                        nvFBCToHwEncSetUp;          //!< [out] Pointer to ::NvFBCToHwEncSetUp().
+    PNVFBCTOHWENCGRABFRAME                    nvFBCToHwEncGrabFrame;      //!< [out] Pointer to ::NvFBCToHwEncGrabFrame().
+    PNVFBCTOHWENCGETHEADER                    nvFBCToHwEncGetHeader;      //!< [out] Pointer to ::NvFBCToHwEncGetHeader().
+    PNVFBCTOHWENCGETCAPS                      nvFBCToHwEncGetCaps;        //!< [out] Pointer to ::nvFBCToHwEncGetCaps().
     PNVFBCTOGLSETUP                           nvFBCToGLSetUp;             //!< [out] Pointer to ::nvFBCToGLSetup().
     PNVFBCTOGLGRABFRAME                       nvFBCToGLGrabFrame;         //!< [out] Pointer to ::nvFBCToGLGrabFrame().
 } NVFBC_API_FUNCTION_LIST;
@@ -2004,3 +2743,5 @@ typedef NVFBCSTATUS (NVFBCAPI* PNVFBCCREATEINSTANCE)(NVFBC_API_FUNCTION_LIST *pF
 #endif
 
 #endif // _NVFBC_H_
+
+
