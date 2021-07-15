@@ -369,7 +369,7 @@ def check_and_handle_lingering_instances() -> None:
         drain_instance(instance_info)
 
 
-def repeated_scale_down_harness(time_delay: int, flask_app: Any=current_app) -> None:
+def repeated_scale_down_harness(time_delay: int, flask_app: Any = current_app) -> None:
     """
     checks scaling every time_delay seconds.
     NOTE:  this function keeps looping and will
