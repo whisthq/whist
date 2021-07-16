@@ -6,7 +6,6 @@ from sys import maxsize
 from typing import List, Optional
 import requests
 from flask import current_app
-from sqlalchemy import and_
 from app.models.hardware import (
     db,
     InstanceSorted,

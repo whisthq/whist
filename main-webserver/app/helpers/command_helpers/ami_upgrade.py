@@ -43,7 +43,6 @@ def insert_new_amis(
             ami_id=ami_id,
             client_commit_hash=client_commit_hash,
             ami_active=False,
-            region_enabled=True,
         )
         new_amis.append(new_ami)
     db.session.add_all(new_amis)
@@ -284,7 +283,6 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
 
     for current_ami in current_active_amis:
         current_ami.ami_active = False
-        current_ami.region_enabled = False
 
     # Reset the list here to ensure no thread status info leaks
     region_wise_upgrade_threads = []
