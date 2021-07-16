@@ -29,7 +29,7 @@ const TermsOfService = () => {
       >
         <div style={{ fontSize: 40 }}>TERMS OF SERVICE</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated October 13th, 2020
+          Last updated July 16th, 2021
         </div>
         <div>
           <p>
