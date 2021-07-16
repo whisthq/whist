@@ -1,7 +1,7 @@
-import React, { FC } from 'react'
-import classNames from 'classnames'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
+import React, { FC } from "react"
+import classNames from "classnames"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 /*
     Prop declarations
@@ -42,15 +42,15 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
 
   <button
     className={classNames(
-      'text-md rounded text-white duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold border-gray',
-      'transition-colors',
+      "text-md rounded text-white duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold border-gray",
+      "transition-colors",
       props.className
     )}
     onClick={props.onClick}
     disabled={props.disabled}
     style={{
-      background: 'rgba(255,255,255,0.1)',
-      border: '1px solid rgba(255,255,255,.1)'
+      background: "rgba(255,255,255,0.1)",
+      border: "1px solid rgba(255,255,255,.1)",
     }}
   >
     {props.contents}
@@ -78,7 +78,7 @@ export const FractalButton: FC<FractalButtonProps> = (
 
   const disabledClassName = classNames(
     props.className,
-    'opacity-50 pointer-events-none'
+    "opacity-50 pointer-events-none"
   )
 
   const enabledClassName = classNames(props.className)
@@ -87,7 +87,7 @@ export const FractalButton: FC<FractalButtonProps> = (
     case FractalButtonState.DISABLED: {
       const disabledButtonProps = Object.assign(baseButtonProps, {
         className: disabledClassName,
-        onClick: doNothing
+        onClick: doNothing,
       })
       return <BaseButton {...disabledButtonProps} />
     }
@@ -103,13 +103,13 @@ export const FractalButton: FC<FractalButtonProps> = (
             />
           </>
         ),
-        onClick: doNothing
+        onClick: doNothing,
       })
       return <BaseButton {...processingButtonProps} />
     }
     default: {
       const enabledButtonProps = Object.assign(baseButtonProps, {
-        className: enabledClassName
+        className: enabledClassName,
       })
       return <BaseButton {...enabledButtonProps} />
     }

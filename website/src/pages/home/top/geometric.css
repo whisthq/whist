@@ -1,14 +1,14 @@
 .geometricOne {
-    stroke-dasharray: 1200;
-    stroke-dashoffset: 1200;
-    animation: animate 5s linear alternate infinite !important;
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: animate 5s linear alternate infinite !important;
 }
 
 @keyframes animate {
-    from {
-        stroke-dashoffset: 1200;
-    }
-    to {
-        stroke-dashoffset: 700;
-    }
+  from {
+    stroke-dashoffset: 1200;
+  }
+  to {
+    stroke-dashoffset: 700;
+  }
 }

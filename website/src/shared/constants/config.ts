@@ -1,8 +1,8 @@
 /* eslint-disable */
 import React from "react"
 import type {
-    FractalEnvironment,
-    FractalConfig,
+  FractalEnvironment,
+  FractalConfig,
 } from "@app/shared/types/config"
 
 const environment: FractalEnvironment = {
@@ -52,8 +52,10 @@ const environment: FractalEnvironment = {
 }
 
 export const config: FractalConfig = (() => {
-    if (import.meta.env.MODE !== "development")
-        return environment[import.meta.env.FRACTAL_ENVIRONMENT as keyof FractalEnvironment]
+  if (import.meta.env.MODE !== "development")
+    return environment[
+      import.meta.env.FRACTAL_ENVIRONMENT as keyof FractalEnvironment
+    ]
 
-    return environment.development
+  return environment.development
 })()
