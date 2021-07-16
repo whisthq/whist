@@ -1,34 +1,34 @@
-import React, { useState, ReactNode } from 'react'
-import { withClass } from '@app/shared/utils/withClass'
-import history from '@app/shared/utils/history'
-import classNames from 'classnames'
+import React, { useState, ReactNode } from "react"
+import { withClass } from "@app/shared/utils/withClass"
+import history from "@app/shared/utils/history"
+import classNames from "classnames"
 import {
   AboutLink,
   SupportLink,
   CareersLink,
   LogoLink,
   WordmarkLink,
-  HomeLink
-} from '@app/shared/components/links'
+  HomeLink,
+} from "@app/shared/components/links"
 import {
   JustifyStartEndRow,
   JustifyStartEndCol,
-  ScreenFull
-} from '@app/shared/components/layouts'
+  ScreenFull,
+} from "@app/shared/components/layouts"
 
-const mobileHidden = 'hidden md:inline'
+const mobileHidden = "hidden md:inline"
 
-const Logo = (props: { className?: string, dark: boolean }) => (
+const Logo = (props: { className?: string; dark: boolean }) => (
   <div
     className={classNames(
-      'flex items-center translate-x-1 space-x-6 mr-10',
+      "flex items-center translate-x-1 space-x-6 mr-10",
       props.className
     )}
   >
     <LogoLink className="w-6 transform md:-translate-y-0.5" dark={props.dark} />
     <WordmarkLink
       className={classNames(
-        'text-xl font-medium text-gray dark:text-gray-100 hover:text-gray dark:hover:text-white',
+        "text-xl font-medium text-gray dark:text-gray-100 hover:text-gray dark:hover:text-white",
         mobileHidden
       )}
     />
@@ -36,8 +36,8 @@ const Logo = (props: { className?: string, dark: boolean }) => (
 )
 
 const startButtonClasses = classNames(
-  'text-gray-500 dark:text-gray-300 hover:text-blue dark:hover:text-mint',
-  'duration-500 font-body tracking-widest hover:no-underline whitespace-nowrap'
+  "text-gray-500 dark:text-gray-300 hover:text-blue dark:hover:text-mint",
+  "duration-500 font-body tracking-widest hover:no-underline whitespace-nowrap"
 )
 
 const AboutLinkStyled = withClass(AboutLink, startButtonClasses)
@@ -53,7 +53,7 @@ const StartHeaderCol = (props: {
   className?: string
   children?: ReactNode[] | ReactNode
 }) => (
-  <div className={classNames('flex flex-col items-center space-y-2')}>
+  <div className={classNames("flex flex-col items-center space-y-2")}>
     {props.children}
   </div>
 )
@@ -88,9 +88,9 @@ const Header = (props: {
         </div>
         <ScreenFull
           className={classNames(
-            'md:hidden',
-            props.dark !== undefined ? 'bg-blue-darkest' : 'bg-white',
-            !expanded && 'hidden'
+            "md:hidden",
+            props.dark !== undefined ? "bg-blue-darkest" : "bg-white",
+            !expanded && "hidden"
           )}
         >
           <div className="flex w-full mt-36">
@@ -98,19 +98,17 @@ const Header = (props: {
               start={
                 <StartHeaderCol>
                   {(props.isSignedIn ?? false) &&
-                  (props.onAccountPage ?? false)
-                    ? (
+                  (props.onAccountPage ?? false) ? (
                     <>
                       <HomeLinkStyled />
                     </>
-                      )
-                    : (
+                  ) : (
                     <>
                       <AboutLinkStyled />
                       <SupportLinkStyled />
                       <CareersLinkStyled />
                     </>
-                      )}
+                  )}
                 </StartHeaderCol>
               }
               middle={<div className="h-8"></div>}

@@ -1,16 +1,16 @@
-import React from 'react'
+import React from "react"
 
-import { ScreenSize } from '@app/shared/constants/screenSizes'
-import { withContext } from '@app/shared/utils/context'
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import { withContext } from "@app/shared/utils/context"
 
-import ChromeBackground from '@app/assets/largeGraphics/speedTestBackground.svg'
-import SpeedTest from '@app/assets/gifs/speedTest.gif'
-import AnimatedLineA from './animatedLineA'
-import AnimatedLineB from './animatedLineB'
-import Router from '@app/assets/icons/router.svg'
-import BrowsingData from '@app/assets/icons/browsingData.svg'
+import ChromeBackground from "@app/assets/largeGraphics/speedTestBackground.svg"
+import SpeedTest from "@app/assets/gifs/speedTest.gif"
+import AnimatedLineA from "./animatedLineA"
+import AnimatedLineB from "./animatedLineB"
+import Router from "@app/assets/icons/router.svg"
+import BrowsingData from "@app/assets/icons/browsingData.svg"
 
-import VerticalTemplate from './verticalTemplate'
+import VerticalTemplate from "./verticalTemplate"
 
 export const Middle = () => {
   /*
@@ -28,8 +28,8 @@ export const Middle = () => {
         title={
           <>
             <div className="text-gray dark:text-gray-300">
-              {' '}
-              Load pages{' '}
+              {" "}
+              Load pages{" "}
               <span className="text-blue dark:text-mint">instantly</span>
             </div>
           </>
@@ -112,7 +112,7 @@ export const Middle = () => {
           <div
             className="rounded border-2 border-white border-solid padding px-4 md:px-10 py-4 shadow-xl w-72 md:w-96 m-auto text-white tracking-wide mt-16 text-sm shadow-bright"
             style={{
-              background: '#0E042C'
+              background: "#0E042C",
             }}
           >
             <div className="max-h-10 md:max-h-12 w-full pt-3">
@@ -131,7 +131,7 @@ export const Middle = () => {
               <div
                 className="relative bg-blue-light text-blue px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-8"
                 style={{
-                  left: width > ScreenSize.MEDIUM ? 275 : 170
+                  left: width > ScreenSize.MEDIUM ? 275 : 170,
                 }}
               >
                 Not Traced
@@ -149,7 +149,7 @@ export const Middle = () => {
               <div
                 className="relative animate-bounce bg-mint text-gray px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-6 delay-500 duration-500"
                 style={{
-                  left: width > ScreenSize.MEDIUM ? 275 : 170
+                  left: width > ScreenSize.MEDIUM ? 275 : 170,
                 }}
               >
                 Not Stored

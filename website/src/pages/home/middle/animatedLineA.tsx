@@ -1,6 +1,6 @@
-import React from 'react'
+import React from "react"
 
-import './animatedLine.css'
+import "./animatedLine.css"
 
 export const AnimatedLineA = (props: { scale?: number }) => {
   /*
@@ -21,7 +21,7 @@ export const AnimatedLineA = (props: { scale?: number }) => {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         style={{
-          transform: scale !== undefined ? `scale(${scale})` : 'scale(1.0)'
+          transform: scale !== undefined ? `scale(${scale})` : "scale(1.0)",
         }}
       >
         <path
