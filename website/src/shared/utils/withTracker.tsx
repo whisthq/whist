@@ -1,14 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useEffect } from 'react'
-import ReactGA from 'react-ga'
-import { config } from '@app/shared/constants/config'
+import React, { useEffect } from "react"
+import ReactGA from "react-ga"
+import { config } from "@app/shared/constants/config"
 
-if (import.meta.env.MODE === 'production') {
+if (import.meta.env.MODE === "production") {
   // optional add gaOptions : {a bunch of options} such as debug and so forth... this should go in config
   ReactGA.initialize(
     config.keys.GOOGLE_ANALYTICS_TRACKING_CODES.map((trackingId: string) => {
       return {
-        trackingId: trackingId
+        trackingId: trackingId,
       }
     })
   )
@@ -21,7 +21,7 @@ const withTracker = (WrappedComponent: any, options = {}) => {
   const trackPage = (page: any) => {
     ReactGA.set({
       page,
-      ...options
+      ...options,
     })
     ReactGA.pageview(page)
   }
@@ -30,7 +30,7 @@ const withTracker = (WrappedComponent: any, options = {}) => {
     // every time the props change render the page
     useEffect(() => {
       const {
-        location: { pathname: page }
+        location: { pathname: page },
       } = props
       trackPage(page)
     }, [props]) // only run on the first i.e. component mount

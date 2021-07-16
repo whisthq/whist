@@ -6,127 +6,127 @@
 name: "ECS Host Setup: Check PR"
 
 on:
-    pull_request:
-        paths:
-            - "ecs-host-setup/**"
-            - "!ecs-host-setup/README.md"
-            - "!ecs-host-setup/setup_localdev_dependencies.sh"
-            - ".github/workflows/ecs-host-setup-check-pr.yml"
-    workflow_dispatch:
+  pull_request:
+    paths:
+      - "ecs-host-setup/**"
+      - "!ecs-host-setup/README.md"
+      - "!ecs-host-setup/setup_localdev_dependencies.sh"
+      - ".github/workflows/ecs-host-setup-check-pr.yml"
+  workflow_dispatch:
 
 jobs:
-    # Building
-    # Check that the AMIs build.
-    ecs-host-setup-check-pr-building:
-        name: Building
-        runs-on: ubuntu-20.04
+  # Building
+  # Check that the AMIs build.
+  ecs-host-setup-check-pr-building:
+    name: Building
+    runs-on: ubuntu-20.04
+    env:
+      aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
+      aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
+      aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
+      aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
+      aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - name: Install webserver scripting dependencies
+        working-directory: main-webserver
+        run: pip install -r scripts/requirements.txt
+
+      ######################## Building ECS Host Service ########################
+
+      # To build ECS Host Service
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
+
+      - name: Authenticate Go Commands with GitHub
         env:
-            aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
-            aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
-            aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
-            aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
-            aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+          GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+          GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+        run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
 
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+      - name: Build Go Project
+        working-directory: ecs-host-service
+        env:
+          WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
+          WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
+          WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
+          LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
+        run: make build
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: "3.8"
+      ###########################################################################
+      ############################## Building AMIs ##############################
 
-            - name: Install webserver scripting dependencies
-              working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
+      - name: Retrieve Current Git Hash as Environment Variable
+        run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-            ######################## Building ECS Host Service ########################
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.aws_new_ami_source_region }}
 
-            # To build ECS Host Service
-            - name: Setup Go environment
-              uses: actions/setup-go@v2.1.3
+      - name: Set ECS Host Service APP_ENV based to DEV (File gets read by ecs-host-service.service)
+        working-directory: ecs-host-setup
+        run: echo 'APP_ENV=DEV' > app_env.env
 
-            - name: Authenticate Go Commands with GitHub
-              env:
-                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-              run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
+      - name: Generate packer_vars.json Packer Variables File for Building New AMI
+        working-directory: ecs-host-setup
+        shell: python3 {0}
+        run: |
+          import json
+          import datetime
 
-            - name: Build Go Project
-              working-directory: ecs-host-service
-              env:
-                  WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
-                  WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
-                  WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
-                  LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
-              run: make build
+          # we hardcode the git_hash and branch name of a pre-built Chrome container image stored in
+          # GHCR to be able to test AMIs without needing to build and deploy new container images
+          data = {}
+          data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+          data["github_username"] = "${{ secrets.GHA_USERNAME }}"
+          data["git_branch"] = "dev"
+          data["git_hash"] = "21034c9d85471b5bacfd0eb7739ef1eb3c9865d5"
+          data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+          data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+          data["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
+          data["source_region"] = "${{ env.aws_new_ami_source_region }}"
+          data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+          data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+          data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+          data["source_ami"] = "${{ env.aws_source_ami_id }}"
 
-            ###########################################################################
-            ############################## Building AMIs ##############################
+          # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
+          # defined as a string of comma-separated values (no spaces) as required by Packer.
+          data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
+          fp = open("packer_vars.json", "w")
+          json.dump(data, fp)
+          fp.close()
 
-            - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+      # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
+      - name: Create New AMI in aws_new_ami_source_region via Packer
+        working-directory: ecs-host-setup
+        shell: python3 {0}
+        run: |
+          import os
+          import subprocess
+          import json
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.aws_new_ami_source_region }}
+          # stdout will be shared with the subprocess so we can see what is happening
+          subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
-            - name: Set ECS Host Service APP_ENV based to DEV (File gets read by ecs-host-service.service)
-              working-directory: ecs-host-setup
-              run: echo 'APP_ENV=DEV' > app_env.env
+          # if packer fails, manifest.json does not get created and the entire workflow fails here
+          assert os.path.exists("manifest.json")
+          fp = open("manifest.json", "r")
+          data = json.load(fp)
+          fp.close()
+          print(data)
 
-            - name: Generate packer_vars.json Packer Variables File for Building New AMI
-              working-directory: ecs-host-setup
-              shell: python3 {0}
-              run: |
-                  import json
-                  import datetime
-
-                  # we hardcode the git_hash and branch name of a pre-built Chrome container image stored in
-                  # GHCR to be able to test AMIs without needing to build and deploy new container images
-                  data = {}
-                  data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
-                  data["github_username"] = "${{ secrets.GHA_USERNAME }}"
-                  data["git_branch"] = "dev"
-                  data["git_hash"] = "21034c9d85471b5bacfd0eb7739ef1eb3c9865d5"
-                  data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
-                  data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-                  date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
-                  data["source_region"] = "${{ env.aws_new_ami_source_region }}"
-                  data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
-                  data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
-                  data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
-                  data["source_ami"] = "${{ env.aws_source_ami_id }}"
-
-                  # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
-                  # defined as a string of comma-separated values (no spaces) as required by Packer.
-                  data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
-                  fp = open("packer_vars.json", "w")
-                  json.dump(data, fp)
-                  fp.close()
-
-            # This spins up an AWS EC2 instance to create the AMI, and then deletes it
-            # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
-            - name: Create New AMI in aws_new_ami_source_region via Packer
-              working-directory: ecs-host-setup
-              shell: python3 {0}
-              run: |
-                  import os
-                  import subprocess
-                  import json
-
-                  # stdout will be shared with the subprocess so we can see what is happening
-                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
-
-                  # if packer fails, manifest.json does not get created and the entire workflow fails here
-                  assert os.path.exists("manifest.json")
-                  fp = open("manifest.json", "r")
-                  data = json.load(fp)
-                  fp.close()
-                  print(data)
-
-            ###########################################################################
+      ###########################################################################

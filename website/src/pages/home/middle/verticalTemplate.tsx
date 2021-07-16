@@ -1,9 +1,9 @@
-import React from 'react'
-import { Row, Col } from 'react-bootstrap'
+import React from "react"
+import { Row, Col } from "react-bootstrap"
 
-import Geometric from '@app/pages/home/top/geometric'
-import { withContext } from '@app/shared/utils/context'
-import { ScreenSize } from '@app/shared/constants/screenSizes'
+import Geometric from "@app/pages/home/top/geometric"
+import { withContext } from "@app/shared/utils/context"
+import { ScreenSize } from "@app/shared/constants/screenSizes"
 
 export const VerticalTemplate = (props: {
   visible: boolean
@@ -33,9 +33,9 @@ export const VerticalTemplate = (props: {
           <div className="relative">
             <div
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 400,
-                left: 425
+                left: 425,
               }}
             >
               <Geometric scale={3} flip={false} />
@@ -44,9 +44,9 @@ export const VerticalTemplate = (props: {
           <div className="relative">
             <div
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 400,
-                right: -840
+                right: -840,
               }}
             >
               <Geometric scale={3} flip={true} />

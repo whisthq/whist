@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react'
-import Modal from 'react-modal'
-import { FaTimes } from 'react-icons/fa'
-import * as typeformEmbed from '@typeform/embed'
-import '@typeform/embed/build/css/widget.css'
-import classNames from 'classnames'
+import React, { useState, useCallback } from "react"
+import Modal from "react-modal"
+import { FaTimes } from "react-icons/fa"
+import * as typeformEmbed from "@typeform/embed"
+import "@typeform/embed/build/css/widget.css"
+import classNames from "classnames"
 
-import 'reactjs-popup/dist/index.css'
+import "reactjs-popup/dist/index.css"
 
-import { config } from '@app/shared/constants/config'
+import { config } from "@app/shared/constants/config"
 
 const Typeform = (props: {
   show: boolean
@@ -28,12 +28,12 @@ const Typeform = (props: {
     if (node !== null) {
       typeformEmbed.createWidget(config.url.TYPEFORM_FORM_ID, {
         container: node,
-        onSubmit: onSubmit
+        onSubmit: onSubmit,
       })
     }
   }, [])
 
-  Modal.setAppElement('#root')
+  Modal.setAppElement("#root")
 
   return (
     <div className="text-center">
@@ -42,22 +42,22 @@ const Typeform = (props: {
         onRequestClose={onClose}
         style={{
           content: {
-            maxWidth: '100vw',
-            maxHeight: '100vh',
-            margin: 'auto'
-          }
+            maxWidth: "100vw",
+            maxHeight: "100vh",
+            margin: "auto",
+          },
         }}
       >
         <div>
           <div
             ref={typeformContainer}
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 0,
-              width: '100%',
-              height: '100%',
-              overflow: 'hidden'
+              width: "100%",
+              height: "100%",
+              overflow: "hidden",
             }}
           />
           <div
@@ -81,8 +81,8 @@ const TypeformButton = (props: { text: string }) => {
       <Typeform show={show} onClose={() => setShow(false)} />
       <button
         className={classNames(
-          'relative text-gray-100 rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8 font-light',
-          'w-full md:w-48 transition duration-500 hover:bg-mint hover:text-black mt-12 tracking-wide'
+          "relative text-gray-100 rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8 font-light",
+          "w-full md:w-48 transition duration-500 hover:bg-mint hover:text-black mt-12 tracking-wide"
         )}
         onClick={() => setShow(true)}
       >

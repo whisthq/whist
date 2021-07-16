@@ -6,35 +6,35 @@
 name: "GitHub Actions: Linting"
 
 on:
-    pull_request:
-        paths:
-            - ".github/workflows/**"
-            - ".github/actions/**"
-            - "!.github/workflows/README.md"
-            - "!.github/actions/README.md"
-            - ".github/workflows/github-actions-linting.yml"
-    workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - "!.github/workflows/README.md"
+      - "!.github/actions/README.md"
+      - ".github/workflows/github-actions-linting.yml"
+  workflow_dispatch:
 
 jobs:
-    github-actions-linting-main:
-        name: Lint GitHub Actions Workflows & Actions
-        runs-on: ubuntu-20.04
+  github-actions-linting-main:
+    name: Lint GitHub Actions Workflows & Actions
+    runs-on: ubuntu-20.04
 
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            - name: Install Node.js 15
-              uses: actions/setup-node@v2.2.0
-              with:
-                  node-version: "15"
+      - name: Install Node.js 15
+        uses: actions/setup-node@v2.2.0
+        with:
+          node-version: "15"
 
-            # We have to use npm install -g here, as the yarn
-            # equivalent "yarn global add" doesn't correctly
-            # add the command to the path in GitHub Actions.
-            - name: Install Prettier
-              run: npm install -g prettier
+      # We have to use npm install -g here, as the yarn
+      # equivalent "yarn global add" doesn't correctly
+      # add the command to the path in GitHub Actions.
+      - name: Install Prettier
+        run: npm install -g prettier
 
-            - name: Check Workflow and Action formatting
-              working-directory: .github
-              run: prettier --check "**/*.{yml,yaml}"
+      - name: Check Workflow and Action formatting
+        working-directory: .github
+        run: prettier --check "**/*.{yml,yaml}"

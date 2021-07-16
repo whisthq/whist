@@ -1,6 +1,6 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext } from "react"
 
-import useWindowDimensions from '@app/shared/utils/formatting'
+import useWindowDimensions from "@app/shared/utils/formatting"
 
 interface MainContextInterface {
   width: number // current browser window width
@@ -13,7 +13,7 @@ const MainContext = React.createContext<MainContextInterface>({
   width: 1920,
   height: 1080,
   dark: true,
-  setDark: () => {}
+  setDark: () => {},
 })
 
 export const MainProvider = ({ children }: any) => {
@@ -26,7 +26,7 @@ export const MainProvider = ({ children }: any) => {
         width: width,
         height: height,
         dark: dark,
-        setDark: setDark
+        setDark: setDark,
       }}
     >
       {children}
@@ -36,6 +36,6 @@ export const MainProvider = ({ children }: any) => {
 
 export const withContext = () => {
   const context = useContext(MainContext)
-  if (context === undefined) throw new Error('No React context found')
+  if (context === undefined) throw new Error("No React context found")
   return context
 }

@@ -6,39 +6,39 @@
 name: "Python Scripts: Linting"
 
 on:
-    pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
-        paths:
-            - "**/*.py"
-            - ".github/workflows/python-scripts-linting.yml"
-    workflow_dispatch:
+  pull_request:
+    branches:
+      - prod
+      - staging
+      - dev
+    paths:
+      - "**/*.py"
+      - ".github/workflows/python-scripts-linting.yml"
+  workflow_dispatch:
 
 jobs:
-    python-scripts-linting-main:
-        name: Lint Python Scripts
-        runs-on: ubuntu-20.04
+  python-scripts-linting-main:
+    name: Lint Python Scripts
+    runs-on: ubuntu-20.04
 
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: "3.8"
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
 
-            - name: Install requirements
-              working-directory: .github/workflows/helpers
-              run: pip install -r requirements.txt
+      - name: Install requirements
+        working-directory: .github/workflows/helpers
+        run: pip install -r requirements.txt
 
-            - name: Check if Code is Linted with Python Black in fractal/fractal monorepo
-              run: |
-                  result=$(black . --check) # Returns 0 if the code is already linted
-                  if [ "$result" -ne "0" ]; then
-                    (echo "To pass this check please lint the code with Python Black" && false)
-                  else
-                    (echo "Code is linted with Python Black" && true)
-                  fi
+      - name: Check if Code is Linted with Python Black in fractal/fractal monorepo
+        run: |
+          result=$(black . --check) # Returns 0 if the code is already linted
+          if [ "$result" -ne "0" ]; then
+            (echo "To pass this check please lint the code with Python Black" && false)
+          else
+            (echo "Code is linted with Python Black" && true)
+          fi

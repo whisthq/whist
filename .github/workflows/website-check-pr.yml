@@ -6,50 +6,50 @@
 name: "Website: Check PR"
 
 on:
-    pull_request:
-        paths:
-            - "website/**"
-            - "!website/README.md"
-            - ".github/workflows/website-check-pr.yml"
-            - "core-ts/**"
-            - "!core-ts/README.md"
-            - ".github/workflows/core-ts-check-pr.yml"
-    workflow_dispatch:
+  pull_request:
+    paths:
+      - "website/**"
+      - "!website/README.md"
+      - ".github/workflows/website-check-pr.yml"
+      - "core-ts/**"
+      - "!core-ts/README.md"
+      - ".github/workflows/core-ts-check-pr.yml"
+  workflow_dispatch:
 
 jobs:
-    # Linting
-    # Checks for formatting using ESlint.
-    website-linting-check-pr-linting:
-        name: Linting
-        runs-on: ubuntu-20.04
+  # Linting
+  # Checks for formatting using ESlint.
+  website-linting-check-pr-linting:
+    name: Linting
+    runs-on: ubuntu-20.04
 
-        env:
-            CI: true
-            NPM_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+    env:
+      CI: true
+      NPM_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
-        steps:
-            - name: Check out Git Repository
-              uses: actions/checkout@v2
+    steps:
+      - name: Check out Git Repository
+        uses: actions/checkout@v2
 
-            - name: Install Node.js 15
-              uses: actions/setup-node@v2.2.0
-              with:
-                  node-version: "15"
+      - name: Install Node.js 15
+        uses: actions/setup-node@v2.2.0
+        with:
+          node-version: "15"
 
-            - name: Run yarn install
-              working-directory: website
-              run: yarn install
+      - name: Run yarn install
+        working-directory: website
+        run: yarn install
 
-            # We have to use npm install -g here, as the yarn
-            # equivalent "yarn global add" doesn't correctly
-            # add the command to the path in GitHub Actions.
-            - name: Install Prettier
-              run: npm install -g prettier
+      # We have to use npm install -g here, as the yarn
+      # equivalent "yarn global add" doesn't correctly
+      # add the command to the path in GitHub Actions.
+      - name: Install Prettier
+        run: npm install -g prettier
 
-            - name: Check if code follows ESLint standards
-              working-directory: website
-              run: yarn run lint-check
+      - name: Check if code follows ESLint standards
+        working-directory: website
+        run: yarn run lint-check
 
-            - name: Check TypeScript/JavaScript formatting
-              working-directory: website
-              run: prettier --check "**/*.{js,ts,tsx}"
+      - name: Check TypeScript/JavaScript formatting
+        working-directory: website
+        run: prettier --check "**/*.{js,ts,tsx}"
