@@ -392,22 +392,20 @@ int32_t multithreaded_send_video(void* opaque) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
             // If 1/MIN_FPS has passed, but no accumulated_frames have happened,
-            // Then we just resend the current frame
-            if (accumulated_frames == 0) {
-                // LOG_INFO("Resending current frame!");
-            }
+            // Then we just send a blank frame with is_repeated_frame = true
+            bool send_new_frame = accumulated_frames > 0 && !wants_iframe;
 
             // transfer the capture of the latest frame from the device to the encoder,
             // This function will try to CUDA/OpenGL optimize the transfer by
             // only passing a GPU reference rather than copy to/from the CPU
-            if (transfer_capture(device, encoder) != 0) {
+            if (send_new_frame && transfer_capture(device, encoder) != 0) {
                 // if there was a failure
                 LOG_ERROR("transfer_capture failed! Exiting!");
                 exiting = true;
                 break;
             }
 
-            if (wants_iframe) {
+            if (send_new_frame && wants_iframe) {
                 video_encoder_set_iframe(encoder);
                 wants_iframe = false;
             }
@@ -415,17 +413,19 @@ int32_t multithreaded_send_video(void* opaque) {
             clock t;
             start_timer(&t);
 
-            int res = video_encoder_encode(encoder);
-            if (res < 0) {
-                // bad boy error
-                LOG_ERROR("Error encoding video frame!");
-                exiting = true;
-                break;
-            } else if (res > 0) {
-                // filter graph is empty
-                break;
+            if (send_new_frame) {
+                int res = video_encoder_encode(encoder);
+                if (res < 0) {
+                    // bad boy error
+                    LOG_ERROR("Error encoding video frame!");
+                    exiting = true;
+                    break;
+                } else if (res > 0) {
+                    // filter graph is empty
+                    break;
+                }
+                // else we have an encoded frame, so handle it!
             }
-            // else we have an encoded frame, so handle it!
 
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
@@ -454,10 +454,12 @@ int32_t multithreaded_send_video(void* opaque) {
             //        frames_since_first_iframe % gop_size,
             //        encoder->encoded_frame_size);
 
-            bitrate_tested_frames++;
-            bytes_tested_frames += encoder->encoded_frame_size;
+            if (send_new_frame) {
+                bitrate_tested_frames++;
+                bytes_tested_frames += encoder->encoded_frame_size;
+            }
 
-            if (encoder->encoded_frame_size != 0) {
+            if (send_new_frame && encoder->encoded_frame_size != 0) {
                 double delay = -1.0;
 
                 if (previous_frame_size > 0) {
@@ -591,6 +593,25 @@ int32_t multithreaded_send_video(void* opaque) {
                     // double server_frame_time =
                     // get_timer(server_frame_timer); LOG_INFO("Server Frame
                     // Time for ID %d: %f", id, server_frame_time);
+                }
+            } else if (!send_new_frame) {
+                // If we don't have a new frame to send, let's just send an empty one
+                static char mini_buf[sizeof(VideoFrame)];
+                VideoFrame* frame = (VideoFrame*)mini_buf;
+                frame->is_repeated_frame = true;
+                // This signals that the screen hasn't changed, so don't bother rendering
+                // this frame and just keep showing the last one.
+                // We don't need to fill out the rest of the fields of the VideoFrame because
+                // is_repeated_frame is true, so it will just be ignored by the client.
+
+                if (broadcast_udp_packet(PACKET_VIDEO, (uint8_t*)frame, sizeof(VideoFrame), id,
+                                         STARTING_BURST_BITRATE,
+                                         video_buffer[id % VIDEO_BUFFER_SIZE],
+                                         video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
+                    LOG_WARNING("Could not broadcast video frame ID %d", id);
+                } else {
+                    // Only increment ID if the send succeeded
+                    id++;
                 }
             }
         }

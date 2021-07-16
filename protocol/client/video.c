@@ -1104,7 +1104,8 @@ int render_video() {
     static unsigned consecutive_repeated_frames = 0;
     if (rendering && frame->is_repeated_frame && !frame->is_iframe) {
         consecutive_repeated_frames++;
-        if (consecutive_repeated_frames > 1) {
+        // if (consecutive_repeated_frames > 1) {
+        if (true) {
             // We've rendered this frame twice already (once when it was new, and once as a repeated
             // frame) so we won't render it now.
 
