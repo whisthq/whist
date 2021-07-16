@@ -84,8 +84,8 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     if (device->active_capture_device == NVIDIA_DEVICE) {
         if (encoder->active_encoder == NVIDIA_ENCODER) {
             nvidia_encoder_frame_intake(encoder->nvidia_encoder,
-                                        device->nvidia_capture_device.p_gpu_texture,
-                                        device->width, device->height);
+                                        device->nvidia_capture_device->p_gpu_texture, device->width,
+                                        device->height);
             return 0;
         } else {
             LOG_ERROR(

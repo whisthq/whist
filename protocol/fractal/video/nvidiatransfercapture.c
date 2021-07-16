@@ -23,8 +23,8 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
     register_params.resourceToRegister = device->p_gpu_texture;
     register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
 
-    int status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder,
-                                                         &register_params);
+    int status =
+        encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to register texture, status = %d", status);
         return -1;
@@ -46,8 +46,8 @@ int nvidia_close_transfer_context(NvidiaEncoder* encoder) {
             (int): 0 on success, -1 on failure
         */
     // unregister all resources in encoder->registered_resources
-    int status = encoder->p_enc_fn.nvEncUnregisterResource(
-        encoder->internal_nvidia_encoder, encoder->registered_resource);
+    int status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
+                                                           encoder->registered_resource);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to unregister resource, status = %d", status);
         return -1;
