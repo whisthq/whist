@@ -1,12 +1,12 @@
-import React from "react"
-import { FaApple, FaWindows } from "react-icons/fa"
+import React from 'react'
+import { FaApple, FaWindows } from 'react-icons/fa'
 
 import {
   FractalButton,
-  FractalButtonState,
-} from "@app/pages/home/components/button"
-import { ScreenSize } from "@app/shared/constants/screenSizes"
-import { withContext } from "@app/shared/utils/context"
+  FractalButtonState
+} from '@app/pages/home/components/button'
+import { ScreenSize } from '@app/shared/constants/screenSizes'
+import { withContext } from '@app/shared/utils/context'
 
 export const ActionPrompt = () => {
   /*

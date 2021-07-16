@@ -52,4 +52,4 @@ jobs:
 
             - name: Check TypeScript/JavaScript formatting
               working-directory: website
-              run: prettier --check "**/*.{js,ts,tsx}"              
+              run: prettier --check "**/*.{js,ts,tsx}"
