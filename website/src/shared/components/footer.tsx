@@ -1,11 +1,11 @@
-import React from "react"
-import { HashLink } from "react-router-hash-link"
+import React from 'react'
+import { HashLink } from 'react-router-hash-link'
 import {
   MediumIcon,
   LinkedinIcon,
   InstagramIcon,
-  TwitterIcon,
-} from "@app/shared/components/icons"
+  TwitterIcon
+} from '@app/shared/components/icons'
 import {
   AboutLink,
   SupportLink,
@@ -14,23 +14,25 @@ import {
   SecurityLink,
   BlogLink,
   DiscordLink,
-  WordmarkLink,
-} from "@app/shared/components/links"
+  WordmarkLink
+} from '@app/shared/components/links'
 
 const FooterLinkList = ({
   title,
-  children,
+  children
 }: {
   title: string
   children: any
 }) => (
   <div className="text-left md:text-right">
-    {title !== "" ? (
+    {title !== ''
+      ? (
       <div className="font-bold mb-2 text-base">{title}</div>
-    ) : null}
+        )
+      : null}
     {children({
       className:
-        "font-body text-gray-700 dark:text-white hover:text-green-400 dark:hover:text-green-400 hover:outline-none text-sm block border-none no-underline hover:no-underline",
+        'font-body text-gray-700 dark:text-white hover:text-green-400 dark:hover:text-green-400 hover:outline-none text-sm block border-none no-underline hover:no-underline'
     })}
   </div>
 )
@@ -39,9 +41,9 @@ const FooterIconList = ({ children }: { children: any }) => (
   <div className="flex text-left space-x-4">
     {children({
       className:
-        "p-2.5 rounded-sm border text-gray-700 dark:text-white hover:text-green-400 dark:hover:text-green-400 ",
-      target: "_blank",
-      rel: "noopener noreferrer",
+        'p-2.5 rounded-sm border text-gray-700 dark:text-white hover:text-green-400 dark:hover:text-green-400 ',
+      target: '_blank',
+      rel: 'noopener noreferrer'
     })}
   </div>
 )
@@ -100,8 +102,8 @@ const Footer = () => {
             className="text-gray-400"
           >
             Terms of Service
-          </HashLink>{" "}
-          &amp;{" "}
+          </HashLink>{' '}
+          &amp;{' '}
           <HashLink
             id="privacyPage"
             to="/privacy#top"

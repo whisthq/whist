@@ -63,7 +63,7 @@ On macOS and Linux Ubuntu GitHub Actions runners, `bash --noprofile --norc -eo p
 
 ### Styling
 
-These YAML files are formatted with [Prettier](https://github.com/prettier/prettier). After installing, you can check formatting with `cd .github/workflows && prettier --check .`, and you can fix formatting with `cd .github/workflows && prettier --write .`. VSCode and other IDEs and text editors have pretty robust Prettier integration, so if you've set that up, that also works well!
+These YAML files are formatted with [Prettier](https://github.com/prettier/prettier). After installing, you can check formatting with `prettier --check .github/*.{yml,yaml}`, and you can fix formatting with `prettier --write .github/*.{yml,yaml}`. VSCode and other IDEs and text editors have pretty robust Prettier integration, so if you've set that up, that also works well! Note that we use a single `.prettierrc` for all Prettier formatting across our entire monorepo, which is why Prettier must be run from the top-level folder.
 
 ## Testing
 

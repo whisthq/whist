@@ -1,5 +1,5 @@
-import React from "react"
-import { Col } from "react-bootstrap"
+import React from 'react'
+import { Col } from 'react-bootstrap'
 
 export const FeatureBox = (props: {
   icon: JSX.Element
@@ -20,7 +20,7 @@ export const FeatureBox = (props: {
   return (
     <Col md={4} className="text-left mb-4">
       <div className="h-full px-12 py-12 bg-blue-lightest border border-transparent dark:border-gray-400 dark:bg-transparent rounded">
-        {" "}
+        {' '}
         {icon}
         <div className="text-gray dark:text-gray-300 text-2xl md:text-3xl mt-8">
           {title}

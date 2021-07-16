@@ -1,10 +1,10 @@
 /* eslint-disable react/no-unescaped-entities */
 
-import React from "react"
-import classNames from "classnames"
+import React from 'react'
+import classNames from 'classnames'
 
-import { ScreenSize } from "@app/shared/constants/screenSizes"
-import { withContext } from "@app/shared/utils/context"
+import { ScreenSize } from '@app/shared/constants/screenSizes'
+import { withContext } from '@app/shared/utils/context'
 
 const TermsOfService = () => {
   const { width } = withContext()
@@ -13,34 +13,34 @@ const TermsOfService = () => {
   return (
     <div
       className={classNames(
-        "overflow-x-hidden",
-        dark ? "dark bg-blue-darkest" : "bg-white"
+        'overflow-x-hidden',
+        dark ? 'dark bg-blue-darkest' : 'bg-white'
       )}
-      style={{ overflowX: "hidden" }}
+      style={{ overflowX: 'hidden' }}
       id="top"
     >
       <div
         className="dark:text-gray-300"
         style={{
-          padding: width > ScreenSize.MEDIUM ? "75px 150px" : "50px 40px",
+          padding: width > ScreenSize.MEDIUM ? '75px 150px' : '50px 40px',
           maxWidth: 1280,
-          margin: "auto",
+          margin: 'auto'
         }}
       >
         <div style={{ fontSize: 40 }}>TERMS OF SERVICE</div>
-        <div style={{ color: "#555555", marginBottom: 40 }}>
+        <div style={{ color: '#555555', marginBottom: 40 }}>
           Last updated October 13th, 2020
         </div>
         <div>
           <p>
             PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH FRACTAL'S
-            PRIVACY POLICY{" "}
-            <a href="https://www.fractal.co/privacy">www.fractal.co/privacy</a>{" "}
-            AND{" "}
+            PRIVACY POLICY{' '}
+            <a href="https://www.fractal.co/privacy">www.fractal.co/privacy</a>{' '}
+            AND{' '}
             <a href="http://www.copyright.gov/legislation/dmca.pdf">
               www.copyright.gov/legislation/dmca.pdf
             </a>
-            , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE USING{" "}
+            , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE USING{' '}
             <a href="https://www.fractal.co">WWW.FRACTAL.CO</a> (THE "SITE"),
             ANY DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
             "APPLICATIONS") AND THE CLOUD COMPUTING SERVICES, FEATURES, CONTENT
@@ -65,7 +65,7 @@ const TermsOfService = () => {
             above. It is effective between Fractal and you as of the date you
             accept these Terms of Service.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Acceptance Of Terms Of Service
           </p>
           <p>
@@ -89,7 +89,7 @@ const TermsOfService = () => {
             content, information, and other materials or services, registered or
             otherwise.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Eligibility</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Eligibility</p>
           <p>
             You represent and warrant that you are at least 18 years of age. If
             you are under age 18, you may not, under any circumstances or for
@@ -104,7 +104,7 @@ const TermsOfService = () => {
             regulation. Further, the Services are offered only for your use, and
             not for the use or benefit of any third party.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Registration</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Registration</p>
           <p>
             To sign up for the Services, you must register for a Fractal user
             account (a "User Account") on the Services (an "Account"). You must
@@ -124,7 +124,7 @@ const TermsOfService = () => {
             directly or through a request made to one of our employees or
             affiliates.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Product</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Product</p>
           <p>
             Fractal is a provider of cloud-based applications ("Cloud
             Applications"). Cloud Applications are similar to a regular
@@ -193,7 +193,7 @@ const TermsOfService = () => {
             components of the streaming, are fully AES encrypted, and Fractal
             does not observe directly any of your stream components.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Fractal Plans And Subscriptions
           </p>
           <p>
@@ -280,14 +280,14 @@ const TermsOfService = () => {
             and/or removal will take effect on the first day of the next
             Subscription Period after the then-current Subscription Period.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Referral Programs</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Referral Programs</p>
           <p>
             From time to time, Fractal may offer its Users benefits for
             referring new additional customers to Fractal. Access to any such
             program is subject to compliance with these Terms by both the User
             and the referred User.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Fractal Software</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Fractal Software</p>
           <p>
             Many of the Services offered by Fractal allow you, the user, to
             download software in order to use those Services. Software includes,
@@ -323,7 +323,7 @@ const TermsOfService = () => {
             the above-mentioned behaviors would expose you to prosecution, to
             full extent of the applicable law in your jurisdiction.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Servers And Operating Systems
           </p>
           <p>
@@ -354,7 +354,7 @@ const TermsOfService = () => {
             Fractal Services following the addition of a new cloud provider by
             Fractal, you express your agreement of their Terms of Service.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Internet Access</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Internet Access</p>
           <p>
             Use of Fractal’s Services requires a working Internet connection,
             which is not included in our Services. The quality of Fractal’s
@@ -373,7 +373,7 @@ const TermsOfService = () => {
             Fractal is not responsible for any costs payable to your Internet
             service provider.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Code Of Conduct</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Code Of Conduct</p>
           <p>
             The proper functioning of our Services requires that Users use the
             Services in an appropriate and reasonable way. Most notably, Fractal
@@ -487,7 +487,7 @@ const TermsOfService = () => {
             liability arising from the content in your (the user’s) account. You
             are responsible for the content on your account.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Non-Fractal Provided Services And Applications
           </p>
           <p>
@@ -506,7 +506,7 @@ const TermsOfService = () => {
             Application's Terms of Service. We encourage you to review these
             Terms of Service frequently.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             User’s Data And Content
           </p>
           <p>
@@ -539,7 +539,7 @@ const TermsOfService = () => {
             parties; Fractal is not liable for the sharing of any User Content
             with third parties.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Personal Data</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Personal Data</p>
           <p>
             In addition to the User Content saved on the User's Cloud
             Applications, Fractal collects certain personal data concerning the
@@ -566,7 +566,7 @@ const TermsOfService = () => {
             of cookies, by changing his or her browser settings, without
             relinquishing access to the service.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Websites User License
           </p>
           <p>
@@ -587,7 +587,7 @@ const TermsOfService = () => {
             permitted for information purposes, and for personal and private use
             only. Any commercial use of the documents is strictly prohibited.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Intellectual Property
           </p>
           <p>
@@ -612,7 +612,7 @@ const TermsOfService = () => {
             property rights not expressly granted in these Terms are reserved to
             Fractal and its affiliates.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Termination By Us</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Termination By Us</p>
           <p>
             We expect you to comply with these Terms. Fractal reserves the right
             to suspend the Services, without notice, if you breach these Terms
@@ -634,7 +634,7 @@ const TermsOfService = () => {
             termination, as outlined in the User’s Data And Content section
             above.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Termination By You</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Termination By You</p>
           <p>
             You may decide to end your subscription at any time, by reaching out
             to your support team via the Fractal website, or by any other means
@@ -643,7 +643,7 @@ const TermsOfService = () => {
             continue until the end of the then-current Subscription Period, and
             will stop at the end of the period; we will not offer any refund.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Territories</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Territories</p>
           <p>
             The Fractal Services are only supported in the regions and countries
             listed on our website at the time of signup. Because of the nature
@@ -661,7 +661,7 @@ const TermsOfService = () => {
             them by local authorities. Fractal declines all liabilities for
             usage of our Services outside of officially-supported geographies.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Copyright</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Copyright</p>
           <p>
             We respect the intellectual property of others and ask our Users to
             do the same.
@@ -682,7 +682,7 @@ const TermsOfService = () => {
             We reserve the right to delete or disable any content alleged to be
             infringing, and/or terminate the subscription of repeat infringers.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Disclaimer; Liability; Indemnification
           </p>
           <p>
@@ -715,7 +715,7 @@ const TermsOfService = () => {
             THIRD-PARTY CLAIM ARISING OUT OF OR IN CONNECTION WITH A VIOLATION
             BY YOU OF ANY OF THESE TERMS.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Amendment Of The Conditions
           </p>
           <p>
@@ -727,7 +727,7 @@ const TermsOfService = () => {
             date you have not agreed to the amended Terms, we reserve the right
             to immediately cancel your subscription.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Notices</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Notices</p>
           <p>
             Unless otherwise stated in these Terms, when the User seeks to
             contact Fractal, the user should do so through Fractal’s website.
@@ -737,7 +737,7 @@ const TermsOfService = () => {
             or text message sent to the contact details provided by the User in
             their User Account or via the Websites.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Miscellaneous</p>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>Miscellaneous</p>
           <p>
             These Terms constitute the entire agreement between you and Fractal
             with respect to the subject matter of these Terms, and supersede and
@@ -756,7 +756,7 @@ const TermsOfService = () => {
             may assign its rights to any of its affiliates, or to any successor
             in interest of any business associated with the Services.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Applicable Law; Disputes
           </p>
           <p>
@@ -786,7 +786,7 @@ const TermsOfService = () => {
             state courts of Fairfield County, Connecticut (or other courts, if
             we so choose).
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>
+          <p style={{ fontWeight: 'bold', fontSize: 20 }}>
             Mandatory Arbitration
           </p>
           <p>
@@ -803,7 +803,7 @@ const TermsOfService = () => {
             County, Connecticut to resolve your claim.
           </p>
           <p>
-            You can opt-out of the requirement to arbitrate by emailing{" "}
+            You can opt-out of the requirement to arbitrate by emailing{' '}
             <a href="mailto:support@fractal.co">support@fractal.co</a> with the
             subject line “Arbitration Opt-Out” within 30 days of the date you
             first register your account. You can obtain the opt-form, free of

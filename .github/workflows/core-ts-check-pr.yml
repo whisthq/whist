@@ -31,9 +31,18 @@ jobs:
         working-directory: core-ts
         run: yarn install
 
+      # We have to use npm install -g here, as the yarn
+      # equivalent "yarn global add" doesn't correctly
+      # add the command to the path in GitHub Actions.
+      - name: Install Prettier
+        run: npm install -g prettier
+
       - name: Check if Code Follows ESLint Standards
         working-directory: core-ts
         run: yarn run lint-check
+
+      - name: Check TypeScript/JavaScript formatting
+        run: prettier --check "website/**/*.{js,ts,tsx}"
 
   test:
     name: Testing

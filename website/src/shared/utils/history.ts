@@ -1,4 +1,4 @@
-import { createBrowserHistory, createMemoryHistory } from "history"
+import { createBrowserHistory, createMemoryHistory } from 'history'
 
 const chooseHistory = () => {
   /* A helper function to create a history object
@@ -11,7 +11,7 @@ const chooseHistory = () => {
    */
 
   const isBrowser =
-    typeof window !== "undefined" && typeof window.document !== "undefined"
+    typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
   if (isBrowser) return createBrowserHistory()
   return createMemoryHistory()

@@ -1,8 +1,8 @@
-import React from "react"
-import { Link } from "react-router-dom"
-import classNames from "classnames"
-import LogoBlack from "@app/assets/icons/logoBlack.svg"
-import LogoWhite from "@app/assets/icons/logoWhite.svg"
+import React from 'react'
+import { Link } from 'react-router-dom'
+import classNames from 'classnames'
+import LogoBlack from '@app/assets/icons/logoBlack.svg'
+import LogoWhite from '@app/assets/icons/logoWhite.svg'
 
 export const AboutLink = (props: { className: string }) => (
   <Link className={props.className} to="/about" id="about">
@@ -26,10 +26,10 @@ export const CareersLink = (props: { className: string }) => (
   </a>
 )
 
-export const LogoLink = (props: { className?: string; dark?: boolean }) => (
+export const LogoLink = (props: { className?: string, dark?: boolean }) => (
   <Link
     className={classNames(props.className)}
-    style={{ minWidth: "1em" }}
+    style={{ minWidth: '1em' }}
     to="/"
   >
     <img
@@ -50,7 +50,7 @@ export const WordmarkLink = (props: { className?: string }) => (
   <Link
     className={classNames(
       props.className,
-      "outline-none font-semibold hover:no-underline tracking-fractal"
+      'outline-none font-semibold hover:no-underline tracking-fractal'
     )}
     to="/"
   >
@@ -58,7 +58,7 @@ export const WordmarkLink = (props: { className?: string }) => (
   </Link>
 )
 
-export const HomeLink = (props: { className?: string; onClick?: Function }) => (
+export const HomeLink = (props: { className?: string, onClick?: Function }) => (
   <Link className={props.className} to="/">
     Home
   </Link>
