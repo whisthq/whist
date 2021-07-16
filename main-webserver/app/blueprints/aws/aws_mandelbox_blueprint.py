@@ -50,11 +50,12 @@ def regions():
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     start_time = time.time() * 1000
     is_active = is_user_active(body.username)
+    care_about_active = False
     time_at_activity = time.time() * 1000
     # How long did it take to see if the user was active?
     time_for_activity = time_at_activity - start_time
     fractal_logger.debug(f"Checking user activity took {time_for_activity} ms")
-    if is_active:
+    if is_active and care_about_active:
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(
             f"Returning 503 to user {body.username} because they are already active."
