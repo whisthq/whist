@@ -1,6 +1,8 @@
 from app.models import MandelboxInfo
+from app.helpers.utils.general.timing import log_time
 
 
+@log_time
 def is_user_active(username: str) -> bool:
     """
     This function determines whether a given user already has a mandelbox running.
