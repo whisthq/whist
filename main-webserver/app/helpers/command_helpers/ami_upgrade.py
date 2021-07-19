@@ -105,6 +105,12 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     fractal_logger.info(
         f"mark_instance_for_draining called for instance {active_instance.instance_name}"
     )
+    if str(active_instance.ip) == "":
+        active_instance.status = InstanceState.DRAINING
+        fractal_logger.info(f"instance {active_instance.instance_name} marked as draining")
+        job_status = True
+        db.session.commit()
+        return job_status
     try:
         auth0_client = Auth0Client(
             current_app.config["AUTH0_DOMAIN"],
