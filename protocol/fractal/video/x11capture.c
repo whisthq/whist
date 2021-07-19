@@ -31,7 +31,6 @@ int handler(Display* d, XErrorEvent* a) {
     return 0;
 }
 
-
 X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
     /*
         Create a device that will capture a screen of the specified width, height, and DPI.
@@ -49,7 +48,7 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
         Returns:
             (int): 0 on success, 1 on failure
     */
-
+    UNUSED(dpi);
     // malloc and 0-init the device
     X11CaptureDevice* device = malloc(sizeof(X11CaptureDevice));
     memset(device, 0, sizeof(X11CaptureDevice));
@@ -109,7 +108,8 @@ int x11_capture_screen(X11CaptureDevice* device) {
             (int): 0 on success, -1 on failure
     */
     if (!device) {
-        LOG_ERROR("Tried to call x11_capture_screen with a NULL X11CaptureDevice! We shouldn't do this!");
+        LOG_ERROR(
+            "Tried to call x11_capture_screen with a NULL X11CaptureDevice! We shouldn't do this!");
         return -1;
     }
 
@@ -136,7 +136,8 @@ int x11_capture_screen(X11CaptureDevice* device) {
         if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
             LOG_ERROR("Couldn't get window width and height!");
             update = -1;
-        } else if (device->width != window_attributes.width || device->height != window_attributes.height) {
+        } else if (device->width != window_attributes.width ||
+                   device->height != window_attributes.height) {
             LOG_ERROR("Wrong width/height!");
             update = -1;
         } else {

@@ -162,7 +162,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
 #else
     device->active_capture_device = X11_DEVICE;
 #endif
-    // Create the X11 capture devicek 
+    // Create the X11 capture devicek
     device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
 #if !USING_SHM
@@ -186,7 +186,7 @@ int capture_screen(CaptureDevice* device) {
         return -1;
     }
     switch (device->active_capture_device) {
-        case NVIDIA_DEVICE:
+        case NVIDIA_DEVICE: {
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
             if (ret < 0) {
                 LOG_ERROR("nvidia_capture_screen failed!");
@@ -204,6 +204,7 @@ int capture_screen(CaptureDevice* device) {
                 }
                 return ret;
             }
+        }
         case X11_DEVICE:
             return x11_capture_screen(device->x11_capture_device);
         default:
@@ -212,7 +213,8 @@ int capture_screen(CaptureDevice* device) {
     }
 }
 
-bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
+                                uint32_t dpi) {
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
         return false;
