@@ -80,14 +80,12 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     }
 #else  // __linux__
     if (device->active_capture_device == NVIDIA_DEVICE) {
-        if (encoder->nvidia_encoder) {
+        if (encoder->active_encoder == NVIDIA_ENCODER) {
             nvidia_encoder_frame_intake(encoder->nvidia_encoder,
                                         device->nvidia_capture_device->dw_texture_index,
                                         device->width, device->height);
-            encoder->active_encoder = NVIDIA_ENCODER;
             return 0;
         } else {
-            encoder->active_encoder = FFMPEG_ENCODER;
             LOG_ERROR(
                 "Cannot transfer capture! If using Nvidia Capture SDK, "
                 "then the Nvidia Encode API must be used!");
