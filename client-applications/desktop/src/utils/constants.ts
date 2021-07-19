@@ -9,7 +9,7 @@ export const allowPayments = false
 export const HostServicePort = 4678
 
 // poll for a mandelbox for 30 seconds max
-export const mandelboxPollingTimeout = 5000
+export const mandelboxPollingTimeout = 30000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to

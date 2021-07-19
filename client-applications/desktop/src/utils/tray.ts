@@ -11,7 +11,7 @@ import { values, endsWith } from "lodash"
 
 import { trayIconPath } from "@app/config/files"
 import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
-// import { allowPayments } from "@app/utils/constants"
+import { allowPayments } from "@app/utils/constants"
 import { MenuItem } from "electron/main"
 
 // We create the tray here so that it persists throughout the application
@@ -45,6 +45,15 @@ const rootMenu = [
   },
 ]
 
+const paymentMenu = [
+  {
+    label: "Billing info",
+    click: () => {
+      trayEvent.emit("payment")
+    },
+  },
+]
+
 const regionMenu = [
   {
     label: "(Admin Only) Region",
@@ -68,9 +77,12 @@ export const createTray = (userEmail: string) => {
 
   tray = new Tray(createNativeImage())
   // If the user is a @fractal.co developer, then allow them to toggle regions for testing
-  const template = endsWith(userEmail, "@fractal.co")
-    ? [...rootMenu, ...regionMenu]
-    : [...rootMenu]
+  const template = [
+    ...rootMenu,
+    ...(endsWith(userEmail, "@fractal.co") ? regionMenu : []),
+    ...(allowPayments ? paymentMenu : []),
+  ]
+
   const menu = Menu.buildFromTemplate(template)
   tray.setContextMenu(menu)
 }
