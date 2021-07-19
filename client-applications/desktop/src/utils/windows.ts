@@ -26,6 +26,7 @@ import {
   protocolStreamKill,
 } from "@app/utils/protocol"
 import { stripeBillingPortalCreate } from "@app/utils/payment"
+import { persistGet } from "@app/utils/persist"
 
 const { buildRoot } = config
 
@@ -34,16 +35,11 @@ const { buildRoot } = config
 // windows we have open. This is used in effects/app.ts to decide when to close the application.
 export const windowMonitor = new events.EventEmitter()
 
-const emitCloseInfo = (args: {
-  crashed: boolean
-  event: string
-  preventDefault?: boolean
-}) => {
+const emitCloseInfo = (args: { crashed: boolean; event: string }) => {
   windowMonitor.emit("window-info", {
     numberWindowsRemaining: getNumberWindows(),
     crashed: args.crashed,
     event: args.event,
-    preventDefault: args.preventDefault ?? false,
   })
 }
 
@@ -283,6 +279,8 @@ export const createProtocolWindow = async () => {
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
+    if (persistGet("exitFeedbackSubmitted", "data") ?? "" === "")
+      createTypeformWindow()
     emitCloseInfo({ crashed: (code ?? 0) === 1, event: "close" })
   })
 

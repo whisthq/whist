@@ -24,7 +24,7 @@ import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
-import { emitCache, persistClear } from "@app/utils/persist"
+import { emitAuthCache, persistClear } from "@app/utils/persist"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -53,7 +53,7 @@ fromTrigger("appReady")
   })
 
 // Check Electron store for persisted data
-fromTrigger("appReady").subscribe(() => emitCache())
+fromTrigger("appReady").subscribe(() => emitAuthCache())
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when

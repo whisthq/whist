@@ -28,6 +28,7 @@ import {
 } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
+import { persist } from "@app/utils/persist"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -64,9 +65,14 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: null },
     })
 
+  const onTypeformSubmit = () => {
+    persist("exitFeedbackSubmitted", true, "data")
+  }
+
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={clearCache} />
-  if (show === WindowHashTypeform) return <Typeform />
+  if (show === WindowHashTypeform)
+    return <Typeform onSubmit={onTypeformSubmit} />
   if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <TwoButtonError
