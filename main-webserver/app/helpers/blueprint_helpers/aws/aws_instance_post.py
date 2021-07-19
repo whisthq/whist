@@ -366,6 +366,7 @@ def check_and_handle_lingering_instances() -> None:
     for instance_name in lingering_instances:
         set_local_lock_timeout(5)
         instance_info = InstanceInfo.query.with_for_update().get(instance_name)
+        fractal_logger.info(f"Instance {instance_name} was lingering and is being drained")
         drain_instance(instance_info)
 
 
