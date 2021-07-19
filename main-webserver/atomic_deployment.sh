@@ -39,7 +39,7 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
     # a diff exists, now apply it atomically by first pausing the webserver
 
     echo "Migra SQL diff:"
-    echo ${SQL_DIFF_STRING}
+    echo "${SQL_DIFF_STRING}"
 
     # stop webserver. TODO: parse how many dynos exist currently and
     # restore that many as opposed to just restoring to 1 dyno
@@ -48,7 +48,7 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
     # Apply diff safely, knowing nothing is happening on webserver.  Note that
     # we don't put quotes around SQL_DIFF_STRING to prevent. `$function$` from
     # turning into `$`.
-    echo ${SQL_DIFF_STRING} | psql -v ON_ERROR_STOP=1 --single-transaction "${DB_URL}"
+    echo "${SQL_DIFF_STRING}" | psql -v ON_ERROR_STOP=1 --single-transaction "${DB_URL}"
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
