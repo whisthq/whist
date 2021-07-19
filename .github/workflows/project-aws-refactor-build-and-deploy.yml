@@ -307,7 +307,7 @@ jobs:
                   else
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
-                  echo 'USE_PROD_LOGGING=false' >> app_env.env
+                  echo 'USE_PROD_LOGGING=true' >> app_env.env
 
                   cat app_env.env
 
