@@ -585,53 +585,22 @@ jobs:
                   password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
                   EOF
 
-            - name: Set heroku app name and DB URLs
-              env:
-                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              run: |
-                  if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-                      HEROKU_APP_NAME=fractal-dev-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-                      HEROKU_APP_NAME=fractal-staging-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-                      HEROKU_APP_NAME=fractal-prod-server
-                  else
-                      echo 'Error: Invalid branch' && false
-                  fi
-                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
-                  DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
-                  CONFIG_DB_URL=$(heroku config:get CONFIG_DB_URL --app=$HEROKU_APP_NAME)
-                  echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
-                  echo "CONFIG_DB_URL=$CONFIG_DB_URL" >> $GITHUB_ENV
-
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Install webserver dependencies for running the flask cli
-              working-directory: webserver
-              run: pip install -r requirements.txt
-
-            - name: Run flask cli to upgrade the AMIs
-              env:
-                  AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
-                  AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
-                  AUTH0_WEBSERVER_CLIENT_SECRET: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
-                  CONFIG_DB_URL: ${{ env.CONFIG_DB_URL }}
-                  DATABASE_URL: ${{ env.DATABASE_URL }}
-                  HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
-                  RUNNING_LOCALLY: true
-                  APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
-                  APP_GIT_COMMIT: ${{ github.sha }}
-              id: run-main-webserver-cli-ami-upgrade
+            # The heroku run command runs a single command in a one-off dyno
+            # that is configured like the Heroku app specified using the
+            # mandatory --app option.
+            # https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-run
+            - name: Upgrade AMIs via Flask CLI
+              id: upgrade
               working-directory: webserver
               shell: bash
-              run: flask command ami_upgrade ${{ github.sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+              run: heroku run --exit-code -e RUNNING_LOCALLY=true --app=fractal-${{ steps.fractal-publish-build-config.outputs.environment}}-server -- flask command ami_upgrade "$GITHUB_SHA" "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
-              if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'success')
+              if: always() && (steps.upgrade.outcome == 'success')
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -646,7 +615,7 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
             - name: Notify Slack that AMI upgrade has failed
-              if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'failure')
+              if: always() && (steps.upgrade.outcome == 'failure')
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
