@@ -171,7 +171,10 @@ void catchup_audio() {
       buffer. The logic inside the if statement should only run before video has started rendering.
      */
 
-    if (last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) {
+    // if nothing has played yet, or if we've fallen far behind (because of a disconnect)
+    if ((last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) ||
+        (last_played_id != -1 &&
+         audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES)) {
         last_played_id = audio_ring_buffer->max_id - 1;
     }
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
@@ -431,8 +434,8 @@ void update_audio() {
 
     catchup_audio();
 
-    // Return if there's nothing to play
-    if (last_played_id == -1) {
+    // Return if there's nothing to play or if last_played_id > max_id (eg ring buffer reset)
+    if (last_played_id == -1 || last_played_id > audio_ring_buffer->max_id) {
         return;
     }
 
