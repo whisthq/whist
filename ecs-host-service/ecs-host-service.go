@@ -762,7 +762,7 @@ func main() {
 		// TODO: make this a bit more robust
 		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
 			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
-			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down...")
+			logger.Errorf("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down.... Error: %s", err)
 			shutdownInstanceOnExit = true
 			globalCancel()
 		} else {
