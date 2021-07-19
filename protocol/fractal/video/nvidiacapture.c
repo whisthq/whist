@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "x11capture.h"
-#include "x11nvidiacapture.h"
+#include "nvidiacapture.h"
 #include <GL/glx.h>
 
 // NOTE: Using Nvidia Capture SDK 8.0.4

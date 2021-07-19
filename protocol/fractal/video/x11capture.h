@@ -32,7 +32,6 @@ Includes
 #include <stdbool.h>
 
 #include <fractal/core/fractal.h>
-#include "x11nvidiacapture.h"
 
 /*
 ============================
@@ -40,7 +39,7 @@ Custom Types
 ============================
 */
 
-typedef struct CaptureDevice {
+typedef struct X11CaptureDevice {
     Display* display;
     XImage* image;
     XShmSegmentInfo segment;
@@ -52,17 +51,6 @@ typedef struct CaptureDevice {
     char* frame_data;
     Damage damage;
     int event;
-    bool texture_on_gpu;
-    bool released;
-    // True if the capture device successfully initialized
-    bool using_nvidia;
-    NvidiaCaptureDevice nvidia_capture_device;
-    // False until the first capture_screen call succeeds
-    bool capture_is_on_nvidia;
-    // True if the first frame is the next to be captured
-    bool first;
-} CaptureDevice;
-
-typedef unsigned int UINT;
+} X11CaptureDevice;
 
 #endif  // CAPTURE_X11CAPTURE_H
