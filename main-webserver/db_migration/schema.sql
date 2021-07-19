@@ -348,6 +348,7 @@ WHERE  (( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_m
        AND status <> 'DRAINING' AND status <> 'HOST_SERVICE_UNRESPONSIVE';
 
 
+
 --
 -- Name: mandelbox_info; Type: TABLE; Schema: hardware; Owner: -
 --
@@ -1157,6 +1158,20 @@ WHERE  new_val IS NULL
         OR old_val IS NULL
         OR new_val ->> 'status' <> old_val ->> 'status'
 ORDER  BY timestamp ASC;
+
+--
+-- Name:  unresponsive_instances; Type: VIEW; Schema: hardware; Owner: -
+--
+SELECT instance_name, timestamp
+FROM   hardware.instance_status_changes
+WHERE  new_status = 'HOST_SERVICE_UNRESPONSIVE'
+AND    instance_name NOT IN
+                             (
+                             SELECT DISTINCT instance_name
+                             FROM            hardware.instance_status_changes
+                             WHERE           old_status = 'HOST_SERVICE_UNRESPONSIVE')
+AND    timestamp < (Now() - interval '5 hours');
+
 --
 -- Name: t_instance_history_id_seq; Type: SEQUENCE; Schema: logging; Owner: -
 --
