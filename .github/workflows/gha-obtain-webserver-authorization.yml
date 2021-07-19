@@ -20,6 +20,11 @@ jobs:
     gha-obtain-webserver-authorization:
         name: Obtain and Cache a Webserver Access Token
         runs-on: ubuntu-20.04
+        strategy:
+            fail-fast: false
+            max-parallel: 3
+            matrix:
+                ref: [dev, staging, prod]
         env:
             TOKEN_FILE: .access_token
         steps:
@@ -29,6 +34,8 @@ jobs:
             - name: Configure job environment
               id: environment
               uses: ./.github/actions/set-environment
+              with:
+                  ref: ${{ matrix.ref }}
 
             # Just before the beginning of each 12-hour period P (starting from
             # UNIX epoch time), we want to obtain a new Fractal API access
@@ -47,8 +54,8 @@ jobs:
               id: date
               run: |
                   # Set the offset variable to 1800 s (30 min) if the Workflow
-                  # was triggered by an event other than workflow_dispatch.
-                  # Otherwise, leave it unset.
+                  # was triggered by an event other than workflow_dispatch
+                  # (i.e. a schedule event). Otherwise, leave it unset.
                   offset="$([ "${{ github.event_name }}" = "workflow_dispatch" ] || echo 1800)"
 
                   # Calculate the timestamp that will be formatted and added to
@@ -60,6 +67,7 @@ jobs:
                   echo "::set-output name=date::$(date --date="@$timestamp" "+%Y%m%d%p")"
 
             - name: Prepare to cache the access token
+              id: cache
               uses: actions/cache@v2
               with:
                   # We have to be clever about how we name our cache key.
@@ -81,6 +89,7 @@ jobs:
             # that can be used to make authorized requests to Fractal's API.
             - name: Obtain authorization to call Fractal's API
               id: token
+              if: "!steps.cache.outputs.cache-hit"
               uses: ./.github/actions/generate-auth0-token
               with:
                   domain: ${{ steps.environment.outputs.auth0-domain }}
@@ -88,4 +97,5 @@ jobs:
                   client-secret: ${{ secrets[steps.environment.outputs.auth0-client-secret-key] }}
 
             - name: Cache the access token
+              if: "!steps.cache.outputs.cache-hit"
               run: echo "${{ steps.token.outputs.access-token }}" > "$TOKEN_FILE"
