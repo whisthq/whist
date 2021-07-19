@@ -63,6 +63,7 @@ void set_opt(VideoEncoder *encoder, char *option, char *value) {
     }
 }
 
+// TODO: all this creation stuff goes in ffmpeg encode
 typedef VideoEncoder *(*VideoEncoderCreator)(int, int, int, int, int, CodecType);
 
 VideoEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
@@ -725,113 +726,62 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     out_height = in_height;
 #endif
 
-    // Try our nvidia encoder first
-    NvidiaEncoder *nvidia_encoder = NULL;
+    VideoEncoder *encoder = malloc(sizeof(VideoEncoder));
+    memset(encoder, 0, sizeof(VideoEncoder));
+    encoder->codec_type = codec_type;
+
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
 #if USING_SERVERSIDE_SCALE
     LOG_ERROR(
         "Cannot create nvidia encoder, does not accept in_width and in_height when using "
         "serverside scaling");
 #else
-    nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
-    if (!nvidia_encoder) {
+    encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    if (!encoder->nvidia_encoder) {
         LOG_ERROR("Failed to create nvidia encoder!");
+        encoder->active_encoder = FFMPEG_ENCODER;
+    } else {
+        encoder->active_encoder = NVIDIA_ENCODER;
     }
-#endif
-#endif
+#endif  // USING_SERVERSIDE_SCALE
+#else
+    encoder->active_encoder = FFMPEG_ENCODER;
+#endif  // USING_NVIDIA_CAPTURE_AND_ENCODE
 
-    VideoEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
-    VideoEncoder *encoder = NULL;
-    for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(VideoEncoderCreator); ++i) {
-        encoder =
-            encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate, codec_type);
-
-        if (!encoder) {
-            LOG_WARNING("Video encoder: Failed, trying next encoder");
-            encoder = NULL;
-        } else {
-            LOG_INFO("Video encoder: Success!");
-            break;
-        }
-    }
-
-    if (!encoder) {
-        LOG_ERROR("Video encoder: All encoders failed!");
+    encoder->ffmpeg_encoder =
+        create_ffmpeg_encoder(in_width, in_height, out_width, out_height, bitrate, codec_type);
+    if (!encoder->ffmpeg_encoder) {
+        LOG_ERROR("FFmpeg encoder creation failed!");
         return NULL;
     }
-
-    encoder->nvidia_encoder = nvidia_encoder;
 
     return encoder;
 }
 
-int video_encoder_frame_intake(VideoEncoder *encoder, void *rgb_pixels, int pitch) {
-    /*
-        Copy frame data in rgb_pixels and pitch to the software frame, and to the hardware frame if
-       possible.
-
-        Arguments:
-            encoder (VideoEncoder*): video encoder containing encoded frames
-            rgb_pixels (void*): pixel data for the frame
-            pitch (int): Pitch data for the frame
-
-        Returns:
-            (int): 0 on success, -1 on failure
-     */
-    memset(encoder->sw_frame->data, 0, sizeof(encoder->sw_frame->data));
-    memset(encoder->sw_frame->linesize, 0, sizeof(encoder->sw_frame->linesize));
-    encoder->sw_frame->data[0] = (uint8_t *)rgb_pixels;
-    encoder->sw_frame->linesize[0] = pitch;
-    encoder->sw_frame->pts++;
-
-    if (encoder->hw_frame) {
-        int res = av_hwframe_transfer_data(encoder->hw_frame, encoder->sw_frame, 0);
-        if (res < 0) {
-            LOG_ERROR("Unable to transfer frame to hardware frame: %s", av_err2str(res));
-            return -1;
-        }
-        encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
+void transfer_nvidia_data(VideoEncoder *encoder) {
+    if (encoder->active_encoder != NVIDIA_ENCODER) {
+        LOG_ERROR("Encoder is not using nvidia, but we are trying to call transfer_nvidia_data!");
+        return;
     }
-    return 0;
+    // Set meta data
+    encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
+    encoder->out_width = encoder->nvidia_encoder->width;
+    encoder->out_height = encoder->nvidia_encoder->height;
+    encoder->codec_type = encoder->nvidia_encoder->codec_type;
+
+    // Construct frame packets
+    encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
+    encoder->num_packets = 1;
+    encoder->packets[0].data = encoder->nvidia_encoder->frame;
+    encoder->packets[0].size = encoder->nvidia_encoder->frame_size;
+    encoder->encoded_frame_size += 8;
 }
 
-int video_encoder_encode(VideoEncoder *encoder) {
-    /*
-        Encode a frame using the encoder and store the resulting packets into encoder->packets. If
-       the frame has alreday been encoded, this function does nothing.
-
-        Arguments:
-            encoder (VideoEncoder*): encoder that will encode the frame
-
-        Returns:
-            (int): 0 on success, -1 on failure
-     */
-#ifdef __linux__
-    if (encoder->capture_is_on_nvidia) {
-        nvidia_encoder_encode(encoder->nvidia_encoder);
-
-        // Set meta data
-        encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
-        encoder->out_width = encoder->nvidia_encoder->width;
-        encoder->out_height = encoder->nvidia_encoder->height;
-        encoder->codec_type = encoder->nvidia_encoder->codec_type;
-
-        // Construct frame packets
-        encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
-        encoder->num_packets = 1;
-        encoder->packets[0].data = encoder->nvidia_encoder->frame;
-        encoder->packets[0].size = encoder->nvidia_encoder->frame_size;
-        encoder->encoded_frame_size += 8;
-
-        return 0;
-    }
-#endif
-
-    if (video_encoder_send_frame(encoder)) {
-        LOG_ERROR("Unable to send frame to encoder!");
+int transfer_ffmpeg_data(VideoEncoder *encoder) {
+    if (encoder->active_encoder != FFMPEG_ENCODER) {
+        LOG_ERROR("Encoder is not using ffmpeg, but we are trying to call transfer_ffmpge_data!");
         return -1;
     }
-
     // If the encoder has been used to encode a frame before we should clear packet data for
     // previously used packets
     if (encoder->num_packets) {
@@ -848,7 +798,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
 
     // receive packets until we receive a nonzero code (indicating either an encoding error, or that
     // all packets have been received).
-    while ((res = video_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
+    while ((res = ffmpeg_encode_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
            0) {
         encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
@@ -868,42 +818,65 @@ int video_encoder_encode(VideoEncoder *encoder) {
     }
 
     encoder->frames_since_last_iframe++;
-    return 0;
+}
+
+int video_encoder_encode(VideoEncoder *encoder) {
+    /*
+        Encode a frame using the encoder and store the resulting packets into encoder->packets. If
+       the frame has alreday been encoded, this function does nothing.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder that will encode the frame
+
+        Returns:
+            (int): 0 on success, -1 on failure
+     */
+    if (!encoder) {
+        LOG_ERROR("Tried to video_encoder_encode with a NULL encoder!");
+        return -1;
+    }
+    switch (encoder->active_encoder) {
+        case NVIDIA_ENCODER:
+#ifdef __linux__
+            nvidia_encoder_encode(encoder->nvidia_encoder);
+            transfer_nvidia_data(encoder);
+            return 0;
+#else
+            LOG_ERROR("Cannot use nvidia encoder if not on Linux!");
+            return -1;
+#endif
+        case FFMPEG_ENCODER:
+            if (ffmpeg_encoder_send_frame(encoder)) {
+                LOG_ERROR("Unable to send frame to encoder!");
+                return -1;
+            }
+            return transfer_ffmpeg_data(encoder);
+        default:
+            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
+            return -1;
+    }
 }
 
 bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
                          CodecType codec) {
-    if (encoder->capture_is_on_nvidia) {
+    if (!encoder) {
+        LOG_ERROR("Calling reconfigure_encoder on a NULL encoder!");
+        return false;
+    }
+    switch (encoder->active_encoder) {
+        case NVIDIA_ENCODER:
 #ifdef __linux__
-        return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate, codec);
+            return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate,
+                                              codec);
 #else
-        return false;
+            return false;
 #endif
-    } else {
-        // Haven't implemented ffmpeg reconfiguring yet
-        return false;
-    }
-}
-
-void video_encoder_write_buffer(VideoEncoder *encoder, int *buf) {
-    /*
-        Write all the encoded packets found in encoder into buf, which we assume is large enough to
-       hold the data.
-
-        Arguments:
-            encoder (VideoEncoder*): encoder holding encoded packets
-            buf (int*): memory buffer for storing the packets
-    */
-    *buf = encoder->num_packets;
-    buf++;
-    for (int i = 0; i < encoder->num_packets; i++) {
-        *buf = encoder->packets[i].size;
-        buf++;
-    }
-    char *char_buf = (void *)buf;
-    for (int i = 0; i < encoder->num_packets; i++) {
-        memcpy(char_buf, encoder->packets[i].data, encoder->packets[i].size);
-        char_buf += encoder->packets[i].size;
+        case FFMPEG_ENCODER:
+            // Haven't implemented ffmpeg reconfiguring yet
+            return false;
+        default:
+            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
+            return -1;
     }
 }
 
@@ -914,18 +887,22 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): Encoder containing the frame
     */
-    if (encoder->capture_is_on_nvidia) {
+    if (!encoder) {
+        LOG_ERROR("video_encoder_set_iframe received NULL encoder!");
+        return;
+    }
+    switch (encoder->active_encoder) {
+        case NVIDIA_ENCODER:
 #ifdef __linux__
-        nvidia_set_iframe(encoder->nvidia_encoder);
+            nvidia_set_iframe(encoder->nvidia_encoder);
 #else
-        LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
+            LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
 #endif
-    } else {
-        LOG_ERROR("ffmpeg set_iframe doesn't work very well! This might not work!");
-        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-        encoder->sw_frame->pts +=
-            encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
-        encoder->sw_frame->key_frame = 1;
+        case FFMPEG_ENCODER:
+            ffmpeg_set_iframe(encoder->ffmpeg_encoder);
+        default:
+            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
+            return -1;
     }
 }
 
@@ -936,16 +913,22 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
         Arguments:
             encoder (VideoEncoder*): encoder containing the frame
     */
-    if (encoder->capture_is_on_nvidia) {
+    if (!encoder) {
+        LOG_ERROR("video_encoder_set_iframe received NULL encoder!");
+        return;
+    }
+    switch (encoder->active_encoder) {
+        case NVIDIA_ENCODER:
 #ifdef __linux__
-        nvidia_unset_iframe(encoder->nvidia_encoder);
+            nvidia_unset_iframe(encoder->nvidia_encoder);
 #else
-        LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
+            LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
 #endif
-    } else {
-        LOG_ERROR("ffmpeg unset_iframe doesn't work very well! This might not work!");
-        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-        encoder->sw_frame->key_frame = 0;
+        case FFMPEG_ENCODER:
+            ffmpeg_unset_iframe(encoder->ffmpeg_encoder);
+        default:
+            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
+            return -1;
     }
 }
 
@@ -970,108 +953,13 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         destroy_nvidia_encoder(encoder->nvidia_encoder);
     }
 #endif
-
-    if (encoder->context) {
-        avcodec_free_context(&encoder->context);
-    }
-
-    if (encoder->filter_graph) {
-        avfilter_graph_free(&encoder->filter_graph);
-    }
-
-    if (encoder->hw_device_ctx) {
-        av_buffer_unref(&encoder->hw_device_ctx);
+    if (encoder->ffmpeg_encoder) {
+        destroy_ffmpeg_encoder(encoder->ffmpeg_encoder);
     }
 
     // free packets
     for (int i = 0; i < MAX_ENCODER_PACKETS; i++) {
         av_packet_unref(&encoder->packets[i]);
     }
-
-    av_frame_free(&encoder->hw_frame);
-    av_frame_free(&encoder->sw_frame);
-    av_frame_free(&encoder->filtered_frame);
-
-    // free the buffer and encoder
-    free(encoder->sw_frame_buffer);
     free(encoder);
-    return;
-}
-
-// Goes through NVENC/QSV/SOFTWARE and sees which one works, cascading to the
-// next one when the previous one doesn't work
-int video_encoder_send_frame(VideoEncoder *encoder) {
-    /*
-        Send a frame through the filter graph, then encode it.
-
-        Arguments:
-            encoder (VideoEncoder*): encoder used to encode the frame
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-    AVFrame *active_frame = encoder->sw_frame;
-    if (encoder->hw_frame) {
-        active_frame = encoder->hw_frame;
-    }
-
-    int res = av_buffersrc_add_frame(encoder->filter_graph_source, active_frame);
-    if (res < 0) {
-        LOG_WARNING("Error submitting frame to the filter graph: %s", av_err2str(res));
-    }
-
-    if (encoder->hw_frame) {
-        // have to re-create buffers after sending to filter graph
-        av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
-    }
-
-    int res_buffer;
-
-    // submit all available frames to the encoder
-    while ((res_buffer = av_buffersink_get_frame(encoder->filter_graph_sink,
-                                                 encoder->filtered_frame)) >= 0) {
-        int res_encoder = avcodec_send_frame(encoder->context, encoder->filtered_frame);
-
-        // unref the frame so it may be reused
-        av_frame_unref(encoder->filtered_frame);
-
-        if (res_encoder < 0) {
-            LOG_WARNING("Error sending frame for encoding: %s", av_err2str(res_encoder));
-            return -1;
-        }
-    }
-    if (res_buffer < 0 && res_buffer != AVERROR(EAGAIN) && res_buffer != AVERROR_EOF) {
-        LOG_WARNING("Error getting frame from the filter graph: %d -- %s", res_buffer,
-                    av_err2str(res_buffer));
-        return -1;
-    }
-
-    return 0;
-}
-
-int video_encoder_receive_packet(VideoEncoder *encoder, AVPacket *packet) {
-    /*
-        Wrapper around FFmpeg's avcodec_receive_packet. Get an encoded packet from the encoder and
-       store it in packet.
-
-        Arguments:
-            encoder (VideoEncoder*): encoder used to encode the frame
-            packet (AVPacket*): packet in which to store encoded data
-
-        Returns:
-            (int): 1 on EAGAIN (no more packets), 0 on success (call this function again), and -1 on
-       failure.
-    */
-    int res_encoder;
-
-    // receive_packet already calls av_packet_unref, no need to reinitialize packet
-    res_encoder = avcodec_receive_packet(encoder->context, packet);
-    if (res_encoder == AVERROR(EAGAIN) || res_encoder == AVERROR(EOF)) {
-        return 1;
-    } else if (res_encoder < 0) {
-        LOG_ERROR("Error getting frame from the encoder: %s", av_err2str(res_encoder));
-        return -1;
-    }
-
-    return 0;
 }

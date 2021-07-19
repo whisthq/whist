@@ -24,6 +24,7 @@ Includes
 
 #include <fractal/core/fractal.h>
 #include "nvidia_encode.h"
+#include "ffmpeg_encode.h"
 
 /*
 ============================
@@ -32,6 +33,11 @@ Custom Types
 */
 
 #define MAX_ENCODER_PACKETS 20
+
+typedef enum VideoEncoderType {
+    NVIDIA_ENCODER,
+    FFMPEG_ENCODER
+} VideoEncoderType;
 
 /**
  * @brief           Struct for handling ffmpeg encoding of video frames. Set to a dummy struct if we
@@ -42,36 +48,19 @@ Custom Types
  *
  */
 typedef struct VideoEncoder {
-    // FFmpeg members to encode and scale video
-    const AVCodec* codec;
-    AVCodecContext* context;
-    AVFilterGraph* filter_graph;
-    AVFilterContext* filter_graph_source;
-    AVFilterContext* filter_graph_sink;
-    AVBufferRef* hw_device_ctx;
-    int frames_since_last_iframe;
-
+    VideoEncoderType active_encoder;
     // packet metadata + data
     int num_packets;
     AVPacket packets[MAX_ENCODER_PACKETS];
 
     // frame metadata + data
-    int in_width, in_height;
     int out_width, out_height;
-    int gop_size;
     bool is_iframe;
-    void* sw_frame_buffer;
     int encoded_frame_size;  /// <size of encoded frame in bytes
-
-    AVFrame* hw_frame;
-    AVFrame* sw_frame;
-    AVFrame* filtered_frame;
-
-    EncodeType type;
+    // EncodeType type;
     CodecType codec_type;
-
-    bool capture_is_on_nvidia;
     NvidiaEncoder* nvidia_encoder;
+    FFmpegEncoder* ffmpeg_encoder;
 } VideoEncoder;
 
 /*

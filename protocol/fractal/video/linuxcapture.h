@@ -5,13 +5,13 @@
 #include "nvidiacapture.h"
 #include "x11capture.h"
 
-enum CaptureDeviceType {
+typedef enum CaptureDeviceType {
     NVIDIA_DEVICE,
     X11_DEVICE
-};
+} CaptureDeviceType;
 
 typedef struct CaptureDevice {
-    enum CaptureDeviceType active_capture_device;
+    CaptureDeviceType active_capture_device;
     // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
