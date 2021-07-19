@@ -26,6 +26,14 @@ if (require.main === module) {
       description: "The JSON object output from fractal/config",
       type: "string",
     })
+    .option("show-protocol-logs", {
+      description: "Print the client protocol logs to stdout",
+      alias: ["P"],
+      type: "boolean",
+    })
     .help().argv
-  start({}, argv.config)
+  start(
+    { SHOW_PROTOCOL_LOGS: argv.showProtocolLogs ? "true" : "false" },
+    argv.config
+  )
 }
