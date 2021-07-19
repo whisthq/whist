@@ -21,14 +21,14 @@ int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
 #ifdef _WIN32
     // If we're encoding using NVENC, we will want the dxgi cuda transfer context to be available
     // TODO: not sure what the behavior should be if not NVENC?
-    if (encoder->type == NVENC_ENCODE) {
+    if (encoder->ffmpeg_encoder->type == NVENC_ENCODE) {
         // initialize the transfer context
         return dxgi_cuda_start_transfer_context(device);
     }
     return 0;
 #else  // __linux__
     if (device->active_capture_device == NVIDIA_DEVICE) {
-        if (encoder->nvidia_encoder) {
+        if (encoder->active_encoder == NVIDIA_ENCODER) {
             return nvidia_start_transfer_context(device->nvidia_capture_device,
                                                  encoder->nvidia_encoder);
         }
@@ -58,7 +58,7 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
     return 0;
 #else  // __linux__
     if (device->active_capture_device == NVIDIA_DEVICE) {
-        if (encoder->nvidia_encoder) {
+        if (encoder->active_encoder == NVIDIA_ENCODER) {
             return nvidia_close_transfer_context(encoder->nvidia_encoder);
         }
     }
@@ -125,6 +125,9 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
                 times_measured = 0;
                 time_spent = 0.0;
             }
+        } else {
+            LOG_ERROR("Using X11 capture, but encoder wasn't ffmpeg!");
+            return -1;
         }
     }
     return 0;
