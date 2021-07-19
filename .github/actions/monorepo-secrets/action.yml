@@ -1,0 +1,15 @@
+name: Monorepo Config
+description: Build /config folder into .json files.
+branding:
+    icon: command
+    color: blue
+inputs:
+    secrets:
+        description: JSON object of GitHub secrets
+        required: true
+outputs:
+    secrets:
+        description: JSON object of Fractal config
+runs:
+    using: docker
+    image: ../../../config/Dockerfile # note relative to this file (action.yml)
