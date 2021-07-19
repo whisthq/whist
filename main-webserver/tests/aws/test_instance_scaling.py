@@ -218,6 +218,13 @@ def test_lingering_instances(monkeypatch, bulk_instance, region_name):
         creation_time_utc_unix_ms=((time() - 1801) * 1000),
     )
     bulk_instance(
+        instance_name=f"still starting",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
+    )
+    bulk_instance(
         instance_name=f"active_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
