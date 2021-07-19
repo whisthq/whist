@@ -46,7 +46,7 @@ bool is_same_wh(CaptureDevice* device) {
 // Try to update the device to the given width/height/dpi
 // If may fail to set the dimensions, but device->width and device->height
 // will always equal the actual dimensions of the screen
-void try_update_dimensions(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     // TODO: Implement DPI changes
 
     // Update the device's width/height
@@ -105,7 +105,7 @@ void try_update_dimensions(CaptureDevice* device, UINT width, UINT height, UINT 
 }
 
 // capture device functions
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     // make sure we can create the device
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into create_capture_device");
@@ -144,8 +144,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     }
     device->root = DefaultRootWindow(device->display);
 
-    device->first = true;
-
     try_update_dimensions(device, width, height, dpi);
 
     // if we can create the nvidia capture device, do so
@@ -165,7 +163,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     device->active_capture_device = X11_DEVICE;
 #endif
     // Create the X11 capture devicek 
-    device->x11_capture_device = create_x11_capture_device(width, height);
+    device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
 #if !USING_SHM
         device->x11_capture_device->image = NULL;
@@ -214,7 +212,7 @@ int capture_screen(CaptureDevice* device) {
     }
 }
 
-bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
         return false;

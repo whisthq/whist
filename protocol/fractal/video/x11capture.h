@@ -51,6 +51,13 @@ typedef struct X11CaptureDevice {
     char* frame_data;
     Damage damage;
     int event;
+    bool first;
 } X11CaptureDevice;
+
+X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi);
+
+int x11_capture_screen(X11CaptureDevice* device);
+
+void destroy_x11_capture_device(X11CaptureDevice* device);
 
 #endif  // CAPTURE_X11CAPTURE_H

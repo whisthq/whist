@@ -89,8 +89,9 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
-    // 0-initialize everything in the NvidiaCaptureDevice
+NvidiaCaptureDevice* create_nvidia_capture_device() {
+    // malloc and 0-initialize a capture device
+    NvidiaCaptureDevice* device = malloc(sizeof(NvidiaCaptureDevice));
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 
     char output_name[NVFBC_OUTPUT_NAME_LEN];
@@ -106,7 +107,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     void* lib_nvfbc = dlopen(LIB_NVFBC_NAME, RTLD_NOW);
     if (lib_nvfbc == NULL) {
         LOG_ERROR("Unable to open '%s' (%s)", LIB_NVFBC_NAME, dlerror());
-        return -1;
+        return NULL;
     }
 
     /*
@@ -117,7 +118,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
         (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
     if (nv_fbc_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvFBCCreateInstance'");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -128,7 +129,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_BOOL fbc_bool = gl_init(&glx_ctx, &glx_fb_config);
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialized OpenGL!");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -142,7 +143,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = nv_fbc_create_instance_ptr(&device->p_fbc_fn);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("Unable to create NvFBC instance (status: %d)", status);
-        return -1;
+        return NULL;
     }
 
     /*
@@ -157,7 +158,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCCreateHandle(&device->fbc_handle, &create_handle_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
     /*
@@ -172,7 +173,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCGetStatus(device->fbc_handle, &status_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
 #if PRINT_STATUS
@@ -181,7 +182,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 
     if (status_params.bCanCreateNow == NVFBC_FALSE) {
         LOG_ERROR("It is not possible to create a capture session on this system.");
-        return -1;
+        return NULL;
     }
 
     // Get width and height
@@ -190,7 +191,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 
     if (device->width % 4 != 0) {
         LOG_ERROR("Device width must be a multiple of 4!");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -211,7 +212,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
     /*
@@ -224,7 +225,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &device->togl_setup_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
     /*
@@ -234,7 +235,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
         "Nvidia Frame capture session started. New frames will be captured when "
         "the display is refreshed or when the mouse cursor moves.");
 
-    return 0;
+    return device;
 }
 
 #define SHOW_DEBUG_FRAMES false
@@ -330,6 +331,7 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
         device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        free(device);
         return;
     }
 
@@ -342,6 +344,8 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        free(device);
         return;
     }
+    free(device);
 }

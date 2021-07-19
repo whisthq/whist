@@ -12,7 +12,6 @@ enum CaptureDeviceType {
 
 typedef struct CaptureDevice {
     enum CaptureDeviceType active_capture_device;
-    bool first;
     // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
@@ -22,5 +21,4 @@ typedef struct CaptureDevice {
     X11CaptureDevice* x11_capture_device;
 } CaptureDevice;
 
-typedef unsigned int UINT;
 #endif

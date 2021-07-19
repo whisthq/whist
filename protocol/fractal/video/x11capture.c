@@ -32,7 +32,7 @@ int handler(Display* d, XErrorEvent* a) {
 }
 
 
-int create_capture_device(X11CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
     /*
         Create a device that will capture a screen of the specified width, height, and DPI.
         This function first attempts to use X11 to set
@@ -42,16 +42,20 @@ int create_capture_device(X11CaptureDevice* device, UINT width, UINT height, UIN
 
         Arguments:
             device (CaptureDevice*): the created capture device
-            width (UINT): desired window width
+            width (uint32_t): desired window width
             height (UNIT): desired window height
-            dpi (UINT): desired window DPI
+            dpi (uint32_t): desired window DPI
 
         Returns:
             (int): 0 on success, 1 on failure
     */
 
-    // Create the NVidia capture device is possible; otherwise use X11 capture.
+    // malloc and 0-init the device
+    X11CaptureDevice* device = malloc(sizeof(X11CaptureDevice));
+    memset(device, 0, sizeof(X11CaptureDevice));
 
+    device->width = width;
+    device->height = height;
     int damage_event, damage_error;
     XDamageQueryExtension(device->display, &damage_event, &damage_error);
     device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
@@ -61,7 +65,7 @@ int create_capture_device(X11CaptureDevice* device, UINT width, UINT height, UIN
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
-        return -1;
+        return NULL;
     }
     Screen* screen = window_attributes.screen;
 
@@ -81,42 +85,18 @@ int create_capture_device(X11CaptureDevice* device, UINT width, UINT height, UIN
 
     if (!XShmAttach(device->display, &device->segment)) {
         LOG_ERROR("Error while attaching display");
-        destroy_capture_device(device);
-        return -1;
+        destroy_x11_capture_device(device);
+        return NULL;
     }
     device->frame_data = device->image->data;
     device->pitch = device->width * 4;
 #else
     device->image = NULL;
-    if (capture_screen(device) < 0) {
-        LOG_ERROR("Failed to call capture_screen for the first frame!");
-        destroy_capture_device(device);
-        return -1;
-    }
 #endif
-    device->capture_is_on_nvidia = false;
-    device->texture_on_gpu = false;
-
-    return 0;
+    return device;
 }
 
-bool reconfigure_capture_device(X11CaptureDevice* device, UINT width, UINT height, UINT dpi) {
-    if (device == NULL) {
-        LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
-        return false;
-    }
-
-    if (device->using_nvidia) {
-        // Reconfigure nvidia device
-        try_update_dimensions(device, width, height, dpi);
-        return true;
-    } else {
-        // Can't reconfigure X11 device
-        return false;
-    }
-}
-
-int capture_screen(X11CaptureDevice* device) {
+int x11_capture_screen(X11CaptureDevice* device) {
     /*
         Capture the screen using device. If using NVidia, we use the NVidia FBC API to capture the
         screen, as described in x11nvidiacapture.c. Otherwise, use X11 functions to capture the
@@ -129,32 +109,11 @@ int capture_screen(X11CaptureDevice* device) {
             (int): 0 on success, -1 on failure
     */
     if (!device) {
-        LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
+        LOG_ERROR("Tried to call x11_capture_screen with a NULL X11CaptureDevice! We shouldn't do this!");
         return -1;
     }
 
-    if (device->using_nvidia) {
-        int ret = nvidia_capture_screen(&device->nvidia_capture_device);
-        if (ret < 0) {
-            LOG_ERROR("nvidia_capture_screen failed!");
-            return ret;
-        } else {
-            // Ensure that we captured the width/height that we intended to
-            if (device->width != device->nvidia_capture_device.width ||
-                device->height != device->nvidia_capture_device.height) {
-                LOG_ERROR(
-                    "Capture Device dimensions %dx%d does not match nvidia dimensions of %dx%d!",
-                    device->width, device->height, device->nvidia_capture_device.width,
-                    device->nvidia_capture_device.height);
-                return -1;
-            }
-            device->pitch = 0;
-            device->frame_data = NULL;
-            device->capture_is_on_nvidia = true;
-            return ret;
-        }
-    }
-
+    device->first = true;
     XLockDisplay(device->display);
 
     int update = 0;
@@ -173,7 +132,11 @@ int capture_screen(X11CaptureDevice* device) {
 
         XDamageSubtract(device->display, device->damage, None, None);
 
-        if (!is_same_wh(device)) {
+        XWindowAttributes window_attributes;
+        if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
+            LOG_ERROR("Couldn't get window width and height!");
+            update = -1;
+        } else if (device->width != window_attributes.width || device->height != window_attributes.height) {
             LOG_ERROR("Wrong width/height!");
             update = -1;
         } else {
@@ -204,15 +167,11 @@ int capture_screen(X11CaptureDevice* device) {
     return update;
 }
 
-void destroy_capture_device(X11CaptureDevice* device) {
+void destroy_x11_capture_device(X11CaptureDevice* device) {
     if (!device) return;
-
-    if (device->using_nvidia) {
-        destroy_nvidia_capture_device(&device->nvidia_capture_device);
-    } else {
-        if (device->image) {
-            XFree(device->image);
-        }
+    if (device->image) {
+        XFree(device->image);
     }
     XCloseDisplay(device->display);
+    free(device);
 }
