@@ -412,7 +412,7 @@ jobs:
                   # {'key': "val'ue"}
                   # if I did not add the \, then the json library would get confused by trying to read this:
                   # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-                  region_to_ami_map_str = '{\"us-east-1\": \"ami-02232043b7b4e0dc0\"}'
+                  region_to_ami_map_str = '{\"us-east-1\": \"ami-02232043b7b4e0dc1\"}'
 
                   print(f"Region to AMI map is set to {region_to_ami_map_str}")
                   print(f"::set-output name=region_to_ami_map::{region_to_ami_map_str}")
