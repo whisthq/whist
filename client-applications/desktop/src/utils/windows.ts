@@ -18,6 +18,7 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
   WindowHashPayment,
+  WindowHashTypeform,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -33,11 +34,16 @@ const { buildRoot } = config
 // windows we have open. This is used in effects/app.ts to decide when to close the application.
 export const windowMonitor = new events.EventEmitter()
 
-const emitCloseInfo = (args: { crashed: boolean; event: string }) => {
+const emitCloseInfo = (args: {
+  crashed: boolean
+  event: string
+  preventDefault?: boolean
+}) => {
   windowMonitor.emit("window-info", {
     numberWindowsRemaining: getNumberWindows(),
     crashed: args.crashed,
     event: args.event,
+    preventDefault: args.preventDefault ?? false,
   })
 }
 
@@ -250,6 +256,19 @@ export const createSignoutWindow = () => {
     } as BrowserWindowConstructorOptions,
   })
 }
+
+export const createTypeformWindow = () =>
+  createWindow({
+    show: WindowHashTypeform,
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+    } as BrowserWindowConstructorOptions,
+    closeOtherWindows: false,
+  })
 
 export const createProtocolWindow = async () => {
   const currentElectronWindows = getElectronWindows()

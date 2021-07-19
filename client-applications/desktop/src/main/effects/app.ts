@@ -18,13 +18,13 @@ import {
   closeAllWindows,
   relaunch,
   createPaymentWindow,
+  createTypeformWindow,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
-import { protocolStreamKill } from "@app/utils/protocol"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -92,7 +92,6 @@ fromTrigger("windowInfo")
   .subscribe((args: { numberWindowsRemaining: number; crashed: boolean }) => {
     if (args.numberWindowsRemaining === 0) {
       destroyTray()
-      protocolStreamKill()
       uploadToS3()
         .then(() => {
           if (!args.crashed) app.quit()
@@ -149,6 +148,10 @@ fromTrigger("relaunchAction").subscribe(() => {
 
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
+})
+
+fromTrigger("trayFeedbackAction").subscribe(() => {
+  createTypeformWindow()
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises

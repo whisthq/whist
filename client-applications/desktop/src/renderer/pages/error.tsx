@@ -7,7 +7,6 @@ const BaseError = (props: { title: string; text: string }) => {
   /*
         Description:
             Base error pop-up. Only contains the title and text.
-
         Arguments:
             title (string): Title of error window
             text (string): Body text of error window
@@ -29,7 +28,6 @@ export const OneButtonError = (props: {
   /*
         Description:
             One button error pop-up. Includes the base error + a blue Fractal button
-
         Arguments:
             title (string): Title of error window
             text (string): Body text of error window
@@ -76,7 +74,6 @@ export const TwoButtonError = (props: {
   /*
         Description:
             Two button error pop-up. Includes the base error and two buttons.
-
         Arguments:
             title (string): Title of error window
             text (string): Body text of error window

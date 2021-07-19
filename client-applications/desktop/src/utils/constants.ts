@@ -9,7 +9,7 @@ export const allowPayments = false
 export const HostServicePort = 4678
 
 // poll for a mandelbox for 30 seconds max
-export const mandelboxPollingTimeout = 30000
+export const mandelboxPollingTimeout = 5000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to
@@ -18,6 +18,7 @@ export const WindowHashAuth = "AUTH"
 export const WindowHashUpdate = "UPDATE"
 export const WindowHashSignout = "SIGNOUT"
 export const WindowHashPayment = "PAYMENT"
+export const WindowHashTypeform = "TYPEFORM"
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 
