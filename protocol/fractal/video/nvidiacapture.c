@@ -91,7 +91,7 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
 
 NvidiaCaptureDevice* create_nvidia_capture_device() {
     // malloc and 0-initialize a capture device
-    NvidiaCaptureDevice* device = malloc(sizeof(NvidiaCaptureDevice));
+    NvidiaCaptureDevice* device = (NvidiaCaptureDevice*)safe_malloc(sizeof(NvidiaCaptureDevice));
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 
     char output_name[NVFBC_OUTPUT_NAME_LEN];

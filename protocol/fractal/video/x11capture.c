@@ -50,7 +50,7 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     */
     UNUSED(dpi);
     // malloc and 0-init the device
-    X11CaptureDevice* device = malloc(sizeof(X11CaptureDevice));
+    X11CaptureDevice* device =(X11CaptureDevice*)safe_malloc(sizeof(X11CaptureDevice));
     memset(device, 0, sizeof(X11CaptureDevice));
 
     device->width = width;

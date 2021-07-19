@@ -21,6 +21,7 @@ typedef struct FFmpegEncoder {
 
     // frame metadata + data
     int in_width, in_height;
+    int out_width, out_height;
     int gop_size;
     bool is_iframe;
     void* sw_frame_buffer;
@@ -34,4 +35,12 @@ typedef struct FFmpegEncoder {
     CodecType codec_type;
 } FFmpegEncoder;
 
+
+FFmpegEncoder* create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate, CodecType codec_type);
+int ffmpeg_encoder_frame_intake(FFmpegEncoder* encoder, void* rgb_pixels, int pitch);
+int ffmpeg_encoder_receive_packet(FFmpegEncoder *encoder, AVPacket *packet);
+int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder);
+void ffmpeg_set_iframe(FFmpegEncoder* encoder);
+void ffmpeg_unset_iframe(FFmpegEncoder* encoder);
+void destroy_ffmpeg_encoder(FFmpegEncoder* encoder);
 #endif
