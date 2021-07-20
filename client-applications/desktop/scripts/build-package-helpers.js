@@ -99,6 +99,7 @@ module.exports = {
                 "../../protocol",
                 {
                     Path: path,
+                    CUDACXX: ".", // Disable CUDA compile to skip Windows server-only steps
                 }
             )
         } else {
