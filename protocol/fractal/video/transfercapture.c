@@ -96,43 +96,42 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     }
 #endif
 
-        if (encoder->active_encoder == FFMPEG_ENCODER) {
-            // CPU transfer, if hardware transfer doesn't work
-            static int times_measured = 0;
-            static double time_spent = 0.0;
+    if (encoder->active_encoder == FFMPEG_ENCODER) {
+        // CPU transfer, if hardware transfer doesn't work
+        static int times_measured = 0;
+        static double time_spent = 0.0;
 
-            clock cpu_transfer_timer;
-            start_timer(&cpu_transfer_timer);
+        clock cpu_transfer_timer;
+        start_timer(&cpu_transfer_timer);
 
-            if (transfer_screen(device)) {
-                LOG_ERROR("Unable to transfer screen to CPU buffer.");
-                return -1;
-            }
-#ifdef _WIN32
-            if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder,
-                                            device->frame_data,
-                                            device->pitch)) {
-#else // __linux
-            if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder,
-                                            device->x11_capture_device->frame_data,
-                                            device->x11_capture_device->pitch)) {
-#endif
-                LOG_ERROR("Unable to load data to AVFrame");
-                return -1;
-            }
-
-            times_measured++;
-            time_spent += get_timer(cpu_transfer_timer);
-
-            if (times_measured == 10) {
-                LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
-                         time_spent / times_measured);
-                times_measured = 0;
-                time_spent = 0.0;
-            }
-        } else {
-            LOG_ERROR("Using X11 capture, but encoder wasn't ffmpeg!");
+        if (transfer_screen(device)) {
+            LOG_ERROR("Unable to transfer screen to CPU buffer.");
             return -1;
         }
+#ifdef _WIN32
+        if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data,
+                                        device->pitch)) {
+#else  // __linux
+        if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder,
+                                        device->x11_capture_device->frame_data,
+                                        device->x11_capture_device->pitch)) {
+#endif
+            LOG_ERROR("Unable to load data to AVFrame");
+            return -1;
+        }
+
+        times_measured++;
+        time_spent += get_timer(cpu_transfer_timer);
+
+        if (times_measured == 10) {
+            LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
+                     time_spent / times_measured);
+            times_measured = 0;
+            time_spent = 0.0;
+        }
+    } else {
+        LOG_ERROR("Using X11 capture, but encoder wasn't ffmpeg!");
+        return -1;
+    }
     return 0;
 }
