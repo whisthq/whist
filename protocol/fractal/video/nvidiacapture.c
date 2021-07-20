@@ -1,3 +1,21 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file nvidiacapture.h
+ * @brief This file contains the code to do screen capture via the Nvidia FBC SDK on Linux Ubuntu.
+============================
+Usage
+============================
+
+NvidiaCaptureDevice contains all the information used to interface with the Nvidia FBC SDK and the
+data of a frame. Call create_nvidia_capture_device to initialize a device, nvidia_capture_screen to
+capture the screen with said device, and destroy_nvidia_capture_device when done capturing frames.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -17,6 +35,19 @@
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
+/*
+============================
+Private Functions
+============================
+*/
+
+static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config);
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 /**
  * @brief                          Creates an OpenGL context for use in NvFBC.
  *                                 NvFBC needs an OpenGL context to work with,
@@ -89,7 +120,20 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
+/*
+============================
+Public Function Implementations
+============================
+*/
 NvidiaCaptureDevice* create_nvidia_capture_device() {
+    /*
+        Create an Nvidia capture device that attaches to the current display via gl_init. This will
+       capture to OpenGL textures, and each capture is stored in the texture at index
+       dw_texture_index. Captures are done without cursors; the cursor is added in client-side.
+
+        Returns:
+            (NvidiaCaptureDevice*): pointer to the newly created capture device
+    */
     // malloc and 0-initialize a capture device
     NvidiaCaptureDevice* device = (NvidiaCaptureDevice*)safe_malloc(sizeof(NvidiaCaptureDevice));
     memset(device, 0, sizeof(NvidiaCaptureDevice));
@@ -241,6 +285,17 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 #define SHOW_DEBUG_FRAMES false
 
 int nvidia_capture_screen(NvidiaCaptureDevice* device) {
+    /*
+        Capture the screen with the given Nvidia capture device. The texture index of the captured
+       screen is stored in device->dw_texture_index.
+
+        Arguments:
+            device (NvidiaCaptureDevice*): device to use to capture the screen
+
+        Returns:
+            (int): number of new frames captured (0 on failure). On the version 7 API, we always
+       return 1 on success. On version 8, we return the number of missed frames + 1.
+    */
     NVFBCSTATUS status;
 
 #if SHOW_DEBUG_FRAMES
@@ -319,6 +374,12 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 }
 
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
+    /*
+        Destroy the device and its resources.
+
+        Arguments
+            device (NvidiaCaptureDevice*): device to destroy
+    */
     NVFBCSTATUS status;
 
     /*

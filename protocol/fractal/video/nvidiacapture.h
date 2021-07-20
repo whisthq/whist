@@ -1,10 +1,34 @@
 #ifndef CAPTURE_X11NVIDIACAPTURE_H
 #define CAPTURE_X11NVIDIACAPTURE_H
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file nvidiacapture.h
+ * @brief This file contains the code to do screen capture via the Nvidia FBC SDK on Linux Ubuntu.
+============================
+Usage
+============================
 
+NvidiaCaptureDevice contains all the information used to interface with the Nvidia FBC SDK and the data of a frame. Call create_nvidia_capture_device to initialize a device, nvidia_capture_screen to capture the screen with said device, and destroy_nvidia_capture_device when done capturing frames.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
 
+/*
+============================
+Custom Types
+============================
+*/
+
+/**
+ * @brief       Struct to handle using Nvidia for capturing the screen. p_fbc_fn contains pointers to the API functions, and dw_texture_index keeps track of the GL texture that the capture is stored on.
+ */
 typedef struct {
     // Width and height of the capture session
     int width;
@@ -19,6 +43,11 @@ typedef struct {
     uint32_t dw_texture_index;
 } NvidiaCaptureDevice;
 
+/*
+============================
+Public Functions
+============================
+*/
 /**
  * @brief                          Creates an nvidia capture device
  *

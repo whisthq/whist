@@ -51,6 +51,11 @@ typedef struct X11CaptureDevice {
     bool first;
 } X11CaptureDevice;
 
+/*
+============================
+Public Functions
+============================
+*/
 /**
  * @brief           Create a device for capturing via X11 with the specified width, height, and DPI.
  *
