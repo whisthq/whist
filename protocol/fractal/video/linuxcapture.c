@@ -1,9 +1,40 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file x11capture.c
+ * @brief This file contains the code to create a capture device and use it to capture the screen on Linux.
+============================
+Usage
+============================
+We first try to create a capture device that uses Nvidia's FBC SDK for capturing frames. This
+capture device must be paired with an Nvidia encoder. If those fail, we fall back to using X11's API
+to create a capture device, which captures on the CPU, and encode using FFmpeg instead. See
+videoencode.h for more details on encoding. The type of capture device currently in use is indicated
+in active_capture_device.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include "linuxcapture.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
 
-// resizing functions
+/*
+============================
+Private Functions
+============================
+*/
+void get_wh(CaptureDevice* device, int* w, int *h);
+bool is_same_wh(CaptureDevice * device);
+void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
 
+/*
+============================
+Private Function Implementations
+============================
+*/
 void get_wh(CaptureDevice* device, int* w, int* h) {
     /*
         Get the width and height of the display associated with device, and store them in w and h,
@@ -43,10 +74,19 @@ bool is_same_wh(CaptureDevice* device) {
     get_wh(device, &w, &h);
     return device->width == w && device->height == h;
 }
-// Try to update the device to the given width/height/dpi
-// If may fail to set the dimensions, but device->width and device->height
-// will always equal the actual dimensions of the screen
+
 void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
+    /*
+       Using XRandR, try updating the device's display to the given width, height, and DPI. Even if
+       this fails to set the dimensions, device->width and device->height will always equal the
+       actual dimensions of the screen.
+
+        Arguments:
+            device (CaptureDevice*): pointer to the device whose window we're resizing
+            width (uint32_t): desired width
+            height (uint32_t): desired height
+            dpi (uint32_t): desired DPI
+    */
     // TODO: Implement DPI changes
 
     // Update the device's width/height
@@ -104,8 +144,25 @@ void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t heigh
     }
 }
 
-// capture device functions
+/*
+============================
+Public Function Implementations
+============================
+*/
 int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
+    /*
+       Initialize the capture device at device with the given width, height and DPI. We use Nvidia
+       whenever possible, and fall back to X11 when not. See nvidiacapture.c and x11capture.c for internal details of each capture device.
+
+       Arguments:
+            device (CaptureDevice*): pointer to the device to initialize
+            width (uint32_t): desired device width
+            height (uint32_t): desired device height
+            dpi (uint32_t): desired device DPI
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
     // make sure we can create the device
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into create_capture_device");
@@ -181,6 +238,17 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
 }
 
 int capture_screen(CaptureDevice* device) {
+    /*
+        Capture the screen that device is attached to. If using Nvidia, since we can't specify what
+       display Nvidia should be using, we need to confirm that the Nvidia device's dimensions match
+       up with device's dimensions.
+
+        Arguments:
+            device (CaptureDevice*): pointer to device we are using for capturing
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
     if (!device) {
         LOG_ERROR("Tried to call capture_screen with a NULL CaptureDevice! We shouldn't do this!");
         return -1;
@@ -215,6 +283,23 @@ int capture_screen(CaptureDevice* device) {
 
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
                                 uint32_t dpi) {
+    /*
+        TODO: this function will be superseded by a function that will handle both recreation and
+       updating.
+
+       Attempt to reconfigure the capture device to the given width, height, and dpi. In
+       Nvidia case, we resize the display and wait for the Nvidia device to internally update
+       (possibly through recreation). In X11 case, we don't update in place.
+
+        Arguments:
+            device (CaptureDevice*): pointer to device we want to reconfigure
+            width (uint32_t): new device width
+            height (uint32_t): new device height
+            dpi (uint32_t): new device DPI
+        
+        Returns:
+            (bool): true if successful, false on failure
+    */
     if (device == NULL) {
         LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
         return false;
@@ -232,6 +317,12 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
 }
 
 void destroy_capture_device(CaptureDevice* device) {
+    /*
+        Destroy device by freeing its contents and the pointer itself.
+
+        Arguments:
+            device (CaptureDevice*): device to destroy
+    */
     if (device == NULL) {
         // nothing to do!
         return;

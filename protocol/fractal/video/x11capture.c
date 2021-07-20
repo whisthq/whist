@@ -1,23 +1,22 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file x11capture.c
- * @brief This file contains the code to do screen capture in the GPU on Linux
- *        Ubuntu.
+ * @file x11capture.h
+ * @brief This file contains the code to do screen capture via the X11 API on Linux Ubuntu.
 ============================
 Usage
 ============================
 
-CaptureDevice contains all the information used to interface with the X11 screen
-capture API and the data of a frame.
-
-Call CreateCaptureDevice to initialize at the beginning of the program, and
-DestroyCaptureDevice to clean up at the end of the program. Call CaptureScreen
-to capture a frame.
-
-You must release each frame you capture via ReleaseScreen before calling
-CaptureScreen again.
+X11CaptureDevice contains all the information used to interface with the X11 screen
+capture API and the data of a frame. Call create_x11_capture_device to initialize a device,
+x11_capture_screen to capture the screen with said device, and destroy_x11_capture_device when done
+capturing frames.
 */
 
+/*
+============================
+Includes
+============================
+*/
 #include "screencapture.h"
 
 #include <X11/extensions/Xdamage.h>
@@ -26,27 +25,49 @@ CaptureScreen again.
 #include <string.h>
 #include <sys/shm.h>
 
+/*
+============================
+Private Functions
+============================
+*/
+int handler(Display* d, XErrorEvent* a);
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 int handler(Display* d, XErrorEvent* a) {
+    /*
+        X11 error handler allowing us to integrate x11 errors with our error logging system.
+
+        Arguments:
+            d (Display*): Unused, needed for the right function signature
+            a (XerrorEvent*): error to log
+
+        Returns:
+            (int): always 0
+    */
     LOG_ERROR("X11 Error: %d", a->error_code);
     return 0;
 }
 
+/*
+============================
+Public Function Implementations
+============================
+*/
 X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
     /*
-        Create a device that will capture a screen of the specified width, height, and DPI.
-        This function first attempts to use X11 to set
-        the display's width, height, and DPI, then creates either an NVidia or X11 capture device,
-        with NVidia given priority. Refer to x11nvidiacapture.c for the internal details of the
-        NVidia capture device.
+        Create an X11 device that will capture a screen of the specified width, height, and DPI using the X11 API.
 
         Arguments:
-            device (CaptureDevice*): the created capture device
             width (uint32_t): desired window width
-            height (UNIT): desired window height
+            height (uint32_t): desired window height
             dpi (uint32_t): desired window DPI
 
         Returns:
-            (int): 0 on success, 1 on failure
+            (X11CaptureDevice*): pointer to the created device
     */
     UNUSED(dpi);
     // malloc and 0-init the device
@@ -97,12 +118,10 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
 
 int x11_capture_screen(X11CaptureDevice* device) {
     /*
-        Capture the screen using device. If using NVidia, we use the NVidia FBC API to capture the
-        screen, as described in x11nvidiacapture.c. Otherwise, use X11 functions to capture the
-        screen.
+        Capture the screen using our X11 device. TODO: needs more documentation, I (Serina) am not really sure what's happening here.
 
         Arguments:
-            device (CaptureDevice*): device used to capture the screen
+            device (X11CaptureDevice*): device used to capture the screen
 
         Returns:
             (int): 0 on success, -1 on failure
@@ -169,6 +188,12 @@ int x11_capture_screen(X11CaptureDevice* device) {
 }
 
 void destroy_x11_capture_device(X11CaptureDevice* device) {
+    /*
+        Destroy the X11 device and free it.
+
+        Arguments:
+            device (X11CaptureDevice*): device to destroy
+    */
     if (!device) return;
     if (device->image) {
         XFree(device->image);
