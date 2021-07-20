@@ -92,6 +92,7 @@ module.exports = {
       const path = pathArray.join(";")
       execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, "../../protocol", {
         Path: path,
+        CUDACXX: ".", // Disable CUDA compile to skip Windows server-only steps
       })
     } else {
       execCommand(`cmake -S . -B ${cmakeBuildDir}`, "../../protocol")
