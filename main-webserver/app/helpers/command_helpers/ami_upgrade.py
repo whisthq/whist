@@ -245,10 +245,12 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Dict[str,
         region_wise_upgrade_thread.start()
     threads_succeeded = True
     instances_created = []
+    regions_failed = []
     for region_and_bool_pair in region_wise_upgrade_threads:
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
             region_name, ami_id = region_and_bool_pair[2]
+            regions_failed.append(region_name)
             region_row = (
                 RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
                 .with_for_update()
@@ -261,7 +263,8 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Dict[str,
         else:
             instances_created.append(region_and_bool_pair[3])
     if not threads_succeeded:
-        fractal_logger.info(f"draining all active instances: {instances_created}")
+        fractal_logger.info(f"Some regions failed to upgrade: {regions_failed}.")
+        fractal_logger.info(f"draining all newly active instances: {instances_created}")
         for instance in instances_created:
             instance = cast(str, instance)
             instanceinfo = InstanceInfo.query.get(instance)
