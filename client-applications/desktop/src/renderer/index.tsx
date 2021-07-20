@@ -46,20 +46,22 @@ const RootComponent = () => {
   const [, setMainState] = useMainState()
   const relaunch = () =>
     setMainState({
-      trigger: { name: TRIGGER.relaunchAction, payload: Date.now() },
+      trigger: { name: TRIGGER.relaunchAction, payload: undefined },
     })
 
   const showPaymentWindow = () =>
     setMainState({
-      trigger: { name: TRIGGER.showPaymentWindow, payload: null },
+      trigger: { name: TRIGGER.showPaymentWindow, payload: undefined },
     })
 
   const clearCache = () =>
-    setMainState({ trigger: { name: TRIGGER.clearCacheAction, payload: null } })
+    setMainState({
+      trigger: { name: TRIGGER.clearCacheAction, payload: undefined },
+    })
 
   const showSignoutWindow = () =>
     setMainState({
-      trigger: { name: TRIGGER.showSignoutWindow, payload: null },
+      trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
   if (show === WindowHashUpdate) return <Update />
