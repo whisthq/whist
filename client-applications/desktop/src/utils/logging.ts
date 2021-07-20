@@ -95,8 +95,8 @@ export const logBase = async (title: string, data: object, level: LogLevel) => {
   */
   const userEmail = persistGet("userEmail") ?? ""
 
-  await amplitudeLog(title, data, userEmail)
-  localLog(title, data, level, userEmail)
+  await amplitudeLog(title, data, userEmail as string)
+  localLog(title, data, level, userEmail as string)
 }
 
 export const uploadToS3 = async () => {
@@ -106,7 +106,9 @@ export const uploadToS3 = async () => {
   Returns:
       Response from the s3 upload
   */
-  const userEmail = persistGet("userEmail") ?? ""
+  if (!app.isPackaged) return
+
+  const userEmail = (persistGet("userEmail") as string) ?? ""
 
   if (userEmail === "") return
 

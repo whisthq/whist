@@ -45,7 +45,11 @@ export const emitAuthCache = () => {
   }
 }
 
-export const persist = (key: string, value: string | boolean, cache?: CacheName) => {
+export const persist = (
+  key: string,
+  value: string | boolean,
+  cache?: CacheName
+) => {
   store.set(`${cache ?? "auth"}.${key}`, value)
 }
 

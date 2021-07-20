@@ -28,7 +28,6 @@ import {
 } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
-import { persist } from "@app/utils/persist"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -66,7 +65,9 @@ const RootComponent = () => {
     })
 
   const onTypeformSubmit = () => {
-    persist("exitFeedbackSubmitted", true, "data")
+    setMainState({
+      trigger: { name: TRIGGER.persistTypeform, payload: null },
+    })
   }
 
   if (show === WindowHashUpdate) return <Update />

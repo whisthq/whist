@@ -19,3 +19,7 @@ merge(fromTrigger("authFlowSuccess")).subscribe(
     })
   }
 )
+
+fromTrigger("persistTypeform").subscribe(() => {
+  persist("typeformFeedbackSubmitted", true, "data")
+})

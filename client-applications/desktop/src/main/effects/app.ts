@@ -4,10 +4,9 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app, IpcMainEvent, session } from "electron"
+import { session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take, takeUntil } from "rxjs/operators"
-import { merge } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -20,8 +19,7 @@ import {
   createPaymentWindow,
   createTypeformWindow,
 } from "@app/utils/windows"
-import { createTray, destroyTray } from "@app/utils/tray"
-import { uploadToS3 } from "@app/utils/logging"
+import { createTray } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { emitAuthCache, persistClear } from "@app/utils/persist"
@@ -72,36 +70,6 @@ fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
   createProtocolWindow().catch((err) => console.error(err))
   createTray(x.userEmail)
 })
-
-fromTrigger("windowsAllClosed")
-  .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-    )
-  )
-  .subscribe((evt: IpcMainEvent) => {
-    evt?.preventDefault()
-  })
-
-fromTrigger("windowInfo")
-  .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-    )
-  )
-  .subscribe((args: { numberWindowsRemaining: number; crashed: boolean }) => {
-    if (args.numberWindowsRemaining === 0) {
-      destroyTray()
-      uploadToS3()
-        .then(() => {
-          if (!args.crashed) app.quit()
-        })
-        .catch((err) => {
-          console.error(err)
-          if (!args.crashed) app.quit()
-        })
-    }
-  })
 
 fromTrigger("trayQuitAction").subscribe(() => {
   closeAllWindows()
