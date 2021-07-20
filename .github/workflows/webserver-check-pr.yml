@@ -37,6 +37,9 @@ jobs:
               working-directory: webserver
               run: pip install -r requirements.txt -r requirements-test.txt
 
+            - name: Add pylint-wrapper to the PATH
+              run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
+
             - name: Check if Code is Linted with Python Black
               working-directory: webserver
               run: |
@@ -48,8 +51,7 @@ jobs:
                   fi
 
             - name: Check if Code Matches Pylint Standards
-              working-directory: webserver
-              run: pylint --rcfile=../pylintrc -j 0 app # Returns 0 if and only if code is linted
+              run: pylint-wrapper webserver/app webserver/auth0.py webserver/payments
 
             - name: Perform static type analysis with mypy
               working-directory: webserver

@@ -56,6 +56,9 @@ jobs:
               working-directory: mandelbox-images
               run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
 
+            - name: Add pylint-wrapper to the PATH
+              run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
+
             - name: Check if Code is Linted with Python Black
               working-directory: mandelbox-images
               run: |
@@ -67,11 +70,7 @@ jobs:
                   fi
 
             - name: Check if Code Matches Pylint Standards
-              working-directory: mandelbox-images/helper_scripts
-              run: |
-                  # Global pylintrc for fractal/fractal
-                  ln -sf ../../pylintrc ./pylintrc
-                  pylint -j 0 helper_scripts testing_scripts # Returns 0 if and only if code is linted
+              run: pylint-wrapper mandelbox-images/helper_scripts mandelbox-images/testing_scripts
 
     # Docker images building
     # Checks that the Docker images build successfully.
