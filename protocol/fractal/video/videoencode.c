@@ -54,6 +54,7 @@ void transfer_nvidia_data(VideoEncoder *encoder) {
     encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
     encoder->out_width = encoder->nvidia_encoder->width;
     encoder->out_height = encoder->nvidia_encoder->height;
+    encoder->codec_type = encoder->nvidia_encoder->codec_type;
 
     // Construct frame packets
     encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
