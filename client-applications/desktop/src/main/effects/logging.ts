@@ -14,7 +14,7 @@ values(TRIGGER).forEach((name: string) => {
     if (x.timestamp !== undefined && x.timestamp > startTime) {
       logBase(
         name,
-        { ...x, msSinceStart: x.timestamp - startTime },
+        { ...omit(x, ["timestamp"]), msSinceStart: x.timestamp - startTime },
         LogLevel.DEBUG
       ).catch((err) => console.error(err))
     } else {
