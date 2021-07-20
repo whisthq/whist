@@ -79,7 +79,7 @@ const amplitudeLog = async (title: string, data: object, userEmail: string) => {
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
       user_id: userEmail,
-      event_properties: { data: util.inspect(data) },
+      event_properties: data,
     })
   }
 }
