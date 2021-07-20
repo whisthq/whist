@@ -22,7 +22,7 @@ Includes
 #if defined(_WIN32)
 #include "dxgicapture.h"
 #else
-#include "x11capture.h"
+#include "linuxcapture.h"
 #endif
 
 /*
@@ -42,7 +42,7 @@ Public Functions
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
 
 /**
  * @brief                          Tries to reconfigure the capture device
@@ -55,7 +55,8 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
  *
  * @returns                        0 if succeeded, else -1
  */
-bool reconfigure_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
+                                uint32_t dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen
