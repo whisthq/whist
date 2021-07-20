@@ -59,7 +59,8 @@ Public Function Implementations
 */
 X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi) {
     /*
-        Create an X11 device that will capture a screen of the specified width, height, and DPI using the X11 API.
+        Create an X11 device that will capture a screen of the specified width, height, and DPI
+       using the X11 API.
 
         Arguments:
             width (uint32_t): desired window width
@@ -71,7 +72,7 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     */
     UNUSED(dpi);
     // malloc and 0-init the device
-    X11CaptureDevice* device =(X11CaptureDevice*)safe_malloc(sizeof(X11CaptureDevice));
+    X11CaptureDevice* device = (X11CaptureDevice*)safe_malloc(sizeof(X11CaptureDevice));
     memset(device, 0, sizeof(X11CaptureDevice));
 
     device->width = width;
@@ -118,7 +119,8 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
 
 int x11_capture_screen(X11CaptureDevice* device) {
     /*
-        Capture the screen using our X11 device. TODO: needs more documentation, I (Serina) am not really sure what's happening here.
+        Capture the screen using our X11 device. TODO: needs more documentation, I (Serina) am not
+       really sure what's happening here.
 
         Arguments:
             device (X11CaptureDevice*): device used to capture the screen

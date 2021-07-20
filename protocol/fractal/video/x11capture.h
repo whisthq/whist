@@ -34,7 +34,8 @@ Custom Types
 */
 
 /**
- * @brief Struct to handle using X11 for capturing the screen. The screen capture data is saved in frame_data.
+ * @brief Struct to handle using X11 for capturing the screen. The screen capture data is saved in
+ * frame_data.
  */
 typedef struct X11CaptureDevice {
     Display* display;
@@ -68,8 +69,9 @@ Public Functions
 X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi);
 
 /**
- * @brief           Capture the screen with given device. Afterwards, the frame capture is stored in frame_data.
- * 
+ * @brief           Capture the screen with given device. Afterwards, the frame capture is stored in
+ * frame_data.
+ *
  * @param device    Device to use for screen captures
  *
  * @returns         0 on success, -1 on failure

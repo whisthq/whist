@@ -55,7 +55,8 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
  *
  * @returns                        0 if succeeded, else -1
  */
-bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
+                                uint32_t dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen

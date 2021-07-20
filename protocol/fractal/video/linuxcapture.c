@@ -1,7 +1,8 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
  * @file x11capture.c
- * @brief This file contains the code to create a capture device and use it to capture the screen on Linux.
+ * @brief This file contains the code to create a capture device and use it to capture the screen on
+Linux.
 ============================
 Usage
 ============================
@@ -26,8 +27,8 @@ Includes
 Private Functions
 ============================
 */
-void get_wh(CaptureDevice* device, int* w, int *h);
-bool is_same_wh(CaptureDevice * device);
+void get_wh(CaptureDevice* device, int* w, int* h);
+bool is_same_wh(CaptureDevice* device);
 void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
 
 /*
@@ -152,7 +153,8 @@ Public Function Implementations
 int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     /*
        Initialize the capture device at device with the given width, height and DPI. We use Nvidia
-       whenever possible, and fall back to X11 when not. See nvidiacapture.c and x11capture.c for internal details of each capture device.
+       whenever possible, and fall back to X11 when not. See nvidiacapture.c and x11capture.c for
+       internal details of each capture device.
 
        Arguments:
             device (CaptureDevice*): pointer to the device to initialize
@@ -296,7 +298,7 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
             width (uint32_t): new device width
             height (uint32_t): new device height
             dpi (uint32_t): new device DPI
-        
+
         Returns:
             (bool): true if successful, false on failure
     */
