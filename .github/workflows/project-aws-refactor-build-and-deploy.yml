@@ -501,7 +501,7 @@ jobs:
             - name: Restore cached Webserver access token file
               uses: actions/cache@v2
               with:
-                  key: access-token-${{ needs.fractal-publish-build-config.outputs.branch }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+                  key: access-token-dev-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
                   path: ${{ env.TOKEN_FILE }}
 
             # We need to put quotes around this step's run command because it
@@ -716,7 +716,7 @@ jobs:
                   TITLE = ":construction: Database Migration Performed :construction:"
                   BODY = f"Database Schema Migration performed on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=title)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
             - name: Notify Slack on Successful Webserver Deploy
               if: needs.fractal-publish-build-config.outputs.publish == 'true'
