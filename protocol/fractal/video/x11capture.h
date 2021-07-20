@@ -3,21 +3,15 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
  * @file x11capture.h
- * @brief This file contains the code to do screen capture in the GPU on Linux
- *        Ubuntu.
+ * @brief This file contains the code to do screen capture via the X11 API on Linux Ubuntu.
 ============================
 Usage
 ============================
 
-CaptureDevice contains all the information used to interface with the X11 screen
-capture API and the data of a frame.
-
-Call CreateCaptureDevice to initialize at the beginning of the program, and
-DestroyCaptureDevice to clean up at the end of the program. Call CaptureScreen
-to capture a frame.
-
-You must release each frame you capture via ReleaseScreen before calling
-CaptureScreen again.
+X11CaptureDevice contains all the information used to interface with the X11 screen
+capture API and the data of a frame. Call create_x11_capture_device to initialize a device,
+x11_capture_screen to capture the screen with said device, and destroy_x11_capture_device when done
+capturing frames.
 */
 
 /*
@@ -32,7 +26,6 @@ Includes
 #include <stdbool.h>
 
 #include <fractal/core/fractal.h>
-#include "x11nvidiacapture.h"
 
 /*
 ============================
@@ -40,7 +33,11 @@ Custom Types
 ============================
 */
 
-typedef struct CaptureDevice {
+/**
+ * @brief Struct to handle using X11 for capturing the screen. The screen capture data is saved in
+ * frame_data.
+ */
+typedef struct X11CaptureDevice {
     Display* display;
     XImage* image;
     XShmSegmentInfo segment;
@@ -52,17 +49,40 @@ typedef struct CaptureDevice {
     char* frame_data;
     Damage damage;
     int event;
-    bool texture_on_gpu;
-    bool released;
-    // True if the capture device successfully initialized
-    bool using_nvidia;
-    NvidiaCaptureDevice nvidia_capture_device;
-    // False until the first capture_screen call succeeds
-    bool capture_is_on_nvidia;
-    // True if the first frame is the next to be captured
     bool first;
-} CaptureDevice;
+} X11CaptureDevice;
 
-typedef unsigned int UINT;
+/*
+============================
+Public Functions
+============================
+*/
+/**
+ * @brief           Create a device for capturing via X11 with the specified width, height, and DPI.
+ *
+ * @param width     The desired width of the device
+ * @param height    The desired height of the device
+ * @param dpi       The desired DPI of the device
+ *
+ * @returns         A pointer to the newly created X11CaptureDevice
+ */
+X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uint32_t dpi);
+
+/**
+ * @brief           Capture the screen with given device. Afterwards, the frame capture is stored in
+ * frame_data.
+ *
+ * @param device    Device to use for screen captures
+ *
+ * @returns         0 on success, -1 on failure
+ */
+int x11_capture_screen(X11CaptureDevice* device);
+
+/**
+ * @brief           Destroy the given X11CaptureDevice and free it.
+ *
+ * @param device    Device to destroy
+ */
+void destroy_x11_capture_device(X11CaptureDevice* device);
 
 #endif  // CAPTURE_X11CAPTURE_H

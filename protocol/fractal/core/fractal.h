@@ -187,12 +187,6 @@ Custom Types
 #define CHUNK_SIZE 65536
 
 /**
- * @brief   Encode type.
- * @details Type of encoding used for video encoding.
- */
-typedef enum EncodeType { SOFTWARE_ENCODE = 0, NVENC_ENCODE = 1, QSV_ENCODE = 2 } EncodeType;
-
-/**
  * @brief   Codec types.
  * @details The codec type being used for video encoding.
  */

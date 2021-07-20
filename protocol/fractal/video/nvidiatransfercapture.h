@@ -22,7 +22,7 @@ Includes
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/nvEncodeAPI.h"
 #include "nvidia_encode.h"
-#include "x11nvidiacapture.h"
+#include "nvidiacapture.h"
 
 /*
 ============================

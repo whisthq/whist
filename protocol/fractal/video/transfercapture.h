@@ -20,7 +20,7 @@ Includes
 #if defined(_WIN32)
 #include "dxgicapture.h"
 #else
-#include "x11capture.h"
+#include "linuxcapture.h"
 #endif
 
 /*

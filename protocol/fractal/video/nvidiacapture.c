@@ -1,3 +1,21 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file nvidiacapture.h
+ * @brief This file contains the code to do screen capture via the Nvidia FBC SDK on Linux Ubuntu.
+============================
+Usage
+============================
+
+NvidiaCaptureDevice contains all the information used to interface with the Nvidia FBC SDK and the
+data of a frame. Call create_nvidia_capture_device to initialize a device, nvidia_capture_screen to
+capture the screen with said device, and destroy_nvidia_capture_device when done capturing frames.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -5,7 +23,7 @@
 #include <string.h>
 
 #include "x11capture.h"
-#include "x11nvidiacapture.h"
+#include "nvidiacapture.h"
 #include <GL/glx.h>
 
 // NOTE: Using Nvidia Capture SDK 8.0.4
@@ -17,6 +35,19 @@
 
 #define LIB_NVFBC_NAME "libnvidia-fbc.so.1"
 
+/*
+============================
+Private Functions
+============================
+*/
+
+static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config);
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 /**
  * @brief                          Creates an OpenGL context for use in NvFBC.
  *                                 NvFBC needs an OpenGL context to work with,
@@ -89,8 +120,22 @@ static NVFBC_BOOL gl_init(GLXContext* glx_ctx, GLXFBConfig* glx_fb_config) {
     return NVFBC_TRUE;
 }
 
-int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
-    // 0-initialize everything in the NvidiaCaptureDevice
+/*
+============================
+Public Function Implementations
+============================
+*/
+NvidiaCaptureDevice* create_nvidia_capture_device() {
+    /*
+        Create an Nvidia capture device that attaches to the current display via gl_init. This will
+       capture to OpenGL textures, and each capture is stored in the texture at index
+       dw_texture_index. Captures are done without cursors; the cursor is added in client-side.
+
+        Returns:
+            (NvidiaCaptureDevice*): pointer to the newly created capture device
+    */
+    // malloc and 0-initialize a capture device
+    NvidiaCaptureDevice* device = (NvidiaCaptureDevice*)safe_malloc(sizeof(NvidiaCaptureDevice));
     memset(device, 0, sizeof(NvidiaCaptureDevice));
 
     char output_name[NVFBC_OUTPUT_NAME_LEN];
@@ -106,7 +151,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     void* lib_nvfbc = dlopen(LIB_NVFBC_NAME, RTLD_NOW);
     if (lib_nvfbc == NULL) {
         LOG_ERROR("Unable to open '%s' (%s)", LIB_NVFBC_NAME, dlerror());
-        return -1;
+        return NULL;
     }
 
     /*
@@ -117,7 +162,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
         (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
     if (nv_fbc_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvFBCCreateInstance'");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -128,7 +173,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_BOOL fbc_bool = gl_init(&glx_ctx, &glx_fb_config);
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialized OpenGL!");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -142,7 +187,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = nv_fbc_create_instance_ptr(&device->p_fbc_fn);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("Unable to create NvFBC instance (status: %d)", status);
-        return -1;
+        return NULL;
     }
 
     /*
@@ -157,7 +202,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCCreateHandle(&device->fbc_handle, &create_handle_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
     /*
@@ -172,7 +217,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCGetStatus(device->fbc_handle, &status_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
 #if PRINT_STATUS
@@ -181,7 +226,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 
     if (status_params.bCanCreateNow == NVFBC_FALSE) {
         LOG_ERROR("It is not possible to create a capture session on this system.");
-        return -1;
+        return NULL;
     }
 
     // Get width and height
@@ -190,7 +235,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
 
     if (device->width % 4 != 0) {
         LOG_ERROR("Device width must be a multiple of 4!");
-        return -1;
+        return NULL;
     }
 
     /*
@@ -211,7 +256,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
     /*
@@ -224,7 +269,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCToGLSetUp(device->fbc_handle, &device->togl_setup_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        return -1;
+        return NULL;
     }
 
     /*
@@ -234,12 +279,23 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device) {
         "Nvidia Frame capture session started. New frames will be captured when "
         "the display is refreshed or when the mouse cursor moves.");
 
-    return 0;
+    return device;
 }
 
 #define SHOW_DEBUG_FRAMES false
 
 int nvidia_capture_screen(NvidiaCaptureDevice* device) {
+    /*
+        Capture the screen with the given Nvidia capture device. The texture index of the captured
+       screen is stored in device->dw_texture_index.
+
+        Arguments:
+            device (NvidiaCaptureDevice*): device to use to capture the screen
+
+        Returns:
+            (int): number of new frames captured (0 on failure). On the version 7 API, we always
+       return 1 on success. On version 8, we return the number of missed frames + 1.
+    */
     NVFBCSTATUS status;
 
 #if SHOW_DEBUG_FRAMES
@@ -318,6 +374,12 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 }
 
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
+    /*
+        Destroy the device and its resources.
+
+        Arguments
+            device (NvidiaCaptureDevice*): device to destroy
+    */
     NVFBCSTATUS status;
 
     /*
@@ -330,6 +392,7 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
         device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        free(device);
         return;
     }
 
@@ -342,6 +405,8 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        free(device);
         return;
     }
+    free(device);
 }
