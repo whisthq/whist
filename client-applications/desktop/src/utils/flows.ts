@@ -15,6 +15,7 @@ import TRIGGER from "@app/utils/triggers"
 export interface Trigger {
   name: string
   payload: any
+  timestamp?: number
 }
 
 // This is the observable that emits Triggers.
@@ -61,13 +62,13 @@ export const flow =
   (trigger: Observable<T>) =>
     mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
       obs.pipe(
-        tap((value) =>
-          console.log(
-            truncate(`DEBUG: ${name}.${key} -- ${inspect(value)}`, {
-              length: 1000,
-            })
-          )
-        ),
+        // tap((value) =>
+        //   console.log(
+        //     truncate(`DEBUG: ${name}.${key} -- ${inspect(value)}`, {
+        //       length: 1000,
+        //     })
+        //   )
+        // ),
         share()
       )
     )
@@ -86,7 +87,11 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   */
 
   obs.subscribe((x: A) => {
-    TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
+    TriggerChannel.next({
+      name: `${name}`,
+      payload: x,
+      timestamp: Date.now(),
+    } as Trigger)
   })
 
   return obs
