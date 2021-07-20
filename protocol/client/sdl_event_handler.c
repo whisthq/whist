@@ -445,7 +445,11 @@ int handle_sdl_event(SDL_Event *event) {
             if (event->key.keysym.scancode == FK_LGUI) {
                 event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
                 event->key.keysym.sym = SDLK_LCTRL;
-            }
+            } 
+            else if (event->key.keysym.scancode == FK_LCTRL) {
+                event->key.keysym.scancode = (SDL_Scancode)FK_LGUI;
+                event->key.keysym.sym = SDLK_LGUI;
+            } 
             if (event->key.keysym.scancode == FK_RGUI) {
                 event->key.keysym.scancode = (SDL_Scancode)FK_RCTRL;
                 event->key.keysym.sym = SDLK_RCTRL;
