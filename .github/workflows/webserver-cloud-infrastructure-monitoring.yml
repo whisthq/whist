@@ -1,15 +1,18 @@
-# workflows/webserver-hanging-resource-notification.yml
+# workflows/webserver-cloud-infrastructure-monitoring.yml
 #
-# Main Webserver: Hanging Resource Notification
-# Checks for Dangling Auto-Scaling Groups, Clusters, EC2 instances, and Packer Build Instances
+# Main Webserver: Cloud Infrastructure Monitoring
+# Checks for Dangling Auto-Scaling Groups, Clusters, EC2 instances, and Packer Build Instances,
+# and cleans dangling Packer instances, AMIs, and EBS snapshots
 
-name: "Main Webserver: Hanging Resource Notification"
+name: "Main Webserver: Cloud Infrastructure Monitoring"
 on:
     schedule:
         - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
     workflow_dispatch:
 
 jobs:
+    # Find the number of AWS EC2 instances we have across all instance states (running, stopped) 
+    # running in each region, and notify Slack
     webserver-enumerate-all-instances:
         name: Main Webserver Enumerate All Instances
         runs-on: ubuntu-20.04
@@ -19,13 +22,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Setup Python-based notification and resource modules
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
-
-            - name: Install boto3
-              run: pip install boto3
-
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -33,7 +29,14 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: List Number of Instances in Slack
+            - name: Setup Python-based Notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
+            - name: Install boto3
+              run: pip install boto3
+
+            - name: List Number of AWS EC2 Instances in Slack
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -48,6 +51,8 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
+    # Find whether we have hanging cloud resources, which are defined as resources that are 
+    # not in one of our databases, but still exist in AWS, and notify Slack
     webserver-hanging-resource-notification:
         name: Main Webserver Hanging Resource Notification
         runs-on: ubuntu-20.04
@@ -66,15 +71,9 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Setup Python-based notification and resource modules
+            - name: Setup Python-based Notifications
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
-
-            - name: Install boto3
-              run: pip install boto3
-
-            - name: Install Utility to Get Date and Time
-              run: pip install python-dateutil
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -82,6 +81,9 @@ jobs:
                   aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
+
+            - name: Install boto3 and Utility for Date & Time
+              run: pip install boto3 python-dateutil
 
             - name: Flag Old EC2 Instances and Notify in Slack if They Exist
               shell: python3 {0}
@@ -98,19 +100,14 @@ jobs:
 
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    webserver-hanging-packer-instance-notification:
-        name: Main Webserver AWS Packer Instance Notification
+    # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
+    # EBS volumes from CI and old dev/staging/production AMIs
+    webserver-cleanup-lingering-packer-builders-and-ami-resources:
+        name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
-
-            - name: Install Utility to Kill Lingering AWS Packer Builder Instances
-              run: pip install aws-hashicorp-packer-reaper
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -119,32 +116,43 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
-              working-directory: webserver
+            - name: Setup Python-based Notifications
+              working-directory: .github/workflows/helpers
+              run: ./notifications/setup_notifications.sh
+
+            - name: Install Utilities to Delete Lingering Packer Builders & AMI Resources
+              run: pip install aws-hashicorp-packer-reaper aws-amicleaner
+
+            - name: Kill All Packer Instances Older Than 45 Minutes
+              run: aws-hashicorp-packer-reaper terminate --older-than 45m
+
+            - name: Delete All but Latest 100 AMIs
+              run: amicleaner -f --keep-previous 100
+            
+            # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance
+            - name: Delete Orphaned EBS Volumes
+              run: amicleaner -f --check-orphans
+
+            - name: Notify Slack on Job Error
+              if: failure()
               shell: python3 {0}
               run: |
-                  import subprocess
                   from notifications.slack_bot import slack_post
+
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  ret = subprocess.run("aws-hashicorp-packer-reaper list", capture_output=True, shell=True)
-                  assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
-                  # example output is shown here: https://pypi.org/project/aws-hashicorp-packer-reaper/
-                  reaper_output_lines = ret.stdout.decode("utf-8").strip().split("\n")
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-                  for line in reaper_output_lines:
-                    if "running" in line:
-                      BODY = f"Dangling Packer Instance: `{line}`"
-                      slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-    notify-if-hanging-resource-fails:
-        name: "Notify Slack if Hanging Resource Workflow Fails"
+    # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
+    notify-slack-on-workflow-failure:
+        name: "Notify Slack if Cloud Infrastructure Monitoring Workflow Fails"
         needs:
             [
-                webserver-hanging-packer-instance-notification,
-                webserver-hanging-resource-notification,
                 webserver-enumerate-all-instances,
+                webserver-hanging-resource-notification,
+                webserver-cleanup-lingering-packer-builders-and-ami-resources,
             ]
         if: failure()
         runs-on: ubuntu-20.04
@@ -152,17 +160,17 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Setup Python-based notifications
+            - name: Setup Python-based Notifications
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack if Hanging Resource Workflow Fails
+            - name: Notify Slack on Workflow Failure
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-dev"
-                  BODY = ":rotating_light: @releases Hanging Resource Notification Failed"
+                  BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
