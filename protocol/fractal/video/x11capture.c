@@ -75,6 +75,12 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     X11CaptureDevice* device = (X11CaptureDevice*)safe_malloc(sizeof(X11CaptureDevice));
     memset(device, 0, sizeof(X11CaptureDevice));
 
+    device->display = XOpenDisplay(NULL);
+    if (!device->display) {
+        LOG_ERROR("ERROR: create_x11_capture_device display did not open");
+        return -1;
+    }
+    device->root = DefaultRootWindow(device->display);
     device->width = width;
     device->height = height;
     int damage_event, damage_error;
