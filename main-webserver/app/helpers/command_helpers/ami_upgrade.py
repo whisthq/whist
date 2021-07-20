@@ -1,6 +1,6 @@
 import sys
 from threading import Thread
-from typing import Dict, List
+from typing import cast, Dict, List, Any
 import requests
 from flask import current_app
 from sqlalchemy import or_, and_
@@ -15,9 +15,10 @@ from app.constants.instance_state_values import InstanceState
 #  This list allows thread success to be passed back to the main thread.
 #  It is thread-safe because lists in python are thread-safe.
 #  It is a list of lists, with each sublist containing a thread, a
-#  boolean demarcating that thread's status (i.e. whether it succeeded), and a
-#  tuple of (region_name, ami_id) associated with that thread.
-region_wise_upgrade_threads = []
+#  boolean demarcating that thread's status (i.e. whether it succeeded), a
+#  tuple of (region_name, ami_id) associated with that thread, and the name of the
+#  created instance.
+region_wise_upgrade_threads: List[List[Any]] = []
 
 
 def insert_new_amis(
@@ -50,7 +51,9 @@ def insert_new_amis(
     return new_amis
 
 
-def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: int, flask_app):
+def launch_new_ami_buffer(
+    region_name: str, ami_id: str, index_in_thread_list: int, flask_app
+) -> None:
     """
     This function will be invoked from the Flask CLI command to upgrade the AMIs for regions.
     Inserts new AMIs into the RegionToAmi table and blocks until the instance is started, and the
@@ -79,6 +82,8 @@ def launch_new_ami_buffer(region_name: str, ami_id: str, index_in_thread_list: i
                 f"Waiting for instance with name: {new_instance_name} to be marked online"
             )
             result = _poll(new_instance_name)
+            if result:
+                region_wise_upgrade_threads[index_in_thread_list][3] = new_instance_name
     region_wise_upgrade_threads[index_in_thread_list][1] = result
 
 
@@ -175,7 +180,7 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
     )
 
 
-def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> None:
+def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]) -> None:
     """
     Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
     This happens in the following steps:
@@ -235,14 +240,17 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
             kwargs={"flask_app": current_app._get_current_object()},
         )
         region_wise_upgrade_threads.append(
-            [region_wise_upgrade_thread, False, (region_name, ami_id)]
+            [region_wise_upgrade_thread, False, (region_name, ami_id), None]
         )
         region_wise_upgrade_thread.start()
     threads_succeeded = True
+    instances_created = []
+    regions_failed = []
     for region_and_bool_pair in region_wise_upgrade_threads:
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
             region_name, ami_id = region_and_bool_pair[2]
+            regions_failed.append(region_name)
             region_row = (
                 RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
                 .with_for_update()
@@ -252,7 +260,15 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: str) -> N
                 region_row.protected_from_scale_down = False
             db.session.commit()
             threads_succeeded = False
+        else:
+            instances_created.append(region_and_bool_pair[3])
     if not threads_succeeded:
+        fractal_logger.info(f"Some regions failed to upgrade: {regions_failed}.")
+        fractal_logger.info(f"draining all newly active instances: {instances_created}")
+        for instance in instances_created:
+            instance = cast(str, instance)
+            instanceinfo = InstanceInfo.query.get(instance)
+            mark_instance_for_draining(instanceinfo)
         # If any thread here failed, fail the workflow
         raise Exception("AMIS failed to upgrade, see logs")
 
