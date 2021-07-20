@@ -14,7 +14,7 @@ import TRIGGER from "@app/utils/triggers"
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
 export interface Trigger {
   name: string
-  payload: any
+  payload: object | undefined
 }
 
 // This is the observable that emits Triggers.
@@ -88,7 +88,10 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   obs.subscribe((x: A) => {
     TriggerChannel.next({
       name: `${name}`,
-      payload: { ...x, timestamp: Date.now() },
+      payload:
+        x !== undefined
+          ? { ...x, timestamp: Date.now() }
+          : { timestamp: Date.now() },
     } as Trigger)
   })
 
