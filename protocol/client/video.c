@@ -29,6 +29,7 @@ Includes
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
+#include <fractal/utils/log_statistic.h>
 #include "network.h"
 
 #define USE_HARDWARE true
@@ -1042,6 +1043,15 @@ void log_frame_statistics(VideoFrame* frame) {
         LOG_INFO("Incorrect Frame Size! %d instead of %d", get_total_frame_size(frame),
                  render_context.frame_size);
     }
+
+    static clock time_since_last_frame;
+    static bool initialized_fps_logging = false;
+    if (!initialized_fps_logging) {
+        initialized_fps_logging = true;
+        start_timer(&time_since_last_frame);
+    }
+    log_double_statistic("FPS", 1.0 / get_timer(time_since_last_frame));
+    start_timer(&time_since_last_frame);
 }
 
 int render_video() {
@@ -1054,6 +1064,7 @@ int render_video() {
         Return:
             (int): 0 on success, -1 on failure
     */
+    static clock latency_clock;
 
     if (!initialized_video_renderer) {
         LOG_ERROR(
@@ -1087,9 +1098,7 @@ int render_video() {
 
         sync_decoder_parameters(frame);
 
-        clock decode_timer;
-        start_timer(&decode_timer);
-
+        start_timer(&latency_clock);
         if (video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
                                        frame->videodata_length) < 0) {
             LOG_WARNING("Failed to send packets to the decoder!");
@@ -1097,6 +1106,10 @@ int render_video() {
             return -1;
         }
         int res;
+        log_double_statistic("video_decoder_send_packets time in ms",
+                             get_timer(latency_clock) * 1000);
+
+        start_timer(&latency_clock);
         // we should only expect this while loop to run once.
         while ((res = video_decoder_get_frame(video_context.decoder)) == 0) {
             if (res < 0) {
@@ -1104,10 +1117,14 @@ int render_video() {
                 rendering = false;
                 return -1;
             }
+            log_double_statistic("video_decoder_get_frame time in ms",
+                                 get_timer(latency_clock) * 1000);
 
-            // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
             safe_SDL_LockMutex(render_mutex);
+
+            start_timer(&latency_clock);
             update_cursor(frame);
+            log_double_statistic("Cursor update time in ms", get_timer(latency_clock) * 1000);
 
             // determine if we should be rendering at all or not
             bool render_this_frame = can_render && !skip_render;
@@ -1136,6 +1153,8 @@ int render_video() {
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
                 // frame into the texture.
+
+                start_timer(&latency_clock);
                 SDL_Rect texture_rect =
                     new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
                 // TODO: wrap this in Fractal update texture
@@ -1151,8 +1170,12 @@ int render_video() {
                     // Clear out bits that aren't used from av_alloc_frame
                     memset(video_context.data, 0, sizeof(video_context.data));
                 }
+                log_double_statistic("Write to SDL texture time in ms",
+                                     get_timer(latency_clock) * 1000);
 
                 // Subsection of texture that should be rendered to screen.
+
+                start_timer(&latency_clock);
                 SDL_Rect output_rect = get_true_render_rect();
                 SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
 
@@ -1161,6 +1184,7 @@ int render_video() {
                 }
                 // this call takes up to 16 ms: takes 8 ms on average.
                 SDL_RenderPresent(renderer);
+                log_double_statistic("Rendering time in ms", get_timer(latency_clock) * 1000);
             }
 
             safe_SDL_UnlockMutex(render_mutex);

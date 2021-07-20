@@ -46,4 +46,6 @@ docs/latex
 
 # logs
 log*
+!log_statistic.c
+!log_statistic.h
 connection_id.txt
