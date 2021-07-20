@@ -78,7 +78,7 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     device->display = XOpenDisplay(NULL);
     if (!device->display) {
         LOG_ERROR("ERROR: create_x11_capture_device display did not open");
-        return -1;
+        return NULL;
     }
     device->root = DefaultRootWindow(device->display);
     device->width = width;
