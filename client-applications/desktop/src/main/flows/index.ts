@@ -20,7 +20,10 @@ const auth = authFlow(
       fromSignal(fromTrigger("authInfo"), fromTrigger(TRIGGER.notPersisted)),
       fromTrigger(TRIGGER.persisted)
     ),
-    fromTrigger(TRIGGER.updateNotAvailable)
+    merge(
+      fromTrigger(TRIGGER.updateNotAvailable),
+      fromTrigger(TRIGGER.updateError)
+    )
   )
 )
 

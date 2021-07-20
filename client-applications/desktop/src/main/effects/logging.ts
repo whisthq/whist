@@ -1,35 +1,26 @@
-import { values } from "lodash"
+import { values, omit } from "lodash"
 
 import { logBase, LogLevel } from "@app/utils/logging"
-import { fromTrigger, TriggerChannel, Trigger } from "@app/utils/flows"
+import { fromTrigger } from "@app/utils/flows"
 import TRIGGER from "@app/utils/triggers"
 
-let lastTimeStamp = 0
+// This is a proxy for when the application started in UNIX (ms since epoch). It's not perfect, but
+// should be good enough.
+const startTime = Date.now()
 
 // Iterates through all the triggers and logs them
 values(TRIGGER).forEach((name: string) => {
   fromTrigger(name).subscribe((x: any) => {
-    logBase(name, x, LogLevel.DEBUG).catch((err) => console.error(err))
-
-    if (name === "appReady") {
-      lastTimeStamp = x?.timestamp ?? 0
-      return
-    }
-    if (
-      lastTimeStamp > 0 &&
-      x.timestamp !== undefined &&
-      x.timestamp > lastTimeStamp
-    ) {
+    if (x.timestamp !== undefined && x.timestamp > startTime) {
       logBase(
         name,
-        {
-          timestamp: `${(
-            x.timestamp - lastTimeStamp
-          ).toString()} ms since application start`,
-        },
+        { ...x, msSinceStart: x.timestamp - startTime },
         LogLevel.DEBUG
+      ).catch((err) => console.error(err))
+    } else {
+      logBase(name, omit(x, ["timestamp"]), LogLevel.DEBUG).catch((err) =>
+        console.error(err)
       )
-      lastTimeStamp = x.timestamp
     }
   })
 })
