@@ -30,12 +30,22 @@ Private Functions
 ============================
 */
 
+void transfer_nvidia_data(VideoEncoder *encoder);
+int transfer_ffmpeg_data(VideoEncoder *encoder);
+
 /*
 ============================
 Private Function Implementations
 ============================
 */
 void transfer_nvidia_data(VideoEncoder *encoder) {
+    /*
+        Set encoder metadata according to nvidia_encoder members and tell the encoder there is only
+       one packet, containing the encoded frame data from the nvidia encoder.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder to use
+    */
     if (encoder->active_encoder != NVIDIA_ENCODER) {
         LOG_ERROR("Encoder is not using nvidia, but we are trying to call transfer_nvidia_data!");
         return;
@@ -54,6 +64,15 @@ void transfer_nvidia_data(VideoEncoder *encoder) {
 }
 
 int transfer_ffmpeg_data(VideoEncoder *encoder) {
+    /*
+        Set encoder metadata according to nvidia encoder members and receive all encoded packets from the ffmpeg encoder to the main encoder.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder to use
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
     if (encoder->active_encoder != FFMPEG_ENCODER) {
         LOG_ERROR("Encoder is not using ffmpeg, but we are trying to call transfer_ffmpge_data!");
         return -1;
@@ -74,8 +93,8 @@ int transfer_ffmpeg_data(VideoEncoder *encoder) {
 
     // receive packets until we receive a nonzero code (indicating either an encoding error, or that
     // all packets have been received).
-    while ((res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder, &encoder->packets[encoder->num_packets])) ==
-           0) {
+    while ((res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder,
+                                                &encoder->packets[encoder->num_packets])) == 0) {
         encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_ENCODER_PACKETS) {
@@ -88,7 +107,8 @@ int transfer_ffmpeg_data(VideoEncoder *encoder) {
     }
 
     // set iframe metadata
-    encoder->is_iframe = encoder->ffmpeg_encoder->frames_since_last_iframe % encoder->ffmpeg_encoder->gop_size == 0;
+    encoder->is_iframe =
+        encoder->ffmpeg_encoder->frames_since_last_iframe % encoder->ffmpeg_encoder->gop_size == 0;
     if (encoder->is_iframe) {
         encoder->ffmpeg_encoder->frames_since_last_iframe = 0;
     }
@@ -108,8 +128,7 @@ Public Function Implementations
 VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
     /*
-        Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,
-       then software encoding if that fails.
+       Create a video encoder with the specified parameters. Try Nvidia first if available, and fall back to FFmpeg if not.
 
         Arguments:
             in_width (int): Width of the frames that the encoder intakes
@@ -123,13 +142,12 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
             (VideoEncoder*): the newly created encoder
      */
 
-    // setup the AVCodec and AVFormatContext
 #if !USING_SERVERSIDE_SCALE
     out_width = in_width;
     out_height = in_height;
 #endif
 
-    VideoEncoder *encoder = (VideoEncoder*)safe_malloc(sizeof(VideoEncoder));
+    VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
@@ -137,16 +155,19 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     LOG_ERROR(
         "Cannot create nvidia encoder, does not accept in_width and in_height when using "
         "serverside scaling");
+    encoder->active_encoder = FFMPEG_ENCODER;
 #else
     encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
     if (!encoder->nvidia_encoder) {
         LOG_ERROR("Failed to create nvidia encoder!");
         encoder->active_encoder = FFMPEG_ENCODER;
     } else {
+        // nvidia creation succeeded!
         encoder->active_encoder = NVIDIA_ENCODER;
     }
 #endif  // USING_SERVERSIDE_SCALE
 #else
+    // No nvidia found
     encoder->active_encoder = FFMPEG_ENCODER;
 #endif  // USING_NVIDIA_CAPTURE_AND_ENCODE
 
@@ -159,7 +180,6 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 
     return encoder;
 }
-
 
 int video_encoder_encode(VideoEncoder *encoder) {
     /*
@@ -200,6 +220,19 @@ int video_encoder_encode(VideoEncoder *encoder) {
 
 bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
                          CodecType codec) {
+    /*
+        Attempt to reconfigure the encoder to use the specified width, height, bitrate, and codec. Unavailable on FFmpeg, but possible on Nvidia.
+
+        Arguments:
+            encoder (VideoEncoder*): encoder to reconfigure
+            width (int): new width
+            height (int): new height
+            bitrate (int): new bitrate
+            codec (CodecType): new codec
+
+        Returns:
+            (bool): true on success, false on failure
+    */
     if (!encoder) {
         LOG_ERROR("Calling reconfigure_encoder on a NULL encoder!");
         return false;

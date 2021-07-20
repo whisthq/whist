@@ -1,9 +1,32 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file ffmpeg_encode.h
+ * @brief This file contains the code to create and destroy FFmpeg encoders and use
+ *        them to encode captured screens.
+============================
+Usage
+============================
+Video is encoded to H264 via either a hardware encoder (currently, we use NVidia GPUs, so we use
+NVENC) or a software encoder if hardware encoding fails. H265 is also supported but not currently used. For encoders, create an H264 encoder via create_ffmpeg_encoder, and use
+it to encode frames via ffmpeg_encoder_send_frame. Retrieve encoded packets using ffmpeg_encoder_receive_packet. When finished, destroy the encoder using destroy_ffmpeg_encoder.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include "ffmpeg_encode.h"
 
 #define GOP_SIZE 99999
 #define MIN_NVENC_WIDTH 33
 #define MIN_NVENC_HEIGHT 17
 
+/*
+============================
+Private Functions
+============================
+*/
 void set_opt(FFmpegEncoder *encoder, char *option, char *value);
 FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
                                     int bitrate, CodecType codec_type);
@@ -12,6 +35,11 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
 FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
                                  int bitrate, CodecType codec_type);
 
+/*
+============================
+Private Function Implementations
+============================
+*/
 void set_opt(FFmpegEncoder *encoder, char *option, char *value) {
     /*
         Wrapper function to set encoder options, like presets, latency, and bitrate.
@@ -659,9 +687,28 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
     return encoder;
 }
 
+/*
+============================
+Public Function Implementations
+============================
+*/
 FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height,
                                      int bitrate, CodecType codec_type) {
-    // TODO: UNFINISHED
+    /*
+        Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,
+       then software encoding if that fails.
+
+        Arguments:
+            in_width (int): Width of the frames that the encoder intakes
+            in_height (int): height of the frames that the encoder intakes
+            out_width (int): width of the frames that the encoder outputs
+            out_height (int): Height of the frames that the encoder outputs
+            bitrate (int): bits per second the encoder will encode to
+            codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
+
+        Returns:
+            (FFmpegEncoder*): the newly created encoder
+     */
     FFmpegEncoder *ffmpeg_encoder = NULL;
     FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
@@ -714,6 +761,12 @@ int ffmpeg_encoder_frame_intake(FFmpegEncoder *encoder, void *rgb_pixels, int pi
 }
 
 void ffmpeg_set_iframe(FFmpegEncoder *encoder) {
+    /*
+        Set the next frame to be an IDR frame. Unreliable for FFmpeg.
+
+        Arguments:
+            encoder (FFmpegEncoder*): encoder to use
+    */
     if (!encoder) {
         LOG_ERROR("ffmpeg_set_iframe received NULL encoder!");
         return;
@@ -726,6 +779,12 @@ void ffmpeg_set_iframe(FFmpegEncoder *encoder) {
 }
 
 void ffmpeg_unset_iframe(FFmpegEncoder *encoder) {
+    /*
+        Set the next frame to be an IDR frame. Unreliable for FFmpeg.
+
+        Arguments:
+            encoder (FFmpegEncoder*): encoder to use
+    */
     if (!encoder) {
         LOG_ERROR("ffmpeg_unset_iframe received NULL encoder!");
         return;
@@ -736,6 +795,12 @@ void ffmpeg_unset_iframe(FFmpegEncoder *encoder) {
 }
 
 void destroy_ffmpeg_encoder(FFmpegEncoder *encoder) {
+    /*
+        Destroy the ffmpeg encoder and its members.
+
+        Arguments:
+            encoder (FFmpegEncoder*): encoder to destroy
+    */
     if (!encoder) {
         return;
     }

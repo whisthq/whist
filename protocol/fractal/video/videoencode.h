@@ -40,12 +40,7 @@ typedef enum VideoEncoderType {
 } VideoEncoderType;
 
 /**
- * @brief           Struct for handling ffmpeg encoding of video frames. Set to a dummy struct if we
- *                  are using NVidia's SDK, which both captures and encodes frames. If software
- *                  encoding, the codec and context determine the properties of the output frames,
- *                  and scaling is done using the filter_graph. Frames encoded on the GPU are stored
- *                  in hw_frame, while frames encoded on the CPU are stored in sw_frame.
- *
+ * @brief            Master video encoding struct. Contains pointers to Nvidia and FFmpeg encoders as well as packet + frame metadata needed for sending encoded frames to the client. We default to using the Nvidia encoder, and fall back to the FFmpeg encoder if that fails.
  */
 typedef struct VideoEncoder {
     VideoEncoderType active_encoder;
@@ -89,42 +84,13 @@ VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, i
                                    int bitrate, CodecType codec_type);
 
 /**
- * @brief                          Put the input data into a software frame, and
- *                                 upload to a hardware frame if applicable.
+ * @brief                       Encode a frame. This will call the necessary encoding functions depending on the encoder type, then record metadata and the encoded packets into encoder->packets.
  *
- * @param encoder                  The encoder to use
- * @param rgb_pixels               The frame to be in encoded
- * @param pitch                    The number of bytes per line
+ * @param encoder               Encoder to use
  *
- * @returns                        0 on success, else -1
- */
-int video_encoder_frame_intake(VideoEncoder* encoder, void* rgb_pixels, int pitch);
-
-/**
- * @brief                          Encode the frame in `encoder->sw_frame` or
- *                                 `encoder->hw_frame`. The encoded packet(s)
- *                                 are stored in `encoder->packets`, and the
- *                                 size of the buffer necessary to store them
- *                                 is stored in `encoder->encoded_frame_size`
- *
- * @param encoder                  The encoder to use
- *
- * @returns                        0 on success, else -1
+ * @returns                     0 on success, otherwise -1
  */
 int video_encoder_encode(VideoEncoder* encoder);
-
-/**
- * @brief                          Write the data from the encoded packet(s) in
- *                                 `encoder->packets` to a buffer, along with
- *                                 header information specifying the size of
- *                                 each packet.
- *
- * @param encoder                  The encoder with stored encoded packet(s)
- * @param buf                      A pointer to an allocated buffer of size at
- *                                 least `encoder->encoded_frame_size` into
- *                                 which to copy the data
- */
-void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
 
 /**
  * @brief                          Reconfigure the encoder using new parameters
@@ -135,8 +101,8 @@ void video_encoder_write_buffer(VideoEncoder* encoder, int* buf);
  * @param bitrate                  The new bitrate
  * @param codec                    The new codec
  *
- * @returns                        0 if the encoder was successfully reconfigured,
- *                                 -1 if no reconfiguration was possible
+ * @returns                        true if the encoder was successfully reconfigured,
+ *                                 false if no reconfiguration was possible
  */
 bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate,
                          CodecType codec);
