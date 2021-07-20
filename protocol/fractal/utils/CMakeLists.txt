@@ -10,6 +10,7 @@ add_library(fractalUtils STATIC
         clock.c
         avpacket_buffer.c
         logging.c
+        log_statistic.c
         error_monitor.c
         json.c
         window_name.c

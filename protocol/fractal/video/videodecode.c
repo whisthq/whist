@@ -22,6 +22,7 @@ Includes
 ============================
 */
 #include "videodecode.h"
+#include <fractal/utils/log_statistic.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -568,9 +569,14 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
        before calling again), -1 on failure
             */
     int res;
+
+    static clock latency_clock;
+
     // If frame was computed on the GPU
     if (decoder->context->hw_frames_ctx) {
+        start_timer(&latency_clock);
         res = avcodec_receive_frame(decoder->context, decoder->hw_frame);
+        log_double_statistic("avcodec_receive_frame time in ms", get_timer(latency_clock) * 1000);
         if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
             return 1;
         } else if (res < 0) {
@@ -578,8 +584,10 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
             destroy_video_decoder(decoder);
             return -1;
         }
-
+        start_timer(&latency_clock);
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+        log_double_statistic("av_hwframe_transfer_data time in ms",
+                             get_timer(latency_clock) * 1000);
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
             LOG_ERROR("Decoder cascaded from hardware to software");
