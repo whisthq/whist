@@ -65,7 +65,8 @@ void transfer_nvidia_data(VideoEncoder *encoder) {
 
 int transfer_ffmpeg_data(VideoEncoder *encoder) {
     /*
-        Set encoder metadata according to nvidia encoder members and receive all encoded packets from the ffmpeg encoder to the main encoder.
+        Set encoder metadata according to nvidia encoder members and receive all encoded packets
+       from the ffmpeg encoder to the main encoder.
 
         Arguments:
             encoder (VideoEncoder*): encoder to use
@@ -128,7 +129,8 @@ Public Function Implementations
 VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
                                    int bitrate, CodecType codec_type) {
     /*
-       Create a video encoder with the specified parameters. Try Nvidia first if available, and fall back to FFmpeg if not.
+       Create a video encoder with the specified parameters. Try Nvidia first if available, and fall
+       back to FFmpeg if not.
 
         Arguments:
             in_width (int): Width of the frames that the encoder intakes
@@ -221,7 +223,8 @@ int video_encoder_encode(VideoEncoder *encoder) {
 bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
                          CodecType codec) {
     /*
-        Attempt to reconfigure the encoder to use the specified width, height, bitrate, and codec. Unavailable on FFmpeg, but possible on Nvidia.
+        Attempt to reconfigure the encoder to use the specified width, height, bitrate, and codec.
+       Unavailable on FFmpeg, but possible on Nvidia.
 
         Arguments:
             encoder (VideoEncoder*): encoder to reconfigure

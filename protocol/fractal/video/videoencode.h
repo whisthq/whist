@@ -34,13 +34,12 @@ Custom Types
 
 #define MAX_ENCODER_PACKETS 20
 
-typedef enum VideoEncoderType {
-    NVIDIA_ENCODER,
-    FFMPEG_ENCODER
-} VideoEncoderType;
+typedef enum VideoEncoderType { NVIDIA_ENCODER, FFMPEG_ENCODER } VideoEncoderType;
 
 /**
- * @brief            Master video encoding struct. Contains pointers to Nvidia and FFmpeg encoders as well as packet + frame metadata needed for sending encoded frames to the client. We default to using the Nvidia encoder, and fall back to the FFmpeg encoder if that fails.
+ * @brief            Master video encoding struct. Contains pointers to Nvidia and FFmpeg encoders
+ * as well as packet + frame metadata needed for sending encoded frames to the client. We default to
+ * using the Nvidia encoder, and fall back to the FFmpeg encoder if that fails.
  */
 typedef struct VideoEncoder {
     VideoEncoderType active_encoder;
@@ -84,7 +83,9 @@ VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, i
                                    int bitrate, CodecType codec_type);
 
 /**
- * @brief                       Encode a frame. This will call the necessary encoding functions depending on the encoder type, then record metadata and the encoded packets into encoder->packets.
+ * @brief                       Encode a frame. This will call the necessary encoding functions
+ * depending on the encoder type, then record metadata and the encoded packets into
+ * encoder->packets.
  *
  * @param encoder               Encoder to use
  *

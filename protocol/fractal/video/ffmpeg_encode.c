@@ -7,8 +7,10 @@
 Usage
 ============================
 Video is encoded to H264 via either a hardware encoder (currently, we use NVidia GPUs, so we use
-NVENC) or a software encoder if hardware encoding fails. H265 is also supported but not currently used. For encoders, create an H264 encoder via create_ffmpeg_encoder, and use
-it to encode frames via ffmpeg_encoder_send_frame. Retrieve encoded packets using ffmpeg_encoder_receive_packet. When finished, destroy the encoder using destroy_ffmpeg_encoder.
+NVENC) or a software encoder if hardware encoding fails. H265 is also supported but not currently
+used. For encoders, create an H264 encoder via create_ffmpeg_encoder, and use it to encode frames
+via ffmpeg_encoder_send_frame. Retrieve encoded packets using ffmpeg_encoder_receive_packet. When
+finished, destroy the encoder using destroy_ffmpeg_encoder.
 */
 
 /*
