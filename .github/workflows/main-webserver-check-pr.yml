@@ -49,7 +49,7 @@ jobs:
 
             - name: Check if Code Matches Pylint Standards
               working-directory: main-webserver
-              run: pylint --rcfile=../pylintrc -j 0 app # Returns 0 if and only if code is linted
+              run: pylint --rcfile=../pylintrc -j 0 --msg-template="::error file={path},line={line},col={column}::{msg_id}: {msg} ({symbol})" # app # Returns 0 if and only if code is linted
 
             - name: Perform static type analysis with mypy
               working-directory: main-webserver
