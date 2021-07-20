@@ -18,6 +18,12 @@
  * \include hello.c
  */
 
+#include <sched.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/mount.h>
+
 
 #define FUSE_USE_VERSION 31
 
@@ -147,6 +153,35 @@ static void show_help(const char *progname)
 	       "\n");
 }
 
+void write_to_file(char *filename, const char *data, size_t size) {
+    int fd = open(filename, O_WRONLY);
+    write(fd, data, size);
+    close(fd);
+}
+
+void unshare_thread() {
+    // Move to a new mount namespace with a new user
+    unshare(CLONE_NEWNS | CLONE_NEWUSER);
+
+    // Appropriately map the new user to container root (uid 0)
+    // In order to do this from an unprivileged process since
+    // Linux 3.19, we must first permanently disable the ability
+    // to call `setgroups` in this namespace.
+    write_to_file("/proc/self/setgroups", "deny", 4);
+    // The syntax here is "from to 1". Right now this is just the
+    // trivial mapping 0 -> 0. Eventually we might want
+    // 0 -> uid("fractal")
+    write_to_file("/proc/self/uid_map", "0 0 1", 5);
+    write_to_file("/proc/self/gid_map", "0 0 1", 5);
+
+    // This is a null mount that just changes the propagation type
+    // of our filesystem at "/" to private. This means that mount
+    // syscalls inside the filesystem in our namespace won't try
+    // to propagate outside -- in particular, FUSE mounts will now
+    // be nicely sandboxed.
+    mount("none", "/", NULL, MS_REC | MS_PRIVATE, NULL);
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -172,7 +207,7 @@ int main(int argc, char *argv[])
 		assert(fuse_opt_add_arg(&args, "--help") == 0);
 		args.argv[0][0] = '\0';
 	}
-
+    unshare_thread();
 	ret = fuse_main(args.argc, args.argv, &hello_oper, NULL);
 	fuse_opt_free_args(&args);
 	return ret;
