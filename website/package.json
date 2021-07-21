@@ -8,9 +8,9 @@
         "build": "./scripts/build.sh",
         "tailwind": "./scripts/tailwind.sh",
         "postinstall": "./scripts/postinstall.sh",
-        "lint-fix": "./scripts/lint-fix.sh",
-        "lint-check": "./scripts/lint-check.sh",
-        "build-netlify": "./scripts/build-netlify.sh"
+        "lint:check": "node ./scripts/lint.js",
+        "lint:fix": "node ./scripts/lint.js --fix",
+        "build:netlify": "./scripts/build-netlify.sh"
     },
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^1.2.35",
@@ -61,6 +61,8 @@
         "@typescript-eslint/parser": "^4.28.1",
         "autoprefixer": "^10.3.0",
         "eslint": "^7.27.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-prettier": "^3.4.0",
         "eslint-plugin-react": "^7.24.0",
         "postcss": "^8.3.0",
         "postcss-cli": "^8.3.1",

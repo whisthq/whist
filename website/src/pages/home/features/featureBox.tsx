@@ -1,12 +1,12 @@
-import React from 'react'
-import { Col } from 'react-bootstrap'
+import React from "react"
+import { Col } from "react-bootstrap"
 
 export const FeatureBox = (props: {
-  icon: JSX.Element
-  title: string
-  text: string
+    icon: JSX.Element
+    title: string
+    text: string
 }) => {
-  /*
+    /*
         Component for a feature box
 
         Arguments:
@@ -15,12 +15,12 @@ export const FeatureBox = (props: {
             text (string): Feature text
     */
 
-  const { icon, title, text } = props
+    const { icon, title, text } = props
 
-  return (
+    return (
         <Col md={4} className="text-left mb-4">
             <div className="h-full px-12 py-12 bg-blue-lightest border border-transparent dark:border-gray-400 dark:bg-transparent rounded">
-                {' '}
+                {" "}
                 {icon}
                 <div className="text-gray dark:text-gray-300 text-2xl md:text-3xl mt-8">
                     {title}
@@ -30,7 +30,7 @@ export const FeatureBox = (props: {
                 </div>
             </div>
         </Col>
-  )
+    )
 }
 
 export default FeatureBox

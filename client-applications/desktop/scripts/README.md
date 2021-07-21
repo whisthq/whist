@@ -30,7 +30,10 @@ export default function start(env, ..._args) {
   // variables received as the first argument will get merged.
   // If the env object is not passed or is undefined, then no extra
   // environment variables will get merged in.
-  helpers.snowpackDev({ ...env, VERSION: helpers.getCurrentClientAppVersion() })
+  helpers.snowpackDev({
+    ...env,
+    VERSION: helpers.getCurrentClientAppVersion(),
+  })
 }
 
 // This is a common node directive that runs only if this is the "main" script.

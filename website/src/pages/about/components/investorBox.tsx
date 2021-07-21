@@ -1,32 +1,32 @@
-import React from 'react'
-import { Row, Col } from 'react-bootstrap'
-import Popup from 'reactjs-popup'
+import React from "react"
+import { Row, Col } from "react-bootstrap"
+import Popup from "reactjs-popup"
 
-import { ScreenSize } from '@app/shared/constants/screenSizes'
-import { withContext } from '@app/shared/utils/context'
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import { withContext } from "@app/shared/utils/context"
 
-import BSV from '@app/assets/investorPhotos/bsv.svg'
-import DC from '@app/assets/investorPhotos/dc.svg'
-import DRF from '@app/assets/investorPhotos/drf.svg'
-import Michael from '@app/assets/investorPhotos/michael.svg'
-import Vijay from '@app/assets/investorPhotos/vijay.svg'
-import Pankaj from '@app/assets/investorPhotos/pankaj.svg'
-import Neo from '@app/assets/investorPhotos/neo.svg'
-import RDV from '@app/assets/investorPhotos/rdv.svg'
-import Slow from '@app/assets/investorPhotos/slow.svg'
+import BSV from "@app/assets/investorPhotos/bsv.svg"
+import DC from "@app/assets/investorPhotos/dc.svg"
+import DRF from "@app/assets/investorPhotos/drf.svg"
+import Michael from "@app/assets/investorPhotos/michael.svg"
+import Vijay from "@app/assets/investorPhotos/vijay.svg"
+import Pankaj from "@app/assets/investorPhotos/pankaj.svg"
+import Neo from "@app/assets/investorPhotos/neo.svg"
+import RDV from "@app/assets/investorPhotos/rdv.svg"
+import Slow from "@app/assets/investorPhotos/slow.svg"
 
-import styles from '@app/styles/global.module.css'
+import styles from "@app/styles/global.module.css"
 
 const InvestorBox = () => {
-  const { width } = withContext()
-  return (
+    const { width } = withContext()
+    return (
         <Row
             style={{
-              margin: 20,
-              padding: width > ScreenSize.SMALL ? 20 : 0,
-              border:
-                    width > ScreenSize.SMALL ? 'solid 10px #0b172b' : 'none',
-              borderRadius: 5
+                margin: 20,
+                padding: width > ScreenSize.SMALL ? 20 : 0,
+                border:
+                    width > ScreenSize.SMALL ? "solid 10px #0b172b" : "none",
+                borderRadius: 5,
             }}
         >
             <Col xs={6} md={4} style={{ margin: 0, padding: 0 }}>
@@ -34,15 +34,15 @@ const InvestorBox = () => {
                     href="http://www.slow.co/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', outline: 'none' }}
+                    style={{ textDecoration: "none", outline: "none" }}
                 >
                     <div className={styles.investorImage}>
                         <img
                             src={Slow}
                             alt=""
                             style={{
-                              maxWidth: 75,
-                              maxHeight: 75
+                                maxWidth: 75,
+                                maxHeight: 75,
                             }}
                         />
                     </div>
@@ -53,15 +53,15 @@ const InvestorBox = () => {
                     href="https://techcrunch.com/2018/08/21/ali-partovi-neo/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', outline: 'none' }}
+                    style={{ textDecoration: "none", outline: "none" }}
                 >
                     <div className={styles.investorImage}>
                         <img
                             src={Neo}
                             alt=""
                             style={{
-                              maxWidth: 75,
-                              maxHeight: 75
+                                maxWidth: 75,
+                                maxHeight: 75,
                             }}
                         />
                     </div>
@@ -72,15 +72,15 @@ const InvestorBox = () => {
                     href="https://www.basisset.ventures/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', outline: 'none' }}
+                    style={{ textDecoration: "none", outline: "none" }}
                 >
                     <div className={styles.investorImage}>
                         <img
                             src={BSV}
                             alt=""
                             style={{
-                              maxWidth: 75,
-                              maxHeight: 75
+                                maxWidth: 75,
+                                maxHeight: 75,
                             }}
                         />
                     </div>
@@ -91,7 +91,7 @@ const InvestorBox = () => {
                     href="https://www.dormroomfund.com/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', outline: 'none' }}
+                    style={{ textDecoration: "none", outline: "none" }}
                 >
                     <div className={styles.investorImage}>
                         <img
@@ -107,7 +107,7 @@ const InvestorBox = () => {
                     href="https://www.roughdraft.vc/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ textDecoration: 'none', outline: 'none' }}
+                    style={{ textDecoration: "none", outline: "none" }}
                 >
                     <div className={styles.investorImage}>
                         <img
@@ -127,39 +127,39 @@ const InvestorBox = () => {
                                 src={Pankaj}
                                 alt=""
                                 style={{
-                                  maxWidth: 70,
-                                  maxHeight: 70,
-                                  borderRadius: 5,
-                                  filter: 'grayscale(90%)'
+                                    maxWidth: 70,
+                                    maxHeight: 70,
+                                    borderRadius: 5,
+                                    filter: "grayscale(90%)",
                                 }}
                             />
                         </div>
                     }
                     contentStyle={{
-                      width: 500,
-                      borderRadius: 5,
-                      backgroundColor: '#EBEBEB',
-                      border: 'none',
-                      minHeight: 325,
-                      padding: '30px 50px'
+                        width: 500,
+                        borderRadius: 5,
+                        backgroundColor: "#EBEBEB",
+                        border: "none",
+                        minHeight: 325,
+                        padding: "30px 50px",
                     }}
                 >
                     <div>
-                        <div style={{ display: 'flex' }}>
+                        <div style={{ display: "flex" }}>
                             <img
                                 src={Pankaj}
                                 alt=""
                                 style={{
-                                  maxWidth: 75,
-                                  maxHeight: 75,
-                                  borderRadius: 37.5
+                                    maxWidth: 75,
+                                    maxHeight: 75,
+                                    borderRadius: 37.5,
                                 }}
                             />
                             <div style={{ paddingLeft: 50 }}>
                                 <div
                                     style={{
-                                      fontSize: 30,
-                                      fontWeight: 'bold'
+                                        fontSize: 30,
+                                        fontWeight: "bold",
                                     }}
                                 >
                                     Pankaj Patel
@@ -167,11 +167,11 @@ const InvestorBox = () => {
                                 <div
                                     className="font-body"
                                     style={{
-                                      margin: 0,
-                                      padding: 0,
-                                      color: '#555555',
-                                      maxHeight: 200,
-                                      overflowY: 'scroll'
+                                        margin: 0,
+                                        padding: 0,
+                                        color: "#555555",
+                                        maxHeight: 200,
+                                        overflowY: "scroll",
                                     }}
                                 >
                                     <p>
@@ -228,39 +228,39 @@ const InvestorBox = () => {
                                 src={Michael}
                                 alt=""
                                 style={{
-                                  maxWidth: 70,
-                                  maxHeight: 70,
-                                  borderRadius: 5,
-                                  filter: 'grayscale(90%)'
+                                    maxWidth: 70,
+                                    maxHeight: 70,
+                                    borderRadius: 5,
+                                    filter: "grayscale(90%)",
                                 }}
                             />
                         </div>
                     }
                     contentStyle={{
-                      width: 500,
-                      borderRadius: 5,
-                      backgroundColor: '#EBEBEB',
-                      border: 'none',
-                      minHeight: 325,
-                      padding: '30px 50px'
+                        width: 500,
+                        borderRadius: 5,
+                        backgroundColor: "#EBEBEB",
+                        border: "none",
+                        minHeight: 325,
+                        padding: "30px 50px",
                     }}
                 >
                     <div>
-                        <div style={{ display: 'flex' }}>
+                        <div style={{ display: "flex" }}>
                             <img
                                 src={Michael}
                                 alt=""
                                 style={{
-                                  maxWidth: 75,
-                                  maxHeight: 75,
-                                  borderRadius: 37.5
+                                    maxWidth: 75,
+                                    maxHeight: 75,
+                                    borderRadius: 37.5,
                                 }}
                             />
                             <div style={{ paddingLeft: 50 }}>
                                 <div
                                     style={{
-                                      fontSize: 30,
-                                      fontWeight: 'bold'
+                                        fontSize: 30,
+                                        fontWeight: "bold",
                                     }}
                                 >
                                     Michael Stoppelman
@@ -268,10 +268,10 @@ const InvestorBox = () => {
                                 <div
                                     className="font-body"
                                     style={{
-                                      margin: 0,
-                                      padding: 0,
-                                      color: '#555555',
-                                      overflowY: 'scroll'
+                                        margin: 0,
+                                        padding: 0,
+                                        color: "#555555",
+                                        overflowY: "scroll",
                                     }}
                                 >
                                     Michael Stoppelman was a former exec at Yelp
@@ -293,10 +293,10 @@ const InvestorBox = () => {
                         src={Vijay}
                         alt=""
                         style={{
-                          maxWidth: 70,
-                          maxHeight: 70,
-                          borderRadius: 5,
-                          filter: 'grayscale(90%)'
+                            maxWidth: 70,
+                            maxHeight: 70,
+                            borderRadius: 5,
+                            filter: "grayscale(90%)",
                         }}
                     />
                 </div>
@@ -310,39 +310,39 @@ const InvestorBox = () => {
                                 src={DC}
                                 alt=""
                                 style={{
-                                  maxWidth: 70,
-                                  maxHeight: 70,
-                                  borderRadius: 5,
-                                  filter: 'grayscale(90%)'
+                                    maxWidth: 70,
+                                    maxHeight: 70,
+                                    borderRadius: 5,
+                                    filter: "grayscale(90%)",
                                 }}
                             />
                         </div>
                     }
                     contentStyle={{
-                      width: 500,
-                      borderRadius: 5,
-                      backgroundColor: '#EBEBEB',
-                      border: 'none',
-                      minHeight: 325,
-                      padding: '30px 50px'
+                        width: 500,
+                        borderRadius: 5,
+                        backgroundColor: "#EBEBEB",
+                        border: "none",
+                        minHeight: 325,
+                        padding: "30px 50px",
                     }}
                 >
                     <div>
-                        <div style={{ display: 'flex' }}>
+                        <div style={{ display: "flex" }}>
                             <img
                                 src={DC}
                                 alt=""
                                 style={{
-                                  maxWidth: 75,
-                                  maxHeight: 75,
-                                  borderRadius: 37.5
+                                    maxWidth: 75,
+                                    maxHeight: 75,
+                                    borderRadius: 37.5,
                                 }}
                             />
                             <div style={{ paddingLeft: 50 }}>
                                 <div
                                     style={{
-                                      fontSize: 30,
-                                      fontWeight: 'bold'
+                                        fontSize: 30,
+                                        fontWeight: "bold",
                                     }}
                                 >
                                     Dan (DC) Posch
@@ -350,10 +350,10 @@ const InvestorBox = () => {
                                 <div
                                     className="font-body"
                                     style={{
-                                      margin: 0,
-                                      padding: 0,
-                                      color: '#555555',
-                                      overflowY: 'scroll'
+                                        margin: 0,
+                                        padding: 0,
+                                        color: "#555555",
+                                        overflowY: "scroll",
                                     }}
                                 >
                                     DC Posch currently serves as the Directory
@@ -369,7 +369,7 @@ const InvestorBox = () => {
                 </Popup>
             </Col>
         </Row>
-  )
+    )
 }
 
 export default InvestorBox

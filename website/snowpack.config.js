@@ -21,7 +21,7 @@ const getBuildOptions = () => {
     // Intended to used to generate `buildOptions` below.
     const netlifyUrl = buildEnv.URL
     const isNetlifyPreview = buildEnv.CONTEXT === "deploy-preview"
-    
+
     if (!isNetlifyPreview && netlifyUrl) {
         // `baseUrl` controls what replaces `%PUBLIC_URL%` in index.html; the default is `/`.
         // Having a full path is important in order for OpenGraph previews to display the
@@ -36,8 +36,10 @@ const getFractalEnv = () => {
     // Return environment variables to bake into our application as a dictionary;
     // these can be imported via `import.meta.env`.
     return {
-        FRACTAL_ENVIRONMENT: process.env.FRACTAL_ENVIRONMENT ? process.env.FRACTAL_ENVIRONMENT : "development",
-        FRACTAL_VERSION: buildEnv.COMMIT_REF ? buildEnv.COMMIT_REF : "local"
+        FRACTAL_ENVIRONMENT: process.env.FRACTAL_ENVIRONMENT
+            ? process.env.FRACTAL_ENVIRONMENT
+            : "development",
+        FRACTAL_VERSION: buildEnv.COMMIT_REF ? buildEnv.COMMIT_REF : "local",
     }
 }
 

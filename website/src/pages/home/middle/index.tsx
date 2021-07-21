@@ -1,26 +1,26 @@
-import React from 'react'
+import React from "react"
 
-import { ScreenSize } from '@app/shared/constants/screenSizes'
-import { withContext } from '@app/shared/utils/context'
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import { withContext } from "@app/shared/utils/context"
 
-import ChromeBackground from '@app/assets/largeGraphics/speedTestBackground.svg'
-import SpeedTest from '@app/assets/gifs/speedTest.gif'
-import AnimatedLineA from './animatedLineA'
-import AnimatedLineB from './animatedLineB'
-import Router from '@app/assets/icons/router.svg'
-import BrowsingData from '@app/assets/icons/browsingData.svg'
+import ChromeBackground from "@app/assets/largeGraphics/speedTestBackground.svg"
+import SpeedTest from "@app/assets/gifs/speedTest.gif"
+import AnimatedLineA from "./animatedLineA"
+import AnimatedLineB from "./animatedLineB"
+import Router from "@app/assets/icons/router.svg"
+import BrowsingData from "@app/assets/icons/browsingData.svg"
 
-import VerticalTemplate from './verticalTemplate'
+import VerticalTemplate from "./verticalTemplate"
 
 export const Middle = () => {
-  /*
+    /*
         Features section of product page
 
         Arguments: none
     */
-  const { width } = withContext()
+    const { width } = withContext()
 
-  return (
+    return (
         <div>
             <VerticalTemplate
                 visible={true}
@@ -28,8 +28,8 @@ export const Middle = () => {
                 title={
                     <>
                         <div className="text-gray dark:text-gray-300">
-                            {' '}
-                            Load pages{' '}
+                            {" "}
+                            Load pages{" "}
                             <span className="text-blue dark:text-mint">
                                 instantly
                             </span>
@@ -58,59 +58,54 @@ export const Middle = () => {
                     </div>
                 }
             />
-                <VerticalTemplate
-                    visible={true}
-                    title={
-                        <>
-                            <div className="text-gray-dark dark:text-gray-300">
-                                Use <span className="text-mint">10x less</span>{' '}
-                                memory
-                            </div>
-                        </>
-                    }
-                    text={
-                        <div className="font-body dark:text-gray-400 tracking-wider">
-                            Today, your computer runs out of memory and slows
-                            down when you open too many tabs. By running in the
-                            cloud, Fractal never consumes more than 300MB of
-                            memory.
+            <VerticalTemplate
+                visible={true}
+                title={
+                    <>
+                        <div className="text-gray-dark dark:text-gray-300">
+                            Use <span className="text-mint">10x less</span>{" "}
+                            memory
                         </div>
-                    }
-                    image={
-                        <div className="m-auto inline-block max-w-xs md:max-w-none">
-                            <div className="relative right-32 md:right-0">
-                                <AnimatedLineB
-                                    scale={
-                                        width > ScreenSize.MEDIUM ? 1.0 : 0.5
-                                    }
-                                />
-                            </div>
-                            <div className="relative right-32 bottom-24 md:right-0 md:bottom-0">
-                                <AnimatedLineA
-                                    scale={
-                                        width > ScreenSize.MEDIUM ? 1.0 : 0.5
-                                    }
-                                />
-                            </div>
-                            <div className="font-body absolute bg-blue-light px-10 py-3 text-blue font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl">
-                                <div>Chrome uses 4GB RAM</div>
-                            </div>
-                            <div className="font-body absolute bg-mint-light px-10 py-3 text-gray font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl">
-                                <div>Fractal uses 0.3GB RAM</div>
-                            </div>
-                            <div className="font-body text-sm font-bold text-gray dark:text-gray-300 tracking-wide mt-0 md:pt-8 w-full">
-                                RAM usage vs. number of tabs open
-                            </div>
+                    </>
+                }
+                text={
+                    <div className="font-body dark:text-gray-400 tracking-wider">
+                        Today, your computer runs out of memory and slows down
+                        when you open too many tabs. By running in the cloud,
+                        Fractal never consumes more than 300MB of memory.
+                    </div>
+                }
+                image={
+                    <div className="m-auto inline-block max-w-xs md:max-w-none">
+                        <div className="relative right-32 md:right-0">
+                            <AnimatedLineB
+                                scale={width > ScreenSize.MEDIUM ? 1.0 : 0.5}
+                            />
                         </div>
-                    }
-                />
+                        <div className="relative right-32 bottom-24 md:right-0 md:bottom-0">
+                            <AnimatedLineA
+                                scale={width > ScreenSize.MEDIUM ? 1.0 : 0.5}
+                            />
+                        </div>
+                        <div className="font-body absolute bg-blue-light px-10 py-3 text-blue font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl">
+                            <div>Chrome uses 4GB RAM</div>
+                        </div>
+                        <div className="font-body absolute bg-mint-light px-10 py-3 text-gray font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl">
+                            <div>Fractal uses 0.3GB RAM</div>
+                        </div>
+                        <div className="font-body text-sm font-bold text-gray dark:text-gray-300 tracking-wide mt-0 md:pt-8 w-full">
+                            RAM usage vs. number of tabs open
+                        </div>
+                    </div>
+                }
+            />
             <VerticalTemplate
                 visible={true}
                 background
                 title={
                     <>
                         <div className="text-gray dark:text-gray-300">
-                            Always{' '}
+                            Always{" "}
                             <span className="text-blue dark:text-mint">
                                 incognito
                             </span>
@@ -118,7 +113,6 @@ export const Middle = () => {
                     </>
                 }
                 text={
-
                     <div className="font-body dark:text-gray-400 tracking-wider mb-4">
                         Because Fractal runs in datacenters, your IP address and
                         location are hidden from websites (similar to a VPN),
@@ -129,7 +123,7 @@ export const Middle = () => {
                     <div
                         className="rounded border-2 border-white border-solid padding px-4 md:px-10 py-4 shadow-xl w-72 md:w-96 m-auto text-white tracking-wide mt-16 text-sm shadow-bright"
                         style={{
-                          background: '#0E042C'
+                            background: "#0E042C",
                         }}
                     >
                         <div className="max-h-10 md:max-h-12 w-full pt-3">
@@ -148,7 +142,7 @@ export const Middle = () => {
                             <div
                                 className="relative bg-blue-light text-blue px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-8"
                                 style={{
-                                  left: width > ScreenSize.MEDIUM ? 275 : 170
+                                    left: width > ScreenSize.MEDIUM ? 275 : 170,
                                 }}
                             >
                                 Not Traced
@@ -170,7 +164,7 @@ export const Middle = () => {
                             <div
                                 className="relative animate-bounce bg-mint text-gray px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-6 delay-500 duration-500"
                                 style={{
-                                  left: width > ScreenSize.MEDIUM ? 275 : 170
+                                    left: width > ScreenSize.MEDIUM ? 275 : 170,
                                 }}
                             >
                                 Not Stored
@@ -180,7 +174,7 @@ export const Middle = () => {
                 }
             />
         </div>
-  )
+    )
 }
 
 export default Middle
