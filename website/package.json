@@ -70,5 +70,10 @@
         "snowpack": "^3.7.1",
         "tailwindcss": "^2.2.4",
         "typescript": "^4.3.5"
-    }
+    },
+    "engines": {
+        "node": ">=15.x",
+        "npm": "use-yarn",
+        "yarn": ">=1.19.x"
+      }
 }

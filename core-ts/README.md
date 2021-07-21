@@ -19,17 +19,17 @@ If you're making new functions or exploring API responses, you might like to be 
 You might setup up `src/index.ts` with the boilerplate below to get you started. Note the relative path imports, and the IIFE function attached to `const _ =`, which allows you to use `async/await` syntax.
 
 ```js
-import { withGet, fetchBase } from "./http"
-import { decorate } from "./utilitles"
+import { withGet, fetchBase } from "./http";
+import { decorate } from "./utilitles";
 
-const get = decorate(fetchBase, withGet)
-const url = "www.my-test-server/endpoint"
+const get = decorate(fetchBase, withGet);
+const url = "www.my-test-server/endpoint";
 
-let x
+let x;
 const _ = (async () => {
-    x = await get({ url })
-    console.log(x)
-})()
+  x = await get({ url });
+  console.log(x);
+})();
 ```
 
 `yarn run dev` in your terminal will start up `nodemon` and `ts-node`, and you'll see new console output every time you reload.

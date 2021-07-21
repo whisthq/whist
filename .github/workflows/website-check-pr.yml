@@ -22,11 +22,6 @@ jobs:
     website-linting-check-pr-linting:
         name: Linting
         runs-on: ubuntu-20.04
-
-        env:
-            CI: true
-            NPM_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-
         steps:
             - name: Check out Git Repository
               uses: actions/checkout@v2
