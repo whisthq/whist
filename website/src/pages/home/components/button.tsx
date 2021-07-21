@@ -1,27 +1,27 @@
-import React, { FC } from "react";
-import classNames from "classnames";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
+import React, { FC } from "react"
+import classNames from "classnames"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 /*
     Prop declarations
 */
 
 export enum FractalButtonState {
-  DEFAULT,
-  DISABLED,
-  PROCESSING,
+    DEFAULT,
+    DISABLED,
+    PROCESSING,
 }
 
 interface BaseButtonProps {
-  contents: JSX.Element | string;
-  onClick?: (_: any) => void;
-  className?: string;
-  disabled?: boolean;
+    contents: JSX.Element | string
+    onClick?: (_: any) => void
+    className?: string
+    disabled?: boolean
 }
 
 interface FractalButtonProps extends BaseButtonProps {
-  state: FractalButtonState;
+    state: FractalButtonState
 }
 
 /*
@@ -29,7 +29,7 @@ interface FractalButtonProps extends BaseButtonProps {
 */
 
 const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
-  /*
+    /*
         Description:
             Base button component with custom text
 
@@ -40,27 +40,27 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
             disabled(boolean): If true, button cannot be clicked
     */
 
-  <button
-    className={classNames(
-      "text-md rounded text-white duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold border-gray",
-      "transition-colors",
-      props.className
-    )}
-    onClick={props.onClick}
-    disabled={props.disabled}
-    style={{
-      background: "rgba(255,255,255,0.1)",
-      border: "1px solid rgba(255,255,255,.1)",
-    }}
-  >
-    {props.contents}
-  </button>
-);
+    <button
+        className={classNames(
+            "text-md rounded text-white duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold border-gray",
+            "transition-colors",
+            props.className
+        )}
+        onClick={props.onClick}
+        disabled={props.disabled}
+        style={{
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,.1)",
+        }}
+    >
+        {props.contents}
+    </button>
+)
 
 export const FractalButton: FC<FractalButtonProps> = (
-  props: FractalButtonProps
+    props: FractalButtonProps
 ): JSX.Element => {
-  /*
+    /*
         Description:
             Returns a button component with custom text
 
@@ -72,46 +72,46 @@ export const FractalButton: FC<FractalButtonProps> = (
             state(FractalButtonType): Button state (defaults to FractalButtonState.DEFAULT)
     */
 
-  const { state, ...baseButtonProps } = props;
+    const { state, ...baseButtonProps } = props
 
-  const doNothing = () => {};
+    const doNothing = () => {}
 
-  const disabledClassName = classNames(
-    props.className,
-    "opacity-50 pointer-events-none"
-  );
+    const disabledClassName = classNames(
+        props.className,
+        "opacity-50 pointer-events-none"
+    )
 
-  const enabledClassName = classNames(props.className);
+    const enabledClassName = classNames(props.className)
 
-  switch (state) {
-    case FractalButtonState.DISABLED: {
-      const disabledButtonProps = Object.assign(baseButtonProps, {
-        className: disabledClassName,
-        onClick: doNothing,
-      });
-      return <BaseButton {...disabledButtonProps} />;
+    switch (state) {
+        case FractalButtonState.DISABLED: {
+            const disabledButtonProps = Object.assign(baseButtonProps, {
+                className: disabledClassName,
+                onClick: doNothing,
+            })
+            return <BaseButton {...disabledButtonProps} />
+        }
+        case FractalButtonState.PROCESSING: {
+            const processingButtonProps = Object.assign(baseButtonProps, {
+                className: disabledClassName,
+                contents: (
+                    <>
+                        <FontAwesomeIcon
+                            icon={faCircleNotch}
+                            spin
+                            className="text-white mt-1"
+                        />
+                    </>
+                ),
+                onClick: doNothing,
+            })
+            return <BaseButton {...processingButtonProps} />
+        }
+        default: {
+            const enabledButtonProps = Object.assign(baseButtonProps, {
+                className: enabledClassName,
+            })
+            return <BaseButton {...enabledButtonProps} />
+        }
     }
-    case FractalButtonState.PROCESSING: {
-      const processingButtonProps = Object.assign(baseButtonProps, {
-        className: disabledClassName,
-        contents: (
-          <>
-            <FontAwesomeIcon
-              icon={faCircleNotch}
-              spin
-              className="text-white mt-1"
-            />
-          </>
-        ),
-        onClick: doNothing,
-      });
-      return <BaseButton {...processingButtonProps} />;
-    }
-    default: {
-      const enabledButtonProps = Object.assign(baseButtonProps, {
-        className: enabledClassName,
-      });
-      return <BaseButton {...enabledButtonProps} />;
-    }
-  }
-};
+}
