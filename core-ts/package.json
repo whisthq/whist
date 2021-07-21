@@ -53,8 +53,8 @@
         "copy-package": "mkdir -p dist && cp package.json dist/package.json",
         "build": "npm run clean && npm run compile",
         "dev": "nodemon -r tsconfig-paths/register --watch src",
-        "lint-check": "eslint src/** --no-error-on-unmatched-pattern",
-        "lint-fix": "eslint --fix src/** --no-error-on-unmatched-pattern",
+        "lint:check": "eslint src/** --no-error-on-unmatched-pattern",
+        "lint:fix": "eslint --fix src/** --no-error-on-unmatched-pattern",
         "tsc-watch": "npm run clean && npm run compile -- --watch",
         "test": "npm run compile && jest",
         "test-watch": "jest --watch"
