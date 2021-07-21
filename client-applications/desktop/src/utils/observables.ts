@@ -6,19 +6,19 @@
  */
 
 import {
-  Observable,
-  ObservableInput,
-  merge,
-  race,
-  interval,
-  from,
-  combineLatest,
+    Observable,
+    ObservableInput,
+    merge,
+    race,
+    interval,
+    from,
+    combineLatest,
 } from "rxjs"
 import { map, mapTo, switchMap, take } from "rxjs/operators"
 import { toPairs } from "lodash"
 
 export const loadingFrom = (
-  /*
+    /*
         Description:
             A helper that automates the creation of a "loading" observable.
 
@@ -33,16 +33,16 @@ export const loadingFrom = (
             observable should emit at a time, any subsequent "end" emissions
             will be ignored until "request" emits again.
     */
-  request: Observable<any>,
-  ...ends: Array<Observable<any>>
+    request: Observable<any>,
+    ...ends: Array<Observable<any>>
 ) =>
-  merge(
-    request.pipe(mapTo(true)),
-    race(...ends.map((o) => o.pipe(mapTo(false))))
-  )
+    merge(
+        request.pipe(mapTo(true)),
+        race(...ends.map((o) => o.pipe(mapTo(false))))
+    )
 
 export const pollMap = <T>(
-  /*
+    /*
         Description:
             An adorable little helper to perform a function on a time interval.
 
@@ -56,18 +56,18 @@ export const pollMap = <T>(
             unsubscribe from it. The returned observable will wait for the first
             time step before emitting its first value.
     */
-  step: number,
-  func: (...args: any[]) => ObservableInput<T>
+    step: number,
+    func: (...args: any[]) => ObservableInput<T>
 ) => {
-  return switchMap((args) =>
-    interval(step).pipe(switchMap(() => from(func(args))))
-  )
+    return switchMap((args) =>
+        interval(step).pipe(switchMap(() => from(func(args))))
+    )
 }
 
 export const objectCombine = <T extends { [key: string]: Observable<any> }>(
-  obj: T
+    obj: T
 ) =>
-  /*
+    /*
         Description:
             Takes in a map of observable values and emits a key/value pair
             anytime any observable in the map emits.
@@ -88,14 +88,14 @@ export const objectCombine = <T extends { [key: string]: Observable<any> }>(
             obj: Key/value mapping of observable names to observables
     */
 
-  merge(
-    ...toPairs(obj).map(([name, obs]) =>
-      obs.pipe(map((val) => ({ [name]: val })))
+    merge(
+        ...toPairs(obj).map(([name, obs]) =>
+            obs.pipe(map((val) => ({ [name]: val })))
+        )
     )
-  )
 
 export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
-  /*
+    /*
         Description:
             A helper that allows one observable to fire only when another observable
             has fired.
@@ -106,4 +106,4 @@ export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
         Returns:
             An observable that fires only when the "signal" observable has fired.
     */
-  combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))
+    combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))

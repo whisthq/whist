@@ -11,36 +11,36 @@ const fs = require("fs-extra")
 const { userDataFolderNames } = require("../config/configs")
 
 const clearAppData = (_env, ...args) => {
-  let foldersToDelete
+    let foldersToDelete
 
-  switch (args[0]) {
-    case "--all":
-      foldersToDelete = Object.values(userDataFolderNames)
-      break
-    case "--prod":
-      foldersToDelete = [userDataFolderNames.production]
-      break
-    case "--dev":
-      foldersToDelete = [userDataFolderNames.development]
-      break
-  }
+    switch (args[0]) {
+        case "--all":
+            foldersToDelete = Object.values(userDataFolderNames)
+            break
+        case "--prod":
+            foldersToDelete = [userDataFolderNames.production]
+            break
+        case "--dev":
+            foldersToDelete = [userDataFolderNames.development]
+            break
+    }
 
-  if (!foldersToDelete) {
-    console.log("Must specify a flag: --[all|dev|prod]")
+    if (!foldersToDelete) {
+        console.log("Must specify a flag: --[all|dev|prod]")
+        app.exit()
+    }
+
+    foldersToDelete.forEach((folder) => {
+        const appPath = path.join(app.getPath("appData"), folder)
+        console.log("Clearing", appPath)
+        fs.rmdirSync(appPath, { recursive: true })
+    })
+
     app.exit()
-  }
-
-  foldersToDelete.forEach((folder) => {
-    const appPath = path.join(app.getPath("appData"), folder)
-    console.log("Clearing", appPath)
-    fs.rmdirSync(appPath, { recursive: true })
-  })
-
-  app.exit()
 }
 
 module.exports = clearAppData
 
 if (require.main === module) {
-  clearAppData({}, ...process.argv.slice(2))
+    clearAppData({}, ...process.argv.slice(2))
 }

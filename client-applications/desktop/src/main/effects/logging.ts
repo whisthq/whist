@@ -10,17 +10,20 @@ const startTime = Date.now()
 
 // Iterates through all the triggers and logs them
 values(TRIGGER).forEach((name: string) => {
-  fromTrigger(name).subscribe((x: any) => {
-    if (x.timestamp !== undefined && x.timestamp > startTime) {
-      logBase(
-        name,
-        { ...omit(x, ["timestamp"]), msSinceStart: x.timestamp - startTime },
-        LogLevel.DEBUG
-      ).catch((err) => console.error(err))
-    } else {
-      logBase(name, omit(x, ["timestamp"]), LogLevel.DEBUG).catch((err) =>
-        console.error(err)
-      )
-    }
-  })
+    fromTrigger(name).subscribe((x: any) => {
+        if (x.timestamp !== undefined && x.timestamp > startTime) {
+            logBase(
+                name,
+                {
+                    ...omit(x, ["timestamp"]),
+                    msSinceStart: x.timestamp - startTime,
+                },
+                LogLevel.DEBUG
+            ).catch((err) => console.error(err))
+        } else {
+            logBase(name, omit(x, ["timestamp"]), LogLevel.DEBUG).catch((err) =>
+                console.error(err)
+            )
+        }
+    })
 })

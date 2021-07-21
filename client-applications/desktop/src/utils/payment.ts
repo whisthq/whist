@@ -9,7 +9,7 @@ import { FractalCallbackUrls } from "@app/config/urls"
 import { store } from "@app/utils/persist"
 
 export const stripeBillingPortalCreate = async () => {
-  /*
+    /*
     Description: 
       Makes a webserver call to get a stripe customer portal url 
     
@@ -20,13 +20,13 @@ export const stripeBillingPortalCreate = async () => {
       the stripe customer portal url 
   */
 
-  const accessToken = store.get("accessToken") ?? ""
-  const response = await post({
-    endpoint: "/stripe/customer_portal",
-    accessToken,
-    body: {
-      return_url: FractalCallbackUrls.paymentCallBack,
-    },
-  })
-  return response?.json?.url
+    const accessToken = store.get("accessToken") ?? ""
+    const response = await post({
+        endpoint: "/stripe/customer_portal",
+        accessToken,
+        body: {
+            return_url: FractalCallbackUrls.paymentCallBack,
+        },
+    })
+    return response?.json?.url
 }
