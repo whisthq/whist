@@ -83,11 +83,11 @@ export const authInfoParse = (res: any) => {
   */
 
     const decoded = jwtDecode(res?.json?.id_token ?? "") as any
-    const subClaim = decoded?.sub
+    const jwtIdentity = decoded?.sub
     const userEmail = decoded?.email
     const accessToken = res?.json?.access_token
     const refreshToken = res?.json?.refresh_token
-    if (typeof subClaim !== "string")
+    if (typeof jwtIdentity !== "string")
         return {
             error: {
                 message: "Decoded JWT does not have property .sub",
@@ -115,7 +115,7 @@ export const authInfoParse = (res: any) => {
                 data: res,
             },
         }
-    return { subClaim, userEmail, accessToken, refreshToken }
+    return { jwtIdentity, userEmail, accessToken, refreshToken }
 }
 
 export const generateRandomConfigToken = () => {

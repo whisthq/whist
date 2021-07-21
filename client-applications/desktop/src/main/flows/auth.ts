@@ -1,7 +1,6 @@
 import { has } from "lodash"
 import { from, zip } from "rxjs"
 import { switchMap, map, filter, share } from "rxjs/operators"
-
 import { flow } from "@app/utils/flows"
 import {
     generateRandomConfigToken,
@@ -12,7 +11,7 @@ import { store } from "@app/utils/persist"
 
 export default flow<{
     userEmail: string
-    subClaim: string
+    jwtIdentity: string
     accessToken: string
     refreshToken: string
     configToken?: string

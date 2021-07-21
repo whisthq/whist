@@ -27,9 +27,9 @@ describe("authInfoParse", () => {
     const testJSONBadRefresh = { ...testJSONGood, refresh_token: undefined }
     const testJSONBadEmail = { ...testJSONGood, id_token: testIdTokenBadEmail }
 
-    test("returns subClaim, userEmail, accessToken, refreshToken", () => {
+    test("returns jwtIdentity, userEmail, accessToken, refreshToken", () => {
         expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
-            subClaim: "jrocket@example.com",
+            jwtIdentity: "jrocket@example.com",
             userEmail: "test@fractal.co",
             accessToken: "abcdefg",
             refreshToken: "hijklmnop",

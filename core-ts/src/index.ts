@@ -11,7 +11,7 @@ export {
     accessToken,
     refreshToken,
     configToken,
-    subClaim,
+    jwtIdentity,
     authCallbackURL,
     mandelboxIP,
     mandelboxPorts,

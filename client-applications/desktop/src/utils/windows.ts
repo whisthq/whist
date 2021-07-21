@@ -200,14 +200,14 @@ export const createAuthWindow = () => {
         const response = await authInfoCallbackRequest({ authCallbackURL: url })
         const data = authInfoParse(response)
         auth0Event.emit("auth-info", {
-            sub: data.subClaim,
+            sub: data.jwtIdentity,
             email: data.userEmail,
             refreshToken: data.refreshToken,
             accessToken: data.accessToken,
         })
-    })
 
-    return win
+        return win
+    })
 }
 
 export const createPaymentWindow = async () => {
@@ -234,7 +234,7 @@ export const createPaymentWindow = async () => {
         urls: [FractalCallbackUrls.paymentCallBack],
     }
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    webRequest.onBeforeRequest(filter, async ({ url }) => {
+    webRequest.onBeforeRequest(filter, async () => {
         win.close()
     })
     return win
