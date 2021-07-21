@@ -90,4 +90,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder);
  */
 void destroy_nvidia_encoder(NvidiaEncoder* encoder);
 
+int32_t multithreaded_destroy_nvidia_encoder(void* opaque);
+
 #endif

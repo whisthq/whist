@@ -32,12 +32,24 @@ Private Functions
 
 void transfer_nvidia_data(VideoEncoder *encoder);
 int transfer_ffmpeg_data(VideoEncoder *encoder);
+int32_t multithreaded_destroy_internal_encoders(void *opaque);
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
+
+int32_t multithreaded_destroy_internal_encoders(void *opaque) {
+    VideoEncoder *encoder = (VideoEncoder *)opaque;
+    if (encoder->ffmpeg_encoder) {
+        destroy_ffmpeg_encoder(encoder->ffmpeg_encoder);
+    }
+    if (encoder->nvidia_encoder) {
+        destroy_nvidia_encoder(encoder->nvidia_encoder);
+    }
+    return 0;
+}
 void transfer_nvidia_data(VideoEncoder *encoder) {
     /*
         Set encoder metadata according to nvidia_encoder members and tell the encoder there is only
