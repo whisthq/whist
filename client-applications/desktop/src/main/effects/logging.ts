@@ -1,5 +1,5 @@
 import { values, omit } from "lodash"
-import { zip } from "rxjs"
+import { zip, Observable, of } from "rxjs"
 
 import { logBase, LogLevel } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
@@ -9,16 +9,25 @@ import TRIGGER from "@app/utils/triggers"
 // should be good enough.
 const startTime = Date.now()
 
-const logTime = (x: { timestamp: number }, start: number) => {
-    if (x.timestamp > startTime) {
-        logBase(
-            "appReadyTime",
-            {
-                ms: x.timestamp - startTime,
-            },
-            LogLevel.DEBUG
-        ).catch((err) => console.error(err))
-    }
+// helper function that takes two observables with timestamps and logs the diff
+const logTime = (
+    name: string,
+    firstObs: Observable<{ timestamp: number }>,
+    secondObs: Observable<{ timestamp: number }>
+) => {
+    zip([firstObs, secondObs]).subscribe(
+        ([f, s]: [{ timestamp: number }, { timestamp: number }]) => {
+            if (s.timestamp > f.timestamp) {
+                logBase(
+                    name,
+                    {
+                        ms: s.timestamp - f.timestamp,
+                    },
+                    LogLevel.DEBUG
+                ).catch((err) => console.error(err))
+            }
+        }
+    )
 }
 
 // Iterates through all the triggers and logs them
@@ -30,11 +39,14 @@ values(TRIGGER).forEach((name: string) => {
     })
 })
 
-fromTrigger("appReady").subscribe((x: any) => logTime(x, startTime))
-
-zip([
+// Log the time diffs (ms) between certain triggers to Amplitude
+logTime(
+    "electronLoadTime",
+    of({ timestamp: startTime }),
+    fromTrigger("appReady")
+)
+logTime(
+    "mandelboxCreateTime",
     fromTrigger("authFlowSuccess"),
-    fromTrigger("mandelboxFlowSuccess"),
-]).subscribe(([a, m]: [{ timestamp: number }, { timestamp: number }]) =>
-    logTime(a, m.timestamp)
+    fromTrigger("mandelboxFlowSuccess")
 )
