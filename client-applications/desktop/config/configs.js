@@ -46,7 +46,8 @@ const configs = {
         deployEnv: "dev",
         sentryEnv: "development",
         clientDownloadURLs: {
-            MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+            MacOS:
+                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
         },
@@ -71,7 +72,8 @@ const configs = {
         deployEnv: "dev",
         sentryEnv: "development",
         clientDownloadURLs: {
-            MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+            MacOS:
+                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
         },
@@ -95,7 +97,8 @@ const configs = {
         deployEnv: "staging",
         sentryEnv: "staging",
         clientDownloadURLs: {
-            MacOS: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
+            MacOS:
+                "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
         },
@@ -119,7 +122,8 @@ const configs = {
         deployEnv: "prod",
         sentryEnv: "production",
         clientDownloadURLs: {
-            MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
+            MacOS:
+                "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
         },

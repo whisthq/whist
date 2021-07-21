@@ -21,19 +21,19 @@ The `tenant.yaml` represents the full configuration of an Auth0 tenant. We have 
 ```yaml
 ---
 resourceServers:
-  - name: Fractal API
-    identifier: "##API_IDENTIFIER##"
-    allow_offline_access: true
-    enforce_policies: true
+    - name: Fractal API
+      identifier: "##API_IDENTIFIER##"
+      allow_offline_access: true
+      enforce_policies: true
 ```
 
 The Auth0 CLI will replace these with the variables defined in the config JSON at deploy-time. Thus, it's important to note that **the `tenant.yaml` file is the same for each of our three tenants**. Any tenant-specific configuration should be moved to its respective config json file.
 
 If you make changes in the Auth0 UI, make sure to run `yarn update-tenant` to download your changes in the local `tenant.yaml`. Changes made in the UI should only be done on the dev tenant. You may notice that this pulls the dev configuration -- this is by design. The flow for updating Auth0 configuration across the tenants is, broadly:
 
-- Change Auth0 config in dev tenant (with web UI, API, etc.)
-- Pull the new `tenant.yml`, commit and push to `dev` branch on GitHub
-- As the changes get promoted to `staging` and `prod`, GitHub Actions will update the Auth0 tenants accordingly
+-   Change Auth0 config in dev tenant (with web UI, API, etc.)
+-   Pull the new `tenant.yml`, commit and push to `dev` branch on GitHub
+-   As the changes get promoted to `staging` and `prod`, GitHub Actions will update the Auth0 tenants accordingly
 
 This ensures that the `tenant.yaml` in source control is the definite source-of-truth for that branch's Auth0 configuration. It also helps by minimizing the differences between our dev and prod Auth0 tenants -- so that no issues will be introduced upon promoting `dev` to `staging` to `prod`.
 
@@ -51,33 +51,33 @@ Here's an example client configuration:
   cross_origin_auth: false
   custom_login_page_on: true
   grant_types:
-    - client_credentials
+      - client_credentials
   is_first_party: true
   is_token_endpoint_ip_header_trusted: false
   jwt_configuration:
-    alg: RS256
-    lifetime_in_seconds: 36000
-    secret_encoded: false
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
   oidc_conformant: true
   refresh_token:
-    expiration_type: non-expiring
-    leeway: 0
-    infinite_token_lifetime: true
-    infinite_idle_token_lifetime: true
-    token_lifetime: 31557600
-    idle_token_lifetime: 2592000
-    rotation_type: non-rotating
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
   sso_disabled: false
   token_endpoint_auth_method: client_secret_post
 ```
 
 Many of these fields are self-explanatory, but some require more explanation:
 
-- `app_type` indicates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Fractal desktop application, etc.
-- `jwt_configuration.alg` is the algorithm used to sign access tokens for this client. This should be 'RS256' (asymmetric signing algorithm, can be verified with a public key) unless there's a very good reason otherwise.
-- `jwt_configuration.lifetime_in_seconds` is the lifetime (in seconds) of an _access_ token. By default, this is 1 day
-- `refresh_token.token_lifetime` is the _maximum_ lifetime (in seconds) of a _refresh_ token
-- `refresh_token.idle_token_lifetime` is the length of time (in seconds) that a refresh token may be not used before the token gets invalidated.
+-   `app_type` indicates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Fractal desktop application, etc.
+-   `jwt_configuration.alg` is the algorithm used to sign access tokens for this client. This should be 'RS256' (asymmetric signing algorithm, can be verified with a public key) unless there's a very good reason otherwise.
+-   `jwt_configuration.lifetime_in_seconds` is the lifetime (in seconds) of an _access_ token. By default, this is 1 day
+-   `refresh_token.token_lifetime` is the _maximum_ lifetime (in seconds) of a _refresh_ token
+-   `refresh_token.idle_token_lifetime` is the length of time (in seconds) that a refresh token may be not used before the token gets invalidated.
 
 ## Adding a New Social Provider
 
