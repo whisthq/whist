@@ -3,7 +3,7 @@ import time
 
 from collections import defaultdict
 from sys import maxsize
-from typing import Any, List, Optional, Dict
+from typing import Any, DefaultDict, List, Optional
 import requests
 from flask import current_app
 from app.models.hardware import (
@@ -175,11 +175,11 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 # as needed.
 # Note that this only works if we have 1 web process,
 # Multiprocess support will require DB synchronization/locking
-scale_mutex: Dict[str, threading.Lock] = defaultdict(threading.Lock)
+scale_mutex: DefaultDict[str, threading.Lock] = defaultdict(threading.Lock)
 
 
 def do_scale_up_if_necessary(
-    region: str, ami: str, force_buffer: Optional[int] = 0, **kwargs: Any
+    region: str, ami: str, force_buffer: int = 0, **kwargs: Any
 ) -> List[str]:
     """
     Scales up new instances as needed, given a region and AMI to check
