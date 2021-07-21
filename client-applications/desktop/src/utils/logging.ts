@@ -13,8 +13,8 @@ import AWS from "aws-sdk"
 import * as Amplitude from "@amplitude/node"
 
 import config, {
-  loggingBaseFilePath,
-  loggingFiles,
+    loggingBaseFilePath,
+    loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
 
@@ -27,65 +27,67 @@ export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
-  fs.mkdirSync(electronLogPath, { recursive: true })
-  const logPath = path.join(electronLogPath, loggingFiles.client)
-  return fs.createWriteStream(logPath)
+    fs.mkdirSync(electronLogPath, { recursive: true })
+    const logPath = path.join(electronLogPath, loggingFiles.client)
+    return fs.createWriteStream(logPath)
 }
 
 const logFile = openLogFile()
 
 // Log levels
 export enum LogLevel {
-  DEBUG = "DEBUG",
-  WARNING = "WARNING",
-  ERROR = "ERROR",
+    DEBUG = "DEBUG",
+    WARNING = "WARNING",
+    ERROR = "ERROR",
 }
 
 const formatLogs = (title: string, data: object, level: LogLevel) => {
-  // We use a special stringify function below before converting an object
-  // to JSON. This is because certain objects in our application, like HTTP
-  // responses and ChildProcess objects, have circular references in their
-  // structure. This is normal NodeJS behavior, but it can cause a runtime error
-  // if you blindly try to turn these objects into JSON. Our special stringify
-  // function strips these circular references from the object.
-  const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${util.inspect(
-    data
-  )}`
+    // We use a special stringify function below before converting an object
+    // to JSON. This is because certain objects in our application, like HTTP
+    // responses and ChildProcess objects, have circular references in their
+    // structure. This is normal NodeJS behavior, but it can cause a runtime error
+    // if you blindly try to turn these objects into JSON. Our special stringify
+    // function strips these circular references from the object.
+    const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${util.inspect(
+        data
+    )}`
 
-  const debugLog = truncate(template, {
-    length: 1000,
-    omission: "...**logBase only prints 1000 characters per log**",
-  })
+    const debugLog = truncate(template, {
+        length: 1000,
+        omission: "...**logBase only prints 1000 characters per log**",
+    })
 
-  return `${util.format(debugLog)} \n`
+    return `${util.format(debugLog)} \n`
 }
 
 const localLog = (
-  title: string,
-  data: object,
-  level: LogLevel,
-  userEmail: string
+    title: string,
+    data: object,
+    level: LogLevel,
+    userEmail: string
 ) => {
-  const logs = formatLogs(`${title} -- ${userEmail}`, data, level)
+    const logs = formatLogs(`${title} -- ${userEmail}`, data, level)
 
-  if (!app.isPackaged) console.log(logs)
+    if (!app.isPackaged) console.log(logs)
 
-  logFile.write(logs)
+    logFile.write(logs)
 }
 
 const amplitudeLog = async (title: string, data: object, userEmail: string) => {
-  if (userEmail !== "") {
-    await amplitude.logEvent({
-      event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
-      session_id: sessionID,
-      user_id: userEmail,
-      event_properties: data,
-    })
-  }
+    if (userEmail !== "") {
+        await amplitude.logEvent({
+            event_type: `[${
+                (config.appEnvironment as string) ?? "LOCAL"
+            }] ${title}`,
+            session_id: sessionID,
+            user_id: userEmail,
+            event_properties: data,
+        })
+    }
 }
 
 export const logBase = async (title: string, data: object, level: LogLevel) => {
-  /*
+    /*
   Description:
       Sends a log to console, client.log file, and/or logz.io depending on if the app is packaged
   Arguments:
@@ -93,61 +95,65 @@ export const logBase = async (title: string, data: object, level: LogLevel) => {
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
-  const userEmail = persistGet("userEmail") ?? ""
+    const userEmail = persistGet("userEmail") ?? ""
 
-  await amplitudeLog(title, data, userEmail as string)
-  localLog(title, data, level, userEmail as string)
+    await amplitudeLog(title, data, userEmail as string)
+    localLog(title, data, level, userEmail as string)
 }
 
 export const uploadToS3 = async () => {
-  /*
+    /*
   Description:
       Uploads a local file to S3
   Returns:
       Response from the s3 upload
   */
-  if (!app.isPackaged) return
+    if (!app.isPackaged) return
 
-  const userEmail = (persistGet("userEmail") as string) ?? ""
+    const userEmail = (persistGet("userEmail") as string) ?? ""
 
-  if (userEmail === "") return
+    if (userEmail === "") return
 
-  const s3FileName = `CLIENT_${userEmail}_${new Date().getTime()}.txt`
+    const s3FileName = `CLIENT_${userEmail}_${new Date().getTime()}.txt`
 
-  await logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
+    await logBase(
+        "Logs upload to S3",
+        { s3FileName: s3FileName },
+        LogLevel.DEBUG
+    )
 
-  const uploadHelper = async (localFilePath: string) => {
-    const accessKey = config.keys.AWS_ACCESS_KEY
-    const secretKey = config.keys.AWS_SECRET_KEY
-    const bucketName = "fractal-protocol-logs"
+    const uploadHelper = async (localFilePath: string) => {
+        const accessKey = config.keys.AWS_ACCESS_KEY
+        const secretKey = config.keys.AWS_SECRET_KEY
+        const bucketName = "fractal-protocol-logs"
 
-    const s3 = new AWS.S3({
-      accessKeyId: accessKey,
-      secretAccessKey: secretKey,
-    })
-    // Read file into buffer
-    const fileContent = fs.readFileSync(localFilePath)
-    // Set up S3 upload parameters
-    const params = {
-      Bucket: bucketName,
-      Key: s3FileName,
-      Body: fileContent,
-    }
-    // Upload files to the bucket
-    return await new Promise((resolve, reject) => {
-      s3.upload(params, (err: Error, data: any) => {
-        if (err !== null) {
-          reject(err)
-        } else {
-          resolve(data)
+        const s3 = new AWS.S3({
+            accessKeyId: accessKey,
+            secretAccessKey: secretKey,
+        })
+        // Read file into buffer
+        const fileContent = fs.readFileSync(localFilePath)
+        // Set up S3 upload parameters
+        const params = {
+            Bucket: bucketName,
+            Key: s3FileName,
+            Body: fileContent,
         }
-      })
-    })
-  }
+        // Upload files to the bucket
+        return await new Promise((resolve, reject) => {
+            s3.upload(params, (err: Error, data: any) => {
+                if (err !== null) {
+                    reject(err)
+                } else {
+                    resolve(data)
+                }
+            })
+        })
+    }
 
-  const logLocation = path.join(electronLogPath, loggingFiles.protocol)
+    const logLocation = path.join(electronLogPath, loggingFiles.protocol)
 
-  if (fs.existsSync(logLocation)) {
-    await uploadHelper(logLocation)
-  }
+    if (fs.existsSync(logLocation)) {
+        await uploadHelper(logLocation)
+    }
 }

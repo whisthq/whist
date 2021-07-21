@@ -12,6 +12,6 @@ import TRIGGER from "@app/utils/triggers"
 
 createTrigger(TRIGGER.persisted, fromEvent(persistEvent, "data-persisted"))
 createTrigger(
-  TRIGGER.notPersisted,
-  fromEvent(persistEvent, "data-not-persisted")
+    TRIGGER.notPersisted,
+    fromEvent(persistEvent, "data-not-persisted")
 )

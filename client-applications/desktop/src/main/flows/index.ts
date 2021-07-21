@@ -15,30 +15,33 @@ const update = autoUpdateFlow(fromTrigger("updateAvailable"))
 
 // Auth flow
 const auth = authFlow(
-  fromSignal(
-    merge(
-      fromSignal(fromTrigger("authInfo"), fromTrigger(TRIGGER.notPersisted)),
-      fromTrigger(TRIGGER.persisted)
-    ),
-    merge(
-      fromTrigger(TRIGGER.updateNotAvailable),
-      fromTrigger(TRIGGER.updateError)
+    fromSignal(
+        merge(
+            fromSignal(
+                fromTrigger("authInfo"),
+                fromTrigger(TRIGGER.notPersisted)
+            ),
+            fromTrigger(TRIGGER.persisted)
+        ),
+        merge(
+            fromTrigger(TRIGGER.updateNotAvailable),
+            fromTrigger(TRIGGER.updateError)
+        )
     )
-  )
 )
 
 // Observable that fires when Fractal is ready to be launched
 const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
-  map((x: object) => ({
-    ...x, // { subClaim, accessToken, configToken }
-    region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
-  })),
-  take(1)
+    map((x: object) => ({
+        ...x, // { subClaim, accessToken, configToken }
+        region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
+    })),
+    take(1)
 ) as Observable<{
-  subClaim: string
-  accessToken: string
-  configToken: string
-  region?: AWSRegion
+    subClaim: string
+    accessToken: string
+    configToken: string
+    region?: AWSRegion
 }>
 
 // Mandelbox creation flow
