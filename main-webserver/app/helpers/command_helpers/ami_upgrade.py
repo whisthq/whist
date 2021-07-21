@@ -1,6 +1,6 @@
 import sys
 from threading import Thread
-from typing import cast, Dict, List, Any
+from typing import cast, Any, List, Mapping
 import requests
 from flask import current_app
 from sqlalchemy import or_, and_
@@ -22,7 +22,7 @@ region_wise_upgrade_threads: List[List[Any]] = []
 
 
 def insert_new_amis(
-    client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]
+    client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]
 ) -> List[RegionToAmi]:
     """
     Inserts new AMIs (but doesn't mark them as active) into the RegionToAmi table.
@@ -180,7 +180,7 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
     )
 
 
-def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Dict[str, str]) -> None:
+def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]) -> None:
     """
     Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
     This happens in the following steps:
