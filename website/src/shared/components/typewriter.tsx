@@ -21,29 +21,32 @@ const charStreams = (
     backwardTick: number
 ) =>
     zip<string | number | boolean>(
-        words.flatMap((
-            w // Letter stream
-        ) =>
-            concat(
-                ["", ...orderedCombinations(w)],
-                orderedCombinations(w).reverse()
-            )
+        words.flatMap(
+            (
+                w // Letter stream
+            ) =>
+                concat(
+                    ["", ...orderedCombinations(w)],
+                    orderedCombinations(w).reverse()
+                )
         ),
-        words.flatMap((
-            w // Timeout stream
-        ) =>
-            concat(
-                [startTick, ...fill(w.split(""), forwardTick)],
-                [endTick, ...fill(tail(w), backwardTick)]
-            )
+        words.flatMap(
+            (
+                w // Timeout stream
+            ) =>
+                concat(
+                    [startTick, ...fill(w.split(""), forwardTick)],
+                    [endTick, ...fill(tail(w), backwardTick)]
+                )
         ),
-        words.flatMap((
-            w // Blink stream
-        ) =>
-            concat(
-                [...fill(tail(w), false), true, true],
-                [true, ...fill(tail(w), false)]
-            )
+        words.flatMap(
+            (
+                w // Blink stream
+            ) =>
+                concat(
+                    [...fill(tail(w), false), true, true],
+                    [true, ...fill(tail(w), false)]
+                )
         )
     )
 
