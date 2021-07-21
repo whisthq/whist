@@ -56,6 +56,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     assert response.json["mandelbox_id"] != "" and response.json["mandelbox_id"] != "None"
 
 
+@pytest.mark.skip(reason="We currently ignore user activity.")
 @pytest.mark.usefixtures("authorized")
 def test_assign_active(client, bulk_instance, monkeypatch):
     """
