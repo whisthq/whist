@@ -4,11 +4,11 @@
  * @brief This file contains utility functions for triggers/flows.
  */
 
-import { inspect } from "util"
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, tap } from "rxjs/operators"
-import { mapValues, values, truncate } from "lodash"
+import { mapValues, values } from "lodash"
 import { withMocking } from "@app/testing"
+import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
@@ -40,11 +40,10 @@ export const fork = <T>(
     return mapValues(filters, (fn) => shared.pipe(filter(fn), share()))
 }
 
-export const flow =
-    <T>(
-        name: string,
-        flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
-    ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
+export const flow = <T>(
+    name: string,
+    flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
+): ((t: Observable<T>) => { [key: string]: Observable<any> }) => {
     /*
     Description: 
       A function that returns a function which, when a trigger is activated, will run
@@ -57,21 +56,24 @@ export const flow =
     Returns: 
       Map of observables
   */
+    const startTime = Date.now()
 
-    (trigger: Observable<T>) => {
+    return (trigger: Observable<T>) => {
         return mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
             obs.pipe(
-                tap((value) =>
-                    console.log(
-                        truncate(`DEBUG: ${name}.${key} -- ${inspect(value)}`, {
-                            length: 1000,
-                        })
+                tap((value: { timestamp: number }) =>
+                    logBase(
+                        `${name}.${key}`,
+                        value,
+                        LogLevel.DEBUG,
+                        value.timestamp - startTime
                     )
                 ),
                 share()
             )
         )
     }
+}
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
     /*

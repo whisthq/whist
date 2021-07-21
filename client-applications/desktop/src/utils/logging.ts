@@ -71,16 +71,29 @@ const localLog = (
     title: string,
     data: object,
     level: LogLevel,
-    userEmail: string
+    userEmail: string,
+    msElapsed?: number
 ) => {
-    const logs = formatLogs(`${title} -- ${userEmail}`, data, level)
+    const logs = formatLogs(
+        `${title} -- ${userEmail} -- ${(msElapsed !== undefined
+            ? msElapsed
+            : 0
+        ).toString()} ms elapsed`,
+        data,
+        level
+    )
 
     if (!app.isPackaged) console.log(logs)
 
     logFile.write(logs)
 }
 
-const amplitudeLog = async (title: string, data: object, userEmail: string) => {
+const amplitudeLog = async (
+    title: string,
+    data: object,
+    userEmail: string,
+    msElapsed?: number
+) => {
     if (userEmail !== "") {
         if (!regionSet) {
             const region = await chooseRegion(defaultAllowedRegions)
@@ -90,7 +103,10 @@ const amplitudeLog = async (title: string, data: object, userEmail: string) => {
                 }] ${title}`,
                 session_id: sessionID,
                 user_id: userEmail,
-                event_properties: data,
+                event_properties: {
+                    ...data,
+                    msElapsed: msElapsed !== undefined ? msElapsed : 0,
+                },
                 user_properties: {
                     aws_region: region,
                 },
@@ -103,13 +119,21 @@ const amplitudeLog = async (title: string, data: object, userEmail: string) => {
                 }] ${title}`,
                 session_id: sessionID,
                 user_id: userEmail,
-                event_properties: data,
+                event_properties: {
+                    ...data,
+                    msElapsed: msElapsed !== undefined ? msElapsed : 0,
+                },
             })
         }
     }
 }
 
-export const logBase = async (title: string, data: object, level: LogLevel) => {
+export const logBase = async (
+    title: string,
+    data: object,
+    level: LogLevel,
+    msElapsed?: number
+) => {
     /*
   Description:
       Sends a log to console, client.log file, and/or logz.io depending on if the app is packaged
@@ -119,9 +143,10 @@ export const logBase = async (title: string, data: object, level: LogLevel) => {
       level (LogLevel): Log level, see enum LogLevel above
   */
     const userEmail = persistGet("userEmail") ?? ""
+    localLog(title, data, level, userEmail as string, msElapsed)
 
-    await amplitudeLog(title, data, userEmail as string)
-    localLog(title, data, level, userEmail as string)
+    if (app.isPackaged)
+        await amplitudeLog(title, data, userEmail as string, msElapsed)
 }
 
 export const uploadToS3 = async () => {
