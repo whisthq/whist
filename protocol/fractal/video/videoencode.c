@@ -204,7 +204,6 @@ int video_encoder_encode(VideoEncoder *encoder) {
             return 0;
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
-            return -1;
 #endif
         case FFMPEG_ENCODER:
             if (ffmpeg_encoder_send_frame(encoder->ffmpeg_encoder)) {
@@ -245,7 +244,6 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
                                               codec);
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
-            return false;
 #endif
         case FFMPEG_ENCODER:
             // Haven't implemented ffmpeg reconfiguring yet
@@ -274,7 +272,6 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
             return;
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
-            return;
 #endif
         case FFMPEG_ENCODER:
             ffmpeg_set_iframe(encoder->ffmpeg_encoder);
@@ -303,7 +300,6 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
             return;
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
-            return;
 #endif
         case FFMPEG_ENCODER:
             ffmpeg_unset_iframe(encoder->ffmpeg_encoder);
