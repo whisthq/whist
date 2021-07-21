@@ -1,7 +1,7 @@
 import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
-import { auth0Event } from "@app/utils/auth"
+import { auth0Event } from "@app/utils/windows"
 import TRIGGER from "@app/utils/triggers"
 
 createTrigger(TRIGGER.authInfo, fromEvent(auth0Event, "auth-info"))

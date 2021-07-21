@@ -1,12 +1,12 @@
 redis:
-  # Matches version being used by dev as of 2021-02-26
-  image: redis:6.0.11
-  ports:
-    - "6379:6379"
+    # Matches version being used by dev as of 2021-02-26
+    image: redis:6.0.11
+    ports:
+        - "6379:6379"
 
 postgres_db:
-  image: postgres:12.5
-  ports:
-    - "9999:5432"
-  environment:
-    POSTGRES_HOST_AUTH_METHOD: trust
+    image: postgres:12.5
+    ports:
+        - "9999:5432"
+    environment:
+        POSTGRES_HOST_AUTH_METHOD: trust
