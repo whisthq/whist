@@ -11,7 +11,7 @@
  *
  */
 
-const { execute } = require("../node_modules/eslint/lib/cli")
+const { execute } = require("../node_modules/eslint/lib/cli");
 
 // The first two arguments here are simply placeholders, as ESLint CLI expects to be called in this way
 
@@ -24,11 +24,11 @@ const lint = (_env, ...args) => {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./scripts/**/*.js",
     "./*.js",
-  ]).then((ret) => process.exit(ret))
-}
+  ]).then((ret) => process.exit(ret));
+};
 
-module.exports = lint
+module.exports = lint;
 
 if (require.main === module) {
-  lint({}, ...process.argv.slice(2))
+  lint({}, ...process.argv.slice(2));
 }
