@@ -102,11 +102,10 @@ jobs:
 
     # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
     # EBS volumes from CI and old dev/staging/production AMIs
+    # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
     webserver-cleanup-lingering-packer-builders-and-ami-resources:
         name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
         runs-on: ubuntu-20.04
-
-        # aws-amicleaner runs per-region, so we need to run this job over all of our enabled regions
         strategy:
             matrix:
                 aws-region:
@@ -117,7 +116,6 @@ jobs:
                     - ca-central-1
                     - eu-west-1
                     - eu-central-1
-
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
