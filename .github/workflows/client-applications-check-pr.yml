@@ -184,8 +184,9 @@ jobs:
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
+              needs: monorepo-config
               env:
-                  CONFIG: ${{ steps.config-macos.outputs.config }}
+                  CONFIG: ${{ needs.config-macos.outputs.config }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
