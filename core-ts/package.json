@@ -52,15 +52,16 @@
         "compile": "tsc",
         "clean": "rimraf dist",
         "copy-package": "mkdir -p dist && cp package.json dist/package.json",
-        "build": "npm run clean && npm run compile",
+        "build": "yarn run clean && yarn run compile",
         "config:build": "docker build -t fractal/config ../config",
         "config:run": "docker run fractal/config --os auto --deploy dev",
         "config:parse": "yarn -s config:build &> /dev/null && yarn -s config:run",
-        "dev": "nodemon -r tsconfig-paths/register --watch src",
+        "dev": "CONFIG=$(yarn config:parse) nodemon -r tsconfig-paths/register --watch src",
         "lint:check": "eslint src/** --no-error-on-unmatched-pattern",
         "lint:fix": "eslint --fix src/** --no-error-on-unmatched-pattern",
-        "tsc-watch": "npm run clean && npm run compile -- --watch",
-        "test": "npm run compile && jest",
-        "test-watch": "jest --watch"
+        "tsc:watch": "CONFIG=$(yarn config:parse) yarn run clean && yarn run compile -- --watch",
+        "test": "CONFIG=$(yarn config:parse) yarn run compile && jest",
+        "test:watch": "CONFIG=$(yarn config:parse) jest --watch"
+        "test": "yarn run compile && jest"
     }
 }
