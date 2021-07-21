@@ -135,12 +135,12 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;
-    encoder->context->rc_max_rate = bitrate;
-    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    // encoder->context->rc_max_rate = bitrate; // maxBitRate
+    encoder->context->rc_buffer_size = 4 * bitrate; // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = FPS;
     encoder->context->gop_size = encoder->gop_size;
-    encoder->context->keyint_min = 5;
+    // encoder->context->keyint_min = 5;
     encoder->context->pix_fmt = hw_format;
 
     // enable automatic insertion of non-reference P-frames
@@ -149,7 +149,7 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     // p1: fastest, but lowest quality -- p7: slowest, best quality
     // only constqp/cbr/vbr are supported now with these presets
     // tune: high quality, low latency, ultra low latency, or lossless; we use ultra low latency
-    set_opt(encoder, "preset", "p1");
+    set_opt(encoder, "preset", "p4");
     set_opt(encoder, "tune", "ull");
     set_opt(encoder, "rc", "cbr");
     // zerolatency: no reordering delay
