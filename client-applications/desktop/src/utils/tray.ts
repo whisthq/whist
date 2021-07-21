@@ -57,7 +57,7 @@ const paymentMenu = [
 ]
 
 const regionMenu = [
-    ({
+    {
         label: "(Admin Only) Region",
         submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
             label: region,
@@ -66,7 +66,7 @@ const regionMenu = [
                 trayEvent.emit("region", region)
             },
         })),
-    } as unknown) as MenuItem,
+    } as unknown as MenuItem,
 ]
 
 export const destroyTray = () => {
