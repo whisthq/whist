@@ -195,6 +195,8 @@ jobs:
                   APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
 
               working-directory: client-applications/desktop
+              env:
+                CONFIG: ${{ steps.config-macos.outputs.config }}
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget -nv https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
@@ -211,4 +213,4 @@ jobs:
                   yarn config set network-timeout 600000
                   yarn cache clean
                   yarn install
-                  yarn package:notarize --config "{}" --version 1.0.0
+                  yarn package:notarize --config $CONFIG --version 1.0.0
