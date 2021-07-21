@@ -82,7 +82,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Install boto3 and Utility for Date & Time
+            - name: Install boto3 and python-dateutil
               run: pip install boto3 python-dateutil
 
             - name: Flag Old EC2 Instances and Notify in Slack if They Exist
@@ -105,6 +105,19 @@ jobs:
     webserver-cleanup-lingering-packer-builders-and-ami-resources:
         name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
         runs-on: ubuntu-20.04
+
+        # aws-amicleaner runs per-region, so we need to run this job over all of our enabled regions
+        strategy:
+            matrix:
+                aws-region:
+                    - us-east-1
+                    - us-east-2
+                    - us-west-1
+                    - us-west-2
+                    - ca-central-1
+                    - eu-west-1
+                    - eu-central-1
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -114,7 +127,7 @@ jobs:
               with:
                   aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+                  aws-region: ${{ matrix.aws-region }}
 
             - name: Setup Python-based Notifications
               working-directory: .github/workflows/helpers
@@ -123,13 +136,23 @@ jobs:
             - name: Install Utilities to Delete Lingering Packer Builders & AMI Resources
               run: pip install aws-hashicorp-packer-reaper aws-amicleaner
 
+            # Packer takes about 25-30 minutes to build new AMIs across all of our enabled regions,
+            # so any Packer instance over 45 minutes old has failed to delete and should be force-deleted
+            # We only run Packer Builders on us-east-1
             - name: Kill All Packer Instances Older Than 45 Minutes
+              if: ${{ matrix.aws-region == 'us-east-1' }}
               run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
-            - name: Delete All but Latest 100 AMIs
-              run: amicleaner -f --keep-previous 100
+            # This deletes all but the currently active AMIs and the last 20 AMIs for the AWS 
+            # region it is ran on. We chose 20 as a somewhat-arbitrary comfortable buffer in case
+            # we need to debug/revert changes at some point
+            - name: Delete All but Latest 20 AMIs
+              run: amicleaner -f --keep-previous 20
 
-            # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance
+            # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
+            # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
+            # with it, which can happen with regular instances, Packer builders, and more. They are 
+            # useless (especially since we don't store user data on instances) and thus should be deleted
             - name: Delete Orphaned EBS Volumes
               run: amicleaner -f --check-orphans
 
