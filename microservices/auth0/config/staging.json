@@ -1,14 +1,14 @@
 {
-  "AUTH0_DOMAIN": "fractal-staging.us.auth0.com",
-  "AUTH0_CLIENT_ID": "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5",
-  "AUTH0_BASE_PATH": "src",
-  "AUTH0_ALLOW_DELETE": false,
-  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
-    "FRACTAL_ELECTRON_APP_CALLBACK": ["http://localhost/callback"],
-    "FRACTAL_AUTHENTICATION_API": "https://api.fractal.co"
-  },
-  "EXCLUDED_PROPS": {
-    "clients": ["client_secret"],
-    "connections": ["options.client_secret", "options.app_secret"]
-  }
+    "AUTH0_DOMAIN": "fractal-staging.us.auth0.com",
+    "AUTH0_CLIENT_ID": "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5",
+    "AUTH0_BASE_PATH": "src",
+    "AUTH0_ALLOW_DELETE": false,
+    "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+        "FRACTAL_ELECTRON_APP_CALLBACK": ["http://localhost/callback"],
+        "FRACTAL_AUTHENTICATION_API": "https://api.fractal.co"
+    },
+    "EXCLUDED_PROPS": {
+        "clients": ["client_secret"],
+        "connections": ["options.client_secret", "options.app_secret"]
+    }
 }

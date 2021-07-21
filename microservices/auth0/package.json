@@ -1,21 +1,21 @@
 {
-  "name": "fractal-auth0",
-  "version": "1.0.0",
-  "description": "Auth0 configuration and hooks",
-  "repository": "https://github.com/fractal/fractal.git",
-  "license": "UNLICENSED",
-  "private": true,
-  "scripts": {
-    "dump:dev": "node ./scripts/dump.js dev",
-    "dump:staging": "node ./scripts/dump.js staging",
-    "dump:prod": "node ./scripts/dump.js prod",
-    "deploy:dev": "node ./scripts/deploy.js dev",
-    "deploy:staging": "node ./scripts/deploy.js staging",
-    "deploy:prod": "node ./scripts/deploy.js prod"
-  },
-  "devDependencies": {
-    "lodash": "^4.17.21",
-    "yaml": "^1.10.2",
-    "auth0-deploy-cli": "^7.1.1"
-  }
+    "name": "fractal-auth0",
+    "version": "1.0.0",
+    "description": "Auth0 configuration and hooks",
+    "repository": "https://github.com/fractal/fractal.git",
+    "license": "UNLICENSED",
+    "private": true,
+    "scripts": {
+        "dump:dev": "node ./scripts/dump.js dev",
+        "dump:staging": "node ./scripts/dump.js staging",
+        "dump:prod": "node ./scripts/dump.js prod",
+        "deploy:dev": "node ./scripts/deploy.js dev",
+        "deploy:staging": "node ./scripts/deploy.js staging",
+        "deploy:prod": "node ./scripts/deploy.js prod"
+    },
+    "devDependencies": {
+        "lodash": "^4.17.21",
+        "yaml": "^1.10.2",
+        "auth0-deploy-cli": "^7.1.1"
+    }
 }

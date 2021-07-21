@@ -20,18 +20,18 @@ Right now, in order to be _sure_ that changes you make to the web stack won't br
 
 The web application stack is comprised of three main components:
 
-- The web server itself, which is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework.
-- An asynchronous task queue, which is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes, and a Redis store.
-- A database. The database is a Postgres instance that is shared by multiple developers.
+-   The web server itself, which is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework.
+-   An asynchronous task queue, which is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes, and a Redis store.
+-   A database. The database is a Postgres instance that is shared by multiple developers.
 
 We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally. None of these commands are run directly, and are instead wrapped by bash scripts that do a bit of preparation (namely `docker/local_deploy.sh` and `tests/setup/setup_tests.sh`).
 
 The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them).
 
-- `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
-- `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
-- `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
-- `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
+-   `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
+-   `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
+-   `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
+-   `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
 All of local deployment, local testing, and CI use ephemeral DBs that are mostly empty copies of the dev database. The copying script (see `db_setup/`) looks at the database specified by those environment variables.
 
@@ -247,12 +247,12 @@ REDIS_URL="$REDIS_SCHEME://$REDIS_USER:$REDIS_PASSWORD@$REDIS_HOST:$REDIS_PORT/$
 
 If not set, the environment variables assume the following default values:
 
-- `REDIS_SCHEME`: `rediss://`
-- `REDIS_USER`: the empty string
-- `REDIS_PASSWORD`: the empty string
-- `REDIS_HOST`: `localhost`
-- `REDIS_PORT`: `6379`
-- `REDIS_DB`: `0`
+-   `REDIS_SCHEME`: `rediss://`
+-   `REDIS_USER`: the empty string
+-   `REDIS_PASSWORD`: the empty string
+-   `REDIS_HOST`: `localhost`
+-   `REDIS_PORT`: `6379`
+-   `REDIS_DB`: `0`
 
 **However,** the presence of the environment variable `REDIS_URL` will prevent a connection string from being generated from these six environment variables. Instead, the value of the `REDIS_URL` environment variable will be read.
 
