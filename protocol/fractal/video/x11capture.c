@@ -88,11 +88,26 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
     device->event = damage_event;
 
+    if (!reconfigure_x11_capture_device(device, width, height, dpi)) {
+        return NULL;
+    }
+
+    return device;
+}
+
+bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, uint32_t height,
+                                    uint32_t dpi) {
+    if (device->image) {
+        XFree(device->image);
+        device->image = NULL;
+    }
+    device->width = width;
+    device->height = height;
 #if USING_SHM
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
-        return NULL;
+        return false;
     }
     Screen* screen = window_attributes.screen;
 
@@ -104,6 +119,11 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
                                                         // the visual. Omitted for brevity
                         ZPixmap, NULL, &device->segment, device->width, device->height);
 
+    if (device->image == NULL) {
+        LOG_ERROR("Could not XShmCreateImage!");
+        return false;
+    }
+
     device->segment.shmid = shmget(
         IPC_PRIVATE, device->image->bytes_per_line * device->image->height, IPC_CREAT | 0777);
 
@@ -113,14 +133,12 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     if (!XShmAttach(device->display, &device->segment)) {
         LOG_ERROR("Error while attaching display");
         destroy_x11_capture_device(device);
-        return NULL;
+        return false;
     }
     device->frame_data = device->image->data;
     device->pitch = device->width * 4;
-#else
-    device->image = NULL;
 #endif
-    return device;
+    return true;
 }
 
 int x11_capture_screen(X11CaptureDevice* device) {
@@ -202,9 +220,13 @@ void destroy_x11_capture_device(X11CaptureDevice* device) {
         Arguments:
             device (X11CaptureDevice*): device to destroy
     */
-    if (!device) return;
+    if (!device) {
+        LOG_ERROR("Passed NULL into destroy_x11_capture_device!");
+        return;
+    }
     if (device->image) {
         XFree(device->image);
+        device->image = NULL;
     }
     XCloseDisplay(device->display);
     free(device);

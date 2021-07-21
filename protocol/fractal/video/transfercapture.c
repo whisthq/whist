@@ -67,18 +67,16 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
 }
 
 int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
-#ifdef _WIN32
-    if (encoder->ffmpeg_encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
-        device->texture_on_gpu) {
-        // if dxgi_cuda is setup and we have a dxgi texture on the gpu
-        if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
-            return 0;
-        } else {
-            LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
-            // otherwise, do the cpu transfer below
-        }
+    if (device->width != encoder->in_width || device->height != encoder->in_height) {
+        LOG_ERROR(
+            "Tried to pass in a captured frame of dimension %dx%d, "
+            "into an encoder that accepts %dx%d as input",
+            device->width, device->height, encoder->in_width, encoder->in_height);
+        return -1;
     }
-#else  // __linux__
+
+    // Handle transfer capture for linux nvidia capture device
+#ifdef __linux__
     if (device->active_capture_device == NVIDIA_DEVICE) {
         if (encoder->active_encoder == NVIDIA_ENCODER) {
             nvidia_encoder_frame_intake(encoder->nvidia_encoder,
@@ -91,12 +89,25 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
                 "then the Nvidia Encode API must be used!");
             return -1;
         }
-    } else {
-        encoder->active_encoder = FFMPEG_ENCODER;
     }
 #endif
 
+    // Handle the normal active_capture_device
     if (encoder->active_encoder == FFMPEG_ENCODER) {
+        // Handle cuda optimized transfer on windows
+#ifdef _WIN32
+        if (encoder->ffmpeg_encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
+            device->texture_on_gpu) {
+            // if dxgi_cuda is setup and we have a dxgi texture on the gpu
+            if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
+                return 0;
+            } else {
+                LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
+                // otherwise, do the cpu transfer below
+            }
+        }
+#endif
+
         // CPU transfer, if hardware transfer doesn't work
         static int times_measured = 0;
         static double time_spent = 0.0;
@@ -130,8 +141,9 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             time_spent = 0.0;
         }
     } else {
-        LOG_ERROR("Using X11 capture, but encoder wasn't ffmpeg!");
+        LOG_ERROR("Using normal capture, but encoder wasn't ffmpeg!");
         return -1;
     }
+
     return 0;
 }

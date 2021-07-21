@@ -312,7 +312,12 @@ int32_t multithreaded_send_video(void* opaque) {
                     // If using nvidia, then we must destroy the existing encoder first
                     // We can't have two nvidia encoders active or the 2nd attempt to
                     // create one will fail
-                    if (encoder != NULL && encoder->nvidia_encoder != NULL) {
+                    // If using ffmpeg, if the dimensions don't match, then we also need to destroy
+                    // the old encoder, since we'll no longer be able to pass captured frames into
+                    // it
+                    if (encoder != NULL && (encoder->nvidia_encoder != NULL ||
+                                            (device->width != encoder->in_width ||
+                                             device->height != encoder->in_height))) {
                         if (transfer_context_active) {
                             close_transfer_context(device, encoder);
                             transfer_context_active = false;
@@ -419,6 +424,8 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // else we have an encoded frame, so handle it!
 
+            video_encoder_unset_iframe(encoder);
+
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
             static double max_frame_time = 0.0;
@@ -441,8 +448,6 @@ int32_t multithreaded_send_video(void* opaque) {
                 total_frame_sizes = 0.0;
                 max_frame_size = 0.0;
             }
-
-            video_encoder_unset_iframe(encoder);
 
             // LOG_INFO("Encode Time: %f (%d) (%d)", get_timer(t),
             //        frames_since_first_iframe % gop_size,
