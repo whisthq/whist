@@ -20,9 +20,9 @@ import {
     createTypeformWindow,
 } from "@app/utils/windows"
 import {
-  createTray,
-  updateSignedInTray,
-  updateSignedOutTray,
+    createTray,
+    updateSignedInTray,
+    updateSignedOutTray,
 } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
@@ -58,8 +58,8 @@ fromTrigger("appReady")
 
 // Check Electron store for persisted data and create the tray
 fromTrigger("appReady").subscribe(() => {
-  emitAuthCache()
-  createTray()
+    emitAuthCache()
+    createTray()
 })
 
 // appReady only fires once, at the launch of the application.
@@ -76,8 +76,8 @@ fromTrigger("notPersisted").subscribe(() => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
-  createProtocolWindow().catch((err) => console.error(err))
-  updateSignedInTray(x.userEmail)
+    createProtocolWindow().catch((err) => console.error(err))
+    updateSignedInTray(x.userEmail)
 })
 
 fromTrigger("trayQuitAction").subscribe(() => {
@@ -115,7 +115,7 @@ fromTrigger("clearCacheAction").subscribe(() => {
 
 // On signout or relaunch, update the tray to the signed out version
 fromTrigger("clearCacheAction").subscribe(() => {
-  updateSignedOutTray()
+    updateSignedOutTray()
 })
 
 // If an admin selects a region, relaunch the app with the selected region passed
