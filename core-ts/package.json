@@ -61,7 +61,7 @@
         "lint:fix": "eslint --fix src/** --no-error-on-unmatched-pattern",
         "tsc:watch": "CONFIG=$(yarn config:parse) yarn run clean && yarn run compile -- --watch",
         "test": "CONFIG=$(yarn config:parse) yarn run compile && jest",
-        "test:watch": "CONFIG=$(yarn config:parse) jest --watch"
+        "test:watch": "CONFIG=$(yarn config:parse) jest --watch",
         "test": "yarn run compile && jest"
     }
 }
