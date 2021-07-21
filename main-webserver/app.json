@@ -39,5 +39,4 @@
         "test": "cd tests && bash run_tests.sh"
       }
     }
-  }
 }

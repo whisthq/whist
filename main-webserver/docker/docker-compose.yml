@@ -2,14 +2,14 @@ version: "3.8"
 
 services:
 
-  postgres_db:
-    image: postgres:12.5
-    ports:
-      - "9999:5432"
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
-    networks:
-      - primary
+    postgres_db:
+        image: postgres:12.5
+        ports:
+            - "9999:5432"
+        environment:
+            POSTGRES_HOST_AUTH_METHOD: trust
+        networks:
+            - primary
 
   web:
     build:
@@ -34,4 +34,4 @@ services:
       APP_GIT_COMMIT: ${APP_GIT_COMMIT}
 
 networks:
-  primary:
+    primary:

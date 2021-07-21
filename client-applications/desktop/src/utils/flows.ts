@@ -40,11 +40,10 @@ export const fork = <T>(
     return mapValues(filters, (fn) => shared.pipe(filter(fn), share()))
 }
 
-export const flow =
-    <T>(
-        name: string,
-        flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
-    ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
+export const flow = <T>(
+    name: string,
+    flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
+): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
     /*
     Description: 
       A function that returns a function which, when a trigger is activated, will run
