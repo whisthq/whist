@@ -8,8 +8,8 @@
         "build": "./scripts/build.sh",
         "tailwind": "./scripts/tailwind.sh",
         "postinstall": "./scripts/postinstall.sh",
-        "lint:fix": "./scripts/lint-fix.sh",
-        "lint:check": "./scripts/lint-check.sh",
+        "lint:check": "node ./scripts/lint.js",
+        "lint:fix": "node ./scripts/lint.js --fix",
         "build:netlify": "./scripts/build-netlify.sh"
     },
     "dependencies": {
