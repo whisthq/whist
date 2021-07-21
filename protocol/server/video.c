@@ -315,9 +315,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     // If using ffmpeg, if the dimensions don't match, then we also need to destroy
                     // the old encoder, since we'll no longer be able to pass captured frames into
                     // it
-                    if (encoder != NULL && (encoder->nvidia_encoder != NULL ||
-                                            (device->width != encoder->in_width ||
-                                             device->height != encoder->in_height))) {
+                    // For now, we'll just always destroy the encoder right here
+                    if (encoder != NULL) {
                         if (transfer_context_active) {
                             close_transfer_context(device, encoder);
                             transfer_context_active = false;
