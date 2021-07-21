@@ -9,12 +9,14 @@ import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
 
 import Update from "@app/renderer/pages/update"
-import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error/error"
+import Typeform from "@app/renderer/pages/typeform"
+import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 
 import {
   WindowHashUpdate,
   WindowHashSignout,
+  WindowHashTypeform,
   allowPayments,
 } from "@app/utils/constants"
 import {
@@ -64,8 +66,16 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
+  const onTypeformSubmit = () => {
+    setMainState({
+      trigger: { name: TRIGGER.persistTypeform, payload: null },
+    })
+  }
+
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={clearCache} />
+  if (show === WindowHashTypeform)
+    return <Typeform onSubmit={onTypeformSubmit} />
   if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <TwoButtonError

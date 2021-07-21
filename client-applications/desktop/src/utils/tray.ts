@@ -24,41 +24,35 @@ const createNativeImage = () => {
   return image
 }
 
-const rootMenu = allowPayments
-  ? [
-      {
-        label: "Billing Information",
-        click: () => {
-          trayEvent.emit("payment")
-        },
-      },
-      {
-        label: "Sign out",
-        click: () => {
-          trayEvent.emit("signout")
-        },
-      },
-      {
-        label: "Quit",
-        click: () => {
-          trayEvent.emit("quit")
-        },
-      },
-    ]
-  : [
-      {
-        label: "Sign out",
-        click: () => {
-          trayEvent.emit("signout")
-        },
-      },
-      {
-        label: "Quit",
-        click: () => {
-          trayEvent.emit("quit")
-        },
-      },
-    ]
+const rootMenu = [
+  {
+    label: "Leave feedback",
+    click: () => {
+      trayEvent.emit("feedback")
+    },
+  },
+  {
+    label: "Sign out",
+    click: () => {
+      trayEvent.emit("signout")
+    },
+  },
+  {
+    label: "Quit",
+    click: () => {
+      trayEvent.emit("quit")
+    },
+  },
+]
+
+const paymentMenu = [
+  {
+    label: "Billing info",
+    click: () => {
+      trayEvent.emit("payment")
+    },
+  },
+]
 
 const regionMenu = [
   {
@@ -83,9 +77,12 @@ export const createTray = (userEmail: string) => {
 
   tray = new Tray(createNativeImage())
   // If the user is a @fractal.co developer, then allow them to toggle regions for testing
-  const template = endsWith(userEmail, "@fractal.co")
-    ? [...rootMenu, ...regionMenu]
-    : [...rootMenu]
+  const template = [
+    ...rootMenu,
+    ...(endsWith(userEmail, "@fractal.co") ? regionMenu : []),
+    ...(allowPayments ? paymentMenu : []),
+  ]
+
   const menu = Menu.buildFromTemplate(template)
   tray.setContextMenu(menu)
 }

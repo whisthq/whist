@@ -20,6 +20,7 @@ const filterByName = (
   TRIGGER.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
   TRIGGER.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
   TRIGGER.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
+  TRIGGER.persistTypeform, // Fires when "Leave feedback" button is clicked
 ].forEach((trigger: string) => {
   createTrigger(
     trigger,

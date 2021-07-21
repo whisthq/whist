@@ -12,4 +12,5 @@ import TRIGGER from "@app/utils/triggers"
 createTrigger(TRIGGER.showPaymentWindow, fromEvent(trayEvent, "payment"))
 createTrigger(TRIGGER.showSignoutWindow, fromEvent(trayEvent, "signout"))
 createTrigger(TRIGGER.trayQuitAction, fromEvent(trayEvent, "quit"))
+createTrigger(TRIGGER.trayFeedbackAction, fromEvent(trayEvent, "feedback"))
 createTrigger(TRIGGER.trayRegionAction, fromEvent(trayEvent, "region"))

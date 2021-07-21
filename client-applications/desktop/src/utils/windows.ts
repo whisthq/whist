@@ -18,6 +18,8 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
   WindowHashPayment,
+  WindowHashTypeform,
+  WindowHashProtocol,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -33,11 +35,16 @@ const { buildRoot } = config
 // windows we have open. This is used in effects/app.ts to decide when to close the application.
 export const windowMonitor = new events.EventEmitter()
 
-const emitCloseInfo = (args: { crashed: boolean; event: string }) => {
+const emitWindowInfo = (args: {
+  crashed: boolean
+  event: string
+  hash: string
+}) => {
   windowMonitor.emit("window-info", {
     numberWindowsRemaining: getNumberWindows(),
     crashed: args.crashed,
     event: args.event,
+    hash: args.hash,
   })
 }
 
@@ -105,6 +112,7 @@ export const getWindowTitle = () => {
 export const createWindow = (args: {
   show: string
   options: Partial<BrowserWindowConstructorOptions>
+  hash: string
   customURL?: string
   closeOtherWindows?: boolean
 }) => {
@@ -146,11 +154,11 @@ export const createWindow = (args: {
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
     win.show()
-    emitCloseInfo({ crashed: false, event: "open" })
+    emitWindowInfo({ crashed: false, event: "open", hash: args.hash })
   })
 
   win.on("closed", () => {
-    emitCloseInfo({ crashed: false, event: "close" })
+    emitWindowInfo({ crashed: false, event: "close", hash: args.hash })
   })
 
   if (args.closeOtherWindows ?? false) closeAllWindows(currentElectronWindows)
@@ -166,6 +174,7 @@ export const createAuthWindow = () => {
       ...width.xs,
       height: 16 * 37,
     } as BrowserWindowConstructorOptions,
+    hash: WindowHashAuth,
     customURL: authenticationURL,
     closeOtherWindows: true,
   })
@@ -198,6 +207,7 @@ export const createPaymentWindow = async () => {
       ...height.md,
       alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
+    hash: WindowHashPayment,
     customURL: billingPortalURL,
   })
 
@@ -224,6 +234,7 @@ export const createUpdateWindow = () =>
       ...height.md,
       skipTaskbar: true,
     } as BrowserWindowConstructorOptions,
+    hash: WindowHashUpdate,
     closeOtherWindows: true,
   })
 
@@ -235,6 +246,7 @@ export const createErrorWindow = (hash: string) => {
       ...width.md,
       ...height.xs,
     } as BrowserWindowConstructorOptions,
+    hash: hash,
     closeOtherWindows: true,
   })
 }
@@ -248,8 +260,23 @@ export const createSignoutWindow = () => {
       ...height.xs,
       alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
+    hash: WindowHashSignout,
   })
 }
+
+export const createTypeformWindow = () =>
+  createWindow({
+    show: WindowHashTypeform,
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashTypeform,
+    closeOtherWindows: false,
+  })
 
 export const createProtocolWindow = async () => {
   const currentElectronWindows = getElectronWindows()
@@ -257,16 +284,21 @@ export const createProtocolWindow = async () => {
   const protocol = await protocolLaunch()
 
   protocol.on("spawn", () => {
-    emitCloseInfo({ crashed: false, event: "open" })
+    emitWindowInfo({ crashed: false, event: "open", hash: WindowHashProtocol })
   })
 
   protocol.on("close", (code: number) => {
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
-    emitCloseInfo({ crashed: (code ?? 0) === 1, event: "close" })
+    emitWindowInfo({
+      crashed: (code ?? 0) === 1,
+      event: "close",
+      hash: WindowHashProtocol,
+    })
   })
 
+  // When the protocol is running, we want all other Electron windows to be closed
   closeElectronWindows(currentElectronWindows)
 }
 
