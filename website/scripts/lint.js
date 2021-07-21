@@ -23,7 +23,6 @@ const lint = (_env, ...args) => {
     "--max-warnings=0",
     "./src/**/*.{js,jsx,ts,tsx}",
     "./scripts/**/*.js",
-    "./public/**/*.{js,ts}",
     "./*.js",
   ]).then((ret) => process.exit(ret))
 }
