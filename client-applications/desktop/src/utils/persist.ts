@@ -12,9 +12,8 @@
 import { app } from "electron"
 import Store from "electron-store"
 import events from "events"
-import { isEmpty, pickBy, keys } from "lodash"
+import { isEmpty, pickBy } from "lodash"
 
-import { appEnvironment } from "../../config/configs"
 import { loggingBaseFilePath } from "@app/config/environment"
 
 app.setPath("userData", loggingBaseFilePath)
@@ -23,37 +22,40 @@ export const store = new Store({ watch: true })
 export const persisted = new events.EventEmitter()
 
 interface Cache {
-  [k: string]: string
+  [k: string]: string | boolean
 }
 
-const cache = {
-  accessToken: store.get(`${appEnvironment as string}-accessToken`) ?? "",
-  configToken: store.get(`${appEnvironment as string}-configToken`) ?? "",
-  refreshToken: store.get(`${appEnvironment as string}-refreshToken`) ?? "",
-  userEmail: store.get(`${appEnvironment as string}-userEmail`) ?? "",
-  subClaim: store.get(`${appEnvironment as string}-subClaim`) ?? "",
-} as Cache
+type CacheName = "auth" | "data"
 
-export const emitCache = () => {
-  if (isEmpty(pickBy(cache, (x) => x === ""))) {
-    persisted.emit("data-persisted", cache)
+const persistedAuth = store.get("auth") as Cache
+
+export const emitAuthCache = () => {
+  const authCache = {
+    accessToken: persistedAuth?.accessToken ?? "",
+    configToken: persistedAuth?.configToken ?? "",
+    refreshToken: persistedAuth?.refreshToken ?? "",
+    userEmail: persistedAuth?.userEmail ?? "",
+    subClaim: persistedAuth?.subClaim ?? "",
+  } as Cache
+
+  if (isEmpty(pickBy(authCache, (x) => x === ""))) {
+    persisted.emit("data-persisted", authCache)
   } else {
     persisted.emit("data-not-persisted")
   }
 }
 
-export const persist = (key: string, value: string) => {
-  store.set(`${appEnvironment as string}-${key}`, value)
+export const persist = (
+  key: string,
+  value: string | boolean,
+  cache?: CacheName
+) => {
+  store.set(`${cache ?? "auth"}.${key}`, value)
 }
 
-export const persistClear = (args?: { exclude?: string[] }) => {
-  const excludedSet = new Set(args?.exclude)
-  keys(cache).forEach((key) => {
-    if (!excludedSet.has(key)) {
-      // Delete key if not in excluded
-      store.delete(`${appEnvironment as string}-${key}`)
-    }
-  })
+export const persistClear = (cache?: CacheName) => {
+  store.delete(cache ?? "auth")
 }
 
-export const persistGet = (key: keyof Cache) => cache[key]
+export const persistGet = (key: keyof Cache, cache?: CacheName) =>
+  (store.get(cache ?? "auth") as Cache)?.[key]

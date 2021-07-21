@@ -120,7 +120,7 @@ export const protocolStreamInfo = (info: {
 }
 
 export const protocolStreamKill = () => {
-  writeStream(childProcess, "kill?0")
   // We send SIGINT just in case
   childProcess?.kill?.("SIGINT")
+  writeStream(childProcess, "kill?0")
 }

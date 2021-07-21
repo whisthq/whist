@@ -4,10 +4,9 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app, IpcMainEvent, session } from "electron"
+import { session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take, takeUntil } from "rxjs/operators"
-import { merge } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -18,13 +17,12 @@ import {
   closeAllWindows,
   relaunch,
   createPaymentWindow,
+  createTypeformWindow,
 } from "@app/utils/windows"
-import { createTray, destroyTray } from "@app/utils/tray"
-import { uploadToS3 } from "@app/utils/logging"
+import { createTray } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
-import { emitCache, persistClear } from "@app/utils/persist"
-import { protocolStreamKill } from "@app/utils/protocol"
+import { emitAuthCache, persistClear } from "@app/utils/persist"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -53,7 +51,7 @@ fromTrigger("appReady")
   })
 
 // Check Electron store for persisted data
-fromTrigger("appReady").subscribe(() => emitCache())
+fromTrigger("appReady").subscribe(() => emitAuthCache())
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -72,37 +70,6 @@ fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
   createProtocolWindow().catch((err) => console.error(err))
   createTray(x.userEmail)
 })
-
-fromTrigger("windowsAllClosed")
-  .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-    )
-  )
-  .subscribe((evt: IpcMainEvent) => {
-    evt?.preventDefault()
-  })
-
-fromTrigger("windowInfo")
-  .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-    )
-  )
-  .subscribe((args: { numberWindowsRemaining: number; crashed: boolean }) => {
-    if (args.numberWindowsRemaining === 0) {
-      destroyTray()
-      protocolStreamKill()
-      uploadToS3()
-        .then(() => {
-          if (!args.crashed) app.quit()
-        })
-        .catch((err) => {
-          console.error(err)
-          if (!args.crashed) app.quit()
-        })
-    }
-  })
 
 fromTrigger("trayQuitAction").subscribe(() => {
   closeAllWindows()
@@ -149,6 +116,10 @@ fromTrigger("relaunchAction").subscribe(() => {
 
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
+})
+
+fromTrigger("trayFeedbackAction").subscribe(() => {
+  createTypeformWindow()
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
