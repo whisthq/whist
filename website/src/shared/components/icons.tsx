@@ -1,5 +1,5 @@
-import React from 'react'
-import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM } from 'react-icons/fa'
+import React from "react"
+import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM } from "react-icons/fa"
 
 export const LogoIcon = (props: any) => <a {...props}>{props.children}</a>
 

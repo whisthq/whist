@@ -1,38 +1,41 @@
 /* eslint-disable react/no-unescaped-entities */
 
-import React from 'react'
-import { HashLink } from 'react-router-hash-link'
-import classNames from 'classnames'
+import React from "react"
+import { HashLink } from "react-router-hash-link"
+import classNames from "classnames"
 
-import { ScreenSize } from '@app/shared/constants/screenSizes'
-import { withContext } from '@app/shared/utils/context'
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import { withContext } from "@app/shared/utils/context"
 
 const Cookies = () => {
-  const { width } = withContext()
-  const { dark } = withContext()
-  return (
-        <div className={classNames(
-          'overflow-x-hidden',
-          dark ? 'dark bg-blue-darkest' : 'bg-white'
-        )}
-          style={{ overflowX: 'hidden' }} id="top">
+    const { width } = withContext()
+    const { dark } = withContext()
+    return (
+        <div
+            className={classNames(
+                "overflow-x-hidden",
+                dark ? "dark bg-blue-darkest" : "bg-white"
+            )}
+            style={{ overflowX: "hidden" }}
+            id="top"
+        >
             <div
-                className= "dark:text-gray-300"
+                className="dark:text-gray-300"
                 style={{
-                  padding:
-                        width > ScreenSize.MEDIUM ? '75px 150px' : '50px 40px',
-                  maxWidth: 1280,
-                  margin: 'auto'
+                    padding:
+                        width > ScreenSize.MEDIUM ? "75px 150px" : "50px 40px",
+                    maxWidth: 1280,
+                    margin: "auto",
                 }}
             >
                 <div style={{ fontSize: 40 }}>COOKIE POLICY</div>
-                <div style={{ color: '#555555', marginBottom: 40 }}>
+                <div style={{ color: "#555555", marginBottom: 40 }}>
                     Last updated October 8th, 2020
                 </div>
                 <p>
                     Fractal Computers, Inc. (“we” or “us” or “our”) may use
                     cookies and other tracking technologies when you visit our
-                    website,{' '}
+                    website,{" "}
                     <HashLink to="/privacy#top">www.fractal.co</HashLink>,
                     including any other media form, media channel, mobile
                     website, or mobile application related or connected thereto
@@ -56,7 +59,7 @@ const Cookies = () => {
                     your continued use of the Site after the date such revised
                     Cookie Policy is posted.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     What Are Cookies
                 </p>
                 <p>
@@ -78,7 +81,7 @@ const Cookies = () => {
                     stored, however, this may downgrade or 'break' certain
                     elements of the site's functionality.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     How We Use Cookies
                 </p>
                 <p>
@@ -90,7 +93,7 @@ const Cookies = () => {
                     sure whether you need them or not, in case they are used to
                     provide a service that you use.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     Disabling Cookies
                 </p>
                 <p>
@@ -102,7 +105,7 @@ const Cookies = () => {
                     Site. Therefore, it is recommended that you do not disable
                     cookies.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     Cookies We Set
                 </p>
                 <p>
@@ -110,7 +113,7 @@ const Cookies = () => {
                     experience possible when using the Site.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>Account Cookies</p>
+                    <p style={{ fontWeight: "bold" }}>Account Cookies</p>
                     <p>
                         When you create an account with us, we use cookies for
                         the management of the signup process and general
@@ -119,7 +122,7 @@ const Cookies = () => {
                         afterwards to remember your Site preferences when logged
                         out.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Site Management Cookies
                     </p>
                     <p>
@@ -130,7 +133,7 @@ const Cookies = () => {
                         that you can only access restricted features and areas
                         when logged in.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Email And Newsletter Cookies
                     </p>
                     <p>
@@ -140,7 +143,7 @@ const Cookies = () => {
                         notifications which might only be valid to
                         subscribed/unsubscribed users.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Subscription Processing Cookies
                     </p>
                     <p>
@@ -149,7 +152,7 @@ const Cookies = () => {
                         that your order is remembered between pages so that we
                         can process it properly.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>Survey Cookies</p>
+                    <p style={{ fontWeight: "bold" }}>Survey Cookies</p>
                     <p>
                         From time to time we offer user surveys and
                         questionnaires to provide you with interesting insights,
@@ -158,7 +161,7 @@ const Cookies = () => {
                         who has already taken part in a survey or to provide you
                         with accurate results across pages.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>Preference Cookies</p>
+                    <p style={{ fontWeight: "bold" }}>Preference Cookies</p>
                     <p>
                         In order to provide you with a great experience on this
                         Site, we provide the functionality to set your
@@ -168,7 +171,7 @@ const Cookies = () => {
                         whenever you interact with a page on our Site.
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     Third-Party Cookies
                 </p>
                 <p>
@@ -177,7 +180,7 @@ const Cookies = () => {
                     third party cookies you might encounter through this Site.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Testing Management Cookies
                     </p>
                     <p>
@@ -189,7 +192,7 @@ const Cookies = () => {
                         optimisations our users appreciate the most.
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     Privacy Policy
                 </p>
                 <p>
@@ -200,17 +203,17 @@ const Cookies = () => {
                     Privacy Policy. By using the Site, you agree to be bound by
                     this Cookie Policy and our Privacy Policy.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     More Information
                 </p>
                 <p>
                     If you are looking for more information, you can contact us
-                    via email at{' '}
+                    via email at{" "}
                     <a href="mailto:support@fractal.co">support@fractal.co</a>.
                 </p>
             </div>
         </div>
-  )
+    )
 }
 
 export default Cookies

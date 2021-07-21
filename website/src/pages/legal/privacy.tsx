@@ -1,32 +1,35 @@
 /* eslint-disable react/no-unescaped-entities */
 
-import React from 'react'
-import { HashLink } from 'react-router-hash-link'
-import classNames from 'classnames'
+import React from "react"
+import { HashLink } from "react-router-hash-link"
+import classNames from "classnames"
 
-import { ScreenSize } from '@app/shared/constants/screenSizes'
-import { withContext } from '@app/shared/utils/context'
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import { withContext } from "@app/shared/utils/context"
 
 const Privacy = () => {
-  const { width } = withContext()
-  const { dark } = withContext()
-  return (
-        <div className={classNames(
-          'overflow-x-hidden',
-          dark ? 'dark bg-blue-darkest' : 'bg-white'
-        )}
-          style={{ overflowX: 'hidden' }} id="top">
+    const { width } = withContext()
+    const { dark } = withContext()
+    return (
+        <div
+            className={classNames(
+                "overflow-x-hidden",
+                dark ? "dark bg-blue-darkest" : "bg-white"
+            )}
+            style={{ overflowX: "hidden" }}
+            id="top"
+        >
             <div
-                className= "dark:text-gray-300"
+                className="dark:text-gray-300"
                 style={{
-                  padding:
-                        width > ScreenSize.MEDIUM ? '75px 150px' : '50px 40px',
-                  maxWidth: 1280,
-                  margin: 'auto'
+                    padding:
+                        width > ScreenSize.MEDIUM ? "75px 150px" : "50px 40px",
+                    maxWidth: 1280,
+                    margin: "auto",
                 }}
             >
                 <div style={{ fontSize: 40 }}>PRIVACY POLICY</div>
-                <div style={{ color: '#555555', marginBottom: 40 }}>
+                <div style={{ color: "#555555", marginBottom: 40 }}>
                     Last updated October 8th, 2020
                 </div>
 
@@ -39,7 +42,7 @@ const Privacy = () => {
                     information. We want you to know that we are committed to
                     protecting your personal information and your right to
                     privacy. This privacy policy explains what happens to the
-                    personal information we collect through our website (such as{' '}
+                    personal information we collect through our website (such as{" "}
                     <a href="https://www.fractal.co">www.fractal.co</a>
                     ), and/or any related services, sales, marketing or events
                     (we refer to them collectively in this privacy policy as the
@@ -47,7 +50,7 @@ const Privacy = () => {
                     regarding your personal information. If you have any
                     questions or concerns about our policy, or our practices
                     with regards to your personal information, please contact us
-                    at{' '}
+                    at{" "}
                     <a href="mailto:support@fractal.co">support@fractal.co</a>.
                     We encourage you to read through this important information.
                     If there are any terms in this privacy policy that you
@@ -55,7 +58,7 @@ const Privacy = () => {
                     our Services.
                 </p>
 
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     Table Of Contents
                 </p>
                 <ol>
@@ -83,7 +86,7 @@ const Privacy = () => {
                     </li>
                 </ol>
 
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     1. What Information Do We Collect?
                 </p>
                 <p>
@@ -94,7 +97,7 @@ const Privacy = () => {
                     we use online identifiers to collect information
                     automatically.
                 </p>
-                <p style={{ fontWeight: 'bold' }}>
+                <p style={{ fontWeight: "bold" }}>
                     Personal Information You Disclose To Us
                 </p>
                 <p>
@@ -120,7 +123,7 @@ const Privacy = () => {
                     provided by you, credentials, and payment details.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Publicly Available Personal Information
                     </p>
                     <p>
@@ -129,7 +132,7 @@ const Privacy = () => {
                         phone number; phone numbers; social media; state of
                         residence; country of residence and other similar data.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Personal Information Provided By You
                     </p>
                     <p>
@@ -137,13 +140,13 @@ const Privacy = () => {
                         location; data collected from surveys; and other similar
                         data.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>Credentials</p>
+                    <p style={{ fontWeight: "bold" }}>Credentials</p>
                     <p>
                         We may collect passwords, password hints, and similar
                         security information used for authentication and account
                         access.
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>Payment Data</p>
+                    <p style={{ fontWeight: "bold" }}>Payment Data</p>
                     <p>
                         We collect data necessary to process your payment if you
                         make purchases, such as your payment instrument
@@ -151,13 +154,13 @@ const Privacy = () => {
                         credit card we would collect the credit card’s number,
                         its card verification code and its expiration date. All
                         payment data is stored by Stripe. You may find their
-                        privacy policy linked here:{' '}
+                        privacy policy linked here:{" "}
                         <a href="https://www.stripe.com/privacy">
                             stripe.com/privacy
                         </a>
                         .
                     </p>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         Social Media Login Data
                     </p>
                     <p>
@@ -176,7 +179,7 @@ const Privacy = () => {
                         jeopardized.
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold' }}>
+                <p style={{ fontWeight: "bold" }}>
                     Information Automatically Collected
                 </p>
                 <p>
@@ -200,7 +203,7 @@ const Privacy = () => {
                     identifiers (like your contact details).
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>Online Identifiers</p>
+                    <p style={{ fontWeight: "bold" }}>Online Identifiers</p>
                     <p>
                         We collect device identification (i.e. type, make, and
                         other identifiers); applications; tools and protocols,
@@ -210,7 +213,7 @@ const Privacy = () => {
                         similar data.
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     2. How Do We Use Your Information?
                 </p>
                 <p>
@@ -227,7 +230,7 @@ const Privacy = () => {
                     below.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         We Use The Information We Collect Or Receive:
                     </p>
                     <p>
@@ -265,10 +268,10 @@ const Privacy = () => {
                         Services that may contain personal information. Prior to
                         posting a testimonial, we will seek your consent to use
                         your name and testimonial. If you wish to update or
-                        delete your testimonial, please contact us at{' '}
+                        delete your testimonial, please contact us at{" "}
                         <a href="mailto:support@fractal.co">
                             support@fractal.co
-                        </a>{' '}
+                        </a>{" "}
                         and be sure to include your name, testimonial location,
                         and contact information.
                     </p>
@@ -321,7 +324,7 @@ const Privacy = () => {
                         information without your consent.
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     3. Will Your Information Be Shared With Anyone?
                 </p>
                 <p>
@@ -330,7 +333,7 @@ const Privacy = () => {
                     protect your rights, or to fulfill business obligations.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>
+                    <p style={{ fontWeight: "bold" }}>
                         We May Process Or Share Data Based On The Following
                         Legal Basis:
                     </p>
@@ -407,7 +410,7 @@ const Privacy = () => {
                         goods and services.
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     4. Do We Use Cookies And Other Tracking Technologies?
                 </p>
                 <p>
@@ -418,7 +421,7 @@ const Privacy = () => {
                     We may use cookies and similar tracking technologies (like
                     web beacons and pixels) to access or store information.
                     Specific information about how we use such technologies and
-                    how you can refuse certain cookies is set out in our{' '}
+                    how you can refuse certain cookies is set out in our{" "}
                     <HashLink to="/cookies#top">Cookie Policy</HashLink>. Our
                     Services are not officially offered in the European Union,
                     but they may be accessible from that area; we take no
@@ -426,7 +429,7 @@ const Privacy = () => {
                     with regards to cookies and other tracking technologies, as
                     defined in the GDPR.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     5. How Do We Handle Your Social Logins?
                 </p>
                 <p>
@@ -456,7 +459,7 @@ const Privacy = () => {
                     personal information, and how you can set your privacy
                     preferences on their sites and applications.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     6. How Long Do We Keep Your Information?
                 </p>
                 <p>
@@ -480,7 +483,7 @@ const Privacy = () => {
                     personal information and isolate it from any further
                     processing until deletion is possible.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     7. How Do We Keep Your Information Safe?
                 </p>
                 <p>
@@ -498,7 +501,7 @@ const Privacy = () => {
                     itself is 100% secure. Consequently, you should only access
                     the Services within a secure environment.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     8. Do We Collect Information From Minors?
                 </p>
                 <p>
@@ -514,10 +517,10 @@ const Privacy = () => {
                     deactivate the account and take reasonable measures to
                     promptly delete such data from our records. If you become
                     aware of any data we have collected from children under age
-                    18, please contact us at{' '}
+                    18, please contact us at{" "}
                     <a href="mailto:support@fractal.co">support@fractal.co</a>.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     9. Advertising And Analytics Services Provided By Others
                 </p>
                 <p>
@@ -550,13 +553,13 @@ const Privacy = () => {
                     address) in a hashed, non-human readable form. For more
                     information about interest-based ads, or to opt-out of
                     having your web browsing information used for behavioral
-                    advertising purposes, please visit{' '}
+                    advertising purposes, please visit{" "}
                     <a href="https://www.aboutads.info/choices">
                         www.aboutads.info/choices
                     </a>
                     .
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     10. What Are Your Privacy Rights?
                 </p>
                 <p>
@@ -568,23 +571,23 @@ const Privacy = () => {
                     believe we are unlawfully processing your personal
                     information, you have the right to complain to your local
                     data protection supervisory authority. You can find their
-                    contact details{' '}
+                    contact details{" "}
                     <a href="http://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm">
                         here
                     </a>
                     . If you have questions or comments about your privacy
-                    rights, you may email us at{' '}
+                    rights, you may email us at{" "}
                     <a href="mailto:support@fractal.co">support@fractal.co</a>.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: 'bold' }}>Account Information</p>
+                    <p style={{ fontWeight: "bold" }}>Account Information</p>
                     <p>
                         If you would like to review or change the information in
                         your account, or terminate your account, you can:
                     </p>
                     <p>
                         Log into your account settings and update your user
-                        account, or contact us at{' '}
+                        account, or contact us at{" "}
                         <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>
@@ -595,18 +598,18 @@ const Privacy = () => {
                         deactivate or delete your account and information from
                         our active databases. However, some information may be
                         retained in our files to prevent fraud, troubleshoot
-                        problems, assist with any investigations, enforce our{' '}
+                        problems, assist with any investigations, enforce our{" "}
                         <a href="https://www.fractal.co/termsofservice">
                             Terms of Service
-                        </a>{' '}
+                        </a>{" "}
                         and/or comply with legal requirements.
                     </p>
                     <p>
                         <span
                             style={{
-                              fontWeight: 'bold',
-                              display: 'block',
-                              marginBottom: '1em'
+                                fontWeight: "bold",
+                                display: "block",
+                                marginBottom: "1em",
                             }}
                         >
                             Cookies And Similar Technologies
@@ -616,7 +619,7 @@ const Privacy = () => {
                         reject cookies. Removing or rejecting cookies may reduce
                         the effectiveness of certain features of our Services.
                         To opt-out of interest-based advertising by advertisers
-                        on our Services, visit{' '}
+                        on our Services, visit{" "}
                         <a href="https://www.aboutads.info/choices">
                             www.aboutads.info/choices
                         </a>
@@ -625,9 +628,9 @@ const Privacy = () => {
                     <p>
                         <span
                             style={{
-                              fontWeight: 'bold',
-                              display: 'block',
-                              marginBottom: '1em'
+                                fontWeight: "bold",
+                                display: "block",
+                                marginBottom: "1em",
                             }}
                         >
                             Opting Out Of Email Marketing
@@ -643,14 +646,14 @@ const Privacy = () => {
                     <p>
                         Note your preferences when you register an account with
                         the site, access your account settings and update
-                        preferences, or contact us by email at{' '}
+                        preferences, or contact us by email at{" "}
                         <a href="mailto:support@fractal.co">
                             support@fractal.co
                         </a>
                         .
                     </p>
                 </div>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     11. Controls For Do-not-track Features
                 </p>
                 <p>
@@ -673,7 +676,7 @@ const Privacy = () => {
                     in the future, we will inform you about that practice in a
                     revised version of this privacy policy.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     12. Do California Residents Have Specific Privacy Rights?
                 </p>
                 <p>
@@ -706,7 +709,7 @@ const Privacy = () => {
                     Services, but please be aware that the data may not be
                     completely or comprehensively removed from our systems.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     13. Do We Make Updates To This Policy?
                 </p>
                 <p>
@@ -724,13 +727,13 @@ const Privacy = () => {
                     review this privacy policy frequently to be informed of how
                     we are protecting your information.
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     14. How Can You Contact Us About This Policy?
                 </p>
                 <p>
                     If you have questions or comments about this policy, you may
-                    email us at{' '}
-                    <a href="mailto:support@fractal.co">support@fractal.co</a>{' '}
+                    email us at{" "}
+                    <a href="mailto:support@fractal.co">support@fractal.co</a>{" "}
                     or by post to:
                 </p>
                 <p>
@@ -739,7 +742,7 @@ const Privacy = () => {
                     Stamford, CT 06901 <br />
                     United States <br />
                 </p>
-                <p style={{ fontWeight: 'bold', fontSize: 20 }}>
+                <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     15. How Can You Review, Update, Or Delete The Data We
                     Collect From You?
                 </p>
@@ -758,7 +761,7 @@ const Privacy = () => {
                 </p>
             </div>
         </div>
-  )
+    )
 }
 
 export default Privacy

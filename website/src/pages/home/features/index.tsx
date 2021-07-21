@@ -1,27 +1,27 @@
-import React from 'react'
-import { Row } from 'react-bootstrap'
+import React from "react"
+import { Row } from "react-bootstrap"
 
-import Lock from '@app/assets/icons/lock.svg'
-import Cloud from '@app/assets/icons/cloud.svg'
-import Rocket from '@app/assets/icons/rocket.svg'
-import FeatureBox from './featureBox'
+import Lock from "@app/assets/icons/lock.svg"
+import Cloud from "@app/assets/icons/cloud.svg"
+import Rocket from "@app/assets/icons/rocket.svg"
+import FeatureBox from "./featureBox"
 
 export const Features = () => {
-  /*
+    /*
         Features section of Chrome product page
 
         Arguments:
             none
     */
 
-  return (
+    return (
         <div className="mt-32 text-center">
             <div className="pt-24">
                 <div className="text-3xl md:text-5xl dark:text-gray-300 leading-normal">
-                    The first{' '}
+                    The first{" "}
                     <span className="text-blue dark:text-mint">
                         cloud-powered
-                    </span>{' '}
+                    </span>{" "}
                     browser
                 </div>
             </div>
@@ -62,7 +62,7 @@ export const Features = () => {
                 />
             </Row>
         </div>
-  )
+    )
 }
 
 export default Features
