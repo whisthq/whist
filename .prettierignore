@@ -1,0 +1,4 @@
+/client-applications/desktop/build/dist/**
+/protocol/sentry-native/**
+/protocol/build-clientapp/**
+/ecs-host-service/ecsagent/**
