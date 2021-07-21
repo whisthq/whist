@@ -37,10 +37,10 @@ Finally, you can open PR to `dev`.
 
 Application data are written and stored in the following locations:
 
--   On macOS, look in `~/Library/Application\ Support/{Electron,fractal}/{dev,staging,prod}`
--   On Linux, look in `~/.config/{Electron,fractal}/{dev,staging,prod}`
--   On Windows, look in `%APPDATA%\{Electron,fractal}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
-    The unpackaged app will have `Electron` in the path while the packaged app will have `fractal`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
+- On macOS, look in `~/Library/Application\ Support/{Electron,fractal}/{dev,staging,prod}`
+- On Linux, look in `~/.config/{Electron,fractal}/{dev,staging,prod}`
+- On Windows, look in `%APPDATA%\{Electron,fractal}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
+  The unpackaged app will have `Electron` in the path while the packaged app will have `fractal`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
 
 Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. This state is persisted in the file `config.json`.
 
@@ -163,9 +163,9 @@ There are some great tutorials for RxJS out there, like [this one](https://www.l
 
 All config variables are stored in various files in the `config` folder in the application root. The configuration files are used in both the application itself and our build scripts.
 
--   `build.js` contains variables used in the build process
--   `environment.js` exports environment-specific variables used while the application is running
--   `paths.js` exports relevant OS-dependent paths
+- `build.js` contains variables used in the build process
+- `environment.js` exports environment-specific variables used while the application is running
+- `paths.js` exports relevant OS-dependent paths
 
 In the electron app itself, these variables are re-exported by the files in `src/config`.
 
