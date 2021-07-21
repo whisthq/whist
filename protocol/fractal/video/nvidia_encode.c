@@ -313,6 +313,7 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     }
     p_preset_config->presetCfg.gopLength = NVENC_INFINITE_GOPLENGTH;
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+    p_preset_config->presetCfg.rcParams.maxBitRate = 4 * bitrate;
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
     p_preset_config->presetCfg.rcParams.vbvBufferSize = bitrate;
 

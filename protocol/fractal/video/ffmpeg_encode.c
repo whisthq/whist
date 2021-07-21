@@ -134,9 +134,9 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     encoder->context = avcodec_alloc_context3(encoder->codec);
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
-    encoder->context->bit_rate = bitrate;
-    // encoder->context->rc_max_rate = bitrate; // maxBitRate
-    encoder->context->rc_buffer_size = 4 * bitrate; // vbvBufferSize
+    encoder->context->bit_rate = bitrate;         // averageBitRate
+    encoder->context->rc_max_rate = 4 * bitrate;  // maxBitRate
+    encoder->context->rc_buffer_size = bitrate;   // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = FPS;
     encoder->context->gop_size = encoder->gop_size;
