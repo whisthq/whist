@@ -51,7 +51,7 @@ To view our Google Analytics dashboard, follow the tutorial on the [Notion Engin
 
 To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
 
-Additional specific checks are done by ESLint. Please run `yarn lint-check` or `yarn lint:fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
+Additional specific checks are done by ESLint. Please run `yarn lint:check` or `yarn lint:fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
 
 You can always run Prettier directly within your IDE by via the following instructions:
 
