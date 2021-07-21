@@ -8,7 +8,6 @@ import requests
 from flask import current_app
 from app.models.hardware import (
     db,
-    InstanceSorted,
     RegionToAmi,
     InstanceInfo,
     InstancesWithRoomForMandelboxes,
@@ -89,18 +88,16 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     else:
         # 5sec arbitrarily decided as sufficient timeout when using with_for_update
         set_local_lock_timeout(5)
-        # We are locking InstanceSorted row to ensure that we are not assigning a user/mandelbox
+        # We are locking InstanceInfo row to ensure that we are not assigning a user/mandelbox
         # to an instance that might be marked as DRAINING. With the locking, the instance will be
         # marked as DRAINING after the assignment is complete but not during the assignment.
-        avail_instance: Optional[InstanceSorted] = (
-            InstanceSorted.query.filter_by(
-                instance_name=instance_with_max_mandelboxes.instance_name
-            )
-            .with_for_update(skip_locked=True)
+        avail_instance: Optional[InstanceInfo] = (
+            InstanceInfo.query.filter_by(instance_name=instance_with_max_mandelboxes.instance_name)
+            .with_for_update()
             .one_or_none()
         )
         # The instance that was available earlier might be lost before we try to grab a lock.
-        if avail_instance is None:
+        if avail_instance is None or avail_instance.status != "ACTIVE":
             return None
         else:
             return avail_instance.instance_name
