@@ -10,37 +10,41 @@ import { AWSRegion } from "@app/@types/aws"
 import { fromSignal } from "@app/utils/observables"
 
 export default flow(
-  "mandelboxFlow",
-  (
-    trigger: Observable<{
-      subClaim: string
-      accessToken: string
-      configToken: string
-      region?: AWSRegion
-    }>
-  ) => {
-    const create = mandelboxCreateFlow(
-      trigger.pipe(map((t) => pick(t, ["subClaim", "accessToken", "region"])))
-    )
+    "mandelboxFlow",
+    (
+        trigger: Observable<{
+            subClaim: string
+            accessToken: string
+            configToken: string
+            region?: AWSRegion
+        }>
+    ) => {
+        const create = mandelboxCreateFlow(
+            trigger.pipe(
+                map((t) => pick(t, ["subClaim", "accessToken", "region"]))
+            )
+        )
 
-    const polling = mandelboxPollingFlow(
-      zip(create.success, trigger).pipe(
-        map(([c, t]) => ({
-          ...pick(c, ["mandelboxID"]),
-          ...pick(t, ["accessToken"]),
-        }))
-      )
-    )
+        const polling = mandelboxPollingFlow(
+            zip(create.success, trigger).pipe(
+                map(([c, t]) => ({
+                    ...pick(c, ["mandelboxID"]),
+                    ...pick(t, ["accessToken"]),
+                }))
+            )
+        )
 
-    const host = hostServiceFlow(
-      zip([trigger, create.success]).pipe(
-        map(([t, _c]) => pick(t, ["subClaim", "accessToken", "configToken"]))
-      )
-    )
+        const host = hostServiceFlow(
+            zip([trigger, create.success]).pipe(
+                map(([t, _c]) =>
+                    pick(t, ["subClaim", "accessToken", "configToken"])
+                )
+            )
+        )
 
-    return {
-      success: fromSignal(polling.success, host.success),
-      failure: merge(create.failure, polling.failure, host.failure),
+        return {
+            success: fromSignal(polling.success, host.success),
+            failure: merge(create.failure, polling.failure, host.failure),
+        }
     }
-  }
 )

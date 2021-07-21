@@ -17,58 +17,58 @@ import { HostServicePort } from "@app/utils/constants"
 /* eslint-disable @typescript-eslint/naming-convention */
 
 export const hostServiceInfo = async (subClaim: string, accessToken?: string) =>
-  get({
-    endpoint: `/host_service?username=${encodeURIComponent(subClaim)}`,
-    accessToken,
-  })
+    get({
+        endpoint: `/host_service?username=${encodeURIComponent(subClaim)}`,
+        accessToken,
+    })
 
 export const hostServiceConfig = async (
-  ip: string,
-  host_port: number,
-  client_app_auth_secret: string,
-  subClaim: string,
-  config_encryption_token: string,
-  jwt_access_token: string
+    ip: string,
+    host_port: number,
+    client_app_auth_secret: string,
+    subClaim: string,
+    config_encryption_token: string,
+    jwt_access_token: string
 ) => {
-  return (await apiPut(
-    "/set_config_encryption_token",
-    `https://${ip}:${HostServicePort}`,
-    {
-      user_id: subClaim,
-      client_app_auth_secret,
-      host_port,
-      config_encryption_token,
-      jwt_access_token,
-    },
-    true
-  )) as { status: number }
+    return (await apiPut(
+        "/set_config_encryption_token",
+        `https://${ip}:${HostServicePort}`,
+        {
+            user_id: subClaim,
+            client_app_auth_secret,
+            host_port,
+            config_encryption_token,
+            jwt_access_token,
+        },
+        true
+    )) as { status: number }
 }
 
 export type HostServiceInfoResponse = AsyncReturnType<typeof hostServiceInfo>
 
 export type HostServiceConfigResponse = AsyncReturnType<
-  typeof hostServiceConfig
+    typeof hostServiceConfig
 >
 
 export const hostServiceInfoIP = (res: HostServiceInfoResponse) => res.json?.ip
 
 export const hostServiceInfoPort = (res: HostServiceInfoResponse) =>
-  res?.json?.port
+    res?.json?.port
 
 export const hostServiceInfoSecret = (res: HostServiceInfoResponse) =>
-  res?.json?.client_app_auth_secret
+    res?.json?.client_app_auth_secret
 
 export const hostServiceInfoValid = (res: HostServiceInfoResponse) =>
-  res?.status === 200 &&
-  (hostServiceInfoIP(res) ?? "") !== "" &&
-  (hostServiceInfoPort(res) ?? "") !== "" &&
-  (hostServiceInfoSecret(res) ?? "") !== ""
+    res?.status === 200 &&
+    (hostServiceInfoIP(res) ?? "") !== "" &&
+    (hostServiceInfoPort(res) ?? "") !== "" &&
+    (hostServiceInfoSecret(res) ?? "") !== ""
 
 export const hostServiceInfoPending = (res: HostServiceInfoResponse) =>
-  res?.status === 200 && !hostServiceInfoValid(res)
+    res?.status === 200 && !hostServiceInfoValid(res)
 
 export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
-  res?.status === 200
+    res?.status === 200
 
 export const hostServiceConfigError = (res: HostServiceConfigResponse) =>
-  !hostServiceConfigValid(res)
+    !hostServiceConfigValid(res)

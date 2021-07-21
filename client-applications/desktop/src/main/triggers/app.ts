@@ -18,6 +18,6 @@ createTrigger(TRIGGER.appReady, fromEvent(app as EventEmitter, "ready"))
 createTrigger(TRIGGER.windowInfo, fromEvent(windowMonitor, "window-info"))
 // Fires when all Electron windows have been closed
 createTrigger(
-  TRIGGER.windowsAllClosed,
-  fromEvent(app as EventEmitter, "window-all-closed")
+    TRIGGER.windowsAllClosed,
+    fromEvent(app as EventEmitter, "window-all-closed")
 )

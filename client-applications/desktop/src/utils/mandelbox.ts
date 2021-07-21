@@ -18,109 +18,109 @@ import { AsyncReturnType } from "@app/@types/state"
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
 export const regionGet = async (subClaim: string, accessToken: string) => {
-  const regions: Record<string, any> = await regionRequest(
-    subClaim,
-    accessToken
-  )
-  const allowedRegions = (regions?.json as AWSRegion[]) ?? []
+    const regions: Record<string, any> = await regionRequest(
+        subClaim,
+        accessToken
+    )
+    const allowedRegions = (regions?.json as AWSRegion[]) ?? []
 
-  if (allowedRegions.length === 0) {
-    return await chooseRegion(defaultAllowedRegions)
-  } else {
-    return await chooseRegion(regions.json)
-  }
+    if (allowedRegions.length === 0) {
+        return await chooseRegion(defaultAllowedRegions)
+    } else {
+        return await chooseRegion(regions.json)
+    }
 }
 
 export const mandelboxCreate = async (
-  subClaim: string,
-  accessToken: string,
-  region?: AWSRegion
+    subClaim: string,
+    accessToken: string,
+    region?: AWSRegion
 ) => {
-  region = region ?? (await regionGet(subClaim, accessToken))
-  const response = await mandelboxRequest(
-    subClaim,
-    accessToken,
-    region,
-    getDPI()
-  )
-  return response
+    region = region ?? (await regionGet(subClaim, accessToken))
+    const response = await mandelboxRequest(
+        subClaim,
+        accessToken,
+        region,
+        getDPI()
+    )
+    return response
 }
 
 export const mandelboxCreateSuccess = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+    response: AsyncReturnType<typeof mandelboxCreate>
 ) => [200, 202].includes(response.status as number)
 
 export const mandelboxCreateErrorNoAccess = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+    response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 402
 
 export const mandelboxCreateErrorUnauthorized = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+    response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 422 || response.status === 401
 
 export const mandelboxCreateErrorMaintenance = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+    response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 512
 
 export const mandelboxCreateErrorInternal = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+    response: AsyncReturnType<typeof mandelboxCreate>
 ) =>
-  (response?.json?.ID ?? "") === "" &&
-  !mandelboxCreateErrorNoAccess(response) &&
-  !mandelboxCreateErrorUnauthorized(response) &&
-  !mandelboxCreateErrorMaintenance(response)
+    (response?.json?.ID ?? "") === "" &&
+    !mandelboxCreateErrorNoAccess(response) &&
+    !mandelboxCreateErrorUnauthorized(response) &&
+    !mandelboxCreateErrorMaintenance(response)
 
 export const mandelboxPolling = async (taskID: string, accessToken: string) =>
-  await taskStatus(taskID, accessToken)
+    await taskStatus(taskID, accessToken)
 
 export const mandelboxPollingError = (
-  response: AsyncReturnType<typeof mandelboxPolling>
+    response: AsyncReturnType<typeof mandelboxPolling>
 ) => (response?.json?.state ?? "") === ""
 
 export const mandelboxPollingSuccess = (
-  response: AsyncReturnType<typeof mandelboxPolling>
+    response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.state === "SUCCESS"
 
 export const mandelboxPollingPending = (
-  response: AsyncReturnType<typeof mandelboxPolling>
+    response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.state !== "SUCCESS" && response?.json?.state !== "FAILURE"
 
 export const mandelboxPollingPorts = (
-  response: AsyncReturnType<typeof mandelboxPolling>
+    response: AsyncReturnType<typeof mandelboxPolling>
 ) => pick(response?.json?.output, ["port_32262", "port_32263", "port_32273"])
 
 export const mandelboxPollingIP = (
-  response: AsyncReturnType<typeof mandelboxPolling>
+    response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.output?.ip
 
 export const mandelboxPollingSecretKey = (
-  response: AsyncReturnType<typeof mandelboxPolling>
+    response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.output?.secret_key
 
 // Helper functions
 
 const taskStatus = async (taskID: string, accessToken: string) =>
-  get({ endpoint: "/status/" + taskID, accessToken })
+    get({ endpoint: "/status/" + taskID, accessToken })
 
 const mandelboxRequest = async (
-  username: string,
-  accessToken: string,
-  region: string,
-  dpi: number
+    username: string,
+    accessToken: string,
+    region: string,
+    dpi: number
 ) =>
-  post({
-    endpoint: "/mandelbox/assign",
-    accessToken,
-    body: {
-      username,
-      region,
-      dpi,
-      app: "Google Chrome",
-    },
-  })
+    post({
+        endpoint: "/mandelbox/assign",
+        accessToken,
+        body: {
+            username,
+            region,
+            dpi,
+            app: "Google Chrome",
+        },
+    })
 
 const regionRequest = async (username: string, accessToken: string) =>
-  get({
-    endpoint: `/regions?username=${username}`,
-    accessToken,
-  })
+    get({
+        endpoint: `/regions?username=${username}`,
+        accessToken,
+    })

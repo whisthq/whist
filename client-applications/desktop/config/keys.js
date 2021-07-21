@@ -10,17 +10,17 @@
 const envOverrides = require("./envOverrides")
 
 const {
-  AWS_ACCESS_KEY = "PLACEHOLDER_CLIENTAPP_AWS_ACCESS_KEY", // only permissioned for S3 client-apps buckets
-  AWS_SECRET_KEY = "PLACEHOLDER_CLIENTAPP_AWS_SECRET_KEY",
-  AMPLITUDE_KEY = "PLACEHOLDER_CLIENTAPP_AMPLITUDE_KEY",
+    AWS_ACCESS_KEY = "PLACEHOLDER_CLIENTAPP_AWS_ACCESS_KEY", // only permissioned for S3 client-apps buckets
+    AWS_SECRET_KEY = "PLACEHOLDER_CLIENTAPP_AWS_SECRET_KEY",
+    AMPLITUDE_KEY = "PLACEHOLDER_CLIENTAPP_AMPLITUDE_KEY",
 } = envOverrides
 
 const keys = {
-  AWS_ACCESS_KEY,
-  AWS_SECRET_KEY,
-  AMPLITUDE_KEY,
+    AWS_ACCESS_KEY,
+    AWS_SECRET_KEY,
+    AMPLITUDE_KEY,
 }
 
 module.exports = {
-  keys,
+    keys,
 }
