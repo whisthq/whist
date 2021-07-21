@@ -1,10 +1,4 @@
-# Tags
-tags
-**/tags
-**/tags.lock
-**/tags.temp
-
-# General files
+# IDE/Editor Files
 *.iml
 .idea/
 *.pyc
@@ -14,6 +8,12 @@ tags
 .vscode/
 .vscode/settings.json
 .idea/
+
+# Vim Tags
+tags
+**/tags
+**/tags.lock
+**/tags.temp
 
 # macOS
 .DS_Store
@@ -44,8 +44,5 @@ lib/64/ffmpeg
 docs/html
 docs/latex
 
-# logs
-log*
-!log_statistic.c
-!log_statistic.h
-connection_id.txt
+# Logs
+**/*.log
