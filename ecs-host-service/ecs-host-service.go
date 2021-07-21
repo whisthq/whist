@@ -157,7 +157,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		// At this point, we've found an image, so we just need to start the container.
 
 		containerName := "host-service-warmup"
-		fc := mandelbox.New(globalCtx, goroutineTracker, types.MandelboxID(containerName))
+		fc := mandelbox.New(context.Background(), goroutineTracker, types.MandelboxID(containerName))
 		defer fc.Close()
 
 		// Assign port bindings for the mandelbox (necessary for
@@ -340,7 +340,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// If so, create the mandelbox object.
-	fc := mandelbox.New(globalCtx, goroutineTracker, req.MandelboxID)
+	fc := mandelbox.New(context.Background(), goroutineTracker, req.MandelboxID)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetMandelboxID())
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
@@ -691,13 +691,15 @@ func main() {
 			logger.Infof("Beginning host service shutdown procedure...")
 		}
 
-		// Cancel the global context, if it hasn't already been cancelled. Note
-		// that this also cleans up after every mandelbox.
+		// Cancel the global context, if it hasn't already been cancelled.
 		globalCancel()
 
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
 		// process.
 		goroutineTracker.Wait()
+
+		// Stop processing new events
+		close(eventLoopKeepalive)
 
 		uninitializeFilesystem()
 
@@ -784,8 +786,11 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	// Start main event loop
-	startEventLoop(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents)
+	// Start main event loop. Note that we don't track this goroutine, but
+	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
+	// needs to stay alive after the global context is cancelled, so we can
+	// process mandelbox death events.
+	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -801,89 +806,93 @@ func main() {
 	}
 }
 
-func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan httpserver.ServerRequest) {
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
+// As long as this channel is blocking, we continue processing events
+// (including Docker events).
+var eventLoopKeepalive = make(chan interface{}, 1)
 
-		// Create filter for which docker events we care about
-		filters := dockerfilters.NewArgs()
-		filters.Add("type", dockerevents.ContainerEventType)
-		eventOptions := dockertypes.EventsOptions{
-			Filters: filters,
+func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan httpserver.ServerRequest) {
+	// Note that we don't use globalCtx for the docker Context, since we still
+	// wish to process Docker events after the global context is cancelled.
+	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
+	defer dockerContextCancel()
+
+	// Create filter for which docker events we care about
+	filters := dockerfilters.NewArgs()
+	filters.Add("type", dockerevents.ContainerEventType)
+	eventOptions := dockertypes.EventsOptions{
+		Filters: filters,
+	}
+
+	// In the following loop, this var determines whether to re-initialize the
+	// Docker event stream. This is necessary because the Docker event stream
+	// needs to be reopened after any error is sent over the error channel.
+	needToReinitDockerEventStream := false
+	dockerevents, dockererrs := dockerClient.Events(dockerContext, eventOptions)
+	logger.Info("Initialized docker event stream.")
+	logger.Info("Entering event loop...")
+
+	// The actual event loop
+	for {
+		if needToReinitDockerEventStream {
+			dockerevents, dockererrs = dockerClient.Events(dockerContext, eventOptions)
+			needToReinitDockerEventStream = false
+			logger.Info("Re-initialized docker event stream.")
 		}
 
-		// In the following loop, this var determines whether to re-initialize the
-		// Docker event stream. This is necessary because the Docker event stream
-		// needs to be reopened after any error is sent over the error channel.
-		needToReinitDockerEventStream := false
-		dockerevents, dockererrs := dockerClient.Events(globalCtx, eventOptions)
-		logger.Info("Initialized docker event stream.")
-		logger.Info("Entering event loop...")
+		select {
+		case <-eventLoopKeepalive:
+			logger.Infof("Leaving main event loop...")
+			return
 
-		// The actual event loop
-		for {
-			if needToReinitDockerEventStream {
-				dockerevents, dockererrs = dockerClient.Events(globalCtx, eventOptions)
-				needToReinitDockerEventStream = false
-				logger.Info("Re-initialized docker event stream.")
-			}
-
-			select {
-			case <-globalCtx.Done():
-				logger.Infof("Leaving main event loop...")
+		case err := <-dockererrs:
+			needToReinitDockerEventStream = true
+			switch {
+			case err == nil:
+				logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
+				continue
+			case err == io.EOF:
+				logger.Panicf(globalCancel, "Docker event stream has been completely read.")
+			case dockerclient.IsErrConnectionFailed(err):
+				// This means "Cannot connect to the Docker daemon..."
+				logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
+				startDockerDaemon(globalCancel)
+				continue
+			default:
+				if !strings.HasSuffix(strings.ToLower(err.Error()), "context canceled") {
+					logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
+				}
 				return
+			}
 
-			case err := <-dockererrs:
-				needToReinitDockerEventStream = true
-				switch {
-				case err == nil:
-					logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
-					continue
-				case err == io.EOF:
-					logger.Panicf(globalCancel, "Docker event stream has been completely read.")
-				case dockerclient.IsErrConnectionFailed(err):
-					// This means "Cannot connect to the Docker daemon..."
-					logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
-					startDockerDaemon(globalCancel)
-					continue
-				default:
-					if !strings.HasSuffix(strings.ToLower(err.Error()), "context canceled") {
-						logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
-					}
-					return
-				}
+		case dockerevent := <-dockerevents:
+			if dockerevent.Action == "die" || dockerevent.Action == "start" {
+				logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
+			}
+			if dockerevent.Action == "die" {
+				mandelboxDieHandler(dockerevent.ID)
+			}
 
-			case dockerevent := <-dockerevents:
-				if dockerevent.Action == "die" || dockerevent.Action == "start" {
-					logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
-				}
-				if dockerevent.Action == "die" {
-					mandelboxDieHandler(dockerevent.ID)
-				}
+		// It may seem silly to just launch goroutines to handle these
+		// serverevents, but we aim to keep the high-level flow control and handling
+		// in this package, and the low-level authentication, parsing, etc. of
+		// requests in `httpserver`.
+		case serverevent := <-httpServerEvents:
+			switch serverevent.(type) {
+			// TODO: actually handle panics in these goroutines
+			case *httpserver.SpinUpMandelboxRequest:
+				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
 
-			// It may seem silly to just launch goroutines to handle these
-			// serverevents, but we aim to keep the high-level flow control and handling
-			// in this package, and the low-level authentication, parsing, etc. of
-			// requests in `httpserver`.
-			case serverevent := <-httpServerEvents:
-				switch serverevent.(type) {
-				// TODO: actually handle panics in these goroutines
-				case *httpserver.SpinUpMandelboxRequest:
-					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
+			case *httpserver.DrainAndShutdownRequest:
+				// Don't do this in a separate goroutine, since there's no reason to.
+				drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
 
-				case *httpserver.DrainAndShutdownRequest:
-					// Don't do this in a separate goroutine, since there's no reason to.
-					drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
-
-				default:
-					if serverevent != nil {
-						err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
-						logger.Error(err)
-						serverevent.ReturnResult("", err)
-					}
+			default:
+				if serverevent != nil {
+					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+					logger.Error(err)
+					serverevent.ReturnResult("", err)
 				}
 			}
 		}
-	}()
+	}
 }

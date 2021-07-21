@@ -35,7 +35,7 @@ func heartbeatGoroutine() {
 		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
 
 		select {
-		case _, _ = <-heartbeatKeepAlive:
+		case <-heartbeatKeepAlive:
 			// If we hit this case, that means that `heartbeatKeepAlive` was either
 			// closed or written to (it should not be written to), but either way,
 			// it's time to die.
@@ -48,7 +48,7 @@ func heartbeatGoroutine() {
 			}
 			return
 
-		case _ = <-timerChan:
+		case <-timerChan:
 			// There's just no time to die
 			if err := writeHeartbeat(); err != nil {
 				logger.Errorf("Error writing heartbeat: %s", err)
