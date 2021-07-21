@@ -23,17 +23,17 @@ const helpers = require("./build-package-helpers")
 // It's worth declaring the parameter even if we're not using it so that
 // it's clear to a reader that we're adhering to our consistent script syntax.
 export default function start(env, ..._args) {
-  helpers.buildAndCopyProtocol()
-  helpers.buildTailwind()
-  // Notice here that we "destructure" the env object before adding the
-  // script-specific environment variable VERSION. This way, the environment
-  // variables received as the first argument will get merged.
-  // If the env object is not passed or is undefined, then no extra
-  // environment variables will get merged in.
-  helpers.snowpackDev({
-    ...env,
-    VERSION: helpers.getCurrentClientAppVersion(),
-  })
+    helpers.buildAndCopyProtocol()
+    helpers.buildTailwind()
+    // Notice here that we "destructure" the env object before adding the
+    // script-specific environment variable VERSION. This way, the environment
+    // variables received as the first argument will get merged.
+    // If the env object is not passed or is undefined, then no extra
+    // environment variables will get merged in.
+    helpers.snowpackDev({
+        ...env,
+        VERSION: helpers.getCurrentClientAppVersion(),
+    })
 }
 
 // This is a common node directive that runs only if this is the "main" script.
@@ -47,7 +47,7 @@ export default function start(env, ..._args) {
 // This block is also a good place to do any "argv" command line parsing. This
 // helps keep initialization separate from the logic inside the "start" function.
 if (require.main === module) {
-  start()
+    start()
 }
 ```
 
