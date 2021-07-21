@@ -11,7 +11,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    # Find the number of AWS EC2 instances we have across all instance states (running, stopped) 
+    # Find the number of AWS EC2 instances we have across all instance states (running, stopped)
     # running in each region, and notify Slack
     webserver-enumerate-all-instances:
         name: Main Webserver Enumerate All Instances
@@ -51,7 +51,7 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Find whether we have hanging cloud resources, which are defined as resources that are 
+    # Find whether we have hanging cloud resources, which are defined as resources that are
     # not in one of our databases, but still exist in AWS, and notify Slack
     webserver-hanging-resource-notification:
         name: Main Webserver Hanging Resource Notification
@@ -128,7 +128,7 @@ jobs:
 
             - name: Delete All but Latest 100 AMIs
               run: amicleaner -f --keep-previous 100
-            
+
             # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance
             - name: Delete Orphaned EBS Volumes
               run: amicleaner -f --check-orphans
