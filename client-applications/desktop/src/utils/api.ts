@@ -25,21 +25,21 @@ import https from "https"
  */
 
 const httpConfig = {
-  server: config.url.WEBSERVER_URL,
-  // handleAuth: (_: any) => goTo("/auth"),
-  endpointRefreshToken: "/token/refresh",
+    server: config.url.WEBSERVER_URL,
+    // handleAuth: (_: any) => goTo("/auth"),
+    endpointRefreshToken: "/token/refresh",
 }
 
 export const get = configGet(httpConfig)
 export const post = configPost(httpConfig)
 
 export const apiPut = async (
-  endpoint: string,
-  server: string | undefined,
-  body: Record<string, any>,
-  ignoreCertificate = false
+    endpoint: string,
+    server: string | undefined,
+    body: Record<string, any>,
+    ignoreCertificate = false
 ) => {
-  /*
+    /*
     Description:
         Sends an HTTP put request.
     NOTE: So far, we only make a PUT request when communicating with the host service, and the
@@ -57,39 +57,39 @@ export const apiPut = async (
         { json, success, response } (JSON) : Returned JSON of PUT request, success True/False, and HTTP response
     */
 
-  const fullUrl = `${server ?? ""}${endpoint ?? ""}`
+    const fullUrl = `${server ?? ""}${endpoint ?? ""}`
 
-  return await new Promise((resolve, reject) => {
-    // If we want to ignore the host certificate, then `rejectUnauthorized` should be false
-    const request = https.request(
-      fullUrl,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        rejectUnauthorized: !ignoreCertificate,
-      },
-      (response) => {
-        let responseText = ""
-        response.on("data", (data: string) => {
-          responseText = `${responseText}${data}`
+    return await new Promise((resolve, reject) => {
+        // If we want to ignore the host certificate, then `rejectUnauthorized` should be false
+        const request = https.request(
+            fullUrl,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                rejectUnauthorized: !ignoreCertificate,
+            },
+            (response) => {
+                let responseText = ""
+                response.on("data", (data: string) => {
+                    responseText = `${responseText}${data}`
+                })
+                response.on("end", () => {
+                    const status = response?.statusCode ?? 400
+                    const json = JSON.stringify(responseText)
+                    resolve({ json, status, response })
+                })
+            }
+        )
+        request.write(JSON.stringify(body))
+        request.on("error", (e) => {
+            reject(e)
         })
-        response.on("end", () => {
-          const status = response?.statusCode ?? 400
-          const json = JSON.stringify(responseText)
-          resolve({ json, status, response })
-        })
-      }
-    )
-    request.write(JSON.stringify(body))
-    request.on("error", (e) => {
-      reject(e)
+        request.end()
     })
-    request.end()
-  })
 }
 
 // TODO: this needs to move somewhere else, but we're not using it yet
 export const tokenValidate = async (accessToken: string) =>
-  get({ endpoint: "/token/validate", accessToken })
+    get({ endpoint: "/token/validate", accessToken })

@@ -19,70 +19,72 @@ let tray: Tray | null = null
 export const trayEvent = new events.EventEmitter()
 
 const createNativeImage = () => {
-  const image = nativeImage?.createFromPath(trayIconPath)?.resize({ width: 16 })
-  image.setTemplateImage(true)
-  return image
+    const image = nativeImage
+        ?.createFromPath(trayIconPath)
+        ?.resize({ width: 16 })
+    image.setTemplateImage(true)
+    return image
 }
 
 const rootMenu = [
-  {
-    label: "Leave feedback",
-    click: () => {
-      trayEvent.emit("feedback")
+    {
+        label: "Leave feedback",
+        click: () => {
+            trayEvent.emit("feedback")
+        },
     },
-  },
-  {
-    label: "Sign out",
-    click: () => {
-      trayEvent.emit("signout")
+    {
+        label: "Sign out",
+        click: () => {
+            trayEvent.emit("signout")
+        },
     },
-  },
-  {
-    label: "Quit",
-    click: () => {
-      trayEvent.emit("quit")
+    {
+        label: "Quit",
+        click: () => {
+            trayEvent.emit("quit")
+        },
     },
-  },
 ]
 
 const paymentMenu = [
-  {
-    label: "Billing info",
-    click: () => {
-      trayEvent.emit("payment")
+    {
+        label: "Billing info",
+        click: () => {
+            trayEvent.emit("payment")
+        },
     },
-  },
 ]
 
 const regionMenu = [
-  {
-    label: "(Admin Only) Region",
-    submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
-      label: region,
-      type: "radio",
-      click: () => {
-        trayEvent.emit("region", region)
-      },
-    })),
-  } as unknown as MenuItem,
+    {
+        label: "(Admin Only) Region",
+        submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
+            label: region,
+            type: "radio",
+            click: () => {
+                trayEvent.emit("region", region)
+            },
+        })),
+    } as unknown as MenuItem,
 ]
 
 export const destroyTray = () => {
-  tray?.destroy()
+    tray?.destroy()
 }
 
 export const createTray = (userEmail: string) => {
-  // We should only have one tray at any given time
-  if (tray != null) destroyTray()
+    // We should only have one tray at any given time
+    if (tray != null) destroyTray()
 
-  tray = new Tray(createNativeImage())
-  // If the user is a @fractal.co developer, then allow them to toggle regions for testing
-  const template = [
-    ...rootMenu,
-    ...(endsWith(userEmail, "@fractal.co") ? regionMenu : []),
-    ...(allowPayments ? paymentMenu : []),
-  ]
+    tray = new Tray(createNativeImage())
+    // If the user is a @fractal.co developer, then allow them to toggle regions for testing
+    const template = [
+        ...rootMenu,
+        ...(endsWith(userEmail, "@fractal.co") ? regionMenu : []),
+        ...(allowPayments ? paymentMenu : []),
+    ]
 
-  const menu = Menu.buildFromTemplate(template)
-  tray.setContextMenu(menu)
+    const menu = Menu.buildFromTemplate(template)
+    tray.setContextMenu(menu)
 }

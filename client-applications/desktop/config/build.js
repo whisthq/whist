@@ -11,20 +11,20 @@ const { appEnvironment = FractalEnvironments.PRODUCTION } = envOverrides
 
 // Make sure we have a valid appEnvironment
 assert(
-  appEnvironment === FractalEnvironments.LOCAL ||
-    appEnvironment === FractalEnvironments.DEVELOPMENT ||
-    appEnvironment === FractalEnvironments.STAGING ||
-    appEnvironment === FractalEnvironments.PRODUCTION
+    appEnvironment === FractalEnvironments.LOCAL ||
+        appEnvironment === FractalEnvironments.DEVELOPMENT ||
+        appEnvironment === FractalEnvironments.STAGING ||
+        appEnvironment === FractalEnvironments.PRODUCTION
 )
 
 // Icon name
 const iconName =
-  appEnvironment === FractalEnvironments.PRODUCTION ||
-  appEnvironment === FractalEnvironments.LOCAL
-    ? "icon"
-    : `icon_${appEnvironment}`
+    appEnvironment === FractalEnvironments.PRODUCTION ||
+    appEnvironment === FractalEnvironments.LOCAL
+        ? "icon"
+        : `icon_${appEnvironment}`
 
 module.exports = {
-  appEnvironment,
-  iconName,
+    appEnvironment,
+    iconName,
 }
