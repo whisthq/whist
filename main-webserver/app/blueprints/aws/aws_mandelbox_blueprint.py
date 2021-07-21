@@ -5,7 +5,7 @@ from http import HTTPStatus
 from flask import Blueprint, current_app
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
-from flask_pydantic import validate
+from flask_pydantic import validate  # type: ignore
 from app.validation import MandelboxAssignBody
 
 from app import fractal_pre_process, log_request
