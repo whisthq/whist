@@ -81,30 +81,32 @@ const localLog = (
 }
 
 const amplitudeLog = async (title: string, data: object, userEmail: string) => {
-  if (userEmail !== "") {
-    if (!regionSet) {
-      const region = await chooseRegion(defaultAllowedRegions)
-      await amplitude.logEvent({
-        event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail,
-        event_properties: data,
-        user_properties: {
-          aws_region: region,
-        },
-      })
-      regionSet = true
-    } else {
-      await amplitude.logEvent({
-        event_type: `[${
-          (config.appEnvironment as string) ?? "LOCAL"
-        }] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail,
-        event_properties: data,
-      })
+    if (userEmail !== "") {
+        if (!regionSet) {
+            const region = await chooseRegion(defaultAllowedRegions)
+            await amplitude.logEvent({
+                event_type: `[${
+                    (config.appEnvironment as string) ?? "LOCAL"
+                }] ${title}`,
+                session_id: sessionID,
+                user_id: userEmail,
+                event_properties: data,
+                user_properties: {
+                    aws_region: region,
+                },
+            })
+            regionSet = true
+        } else {
+            await amplitude.logEvent({
+                event_type: `[${
+                    (config.appEnvironment as string) ?? "LOCAL"
+                }] ${title}`,
+                session_id: sessionID,
+                user_id: userEmail,
+                event_properties: data,
+            })
+        }
     }
-  }
 }
 
 export const logBase = async (title: string, data: object, level: LogLevel) => {
