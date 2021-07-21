@@ -1,10 +1,10 @@
 # Fractal Core Typescript Library
 
-This project is an internal Fractal library for shared React components, Typescript functions, CSS modules, etc., which are used in various other projects within Fractal. If you write TypeScript code that you believe can be reused across various projects, then you should add it to this internal library and use the library within your project, for maximum code reusability.
+This project is an internal Fractal library for shared React components, Typescript functions, CSS modules, etc., which are used in various other projects within the Fractal monorepo. If you write TypeScript code that you believe can be reused across various projects, then you should add it to this internal library and use the library within your project, for maximum code reusability.
 
 ## Development Workflow
 
-One of the goals of `core-ts` is to extract out common code in the Fractal website and Fractal client application. Those code bases are run in a browser environment and setup with Hot Module Reloading, making it easy to save a file and see how your changes work.
+One of the goals of `core-ts` is to extract out common code in the Fractal website and Fractal user-facing application(s). Those codebases are run in a browser environment and setup with Hot Module Reloading, making it easy to save a file and see how your changes work.
 
 Because `core-ts` is decoupled from Electron or Create React App, we need a manual setup so that we can interact with code as we're developing. Here's a few ways may want to work, depending on the job you're doing.
 
@@ -12,7 +12,7 @@ Because `core-ts` is decoupled from Electron or Create React App, we need a manu
 
 If you're just making small changes to some functions and want to make sure they pass the test suite, run `yarn run test-watch`. This will start `jest --watch`, which runs the tests every time your code changes. It's a little nicer than manually re-triggering them.
 
-##### 2. Hot reload all of core-ts
+##### 2. Hot reload all of `core-ts`
 
 If you're making new functions or exploring API responses, you might like to be able to import any module from `core-ts` and just run as a script. `core-ts` has `nodemon`, a file watcher, as well as `ts-node`, a TypeScript REPL, installed just for this. Currently, `src/index.ts` is empty and is not a bad file to use as a "scratch pad", because it can easily import the rest of the submodules in `core-ts`. Just don't commit your "scratch pad" changes.
 
