@@ -58,9 +58,17 @@ export const flow =
       Map of observables
   */
 
-    (trigger: Observable<T>) =>
-        mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
+    (trigger: Observable<T>) => {
+        const flowStartTime = Date.now()
+        return mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
             obs.pipe(
+                tap(() =>
+                    console.log(
+                        `Flow ${name}.${key} took ${(
+                            Date.now() - flowStartTime
+                        ).toString()} ms`
+                    )
+                ),
                 tap((value) =>
                     console.log(
                         truncate(`DEBUG: ${name}.${key} -- ${inspect(value)}`, {
@@ -71,6 +79,7 @@ export const flow =
                 share()
             )
         )
+    }
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
     /*

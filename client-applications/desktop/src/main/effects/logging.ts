@@ -1,4 +1,5 @@
 import { values, omit } from "lodash"
+import { zip } from "rxjs"
 
 import { logBase, LogLevel } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
@@ -8,22 +9,32 @@ import TRIGGER from "@app/utils/triggers"
 // should be good enough.
 const startTime = Date.now()
 
+const logTime = (x: { timestamp: number }, start: number) => {
+    if (x.timestamp > startTime) {
+        logBase(
+            "appReadyTime",
+            {
+                ms: x.timestamp - startTime,
+            },
+            LogLevel.DEBUG
+        ).catch((err) => console.error(err))
+    }
+}
+
 // Iterates through all the triggers and logs them
 values(TRIGGER).forEach((name: string) => {
     fromTrigger(name).subscribe((x: any) => {
-        if (x.timestamp !== undefined && x.timestamp > startTime) {
-            logBase(
-                name,
-                {
-                    ...omit(x, ["timestamp"]),
-                    msSinceStart: x.timestamp - startTime,
-                },
-                LogLevel.DEBUG
-            ).catch((err) => console.error(err))
-        } else {
-            logBase(name, omit(x, ["timestamp"]), LogLevel.DEBUG).catch((err) =>
-                console.error(err)
-            )
-        }
+        logBase(name, omit(x, ["timestamp"]), LogLevel.DEBUG).catch((err) =>
+            console.error(err)
+        )
     })
 })
+
+fromTrigger("appReady").subscribe((x: any) => logTime(x, startTime))
+
+zip([
+    fromTrigger("authFlowSuccess"),
+    fromTrigger("mandelboxFlowSuccess"),
+]).subscribe(([a, m]: [{ timestamp: number }, { timestamp: number }]) =>
+    logTime(a, m.timestamp)
+)
