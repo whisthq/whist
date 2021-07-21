@@ -77,25 +77,31 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     if instance_name is None:
         fractal_logger.info(
             f"No instance found with body.region: {body.region},\
-             body.client_commit_hash: {body.client_commit_hash}"
+             body.client_commit_hash: {client_commit_hash}"
         )
 
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
             # and we know what instance type we're missing from the request
-            scaling_thread = Thread(
-                target=do_scale_up_if_necessary,
-                args=(
-                    body.region,
-                    RegionToAmi.query.get(
-                        {"region_name": body.region, "client_commit_hash": client_commit_hash}
-                    ).ami_id,
-                ),
-                kwargs={
-                    "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
-                },
+            ami = RegionToAmi.query.get(
+                {"region_name": body.region, "client_commit_hash": client_commit_hash}
             )
-            scaling_thread.start()
+            if ami is None:
+                fractal_logger.debug(
+                    f"No AMI found for region: {body.region}, commit hash: {client_commit_hash}"
+                )
+            else:
+                scaling_thread = Thread(
+                    target=do_scale_up_if_necessary,
+                    args=(
+                        body.region,
+                        ami.ami_id,
+                    ),
+                    kwargs={
+                        "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
+                    },
+                )
+                scaling_thread.start()
         fractal_logger.debug(
             f"Returning 503 to user {body.username} because we didn't find an instance for them."
         )
