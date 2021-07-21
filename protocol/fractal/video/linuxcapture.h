@@ -47,8 +47,16 @@ typedef struct CaptureDevice {
     // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
+
+    // To hold software captured frames
+    void* frame_data;
+    int pitch;
+
+    // Shared X11 state
     Display* display;
     Window root;
+
+    // Underlying X11/Nvidia capture devices
     NvidiaCaptureDevice* nvidia_capture_device;
     X11CaptureDevice* x11_capture_device;
 } CaptureDevice;

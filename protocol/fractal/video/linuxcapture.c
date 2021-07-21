@@ -337,4 +337,8 @@ void destroy_capture_device(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-int transfer_screen(CaptureDevice* device) { return 0; }
+int transfer_screen(CaptureDevice* device) {
+    device->frame_data = device->x11_capture_device->frame_data;
+    device->pitch = device->x11_capture_device->pitch;
+    return 0;
+}

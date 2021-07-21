@@ -892,9 +892,11 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
         Returns:
             (int): 0 on success, -1 on failure
     */
-    AVFrame *active_frame = encoder->sw_frame;
+    AVFrame *active_frame = NULL;
     if (encoder->hw_frame) {
         active_frame = encoder->hw_frame;
+    } else {
+        active_frame = encoder->sw_frame;
     }
 
     int res = av_buffersrc_add_frame(encoder->filter_graph_source, active_frame);
@@ -941,7 +943,7 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
     // Increment GOP counter
     encoder->frames_since_last_iframe++;
     // If we've forced an iframe
-    if (encoder->sw_frame->pict_type == AV_PICTURE_TYPE_I) {
+    if (active_frame->pict_type == AV_PICTURE_TYPE_I) {
         encoder->is_iframe = true;
     }
 
