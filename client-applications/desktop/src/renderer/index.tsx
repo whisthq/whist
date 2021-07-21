@@ -66,11 +66,11 @@ const RootComponent = () => {
             trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
         })
 
-  const onTypeformSubmit = () => {
-    setMainState({
-      trigger: { name: TRIGGER.persistTypeform, payload: undefined },
-    })
-  }
+    const onTypeformSubmit = () => {
+        setMainState({
+            trigger: { name: TRIGGER.persistTypeform, payload: undefined },
+        })
+    }
 
     if (show === WindowHashUpdate) return <Update />
     if (show === WindowHashSignout) return <Signout onClick={clearCache} />
