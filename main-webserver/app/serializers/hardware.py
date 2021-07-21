@@ -6,16 +6,16 @@ from app.models import (
 )
 
 
-class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):  # type: ignore[name-defined]
+class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SupportedAppImages
 
 
-class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):  # type: ignore[name-defined]
+class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = RegionToAmi
 
 
-class InstanceInfoSchema(ma.SQLAlchemyAutoSchema):  # type: ignore[name-defined]
+class InstanceInfoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = InstanceInfo
