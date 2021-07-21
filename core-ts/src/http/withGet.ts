@@ -1,4 +1,4 @@
-import { ServerDecorator } from "../types/api"
+import { ServerDecorator } from "../types/api";
 
 /*
  * Attaches a GET method to a ServerRequest.
@@ -8,4 +8,4 @@ import { ServerDecorator } from "../types/api"
  * @returns a ServerResponse wrapped in a Promise
  */
 export const withGet: ServerDecorator = async (fn, req) =>
-    await fn({ ...req, method: "GET" })
+  await fn({ ...req, method: "GET" });

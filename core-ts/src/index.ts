@@ -1,1 +1,1 @@
-export { configGet, configPost } from "./http"
+export { configGet, configPost } from "./http";

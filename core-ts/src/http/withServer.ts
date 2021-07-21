@@ -1,4 +1,4 @@
-import { ServerDecorator } from "../types/api"
+import { ServerDecorator } from "../types/api";
 
 /*
  * Accepts a "server" parameter at configuration time.
@@ -7,7 +7,7 @@ import { ServerDecorator } from "../types/api"
  * @param server - a string representing a HTTP server
  * @returns a ServerDecorator function
  */
-export const withServer = (server: string): ServerDecorator => async (
-    fn,
-    req
-) => await fn({ ...req, server })
+export const withServer =
+  (server: string): ServerDecorator =>
+  async (fn, req) =>
+    await fn({ ...req, server });

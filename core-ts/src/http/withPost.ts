@@ -1,4 +1,4 @@
-import { ServerDecorator } from "../types/api"
+import { ServerDecorator } from "../types/api";
 
 /*
  * Attaches a POST method to a ServerRequest.
@@ -8,4 +8,4 @@ import { ServerDecorator } from "../types/api"
  * @returns a ServerResponse wrapped in a Promise
  */
 export const withPost: ServerDecorator = async (fn, req) =>
-    await fn({ ...req, method: "POST" })
+  await fn({ ...req, method: "POST" });

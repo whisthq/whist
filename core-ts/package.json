@@ -51,12 +51,17 @@
         "compile": "tsc",
         "clean": "rimraf dist",
         "copy-package": "mkdir -p dist && cp package.json dist/package.json",
-        "build": "npm run clean && npm run compile",
+        "build": "yarn run clean && yarn run compile",
         "dev": "nodemon -r tsconfig-paths/register --watch src",
         "lint:check": "node ./scripts/lint.js",
         "lint:fix": "node ./scripts/lint.js --fix",
-        "tsc-watch": "npm run clean && npm run compile -- --watch",
-        "test": "npm run compile && jest",
+        "tsc-watch": "yarn run clean && yarn run compile -- --watch",
+        "test": "yarn run compile && jest",
         "test-watch": "jest --watch"
-    }
+    },
+    "engines": {
+        "node": ">=15.x",
+        "npm": "use-yarn",
+        "yarn": ">=1.19.x"
+      }
 }
