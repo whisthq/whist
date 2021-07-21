@@ -749,7 +749,24 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
             break;
         }
     }
+    if (ffmpeg_encoder == NULL) {
+        LOG_ERROR("All ffmpeg encoders failed!");
+    } else {
+        ffmpeg_encoder->bitrate = bitrate;
+    }
     return ffmpeg_encoder;
+}
+
+// Reconfigure the encoder, with the same parameters as in create_ffmpeg_encoder
+bool ffmpeg_reconfigure_encoder(FFmpegEncoder *encoder, int in_width, int in_height, int out_width,
+                                int out_height, int bitrate, CodecType codec_type) {
+    if (in_width != encoder->in_width || in_height != encoder->in_height ||
+        out_width != encoder->out_width || out_height != encoder->out_height ||
+        bitrate != encoder->bitrate || codec_type != encoder->codec_type) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 int ffmpeg_encoder_frame_intake(FFmpegEncoder *encoder, void *rgb_pixels, int pitch) {

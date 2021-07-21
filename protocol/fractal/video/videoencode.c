@@ -54,7 +54,6 @@ void transfer_nvidia_data(VideoEncoder *encoder) {
     encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
     encoder->out_width = encoder->nvidia_encoder->width;
     encoder->out_height = encoder->nvidia_encoder->height;
-    encoder->codec_type = encoder->nvidia_encoder->codec_type;
 
     // Construct frame packets
     encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
@@ -112,7 +111,6 @@ int transfer_ffmpeg_data(VideoEncoder *encoder) {
     encoder->out_width = encoder->ffmpeg_encoder->out_width;
     encoder->out_height = encoder->ffmpeg_encoder->out_height;
     encoder->is_iframe = encoder->ffmpeg_encoder->is_iframe;
-    encoder->codec_type = encoder->ffmpeg_encoder->codec_type;
     return 0;
 }
 
@@ -177,6 +175,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         LOG_ERROR("FFmpeg encoder creation failed!");
         return NULL;
     }
+
+    encoder->codec_type = codec_type;
 
     return encoder;
 }
@@ -246,8 +246,8 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
         case FFMPEG_ENCODER:
-            // Haven't implemented ffmpeg reconfiguring yet
-            return false;
+            return ffmpeg_reconfigure_encoder(encoder->ffmpeg_encoder, width, height, width, height,
+                                              bitrate, codec);
         default:
             LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
             return -1;

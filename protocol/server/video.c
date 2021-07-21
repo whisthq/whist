@@ -105,6 +105,9 @@ int32_t multithreaded_encoder_factory(void* opaque) {
     encoder_factory_result = create_video_encoder(
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
         encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
+    if (encoder_factory_result == NULL) {
+        LOG_FATAL("Could not create an encoder, giving up!");
+    }
     encoder_finished = true;
     return 0;
 }
@@ -268,7 +271,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     current_bitrate = (int)(max_mbps * 1024 * 1024);
                     update_encoder = false;
                 } else {
-                    LOG_ERROR("Reconfiguration failed! Creating a new encoder!");
+                    // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
+                    LOG_INFO("Reconfiguration failed! Creating a new encoder!");
                 }
             }
 
