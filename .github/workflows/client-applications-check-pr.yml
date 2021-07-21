@@ -19,6 +19,40 @@ on:
 jobs:
     # Linting
     # Checks for formatting using ESlint.
+    config:
+        name: Building config
+        runs-on: ubuntu-20.04
+
+        # Comment
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Build Monorepo Configuration for Mac
+              id: config-macos
+              uses: ./.github/actions/monorepo-config
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+                  os: macos
+                  deploy: dev
+
+            - name: Build Monorepo Configuration for Windows
+              id: config-win32
+              uses: ./.github/actions/monorepo-config
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+                  os: win32
+                  deploy: dev
+
+            - name: Log Configuration
+              shell: python3 {0}
+              run: |
+                  output = """
+                  CONFIG:
+                  ${{ steps.config-macos.outputs.config }}
+                  """
+                  print(output)
+
     client-applications-check-pr-linting:
         name: Linting
         runs-on: ubuntu-20.04
@@ -55,8 +89,10 @@ jobs:
                 config:
                     - name: Windows
                       os: windows-2019
+                      config-os: win32
                     - name: macOS
                       os: macos-10.14
+                      config-os: macos
 
         steps:
             - name: Checkout Git Repository
