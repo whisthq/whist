@@ -1,14 +1,14 @@
-import React from 'react'
-import { Route, Switch } from 'react-router-dom'
+import React from "react";
+import { Route, Switch } from "react-router-dom";
 
-import About from '@app/pages/about'
-import Cookies from '@app/pages/legal/cookies'
-import Privacy from '@app/pages/legal/privacy'
-import TermsOfService from '@app/pages/legal/tos'
-import Landing from '@app/pages/home'
+import About from "@app/pages/about";
+import Cookies from "@app/pages/legal/cookies";
+import Privacy from "@app/pages/legal/privacy";
+import TermsOfService from "@app/pages/legal/tos";
+import Landing from "@app/pages/home";
 
-import routes from '@app/shared/constants/routes'
-import withTracker from '@app/shared/utils/withTracker'
+import routes from "@app/shared/constants/routes";
+import withTracker from "@app/shared/utils/withTracker";
 
 const RootApp = () => {
   /*
@@ -24,7 +24,7 @@ const RootApp = () => {
       <Route exact path={routes.TOS} component={withTracker(TermsOfService)} />
       <Route exact path={routes.LANDING} component={withTracker(Landing)} />
     </Switch>
-  )
-}
+  );
+};
 
-export default RootApp
+export default RootApp;

@@ -1,6 +1,6 @@
-import React from 'react'
+import React from "react";
 
-import './animatedLine.css'
+import "./animatedLine.css";
 
 export const AnimatedLineB = (props: { scale?: number }) => {
   /*
@@ -10,7 +10,7 @@ export const AnimatedLineB = (props: { scale?: number }) => {
             scale (number): How big the SVG would be, default size is 1
     */
 
-  const { scale } = props
+  const { scale } = props;
   return (
     <svg
       width="569"
@@ -19,7 +19,7 @@ export const AnimatedLineB = (props: { scale?: number }) => {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{
-        transform: scale !== undefined ? `scale(${scale})` : 'scale(1.0)'
+        transform: scale !== undefined ? `scale(${scale})` : "scale(1.0)",
       }}
     >
       <path
@@ -121,7 +121,7 @@ export const AnimatedLineB = (props: { scale?: number }) => {
         </filter>
       </defs>
     </svg>
-  )
-}
+  );
+};
 
-export default AnimatedLineB
+export default AnimatedLineB;
