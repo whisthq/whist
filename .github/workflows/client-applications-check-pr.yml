@@ -42,7 +42,7 @@ jobs:
 
             - name: Check if Code Follows ESLint Standards
               working-directory: client-applications/desktop
-              run: yarn lint:check
+              run: yarn run lint:check
 
     # Building
     # Check that the Client Applications build.

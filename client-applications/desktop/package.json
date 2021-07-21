@@ -17,8 +17,8 @@
     "package:notarize": "node ./scripts/package-notarize.js",
     "package:publish": "node ./scripts/package-publish.js",
     "postinstall": "node ./scripts/postinstall.js",
-    "lint:check": "node ./scripts/lint.js",
-    "lint:fix": "node ./scripts/lint.js --fix",
+    "lint:check": "node ./client-applications/desktop/scripts/lint.js",
+    "lint:fix": "node ./client-applications/desktop/scripts/lint.js --fix",
     "cache:clear": "electron ./scripts/clearAppData.js",
     "test:manual": "node ./scripts/testManual.js"
   },
