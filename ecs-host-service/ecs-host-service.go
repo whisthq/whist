@@ -865,9 +865,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			}
 
 		case dockerevent := <-dockerevents:
-			if dockerevent.Action == "die" || dockerevent.Action == "start" {
-				logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
-			}
+			logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			if dockerevent.Action == "die" {
 				mandelboxDieHandler(dockerevent.ID)
 			}
