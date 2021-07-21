@@ -19,7 +19,11 @@ import {
     createPaymentWindow,
     createTypeformWindow,
 } from "@app/utils/windows"
-import { createTray } from "@app/utils/tray"
+import {
+  createTray,
+  updateSignedInTray,
+  updateSignedOutTray,
+} from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { emitAuthCache, persistClear } from "@app/utils/persist"
@@ -52,8 +56,11 @@ fromTrigger("appReady")
             .catch((err) => console.error(err))
     })
 
-// Check Electron store for persisted data
-fromTrigger("appReady").subscribe(() => emitAuthCache())
+// Check Electron store for persisted data and create the tray
+fromTrigger("appReady").subscribe(() => {
+  emitAuthCache()
+  createTray()
+})
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -69,8 +76,8 @@ fromTrigger("notPersisted").subscribe(() => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
-    createProtocolWindow().catch((err) => console.error(err))
-    createTray(x.userEmail)
+  createProtocolWindow().catch((err) => console.error(err))
+  updateSignedInTray(x.userEmail)
 })
 
 fromTrigger("trayQuitAction").subscribe(() => {
@@ -104,6 +111,11 @@ fromTrigger("clearCacheAction").subscribe(() => {
         .catch((err) => console.error(err))
     // Restart the app
     relaunch()
+})
+
+// On signout or relaunch, update the tray to the signed out version
+fromTrigger("clearCacheAction").subscribe(() => {
+  updateSignedOutTray()
 })
 
 // If an admin selects a region, relaunch the app with the selected region passed
