@@ -9,6 +9,12 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
                              NV_ENC_PRESET_CONFIG* p_preset_config);
 GUID get_codec_guid(CodecType codec);
 
+int32_t multithreaded_destroy_nvidia_encoder(void* opaque) {
+    NvidiaEncoder* nvidia_encoder = (NvidiaEncoder*)opaque;
+    destroy_nvidia_encoder(nvidia_encoder);
+    return 0;
+}
+
 void try_free_frame(NvidiaEncoder* encoder) {
     NVENCSTATUS status;
 

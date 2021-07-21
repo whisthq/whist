@@ -142,4 +142,5 @@ void ffmpeg_set_iframe(FFmpegEncoder* encoder);
  * @param encoder                  Encoder to be destroyed
  */
 void destroy_ffmpeg_encoder(FFmpegEncoder* encoder);
+int32_t multithreaded_destroy_ffmpeg_encoder(void* opaque);
 #endif
