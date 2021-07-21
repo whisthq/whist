@@ -230,3 +230,55 @@ git commit -a -m 'testing the workflow' \
 ```
 
 That's all! Keep to this practice, and you won't need a special runner like `nektos/act` for developing an Action.
+
+## GitHub environment
+
+The entire GitHub environment will be passed automatically to the Docker image. Note the environment is not identical to the environment of GitHub workflows. An example is below.
+
+```json
+{
+    "ACTIONS_RUNTIME_TOKEN": "*****",
+    "ACTIONS_CACHE_URL": "https://artifactcache.actions.githubusercontent.com",
+    "CI": "true",
+    "HOSTNAME": "4a265cb02253",
+    "GITHUB_ENV": "/github/file_commands/set_env_***",
+    "PYTHON_PIP_VERSION": "21.1.2",
+    "HOME": "/github/home",
+    "GITHUB_EVENT_PATH": "/github/workflow/event.json",
+    "RUNNER_TEMP": "/home/runner/work/_temp",
+    "GITHUB_REPOSITORY_OWNER": "fractal",
+    "GITHUB_RETENTION_DAYS": "14",
+    "GPG_KEY": "E3FF2839C048B25C084DEBE9B26995E310250568",
+    "GITHUB_HEAD_REF": "",
+    "GITHUB_GRAPHQL_URL": "https://api.github.com/graphql",
+    "GITHUB_API_URL": "https://api.github.com",
+    "ACTIONS_RUNTIME_URL": "https://pipelines.actions.githubusercontent.com/**",
+    "RUNNER_OS": "Linux",
+    "GITHUB_WORKFLOW": "Monorepo Config",
+    "INPUT_SECRETS": "neil-secret",
+    "PYTHON_GET_PIP_URL": "https://github.com/pypa/get-pip/raw/***",
+    "GITHUB_RUN_ID": "917521391",
+    "GITHUB_BASE_REF": "",
+    "GITHUB_ACTION_REPOSITORY": "",
+    "PATH": "/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin",
+    "RUNNER_TOOL_CACHE": "/opt/hostedtoolcache",
+    "GITHUB_ACTION": "self",
+    "GITHUB_RUN_NUMBER": "379",
+    "LANG": "C.UTF-8",
+    "GITHUB_REPOSITORY": "fractal/fractal",
+    "GITHUB_ACTION_REF": "",
+    "GITHUB_ACTIONS": "true",
+    "PYTHON_VERSION": "3.9.5",
+    "GITHUB_WORKSPACE": "/github/workspace",
+    "GITHUB_JOB": "hello_world_job",
+    "GITHUB_SHA": "83ce92a46274109e0351ff94477bf4d6316793ba",
+    "GITHUB_ACTOR": "neilyio",
+    "GITHUB_REF": "refs/heads/neilyio/config/monorepo-level",
+    "GITHUB_PATH": "/github/file_commands/add_path_***",
+    "RUNNER_WORKSPACE": "/home/runner/work/fractal",
+    "PWD": "/github/workspace",
+    "GITHUB_EVENT_NAME": "workflow_dispatch",
+    "GITHUB_SERVER_URL": "https://github.com",
+    "PYTHON_GET_PIP_SHA256": "********************************8"
+}
+```

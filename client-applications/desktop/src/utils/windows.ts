@@ -9,10 +9,17 @@
 import path from "path"
 import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
+import { store } from "@app/utils/persist"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { FractalCallbackUrls } from "@app/config/urls"
-import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
+import {
+    paymentPortalParse,
+    paymentPortalRequest,
+    authInfoCallbackRequest,
+    authInfoParse,
+    authPortalURL,
+} from "@fractal/core-ts"
 import {
     WindowHashAuth,
     WindowHashSignout,
@@ -26,9 +33,11 @@ import {
     childProcess,
     protocolStreamKill,
 } from "@app/utils/protocol"
-import { stripeBillingPortalCreate } from "@app/utils/payment"
 
 const { buildRoot } = config
+
+// Custom Event Emitter for Auth0 events
+export const auth0Event = new events.EventEmitter()
 
 // Because the protocol window is a window that's not recognized by Electron's BrowserWindow
 // module, we create our own event emitter to handle things like keeping track of how many
@@ -173,7 +182,7 @@ export const createAuthWindow = () => {
             height: 16 * 37,
         } as BrowserWindowConstructorOptions,
         hash: WindowHashAuth,
-        customURL: authenticationURL,
+        customURL: authPortalURL(),
         closeOtherWindows: true,
     })
 
@@ -188,15 +197,23 @@ export const createAuthWindow = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     webRequest.onBeforeRequest(filter, async ({ url }) => {
-        const data = await authInfo(url)
-        auth0Event.emit("auth-info", data)
-    })
+        const response = await authInfoCallbackRequest({ authCallbackURL: url })
+        const data = authInfoParse(response)
+        auth0Event.emit("auth-info", {
+            sub: data.jwtIdentity,
+            email: data.userEmail,
+            refreshToken: data.refreshToken,
+            accessToken: data.accessToken,
+        })
 
-    return win
+        return win
+    })
 }
 
 export const createPaymentWindow = async () => {
-    const billingPortalURL = await stripeBillingPortalCreate()
+    const accessToken = (store.get("accessToken") as string) ?? ""
+    const response = paymentPortalParse(paymentPortalRequest({ accessToken }))
+    if (response.error !== undefined) throw new Error(response.error.message)
     const win = createWindow({
         show: WindowHashPayment,
         options: {
@@ -206,7 +223,7 @@ export const createPaymentWindow = async () => {
             alwaysOnTop: true,
         } as BrowserWindowConstructorOptions,
         hash: WindowHashPayment,
-        customURL: billingPortalURL,
+        customURL: response.paymentPortalURL,
     })
 
     const {
@@ -217,7 +234,7 @@ export const createPaymentWindow = async () => {
         urls: [FractalCallbackUrls.paymentCallBack],
     }
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    webRequest.onBeforeRequest(filter, async ({ url }) => {
+    webRequest.onBeforeRequest(filter, async () => {
         win.close()
     })
     return win

@@ -4,6 +4,7 @@ import yaml
 import os
 import json
 import click
+import platform
 import tests.mock_data as mock_data
 import helpers.cli
 import helpers.validate as validate
@@ -36,6 +37,11 @@ def test_parse_receives_args(mocker):
     mock = mocker.Mock(spec=parse.parse, return_value={"mock": {}})
 
     cli = helpers.cli.create_cli(mock)
+
+    os_name = {"Darwin": "macos", "Windows": "win32", "Linux": "linux"}.get(
+        platform.system()
+    )
+
     with temporary_fs(mock_data.config_simple_fs) as tempdir:
         config = str(tempdir.joinpath("config"))
 
@@ -58,6 +64,12 @@ def test_parse_receives_args(mocker):
         cli_result(cli, ["--path", config, "--deploy", "dev", "--os", "macos"])
         mock.assert_called_once_with(
             config, profiles={"deploy": "dev", "os": "macos"}, secrets={}
+        )
+        mock.reset_mock()
+
+        cli_result(cli, ["--path", config, "--deploy", "dev", "--os", "auto"])
+        mock.assert_called_once_with(
+            config, profiles={"deploy": "dev", "os": "linux"}, secrets={}
         )
         mock.reset_mock()
 

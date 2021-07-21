@@ -27,6 +27,6 @@ export type FractalEnvironment = {
 }
 
 export enum FractalNodeEnvironment {
-    DEVELOPMENT = 'development',
-    PRODUCTION = 'production',
+    DEVELOPMENT = "development",
+    PRODUCTION = "production",
 }
