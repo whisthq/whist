@@ -167,12 +167,15 @@ void unshare_thread() {
     // In order to do this from an unprivileged process since
     // Linux 3.19, we must first permanently disable the ability
     // to call `setgroups` in this namespace.
-    write_to_file("/proc/self/setgroups", "deny", 4);
-    // The syntax here is "from to 1". Right now this is just the
-    // trivial mapping 0 -> 0. Eventually we might want
-    // 0 -> uid("fractal")
-    write_to_file("/proc/self/uid_map", "0 0 1", 5);
-    write_to_file("/proc/self/gid_map", "0 0 1", 5);
+    write_to_file("/proc/thread-self/setgroups", "deny", 4);
+    // The syntax here is "from to range_size".
+    // Right now this is just the trivial mapping 0->0,
+    // but eventually we will want to map child-namespace 0
+    // to parent-namespace 1000 (fractal) for uid and gid.
+    // This is difficult because this is only permitted if
+    // the process is uid/gid 1000 in the parent namespace.
+    write_to_file("/proc/thread-self/uid_map", "0 0 1", 5);
+    write_to_file("/proc/thread-self/gid_map", "0 0 1", 5);
 
     // This is a null mount that just changes the propagation type
     // of our filesystem at "/" to private. This means that mount
