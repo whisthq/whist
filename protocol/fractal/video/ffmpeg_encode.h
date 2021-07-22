@@ -56,6 +56,8 @@ typedef struct FFmpegEncoder {
     int frames_since_last_iframe;
 
     // frame metadata + data
+    CodecType codec_type;
+    int bitrate;
     int in_width, in_height;
     int out_width, out_height;
     int gop_size;
@@ -63,12 +65,12 @@ typedef struct FFmpegEncoder {
     void* sw_frame_buffer;
     int encoded_frame_size;  /// <size of encoded frame in bytes
 
+    // The type of encoder being used (nvenc/qsv/software/etc)
+    FFmpegEncodeType type;
+    // Various AVFrame's to be used for encoding
     AVFrame* hw_frame;
     AVFrame* sw_frame;
     AVFrame* filtered_frame;
-
-    FFmpegEncodeType type;
-    CodecType codec_type;
 } FFmpegEncoder;
 
 /*
@@ -95,6 +97,10 @@ Public Functions
  */
 FFmpegEncoder* create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height,
                                      int bitrate, CodecType codec_type);
+
+// Reconfigure the encoder, with the same parameters as in create_ffmpeg_encoder
+bool ffmpeg_reconfigure_encoder(FFmpegEncoder* encoder, int in_width, int in_height, int out_width,
+                                int out_height, int bitrate, CodecType codec_type);
 /**
  * @brief                          Put the input data into a software frame, and
  *                                 upload to a hardware frame if applicable.

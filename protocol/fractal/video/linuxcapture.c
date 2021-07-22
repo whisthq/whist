@@ -215,13 +215,12 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
         // TODO: also create the x11 device now in case nvidia fails
         return 0;
     } else {
-        device->active_capture_device = X11_DEVICE;
         LOG_ERROR("USING_NVIDIA_CAPTURE_AND_ENCODE defined but unable to use Nvidia Capture SDK!");
     }
-#else
-    device->active_capture_device = X11_DEVICE;
 #endif
-    // Create the X11 capture devicek
+
+    // Create the X11 capture device
+    device->active_capture_device = X11_DEVICE;
     device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
 #if !USING_SHM
@@ -266,8 +265,8 @@ int capture_screen(CaptureDevice* device) {
                 if (device->width != device->nvidia_capture_device->width ||
                     device->height != device->nvidia_capture_device->height) {
                     LOG_ERROR(
-                        "Capture Device dimensions %dx%d does not match nvidia dimensions of "
-                        "%dx%d!",
+                        "Capture Device is configured for dimensions %dx%d, which "
+                        "does not match nvidia's captured dimensions of %dx%d!",
                         device->width, device->height, device->nvidia_capture_device->width,
                         device->nvidia_capture_device->height);
                     return -1;
@@ -278,7 +277,7 @@ int capture_screen(CaptureDevice* device) {
         case X11_DEVICE:
             return x11_capture_screen(device->x11_capture_device);
         default:
-            LOG_ERROR("Unknown capture device type: %d", device->active_capture_device);
+            LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return -1;
     }
 }
@@ -311,9 +310,9 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
             try_update_dimensions(device, width, height, dpi);
             return true;
         case X11_DEVICE:
-            return false;
+            return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
         default:
-            LOG_ERROR("Unknown capture device type: %d", device->active_capture_device);
+            LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return false;
     }
 }
@@ -338,4 +337,8 @@ void destroy_capture_device(CaptureDevice* device) {
     XCloseDisplay(device->display);
 }
 
-int transfer_screen(CaptureDevice* device) { return 0; }
+int transfer_screen(CaptureDevice* device) {
+    device->frame_data = device->x11_capture_device->frame_data;
+    device->pitch = device->x11_capture_device->pitch;
+    return 0;
+}

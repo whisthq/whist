@@ -105,6 +105,9 @@ int32_t multithreaded_encoder_factory(void* opaque) {
     encoder_factory_result = create_video_encoder(
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
         encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
+    if (encoder_factory_result == NULL) {
+        LOG_FATAL("Could not create an encoder, giving up!");
+    }
     encoder_finished = true;
     return 0;
 }
@@ -268,7 +271,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     current_bitrate = (int)(max_mbps * 1024 * 1024);
                     update_encoder = false;
                 } else {
-                    LOG_ERROR("Reconfiguration failed! Creating a new encoder!");
+                    // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
+                    LOG_INFO("Reconfiguration failed! Creating a new encoder!");
                 }
             }
 
@@ -312,7 +316,11 @@ int32_t multithreaded_send_video(void* opaque) {
                     // If using nvidia, then we must destroy the existing encoder first
                     // We can't have two nvidia encoders active or the 2nd attempt to
                     // create one will fail
-                    if (encoder != NULL && encoder->nvidia_encoder != NULL) {
+                    // If using ffmpeg, if the dimensions don't match, then we also need to destroy
+                    // the old encoder, since we'll no longer be able to pass captured frames into
+                    // it
+                    // For now, we'll just always destroy the encoder right here
+                    if (encoder != NULL) {
                         if (transfer_context_active) {
                             close_transfer_context(device, encoder);
                             transfer_context_active = false;
@@ -419,6 +427,8 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // else we have an encoded frame, so handle it!
 
+            video_encoder_unset_iframe(encoder);
+
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
             static double max_frame_time = 0.0;
@@ -441,8 +451,6 @@ int32_t multithreaded_send_video(void* opaque) {
                 total_frame_sizes = 0.0;
                 max_frame_size = 0.0;
             }
-
-            video_encoder_unset_iframe(encoder);
 
             // LOG_INFO("Encode Time: %f (%d) (%d)", get_timer(t),
             //        frames_since_first_iframe % gop_size,

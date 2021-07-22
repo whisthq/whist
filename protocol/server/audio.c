@@ -127,7 +127,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                     audio_frame_number++;
                     audio_frame_size += audio_encoder->encoded_frame_size;
 
-                    if (audio_frame_number % 30 == 0) {
+                    if (audio_frame_number % 300 == 0) {
                         LOG_INFO("Average Audio Encode Time: %f", audio_total_encode_time / 30);
                         audio_total_encode_time = 0.0;
                         LOG_INFO("Average Audio Frame Size: %f", audio_frame_size / 30.0);
