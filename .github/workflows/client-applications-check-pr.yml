@@ -67,7 +67,7 @@ jobs:
               run: |
                   output = """
                   CONFIG:
-                  ${{ steps.config-macos.outputs.config }}
+                  ${{ steps.config-macos-oneline.outputs.config }}
                   """
                   print(output)
 
