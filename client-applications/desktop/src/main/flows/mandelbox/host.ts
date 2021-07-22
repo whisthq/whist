@@ -9,49 +9,41 @@ import {
     hostServiceConfig,
     hostServiceConfigValid,
     hostServiceConfigError,
+    HostServiceInfoResponse,
+    HostServiceConfigResponse,
 } from "@app/utils/host"
 import { from, interval, of, merge, zip } from "rxjs"
-import {
-    map,
-    share,
-    takeUntil,
-    switchMap,
-    mapTo,
-    take,
-    filter,
-} from "rxjs/operators"
-import { flow } from "@app/utils/flows"
+import { map, share, takeUntil, switchMap, mapTo, take } from "rxjs/operators"
+import { flow, fork } from "@app/utils/flows"
 import { some, pick } from "lodash"
 
 const hostServiceInfoRequest = flow<{
-    jwtIdentity: string
+    subClaim: string
     accessToken: string
     configToken: string
-}>("hostServiceInfoRequest", (trigger) => {
-    const request = trigger.pipe(
-        switchMap(({ jwtIdentity, accessToken }) =>
-            from(hostServiceInfo(jwtIdentity, accessToken))
-        )
-    )
-    return {
-        success: request.pipe(filter((result) => hostServiceInfoValid(result))),
-        pending: request.pipe(
-            filter((result) => hostServiceInfoPending(result))
-        ),
-        failure: request.pipe(
-            filter(
-                (result) =>
-                    !some([
-                        hostServiceInfoValid(result),
-                        hostServiceInfoPending(result),
-                    ])
+}>("hostServiceInfoRequest", (trigger) =>
+    fork(
+        trigger.pipe(
+            switchMap(({ subClaim, accessToken }) =>
+                from(hostServiceInfo(subClaim, accessToken))
             )
         ),
-    }
-})
+        {
+            success: (result: HostServiceInfoResponse) =>
+                hostServiceInfoValid(result),
+            pending: (result: HostServiceInfoResponse) =>
+                hostServiceInfoPending(result),
+            failure: (result: HostServiceInfoResponse) =>
+                !some([
+                    hostServiceInfoValid(result),
+                    hostServiceInfoPending(result),
+                ]),
+        }
+    )
+)
 
 const hostPollingInner = flow<{
-    jwtIdentity: string
+    subClaim: string
     accessToken: string
     configToken: string
 }>("hostPollingInner", (trigger) => {
@@ -70,7 +62,7 @@ const hostPollingInner = flow<{
 })
 
 const hostInfoFlow = flow<{
-    jwtIdentity: string
+    subClaim: string
     accessToken: string
     configToken: string
 }>("hostInfoFlow", (trigger) => {
@@ -102,44 +94,44 @@ const hostConfigFlow = flow<{
     mandelboxIP: string
     mandelboxPort: number
     mandelboxSecret: string
-    jwtIdentity: string
+    subClaim: string
     configToken: string
     accessToken: string
-}>("hostConfigFlow", (trigger) => {
-    const hostServiceConfigRequest = trigger.pipe(
-        switchMap(
-            ({
-                mandelboxIP,
-                mandelboxPort,
-                mandelboxSecret,
-                jwtIdentity,
-                configToken,
-                accessToken,
-            }) =>
-                from(
-                    hostServiceConfig(
-                        mandelboxIP,
-                        mandelboxPort,
-                        mandelboxSecret,
-                        jwtIdentity,
-                        configToken,
-                        accessToken
+}>("hostConfigFlow", (trigger) =>
+    fork(
+        trigger.pipe(
+            switchMap(
+                ({
+                    mandelboxIP,
+                    mandelboxPort,
+                    mandelboxSecret,
+                    subClaim,
+                    configToken,
+                    accessToken,
+                }) =>
+                    from(
+                        hostServiceConfig(
+                            mandelboxIP,
+                            mandelboxPort,
+                            mandelboxSecret,
+                            subClaim,
+                            configToken,
+                            accessToken
+                        )
                     )
-                )
-        )
+            )
+        ),
+        {
+            success: (result: HostServiceConfigResponse) =>
+                hostServiceConfigValid(result),
+            failure: (result: HostServiceConfigResponse) =>
+                hostServiceConfigError(result),
+        }
     )
-    return {
-        failure: hostServiceConfigRequest.pipe(
-            filter((result) => hostServiceConfigError(result))
-        ),
-        success: hostServiceConfigRequest.pipe(
-            filter((result) => hostServiceConfigValid(result))
-        ),
-    }
-})
+)
 
 export default flow<{
-    jwtIdentity: string
+    subClaim: string
     accessToken: string
     configToken: string
 }>("hostServiceFlow", (trigger) => {
@@ -148,7 +140,7 @@ export default flow<{
     const config = hostConfigFlow(
         zip(trigger, info.success).pipe(
             map(([t, i]) => ({
-                ...pick(t, ["jwtIdentity", "configToken", "accessToken"]),
+                ...pick(t, ["subClaim", "configToken", "accessToken"]),
                 ...pick(i, ["mandelboxIP", "mandelboxPort", "mandelboxSecret"]),
             }))
         )

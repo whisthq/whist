@@ -35,7 +35,7 @@ export const emitAuthCache = () => {
         configToken: persistedAuth?.configToken ?? "",
         refreshToken: persistedAuth?.refreshToken ?? "",
         userEmail: persistedAuth?.userEmail ?? "",
-        jwtIdentity: persistedAuth?.jwtIdentity ?? "",
+        subClaim: persistedAuth?.subClaim ?? "",
     } as Cache
 
     if (isEmpty(pickBy(authCache, (x) => x === ""))) {

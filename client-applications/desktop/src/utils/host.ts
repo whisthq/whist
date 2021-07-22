@@ -16,12 +16,9 @@ import { HostServicePort } from "@app/utils/constants"
 // So we choose to just ignore the linter rule.
 /* eslint-disable @typescript-eslint/naming-convention */
 
-export const hostServiceInfo = async (
-    jwtIdentity: string,
-    accessToken?: string
-) =>
+export const hostServiceInfo = async (subClaim: string, accessToken?: string) =>
     get({
-        endpoint: `/host_service?username=${encodeURIComponent(jwtIdentity)}`,
+        endpoint: `/host_service?username=${encodeURIComponent(subClaim)}`,
         accessToken,
     })
 
@@ -29,7 +26,7 @@ export const hostServiceConfig = async (
     ip: string,
     host_port: number,
     client_app_auth_secret: string,
-    jwtIdentity: string,
+    subClaim: string,
     config_encryption_token: string,
     jwt_access_token: string
 ) => {
@@ -37,7 +34,7 @@ export const hostServiceConfig = async (
         "/set_config_encryption_token",
         `https://${ip}:${HostServicePort}`,
         {
-            user_id: jwtIdentity,
+            user_id: subClaim,
             client_app_auth_secret,
             host_port,
             config_encryption_token,

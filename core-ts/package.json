@@ -44,7 +44,6 @@
     },
     "dependencies": {
         "browser-or-node": "^1.3.0",
-        "jwt-decode": "^3.1.2",
         "lodash": "^4.17.21",
         "node-fetch": "^2.6.1"
     },
@@ -52,16 +51,12 @@
         "compile": "tsc",
         "clean": "rimraf dist",
         "copy-package": "mkdir -p dist && cp package.json dist/package.json",
-        "build": "yarn run clean && yarn run compile",
-        "config:build": "docker build -t fractal/config ../config",
-        "config:run": "docker run fractal/config --os auto --deploy dev",
-        "config:parse": "yarn -s config:build &> /dev/null && yarn -s config:run",
-        "dev": "CONFIG=$(yarn config:parse) nodemon -r tsconfig-paths/register --watch src",
+        "build": "npm run clean && npm run compile",
+        "dev": "nodemon -r tsconfig-paths/register --watch src",
         "lint:check": "eslint src/** --no-error-on-unmatched-pattern",
         "lint:fix": "eslint --fix src/** --no-error-on-unmatched-pattern",
-        "tsc:watch": "CONFIG=$(yarn config:parse) yarn run clean && yarn run compile -- --watch",
-        "test": "CONFIG=$(yarn config:parse) yarn run compile && jest",
-        "test:watch": "CONFIG=$(yarn config:parse) jest --watch",
-        "test:ci": "yarn run compile && jest"
+        "tsc-watch": "npm run clean && npm run compile -- --watch",
+        "test": "npm run compile && jest",
+        "test-watch": "jest --watch"
     }
 }

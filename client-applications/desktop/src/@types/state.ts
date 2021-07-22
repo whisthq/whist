@@ -5,7 +5,7 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
 
 export interface StateIPC {
     userEmail: string // User email returned by Auth0
-    jwtIdentity: string // Auth0 JWT subject, used as unique identifier
+    subClaim: string // Auth0 JWT subject, used as unique identifier
     password: string // Currently deprecated
     refreshToken: string // Auth0 refresh token
     accessToken: string // JWT

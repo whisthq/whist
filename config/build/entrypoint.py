@@ -6,9 +6,6 @@
 # to compare schemas. After setting up, we call the main diff process to
 # actually do the work.
 #
-# The config/folder must be copied to /root in the container, so that this
-# file's path is /root/build/entrypoint.py.
-#
 # We need to make some GitHub Actions-specific considerations revolving
 # around output and exit code, so in some places we check for the CI env
 # variable which will be true in the GitHub runner. We want this file to
@@ -17,21 +14,12 @@
 
 import os
 import re
-from sys import exit, argv, stderr, stdout
+from sys import exit, argv, stderr
 from subprocess import run
 from rich import traceback
-from collections.abc import Iterable
 
 # Better errors!
 traceback.install()
-
-
-def flatten(l):
-    for el in l:
-        if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
-            yield from flatten(el)
-        else:
-            yield el
 
 
 def actionify(name, data):
@@ -52,46 +40,28 @@ def actionify(name, data):
     return f"::set-output name={name}::{escaped}"
 
 
-# Below, we run /root/build/main.py two different ways under two different
-# conditions. If we're in CI, then we look for arguments from environment
-# variables. GitHub Actions will pass the arguments through variables
-# prefixed with INPUT_. If we're not in CI, then we expect that we are
-# running locally, and we accept arguments through command line --flags.
+# The fractal/config folder will get copied to /root inside the container.
+# We'll run the build/main.py and pass it the /root as the --path.
+# We pull any extra CLI arguments from sys.argv, and pass it to the subprocess.
+result = run(
+    ["python", "/root/build/main.py", "--path", "/root", *argv[1:]],
+    text=True,
+    capture_output=True,
+    check=False,
+)
+
+config = result.stdout
 
 if os.environ.get("CI"):
-    maps = {
-        "--secrets": os.environ.get("INPUT_SECRETS"),
-        "--os": os.environ.get("INPUT_OS"),
-        "--deploy": os.environ.get("INPUT_DEPLOY"),
-    }
-
-    args = list(flatten(((k, v) for k, v in maps.items() if v is not None)))
-
-    result = run(
-        ["python", "/root/build/main.py", "--path", "/root", *args],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
     # We're running in CI through a GitHub Action, which means we
     # won't be using the stdout from this process. We need to
     # print the special set-output string to use the result.
-    if result.returncode != 0:
-        print(result.stdout)
-        print(result.stderr)
-        exit(result.returncode)
-    else:
-        stdout.write(actionify("config", result.stdout))
+    print(actionify("config", config))
 else:
-    result = run(
-        ["python", "/root/build/main.py", "--path", "/root", *argv[1:]],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
     # We're not in CI, and we may want to use the stdout directly,
     # so we won't print any headers.
-    stdout.write(result.stdout)
-    if result.stderr:
-        print(result.stderr, file=stderr)
-        exit(result.returncode)
+    print(config)
+
+if result.stderr:
+    print(result.stderr, file=stderr)
+exit(result.returncode)
