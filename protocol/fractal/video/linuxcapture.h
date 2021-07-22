@@ -45,6 +45,9 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
 typedef struct CaptureDevice {
     CaptureDeviceType active_capture_device;
     CaptureDeviceType last_capture_device;
+    bool pending_destruction;
+    FractalThread nvidia_manager;
+    FractalSemaphore nvidia_device_semaphore;
     // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
@@ -61,7 +64,5 @@ typedef struct CaptureDevice {
     NvidiaCaptureDevice* nvidia_capture_device;
     X11CaptureDevice* x11_capture_device;
 } CaptureDevice;
-
-int32_t multithreaded_nvidia_device_manager(void* opaque);
 
 #endif

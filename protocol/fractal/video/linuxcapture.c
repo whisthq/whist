@@ -22,8 +22,6 @@ Includes
 #include "x11capture.h"
 #include "nvidiacapture.h"
 
-FractalSemaphore nvidia_device_semaphore;
-
 /*
 ============================
 Private Functions
@@ -42,10 +40,12 @@ Private Function Implementations
 
 int32_t multithreaded_nvidia_device_manager(void* opaque) {
     CaptureDevice* device = (CaptureDevice*)opaque;
-    nvidia_device_semaphore = fractal_create_semaphore(0);
 
     while (true) {
-        fractal_wait_semaphore(nvidia_device_semaphore);
+        fractal_wait_semaphore(device->nvidia_device_semaphore);
+        if (device->pending_destruction) {
+            break;
+        }
 
         // Nvidia requires recreation
         if (device->nvidia_capture_device) {
@@ -201,6 +201,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
         LOG_ERROR("NULL device was passed into create_capture_device");
         return -1;
     }
+    memset(device, 0, sizeof(CaptureDevice));
 
     // resize the X11 display to the appropriate width and height
     if (width <= 0 || height <= 0) {
@@ -242,9 +243,11 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     device->nvidia_capture_device = create_nvidia_capture_device();
     if (device->nvidia_capture_device) {
         device->active_capture_device = NVIDIA_DEVICE;
+
+        device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
+                                                       "multithreaded_nvidia_manager", device);
+        device->nvidia_device_semaphore = fractal_create_semaphore(0);
         LOG_INFO("Using Nvidia Capture SDK!");
-        // TODO: also create the x11 device now in case nvidia fails
-        return 0;
     } else {
         LOG_ERROR("USING_NVIDIA_CAPTURE_AND_ENCODE defined but unable to use Nvidia Capture SDK!");
     }
@@ -303,7 +306,7 @@ int capture_screen(CaptureDevice* device) {
             }
             // otherwise, nvidia failed!
             device->active_capture_device = X11_DEVICE;
-            fractal_post_semaphore(nvidia_device_semaphore);
+            fractal_post_semaphore(device->nvidia_device_semaphore);
         }
         case X11_DEVICE:
             device->last_capture_device = X11_DEVICE;
@@ -352,6 +355,12 @@ void destroy_capture_device(CaptureDevice* device) {
         // nothing to do!
         return;
     }
+    // tell the nvidia thread to stop
+    device->pending_destruction = true;
+    fractal_post_semaphore(device->nvidia_device_semaphore);
+    // wait for the nvidia thread to terminate
+    fractal_wait_thread(device->nvidia_manager, NULL);
+    // now we can destroy the capture device
     if (device->nvidia_capture_device) {
         destroy_nvidia_capture_device(device->nvidia_capture_device);
     }
