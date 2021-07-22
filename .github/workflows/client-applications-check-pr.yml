@@ -62,11 +62,8 @@ jobs:
             - name: Log Configuration
               shell: python3 {0}
               run: |
-                  output = """
-                  CONFIG:
-                  ${{ steps.config-macos-oneline.outputs.config }}
-                  """
-                  print(output)
+                  out = """${{ steps.config-macos-oneline.outputs.config }}"""
+                  print(out)
 
     client-applications-check-pr-linting:
         name: Linting
