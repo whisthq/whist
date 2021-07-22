@@ -1,27 +1,25 @@
-import { has } from "lodash"
 import { from, zip } from "rxjs"
-import { switchMap, map, filter, share } from "rxjs/operators"
-import { flow } from "@app/utils/flows"
+import { switchMap, map } from "rxjs/operators"
+
+import { flow, fork } from "@app/utils/flows"
 import {
+    generateRefreshedAuthInfo,
     generateRandomConfigToken,
-    authInfoRefreshRequest,
-    authInfoParse,
-} from "@fractal/core-ts"
+    authInfoValid,
+} from "@app/utils/auth"
 import { store } from "@app/utils/persist"
 
 export default flow<{
     userEmail: string
-    jwtIdentity: string
+    subClaim: string
     accessToken: string
     refreshToken: string
     configToken?: string
 }>("authFlow", (trigger) => {
     const refreshedAuthInfo = trigger.pipe(
         switchMap((tokens: { refreshToken: string }) =>
-            from(authInfoRefreshRequest(tokens))
-        ),
-        map(authInfoParse),
-        share()
+            from(generateRefreshedAuthInfo(tokens.refreshToken))
+        )
     )
 
     const authInfoWithConfig = zip(refreshedAuthInfo, trigger).pipe(
@@ -34,12 +32,8 @@ export default flow<{
         }))
     )
 
-    return {
-        failure: authInfoWithConfig.pipe(
-            filter((tokens) => has(tokens, "error"))
-        ),
-        success: authInfoWithConfig.pipe(
-            filter((tokens) => !has(tokens, "error"))
-        ),
-    }
+    return fork(authInfoWithConfig, {
+        success: (result: any) => authInfoValid(result),
+        failure: (result: any) => !authInfoValid(result),
+    })
 })

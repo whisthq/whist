@@ -1,11 +1,11 @@
 # This file represents the allowed "profiles" for our configuration.
 
 os:
-    - "linux"
-    - "macos"
-    - "win32"
+  - "linux"
+  - "macos"
+  - "win32"
 deploy:
-    - "local"
-    - "dev"
-    - "staging"
-    - "production"
+  - "local"
+  - "dev"
+  - "staging"
+  - "production"

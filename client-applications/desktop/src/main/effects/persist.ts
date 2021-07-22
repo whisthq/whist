@@ -9,7 +9,7 @@ import { persist } from "@app/utils/persist"
 merge(fromTrigger("authFlowSuccess")).subscribe(
     (args: {
         userEmail: string
-        jwtIdentity: string
+        subClaim: string
         accessToken: string
         refreshToken: string
         configToken: string

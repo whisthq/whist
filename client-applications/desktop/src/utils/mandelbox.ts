@@ -17,9 +17,9 @@ import { AsyncReturnType } from "@app/@types/state"
 // consistent with their low-resolution counterparts.
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
-export const regionGet = async (jwtIdentity: string, accessToken: string) => {
+export const regionGet = async (subClaim: string, accessToken: string) => {
     const regions: Record<string, any> = await regionRequest(
-        jwtIdentity,
+        subClaim,
         accessToken
     )
     const allowedRegions = (regions?.json as AWSRegion[]) ?? []
@@ -32,13 +32,13 @@ export const regionGet = async (jwtIdentity: string, accessToken: string) => {
 }
 
 export const mandelboxCreate = async (
-    jwtIdentity: string,
+    subClaim: string,
     accessToken: string,
     region?: AWSRegion
 ) => {
-    region = region ?? (await regionGet(jwtIdentity, accessToken))
+    region = region ?? (await regionGet(subClaim, accessToken))
     const response = await mandelboxRequest(
-        jwtIdentity,
+        subClaim,
         accessToken,
         region,
         getDPI()
