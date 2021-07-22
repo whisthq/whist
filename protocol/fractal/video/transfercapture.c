@@ -79,36 +79,20 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         return -1;
     }
 
-    // Handle transfer capture for linux nvidia capture device
-#ifdef __linux__
-    if (device->active_capture_device == NVIDIA_DEVICE) {
-<<<<<<< HEAD
-        if (encoder->active_encoder == NVIDIA_ENCODER) {
-            nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->width, device->height);
-            return 0;
-        } else {
-            LOG_ERROR(
-                "Cannot transfer capture! If using Nvidia Capture SDK, "
-                "then the Nvidia Encode API must be used!");
-            return -1;
-        }
-=======
+    // Handle transfer capture for nvidia capture device
+    if (device->last_capture_device == NVIDIA_DEVICE) {
         if (encoder->active_encoder != NVIDIA_ENCODER) {
             LOG_INFO("Switching back to Nvidia encoder for use with Nvidia capture!");
             encoder->active_encoder = NVIDIA_ENCODER;
             video_encoder_set_iframe(encoder);
         }
 #ifdef __linux__
-        nvidia_encoder_frame_intake(encoder->nvidia_encoder,
-                                    device->nvidia_capture_device->dw_texture_index, device->width,
-                                    device->height);
+        nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->width, device->height);
 #else
         LOG_FATAL("Cannot use NVIDIA_ENCODER on Windows!");
 #endif
         return 0;
->>>>>>> c3049844b... linux capture now has better updater
     }
-#endif
 
     if (encoder->active_encoder != FFMPEG_ENCODER) {
         LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");
