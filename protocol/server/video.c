@@ -202,19 +202,20 @@ int32_t multithreaded_send_video(void* opaque) {
                 }
 
                 if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
-                   // Reconfigured the capture device!
-                   // No need to recreate it, the device has now been updated
-                   LOG_INFO("Successfully reconfigured the capture device");
-                   // We should also update the encoder since the device has been reconfigured
-                   update_encoder = true;
+                    // Reconfigured the capture device!
+                    // No need to recreate it, the device has now been updated
+                    LOG_INFO("Successfully reconfigured the capture device");
+                    // We should also update the encoder since the device has been reconfigured
+                    update_encoder = true;
                 } else {
-                   // Destroying the old capture device so that a new one can be recreated below
-                   LOG_FATAL(
-                       "Failed to reconfigure the capture device! We probably have a memory leak!");
-                       // "Destroying and recreating the capture device instead!");
+                    // Destroying the old capture device so that a new one can be recreated below
+                    LOG_FATAL(
+                        "Failed to reconfigure the capture device! We probably have a memory "
+                        "leak!");
+                    // "Destroying and recreating the capture device instead!");
 
-                // For the time being, we have disabled the reconfigure functionality because
-                // of some weirdness happening in vkCreateDevice()
+                    // For the time being, we have disabled the reconfigure functionality because
+                    // of some weirdness happening in vkCreateDevice()
                 }
             } else {
                 LOG_INFO("No capture device exists yet, creating a new one.");
