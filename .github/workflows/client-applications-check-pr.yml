@@ -24,7 +24,7 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             macos: ${{ steps.config-macos.outputs.config }}
-            win32: ${{ steps.config-win32.outputs.config }}
+            win32: "TEST VALUE"
 
         # Comment
         steps:
