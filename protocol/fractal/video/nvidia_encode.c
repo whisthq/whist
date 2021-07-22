@@ -311,8 +311,9 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
         LOG_ERROR("Failed to obtain preset settings, status = %d", status);
         return -1;
     }
-    p_preset_config->presetCfg.gopLength = 999999;
+    p_preset_config->presetCfg.gopLength = NVENC_INFINITE_GOPLENGTH;
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+    p_preset_config->presetCfg.rcParams.maxBitRate = 4 * bitrate;
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
     p_preset_config->presetCfg.rcParams.vbvBufferSize = bitrate;
 

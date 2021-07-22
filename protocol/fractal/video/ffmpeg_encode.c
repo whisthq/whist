@@ -29,7 +29,7 @@ Includes
 Private Functions
 ============================
 */
-void set_opt(FFmpegEncoder *encoder, char *option, char *value);
+bool set_opt(FFmpegEncoder *encoder, char *option, char *value);
 FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
                                     int bitrate, CodecType codec_type);
 FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
@@ -42,7 +42,7 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
 Private Function Implementations
 ============================
 */
-void set_opt(FFmpegEncoder *encoder, char *option, char *value) {
+bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
     /*
         Wrapper function to set encoder options, like presets, latency, and bitrate.
 
@@ -54,6 +54,9 @@ void set_opt(FFmpegEncoder *encoder, char *option, char *value) {
     int ret = av_opt_set(encoder->context->priv_data, option, value, 0);
     if (ret < 0) {
         LOG_WARNING("Could not av_opt_set %s to %s!", option, value);
+        return false;
+    } else {
+        return true;
     }
 }
 
@@ -131,13 +134,13 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     encoder->context = avcodec_alloc_context3(encoder->codec);
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
-    encoder->context->bit_rate = bitrate;
-    encoder->context->rc_max_rate = bitrate;
-    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    encoder->context->bit_rate = bitrate;         // averageBitRate
+    encoder->context->rc_max_rate = 4 * bitrate;  // maxBitRate
+    encoder->context->rc_buffer_size = bitrate;   // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = FPS;
     encoder->context->gop_size = encoder->gop_size;
-    encoder->context->keyint_min = 5;
+    // encoder->context->keyint_min = 5;
     encoder->context->pix_fmt = hw_format;
 
     // enable automatic insertion of non-reference P-frames
@@ -146,13 +149,19 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     // p1: fastest, but lowest quality -- p7: slowest, best quality
     // only constqp/cbr/vbr are supported now with these presets
     // tune: high quality, low latency, ultra low latency, or lossless; we use ultra low latency
-    set_opt(encoder, "preset", "p1");
+    set_opt(encoder, "preset", "p4");
     set_opt(encoder, "tune", "ull");
     set_opt(encoder, "rc", "cbr");
     // zerolatency: no reordering delay
     set_opt(encoder, "zerolatency", "1");
     // delay frame output by 0 frames
     set_opt(encoder, "delay", "0");
+    // Make all I-Frames IDR Frames
+    if (!set_opt(encoder, "forced-idr", "1")) {
+        LOG_ERROR("Cannot create encoder if IDR's cannot be forced");
+        destroy_ffmpeg_encoder(encoder);
+        return NULL;
+    }
 
     // assign hw_device_ctx
     av_buffer_unref(&encoder->context->hw_frames_ctx);
@@ -393,6 +402,13 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
     encoder->context->gop_size = encoder->gop_size;
     encoder->context->keyint_min = 5;
     encoder->context->pix_fmt = hw_format;
+
+    // Make all I-Frames IDR Frames
+    if (!set_opt(encoder, "forced-idr", "1")) {
+        LOG_ERROR("Cannot create encoder if IDR's cannot be forced");
+        destroy_ffmpeg_encoder(encoder);
+        return NULL;
+    }
 
     // assign hw_device_ctx
     av_buffer_unref(&encoder->context->hw_frames_ctx);
@@ -679,6 +695,12 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
 
     set_opt(encoder, "preset", "fast");
     set_opt(encoder, "tune", "zerolatency");
+    // Make all I-Frames IDR Frames
+    if (!set_opt(encoder, "forced-idr", "1")) {
+        LOG_ERROR("Cannot create encoder if IDR's cannot be forced");
+        destroy_ffmpeg_encoder(encoder);
+        return NULL;
+    }
 
     if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
         LOG_WARNING("Failed to open context for stream");
@@ -712,6 +734,7 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
             (FFmpegEncoder*): the newly created encoder
      */
     FFmpegEncoder *ffmpeg_encoder = NULL;
+    // TODO: Get QSV Encoder Working
     FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
         ffmpeg_encoder =
@@ -721,11 +744,29 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
             LOG_WARNING("FFmpeg encoder: Failed, trying next encoder");
             ffmpeg_encoder = NULL;
         } else {
+            LOG_INFO("CODEC TYPE: %d", ffmpeg_encoder->codec_type);
             LOG_INFO("Video encoder: Success!");
             break;
         }
     }
+    if (ffmpeg_encoder == NULL) {
+        LOG_ERROR("All ffmpeg encoders failed!");
+    } else {
+        ffmpeg_encoder->bitrate = bitrate;
+    }
     return ffmpeg_encoder;
+}
+
+// Reconfigure the encoder, with the same parameters as in create_ffmpeg_encoder
+bool ffmpeg_reconfigure_encoder(FFmpegEncoder *encoder, int in_width, int in_height, int out_width,
+                                int out_height, int bitrate, CodecType codec_type) {
+    if (in_width != encoder->in_width || in_height != encoder->in_height ||
+        out_width != encoder->out_width || out_height != encoder->out_height ||
+        bitrate != encoder->bitrate || codec_type != encoder->codec_type) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 int ffmpeg_encoder_frame_intake(FFmpegEncoder *encoder, void *rgb_pixels, int pitch) {
@@ -757,7 +798,6 @@ int ffmpeg_encoder_frame_intake(FFmpegEncoder *encoder, void *rgb_pixels, int pi
             LOG_ERROR("Unable to transfer frame to hardware frame: %s", av_err2str(res));
             return -1;
         }
-        encoder->hw_frame->pict_type = encoder->sw_frame->pict_type;
     }
     return 0;
 }
@@ -773,11 +813,17 @@ void ffmpeg_set_iframe(FFmpegEncoder *encoder) {
         LOG_ERROR("ffmpeg_set_iframe received NULL encoder!");
         return;
     }
-    LOG_ERROR("ffmpeg set_iframe doesn't work very well! This might not work!");
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-    encoder->sw_frame->pts +=
-        encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
-    encoder->sw_frame->key_frame = 1;
+    if (encoder->type == SOFTWARE_ENCODE || encoder->type == NVENC_ENCODE) {
+        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
+        // encoder->sw_frame->pts +=
+        //    encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
+        encoder->sw_frame->key_frame = 1;
+        if (encoder->hw_frame) {
+            encoder->hw_frame->pict_type = AV_PICTURE_TYPE_I;
+        }
+    } else {
+        LOG_FATAL("ffmpeg_set_iframe not implemented on QSV yet!");
+    }
 }
 
 void ffmpeg_unset_iframe(FFmpegEncoder *encoder) {
@@ -791,9 +837,15 @@ void ffmpeg_unset_iframe(FFmpegEncoder *encoder) {
         LOG_ERROR("ffmpeg_unset_iframe received NULL encoder!");
         return;
     }
-    LOG_ERROR("ffmpeg unset_iframe doesn't work very well! This might not work!");
-    encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-    encoder->sw_frame->key_frame = 0;
+    if (encoder->type == SOFTWARE_ENCODE || encoder->type == NVENC_ENCODE) {
+        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+        encoder->sw_frame->key_frame = 0;
+        if (encoder->hw_frame) {
+            encoder->hw_frame->pict_type = AV_PICTURE_TYPE_NONE;
+        }
+    } else {
+        LOG_FATAL("ffmpeg_unset_iframe not implemented on QSV yet!");
+    }
 }
 
 void destroy_ffmpeg_encoder(FFmpegEncoder *encoder) {
@@ -840,9 +892,11 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
         Returns:
             (int): 0 on success, -1 on failure
     */
-    AVFrame *active_frame = encoder->sw_frame;
+    AVFrame *active_frame = NULL;
     if (encoder->hw_frame) {
         active_frame = encoder->hw_frame;
+    } else {
+        active_frame = encoder->sw_frame;
     }
 
     int res = av_buffersrc_add_frame(encoder->filter_graph_source, active_frame);
@@ -874,6 +928,23 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
         LOG_WARNING("Error getting frame from the filter graph: %d -- %s", res_buffer,
                     av_err2str(res_buffer));
         return -1;
+    }
+
+    // Wrap around GOP size
+    if (encoder->frames_since_last_iframe % encoder->gop_size == 0) {
+        encoder->frames_since_last_iframe = 0;
+    }
+    // If we're at the start of a GOP
+    if (encoder->frames_since_last_iframe == 0) {
+        encoder->is_iframe = true;
+    } else {
+        encoder->is_iframe = false;
+    }
+    // Increment GOP counter
+    encoder->frames_since_last_iframe++;
+    // If we've forced an iframe
+    if (active_frame->pict_type == AV_PICTURE_TYPE_I) {
+        encoder->is_iframe = true;
     }
 
     return 0;

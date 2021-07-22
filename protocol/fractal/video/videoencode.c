@@ -54,7 +54,6 @@ void transfer_nvidia_data(VideoEncoder *encoder) {
     encoder->is_iframe = encoder->nvidia_encoder->is_iframe;
     encoder->out_width = encoder->nvidia_encoder->width;
     encoder->out_height = encoder->nvidia_encoder->height;
-    encoder->codec_type = encoder->nvidia_encoder->codec_type;
 
     // Construct frame packets
     encoder->encoded_frame_size = encoder->nvidia_encoder->frame_size;
@@ -109,15 +108,9 @@ int transfer_ffmpeg_data(VideoEncoder *encoder) {
     }
 
     // set iframe metadata
-    encoder->is_iframe =
-        encoder->ffmpeg_encoder->frames_since_last_iframe % encoder->ffmpeg_encoder->gop_size == 0;
-    if (encoder->is_iframe) {
-        encoder->ffmpeg_encoder->frames_since_last_iframe = 0;
-    }
-
-    encoder->ffmpeg_encoder->frames_since_last_iframe++;
     encoder->out_width = encoder->ffmpeg_encoder->out_width;
     encoder->out_height = encoder->ffmpeg_encoder->out_height;
+    encoder->is_iframe = encoder->ffmpeg_encoder->is_iframe;
     return 0;
 }
 
@@ -152,6 +145,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 
     VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
+    encoder->in_width = in_width;
+    encoder->in_height = in_height;
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
 #if USING_SERVERSIDE_SCALE
@@ -181,6 +176,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         return NULL;
     }
 
+    encoder->codec_type = codec_type;
+
     return encoder;
 }
 
@@ -206,8 +203,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
             transfer_nvidia_data(encoder);
             return 0;
 #else
-            LOG_ERROR("Cannot use nvidia encoder if not on Linux!");
-            return -1;
+            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
         case FFMPEG_ENCODER:
             if (ffmpeg_encoder_send_frame(encoder->ffmpeg_encoder)) {
@@ -247,11 +243,11 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
             return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate,
                                               codec);
 #else
-            return false;
+            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
         case FFMPEG_ENCODER:
-            // Haven't implemented ffmpeg reconfiguring yet
-            return false;
+            return ffmpeg_reconfigure_encoder(encoder->ffmpeg_encoder, width, height, width, height,
+                                              bitrate, codec);
         default:
             LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
             return -1;
@@ -275,8 +271,7 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
             nvidia_set_iframe(encoder->nvidia_encoder);
             return;
 #else
-            LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
-            return;
+            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
         case FFMPEG_ENCODER:
             ffmpeg_set_iframe(encoder->ffmpeg_encoder);
@@ -304,8 +299,7 @@ void video_encoder_unset_iframe(VideoEncoder *encoder) {
             nvidia_unset_iframe(encoder->nvidia_encoder);
             return;
 #else
-            LOG_ERROR("nvidia set-iframe is not implemented on Windows!");
-            return;
+            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
         case FFMPEG_ENCODER:
             ffmpeg_unset_iframe(encoder->ffmpeg_encoder);
@@ -327,16 +321,18 @@ void destroy_video_encoder(VideoEncoder *encoder) {
 
     // Check if encoder exists
     if (encoder == NULL) {
-        LOG_INFO("Encoder empty, not destroying anything.");
+        LOG_ERROR("NULL Encoder passed into destroy_video_encoder, nothing will be destroyed.");
         return;
     }
 
-#ifdef __linux__
     // Destroy the nvidia encoder, if any
     if (encoder->nvidia_encoder) {
+#ifdef __linux__
         destroy_nvidia_encoder(encoder->nvidia_encoder);
-    }
+#else
+        LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
+    }
     if (encoder->ffmpeg_encoder) {
         destroy_ffmpeg_encoder(encoder->ffmpeg_encoder);
     }
