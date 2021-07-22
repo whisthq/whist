@@ -80,8 +80,11 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
 }
 
 int32_t multithreaded_destroy_x11_device(void* opaque) {
+    clock x11_timer;
+    start_timer(&x11_timer);
     CaptureDevice* device = (CaptureDevice*)opaque;
     destroy_x11_capture_device(device->x11_capture_device);
+    LOG_INFO("X11 destruction took %f seconds", get_timer(x11_timer));
     return 0;
 }
 

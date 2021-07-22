@@ -200,6 +200,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     close_transfer_context(device, encoder);
                     transfer_context_active = false;
                 }
+                update_capture_device(device, true_width, true_height, client_dpi);
                 // if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
                 //    // Reconfigured the capture device!
                 //    // No need to recreate it, the device has now been updated
@@ -214,8 +215,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 // For the time being, we have disabled the reconfigure functionality because
                 // of some weirdness happening in vkCreateDevice()
-                destroy_capture_device(device);
-                device = NULL;
                 // }
             } else {
                 LOG_INFO("No capture device exists yet, creating a new one.");
