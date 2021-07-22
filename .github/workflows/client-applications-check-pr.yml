@@ -52,9 +52,8 @@ jobs:
               run: |
                   from base64 import b85encode
                   config = r"""${{ steps.config-macos.outputs.config }}"""
-                  encoded = b85encode(config.encode())
-                  print("encoded", encoded.decode())
-                  print(f"::set-output name=config::{encoded.decode()}")
+                  encoded = b85encode(config.encode()).decode()
+                  print(f"::set-output name=config::{encoded}")
 
             - name: Log MacOS Configuration
               shell: python3 {0}
@@ -111,6 +110,15 @@ jobs:
               shell: python3 {0}
               run: |
                   print(r"""${{ toJSON(needs) }}""")
+
+            - name: Decode MacOS Config
+              shell: python3 {0}
+              run: |
+                  from base64 import b85decode
+                  encoded = "${{ needs.config.outputs.macos }}"
+                  config = b85decode(encoded.encode())
+                  print(config)
+                  print(f"::set-output name=config::{encoded}")
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
