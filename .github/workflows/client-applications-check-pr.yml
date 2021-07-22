@@ -52,7 +52,7 @@ jobs:
               shell: python3 {0}
               run: |
                   import json
-                  jstring = """${{ steps.config-macos.outputs.config }}"""
+                  jstring = r"""${{ steps.config-macos.outputs.config }}"""
                   print(jstring)
                   config = json.loads(jstring)
                   print(f"::set-output name=config::{json.dumps(config)}")
