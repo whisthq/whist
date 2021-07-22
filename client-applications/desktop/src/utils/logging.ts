@@ -19,11 +19,11 @@ import config, {
     loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
+import { sessionID } from "@app/utils/constants"
 
 app.setPath("userData", loggingBaseFilePath)
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
-const sessionID = new Date().getTime()
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 
 // Variable to let us know whether the user's aws_region in Amplitude has been
@@ -78,7 +78,7 @@ const localLog = (
         `${title} -- ${userEmail} -- ${(msElapsed !== undefined
             ? msElapsed
             : 0
-        ).toString()} ms elapsed`,
+        ).toString()} ms since flow was triggered`,
         data,
         level
     )
@@ -128,7 +128,7 @@ const amplitudeLog = async (
     }
 }
 
-export const logBase = async (
+export const logBase = (
     title: string,
     data: object,
     level: LogLevel,
@@ -146,7 +146,9 @@ export const logBase = async (
     localLog(title, data, level, userEmail as string, msElapsed)
 
     if (app.isPackaged)
-        await amplitudeLog(title, data, userEmail as string, msElapsed)
+        amplitudeLog(title, data, userEmail as string, msElapsed).catch((err) =>
+            console.log(err)
+        )
 }
 
 export const uploadToS3 = async () => {
@@ -162,13 +164,7 @@ export const uploadToS3 = async () => {
 
     if (userEmail === "") return
 
-    const s3FileName = `CLIENT_${userEmail}_${new Date().getTime()}.txt`
-
-    await logBase(
-        "Logs upload to S3",
-        { s3FileName: s3FileName },
-        LogLevel.DEBUG
-    )
+    const s3FileName = `CLIENT_${userEmail}_${sessionID}.txt`
 
     const uploadHelper = async (localFilePath: string) => {
         const accessKey = config.keys.AWS_ACCESS_KEY
@@ -201,7 +197,5 @@ export const uploadToS3 = async () => {
 
     const logLocation = path.join(electronLogPath, loggingFiles.protocol)
 
-    if (fs.existsSync(logLocation)) {
-        await uploadHelper(logLocation)
-    }
+    if (fs.existsSync(logLocation)) await uploadHelper(logLocation)
 }

@@ -61,12 +61,12 @@ export const flow = <T>(
     return (trigger: Observable<T>) => {
         return mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
             obs.pipe(
-                tap((value: { timestamp: number }) =>
+                tap((value: object) =>
                     logBase(
                         `${name}.${key}`,
                         value,
                         LogLevel.DEBUG,
-                        value.timestamp - startTime
+                        Date.now() - startTime
                     )
                 ),
                 share()
@@ -77,25 +77,22 @@ export const flow = <T>(
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
     /*
-    Description: 
-      Creates a Trigger from an observable
-    
-    Arguments: 
-      name (string): Trigger name
-      obs (Observable<A>): Observable to be turned into a Trigger
+      Description: 
+        Creates a Trigger from an observable
+      
+      Arguments: 
+        name (string): Trigger name
+        obs (Observable<A>): Observable to be turned into a Trigger
 
-    Returns: 
-      Original observable
-  */
+      Returns: 
+        Original observable
+    */
 
-    obs.subscribe((x: A) => {
+    obs.subscribe((x: any) => {
         TriggerChannel.next({
             name: `${name}`,
-            payload:
-                x !== undefined
-                    ? { ...x, timestamp: Date.now() }
-                    : { timestamp: Date.now() },
-        } as Trigger)
+            payload: x,
+        })
     })
 
     return obs
