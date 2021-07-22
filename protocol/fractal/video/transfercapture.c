@@ -82,6 +82,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     // Handle transfer capture for linux nvidia capture device
 #ifdef __linux__
     if (device->active_capture_device == NVIDIA_DEVICE) {
+<<<<<<< HEAD
         if (encoder->active_encoder == NVIDIA_ENCODER) {
             nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->width, device->height);
             return 0;
@@ -91,56 +92,73 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
                 "then the Nvidia Encode API must be used!");
             return -1;
         }
+=======
+        if (encoder->active_encoder != NVIDIA_ENCODER) {
+            LOG_INFO("Switching back to Nvidia encoder for use with Nvidia capture!");
+            encoder->active_encoder = NVIDIA_ENCODER;
+            video_encoder_set_iframe(encoder);
+        }
+#ifdef __linux__
+        nvidia_encoder_frame_intake(encoder->nvidia_encoder,
+                                    device->nvidia_capture_device->dw_texture_index, device->width,
+                                    device->height);
+#else
+        LOG_FATAL("Cannot use NVIDIA_ENCODER on Windows!");
+#endif
+        return 0;
+>>>>>>> c3049844b... linux capture now has better updater
     }
 #endif
 
+    if (encoder->active_encoder != FFMPEG_ENCODER) {
+        LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");
+        encoder->active_encoder = FFMPEG_ENCODER;
+        video_encoder_set_iframe(encoder);
+    }
     // Handle the normal active_capture_device
-    if (encoder->active_encoder == FFMPEG_ENCODER) {
-        // Handle cuda optimized transfer on windows
 #ifdef _WIN32
-        if (encoder->ffmpeg_encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
-            device->texture_on_gpu) {
-            // if dxgi_cuda is setup and we have a dxgi texture on the gpu
-            if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
-                return 0;
-            } else {
-                LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
-                // otherwise, do the cpu transfer below
-            }
+    // Handle cuda optimized transfer on windows
+    if (encoder->ffmpeg_encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
+        device->texture_on_gpu) {
+        // if dxgi_cuda is setup and we have a dxgi texture on the gpu
+        if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
+            return 0;
+        } else {
+            LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
+            // otherwise, do the cpu transfer below
         }
+    }
 #endif
 
-        // CPU transfer, if hardware transfer doesn't work
-        static int times_measured = 0;
-        static double time_spent = 0.0;
+    // CPU transfer, if hardware transfer doesn't work
+    static int times_measured = 0;
+    static double time_spent = 0.0;
 
-        clock cpu_transfer_timer;
-        start_timer(&cpu_transfer_timer);
+    clock cpu_transfer_timer;
+    start_timer(&cpu_transfer_timer);
 
-        // This will populate frame_data/pitch from DXGI/X11
-        if (transfer_screen(device)) {
-            LOG_ERROR("Unable to transfer screen to CPU buffer.");
-            return -1;
-        }
-
-        if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data,
-                                        device->pitch)) {
-            LOG_ERROR("Unable to load data to AVFrame");
-            return -1;
-        }
-
-        times_measured++;
-        time_spent += get_timer(cpu_transfer_timer);
-
-        if (times_measured == 10) {
-            LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
-                     time_spent / times_measured);
-            times_measured = 0;
-            time_spent = 0.0;
-        }
-    } else {
-        LOG_ERROR("Using normal capture, but encoder wasn't ffmpeg!");
+    if (transfer_screen(device)) {
+        LOG_ERROR("Unable to transfer screen to CPU buffer.");
         return -1;
+    }
+#ifdef _WIN32
+    if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data, device->pitch)) {
+#else  // __linux
+    if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->x11_capture_device->frame_data,
+                                    device->x11_capture_device->pitch)) {
+#endif
+        LOG_ERROR("Unable to load data to AVFrame");
+        return -1;
+    }
+
+    times_measured++;
+    time_spent += get_timer(cpu_transfer_timer);
+
+    if (times_measured == 10) {
+        LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
+                 time_spent / times_measured);
+        times_measured = 0;
+        time_spent = 0.0;
     }
 
     return 0;
