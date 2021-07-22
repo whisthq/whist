@@ -99,6 +99,15 @@ jobs:
                       config-os: macos
 
         steps:
+            - name: Log needs
+              shell: python3 {0}
+              run: |
+                  output = """
+                  NEEDS:
+                  ${{ needs }}
+                  """
+                  print(output)
+
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
