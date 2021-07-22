@@ -62,7 +62,7 @@ jobs:
             - name: Log Configuration
               shell: python3 {0}
               run: |
-                  out = """${{ steps.config-macos-oneline.outputs.config }}"""
+                  out = r"""${{ steps.config-macos-oneline.outputs.config }}"""
                   print(out)
 
     client-applications-check-pr-linting:
