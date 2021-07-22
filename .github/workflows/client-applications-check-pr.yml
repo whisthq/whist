@@ -22,6 +22,9 @@ jobs:
     config:
         name: Building config
         runs-on: ubuntu-20.04
+        outputs:
+            macos: ${{ steps.config-macos.outputs.config }}
+            win32: ${{ steps.config-win32.outputs.config }}
 
         # Comment
         steps:
@@ -170,7 +173,7 @@ jobs:
             #   if: runner.os == 'Windows'
             #   shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
             #   env:
-            #       CONFIG: ${{ needs.config-macos.outputs.config }}
+            #       CONFIG: ${{ needs.config.outputs.win32 }}
             #       AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
             #       AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
             #       AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -187,7 +190,7 @@ jobs:
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
-                  CONFIG: ${{ needs.config-macos.outputs.config }}
+                  CONFIG: ${{ needs.config.outputs.macos }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
