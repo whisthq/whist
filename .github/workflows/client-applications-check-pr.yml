@@ -50,9 +50,9 @@ jobs:
               id: encoded-macos
               shell: python3 {0}
               run: |
-                  from base64 import b64encode
+                  from base64 import b85encode
                   config = r"""${{ steps.config-macos.outputs.config }}"""
-                  encoded = b64encode(config.encode())
+                  encoded = b85encode(config.encode())
                   print("encoded", encoded.decode())
                   print(f"::set-output name=config::{encoded.decode()}")
 
