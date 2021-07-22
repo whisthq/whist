@@ -128,7 +128,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("Nvidia Error: %d %s", status,
                   device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        destroy_nvidia_capture_device(device); 
+        destroy_nvidia_capture_device(device);
         return NULL;
     }
 
@@ -147,7 +147,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 
     if (device->width % 4 != 0) {
         LOG_ERROR("Device width must be a multiple of 4!");
-        destroy_nvidia_capture_device(device); 
+        destroy_nvidia_capture_device(device);
         return NULL;
     }
 
@@ -169,7 +169,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     status = device->p_fbc_fn.nvFBCCreateCaptureSession(device->fbc_handle, &create_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        destroy_nvidia_capture_device(device); 
+        destroy_nvidia_capture_device(device);
         return NULL;
     }
 
@@ -183,7 +183,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     status = device->p_fbc_fn.nvFBCToCudaSetUp(device->fbc_handle, &setup_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        destroy_nvidia_capture_device(device); 
+        destroy_nvidia_capture_device(device);
         return NULL;
     }
 
