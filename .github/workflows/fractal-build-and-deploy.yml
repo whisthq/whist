@@ -1223,6 +1223,7 @@ jobs:
             #   if: runner.os == 'Windows'
             #   working-directory: client-applications\desktop
             #   env:
+            #      CONFIG: ${{ needs.config-macos.outputs.config }}
             #      AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
             #      AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
             #      AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -1233,13 +1234,14 @@ jobs:
             #      call yarn config set network-timeout 600000
             #      call yarn cache clean
             #      call yarn install
-            #      call yarn package:publish --config="{}" --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+            #      call yarn package:publish --config=$CONFIG --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
               if: runner.os == 'macOS'
               working-directory: client-applications/desktop
               env:
+                  CONFIG: ${{ needs.config-macos.outputs.config }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -1264,7 +1266,7 @@ jobs:
                   yarn config set network-timeout 600000
                   yarn cache clean
                   yarn install
-                  yarn package:publish --config='${{needs.monorepo-config.outputs.config}}' --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  yarn package:publish --config=$CONFIG --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times

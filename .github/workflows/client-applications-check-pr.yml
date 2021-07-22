@@ -169,6 +169,7 @@ jobs:
             #   if: runner.os == 'Windows'
             #   shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
             #   env:
+            #       CONFIG: ${{ needs.config-macos.outputs.config }}
             #       AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
             #       AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
             #       AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -180,7 +181,7 @@ jobs:
             #       call yarn config set network-timeout 600000
             #       call yarn cache clean
             #       call yarn install
-            #       call yarn package:notarize --config="{}" --version 1.0.0
+            #       call yarn package:notarize --config $CONFIG --version 1.0.0
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
