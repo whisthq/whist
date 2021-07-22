@@ -57,9 +57,9 @@ jobs:
                   from sys import stdout
                   jstring = r"""${{ steps.config-macos.outputs.config }}"""
                   config = json.loads(jstring)
-                  print("JSON DUMP")
-                  print(json.dumps(config))
-                  print("END JSON DUMP")
+                  stdout.write("JSON DUMP")
+                  stdout.write(json.dumps(config))
+                  stdout.write("END JSON DUMP")
                   stdout.write(f"::set-output name=config::{json.dumps(config)}")
 
             - name: Log Configuration
