@@ -27,7 +27,6 @@ jobs:
               ${{ steps.encoded-macos.outputs.config }}
             win32: "TEST VALUE"
 
-        # Comment
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -53,7 +52,7 @@ jobs:
               shell: python3 {0}
               run: |
                   from base64 import b64encode
-                  config = r"""${{ steps.encoded-macos.outputs.config }}
+                  config = r"""${{ steps.encoded-macos.outputs.config }}"""
                   encoded = b64encode(config.encode())
                   print(f"::set-output name=config::{encoded}")
 
