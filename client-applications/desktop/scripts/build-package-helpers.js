@@ -48,62 +48,62 @@ const configOS = () => {
     return "linux"
 }
 
-const configOS = () => {
-  if (process.platform === "win32") return "win32"
-  if (process.platform === "darwin") return "macos"
-  return "linux"
-}
-
 module.exports = {
-  // Build the protocol and copy it into the expected location
-  buildConfig: (params = {}) => {
-    // Build the docker image from fractal/config/Dockerfile
-    // When the --quiet flag is used, then the stdout of docker build
-    // will be the sha256 hash of the image.
-    const imageTag = "fractal/config"
-    console.log(`Building ${imageTag} Docker image`)
-    const build = `docker build --tag ${imageTag} ../../config`
-    execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
+    // Build the protocol and copy it into the expected location
+    buildConfig: (params = {}) => {
+        // Build the docker image from fractal/config/Dockerfile
+        // When the --quiet flag is used, then the stdout of docker build
+        // will be the sha256 hash of the image.
+        const imageTag = "fractal/config"
+        console.log(`Building ${imageTag} Docker image`)
+        const build = `docker build --tag ${imageTag} ../../config`
+        execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
 
-    // Using the params argument, we'll build some strings that pass options
-    // to the config CLI. Everything should be coerced to JSON strings first.
-    const os = `--os ${JSON.stringify(params.os ?? configOS())}`
-    const secrets = params.secrets
-      ? `--secrets ${JSON.stringify(params.secrets)}`
-      : ""
-    const deploy = params.deploy
-      ? `--deploy ${JSON.stringify(params.deploy)}`
-      : ""
-    console.log(`Parsing config with: ${secrets} ${os} ${deploy}`)
+        // Using the params argument, we'll build some strings that pass options
+        // to the config CLI. Everything should be coerced to JSON strings first.
+        const os = `--os ${JSON.stringify(params.os ?? configOS())}`
+        const secrets = params.secrets
+            ? `--secrets ${JSON.stringify(params.secrets)}`
+            : ""
+        const deploy = params.deploy
+            ? `--deploy ${JSON.stringify(params.deploy)}`
+            : ""
+        console.log(`Parsing config with: ${secrets} ${os} ${deploy}`)
 
-    // Pass the sha256 hash of the image to docker run, removing the created
-    // container afterwards. The output of these will be a JSON string
-    // of the config object.
-    const run = `docker run --rm ${imageTag} ${secrets} ${os} ${deploy}`
-    return execSync(run, { encoding: "utf-8", stdio: "pipe" })
-  },
-  buildAndCopyProtocol: () => {
-    console.log("Building the protocol...")
-    const cmakeBuildDir = "build-clientapp"
-    fs.mkdirSync(path.join("../../protocol", cmakeBuildDir), {
-      recursive: true,
-    })
+        // Pass the sha256 hash of the image to docker run, removing the created
+        // container afterwards. The output of these will be a JSON string
+        // of the config object.
+        const run = `docker run --rm ${imageTag} ${secrets} ${os} ${deploy}`
+        return execSync(run, { encoding: "utf-8", stdio: "pipe" })
+    },
+    buildAndCopyProtocol: () => {
+        console.log("Building the protocol...")
+        const cmakeBuildDir = "build-clientapp"
+        fs.mkdirSync(path.join("../../protocol", cmakeBuildDir), {
+            recursive: true,
+        })
 
-    if (process.platform === "win32") {
-      // On Windows, cmake wants rc.exe but is provided node_modules/.bin/rc.js
-      // Hence, we must modify the path to pop out the node_modules entries.
-      const pathArray = process.env.Path.split(";")
-      while (
-        ["node_modules", "yarn", "Yarn"].some((v) => pathArray[0].includes(v))
-      )
-        pathArray.shift()
-      const path = pathArray.join(";")
-      execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, "../../protocol", {
-        Path: path,
-      })
-    } else {
-      execCommand(`cmake -S . -B ${cmakeBuildDir}`, "../../protocol")
-    }
+        if (process.platform === "win32") {
+            // On Windows, cmake wants rc.exe but is provided node_modules/.bin/rc.js
+            // Hence, we must modify the path to pop out the node_modules entries.
+            const pathArray = process.env.Path.split(";")
+            while (
+                ["node_modules", "yarn", "Yarn"].some((v) =>
+                    pathArray[0].includes(v)
+                )
+            )
+                pathArray.shift()
+            const path = pathArray.join(";")
+            execCommand(
+                `cmake -S . -B ${cmakeBuildDir} -G Ninja`,
+                "../../protocol",
+                {
+                    Path: path,
+                }
+            )
+        } else {
+            execCommand(`cmake -S . -B ${cmakeBuildDir}`, "../../protocol")
+        }
 
         execCommand(
             `cmake --build ${cmakeBuildDir} -j --target FractalClient`,
