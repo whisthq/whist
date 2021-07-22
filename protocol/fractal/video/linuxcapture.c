@@ -39,6 +39,19 @@ Private Function Implementations
 */
 
 int32_t multithreaded_nvidia_device_manager(void* opaque) {
+    /*
+        Multithreaded function to asynchronously destroy and create the nvidia capture device when
+       necessary. nvidia_device_semaphore will be posted to if capture_screen on nvidia fails,
+       indicating a need to recreate the capture device, or when the whole device is being torn
+       down. In the former case, the thread will keep attempting to create a new nvidia device until
+       successful. In the latter case, the thread will exit.
+
+        Arguments:
+            opaque (void*): pointer to the capture device
+
+        Returns:
+            (int): 0 on exit
+    */
     CaptureDevice* device = (CaptureDevice*)opaque;
 
     while (true) {
@@ -320,12 +333,9 @@ int capture_screen(CaptureDevice* device) {
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
                                 uint32_t dpi) {
     /*
-        TODO: this function will be superseded by a function that will handle both recreation and
-       updating.
-
        Attempt to reconfigure the capture device to the given width, height, and dpi. In
-       Nvidia case, we resize the display and wait for the Nvidia device to internally update
-       (possibly through recreation). In X11 case, we don't update in place.
+       Nvidia case, we resize the display and wait for the Nvidia device to tell us we must recreate
+       it. In X11 case, we don't update in place.
 
         Arguments:
             device (CaptureDevice*): pointer to device we want to reconfigure
