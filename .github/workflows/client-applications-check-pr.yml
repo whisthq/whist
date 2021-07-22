@@ -97,7 +97,7 @@ jobs:
             - name: Log needs
               shell: python3 {0}
               run: |
-                  print(r"""${{ needs }}""")
+                  print(r"""${{ toJSON(needs) }}""")
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
