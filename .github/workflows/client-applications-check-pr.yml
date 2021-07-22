@@ -55,6 +55,7 @@ jobs:
                   jstring = """
                   ${{ steps.config-macos.outputs.config }}
                   """
+                  print(jstring)
                   config = json.loads(jstring)
                   print(f"::set-output name=config::{json.dumps(config)}")
 
