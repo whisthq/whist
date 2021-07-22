@@ -51,10 +51,14 @@ jobs:
               id: config-macos-oneline
               shell: python3 {0}
               run: |
+                  # Must use a raw string below so that newlines are processed
+                  # correctly.
                   import json
                   jstring = r"""${{ steps.config-macos.outputs.config }}"""
-                  print(jstring)
                   config = json.loads(jstring)
+                  print("JSON DUMP")
+                  print(json.dumps(config))
+                  print("END JSON DUMP")
                   print(f"::set-output name=config::{json.dumps(config)}")
 
             - name: Log Configuration
