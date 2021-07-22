@@ -1,5 +1,5 @@
 #include "threads.h"
-#include <fractal/utils/logging.h>
+#include <fractal/logging/logging.h>
 
 #ifdef __linux__
 // Manual pthread control

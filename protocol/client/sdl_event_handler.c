@@ -19,7 +19,7 @@ Includes
 
 #include "sdl_event_handler.h"
 
-#include <fractal/utils/logging.h>
+#include <fractal/logging/logging.h>
 #include "sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "audio.h"

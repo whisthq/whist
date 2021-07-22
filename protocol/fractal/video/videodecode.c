@@ -22,7 +22,7 @@ Includes
 ============================
 */
 #include "videodecode.h"
-#include <fractal/utils/log_statistic.h>
+#include <fractal/logging/log_statistic.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -29,7 +29,7 @@ Includes
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
-#include <fractal/utils/log_statistic.h>
+#include <fractal/logging/log_statistic.h>
 #include "network.h"
 
 #define USE_HARDWARE true

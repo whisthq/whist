@@ -40,7 +40,7 @@ Includes
 
 #include <stdio.h>
 
-#include "logging.h"
+#include <fractal/logging/logging.h>
 
 void print_os_info() {
 #ifdef _WIN32

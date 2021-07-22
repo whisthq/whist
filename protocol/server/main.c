@@ -40,7 +40,7 @@ Includes
 #include <fractal/core/fractalgetopt.h>
 #include <fractal/core/fractal.h>
 #include <fractal/input/input.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/error_monitor.h>
 #include <fractal/video/transfercapture.h>
 #include "client.h"
 #include "handle_client_message.h"

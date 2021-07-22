@@ -21,8 +21,8 @@ Includes
 #include <fractal/input/input.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/clock.h>
-#include <fractal/utils/logging.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/logging.h>
+#include <fractal/logging/error_monitor.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
