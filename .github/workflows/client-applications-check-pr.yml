@@ -54,11 +54,6 @@ jobs:
                   os: win32
                   deploy: dev
 
-            - name: Log MacOS Configuration
-              shell: python3 {0}
-              run: |
-                  print(r"""${{ steps.config-macos.outputs.config }}""")
-
     client-applications-check-pr-linting:
         name: Linting
         runs-on: ubuntu-20.04
