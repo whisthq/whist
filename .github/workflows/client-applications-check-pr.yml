@@ -23,7 +23,7 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: ${{ toJSON(fromJSON(steps.config-macos.outputs.config)) }}
+            macos: ${{ steps.config-macos-oneline.outputs.config }}
             win32: "TEST VALUE"
 
         # Comment
@@ -46,6 +46,17 @@ jobs:
                   secrets: ${{ toJSON(secrets) }}
                   os: win32
                   deploy: dev
+
+            - name: One-line Configuration
+              id: config-macos-oneline
+              shell: python3 {0}
+              run: |
+                  import json
+                  jstring = """
+                  ${{ steps.config-macos.outputs.config }}
+                  """
+                  config = json.loads(jstring)
+                  print(f"::set-output name=config::{json.dumps(config)}")
 
             - name: Log Configuration
               shell: python3 {0}
