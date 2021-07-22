@@ -116,7 +116,7 @@ jobs:
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-prod"              
+                  SLACK_CHANNEL = "#alerts-dev"
                   BODY = "@releases :rotating_light: Failed to deploy `protocol` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -128,7 +128,7 @@ jobs:
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-prod"              
+                  SLACK_CHANNEL = "#alerts-dev"
                   TITLE = ":orange_book: Protocol Internal Documentation Deployed :orange_book:"
                   BODY = "Fractal `protocol` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
