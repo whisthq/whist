@@ -54,6 +54,7 @@ jobs:
                   from base64 import b64encode
                   config = r"""${{ steps.config-macos.outputs.config }}"""
                   encoded = b64encode(config.encode())
+                  print("encoded", encoded)
                   print(f"::set-output name=config::{encoded}")
 
             - name: Log MacOS Configuration
