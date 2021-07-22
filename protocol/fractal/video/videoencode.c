@@ -252,25 +252,21 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
     encoder->in_width = width;
     encoder->in_height = height;
     encoder->codec_type = codec;
-    switch (encoder->active_encoder) {
-        case NVIDIA_ENCODER:
+    // reconfigure both encoders
+    bool nvidia_reconfigured = true;
+    if (encoder->nvidia_encoder) {
 #ifdef __linux__
-            return false;
-            // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
-            // registration somehow.
-
-            // return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate,
-            //                                   codec);
+        nvidia_reconfigured = false;
+        // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
+        // registration somehow.
+        // nvidia_reconfigured = nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height,
+        // bitrate, codec);
 #else
-            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
+        LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
-        case FFMPEG_ENCODER:
-            return ffmpeg_reconfigure_encoder(encoder->ffmpeg_encoder, width, height, width, height,
-                                              bitrate, codec);
-        default:
-            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
-            return -1;
     }
+    return nvidia_reconfigured && ffmpeg_reconfigure_encoder(encoder->ffmpeg_encoder, width, height,
+                                                             width, height, bitrate, codec);
 }
 
 void video_encoder_set_iframe(VideoEncoder *encoder) {
