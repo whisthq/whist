@@ -21,7 +21,6 @@ jobs:
     # Checks for formatting using ESlint.
     config:
         name: Building config
-        id: monorepo-config
         runs-on: ubuntu-20.04
 
         # Comment
@@ -83,7 +82,7 @@ jobs:
     # Check that the Client Applications build.
     client-applications-check-pr-building:
         name: Building on ${{ matrix.config.name }}
-        needs: monorepo-config
+        needs: config
         runs-on: ${{ matrix.config.os }}
 
         strategy:
