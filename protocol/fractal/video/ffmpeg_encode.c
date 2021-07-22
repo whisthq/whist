@@ -20,7 +20,7 @@ Includes
 */
 #include "ffmpeg_encode.h"
 
-#define GOP_SIZE 99999
+#define GOP_SIZE 999999
 #define MIN_NVENC_WIDTH 33
 #define MIN_NVENC_HEIGHT 17
 
@@ -813,39 +813,7 @@ void ffmpeg_set_iframe(FFmpegEncoder *encoder) {
         LOG_ERROR("ffmpeg_set_iframe received NULL encoder!");
         return;
     }
-    if (encoder->type == SOFTWARE_ENCODE || encoder->type == NVENC_ENCODE) {
-        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_I;
-        // encoder->sw_frame->pts +=
-        //    encoder->context->gop_size - (encoder->sw_frame->pts % encoder->context->gop_size);
-        encoder->sw_frame->key_frame = 1;
-        if (encoder->hw_frame) {
-            encoder->hw_frame->pict_type = AV_PICTURE_TYPE_I;
-        }
-    } else {
-        LOG_FATAL("ffmpeg_set_iframe not implemented on QSV yet!");
-    }
-}
-
-void ffmpeg_unset_iframe(FFmpegEncoder *encoder) {
-    /*
-        Set the next frame to be an IDR frame. Unreliable for FFmpeg.
-
-        Arguments:
-            encoder (FFmpegEncoder*): encoder to use
-    */
-    if (!encoder) {
-        LOG_ERROR("ffmpeg_unset_iframe received NULL encoder!");
-        return;
-    }
-    if (encoder->type == SOFTWARE_ENCODE || encoder->type == NVENC_ENCODE) {
-        encoder->sw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-        encoder->sw_frame->key_frame = 0;
-        if (encoder->hw_frame) {
-            encoder->hw_frame->pict_type = AV_PICTURE_TYPE_NONE;
-        }
-    } else {
-        LOG_FATAL("ffmpeg_unset_iframe not implemented on QSV yet!");
-    }
+    encoder->wants_iframe = true;
 }
 
 void destroy_ffmpeg_encoder(FFmpegEncoder *encoder) {
@@ -899,6 +867,17 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
         active_frame = encoder->sw_frame;
     }
 
+    if (encoder->wants_iframe) {
+        if (encoder->type != SOFTWARE_ENCODE && encoder->type != NVENC_ENCODE) {
+            LOG_FATAL("ffmpeg_set_iframe not implemented on QSV yet!");
+        }
+        active_frame->pict_type = AV_PICTURE_TYPE_I;
+        active_frame->key_frame = 1;
+    } else {
+        active_frame->pict_type = AV_PICTURE_TYPE_NONE;
+        active_frame->key_frame = 0;
+    }
+
     int res = av_buffersrc_add_frame(encoder->filter_graph_source, active_frame);
     if (res < 0) {
         LOG_WARNING("Error submitting frame to the filter graph: %s", av_err2str(res));
@@ -942,10 +921,12 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
     }
     // Increment GOP counter
     encoder->frames_since_last_iframe++;
-    // If we've forced an iframe
-    if (active_frame->pict_type == AV_PICTURE_TYPE_I) {
+
+    // Note: We can't check active_frame->pict_type bc ffmpeg cobbles it for some reason
+    if (encoder->wants_iframe) {
         encoder->is_iframe = true;
     }
+    encoder->wants_iframe = false;
 
     return 0;
 }

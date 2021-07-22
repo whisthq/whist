@@ -77,14 +77,6 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_inde
 void nvidia_set_iframe(NvidiaEncoder* encoder);
 
 /**
- * @brief                          Allow the next frame to be either an I-frame
- *                                 or not an i-frame
- *
- * @param encoder                  Encoder to be updated
- */
-void nvidia_unset_iframe(NvidiaEncoder* encoder);
-
-/**
  * @brief                          Encode the most recently intake'd frame
  *
  * @param encoder                  The encoder to encode with
