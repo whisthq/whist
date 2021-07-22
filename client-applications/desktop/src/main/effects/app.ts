@@ -21,8 +21,8 @@ import {
 } from "@app/utils/windows"
 import {
     createTray,
-    updateSignedInTray,
-    updateSignedOutTray,
+    toggleSignedInTray,
+    toggleSignedOutTray,
 } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
@@ -77,7 +77,7 @@ fromTrigger("notPersisted").subscribe(() => {
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
     createProtocolWindow().catch((err) => console.error(err))
-    updateSignedInTray(x.userEmail)
+    toggleSignedInTray(x.userEmail)
 })
 
 fromTrigger("trayQuitAction").subscribe(() => {
@@ -115,7 +115,7 @@ fromTrigger("clearCacheAction").subscribe(() => {
 
 // On signout or relaunch, update the tray to the signed out version
 fromTrigger("clearCacheAction").subscribe(() => {
-    updateSignedOutTray()
+    toggleSignedOutTray()
 })
 
 // If an admin selects a region, relaunch the app with the selected region passed

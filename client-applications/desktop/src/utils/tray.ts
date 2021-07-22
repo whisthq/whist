@@ -80,7 +80,7 @@ export const createTray = () => {
 }
 
 // Function to update the tray after the user has logged in
-export const updateSignedInTray = (userEmail: string) => {
+export const toggleSignedInTray = (userEmail: string) => {
     signoutMenu.enabled = true
     const menu = Menu.buildFromTemplate([feedbackMenu, signoutMenu, quitMenu])
     // If the user is a @fractal.co developer, then allow them to toggle regions for testing
@@ -93,7 +93,7 @@ export const updateSignedInTray = (userEmail: string) => {
     tray?.setContextMenu(menu)
 }
 
-export const updateSignedOutTray = () => {
+export const toggleSignedOutTray = () => {
     signoutMenu.enabled = false
     const menu = Menu.buildFromTemplate([feedbackMenu, signoutMenu, quitMenu])
     tray?.setContextMenu(menu)
