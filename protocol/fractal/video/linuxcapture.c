@@ -22,6 +22,8 @@ Includes
 #include "x11capture.h"
 #include "nvidiacapture.h"
 
+FractalSemaphore nvidia_device_semaphore;
+
 /*
 ============================
 Private Functions
@@ -30,9 +32,7 @@ Private Functions
 void get_wh(CaptureDevice* device, int* w, int* h);
 bool is_same_wh(CaptureDevice* device);
 void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
-int32_t multithreaded_destroy_nvidia_device(void* opaque);
 int32_t multithreaded_destroy_x11_device(void* opaque);
-int32_t multithreaded_create_active_nvidia_device(void* opaque);
 
 /*
 ============================
@@ -40,29 +40,35 @@ Private Function Implementations
 ============================
 */
 
-int32_t multithreaded_destroy_nvidia_device(void* opaque) {
-    NvidiaCaptureDevice* device = (NvidiaCaptureDevice*)opaque;
-    destroy_nvidia_capture_device(device);
+int32_t multithreaded_nvidia_device_manager(void* opaque) {
+    CaptureDevice* device = (CaptureDevice*)opaque;
+    nvidia_device_semaphore = fractal_create_semaphore(0);
+
+    while (true) {
+        fractal_wait_semaphore(nvidia_device_semaphore);
+
+        // Nvidia requires recreation
+        if (device->nvidia_capture_device) {
+            destroy_nvidia_capture_device(device->nvidia_capture_device);
+            device->nvidia_capture_device = NULL;
+        }
+
+        while (device->nvidia_capture_device == NULL) {
+            device->nvidia_capture_device = create_nvidia_capture_device();
+            if (device->nvidia_capture_device) {
+                device->active_capture_device = NVIDIA_DEVICE;
+                break;
+            } else {
+                fractal_sleep(500);
+            }
+        }
+    }
     return 0;
 }
 
 int32_t multithreaded_destroy_x11_device(void* opaque) {
-    X11CaptureDevice* device = (X11CaptureDevice*)opaque;
-    destroy_x11_capture_device(device);
-    return 0;
-}
-
-int32_t multithreaded_create_active_nvidia_device(void* opaque) {
     CaptureDevice* device = (CaptureDevice*)opaque;
-    while (!device->nvidia_capture_device) {
-        device->nvidia_capture_device = create_nvidia_capture_device();
-        if (device->nvidia_capture_device) {
-            device->active_capture_device = NVIDIA_DEVICE;
-            break;
-        } else {
-            fractal_sleep(500);
-        }
-    }
+    destroy_x11_capture_device(device->x11_capture_device);
     return 0;
 }
 
@@ -282,24 +288,25 @@ int capture_screen(CaptureDevice* device) {
     switch (device->active_capture_device) {
         case NVIDIA_DEVICE: {
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
-            if (ret < 0) {
-                LOG_ERROR("nvidia_capture_screen failed!");
-                // TODO: look into falling back to X11
-                return -1;
-            } else {
-                if (device->width != device->nvidia_capture_device->width ||
-                    device->height != device->nvidia_capture_device->height) {
+            if (ret == 0) {
+                if (device->width == device->nvidia_capture_device->width &&
+                    device->height == device->nvidia_capture_device->height) {
+                    device->last_capture_device = NVIDIA_DEVICE;
+                    return 0;
+                } else {
                     LOG_ERROR(
                         "Capture Device is configured for dimensions %dx%d, which "
                         "does not match nvidia's captured dimensions of %dx%d!",
                         device->width, device->height, device->nvidia_capture_device->width,
                         device->nvidia_capture_device->height);
-                    return -1;
                 }
-                return ret;
             }
+            // otherwise, nvidia failed!
+            device->active_capture_device = X11_DEVICE;
+            fractal_post_semaphore(nvidia_device_semaphore);
         }
         case X11_DEVICE:
+            device->last_capture_device = X11_DEVICE;
             return x11_capture_screen(device->x11_capture_device);
         default:
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
@@ -330,16 +337,8 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
         LOG_ERROR("NULL device was passed into reconfigure_capture_device!");
         return false;
     }
-    switch (device->active_capture_device) {
-        case NVIDIA_DEVICE:
-            try_update_dimensions(device, width, height, dpi);
-            return true;
-        case X11_DEVICE:
-            return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
-        default:
-            LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
-            return false;
-    }
+    try_update_dimensions(device, width, height, dpi);
+    return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
 }
 
 void destroy_capture_device(CaptureDevice* device) {
