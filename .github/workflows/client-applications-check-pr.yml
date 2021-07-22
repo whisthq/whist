@@ -85,7 +85,7 @@ jobs:
     # Check that the Client Applications build.
     client-applications-check-pr-building:
         name: Building on ${{ matrix.config.name }}
-        needs: config
+        needs: [config]
         runs-on: ${{ matrix.config.os }}
 
         strategy:
