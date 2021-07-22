@@ -23,7 +23,7 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: ${{ steps.config-macos.outputs.config }}
+            macos: ${{ fromJSON(steps.config-macos.outputs.config) }}
             win32: "TEST VALUE"
 
         # Comment
