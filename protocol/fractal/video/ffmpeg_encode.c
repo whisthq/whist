@@ -899,10 +899,9 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
         active_frame = encoder->sw_frame;
     }
 
-    // av_buffersrc_add_frame overwrites pict_type for some reason so we have to save it here
-    bool active_frame_pict_type = active_frame->pict_type;
-
-    int res = av_buffersrc_add_frame(encoder->filter_graph_source, active_frame);
+    // Don't use av_buffersrc_add_frame because we want to save frame data
+    int res = av_buffersrc_add_frame_flags(encoder->filter_graph_source, active_frame,
+                                           AV_BUFFERSRC_FLAG_KEEP_REF);
     if (res < 0) {
         LOG_WARNING("Error submitting frame to the filter graph: %s", av_err2str(res));
     }
