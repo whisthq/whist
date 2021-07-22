@@ -24,13 +24,19 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             macos: |
-              ${{ steps.config-macos.outputs.config }}
+              ${{ steps.config-sanity.outputs.config }}
             win32: "TEST VALUE"
 
         # Comment
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+
+            - name: Test sanity
+              id: config-sanity
+              shell: python3 {0}
+              run: |
+                  print(f"::set-output name=config::neilwashere")
 
             - name: Build Monorepo Configuration for Mac
               id: config-macos
