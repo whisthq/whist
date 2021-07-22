@@ -21,6 +21,7 @@ jobs:
     # Checks for formatting using ESlint.
     config:
         name: Building config
+        id: monorepo-config
         runs-on: ubuntu-20.04
 
         # Comment
