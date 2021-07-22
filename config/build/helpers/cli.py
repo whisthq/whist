@@ -6,7 +6,6 @@
 import json
 import click
 import toolz
-import platform
 from pathlib import Path
 
 
@@ -93,9 +92,7 @@ def create_cli(main_fn):
     )
     @click.option(
         "--os",
-        type=click.Choice(
-            ["macos", "win32", "linux", "auto"], case_sensitive=False
-        ),
+        type=click.Choice(["macos", "win32", "linux"], case_sensitive=False),
         help="A choice of 'os', must be declared in config/profile.yml",
     )
     @click.option(
@@ -135,23 +132,13 @@ def create_cli(main_fn):
         # Example above has extra spacing due to behavior of the CLI --help.
         profiles = {}
         if os:
-            if os == "auto":
-                os_name = platform.system()
-                if os_name == "Darwin":
-                    profiles["os"] = "macos"
-                if os_name == "Windows":
-                    profiles["os"] = "win32"
-                else:
-                    profiles["os"] = "linux"
-            else:
-                profiles["os"] = os
+            profiles["os"] = os
         if deploy:
             profiles["deploy"] = deploy
 
         result = main_fn(path, secrets=secrets or {}, profiles=profiles)
-        result_json = json.dumps(result)
+        result_json = json.dumps(result, indent=4)
 
-        # Don't print with newline.
-        click.echo(result_json, nl=False)
+        click.echo(result_json)
 
     return cli

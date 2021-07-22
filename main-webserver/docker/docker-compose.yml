@@ -1,60 +1,60 @@
 version: "3.8"
 
 x-app: &base-app
-    build:
-        context: ..
-        dockerfile: docker/Dockerfile
-    depends_on:
-        - redis
-    networks:
-        # docker networks make sure web/celery can find redis
-        - primary
-    volumes:
-        - ..:/app
-        - $HOME/.aws:/.aws
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  depends_on:
+    - redis
+  networks:
+    # docker networks make sure web/celery can find redis
+    - primary
+  volumes:
+    - ..:/app
+    - $HOME/.aws:/.aws
 
 services:
-    redis:
-        # Matches version being used by dev as of 2021-02-26
-        image: redis:6.0.11
-        ports:
-            - "7810:6379" # Proxy redis on localhost:7810
-        networks:
-            - primary
+  redis:
+    # Matches version being used by dev as of 2021-02-26
+    image: redis:6.0.11
+    ports:
+      - "7810:6379" # Proxy redis on localhost:7810
+    networks:
+      - primary
 
-    postgres_db:
-        image: postgres:12.5
-        ports:
-            - "9999:5432"
-        environment:
-            POSTGRES_HOST_AUTH_METHOD: trust
-        networks:
-            - primary
+  postgres_db:
+    image: postgres:12.5
+    ports:
+      - "9999:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks:
+      - primary
 
-    web:
-        <<: *base-app
-        command: web
-        ports:
-            - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
-        environment:
-            AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
-            DATABASE_URL: ${DATABASE_URL}
-            REDIS_URL: redis://redis
-            PORT: 7730
-            APP_GIT_BRANCH: ${APP_GIT_BRANCH}
-            APP_GIT_COMMIT: ${APP_GIT_COMMIT}
+  web:
+    <<: *base-app
+    command: web
+    ports:
+      - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
+    environment:
+      AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis
+      PORT: 7730
+      APP_GIT_BRANCH: ${APP_GIT_BRANCH}
+      APP_GIT_COMMIT: ${APP_GIT_COMMIT}
 
-    celery:
-        <<: *base-app
-        command: celery
-        environment:
-            DATABASE_URL: ${DATABASE_URL}
-            REDIS_URL: redis://redis
-            AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
-            NUM_WORKERS: 2
-            WORKER_CONCURRENCY: 50
-            APP_GIT_BRANCH: ${APP_GIT_BRANCH}
-            APP_GIT_COMMIT: ${APP_GIT_COMMIT}
+  celery:
+    <<: *base-app
+    command: celery
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis
+      AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
+      NUM_WORKERS: 2
+      WORKER_CONCURRENCY: 50
+      APP_GIT_BRANCH: ${APP_GIT_BRANCH}
+      APP_GIT_COMMIT: ${APP_GIT_COMMIT}
 
 networks:
-    primary:
+  primary:

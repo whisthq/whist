@@ -45,47 +45,12 @@ on:
                 default: true
 
 jobs:
-    monorepo-config:
-        name: Building monorepo config
-        runs-on: ubuntu-20.04
-
-        # Comment
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Build Monorepo Configuration for Mac
-              id: config-macos
-              uses: ./.github/actions/monorepo-config
-              with:
-                  secrets: ${{ toJSON(secrets) }}
-                  os: macos
-                  deploy: dev
-
-            - name: Build Monorepo Configuration for Windows
-              id: config-win32
-              uses: ./.github/actions/monorepo-config
-              with:
-                  secrets: ${{ toJSON(secrets) }}
-                  os: win32
-                  deploy: dev
-
-            - name: Log Configuration
-              shell: python3 {0}
-              run: |
-                  output = """
-                  CONFIG:
-                  ${{ steps.config-macos.outputs.config }}
-                  """
-                  print(output)
-
     # Configure Jobs
     # Detect the branch using regex matching and store as an output to regulate downstream actions.
     # Access branch with `fractal-publish-build-config.outputs.branch`.
     fractal-publish-build-config:
         name: "Configure Jobs"
         runs-on: ubuntu-20.04
-        needs: monorepo-config
         outputs:
             branch: ${{ steps.set-deploy-environment.outputs.environment }}
             jobs: ${{ steps.detect-jobs.outputs.jobs }}
@@ -1264,7 +1229,7 @@ jobs:
                   yarn config set network-timeout 600000
                   yarn cache clean
                   yarn install
-                  yarn package:publish --config='${{needs.monorepo-config.outputs.config}}' --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  yarn package:publish --config="{}" --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
