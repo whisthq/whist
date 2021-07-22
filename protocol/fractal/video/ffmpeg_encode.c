@@ -945,7 +945,7 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
     // Increment GOP counter
     encoder->frames_since_last_iframe++;
     // If we've forced an iframe
-    if (active_frame_pict_type == AV_PICTURE_TYPE_I) {
+    if (active_frame->pict_type == AV_PICTURE_TYPE_I) {
         encoder->is_iframe = true;
     }
 
