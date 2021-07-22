@@ -54,12 +54,13 @@ jobs:
                   # Must use a raw string below so that newlines are processed
                   # correctly.
                   import json
+                  from sys import stdout
                   jstring = r"""${{ steps.config-macos.outputs.config }}"""
                   config = json.loads(jstring)
                   print("JSON DUMP")
                   print(json.dumps(config))
                   print("END JSON DUMP")
-                  print(f"::set-output name=config::{json.dumps(config)}")
+                  sys.stdout.write(f"::set-output name=config::{json.dumps(config)}")
 
             - name: Log Configuration
               shell: python3 {0}
