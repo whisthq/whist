@@ -23,7 +23,7 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: |
+            macos: >
               ${{ steps.config-macos-oneline.outputs.config }}
             win32: "TEST VALUE"
 
