@@ -23,8 +23,7 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: >-
-              ${{ steps.encoded-macos.outputs.config }}
+            macos: ${{ steps.encoded-macos.outputs.config }}
             win32: "TEST VALUE"
 
         steps:
@@ -55,7 +54,7 @@ jobs:
                   config = r"""${{ steps.config-macos.outputs.config }}"""
                   encoded = b64encode(config.encode())
                   print("encoded", encoded.decode())
-                  print(f"::set-output name=config::{encoded}")
+                  print(f"::set-output name=config::{encoded.decode()}")
 
             - name: Log MacOS Configuration
               shell: python3 {0}
