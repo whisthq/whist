@@ -23,7 +23,7 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: >
+            macos: |
               ${{ steps.config-macos.outputs.config }}
             win32: "TEST VALUE"
 
@@ -48,23 +48,10 @@ jobs:
                   os: win32
                   deploy: dev
 
-            - name: One-line Configuration
-              id: config-macos-oneline
+            - name: Log MacOS Configuration
               shell: python3 {0}
               run: |
-                  # Must use a raw string below so that newlines are processed
-                  # correctly.
-                  import json
-                  from sys import stdout
-                  jstring = r"""${{ steps.config-macos.outputs.config }}"""
-                  config = json.loads(jstring)
-                  print(f"::set-output name=config::{json.dumps(config)}")
-
-            - name: Log Configuration
-              shell: python3 {0}
-              run: |
-                  out = r"""${{ steps.config-macos-oneline.outputs.config }}"""
-                  print(out)
+                  print(r"""${{ steps.config-macos.outputs.config }}""")
 
     client-applications-check-pr-linting:
         name: Linting
@@ -110,11 +97,7 @@ jobs:
             - name: Log needs
               shell: python3 {0}
               run: |
-                  output = """
-                  NEEDS:
-                  ${{ toJSON(needs) }}
-                  """
-                  print(output)
+                  print(r"""${{ needs }}""")
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
