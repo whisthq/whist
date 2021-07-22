@@ -112,13 +112,14 @@ jobs:
                   print(r"""${{ toJSON(needs) }}""")
 
             - name: Decode MacOS Config
+              id: config-macos
               shell: python3 {0}
               run: |
                   from base64 import b85decode
                   encoded = "${{ needs.config.outputs.macos }}"
-                  config = b85decode(encoded.encode())
+                  config = b85decode(encoded.encode()).decode()
                   print(config)
-                  print(f"::set-output name=config::{encoded}")
+                  print(f"::set-output name=config::{config}")
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -194,7 +195,7 @@ jobs:
             #   if: runner.os == 'Windows'
             #   shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
             #   env:
-            #       CONFIG: ${{ needs.config.outputs.win32 }}
+            #       CONFIG: ${{ steps.config-win32.outputs.config }}
             #       AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
             #       AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
             #       AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -211,7 +212,7 @@ jobs:
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
-                  CONFIG: ${{ needs.config.outputs.macos }}
+                  CONFIG: ${{ steps.config-macos.outputs.config }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
