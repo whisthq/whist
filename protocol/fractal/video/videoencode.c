@@ -282,34 +282,6 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
     }
 }
 
-void video_encoder_unset_iframe(VideoEncoder *encoder) {
-    /*
-        Indicate that the next frame is not an iframe.
-
-        Arguments:
-            encoder (VideoEncoder*): encoder containing the frame
-    */
-    if (!encoder) {
-        LOG_ERROR("video_encoder_set_iframe received NULL encoder!");
-        return;
-    }
-    switch (encoder->active_encoder) {
-        case NVIDIA_ENCODER:
-#ifdef __linux__
-            nvidia_unset_iframe(encoder->nvidia_encoder);
-            return;
-#else
-            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
-#endif
-        case FFMPEG_ENCODER:
-            ffmpeg_unset_iframe(encoder->ffmpeg_encoder);
-            return;
-        default:
-            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
-            return;
-    }
-}
-
 void destroy_video_encoder(VideoEncoder *encoder) {
     /*
         Destroy all components of the encoder, then free the encoder itself.

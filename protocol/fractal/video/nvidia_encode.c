@@ -407,8 +407,6 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
 
 void nvidia_set_iframe(NvidiaEncoder* encoder) { encoder->wants_iframe = true; }
 
-void nvidia_unset_iframe(NvidiaEncoder* encoder) { encoder->wants_iframe = false; }
-
 void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     LOG_INFO("Destroying nvidia encoder...");
 
