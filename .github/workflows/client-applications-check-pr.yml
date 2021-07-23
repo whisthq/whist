@@ -17,14 +17,26 @@ on:
     workflow_dispatch:
 
 jobs:
-    # Linting
-    # Checks for formatting using ESlint.
+    # We use a separate job for building the monorepo configuration. The monorepo
+    # configuration is built in a Docker container, and Docker Actions can only be
+    # run on Linux environments on GitHub. As we need to build the client application
+    # in Mac and Windows environments, we need to run the configuration builder as a
+    # separate job. We set the JSON configuration data as "outputs" of this job step,
+    # so that it can be consumed by other jobs.
+    #
+    # Before we set the "outputs" of this job step, we need to perform a small trick
+    # to get around a implementation detail of GitHub Actions. The GitHub Actions runner
+    # will silently ignore any "outputs" that contain values inside the GitHub secrets
+    # store. This is for security purposes, but it's rather inconvenient when we're trying
+    # to pass around a configuration object that may contain secret values. To get around
+    # GitHub's limitation, we first encode the configuration string to base-85. Other jobs
+    # will need to decode the base-85 string to produce the JSON configuration object.
     config:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: ${{ steps.encoded-macos.outputs.config }}
-            win32: ${{ steps.encoded-win32.outputs.config }}
+            macos: ${{ steps.encoded-config.outputs.macos }}
+            win32: ${{ steps.encoded-config.outputs.win32 }}
 
         steps:
             - name: Checkout Git Repository
@@ -46,23 +58,17 @@ jobs:
                   os: win32
                   deploy: dev
 
-            - name: Encode MacOS Configuration
-              id: encoded-macos
+            - name: Encode Configuration
+              id: encoded-config
               shell: python3 {0}
               run: |
                   from base64 import b85encode
-                  config = r"""${{ steps.config-macos.outputs.config }}"""
-                  encoded = b85encode(config.encode()).decode()
-                  print(f"::set-output name=config::{encoded}")
-
-            - name: Encode Win32 Configuration
-              id: encoded-win32
-              shell: python3 {0}
-              run: |
-                  from base64 import b85encode
-                  config = r"""${{ steps.config-win32.outputs.config }}"""
-                  encoded = b85encode(config.encode()).decode()
-                  print(f"::set-output name=config::{encoded}")
+                  macos = r"""${{ steps.config-macos.outputs.config }}"""
+                  win32 = r"""${{ steps.config-win32.outputs.config }}"""
+                  encoded_macos = b85encode(macos.encode()).decode()
+                  encoded_win32 = b85encode(win32.encode()).decode()
+                  print(f"::set-output name=macos::{encoded_macos}")
+                  print(f"::set-output name=win32::{encoded_win32}")
 
             - name: Log MacOS Configuration
               shell: python3 {0}
