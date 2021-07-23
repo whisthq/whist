@@ -25,6 +25,16 @@ variable "git_hash" {
   default = ""
 }
 
+variable "git_commit_sha" {
+  type    = string
+  default = ""
+}
+
+variable "pr_number" {
+  type    = string
+  default = ""
+}
+
 variable "github_pat" {
   type      = string
   default   = ""
@@ -90,6 +100,10 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
   vpc_id       = "${var.vpc_id}"
   force_deregister      = true
   force_delete_snapshot = true
+  run_tag {
+    key = "Name"
+    value = "Packer-Builder-${var.source_region}-${var.pr_number}-${var.git_commit_sha}"
+  }
 }
 
 build {

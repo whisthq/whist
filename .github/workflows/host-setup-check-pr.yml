@@ -65,6 +65,12 @@ jobs:
             ###########################################################################
             ############################## Building AMIs ##############################
 
+            - name: Retrieve Current Git Hash as Environment Variable
+              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+            - name: Retrieve Current PR Number as Environment Variable
+              run: echo "pr_number=${{ github.event.number }}" >> $GITHUB_ENV
+
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -83,13 +89,19 @@ jobs:
                   import json
                   import datetime
 
-                  # we hardcode the git_hash and branch name of a pre-built Chrome mandelbox image stored in
+                  # we hardcode the git_hash and git_branch name of a pre-built Chrome mandelbox image stored in
                   # GHCR to be able to test AMIs without needing to build and deploy new mandelbox images
+
                   data = {}
                   data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
                   data["github_username"] = "${{ secrets.GHA_USERNAME }}"
                   data["git_branch"] = "dev"
                   data["git_hash"] = "21034c9d85471b5bacfd0eb7739ef1eb3c9865d5"
+
+                  # pr_number is the number of the pr this check is running for,
+                  # used to identify the packer instance we create
+                  data["pr_number"] = "${{ env.pr_number }}"
+                  data["git_commit_sha"] = "${{ env.commit_sha }}"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
