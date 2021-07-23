@@ -246,8 +246,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── blueprints -->  our API endpoints are described here
 │   │   ├── aws
 │   │   │   └── aws_mandelbox_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
-│   │   ├── host_service
-│   │   │   └── host_service_blueprint.py --> endpoints that handle host service handshakes
 │   │   ├── mail
 │   │   │   ├── mail_blueprint.py --> endpoints for generating and sending emails
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
