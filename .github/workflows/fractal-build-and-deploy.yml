@@ -541,10 +541,11 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
+                main-webserver-deploy-heroku,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: main-webserver-update-fractal-services-${{ github.ref }}
-        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.main-webserver-deploy-heroku.result == 'success')
         env:
             TOKEN_FILE: .access_token
         steps:
