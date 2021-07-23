@@ -61,15 +61,6 @@ jobs:
                     - ca-central-1
                     - eu-west-1
                     - eu-central-1
-                resource:
-                    - ASGs
-                    - Clusters
-                    - Tasks
-                    - Instances
-        env:
-            db_url_dev: "https://dev-database.fractal.co/v1/graphql"
-            db_url_staging: "https://staging-database.fractal.co/v1/graphql"
-            db_url_prod: "https://prod-database.fractal.co/v1/graphql"
 
         steps:
             - name: Checkout Git Repository
@@ -92,20 +83,13 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Hanging Resources and Notify in Slack if They Exist
+            - name: Check for Hanging EC2 Instances and Notify in Slack if They Exist
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
-                  from aws.resource_helpers import hanging_resource
+                  from aws.resource_helpers import hanging_instances
 
-                  resources = hanging_resource("${{ matrix.resource }}",
-                                               "${{ matrix.aws-region }}",
-                                               [ "${{ env.db_url_dev}}",
-                                                 "${{ env.db_url_staging}}",
-                                                 "${{ env.db_url_prod}}"],
-                                               [ "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}",
-                                                 "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}",
-                                                 "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" ])
+                  resources = hanging_instances("${{ matrix.aws-region }}")
 
                   if resources:
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
