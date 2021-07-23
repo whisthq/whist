@@ -83,13 +83,13 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Hanging EC2 Instances and Notify in Slack if They Exist
+            - name: Flag Old EC2 Instances and Notify in Slack if They Exist
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
-                  from aws.resource_helpers import hanging_instances
+                  from aws.resource_helpers import flag_instances
 
-                  resources = hanging_instances("${{ matrix.aws-region }}")
+                  resources = flag_instances("${{ matrix.aws-region }}")
 
                   if resources:
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"

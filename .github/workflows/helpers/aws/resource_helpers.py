@@ -167,21 +167,3 @@ def flag_instances(region):
                 msg += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED*\n"
 
     return msg
-
-
-def hanging_instances(region):
-    """
-    Reports any hanging EC2 instances of the specified component in a given region
-
-    Args:
-        region (str): current region
-
-    Returns:
-        string: formatted bulleted list for Slack notification
-    """
-    msg = "\n"
-    instances = flag_instances(region)
-    if len(instances) > 0:
-        msg += instances
-        return msg
-    return ""
