@@ -381,7 +381,7 @@ int32_t multithreaded_send_video(void* opaque) {
         clock server_frame_timer;
         start_timer(&server_frame_timer);
 
-        // Only if we have a frame to render
+        // Only if we have a frame to render or we need to send something to keep up with MIN_FPS
         if (accumulated_frames > 0 || wants_iframe ||
             get_timer(last_frame_capture) > 1.0 / MIN_FPS) {
             // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
@@ -392,7 +392,11 @@ int32_t multithreaded_send_video(void* opaque) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
             // If 1/MIN_FPS has passed, but no accumulated_frames have happened,
-            // Then we just send a blank frame with is_repeated_frame = true
+            // then send_new_frame is false, and we just send an empty frame with
+            // is_empty_frame = true
+            // NOTE: `accumulated_frames` is the number of new frames collected since the last
+            // frame sent. If this is 0, then this frame is just a repeat of the frame
+            // before it (which we're sending to keep the framerate above MIN_FPS).
             bool send_new_frame = accumulated_frames > 0 || wants_iframe;
 
             // transfer the capture of the latest frame from the device to the encoder,
@@ -517,15 +521,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
-                    if (accumulated_frames == 0) {
-                        // `accumulated_frames` is the number of new frames collected since the last
-                        // frame sent. If this is 0, then this frame is just a repeat of the frame
-                        // before it (which we're sending to keep the framerate above MIN_FPS).
-                        frame->is_repeated_frame = true;
-                    } else {
-                        // This is a new frame that is different from the one before it
-                        frame->is_repeated_frame = false;
-                    }
+                    frame->is_empty_frame = false;
 
                     static FractalCursorImage cursor_cache[2];
                     static int last_cursor_id = 0;
@@ -598,11 +594,11 @@ int32_t multithreaded_send_video(void* opaque) {
                 // If we don't have a new frame to send, let's just send an empty one
                 static char mini_buf[sizeof(VideoFrame)];
                 VideoFrame* frame = (VideoFrame*)mini_buf;
-                frame->is_repeated_frame = true;
+                frame->is_empty_frame = true;
                 // This signals that the screen hasn't changed, so don't bother rendering
                 // this frame and just keep showing the last one.
                 // We don't need to fill out the rest of the fields of the VideoFrame because
-                // is_repeated_frame is true, so it will just be ignored by the client.
+                // is_empty_frame is true, so it will just be ignored by the client.
 
                 if (broadcast_udp_packet(PACKET_VIDEO, (uint8_t*)frame, sizeof(VideoFrame), id,
                                          STARTING_BURST_BITRATE,

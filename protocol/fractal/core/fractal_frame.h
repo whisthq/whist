@@ -20,7 +20,7 @@ typedef struct VideoFrame {
     int num_peer_update_msgs;
 
     bool has_cursor;
-    bool is_repeated_frame;  // indicates whether this frame is identical to the one last sent
+    bool is_empty_frame;  // indicates whether this frame is identical to the one last sent
     int videodata_length;
 
     unsigned char data[];

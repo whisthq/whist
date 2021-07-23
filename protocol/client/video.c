@@ -1098,27 +1098,14 @@ int render_video() {
     // Cast to VideoFrame* because this variable is not volatile in this section
     VideoFrame* frame = (VideoFrame*)render_context.frame_buffer;
 
-    // We want to avoid rendering the same repeated frame again and again (unless we get an iframe).
-    // However, in order to avoid a "pixel glitch", we will still render a frame again the first
-    // time we get a repeated frame, which we keep track of with consecutive_repeated_frames.
-    static unsigned consecutive_repeated_frames = 0;
-    if (rendering && frame->is_repeated_frame && !frame->is_iframe) {
-        consecutive_repeated_frames++;
-        // if (consecutive_repeated_frames > 1) {
-        if (true) {
-            // We've rendered this frame twice already (once when it was new, and once as a repeated
-            // frame) so we won't render it now.
-
-            // We pretend we just rendered this frame. For all intents and purposes we technically
-            // already did, but if we don't do this we'll keep assuming that we're behind on frames
-            // and start requesting a bunch of iframes, which forces a render.
-            video_data.last_rendered_id = render_context.id;
-            rendering = false;
-            return -1;
-        }
-    } else if (rendering) {
-        // This is a new frame, and we're going to render it
-        consecutive_repeated_frames = 0;
+    // If the frame hasn't changed since the last one, the server will just send an empty frame to
+    // keep the framerate at least at MIN_FPS. We don't want to render this empty frame though.
+    if (rendering && frame->is_empty_frame) {
+        // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
+        // we're behind on frames and start requesting a bunch of iframes, which forces a render.
+        video_data.last_rendered_id = render_context.id;
+        rendering = false;
+        return -1;
     }
 
     SDL_Renderer* renderer = video_context.renderer;
