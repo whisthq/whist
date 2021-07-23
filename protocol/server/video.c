@@ -393,7 +393,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // If 1/MIN_FPS has passed, but no accumulated_frames have happened,
             // Then we just send a blank frame with is_repeated_frame = true
-            bool send_new_frame = accumulated_frames > 0 && !wants_iframe;
+            bool send_new_frame = accumulated_frames > 0 || wants_iframe;
 
             // transfer the capture of the latest frame from the device to the encoder,
             // This function will try to CUDA/OpenGL optimize the transfer by
