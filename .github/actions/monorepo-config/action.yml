@@ -4,11 +4,8 @@ branding:
     icon: command
     color: blue
 inputs:
-    secrets-github:
-        description: JSON object of GitHub secrets
-        required: false
-    secrets-heroku:
-        description: JSON object of Heroku secrets
+    secrets:
+        description: JSON object secrets
         required: false
     os:
         description: Either 'macos', 'win32', or 'linux'
@@ -19,17 +16,6 @@ inputs:
 outputs:
     config:
         description: JSON object of Fractal config
-args: # positional arguments will be passed to entrypoint.sh
-    - --path
-    - config # path to /config folder
-    - --secrets
-    - ${{ inputs.secrets-github }}
-    - --secrets # secrets will be merged
-    - ${{ inputs.secrets-heroku }}
-    - --os
-    - ${{ inputs.os }}
-    - --deploy # empty string will be coerced to None
-    - ${{ inputs.deploy }}
 runs:
     using: docker
     image: Dockerfile # note relative to this file (action.yml)
