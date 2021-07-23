@@ -16,13 +16,13 @@ const features = [
     {
         name: "Product Designers",
         description:
-            "When working with large assets in 2D/3D, web-based design tools like Figma.",
+            "When working with large assets in 2D/3D, web-based design tools like Figma and your computer cries for a dedicated graphics card.",
         icon: ScaleIcon,
     },
     {
         name: "Productivity Workers",
         description:
-            "When having multiple Google Slides, Airtables, or Notion Docs open slows down your computer.",
+            "When you're the world record holder for the largest Google Slides presentation or Airtable workspace and your computer slows down.",
         icon: LightningBoltIcon,
     },
     {
