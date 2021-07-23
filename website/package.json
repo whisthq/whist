@@ -51,7 +51,7 @@
         "@snowpack/plugin-typescript": "^1.2.1",
         "@types/classnames": "^2.3.1",
         "@types/lodash": "^4.14.170",
-        "@types/node": "^16.3.1",
+        "@types/node": "^16.4.1",
         "@types/react": "^17.0.13",
         "@types/react-dom": "^17.0.5",
         "@types/react-router": "^5.1.13",
