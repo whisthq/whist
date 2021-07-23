@@ -25,9 +25,7 @@ export const FeatureBox = (props: {
                 <div className="text-gray dark:text-gray-300 text-lg mt-8">
                     {title}
                 </div>
-                <div className="mt-2 text-base text-gray-500">
-                    {text}
-                </div>
+                <div className="mt-2 text-base text-gray-500">{text}</div>
             </div>
         </Col>
     )

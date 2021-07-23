@@ -8,10 +8,10 @@ import {
 } from "@app/pages/home/components/button"
 
 const includedFeatures = [
+    "Unlimited access after free trial",
     "Official Fractal t-shirt and mug",
     "Private Discord forum access",
-    "Recognition on supporter board",
-    "Priority customer support",
+    "Recognition on supporter board (coming soon)",
 ]
 
 const Pricing = () => {
@@ -24,8 +24,8 @@ const Pricing = () => {
                             Try Fractal for free
                         </div>
                         <p className="mt-4 text-xl text-gray-500">
-                            You'll start with a 14 day free trial, after which
-                            we'll ask for a small &lsquo;supporter
+                            You&lsquo;ll start with a 14 day free trial, after
+                            which we&lsquo;ll ask for a small &lsquo;supporter
                             contribution&lsquo;.
                         </p>
                         <Link to="download" spy={true} smooth={true}>
@@ -41,18 +41,18 @@ const Pricing = () => {
             <div className="mt-8 pb-16 sm:mt-12 sm:pb-20 lg:pb-28">
                 <div className="relative">
                     <div className="relative">
-                        <div className="max-w-lg mx-auto lg:max-w-none lg:flex lg:items-start">
-                            <div className="bg-blue-darker px-6 py-8 lg:p-12 lg:pr-40 rounded-lg">
+                        <div className="max-w-lg mx-auto overflow-hidden lg:max-w-none lg:flex lg:items-start">
+                            <div className="bg-blue-darker px-6 py-8 lg:p-12 lg:pr-36 rounded-lg">
                                 <h3 className="text-2xl text-gray-300 sm:text-3xl">
-                                    Becoming a Supporter
+                                    Become a Supporter
                                 </h3>
-                                <p className="mt-6 text-base text-gray-500">
-                                    Over the next few months, you'll have the
-                                    opportunity to become a supporter. Our
-                                    current focus is building a great product,
-                                    not revenue, so we'll ask our supporters to
-                                    help us decide a fair, long-term pricing
-                                    model.
+                                <p className="mt-6 text-base text-gray-400">
+                                    Until November 1, 2021, you&lsquo;ll have
+                                    the opportunity to become a supporter. Since
+                                    our current focus is building a great
+                                    product, not revenue, we&lsquo;ll ask our
+                                    supporters to help us decide a fair,
+                                    long-term pricing model.
                                 </p>
                                 <div className="mt-8">
                                     <div className="flex items-center">
@@ -73,7 +73,7 @@ const Pricing = () => {
                                                         aria-hidden="true"
                                                     />
                                                 </div>
-                                                <p className="ml-3 text-sm text-gray-500 top-0.5 relative">
+                                                <p className="ml-3 text-sm text-gray-400 top-0.5 relative">
                                                     {feature}
                                                 </p>
                                             </li>
@@ -81,7 +81,7 @@ const Pricing = () => {
                                     </ul>
                                 </div>
                             </div>
-                            <div className="py-8 px-6 text-center bg-blue-200 lg:flex-shrink-0 lg:flex lg:flex-col lg:justify-center lg:p-16 rounded-lg bg-gray-100 max-w-lg relative right-12 top-48">
+                            <div className="py-8 px-6 text-center bg-blue-200 lg:flex-shrink-0 lg:flex lg:flex-col lg:justify-center lg:p-16 rounded-lg sm:mt-4 bg-gray-100 max-w-lg relative lg:right-12 lg:top-16">
                                 <p className="text-lg leading-6 font-medium text-gray-900">
                                     Pay once, become a supporter forever
                                 </p>
@@ -92,14 +92,11 @@ const Pricing = () => {
                                     </span>
                                 </div>
                                 <div className="mt-4 text-sm">
-                                    <a
-                                        href="#"
-                                        className="font-medium text-gray-900"
-                                    >
+                                    <div className="font-medium text-gray-900">
                                         After your 14 day free trial has
-                                        expired, you'll have the option to
+                                        expired, you&lsquo;ll have the option to
                                         become a supporter.
-                                    </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
