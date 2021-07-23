@@ -11,6 +11,8 @@ import Top from "./top"
 import Middle from "./middle"
 import Features from "./features"
 import ActionPrompt from "./bottom"
+import Users from "./users"
+import Pricing from "./pricing"
 
 export const Chrome = () => {
     /*
@@ -32,6 +34,8 @@ export const Chrome = () => {
                 <Top />
                 <Middle />
                 <Features />
+                <Users />
+                <Pricing />
                 <ActionPrompt />
             </div>
             <Footer />

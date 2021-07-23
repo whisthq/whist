@@ -22,10 +22,10 @@ export const FeatureBox = (props: {
             <div className="h-full px-12 py-12 bg-blue-lightest border border-transparent dark:border-gray-400 dark:bg-transparent rounded">
                 {" "}
                 {icon}
-                <div className="text-gray dark:text-gray-300 text-2xl md:text-3xl mt-8">
+                <div className="text-gray dark:text-gray-300 text-lg mt-8">
                     {title}
                 </div>
-                <div className="font-body text-gray-600 dark:text-gray-400 text-md mt-4 tracking-wider">
+                <div className="mt-2 text-base text-gray-500">
                     {text}
                 </div>
             </div>

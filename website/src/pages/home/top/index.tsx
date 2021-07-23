@@ -85,7 +85,7 @@ export const Top = () => {
                 </FadeIn>
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1700 : 100}>
                     <div className="mt-10 md:mt-12 relative">
-                        <p className="font-body m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
+                        <p className="text-md m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
                             Load pages instantly. Use 10x less memory. Enjoy
                             complete privacy. Fractal is a supercharged version
                             of Chrome that runs in the cloud.

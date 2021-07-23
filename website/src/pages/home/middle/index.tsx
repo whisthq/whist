@@ -37,7 +37,7 @@ export const Middle = () => {
                     </>
                 }
                 text={
-                    <div className="font-body dark:text-gray-400 tracking-wider">
+                    <div className="text-md text-gray-400">
                         Fractal runs in the cloud on gigabit Internet. Browse
                         the web at lightning speeds, even if your own Internet
                         is slow.
@@ -69,7 +69,7 @@ export const Middle = () => {
                     </>
                 }
                 text={
-                    <div className="font-body dark:text-gray-400 tracking-wider">
+                    <div className="text-md text-gray-400">
                         Today, your computer runs out of memory and slows down
                         when you open too many tabs. By running in the cloud,
                         Fractal never consumes more than 300MB of memory.
@@ -113,7 +113,7 @@ export const Middle = () => {
                     </>
                 }
                 text={
-                    <div className="font-body dark:text-gray-400 tracking-wider mb-4">
+                    <div className="mt-2 text-md text-gray-400 mb-4">
                         Because Fractal runs in datacenters, your IP address and
                         location are hidden from websites (similar to a VPN),
                         and your browsing data is not stored on your computer.
@@ -162,7 +162,7 @@ export const Middle = () => {
                                 </div>
                             </div>
                             <div
-                                className="relative animate-bounce bg-mint text-gray px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-6 delay-500 duration-500"
+                                className="relative animate-bounce bg-mint text-black px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-6 delay-500 duration-500"
                                 style={{
                                     left: width > ScreenSize.MEDIUM ? 275 : 170,
                                 }}

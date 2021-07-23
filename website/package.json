@@ -16,6 +16,7 @@
         "@fortawesome/fontawesome-svg-core": "^1.2.35",
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
         "@fortawesome/react-fontawesome": "^0.1.14",
+        "@heroicons/react": "^1.0.2",
         "@sentry/react": "^6.10.0",
         "@typeform/embed-react": "^1.0.7",
         "@types/react-modal": "^3.12.0",
