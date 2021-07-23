@@ -292,7 +292,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(DEFINED ENV{FRACTAL_OSX_SYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{FRACTAL_OSX_SYSROOT})
     else()
-        set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk)
+        set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
     endif()
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15) # deployment target must be <= than compiler SDK above
 endif()
