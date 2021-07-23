@@ -19,22 +19,8 @@ if [ "$EUID" -eq 0 ]; then
     exit
 fi
 
-# Create directories for ECS agent
-sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
-
 # Install jq to build JSON
 sudo apt-get install -y jq
-
-# Create list of GPU devices for mounting to mandelboxes
-DEVICES=""
-for DEVICE_INDEX in {0..64}
-do
-    DEVICE_PATH="/dev/nvidia${DEVICE_INDEX}"
-    if [ -e "$DEVICE_PATH" ]; then
-        DEVICES="${DEVICES} --device ${DEVICE_PATH}:${DEVICE_PATH} "
-    fi
-done
-DEVICE_MOUNTS=`printf "$DEVICES"`
 
 # Set IP tables for routing networking from host to mandelboxes
 sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
@@ -49,10 +35,6 @@ sudo iptables -I DOCKER-USER -i docker0 -d 169.254.169.254 -p tcp -m multiport -
 sudo iptables -I DOCKER-USER -i docker0 -d 169.254.170.2   -p tcp -m multiport --dports 80,443 -j DROP
 
 sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
-
-# Remove extra unnecessary files
-sudo rm -rf /var/lib/cloud/instances/
-sudo rm -f /var/lib/ecs/data/*
 
 # The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
