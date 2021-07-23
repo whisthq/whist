@@ -749,7 +749,7 @@ jobs:
                   TITLE = ":construction: Database Migration Performed :construction:"
                   BODY = f"Database Schema Migration performed on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=title)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
             - name: Notify Slack on Successful Webserver Deploy
               if: needs.fractal-publish-build-config.outputs.publish == 'true'
