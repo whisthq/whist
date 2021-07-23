@@ -30,11 +30,17 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
 
 # Install Google Chrome
-RUN apt-get update && apt-get install --no-install-recommends -y \
-   google-chrome-stable \
-   && apt-get autoremove -y \
-   && apt-get clean \
-   && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install --no-install-recommends -y \
+#     google-chrome-stable \
+#     && apt-get autoremove -y \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
+# Check available versions here: https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
+# This NEEDS to be reverted to the above latest stable as soon as Google fixes the issues, or as soon as we find a workaround
+ARG CHROME_VERSION="91.0.4472.164-1"
+RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+    && apt-get install --no-install-recommends -y /tmp/chrome.deb \
+    && rm /tmp/chrome.deb
 
 # Set default browser
 RUN su - fractal -c \
