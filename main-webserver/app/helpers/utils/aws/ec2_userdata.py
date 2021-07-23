@@ -6,5 +6,5 @@ exists so the userdata can be brought in via an import
 
 import os
 
-with open(os.path.join(os.path.dirname(__file__), "no_ecs_userdata.sh"), "r") as f:
+with open(os.path.join(os.path.dirname(__file__), "ec2_userdata.sh"), "r") as f:
     userdata_template = f.read()
