@@ -56,7 +56,7 @@ jobs:
                     - name: Windows
                       os: windows-2019
                     - name: macOS
-                      os: macos-10.14
+                      os: macos-10.15
 
         steps:
             - name: Checkout Git Repository
@@ -152,7 +152,7 @@ jobs:
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
 
                   # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
                   APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
@@ -160,15 +160,15 @@ jobs:
 
               working-directory: client-applications/desktop
               run: |
-                  # Explicitly retrieve macOS 10.14 SDK
-                  wget -nv https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
+                  # Explicitly retrieve macOS 10.15 SDK
+                  wget -nv https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.15.sdk.tar.xz
 
                   # Untar it
-                  xz -d MacOSX10.14.sdk.tar.xz
-                  tar -xf MacOSX10.14.sdk.tar
+                  xz -d MacOSX10.15.sdk.tar.xz
+                  tar -xf MacOSX10.15.sdk.tar
 
                   # Move it to the right folder for building the protocol
-                  mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+                  mv MacOSX10.15.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application, using a hardcoded test version
                   # We need to increase the timeout to deal with GHA's weak VMs.

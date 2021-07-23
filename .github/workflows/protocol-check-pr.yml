@@ -27,9 +27,9 @@ jobs:
                       os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
                       cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
                     - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
-                      os: ubuntu-20.04 # cmake is pre-installed on ubuntu-18.04+ machines
+                      os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
                     - name: "Build and Check Protocol on macOS (clang)"
-                      os: macos-10.14 # cmake is pre-installed on macos-10.14+ machines
+                      os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
 
         steps:
             - name: Checkout Git Repository

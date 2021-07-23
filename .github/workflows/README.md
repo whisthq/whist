@@ -43,7 +43,7 @@ In many cases, `jobname` can simply be `main` -- for example, here is the start 
 jobs:
     protocol-linting-main:
         name: Lint Protocol
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
 ```
 
 Notice that we also include a `Title Case`, plaintext name for the job, in addition to the tag `protocol-linting-main`.

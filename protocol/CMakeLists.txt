@@ -294,7 +294,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     else()
         set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk)
     endif()
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14) # deployment target must be <= than compiler SDK above
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15) # deployment target must be <= than compiler SDK above
 endif()
 
 # Store compiler options of native libraries, for now, we simply pass in "-w" to disable warnings

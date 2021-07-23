@@ -34,7 +34,7 @@ jobs:
                     - name: "OpenSSL (Windows)"
                       os: windows-2019
                     - name: "OpenSSL (macOS)"
-                      os: macos-10.14
+                      os: macos-10.15
                     - name: "OpenSSL (Linux Ubuntu)"
                       os: ubuntu-20.04
 
@@ -88,17 +88,17 @@ jobs:
             - name: Build Fractal OpenSSL on macOS
               if: runner.os == 'macOS'
               env:
-                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               run: |
-                  # Explicitly retrieve macOS 10.14 SDK
-                  wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
+                  # Explicitly retrieve macOS 10.15 SDK
+                  wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.15.sdk.tar.xz
 
                   # Untar it
-                  xz -d MacOSX10.14.sdk.tar.xz
-                  tar -xf MacOSX10.14.sdk.tar
+                  xz -d MacOSX10.15.sdk.tar.xz
+                  tar -xf MacOSX10.15.sdk.tar
 
                   # Move it to the right folder for building SDL
-                  mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+                  mv MacOSX10.15.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # configure and build OpenSSL with -O3 flag
                   ./config --release
