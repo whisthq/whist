@@ -1,23 +1,6 @@
-# Module Structure
+# Blueprints
 
-At the module level, the code is separated between AWS, mail, admin, payment, and auth (post and get request handlers).
+The Python files under this directory contain definitions of Flask [Blueprints][0], which are modular groups of (related) routes. All Blueprints are registered to our Flask application in [`factory.py`][1]. When a Blueprint is registered to a Flask application instance, all of the routes registered to the Blueprint are in turn registered to the application.
 
-## Admin
-
-This folder contains our admin login, logs, report generation, and admin dashboard endpoints.
-
-## Auth
-
-This folder contains our account generation and manipulation endpoints, plus login.
-
-## AWS
-
-This folder contains our AWS mandelbox creation, deletion, modification and ping endpoints
-
-## Mail
-
-This folder contains our email generation and send endpoints
-
-## Payment
-
-This folder contains our stripe handling/payment endpoints
+[0]: https://flask.palletsprojects.com/en/2.0.x/blueprints/
+[1]: main-webserver/app/factory.py
