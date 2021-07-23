@@ -799,10 +799,10 @@ jobs:
         if: |
             always() &&
             (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
-            (needs.main-webserver-deploy-heroku.result != 'failure') &&
-            (needs.microservices-deploy-auth0-rules.result != 'failure') &&
-            (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result != 'failure') &&
-            (needs.main-webserver-update-fractal-services.result != 'failure')
+            (needs.main-webserver-deploy-heroku.result == 'success') &&
+            (needs.microservices-deploy-auth0-rules.result == 'success') &&
+            (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') &&
+            (needs.main-webserver-update-fractal-services.result == 'success')
 
         strategy:
             matrix:
@@ -1074,7 +1074,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, client-applications-publish-build-s3]
-        # run if client-applications-publish-build-s3 succeeds or fails (but not skipped)
+        # run if client-applications-publish-build-s3 succeeds or fails (but not skipped or cancelled)
         if: always() && (needs.client-applications-publish-build-s3.result == 'success' || needs.client-applications-publish-build-s3.result == 'failure' )
         steps:
             - name: Checkout Git Repository
