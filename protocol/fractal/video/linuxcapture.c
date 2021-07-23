@@ -301,11 +301,11 @@ int capture_screen(CaptureDevice* device) {
     switch (device->active_capture_device) {
         case NVIDIA_DEVICE: {
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
-            if (ret == 0) {
+            if (ret >= 0) {
                 if (device->width == device->nvidia_capture_device->width &&
                     device->height == device->nvidia_capture_device->height) {
                     device->last_capture_device = NVIDIA_DEVICE;
-                    return 0;
+                    return ret;
                 } else {
                     LOG_ERROR(
                         "Capture Device is configured for dimensions %dx%d, which "
