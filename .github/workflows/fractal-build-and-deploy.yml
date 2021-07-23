@@ -319,7 +319,7 @@ jobs:
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./push_container_image.sh $app ${{ needs.fractal-publish-build-config.outputs.branch }}
+                    ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.branch }}
                   done
 
             ##########################################################################################
@@ -470,8 +470,8 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":whale: Container Images & AMIs Deployed :whale:"
-                  BODY = "Container Images & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":whale: Mandelbox Images & AMIs Deployed :whale:"
+                  BODY = "Mandelbox Images & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -790,7 +790,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                containers-and-ami-publish-ghcr-and-aws,
+                mandelboxes-and-ami-publish-ghcr-and-aws,
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
             ]
@@ -800,7 +800,7 @@ jobs:
             (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
             (needs.main-webserver-deploy-heroku.result != 'failure') &&
             (needs.microservices-deploy-auth0-rules.result != 'failure') &&
-            (needs.containers-and-ami-publish-ghcr-and-aws.result != 'failure') &&
+            (needs.mandelboxes-and-ami-publish-ghcr-and-aws.result != 'failure') &&
             (needs.main-webserver-update-fractal-services.result != 'failure')
 
         strategy:
@@ -1189,7 +1189,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                containers-and-ami-publish-ghcr-and-aws,
+                mandelboxes-and-ami-publish-ghcr-and-aws,
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
                 client-applications-publish-build-s3,
