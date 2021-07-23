@@ -503,17 +503,6 @@ ALTER SEQUENCE logging.t_region_history_id_seq OWNED BY logging.t_region_history
 
 
 --
--- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
---
-
-CREATE TABLE sales.email_templates (
-    id character varying NOT NULL,
-    url character varying NOT NULL,
-    title text
-);
-
-
---
 -- Name: t_instance_history id; Type: DEFAULT; Schema: logging; Owner: -
 --
 
@@ -637,14 +626,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_schema_notifications
 
 ALTER TABLE ONLY hdb_catalog.hdb_version
     ADD CONSTRAINT hdb_version_pkey PRIMARY KEY (hasura_uuid);
-
-
---
--- Name: email_templates email_templates_pkey; Type: CONSTRAINT; Schema: sales; Owner: -
---
-
-ALTER TABLE ONLY sales.email_templates
-    ADD CONSTRAINT email_templates_pkey PRIMARY KEY (id);
 
 
 --

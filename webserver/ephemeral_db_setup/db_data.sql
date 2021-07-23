@@ -46,16 +46,5 @@ INSERT INTO hardware.supported_app_images (app_id, logo_url, category, descripti
 
 
 --
--- Data for Name: email_templates; Type: TABLE DATA; Schema: sales; Owner: uap4ch2emueqo9
---
-
-INSERT INTO sales.email_templates (id, url, title) VALUES ('EMAIL_VERIFICATION', 'https://fractal-email-templates.s3.amazonaws.com/email_verification.html', '[Fractal] Please verify your email');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('PASSWORD_RESET', 'https://fractal-email-templates.s3.amazonaws.com/password_reset.html', 'Reset your password');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('PAYMENT_FAILURE', 'https://fractal-email-templates.s3.amazonaws.com/payment_failure.html', 'Action Required: Your payment method failed');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('PAYMENT_SUCCESSFUL', 'https://fractal-email-templates.s3.amazonaws.com/payment_successful.html', 'Thank you for choosing Fractal');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('FEEDBACK', 'https://fractal-email-templates.s3.amazonaws.com/feedback.html', 'A user has just cancelled their plan');
-
-
---
 -- PostgreSQL database dump complete
 --

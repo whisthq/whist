@@ -11,7 +11,6 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from flask_marshmallow import Marshmallow
-from flask_sendgrid import SendGrid
 from jwt import PyJWKClient
 
 from app.helpers.utils.general.logs import fractal_logger
@@ -29,7 +28,6 @@ from payments import PaymentRequired
 
 jwtManager = JWTManager()
 ma = Marshmallow()
-mail = SendGrid()
 
 
 @jwtManager.decode_key_loader
@@ -93,7 +91,6 @@ def create_app(testing=False):
     db.init_app(app)
     jwtManager.init_app(app)
     ma.init_app(app)
-    mail.init_app(app)
     register_flask_view_metrics_monitor(app)
 
     CORS(app)
@@ -162,12 +159,7 @@ def register_blueprints(app):
     """
 
     from .blueprints.aws.aws_mandelbox_blueprint import aws_mandelbox_bp
-
-    from .blueprints.mail.mail_blueprint import mail_bp
-    from .blueprints.mail.newsletter_blueprint import newsletter_bp
     from payments.stripe_blueprint import stripe_bp
 
     app.register_blueprint(aws_mandelbox_bp)
-    app.register_blueprint(mail_bp)
-    app.register_blueprint(newsletter_bp)
     app.register_blueprint(stripe_bp)

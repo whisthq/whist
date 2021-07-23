@@ -246,17 +246,12 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── blueprints -->  our API endpoints are described here
 │   │   ├── aws
 │   │   │   └── aws_mandelbox_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
-│   │   ├── mail
-│   │   │   ├── mail_blueprint.py --> endpoints for generating and sending emails
-│   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
 │   ├── config.py --> General app config and setup utils
 │   ├── constants --> Constants used throughout our program
 │   ├── exceptions.py --> exceptions we use throughout the app
 │   ├── factory.py -->  general application setup scripts
 │   ├── helpers --> helper utils we use throughout the codebase
 │   │   ├── blueprint_helpers --> any complex synchronous computation that's part of our endpoints
-│   │   │   ├── mail
-│   │   │   │   └── mail_post.py --> helpers that generate emails to send to users
 │   │   ├── helpers_tests
 │   │   │   ├── aws_tests
 │   │   │   │   └── test_ecs_client.py --> basic tests of ECSClient functionality
@@ -279,17 +274,13 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── logs.py --> our webserver logging config
 │   │       │   ├── sql_commands.py --> helpers for SQL commit, update, and deletion
 │   │       │   └── tokens.py --> utils for generating JWTs
-│   │       └── mail
-│   │           └── mail_client.py --> helpers for mail generation
 │   ├── models --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
 │   │   ├── logs.py -->  tables in our logs schema
-│   │   └── sales.py -->  tables in our sales schema
 │   └── serializers --> object-to-json conversion for our ORM.  Structure mirrors models
 │       ├── hardware.py
 │       ├── logs.py
-│       └── sales.py
 ├── app.json -->  structure of our app/heroku config
 ├── db_migration --> code that governs DB migration
 │   ├── config.py  --> config values for the migration

@@ -7,4 +7,3 @@ from .hardware import (
     RegionToAmi,
     SupportedAppImages,
 )
-from .sales import EmailTemplates
