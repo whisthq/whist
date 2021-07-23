@@ -1,6 +1,6 @@
 # Module Structure
 
-At the module level, the code is separated between blueprints, models/ serializers, and helpers. Code should only ever live in one of these, and each of these (besides models/serializers, which are only tested at the integration test level) should have their own unit tests with the other modules (as necessary) mocked out as well as integration tests.
+At the module level, the code is separated between blueprints, models, and helpers. Code should only ever live in one of these, and each of these (besides models which are only tested at the integration test level) should have their own unit tests with the other modules (as necessary) mocked out as well as integration tests.
 
 ## Blueprints
 
@@ -28,15 +28,15 @@ Our helpers are divided into 2 sections — `blueprint_helpers`, which directly 
 
 For more details, see the [README for the `helpers` directory](helpers/README.md).
 
-## Models/Serializers
+## Models
 
 We leverage `flask-sqlalchemy` as our object-relational mapping (ORM), which helps us to easily execute SQL commands without writing raw SQL and catch inconsistencies between the server's understanding of SQL structure and the actual SQL structure at import-time rather than run-time. Specifically, `sqlalchemy` lets us represent database tables as Python objects, making programmatic table modifications more closely resemble the surrounding code.
 
-Files in `app/models` and `app/serializers` are named after the DB schemata which they're representing in the ORM.
+Files in `app/models` are named after the DB schemata which they're representing in the ORM.
 
 If you're adding a table to the DB, you should add a corresponding model class to the file for the schema that table is part of. Examples can be found in the files.
 
-Models should exactly mimic the DB tables they're based on (down to column names, constraints, and foreign/primary keys), and one model should exist for every DB table. Serializers should use the pattern already shown in the `serializers` files and are a convenient tool to json-ify SQLAlchemy objects (e.g. rows).
+Models should exactly mimic the DB tables they're based on (down to column names, constraints, and foreign/primary keys), and one model should exist for every DB table.
 
 # Most important code:
 

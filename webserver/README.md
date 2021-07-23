@@ -278,9 +278,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
 │   │   ├── logs.py -->  tables in our logs schema
-│   └── serializers --> object-to-json conversion for our ORM.  Structure mirrors models
-│       ├── hardware.py
-│       ├── logs.py
 ├── app.json -->  structure of our app/heroku config
 ├── db_migration --> code that governs DB migration
 │   ├── config.py  --> config values for the migration

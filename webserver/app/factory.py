@@ -10,7 +10,6 @@ from flask import current_app, Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
-from flask_marshmallow import Marshmallow
 from jwt import PyJWKClient
 
 from app.helpers.utils.general.logs import fractal_logger
@@ -27,7 +26,6 @@ from auth0 import ScopeError
 from payments import PaymentRequired
 
 jwtManager = JWTManager()
-ma = Marshmallow()
 
 
 @jwtManager.decode_key_loader
@@ -90,7 +88,6 @@ def create_app(testing=False):
     limiter.init_app(app)
     db.init_app(app)
     jwtManager.init_app(app)
-    ma.init_app(app)
     register_flask_view_metrics_monitor(app)
 
     CORS(app)
