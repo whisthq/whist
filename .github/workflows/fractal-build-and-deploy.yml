@@ -544,7 +544,7 @@ jobs:
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: main-webserver-update-fractal-services-${{ github.ref }}
-        if: always() && (needs.mandelboxes-and-ami-publish-ghcr-and-aws.result == 'success')
+        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
         env:
             TOKEN_FILE: .access_token
         steps:
@@ -790,7 +790,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                mandelboxes-and-ami-publish-ghcr-and-aws,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
             ]
@@ -800,7 +800,7 @@ jobs:
             (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
             (needs.main-webserver-deploy-heroku.result != 'failure') &&
             (needs.microservices-deploy-auth0-rules.result != 'failure') &&
-            (needs.mandelboxes-and-ami-publish-ghcr-and-aws.result != 'failure') &&
+            (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result != 'failure') &&
             (needs.main-webserver-update-fractal-services.result != 'failure')
 
         strategy:
@@ -1189,7 +1189,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                mandelboxes-and-ami-publish-ghcr-and-aws,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
                 client-applications-publish-build-s3,
