@@ -1032,7 +1032,7 @@ jobs:
                   yarn package:publish \
                   --config="{}" \
                   --version=${{ env.desktop_app_new_version }} \
-                  --environment=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
                   --commit=${{ env.commit_sha }}
 
             # Update hasura version
