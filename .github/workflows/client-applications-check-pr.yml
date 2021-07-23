@@ -19,6 +19,52 @@ on:
 jobs:
     # Linting
     # Checks for formatting using ESlint.
+    config:
+        name: Building config
+        runs-on: ubuntu-20.04
+        outputs:
+            macos: ${{ steps.encoded-macos.outputs.config }}
+            win32: "TEST VALUE"
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Build Monorepo Configuration for Mac
+              id: config-macos
+              uses: ./.github/actions/monorepo-config
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+                  os: macos
+                  deploy: dev
+
+            - name: Build Monorepo Configuration for Windows
+              id: config-win32
+              uses: ./.github/actions/monorepo-config
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+                  os: win32
+                  deploy: dev
+
+            - name: Encode MacOS Configuration
+              id: encoded-macos
+              shell: python3 {0}
+              run: |
+                  from base64 import b85encode
+                  config = r"""${{ steps.config-macos.outputs.config }}"""
+                  encoded = b85encode(config.encode()).decode()
+                  print(f"::set-output name=config::{encoded}")
+
+            - name: Log MacOS Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-macos.outputs.config }}""")
+
+            - name: Log Win32 Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-win32.outputs.config }}""")
+
     client-applications-check-pr-linting:
         name: Linting
         runs-on: ubuntu-20.04
@@ -48,6 +94,7 @@ jobs:
     # Check that the Client Applications build.
     client-applications-check-pr-building:
         name: Building on ${{ matrix.config.name }}
+        needs: [config]
         runs-on: ${{ matrix.config.os }}
 
         strategy:
@@ -59,6 +106,21 @@ jobs:
                       os: macos-10.15
 
         steps:
+            - name: Log needs
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ toJSON(needs) }}""")
+
+            - name: Decode MacOS Config
+              id: config-macos
+              shell: python3 {0}
+              run: |
+                  from base64 import b85decode
+                  encoded = "${{ needs.config.outputs.macos }}"
+                  config = b85decode(encoded.encode()).decode()
+                  print(config)
+                  print(f"::set-output name=config::{config}")
+
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
@@ -133,6 +195,7 @@ jobs:
               if: false && runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               env:
+                  CONFIG: ${{ steps.config-win32.outputs.config }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -144,11 +207,12 @@ jobs:
                   call yarn config set network-timeout 600000
                   call yarn cache clean
                   call yarn install
-                  call yarn package:notarize --config="{}" --version 1.0.0 --commit=${{ github.sha }}
+                  call yarn package:notarize --config=$CONFIG --version=1.0.0 --commit=${{ github.sha }}
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
+                  CONFIG: ${{ steps.config-macos.outputs.config }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -165,4 +229,4 @@ jobs:
                   yarn config set network-timeout 600000
                   yarn cache clean
                   yarn install
-                  yarn package:notarize --config "{}" --version 1.0.0 --commit=${{ github.sha }}
+                  yarn package:notarize --config $CONFIG --version 1.0.0 --commit=${{ github.sha }}
