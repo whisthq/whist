@@ -70,6 +70,15 @@ jobs:
                   print(f"::set-output name=macos::{encoded_macos}")
                   print(f"::set-output name=win32::{encoded_win32}")
 
+            - name: Encode Win32 Configuration
+              id: encoded-win32
+              shell: python3 {0}
+              run: |
+                  from base64 import b85encode
+                  config = r"""${{ steps.config-win32.outputs.config }}"""
+                  encoded = b85encode(config.encode()).decode()
+                  print(f"::set-output name=config::{encoded}")
+
             - name: Log MacOS Configuration
               shell: python3 {0}
               run: |
