@@ -427,8 +427,6 @@ int32_t multithreaded_send_video(void* opaque) {
             }
             // else we have an encoded frame, so handle it!
 
-            video_encoder_unset_iframe(encoder);
-
             static int frame_stat_number = 0;
             static double total_frame_time = 0.0;
             static double max_frame_time = 0.0;
