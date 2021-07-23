@@ -7,7 +7,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/NVIDIA/go-nvml v0.11.1-0
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.4.1
+	github.com/aws/aws-sdk-go-v2/config v1.5.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.11.0
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
