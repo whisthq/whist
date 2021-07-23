@@ -10,7 +10,7 @@ import time
 from typing import Dict, List, Optional
 import boto3
 
-from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
+from app.helpers.utils.aws.ec2_userdata import userdata_template
 from app.helpers.utils.cloud_interface.base_cloud_interface import CloudClient
 
 
