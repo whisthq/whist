@@ -76,7 +76,7 @@ jobs:
             - name: Serialize Workflows with Turnstyle
               uses: softprops/turnstyle@v1
               with:
-                  continue-after-seconds: 900 # Minimum 15 minutes distance between workflows
+                  continue-after-seconds: 3600 # Minimum 1 hour distance between workflows (TODO: reduce this)
                   same-branch-only: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
