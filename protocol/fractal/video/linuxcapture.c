@@ -52,6 +52,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         Returns:
             (int): 0 on exit
     */
+    fractal_sleep(500);
     CaptureDevice* device = (CaptureDevice*)opaque;
 
     while (true) {
@@ -68,13 +69,9 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
 
         while (device->nvidia_capture_device == NULL) {
             device->nvidia_capture_device = create_nvidia_capture_device();
-            if (device->nvidia_capture_device) {
-                device->active_capture_device = NVIDIA_DEVICE;
-                break;
-            } else {
-                fractal_sleep(500);
-            }
+            fractal_sleep(500);
         }
+        device->active_capture_device = NVIDIA_DEVICE;
     }
     return 0;
 }
@@ -256,15 +253,20 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     // if we can create the nvidia capture device, do so
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
+    // The first nvidia device creation must be synchronous, so that we can also create the encoder
+    device->nvidia_capture_device = create_nvidia_capture_device();
+    if (device->nvidia_capture_device) {
+        device->active_capture_device = NVIDIA_DEVICE;
+    }
     device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
                                                    "multithreaded_nvidia_manager", device);
     device->nvidia_device_semaphore = fractal_create_semaphore(0);
-    // nvidia manager will handle nvidai creation asynchronously
-    fractal_post_semaphore(device->nvidia_device_semaphore);
 #endif
 
     // Create the X11 capture device
-    device->active_capture_device = X11_DEVICE;
+    if (!device->nvidia_capture_device) {
+        device->active_capture_device = X11_DEVICE;
+    }
     device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
 #if !USING_SHM

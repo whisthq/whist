@@ -301,6 +301,10 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
         Arguments
             device (NvidiaCaptureDevice*): device to destroy
     */
+    if (device == NULL) {
+        LOG_ERROR("destroy_nvidia_capture_device received NULL device!");
+        return;
+    }
     NVFBCSTATUS status;
 
     /*
