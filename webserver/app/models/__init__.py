@@ -5,5 +5,4 @@ from .hardware import (
     MandelboxInfo,
     InstanceInfo,
     RegionToAmi,
-    SupportedAppImages,
 )

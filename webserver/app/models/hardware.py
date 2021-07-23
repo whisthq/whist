@@ -145,20 +145,3 @@ class RegionToAmi(db.Model):
     client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)
     ami_active = db.Column(db.Boolean, nullable=False, server_default=true())
     protected_from_scale_down = db.Column(db.Boolean, nullable=False, server_default=false())
-
-
-class SupportedAppImages(db.Model):
-    __tablename__ = "supported_app_images"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-
-    app_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
-    logo_url = db.Column(db.String(250), nullable=False)
-    category = db.Column(db.String(250))
-    description = db.Column(db.String(250))
-    long_description = db.Column(db.String(250))
-    url = db.Column(db.String(250))
-    tos = db.Column(db.String(250))
-    active = db.Column(db.Boolean, nullable=False, default=False)
-    # The coefficient delineating what fraction of live users we should have
-    # as a prewarmed buffer
-    preboot_number = db.Column(db.Float, nullable=False)

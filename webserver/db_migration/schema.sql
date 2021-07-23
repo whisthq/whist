@@ -315,23 +315,6 @@ CREATE TABLE hardware.region_to_ami (
 
 
 --
--- Name: supported_app_images; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.supported_app_images (
-    app_id character varying NOT NULL,
-    logo_url character varying,
-    category character varying,
-    description character varying,
-    long_description character varying,
-    url character varying,
-    tos character varying,
-    active boolean NOT NULL,
-    preboot_number double precision DEFAULT 0.0 NOT NULL
-);
-
-
---
 -- Name: hdb_action_log; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -546,14 +529,6 @@ ALTER TABLE ONLY hardware.mandelbox_info
 
 ALTER TABLE ONLY hardware.region_to_ami
     ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
-
-
---
--- Name: supported_app_images supported_app_images_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.supported_app_images
-    ADD CONSTRAINT supported_app_images_pkey PRIMARY KEY (app_id);
 
 
 --
