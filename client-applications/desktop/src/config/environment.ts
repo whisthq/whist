@@ -21,9 +21,9 @@ const getDevelopmentConfig = () => {
             return configs.PRODUCTION
         default:
             console.warn(
-                `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${FractalEnvironments.LOCAL}`
+                `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${FractalEnvironments.DEVELOPMENT}`
             )
-            return configs.LOCAL
+            return configs.DEVELOPMENT
     }
 }
 
