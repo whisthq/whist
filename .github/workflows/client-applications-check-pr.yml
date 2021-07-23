@@ -24,6 +24,7 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             macos: ${{ steps.encoded-macos.outputs.config }}
+            win32: ${{ steps.encoded-win32.outputs.config }}
 
         steps:
             - name: Checkout Git Repository
@@ -51,6 +52,15 @@ jobs:
               run: |
                   from base64 import b85encode
                   config = r"""${{ steps.config-macos.outputs.config }}"""
+                  encoded = b85encode(config.encode()).decode()
+                  print(f"::set-output name=config::{encoded}")
+
+            - name: Encode Win32 Configuration
+              id: encoded-win32
+              shell: python3 {0}
+              run: |
+                  from base64 import b85encode
+                  config = r"""${{ steps.config-win32.outputs.config }}"""
                   encoded = b85encode(config.encode()).decode()
                   print(f"::set-output name=config::{encoded}")
 
