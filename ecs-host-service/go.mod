@@ -25,7 +25,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/jackc/pgconn v1.8.1
+	github.com/jackc/pgconn v1.9.0
 	github.com/jackc/pgtype v1.7.1-0.20210424130834-4380e23ae1c8
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/jschaf/pggen v0.0.0-20210622015421-8d43ddabaecf // indirect
