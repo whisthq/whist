@@ -37,7 +37,8 @@ sudo iptables -I DOCKER-USER -i docker0 -d 169.254.170.2   -p tcp -m multiport -
 sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
 
 # Remove a directory (necessary for the userdata to run)
-sudo rm -rf /var/lib/cloud/instances/
+sudo rm -rf /var/lib/cloud/*
+sudo rm -f /var/lib/ecs/data/*
 
 # The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
