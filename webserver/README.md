@@ -311,18 +311,11 @@ Note that all conftest files contain test fixtures for their respective director
 ├── run-web.sh --> script to spawn the web process.
 └── tests --> tests for our assorted endpoints.  All files without docs
     should be assumed to unit test the endpoints/bps they name.
-    ├── admin
-    │   └── test_logs.py
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
     │   ├── test_instance_scaling.py
     │   ├── test_instance_selection.py
-    ├── constants --> useful constants for testing
-    │   └── settings.py --> pytest settings
-    ├── helpers
-    │   └── general
-    │       └── progress.py
     ├── misc
     │   └── test_rate_limiter.py
     ├── patches.py --> useful monkeypatches for all our tests
