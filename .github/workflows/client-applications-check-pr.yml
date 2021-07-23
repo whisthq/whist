@@ -24,7 +24,6 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             macos: ${{ steps.encoded-macos.outputs.config }}
-            win32: "TEST VALUE"
 
         steps:
             - name: Checkout Git Repository
