@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.5 (Debian 12.5-1.pgdg100+1)
--- Dumped by pg_dump version 12.7 (Ubuntu 12.7-0ubuntu0.20.04.1)
+-- Dumped from database version 13.3 (Ubuntu 13.3-1.pgdg20.04+1)
+-- Dumped by pg_dump version 13.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -69,7 +69,7 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
 -- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
 --
 
-COMMENT ON EXTENSION pg_stat_statements IS 'track execution statistics of all SQL statements executed';
+COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statistics of all SQL statements executed';
 
 
 --
@@ -106,7 +106,8 @@ CREATE FUNCTION hardware.change_trigger() RETURNS trigger
            INSERT INTO logging.t_instance_history (
              tabname, schemaname, operation, new_val, old_val
            )
-           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), row_to_json(OLD));
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), 
+row_to_json(OLD));
            RETURN NEW;
          ELSIF  TG_OP = 'UPDATE'
          THEN
@@ -144,7 +145,8 @@ CREATE FUNCTION hardware.change_trigger_regions() RETURNS trigger
            INSERT INTO logging.t_region_history (
              tabname, schemaname, operation, new_val, old_val
            )
-           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), row_to_json(OLD));
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), 
+row_to_json(OLD));
            RETURN NEW;
          ELSIF TG_OP = 'DELETE'
          THEN
@@ -180,7 +182,8 @@ CREATE FUNCTION hdb_catalog.event_trigger_table_name_update() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-  IF (NEW.table_schema, NEW.table_name) <> (OLD.table_schema, OLD.table_name)  THEN
+  IF (NEW.table_schema, NEW.table_name) <> (OLD.table_schema, OLD.table_name)  
+THEN
     UPDATE hdb_catalog.event_triggers
     SET schema_name = NEW.table_schema, table_name = NEW.table_name
     WHERE (schema_name, table_name) = (OLD.table_schema, OLD.table_name);
@@ -226,8 +229,11 @@ CREATE FUNCTION hdb_catalog.inject_table_defaults(view_schema text, view_name te
     DECLARE
         r RECORD;
     BEGIN
-      FOR r IN SELECT column_name, column_default FROM information_schema.columns WHERE table_schema = tab_schema AND table_name = tab_name AND column_default IS NOT NULL LOOP
-          EXECUTE format('ALTER VIEW %I.%I ALTER COLUMN %I SET DEFAULT %s;', view_schema, view_name, r.column_name, r.column_default);
+      FOR r IN SELECT column_name, column_default FROM 
+information_schema.columns WHERE table_schema = tab_schema AND table_name = 
+tab_name AND column_default IS NOT NULL LOOP
+          EXECUTE format('ALTER VIEW %I.%I ALTER COLUMN %I SET DEFAULT %s;', 
+view_schema, view_name, r.column_name, r.column_default);
       END LOOP;
     END;
 $$;
@@ -333,25 +339,6 @@ CREATE TABLE hardware.instance_info (
     aws_instance_type character varying NOT NULL
 );
 
---
--- Name: lingering_instances; Type: VIEW; Schema: hardware; Owner: -
---
-CREATE VIEW hardware.lingering_instances as SELECT instance_name,
-       cloud_provider_id,
-       status
-FROM   hardware.instance_info
-WHERE  (( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
-       >
-       120000 AND status <> 'PRE_CONNECTION') OR (( Extract(epoch FROM Now()) * 1000 ) :: bigint - last_updated_utc_unix_ms
-       >
-       900000
-       AND (Extract(epoch FROM Now()) * 1000 ) :: bigint - creation_time_utc_unix_ms
-       >
-       900000)
-
-       AND status <> 'DRAINING' AND status <> 'HOST_SERVICE_UNRESPONSIVE';
-
-
 
 --
 -- Name: mandelbox_info; Type: TABLE; Schema: hardware; Owner: -
@@ -410,6 +397,48 @@ CREATE VIEW hardware.instance_sorted AS
    FROM hardware.instance_info
   WHERE (((instance_info.instance_name)::text IN ( SELECT instances_with_room_for_mandelboxes.instance_name
            FROM hardware.instances_with_room_for_mandelboxes)) AND (instance_info.last_updated_utc_unix_ms <> '-1'::integer) AND ((instance_info.status)::text = 'ACTIVE'::text));
+
+
+--
+-- Name: t_instance_history; Type: TABLE; Schema: logging; Owner: -
+--
+
+CREATE TABLE logging.t_instance_history (
+    id integer NOT NULL,
+    tstamp timestamp without time zone DEFAULT now(),
+    schemaname text,
+    tabname text,
+    operation text,
+    who text DEFAULT CURRENT_USER,
+    new_val json,
+    old_val json
+);
+
+
+--
+-- Name: instance_status_changes; Type: VIEW; Schema: hardware; Owner: -
+--
+
+CREATE VIEW hardware.instance_status_changes AS
+ SELECT t_instance_history.tstamp AS "timestamp",
+    COALESCE((t_instance_history.new_val ->> 'instance_name'::text), (t_instance_history.old_val ->> 'instance_name'::text)) AS instance_name,
+    COALESCE((t_instance_history.new_val ->> 'status'::text), 'deleted'::text) AS new_status,
+    COALESCE((t_instance_history.old_val ->> 'status'::text), 'newly added'::text) AS old_status
+   FROM logging.t_instance_history
+  WHERE ((t_instance_history.new_val IS NULL) OR (t_instance_history.old_val IS NULL) OR ((t_instance_history.new_val ->> 'status'::text) <> (t_instance_history.old_val ->> 'status'::text)))
+  ORDER BY t_instance_history.tstamp;
+
+
+--
+-- Name: lingering_instances; Type: VIEW; Schema: hardware; Owner: -
+--
+
+CREATE VIEW hardware.lingering_instances AS
+ SELECT instance_info.instance_name,
+    instance_info.cloud_provider_id,
+    instance_info.status
+   FROM hardware.instance_info
+  WHERE ((((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 120000) AND ((instance_info.status)::text <> 'PRE_CONNECTION'::text)) OR (((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 900000) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.creation_time_utc_unix_ms) > 900000) AND ((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text)));
 
 
 --
@@ -1122,22 +1151,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
--- Name: t_instance_history; Type: TABLE; Schema: logging; Owner: -
---
-
-CREATE TABLE logging.t_instance_history (
-    id integer NOT NULL,
-    tstamp timestamp without time zone DEFAULT now(),
-    schemaname text,
-    tabname text,
-    operation text,
-    who text DEFAULT CURRENT_USER,
-    new_val json,
-    old_val json
-);
-
-
---
 -- Name: instance_status_change; Type: VIEW; Schema: logging; Owner: -
 --
 
@@ -1148,40 +1161,12 @@ CREATE VIEW logging.instance_status_change AS
    FROM logging.t_instance_history
   WHERE ((t_instance_history.old_val ->> 'status'::text) <> (t_instance_history.new_val ->> 'status'::text));
 
-CREATE VIEW hardware.instance_status_changes AS
-SELECT tstamp                                                             AS
-       timestamp,
-       COALESCE(new_val ->> 'instance_name', old_val ->> 'instance_name') AS
-       instance_name,
-       COALESCE(new_val ->> 'status', 'deleted')                          AS
-       new_status,
-       COALESCE(old_val ->> 'status', 'newly added')                      AS
-       old_status
-FROM   logging.t_instance_history
-WHERE  new_val IS NULL
-        OR old_val IS NULL
-        OR new_val ->> 'status' <> old_val ->> 'status'
-ORDER  BY timestamp ASC;
-
---
--- Name:  unresponsive_instances; Type: VIEW; Schema: hardware; Owner: -
---
-SELECT instance_name, timestamp
-FROM   hardware.instance_status_changes
-WHERE  new_status = 'HOST_SERVICE_UNRESPONSIVE'
-AND    instance_name NOT IN
-                             (
-                             SELECT DISTINCT instance_name
-                             FROM            hardware.instance_status_changes
-                             WHERE           old_status = 'HOST_SERVICE_UNRESPONSIVE')
-AND    timestamp < (Now() - interval '5 hours');
 
 --
 -- Name: t_instance_history_id_seq; Type: SEQUENCE; Schema: logging; Owner: -
 --
 
 CREATE SEQUENCE logging.t_instance_history_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1201,7 +1186,6 @@ ALTER SEQUENCE logging.t_instance_history_id_seq OWNED BY logging.t_instance_his
 --
 
 CREATE SEQUENCE logging.t_region_history_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1686,3 +1670,4 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 --
 -- PostgreSQL database dump complete
 --
+
