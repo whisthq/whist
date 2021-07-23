@@ -791,7 +791,6 @@ jobs:
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
-                ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
             ]
         # Only run client-apps deployment if none of the previous steps failed
@@ -1190,7 +1189,6 @@ jobs:
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
-                ecs-task-definitions-deploy-task-definitions-ecs,
                 main-webserver-update-fractal-services,
                 client-applications-publish-build-s3,
             ]
