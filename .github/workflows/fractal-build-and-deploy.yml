@@ -822,7 +822,7 @@ jobs:
                   fetch-depth: 0
 
             - name: Install Node.js 15
-              uses: actions/setup-node@v2.2.0
+              uses: actions/setup-node@v2.3.0
               with:
                   node-version: "15"
 
@@ -1137,7 +1137,7 @@ jobs:
               run: ./notifications/setup_notifications.sh
 
             - name: Install Node.js 15
-              uses: actions/setup-node@v2.2.0
+              uses: actions/setup-node@v2.3.0
               with:
                   node-version: "15"
 
