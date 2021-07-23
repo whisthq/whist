@@ -138,8 +138,8 @@ jobs:
                     # On push to staging/prod, we want to run all jobs
                       JOB_NAME="all"
                     else
-                    # On push to dev, we want to filter jobs
-                      JOB_NAME="filter"
+                    # TODO: On push to dev, we want to filter jobs
+                      JOB_NAME="all"
                     fi
                     # Store the commit from before the push was made
                     # This is only used when filtering
