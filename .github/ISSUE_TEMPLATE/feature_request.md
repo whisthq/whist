@@ -8,9 +8,6 @@ assignees: ""
 
 **Feature Description**
 
-
 **The Problem It Fixes**
 
-
 **Potential Implementation(s)**
-

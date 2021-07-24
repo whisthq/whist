@@ -7,7 +7,7 @@ import { ServerDecorator } from "../types/api"
  * @param server - a string representing a HTTP server
  * @returns a ServerDecorator function
  */
-export const withServer = (server: string): ServerDecorator => async (
-    fn,
-    req
-) => await fn({ ...req, server })
+export const withServer =
+    (server: string): ServerDecorator =>
+    async (fn, req) =>
+        await fn({ ...req, server })

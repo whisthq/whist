@@ -1,0 +1,19 @@
+# Auto-generated
+**/tailwind.css
+**/bootstrap.css
+
+# Typescript build folders
+client-applications/desktop/build
+core-ts/dist
+
+# Auth0 files are creating some errors due to special syntax
+microservices/auth0
+
+# Client-Applications files
+client-applications/desktop/public 
+client-applications/desktop/release
+client-applications/desktop/*.css
+
+# Protocol files
+/protocol/sentry-native/**
+/protocol/build-clientapp/**

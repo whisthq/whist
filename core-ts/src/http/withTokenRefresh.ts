@@ -31,26 +31,30 @@ const isToken = (token: unknown) => (!token || token === "" ? false : true)
  * @returns a ServerResponse wrapped in a Promise
  */
 
-export const withTokenRefresh = (endpoint: string): ServerDecorator => async (
-    fn: ServerEffect,
-    req: ServerRequest
-) => {
-    const { refreshToken, accessToken } = req
-    const firstResponse = await fn({ ...req, token: accessToken })
+export const withTokenRefresh =
+    (endpoint: string): ServerDecorator =>
+    async (fn: ServerEffect, req: ServerRequest) => {
+        const { refreshToken, accessToken } = req
+        const firstResponse = await fn({ ...req, token: accessToken })
 
-    // Only deal with 401 response.
-    if (firstResponse.response?.status !== 401) return firstResponse
+        // Only deal with 401 response.
+        if (firstResponse.response?.status !== 401) return firstResponse
 
-    // If we have no access code or refresh code, we're not logged in.
-    if (!isToken(accessToken) || !isToken(refreshToken))
-        return { ...firstResponse, error: USER_LOGGED_OUT } as ServerResponse
+        // If we have no access code or refresh code, we're not logged in.
+        if (!isToken(accessToken) || !isToken(refreshToken))
+            return {
+                ...firstResponse,
+                error: USER_LOGGED_OUT,
+            } as ServerResponse
 
-    // We have a refresh token, ask for a new access code.
-    const refreshResponse = await post({ endpoint, token: refreshToken })
-    const newAccess = refreshResponse.json && refreshResponse.json.accessToken
+        // We have a refresh token, ask for a new access code.
+        const refreshResponse = await post({ endpoint, token: refreshToken })
+        const newAccess =
+            refreshResponse.json && refreshResponse.json.accessToken
 
-    // If we still don't have an access code, we send back up an error.
-    if (!isToken(newAccess)) return { ...firstResponse, error: USER_LOGGED_OUT }
+        // If we still don't have an access code, we send back up an error.
+        if (!isToken(newAccess))
+            return { ...firstResponse, error: USER_LOGGED_OUT }
 
-    return await fn({ ...req, token: newAccess })
-}
+        return await fn({ ...req, token: newAccess })
+    }
