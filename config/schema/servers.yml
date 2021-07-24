@@ -1,47 +1,47 @@
 CLIENT_DOWNLOAD:
-  local:
-    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
-  dev:
-    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
-  staging:
-    macos: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-staging.amazonaws.com/Fractal.AppImage"
-  production:
-    macos: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Fractal.AppImage"
+    local:
+        macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
+        win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+        linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
+    dev:
+        macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
+        win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
+        linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
+    staging:
+        macos: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg"
+        win32: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
+        linux: "https://fractal-chromium-linux-staging.amazonaws.com/Fractal.AppImage"
+    production:
+        macos: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
+        win32: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
+        linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Fractal.AppImage"
 
 WEBSERVER:
-  local: "http://127.0.0.1:7730"
-  dev: "https://dev-server.fractal.co"
-  staging: "https://staging-server.fractal.co"
-  production: "https://prod-server.fractal.co"
+    local: "http://127.0.0.1:7730"
+    dev: "https://dev-server.fractal.co"
+    staging: "https://staging-server.fractal.co"
+    production: "https://prod-server.fractal.co"
 
 FRONTEND:
-  local: "http://localhost:3000"
-  dev: "dev.fractal.co"
-  staging: "staging.fractal.co"
-  production: "production.fractal.co"
+    local: "http://localhost:3000"
+    dev: "dev.fractal.co"
+    staging: "staging.fractal.co"
+    production: "production.fractal.co"
 
 AUTH_DOMAIN:
-  local: "fractal-dev.us.auth0.com"
-  dev: "fractal-dev.us.auth0.com"
-  staging: "fractal-staging.us.auth0.com"
-  production: "fractal-prod.us.auth0.com"
+    local: "fractal-dev.us.auth0.com"
+    dev: "fractal-dev.us.auth0.com"
+    staging: "fractal-staging.us.auth0.com"
+    production: "fractal-prod.us.auth0.com"
 
 AUTH_CLIENT_ID:
-  local: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
-  dev: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
-  staging: "iCSxaFGY9gO866H9yJ4Jy05APFyfMTSk"
-  production: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv"
+    local: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
+    dev: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
+    staging: "iCSxaFGY9gO866H9yJ4Jy05APFyfMTSk"
+    production: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv"
 
 AUTH_IDENTIFIER_API:
-  local: "https://api.fractal.co"
-  dev: "https://api.fractal.co"
-  staging: "https://staging-server.fractal.co"
-  production: "https://prod-server.fractal.co"
+    local: "https://api.fractal.co"
+    dev: "https://api.fractal.co"
+    staging: "https://staging-server.fractal.co"
+    production: "https://prod-server.fractal.co"

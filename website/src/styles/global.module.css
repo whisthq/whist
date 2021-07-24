@@ -21,7 +21,6 @@
     --font-family-secondary: "Myriad Pro";
 }
 
-
 @font-face {
     font-family: --font-family-primary;
     src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
@@ -32,7 +31,7 @@
 @font-face {
     font-family: --font-family-primary;
     src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
-    font-weight: bold;  /* bold == 700 */
+    font-weight: bold; /* bold == 700 */
     font-style: bold;
 }
 
@@ -54,7 +53,6 @@
     font-weight: 800;
 }
 
-
 .investorImage {
     background: var(--white-background-color);
     padding: 15px;
@@ -68,7 +66,6 @@
 .investorImage:hover {
     cursor: pointer;
 }
-
 
 .carousel-indicators li {
     background-color: #000000 !important;
