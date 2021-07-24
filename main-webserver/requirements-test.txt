@@ -1,6 +1,6 @@
 black==21.6b0
 flake8==3.9.1
-moto==2.0.1
+moto==2.1.0
 mypy==0.910
 progressbar==2.5
 pylint==2.9.3
