@@ -9,7 +9,7 @@ See [desktop/README.md](desktop/README.md) for details on contributing to the de
 The following platforms are supported by the Fractal applications (links are to S3 buckets containing the platform's latest `production` release):
 
 -   [Windows 10](https://s3.console.aws.amazon.com/s3/buckets/fractal-chromium-windows-prod/?region=us-east-1)
--   [MacOS 10.14+](https://s3.console.aws.amazon.com/s3/buckets/fractal-chromium-macos-prod/?region=us-east-1)
+-   [MacOS 10.15+](https://s3.console.aws.amazon.com/s3/buckets/fractal-chromium-macos-prod/?region=us-east-1)
 
 For the desktop OS applications listed above, the version requirements come from the Fractal protocol; the Electron-based application should run on older versions as well, if needed for testing.
 
