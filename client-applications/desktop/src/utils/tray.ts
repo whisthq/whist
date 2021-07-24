@@ -26,65 +26,75 @@ const createNativeImage = () => {
     return image
 }
 
-const rootMenu = [
-    {
-        label: "Leave feedback",
-        click: () => {
-            trayEvent.emit("feedback")
-        },
+const feedbackMenu = new MenuItem({
+    label: "Leave feedback",
+    click: () => {
+        trayEvent.emit("feedback")
     },
-    {
-        label: "Sign out",
-        click: () => {
-            trayEvent.emit("signout")
-        },
-    },
-    {
-        label: "Quit",
-        click: () => {
-            trayEvent.emit("quit")
-        },
-    },
-]
+})
 
-const paymentMenu = [
-    {
-        label: "Billing info",
-        click: () => {
-            trayEvent.emit("payment")
-        },
+const signoutMenu = new MenuItem({
+    id: "signout",
+    label: "Sign out",
+    click: () => {
+        trayEvent.emit("signout")
     },
-]
+    enabled: false,
+})
+const quitMenu = new MenuItem({
+    id: "quit",
+    label: "Quit",
+    click: () => {
+        trayEvent.emit("quit")
+    },
+})
+const regionMenu = new MenuItem({
+    label: "(Admin Only) Region",
+    submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
+        label: region,
+        type: "radio",
+        click: () => {
+            trayEvent.emit("region", region)
+        },
+    })),
+})
 
-const regionMenu = [
-    {
-        label: "(Admin Only) Region",
-        submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
-            label: region,
-            type: "radio",
-            click: () => {
-                trayEvent.emit("region", region)
-            },
-        })),
-    } as unknown as MenuItem,
-]
+const paymentMenu = new MenuItem({
+    label: "Billing Information",
+    click: () => {
+        trayEvent.emit("payment")
+    },
+})
 
 export const destroyTray = () => {
     tray?.destroy()
 }
 
-export const createTray = (userEmail: string) => {
+export const createTray = () => {
     // We should only have one tray at any given time
     if (tray != null) destroyTray()
 
     tray = new Tray(createNativeImage())
-    // If the user is a @fractal.co developer, then allow them to toggle regions for testing
-    const template = [
-        ...rootMenu,
-        ...(endsWith(userEmail, "@fractal.co") ? regionMenu : []),
-        ...(allowPayments ? paymentMenu : []),
-    ]
-
-    const menu = Menu.buildFromTemplate(template)
+    const menu = Menu.buildFromTemplate([feedbackMenu, signoutMenu, quitMenu])
     tray.setContextMenu(menu)
+}
+
+// Function to update the tray after the user has logged in
+export const toggleSignedInTray = (userEmail: string) => {
+    signoutMenu.enabled = true
+    const menu = Menu.buildFromTemplate([feedbackMenu, signoutMenu, quitMenu])
+    // If the user is a @fractal.co developer, then allow them to toggle regions for testing
+    if (endsWith(userEmail, "@fractal.co")) {
+        menu.append(regionMenu)
+    }
+    if (allowPayments) {
+        menu.insert(0, paymentMenu)
+    }
+    tray?.setContextMenu(menu)
+}
+
+export const toggleSignedOutTray = () => {
+    signoutMenu.enabled = false
+    const menu = Menu.buildFromTemplate([feedbackMenu, signoutMenu, quitMenu])
+    tray?.setContextMenu(menu)
 }
