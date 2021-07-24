@@ -24,7 +24,7 @@ def generate_name(
     branch = branch if branch is not None else current_app.config["APP_GIT_BRANCH"]
     commit = commit if commit is not None else current_app.config["APP_GIT_COMMIT"][0:7]
     # Sanitize branch name to prevent complaints from boto. Note from the
-    # python3 docs that if the hyphen is at the beginning or end of the
+    # Python 3 docs that if the hyphen is at the beginning or end of the
     # contents of `[]` then it should not be escaped.
     branch = re.sub("[^0-9a-zA-Z-]+", "-", branch, count=0, flags=re.ASCII)
 

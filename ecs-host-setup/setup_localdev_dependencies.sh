@@ -14,7 +14,7 @@ cd "$DIR"
 
 # This part installs things that are ONLY necessary for engineer dev instances, NOT for production instances
 echo "================================================"
-echo "Installing python dependencies..."
+echo "Installing Python dependencies..."
 echo "================================================"
 sudo apt-get install -y python3-pip
 cd ..
