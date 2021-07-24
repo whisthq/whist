@@ -164,7 +164,7 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
     Returns:
         List[InstanceInfo] -> List of instances that are currently running.
     """
-    return (
+    return (  # type: ignore[no-any-return]
         db.session.query(InstanceInfo)
         .filter(
             and_(
