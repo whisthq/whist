@@ -179,19 +179,7 @@ Notarizing is done in Github CI. In the event you want to notarize locally:
 
 1. Download the Fractal Apple Developer Certificate, which is `fractal-apple-codesigning-certificate.p12` in the `fractal-dev-secrets` bucket. The password is `Fractalcomputers!`.
 
-2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store. If your Mac doesn't have the App Store, you can run these commands (replace `10.14` with your Mac's version):
-
-```
-# Explicitly retrieve macOS 10.14 SDK
-wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
-
-# Untar it
-xz -d MacOSX10.14.sdk.tar.xz
-tar -xf MacOSX10.14.sdk.tar
-
-# Move it to the right folder for building the protocol
-mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
-```
+2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store, and ensuring that you have the MacOSX SDK at `/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk`.
 
 3. Run `xcode-select --install`.
 
