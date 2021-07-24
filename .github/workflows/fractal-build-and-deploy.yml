@@ -156,8 +156,8 @@ jobs:
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
                   job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol mandelbox-images"
-                  job_dependencies[main-webserver-update-fractal-services]=" "
-                  job_dependencies[main-webserver-deploy-heroku]="main-webserver"
+                  job_dependencies[webserver-update-fractal-services]=" "
+                  job_dependencies[webserver-deploy-heroku]="webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
                   job_dependencies[microservices-deploy-auth0-rules]="microservices"
                   # Files that all jobs depend on
@@ -353,7 +353,7 @@ jobs:
                   python-version: "3.9.5"
 
             - name: Install webserver scripting dependencies
-              working-directory: main-webserver
+              working-directory: webserver
               run: pip install -r scripts/requirements.txt
 
             - name: Setup Python-based notifications
@@ -532,17 +532,17 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Uses webserver's cli command to update AMIs if new AMIs have been built
-    main-webserver-update-fractal-services:
-        name: "Update Fractal Services using Main-Webserver"
+    webserver-update-fractal-services:
+        name: "Update Fractal Services using Webserver"
         runs-on: ubuntu-20.04
         needs:
             [
                 fractal-publish-build-config,
-                main-webserver-deploy-heroku,
+                webserver-deploy-heroku,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
-        concurrency: main-webserver-update-fractal-services-${{ github.ref }}
-        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.main-webserver-deploy-heroku.result == 'success')
+        concurrency: webserver-update-fractal-services-${{ github.ref }}
+        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success')
         env:
             TOKEN_FILE: .access_token
         steps:
@@ -609,7 +609,7 @@ jobs:
               run: ./notifications/setup_notifications.sh
 
             - name: Install webserver dependencies for running the flask cli
-              working-directory: main-webserver
+              working-directory: webserver
               run: pip install -r requirements.txt
 
             - name: Run flask cli to upgrade the AMIs
@@ -626,12 +626,12 @@ jobs:
                   APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
                   APP_GIT_COMMIT: ${{ github.sha }}
               id: run-main-webserver-cli-ami-upgrade
-              working-directory: main-webserver
+              working-directory: webserver
               shell: bash
               run: flask command ami_upgrade ${{ github.sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
-              if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
+              if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'success')
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -646,7 +646,7 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
             - name: Notify Slack that AMI upgrade has failed
-              if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'failure')
+              if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'failure')
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -660,12 +660,12 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Main Webserver: Deploy to Heroku
-    # Push the main-webserver subtree to the appropriate Heroku app.
-    main-webserver-deploy-heroku:
+    # Push the webserver subtree to the appropriate Heroku app.
+    webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|webserver-deploy-heroku|')
 
         steps:
             - name: Checkout Git Repository
@@ -723,7 +723,7 @@ jobs:
               env:
                   HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
               run: |
-                  main-webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
+                  webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
             - name: Notify Slack on Database Migration Performed
               shell: python3 {0}
@@ -733,7 +733,7 @@ jobs:
                   import urllib.parse
                   from notifications.slack_bot import slack_post
 
-                  # This should be set by main-webserver/atomic_deployment.sh
+                  # This should be set by webserver/atomic_deployment.sh
                   if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
                     sys.exit(0)
 
@@ -768,7 +768,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `main-webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -784,19 +784,19 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                main-webserver-deploy-heroku,
+                webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
-                main-webserver-update-fractal-services,
+                webserver-update-fractal-services,
             ]
         # Only run client-apps deployment if none of the previous steps failed
         if: |
             always() &&
             (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
-            (needs.main-webserver-deploy-heroku.result == 'success') &&
+            (needs.webserver-deploy-heroku.result == 'success') &&
             (needs.microservices-deploy-auth0-rules.result == 'success') &&
             (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') &&
-            (needs.main-webserver-update-fractal-services.result == 'success')
+            (needs.webserver-update-fractal-services.result == 'success')
 
         strategy:
             matrix:
@@ -1169,10 +1169,10 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                main-webserver-deploy-heroku,
+                webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
-                main-webserver-update-fractal-services,
+                webserver-update-fractal-services,
                 client-applications-publish-build-s3,
             ]
         if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)

@@ -1,1 +1,0 @@
-The README for both `main-webserver/app/serializers/` and `main-webserver/app/models` is located in the section called "Models/Serializers" at [`main-webserver/app/README.md`](../README.md#modelsserializers).

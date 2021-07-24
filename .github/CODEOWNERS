@@ -16,8 +16,8 @@
 /core-ts/               @neilyio @mingy98 @janniezhong
 /ecs-host-service/      @djsavvy @sardination @rpadaki
 /ecs-host-setup/        @rpadaki @djsavvy @philippemnoel
-/main-webserver/        @FishmanL @owenniles @djsavvy
 /protocol/              @npip99 @rpadaki @sardination
+/webserver/             @FishmanL @owenniles @djsavvy
 /website/               @neilyio @mingy98 @janniezhong
 
 # In each subsection folders are ordered first by depth, then alphabetically.

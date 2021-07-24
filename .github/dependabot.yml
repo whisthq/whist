@@ -159,10 +159,10 @@ updates:
       open-pull-requests-limit: 10
 
     #####################################################
-    ################### Main-Webserver ##################
+    ################### Webserver ##################
 
     - package-ecosystem: "pip"
-      directory: "/main-webserver/db_migration" # looks for requirements.txt in this directory
+      directory: "/webserver/db_migration" # looks for requirements.txt in this directory
       schedule:
           interval: "monthly" # runs on the first day of each month
       ignore:
@@ -171,7 +171,7 @@ updates:
       open-pull-requests-limit: 10
 
     - package-ecosystem: "pip"
-      directory: "/main-webserver/scripts" # looks for requirements.txt in this directory
+      directory: "/webserver/scripts" # looks for requirements.txt in this directory
       schedule:
           interval: "monthly" # runs on the first day of each month
       ignore:
@@ -180,7 +180,7 @@ updates:
       open-pull-requests-limit: 10
 
     - package-ecosystem: "docker"
-      directory: "/main-webserver/docker" # looks for Dockerfile in this directory
+      directory: "/webserver/docker" # looks for Dockerfile in this directory
       schedule:
           interval: "monthly" # runs on the first day of each month
       ignore:
@@ -189,7 +189,7 @@ updates:
       open-pull-requests-limit: 10
 
     - package-ecosystem: "pip"
-      directory: "/main-webserver" # looks for requirements.txt in this directory
+      directory: "/webserver" # looks for requirements.txt in this directory
       schedule:
           interval: "monthly" # runs on the first day of each month
       ignore:

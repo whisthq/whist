@@ -10,7 +10,7 @@ on:
         paths:
             - "ecs-host-service/**"
             - "!ecs-host-service/README.md"
-            - "main-webserver/db_migration/schema.sql"
+            - "webserver/db_migration/schema.sql"
             - ".github/workflows/ecs-host-service-check-pr.yml"
     workflow_dispatch:
 

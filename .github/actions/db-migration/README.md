@@ -41,13 +41,13 @@ You can have multiple `--volume` flags, and it can be helpful to add `.github/ac
 With the `fractal` repo as your working directory and the variable `DB_URL` set to the URL of the running database, run this command to dump the database schema to correct file. Make sure to use a single `>` to overwrite the file.
 
 ```sh
-pg_dump --no-owner --no-privileges --schema-only $DB_URL > main-webserver/db_migration/schema.sql
+pg_dump --no-owner --no-privileges --schema-only $DB_URL > webserver/db_migration/schema.sql
 
 ```
 
 ## High-Level Overview
 
-The Fractal migration strategy revolves around treating our database schema as code. Like anything else in the codebase, this involves checking a schema "source of truth" into version control. This takes the form of a file in `fractal/main-webserver/db-migration` called `schema.sql`.
+The Fractal migration strategy revolves around treating our database schema as code. Like anything else in the codebase, this involves checking a schema "source of truth" into version control. This takes the form of a file in `fractal/webserver/db-migration` called `schema.sql`.
 
 `schema.sql` represents the shape of the database schema for the branch that it resides in. So the `schema.sql` in the `dev` branch represents the database at `fractal-dev-server`, and the `schema.sql` in the `staging` branch represents the database at `fractal-staging-server`.
 
@@ -56,11 +56,11 @@ This means that standard `git` discipline applies to how we manage our database 
 1. Create a branch off `origin/dev` to work on your feature.
 2. Run and test your branch with a local copy of the `dev` database. Change the schema of your local database until fits your needs.
 3. Run `pg_dump` on your local database, using the output to overwrite `schema.sql` in your branch. This new version of `schema.sql` is the "source of truth" for your branch.
-4. Commit `schema.sql` and open a PR. A GitHub Action (`database-migration.yml`) will "diff" your `schema.sql` with `origin/dev/main-webserver/db-migration/schema.sql`, placing the "diff" in the PR conversation for convenience. This "diff" represents the changes that are necessary to migrate the `dev` database to conform to your branch's schema changes.
+4. Commit `schema.sql` and open a PR. A GitHub Action (`database-migration.yml`) will "diff" your `schema.sql` with `origin/dev/webserver/db-migration/schema.sql`, placing the "diff" in the PR conversation for convenience. This "diff" represents the changes that are necessary to migrate the `dev` database to conform to your branch's schema changes.
 5. The "diff" is reviewed and discussed by the team. If the schema changes are approved, your PR is accepted and merged.
 6. Upon merging your PR to `origin/dev`, GitHub Actions automatically executes the "diff" SQL commands on the "live" `dev` database, e.g. `fractal-dev-server`. The database migration is now complete!
 
-Any change to `fractal/main-webserver` will trigger the migration workflow.
+Any change to `fractal/webserver` will trigger the migration workflow.
 
 As with all good `git` practice, this means that we only ever make changes through the `git` flow. Sure, you _could_ update the database though the UI, or manually through SQL commands. You also _could_ push your code right to `origin/prod`, bypassing the review process. Even though that would save you some steps, we don't do it because we know it breaks the integrity of our codebase.
 
