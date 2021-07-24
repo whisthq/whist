@@ -7,7 +7,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/NVIDIA/go-nvml v0.11.1-0
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.4.1
+	github.com/aws/aws-sdk-go-v2/config v1.5.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.12.0
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
@@ -25,9 +25,9 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/jackc/pgconn v1.8.1
-	github.com/jackc/pgtype v1.7.1-0.20210424130834-4380e23ae1c8
-	github.com/jackc/pgx/v4 v4.11.0
+	github.com/jackc/pgconn v1.9.0
+	github.com/jackc/pgtype v1.8.0
+	github.com/jackc/pgx/v4 v4.12.0
 	github.com/jschaf/pggen v0.0.0-20210622015421-8d43ddabaecf // indirect
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
