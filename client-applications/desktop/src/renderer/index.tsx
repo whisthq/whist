@@ -68,7 +68,7 @@ const RootComponent = () => {
 
     const onTypeformSubmit = () => {
         setMainState({
-            trigger: { name: TRIGGER.persistTypeform, payload: null },
+            trigger: { name: TRIGGER.persistTypeform, payload: undefined },
         })
     }
 
