@@ -100,7 +100,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         if avail_instance is None or avail_instance.status != "ACTIVE":
             return None
         else:
-            return avail_instance.instance_name
+            return avail_instance.instance_name  # type: ignore[no-any-return]
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
@@ -159,7 +159,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     desired_free_mandelboxes = current_app.config["DESIRED_FREE_MANDELBOXES"]
 
     if num_free_mandelboxes < desired_free_mandelboxes:
-        return current_app.config["DEFAULT_INSTANCE_BUFFER"]
+        return int(current_app.config["DEFAULT_INSTANCE_BUFFER"])
 
     if num_free_mandelboxes >= (desired_free_mandelboxes + avg_mandelbox_capacity):
         return -1
