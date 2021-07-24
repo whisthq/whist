@@ -35,7 +35,7 @@ FROM python:3.9.5-slim-buster
 
 # Copy fully compiled Python dependencies from the builder image into this final
 # image
-COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
+COPY --from=builder /usr/local/lib/python3.9.5/site-packages /usr/local/lib/python3.9.5/site-packages
 # Copy the bin tools created for the Python dependencies from the builder image
 # into this final image to ease developer usage
 COPY --from=builder /usr/local/bin /usr/local/bin
