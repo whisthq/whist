@@ -1,5 +1,5 @@
 import { app, IpcMainEvent } from "electron"
-import { takeUntil } from "rxjs/operators"
+import { takeUntil, withLatestFrom, startWith, mapTo } from "rxjs/operators"
 import { merge } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
@@ -29,14 +29,23 @@ fromTrigger("windowInfo")
                 fromTrigger("updateDownloaded"),
                 fromTrigger("updateAvailable")
             )
+        ),
+        withLatestFrom(
+            fromTrigger("mandelboxFlowFailure").pipe(
+                mapTo(true),
+                startWith(false)
+            )
         )
     )
     .subscribe(
-        (args: {
-            numberWindowsRemaining: number
-            crashed: boolean
-            hash: string
-        }) => {
+        ([args, mandelboxFailed]: [
+            {
+                numberWindowsRemaining: number
+                crashed: boolean
+                hash: string
+            },
+            boolean
+        ]) => {
             // If there are still windows open, ignore
             if (args.numberWindowsRemaining !== 0) return
             // If all windows are closed and the protocol wasn't the last open window, quit
@@ -44,14 +53,17 @@ fromTrigger("windowInfo")
                 app.quit()
                 return
             }
-            // If the protocol was the last window to be closed and we haven't asked for feedback, ask for feedback
+            // If the protocol was the last window to be closed and we haven't asked for feedback,
+            // ask for feedback
             if (
                 !(
                     (persistGet(
                         "typeformFeedbackSubmitted",
                         "data"
                     ) as boolean) ?? false
-                )
+                ) &&
+                !args.crashed &&
+                !mandelboxFailed
             ) {
                 createTypeformWindow()
                 return
