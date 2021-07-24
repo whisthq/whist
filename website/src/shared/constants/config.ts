@@ -15,8 +15,7 @@ const environment: FractalEnvironment = {
         },
         sentry_env: "development",
         client_download_urls: {
-            macOS:
-                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+            macOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
         },
@@ -30,8 +29,7 @@ const environment: FractalEnvironment = {
         },
         sentry_env: "staging",
         client_download_urls: {
-            macOS:
-                "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
+            macOS: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
         },
@@ -45,8 +43,7 @@ const environment: FractalEnvironment = {
         },
         sentry_env: "production",
         client_download_urls: {
-            macOS:
-                "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
+            macOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
             Windows:
                 "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
         },

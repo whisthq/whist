@@ -6,9 +6,14 @@
 client-applications/desktop/build
 core-ts/dist
 
-# auth0 files are creating some errors due to special syntax
+# Auth0 files are creating some errors due to special syntax
 microservices/auth0
 
-# Non-core javascript repos
-ecs-host-service/
-protocol/
+# Client-Applications files
+client-applications/desktop/public 
+client-applications/desktop/release
+client-applications/desktop/*.css
+
+# Protocol files
+/protocol/sentry-native/**
+/protocol/build-clientapp/**
