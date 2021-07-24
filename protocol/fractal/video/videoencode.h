@@ -118,14 +118,6 @@ bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitra
 void video_encoder_set_iframe(VideoEncoder* encoder);
 
 /**
- * @brief                          Allow the next frame to be either an I-frame
- *                                 or not an i-frame
- *
- * @param encoder                  Encoder to be updated
- */
-void video_encoder_unset_iframe(VideoEncoder* encoder);
-
-/**
  * @brief                          Destroy encoder
  *
  * @param encoder                  Encoder to be destroyed

@@ -3,25 +3,7 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-echo Userdata started
-
-# Build array of GPU IDs
-DRIVER_VERSION=$(modinfo nvidia --field version)
-IFS="\n"
-IDS=()
-for x in $(nvidia-smi -L); do
-    IDS+=$(echo "$x" | cut -f6 -d " " | cut -c 1-40)
-done
-
-# Convert GPU IDs to JSON Array
-ID_JSON=$(printf '%s\n' "${IDS[@]}" | jq -R . | jq -s -c .)
-
-# Create JSON GPU Object and populate nvidia-gpu-info.json
-echo "{{\"DriverVersion\":\"${DRIVER_VERSION}\",\"GPUIDs\":${ID_JSON}}}" > /var/lib/ecs/gpu/nvidia-gpu-info.json
-
-
-echo Nvidia Stuff Done
-
+echo "Fractal EC2 userdata started"
 
 cd /home/ubuntu
 
@@ -50,10 +32,14 @@ ExecStart=/home/ubuntu/ecs-host-service
 WantedBy=multi-user.target
 EOF
 
-echo Service Made
+echo "Created systemd service for ecs-host-service"
 
 # Reload daemon files
 sudo /bin/systemctl daemon-reload
 
 # Enable ECS Host Service
 sudo systemctl enable --now ecs-host-service.service
+
+echo "Enabled ecs-host-service"
+
+echo "Fractal EC2 userdata finished"

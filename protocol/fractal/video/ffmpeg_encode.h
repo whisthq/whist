@@ -54,6 +54,7 @@ typedef struct FFmpegEncoder {
     AVFilterContext* filter_graph_sink;
     AVBufferRef* hw_device_ctx;
     int frames_since_last_iframe;
+    bool wants_iframe;
 
     // frame metadata + data
     CodecType codec_type;
@@ -129,20 +130,11 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder* encoder);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,
- *                                 with SPS/PPS headers included as well. Right now, this function
- * is not reliable.
+ *                                 with SPS/PPS headers included as well.
  *
  * @param encoder                  Encoder to be updated
  */
 void ffmpeg_set_iframe(FFmpegEncoder* encoder);
-
-/**
- * @brief                          Allow the next frame to be either an I-frame
- *                                 or not an i-frame. Right now, this function is not reliable.
- *
- * @param encoder                  Encoder to be updated
- */
-void ffmpeg_unset_iframe(FFmpegEncoder* encoder);
 
 /**
  * @brief                          Destroy encoder

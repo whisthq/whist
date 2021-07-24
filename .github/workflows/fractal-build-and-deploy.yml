@@ -138,8 +138,8 @@ jobs:
                     # On push to staging/prod, we want to run all jobs
                       JOB_NAME="all"
                     else
-                    # On push to dev, we want to filter jobs
-                      JOB_NAME="filter"
+                    # TODO: On push to dev, we want to filter jobs
+                      JOB_NAME="all"
                     fi
                     # Store the commit from before the push was made
                     # This is only used when filtering
@@ -319,7 +319,7 @@ jobs:
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./push_container_image.sh $app ${{ needs.fractal-publish-build-config.outputs.branch }}
+                    ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.branch }}
                   done
 
             ##########################################################################################
@@ -407,7 +407,7 @@ jobs:
                   data["source_ami"] = "${{ env.aws_source_ami_id }}"
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
                   # defined as a string of comma-separated values (no spaces) as required by Packer.
-                  data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
+                  data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
                   fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
@@ -470,8 +470,8 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  TITLE = ":whale: Container Images & AMIs Deployed :whale:"
-                  BODY = "Container Images & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  TITLE = ":whale: Mandelbox Images & AMIs Deployed :whale:"
+                  BODY = "Mandelbox Images & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -541,10 +541,11 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
+                main-webserver-deploy-heroku,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: main-webserver-update-fractal-services-${{ github.ref }}
-        if: always() && (needs.mandelboxes-and-ami-publish-ghcr-and-aws.result == 'success')
+        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.main-webserver-deploy-heroku.result == 'success')
         env:
             TOKEN_FILE: .access_token
         steps:
@@ -743,11 +744,12 @@ jobs:
                     sys.exit(0)
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = f"#alerts-{BRANCH_NAME}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+
                   TITLE = ":construction: Database Migration Performed :construction:"
                   BODY = f"Database Schema Migration performed on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=title)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
             - name: Notify Slack on Successful Webserver Deploy
               if: needs.fractal-publish-build-config.outputs.publish == 'true'
@@ -790,8 +792,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                containers-and-ami-publish-ghcr-and-aws,
-                ecs-task-definitions-deploy-task-definitions-ecs,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
                 main-webserver-update-fractal-services,
             ]
         # Only run client-apps deployment if none of the previous steps failed
@@ -800,7 +801,7 @@ jobs:
             (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
             (needs.main-webserver-deploy-heroku.result != 'failure') &&
             (needs.microservices-deploy-auth0-rules.result != 'failure') &&
-            (needs.containers-and-ami-publish-ghcr-and-aws.result != 'failure') &&
+            (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result != 'failure') &&
             (needs.main-webserver-update-fractal-services.result != 'failure')
 
         strategy:
@@ -1189,8 +1190,7 @@ jobs:
                 fractal-publish-build-config,
                 main-webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                containers-and-ami-publish-ghcr-and-aws,
-                ecs-task-definitions-deploy-task-definitions-ecs,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
                 main-webserver-update-fractal-services,
                 client-applications-publish-build-s3,
             ]
