@@ -21,7 +21,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     Return:
         Errors out if the client is not initialized correctly.
     """
-    sentry_sdk.init( # noqa: E0110
+    sentry_sdk.init(  # noqa: E0110
         dsn=sentry_dsn,
         integrations=[FlaskIntegration()],
         environment=env,
