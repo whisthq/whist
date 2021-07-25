@@ -5,7 +5,7 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# From AWS: Starting with GRID version 11.0, you can use the driver packages under latest for both G3 and G4dn instances. We will not add 
+# From AWS: Starting with GRID version 11.0, you can use the driver packages under latest for both G3 and G4dn instances. We will not add
 # versions later than 11.0 to g4/latest, but will keep version 11.0 and the earlier versions specific to G4dn under g4/latest.
 
 # Hardcode a GRID driver version to avoid server/client version mismatch. This driver version needs to be updated periodically.
