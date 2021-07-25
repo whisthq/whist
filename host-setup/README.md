@@ -47,8 +47,8 @@ cd ~/fractal/protocol/
 cd ~/fractal/container-images
 ./build_container_image.sh base
 
-# build the Fractal ECS host service
-cd ~/fractal/ecs-host-service
+# build the Fractal Host Service
+cd ~/fractal/host-service
 make run # keep this open in a separate terminal
 
 # run the Fractal base container image

@@ -101,7 +101,7 @@ You first need to build the protocol and then build the base image before you ca
 
 ### Running Local Images
 
-Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../ecs-host-service && make run`.
+Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../host-service && make run`.
 
 Once an image with tag `current-build` has been built locally via `build_mandelbox_images.sh`, it may be run locally by calling:
 
@@ -115,7 +115,7 @@ There are some other options available to control properties of the resulting ma
 
 ### Running Remote-Pushed Images
 
-Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../ecs-host-service && make run`.
+Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../host-service && make run`.
 
 If an image has been pushed to GHCR and you wish to test it, you first need to authenticate Docker to allow you to pull the relevant image. To do this, run the following:
 

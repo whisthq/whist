@@ -40,7 +40,7 @@ sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
 sudo rm -rf /var/lib/cloud/*
 sudo rm -f /var/lib/ecs/data/*
 
-# The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
+# The Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
 # It gets enabled in base_userdata_template.sh
 

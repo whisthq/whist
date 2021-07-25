@@ -147,10 +147,10 @@ updates:
       open-pull-requests-limit: 10
 
     #####################################################
-    ################## ECS-Host-Service #################
+    #################### Host-Service ###################
 
     - package-ecosystem: "gomod"
-      directory: "/ecs-host-service" # looks for go.mod and go.sum in this directory
+      directory: "/host-service" # looks for go.mod and go.sum in this directory
       schedule:
           interval: "monthly" # runs on the first day of each month
       ignore:

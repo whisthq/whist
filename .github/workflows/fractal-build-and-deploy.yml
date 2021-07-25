@@ -207,7 +207,7 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup ecs-host-service protocol mandelbox-images"
+                  job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelbox-images"
                   job_dependencies[webserver-update-fractal-services]=" "
                   job_dependencies[webserver-deploy-heroku]="webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
@@ -322,7 +322,7 @@ jobs:
     # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
     # This job does:
     # 1- Build and publish the mandelbox images to a GitHub Container Registry repository
-    # 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal ECS Host Service and pre-pulled
+    # 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal Host Service and pre-pulled
     #    Fractal mandelbox images from step 1, to all supported AWS EC2 regions
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
     mandelboxes-and-amis-publish-ghcr-and-aws:
@@ -376,7 +376,7 @@ jobs:
                   done
 
             ##########################################################################################
-            ########################### Stage 2 - Build ECS Host Service  ############################
+            ############################# Stage 2 - Build Host Service  ##############################
 
             - name: Setup Go environment
               uses: actions/setup-go@v2.1.3
@@ -394,7 +394,7 @@ jobs:
                   HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
                   HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
                   LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
-              working-directory: ecs-host-service
+              working-directory: host-service
               run: make build
 
             ##########################################################################################
@@ -420,7 +420,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
-            - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
+            - name: Set Host Service APP_ENV based on Git Branch (File gets read by host-service.service)
               working-directory: host-setup
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"

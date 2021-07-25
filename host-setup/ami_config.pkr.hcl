@@ -136,8 +136,8 @@ build {
   }
 
   provisioner "file" {
-    destination = "/home/ubuntu/ecs-host-service"
-    source      = "../ecs-host-service/build/ecs-host-service"
+    destination = "/home/ubuntu/host-service"
+    source      = "../host-service/build/host-service"
   }
 
   provisioner "shell" {
