@@ -88,6 +88,8 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
   ssh_username = "ubuntu"
   subnet_id    = "${var.subnet_id}"
   vpc_id       = "${var.vpc_id}"
+  force_deregister      = true
+  force_delete_snapshot = true
 }
 
 build {
