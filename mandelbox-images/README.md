@@ -62,8 +62,6 @@ A tree structure is provided below:
 
 To contribute to enhancing all the mandelbox images Fractal uses, you should contribute to the base Dockerfile.20 under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile.20 for the application in question. We strive to make mandelbox images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
 
-Contributions should be made via pull requests to the `dev` branch, which is then merged up to `prod`. The `prod` branch gets automatically deployed to production by building and uploading to [GHCR](https://ghcr.io) via GitHub Actions, and must not be pushed to unless thorough testing has been performed. Currently, at every PR to `prod` or `dev`, the Dockerfiles specified in `dockerfiles-building-ubuntu20.yml` will be built on GitHub Actions and status checks will be reported. These tests need to be pass before merging is approved.
-
 ### Getting Started
 
 After cloning the repo, set up your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository:
@@ -143,7 +141,7 @@ Currently, it is important to wait 5-10 seconds after making the cURL request be
 
 ## Publishing
 
-We store our production mandelbox images on GitHub mandelbox Registry (GHCR) and deploy them on AWS Elastic Mandelbox Service (ECS).
+We store our production mandelbox images on GitHub mandelbox Registry (GHCR) and deploy them on EC2 via our host service.
 
 ### Manual Publishing
 
@@ -176,3 +174,7 @@ We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support i
 ### I have the correct IP and ports for a mandelbox on my EC2 dev instance to connect to, but it looks like my protocol server and client aren't seeing each other!
 
 Make sure your dev instance has a security group that has at least the ports [1025, 49151) open for incoming TCP and UDP connections.
+
+### My Nvidia drivers stopped working!
+
+To fix this, you can either (a) disable rolling kernel updates or (b) hardcode the kernel version in `/etc/default/grub` and refresh GRUB. We suggest you do B.
