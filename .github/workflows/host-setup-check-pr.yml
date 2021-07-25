@@ -1,9 +1,9 @@
 # workflows/ecs-host-setup-check-pr.yml
 #
-# ECS Host Setup: Check PR
-# Checks an ECS Host Setup PR for AMI building success with Packer.
+# Host Setup: Check PR
+# Checks an Host Setup PR for AMI building success with Packer.
 
-name: "ECS Host Setup: Check PR"
+name: "Host Setup: Check PR"
 
 on:
     pull_request:

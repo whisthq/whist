@@ -38,7 +38,7 @@ fi
 # Download and extract nvidia-drivers
 if [[ ! -d "base/build-temp/nvidia-driver" ]]; then
     mkdir "base/build-temp/nvidia-driver"
-    ../ecs-host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
+    ../host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
 fi
 
 python3 ./helper_scripts/build_mandelbox_image.py "$@"

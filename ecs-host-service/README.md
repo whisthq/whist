@@ -22,7 +22,7 @@ It is only possible to run the host service on AWS EC2 instances, since the host
 
 From an EC2 instance, you can run the host service via `make run`. Note that the service must be run as `root` since it manages `systemd` and `docker`, so make sure that your Linux user has permission to use `sudo` and be prepared to supply your password.
 
-If you want to test the host service with our production Sentry configuration, use the command `make runprod`. Note that this will count against our Sentry logging quotas! As such, we only recommend you try to do that on an Fractal-optimized AWS ECS instance that was started by the webserver (see `ecs-host-setup/`).
+If you want to test the host service with our production Sentry configuration, use the command `make runprod`. Note that this will count against our Sentry logging quotas! As such, we only recommend you try to do that on an Fractal-optimized AWS ECS instance that was started by the webserver (see `host-setup/`).
 
 ### Design Decisions
 

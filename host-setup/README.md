@@ -1,4 +1,4 @@
-# Fractal ECS Host Setup
+# Fractal Host Setup
 
 This subfolder contains the scripts to set up AWS EC2 instances for developing Fractal, and for setting up AWS EC2 AMIs (Amazon Machine Images) for our production EC2 instances running Fractal containers for our users.
 
@@ -35,7 +35,7 @@ git clone git@github.com:fractal/fractal.git # via SSH
 git clone https://github.com/fractal/fractal.git # via HTTPS
 
 # set up the EC2 host for development
-cd ~/fractal/ecs-host-setup
+cd ~/fractal/host-setup
 ./setup_localdev_dependencies.sh
 sudo reboot
 
@@ -82,13 +82,13 @@ git clone https://github.com/fractal/fractal.git
 
 # set up the EC2 host with proper packages and drivers,
 # and sets Fractal Docker daemon configs from docker-demon-config/daemon.json
-cd ~/fractal/ecs-host-setup
+cd ~/fractal/host-setup
 ./setup_ubuntu20_host.sh
 sudo reboot
 
 # set up networking rules and system configs and services
 # this script also copies over the userdata-bootstrap.sh script
-cd ~/fractal/ecs-host-setup
+cd ~/fractal/host-setup
 ./setup_ubuntu20_ami_host.sh
 
 # VERY IMPORTANT: remove all Fractal code!

@@ -32,7 +32,7 @@ At a high-level, Fractal works the following way:
 -   The login and launch processes are REST API requests to the Fractal webserver.
 -   When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific mandelbox.
 -   The webserver will then provision a mandelbox associated with the specific streamed application/task definition requested.
-    -   If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/ecs-host-setup` scripts and has the `/ecs-host-service` preinstalled.
+    -   If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/host-setup` scripts and has the `/ecs-host-service` preinstalled.
 -   If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker mandelbox for the requested application on the chosen EC2 instance. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver that it is ready to stream.
     -   The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
 -   Once the webserver receives a confirmation that the mandelbox is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
@@ -47,7 +47,7 @@ The Fractal monorepository contains 8 Fractal subrepositories:
 | mandelbox-images    | The Dockerfiles defining the mandelbox images and helper scripts for the applications we stream.      |
 | core-ts             | The Fractal internal TypeScript library of utilities and reusable components.                         |
 | ecs-host-service    | The Fractal service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
-| ecs-host-setup      | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal mandelboxes. |
+| host-setup          | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal mandelboxes. |
 | webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.   |
 | microservices       | Code we deploy to other platforms, like Auth0.                                                        |
 | protocol            | The streaming technology API, both client and server, for streaming applications to users.            |
@@ -94,7 +94,7 @@ We do all feature development and most bug-fixing on feature branches that are f
 
 **Feature branches are named as follows:**
 
--   Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the ECS host service llama-themed would be called `djsavvy/ecs-host-service/add-llama-theme`.
+-   Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the Host Service llama-themed would be called `djsavvy/ecs-host-service/add-llama-theme`.
 -   Broader feature branches that touch multiple projects should be named in the form `<author>/<feature-verb>`.
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.

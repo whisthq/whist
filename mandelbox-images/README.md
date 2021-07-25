@@ -64,7 +64,7 @@ To contribute to enhancing all the mandelbox images Fractal uses, you should con
 
 ### Getting Started
 
-After cloning the repo, set up your EC2 instance with the setup script from the [ECS Host Setup](https://github.com/fractal/ecs-host-setup/) repository:
+After cloning the repo, set up your EC2 instance with the setup script from the `host-setup` subrepo.:
 
 ```shell
 ./setup_localdev_dependencies.sh
