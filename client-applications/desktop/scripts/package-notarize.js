@@ -19,6 +19,9 @@ const packageNotarize = (env, config, version, commit) => {
     // For testing, we just hardcode the environment to dev
     helpers.setPackagedEnv("dev")
 
+    // We hardcode the commit sha to the current commit
+    helpers.setPackagedCommit(commit)
+
     // We test setting the secret keys
     helpers.populateSecretKeys([
         "AWS_ACCESS_KEY",
@@ -30,7 +33,6 @@ const packageNotarize = (env, config, version, commit) => {
         ...env,
         CONFIG: config,
         VERSION: version,
-        COMMIT_SHA: commit,
     })
     helpers.electronBuild()
 
