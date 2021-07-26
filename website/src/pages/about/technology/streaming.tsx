@@ -1,10 +1,5 @@
 import React from "react"
 
-import {
-    FractalButton,
-    FractalButtonState,
-} from "@app/pages/home/components/button"
-
 const Streaming = () => (
     <div className="py-16 overflow-hidden">
         <div className="max-w-7xl mx-auto space-y-8">
@@ -39,12 +34,6 @@ const Streaming = () => (
                             egestas. Enim sit aliquam nec, a. Morbi enim
                             fermentum lacus in. Viverra.
                         </p>
-                    </div>
-                    <div className="mt-12 text-base max-w-prose mx-auto lg:max-w-none">
-                        <FractalButton
-                            contents="DOWNLOAD NOW"
-                            state={FractalButtonState.DEFAULT}
-                        />
                     </div>
                 </div>
                 <div className="mt-12 relative text-base max-w-prose mx-auto lg:mt-0 lg:max-w-none">

@@ -28,9 +28,9 @@ const about = [
         icon: CursorClickIcon,
     },
     {
-        name: "Privacy",
+        name: "Security",
         description: "How Fractal protects your browsing data.",
-        href: "#",
+        href: "/security",
         icon: ShieldCheckIcon,
     },
     {
@@ -143,27 +143,6 @@ const Header = () => {
                                                             </a>
                                                         ))}
                                                     </div>
-                                                    <div className="p-5 bg-gray-50 sm:p-8">
-                                                        <a
-                                                            href="#"
-                                                            className="-m-3 p-3 flow-root rounded-md hover:bg-gray-100"
-                                                        >
-                                                            <div className="flex items-center">
-                                                                <div className="text-base font-medium text-gray-900">
-                                                                    Enterprise
-                                                                </div>
-                                                                <span className="ml-3 inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium leading-5 bg-indigo-100 text-indigo-800">
-                                                                    New
-                                                                </span>
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-gray-500">
-                                                                Empower your
-                                                                entire team with
-                                                                even more
-                                                                advanced tools.
-                                                            </p>
-                                                        </a>
-                                                    </div>
                                                 </div>
                                             </Popover.Panel>
                                         </Transition>
@@ -237,8 +216,7 @@ const Header = () => {
                                 </span>
                             </LinkScroll>
                         </Popover.Group>
-                        <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
-                        </div>
+                        <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0"></div>
                     </div>
 
                     <Transition

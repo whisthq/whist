@@ -1,5 +1,10 @@
 import React from "react"
 
+import {
+    FractalButton,
+    FractalButtonState,
+} from "@app/pages/home/components/button"
+
 const Specs = () => {
     return (
         <div className="max-w-7xl mx-auto mt-24 py-12 px-4 sm:py-16 lg:py-20">
@@ -8,7 +13,7 @@ const Specs = () => {
                     Chrome, but more powerful
                 </div>
                 <p className="mt-3 text-xl text-gray-500 sm:mt-4">
-                    Unlock datacenter-grade hardware from any laptop.
+                    Fractal runs Google Chrome on datacenter-grade hardware
                 </p>
             </div>
             <dl className="mt-10 text-center sm:max-w-3xl sm:mx-auto sm:grid sm:grid-cols-3 sm:gap-8">
@@ -37,6 +42,12 @@ const Specs = () => {
                     </dd>
                 </div>
             </dl>
+            <div className="text-center mt-16">
+                <FractalButton
+                    contents="DOWNLOAD NOW"
+                    state={FractalButtonState.DEFAULT}
+                />
+            </div>
         </div>
     )
 }
