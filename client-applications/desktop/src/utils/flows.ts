@@ -4,11 +4,11 @@
  * @brief This file contains utility functions for triggers/flows.
  */
 
-import { inspect } from "util"
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map, tap } from "rxjs/operators"
-import { mapValues, values, truncate } from "lodash"
+import { filter, share, map, tap, take } from "rxjs/operators"
+import { mapValues, values } from "lodash"
 import { withMocking } from "@app/testing"
+import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
@@ -40,11 +40,10 @@ export const fork = <T>(
     return mapValues(filters, (fn) => shared.pipe(filter(fn), share()))
 }
 
-export const flow =
-    <T>(
-        name: string,
-        flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
-    ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
+export const flow = <T>(
+    name: string,
+    flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
+): ((t: Observable<T>) => { [key: string]: Observable<any> }) => {
     /*
     Description: 
       A function that returns a function which, when a trigger is activated, will run
@@ -57,42 +56,47 @@ export const flow =
     Returns: 
       Map of observables
   */
+    return (trigger: Observable<T>) => {
+        // Store the timestamp of when the flow starts, i.e. when the trigger fires
+        let startTime = 0
+        trigger.pipe(take(1)).subscribe(() => {
+            startTime = Date.now()
+        })
 
-    (trigger: Observable<T>) =>
-        mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
+        return mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
             obs.pipe(
-                tap((value) =>
-                    console.log(
-                        truncate(`DEBUG: ${name}.${key} -- ${inspect(value)}`, {
-                            length: 1000,
-                        })
+                tap((value: object) =>
+                    logBase(
+                        `${name}.${key}`,
+                        value,
+                        LogLevel.DEBUG,
+                        Date.now() - startTime // This is how long the flow took run
                     )
                 ),
                 share()
             )
         )
+    }
+}
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
     /*
-    Description: 
-      Creates a Trigger from an observable
-    
-    Arguments: 
-      name (string): Trigger name
-      obs (Observable<A>): Observable to be turned into a Trigger
+      Description: 
+        Creates a Trigger from an observable
+      
+      Arguments: 
+        name (string): Trigger name
+        obs (Observable<A>): Observable to be turned into a Trigger
 
-    Returns: 
-      Original observable
-  */
+      Returns: 
+        Original observable
+    */
 
-    obs.subscribe((x: A) => {
+    obs.subscribe((x: any) => {
         TriggerChannel.next({
             name: `${name}`,
-            payload:
-                x !== undefined
-                    ? { ...x, timestamp: Date.now() }
-                    : { timestamp: Date.now() },
-        } as Trigger)
+            payload: x,
+        })
     })
 
     return obs

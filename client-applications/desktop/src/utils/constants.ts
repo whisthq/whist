@@ -28,3 +28,5 @@ export const ErrorIPC = [
     "contextBridge.exposeInMainWorld. You must explicity attach the 'on' and",
     "'send' methods for them to be exposed.",
 ].join(" ")
+
+export const sessionID = Date.now()
