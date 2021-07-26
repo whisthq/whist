@@ -42,7 +42,7 @@ const Pricing = () => {
                 <div className="relative">
                     <div className="relative">
                         <div className="max-w-lg mx-auto overflow-hidden lg:max-w-none lg:flex lg:items-start">
-                            <div className="bg-gray-800 px-6 py-8 lg:p-12 rounded-lg">
+                            <div className="bg-gray-900 px-6 py-8 lg:p-12 rounded-lg">
                                 <div className="flex justify-between w-full">
                                     <h3 className="text-2xl text-gray-300 sm:text-3xl">
                                         Become a Supporter

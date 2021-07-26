@@ -13,16 +13,12 @@ const Detailed = () => {
                             How We Keep Your Data Private
                         </span>
                     </h1>
-                    <p className="mt-8 text-xl text-gray-500 leading-8 text-center">
-                        Talk about details of app config security and AES
-                        encryption here.
-                    </p>
-                    <p className="mt-8 text-xl text-gray-500 leading-8 text-center">
-                        Aliquet nec orci mattis amet quisque ullamcorper neque,
-                        nibh sem. At arcu, sit dui mi, nibh dui, diam eget
-                        aliquam. Quisque id at vitae feugiat egestas ac. Diam
-                        nulla orci at in viverra scelerisque eget. Eleifend
-                        egestas fringilla sapien.
+                    <p className="mt-8 text-xl text-gray-500 leading-8 text-left">
+                        Fractal works by streaming Google Chrome from our
+                        datacenters to your computer. Because Google Chrome is
+                        being streamed to your computer from a datacenter in the
+                        form of video pixels, there are two types of security to
+                        consider: security in motion and security at rest.
                     </p>
                 </div>
             </div>

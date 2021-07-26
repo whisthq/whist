@@ -47,7 +47,7 @@ const Emails = () => (
                     {supportLinks.map((link) => (
                         <div
                             key={link.name}
-                            className="flex flex-col rounded border"
+                            className="flex flex-col rounded bg-gray-900"
                         >
                             <div className="flex-1 relative pt-16 px-6 pb-8 md:px-8">
                                 <div className="top-0 p-3 inline-block bg-blue rounded transform -translate-y-1/2">

@@ -35,7 +35,7 @@ const features = [
 
 const Users = () => {
     return (
-        <div className="overflow-hidden mt-36 bg-gray-800">
+        <div className="overflow-hidden mt-36 bg-gray-900">
             <div className="relative max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
                 <div className="relative lg:grid lg:grid-cols-3 lg:gap-x-8">
                     <div className="lg:col-span-1">

@@ -11,25 +11,25 @@ const features = [
     {
         name: "Browsing History",
         description:
-            "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Maiores impedit perferendis suscipit eaque, iste dolor cupiditate blanditiis ratione.",
+            "Your browsing history is locked behind a master key that only you have access to.",
         icon: GlobeAltIcon,
     },
     {
         name: "Saved passwords and cookies",
         description:
-            "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Maiores impedit perferendis suscipit eaque, iste dolor cupiditate blanditiis ratione.",
+            "All your passwords and cookies are encrypted and never touch our permanent storage.",
         icon: ScaleIcon,
     },
     {
-        name: "Your browser screen",
+        name: "Video and audio",
         description:
-            "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Maiores impedit perferendis suscipit eaque, iste dolor cupiditate blanditiis ratione.",
+            "Your video and audio packets are encrypted along every step of the streaming process and are never tracked, stored, or seen by anyone besides you.",
         icon: LightningBoltIcon,
     },
     {
-        name: "Your current URL",
+        name: "Account data",
         description:
-            "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Maiores impedit perferendis suscipit eaque, iste dolor cupiditate blanditiis ratione.",
+            "We will never sell or release any of your data to any third-party provider without your explicit approval.",
         icon: AnnotationIcon,
     },
 ]
