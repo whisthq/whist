@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/MicahParks/keyfunc v0.6.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
-	github.com/NVIDIA/go-nvml v0.11.1-0 // indirect
+	github.com/NVIDIA/go-nvml v0.11.1-0
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.5.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.12.0
@@ -24,7 +24,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/jackc/pgconn v1.9.0
+	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgtype v1.8.0
 	github.com/jackc/pgx/v4 v4.12.0
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
