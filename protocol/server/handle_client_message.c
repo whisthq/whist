@@ -50,6 +50,7 @@ extern volatile int client_dpi;
 extern volatile CodecType client_codec_type;
 extern volatile bool update_device;
 
+extern volatile bool stop_encoding;
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
 extern InputDevice *input_device;
@@ -66,6 +67,7 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling);
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling);
+static int handle_encoding_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
@@ -114,6 +116,9 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
             return handle_user_input_message(fmsg, client_id, is_controlling);
         case MESSAGE_KEYBOARD_STATE:
             return handle_keyboard_state_message(fmsg, client_id, is_controlling);
+        case MESSAGE_START_ENCODING:
+        case MESSAGE_STOP_ENCODING:
+            return handle_encoding_message(fmsg, client_id, is_controlling);
         case MESSAGE_MBPS:
             return handle_bitrate_message(fmsg, client_id, is_controlling);
         case MESSAGE_PING:
@@ -206,6 +211,36 @@ static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_
     UNUSED(client_id);
     if (!is_controlling) return 0;
     update_keyboard_state(input_device, fmsg);
+    return 0;
+}
+
+static int handle_encoding_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+    /*
+        Stop encoding and sending frames if the client requests it to save resources
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    UNUSED(client_id);
+    UNUSED(is_controlling);
+    if (fmsg->type == MESSAGE_STOP_ENCODING) {
+        LOG_INFO("MSG RECEIVED TO STOP ENCODING");
+        stop_encoding = true;
+    } else if (fmsg->type == MESSAGE_START_ENCODING && stop_encoding == true) {
+        // Extra check that `stop_encoding == true` is to ignore erroneous extra
+        // MESSAGE_START_ENCODING messages
+        LOG_INFO("MSG RECEIVED TO START ENCODING AGAIN");
+        stop_encoding = false;
+        wants_iframe = true;
+    } else {
+        return -1;
+    }
     return 0;
 }
 

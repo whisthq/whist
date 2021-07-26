@@ -505,7 +505,9 @@ typedef enum FractalClientMessageType {
     MESSAGE_MULTIGESTURE = 7,  ///< Gesture Event
     MESSAGE_RELEASE = 8,       ///< Message instructing the host to release all input
                                ///< that is currently pressed.
-    MESSAGE_MBPS = 107,        ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_STOP_ENCODING = 105,
+    MESSAGE_START_ENCODING = 106,
+    MESSAGE_MBPS = 107,  ///< `mbps` double is valid in FractClientMessage.
     MESSAGE_PING = 108,
     MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage

@@ -71,6 +71,7 @@ volatile bool update_device = true;
 FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
+extern volatile bool stop_encoding;
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
 
@@ -391,13 +392,16 @@ int32_t multithreaded_send_video(void* opaque) {
             if (accumulated_frames > 1) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
-            // If 1/MIN_FPS has passed, but no accumulated_frames have happened,
-            // then send_new_frame is false, and we just send an empty frame with
-            // is_empty_frame = true
-            // NOTE: `accumulated_frames` is the number of new frames collected since the last
-            // frame sent. If this is 0, then this frame is just a repeat of the frame
-            // before it (which we're sending to keep the framerate above MIN_FPS).
-            bool send_new_frame = accumulated_frames > 0 || wants_iframe;
+            // If 1/MIN_FPS has passed but no accumulated_frames have happened (or the client asked
+            // the server to stop encoding frames to save resources), then send_new_frame is false,
+            // and we just send an empty frame with is_empty_frame = true
+            // NOTE: `accumulated_frames` is the number of new frames collected since the last frame
+            // sent. If this is 0, then this frame is just a repeat of the frame before it (which
+            // we're sending to keep the framerate above MIN_FPS).
+            // ADDITIONAL NOTE: If wants_iframe gets set to true when stop_encoding is true or
+            // accumulated_frames is 0 (which it ordinarily shouldn't), we HAVE TO render that frame
+            // or the server will spazz out and start sending 1000's of FPS.
+            bool send_new_frame = (!stop_encoding && accumulated_frames > 0) || wants_iframe;
 
             // transfer the capture of the latest frame from the device to the encoder,
             // This function will try to CUDA/OpenGL optimize the transfer by
