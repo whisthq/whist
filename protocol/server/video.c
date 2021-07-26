@@ -393,35 +393,34 @@ int32_t multithreaded_send_video(void* opaque) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
             // If 1/MIN_FPS has passed but no accumulated_frames have happened (or the client asked
-            // the server to stop encoding frames to save resources), then send_new_frame is false,
-            // and we just send an empty frame with is_empty_frame = true
+            // the server to stop encoding frames to save resources via `stop_streaming`), then we
+            // skip everything in here, and we just send an empty frame with is_empty_frame = true.
             // NOTE: `accumulated_frames` is the number of new frames collected since the last frame
             // sent. If this is 0, then this frame is just a repeat of the frame before it (which
             // we're sending to keep the framerate above MIN_FPS).
             // ADDITIONAL NOTE: If wants_iframe gets set to true when stop_streaming is true or
             // accumulated_frames is 0 (which it ordinarily shouldn't), we HAVE TO render that frame
             // or the server will spazz out and start sending 1000's of FPS.
-            bool send_new_frame = (!stop_streaming && accumulated_frames > 0) || wants_iframe;
+            if (accumulated_frames > 0 || wants_iframe) {
+                // transfer the capture of the latest frame from the device to
+                // the encoder,
+                // This function will try to CUDA/OpenGL optimize the transfer by
+                // only passing a GPU reference rather than copy to/from the CPU
+                if (transfer_capture(device, encoder) != 0) {
+                    // if there was a failure
+                    LOG_ERROR("transfer_capture failed! Exiting!");
+                    exiting = true;
+                    break;
+                }
 
-            // transfer the capture of the latest frame from the device to the encoder,
-            // This function will try to CUDA/OpenGL optimize the transfer by
-            // only passing a GPU reference rather than copy to/from the CPU
-            if (send_new_frame && transfer_capture(device, encoder) != 0) {
-                // if there was a failure
-                LOG_ERROR("transfer_capture failed! Exiting!");
-                exiting = true;
-                break;
-            }
+                if (wants_iframe) {
+                    video_encoder_set_iframe(encoder);
+                    wants_iframe = false;
+                }
 
-            if (send_new_frame && wants_iframe) {
-                video_encoder_set_iframe(encoder);
-                wants_iframe = false;
-            }
+                clock t;
+                start_timer(&t);
 
-            clock t;
-            start_timer(&t);
-
-            if (send_new_frame) {
                 int res = video_encoder_encode(encoder);
                 if (res < 0) {
                     // bad boy error
@@ -433,168 +432,167 @@ int32_t multithreaded_send_video(void* opaque) {
                     break;
                 }
                 // else we have an encoded frame, so handle it!
-            }
 
-            static int frame_stat_number = 0;
-            static double total_frame_time = 0.0;
-            static double max_frame_time = 0.0;
-            static double total_frame_sizes = 0.0;
-            static double max_frame_size = 0.0;
+                static int frame_stat_number = 0;
+                static double total_frame_time = 0.0;
+                static double max_frame_time = 0.0;
+                static double total_frame_sizes = 0.0;
+                static double max_frame_size = 0.0;
 
-            frame_stat_number++;
-            total_frame_time += get_timer(t);
-            max_frame_time = max(max_frame_time, get_timer(t));
-            total_frame_sizes += encoder->encoded_frame_size;
-            max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
+                frame_stat_number++;
+                total_frame_time += get_timer(t);
+                max_frame_time = max(max_frame_time, get_timer(t));
+                total_frame_sizes += encoder->encoded_frame_size;
+                max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
 
-            if (frame_stat_number % 30 == 0) {
-                LOG_INFO("Longest Encode Time: %f", max_frame_time);
-                LOG_INFO("Average Encode Time: %f", total_frame_time / 30);
-                LOG_INFO("Longest Encode Size: %f", max_frame_size);
-                LOG_INFO("Average Encode Size: %f", total_frame_sizes / 30);
-                total_frame_time = 0.0;
-                max_frame_time = 0.0;
-                total_frame_sizes = 0.0;
-                max_frame_size = 0.0;
-            }
+                if (frame_stat_number % 30 == 0) {
+                    LOG_INFO("Longest Encode Time: %f", max_frame_time);
+                    LOG_INFO("Average Encode Time: %f", total_frame_time / 30);
+                    LOG_INFO("Longest Encode Size: %f", max_frame_size);
+                    LOG_INFO("Average Encode Size: %f", total_frame_sizes / 30);
+                    total_frame_time = 0.0;
+                    max_frame_time = 0.0;
+                    total_frame_sizes = 0.0;
+                    max_frame_size = 0.0;
+                }
 
-            // LOG_INFO("Encode Time: %f (%d) (%d)", get_timer(t),
-            //        frames_since_first_iframe % gop_size,
-            //        encoder->encoded_frame_size);
+                // LOG_INFO("Encode Time: %f (%d) (%d)", get_timer(t),
+                //        frames_since_first_iframe % gop_size,
+                //        encoder->encoded_frame_size);
 
-            if (send_new_frame) {
                 bitrate_tested_frames++;
                 bytes_tested_frames += encoder->encoded_frame_size;
-            }
 
-            if (send_new_frame && encoder->encoded_frame_size != 0) {
-                double delay = -1.0;
+                if (encoder->encoded_frame_size != 0) {
+                    double delay = -1.0;
 
-                if (previous_frame_size > 0) {
-                    double frame_time = get_timer(previous_frame_time);
-                    start_timer(&previous_frame_time);
-                    // double mbps = previous_frame_size * 8.0 / 1024.0 /
-                    // 1024.0 / frame_time; TODO: bitrate throttling alg
-                    // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
-                    // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
-                    // / max_mbps = IdealTime
-                    double transmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
-                                           BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
+                    if (previous_frame_size > 0) {
+                        double frame_time = get_timer(previous_frame_time);
+                        start_timer(&previous_frame_time);
+                        // double mbps = previous_frame_size * 8.0 / 1024.0 /
+                        // 1024.0 / frame_time; TODO: bitrate throttling alg
+                        // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
+                        // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
+                        // / max_mbps = IdealTime
+                        double transmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
+                                               BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
 
-                    // double average_frame_size = 1.0 * bytes_tested_frames
-                    // / bitrate_tested_frames;
-                    double current_trasmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
-                                                  BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE / max_mbps;
-                    double current_fps = 1.0 / current_trasmit_time;
+                        // double average_frame_size = 1.0 * bytes_tested_frames
+                        // / bitrate_tested_frames;
+                        double current_trasmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
+                                                      BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE /
+                                                      max_mbps;
+                        double current_fps = 1.0 / current_trasmit_time;
 
-                    delay = transmit_time - frame_time;
-                    delay = min(delay, 0.004);
+                        delay = transmit_time - frame_time;
+                        delay = min(delay, 0.004);
 
-                    // LOG_INFO("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
-                    // %f, Transmit Time: %f, Delay: %f",
-                    // previous_frame_size, mbps, max_mbps, frame_time,
-                    // transmit_time, delay);
+                        // LOG_INFO("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
+                        // %f, Transmit Time: %f, Delay: %f",
+                        // previous_frame_size, mbps, max_mbps, frame_time,
+                        // transmit_time, delay);
 
-                    if ((current_fps < worst_fps || ideal_bitrate > current_bitrate) &&
-                        bitrate_tested_frames > 20) {
-                        // Rather than having lower than the worst
-                        // acceptable fps, find the ratio for what the
-                        // bitrate should be
-                        double ratio_bitrate = current_fps / worst_fps;
-                        int new_bitrate = (int)(ratio_bitrate * current_bitrate);
-                        if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
-                            // LOG_INFO("Updating bitrate from %d to %d",
-                            //        current_bitrate, new_bitrate);
-                            // TODO: Analyze bitrate handling with GOP size
-                            // current_bitrate = new_bitrate;
-                            // update_encoder = true;
+                        if ((current_fps < worst_fps || ideal_bitrate > current_bitrate) &&
+                            bitrate_tested_frames > 20) {
+                            // Rather than having lower than the worst
+                            // acceptable fps, find the ratio for what the
+                            // bitrate should be
+                            double ratio_bitrate = current_fps / worst_fps;
+                            int new_bitrate = (int)(ratio_bitrate * current_bitrate);
+                            if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
+                                // LOG_INFO("Updating bitrate from %d to %d",
+                                //        current_bitrate, new_bitrate);
+                                // TODO: Analyze bitrate handling with GOP size
+                                // current_bitrate = new_bitrate;
+                                // update_encoder = true;
 
-                            bitrate_tested_frames = 0;
-                            bytes_tested_frames = 0;
+                                bitrate_tested_frames = 0;
+                                bytes_tested_frames = 0;
+                            }
                         }
                     }
-                }
 
-                if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
-                    LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
-                } else {
-                    // Create frame struct with compressed frame data and
-                    // metadata
-                    static char buf[LARGEST_VIDEOFRAME_SIZE];
-                    VideoFrame* frame = (VideoFrame*)buf;
-                    frame->width = encoder->out_width;
-                    frame->height = encoder->out_height;
-                    frame->codec_type = encoder->codec_type;
-                    frame->is_empty_frame = false;
-
-                    static FractalCursorImage cursor_cache[2];
-                    static int last_cursor_id = 0;
-                    int current_cursor_id = (last_cursor_id + 1) % 2;
-
-                    FractalCursorImage* last_cursor = &cursor_cache[last_cursor_id];
-                    FractalCursorImage* current_cursor = &cursor_cache[current_cursor_id];
-
-                    get_current_cursor(current_cursor);
-
-                    // If the current cursor is the same as the last cursor,
-                    // just don't send any cursor
-                    if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
-                        set_frame_cursor_image(frame, NULL);
+                    if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
+                        LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                     } else {
-                        set_frame_cursor_image(frame, current_cursor);
-                    }
+                        // Create frame struct with compressed frame data and
+                        // metadata
+                        static char buf[LARGEST_VIDEOFRAME_SIZE];
+                        VideoFrame* frame = (VideoFrame*)buf;
+                        frame->width = encoder->out_width;
+                        frame->height = encoder->out_height;
+                        frame->codec_type = encoder->codec_type;
+                        frame->is_empty_frame = false;
 
-                    last_cursor_id = current_cursor_id;
+                        static FractalCursorImage cursor_cache[2];
+                        static int last_cursor_id = 0;
+                        int current_cursor_id = (last_cursor_id + 1) % 2;
 
-                    // frame is an iframe if this frame does not require previous frames to
-                    // render
-                    frame->is_iframe = encoder->is_iframe;
+                        FractalCursorImage* last_cursor = &cursor_cache[last_cursor_id];
+                        FractalCursorImage* current_cursor = &cursor_cache[current_cursor_id];
 
-                    frame->videodata_length = encoder->encoded_frame_size;
+                        get_current_cursor(current_cursor);
 
-                    write_packets_to_buffer(encoder->num_packets, encoder->packets,
-                                            (void*)get_frame_videodata(frame));
+                        // If the current cursor is the same as the last cursor,
+                        // just don't send any cursor
+                        if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
+                            set_frame_cursor_image(frame, NULL);
+                        } else {
+                            set_frame_cursor_image(frame, current_cursor);
+                        }
+
+                        last_cursor_id = current_cursor_id;
+
+                        // frame is an iframe if this frame does not require previous frames to
+                        // render
+                        frame->is_iframe = encoder->is_iframe;
+
+                        frame->videodata_length = encoder->encoded_frame_size;
+
+                        write_packets_to_buffer(encoder->num_packets, encoder->packets,
+                                                (void*)get_frame_videodata(frame));
 
 #if LOG_VIDEO
-                    LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
-                             frame->is_iframe ? "(I-frame)" : "");
+                        LOG_INFO("Sent video packet %d (Size: %d) %s", id,
+                                 encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" : "");
 #endif  // LOG_VIDEO
 
-                    PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
+                        PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
 
-                    size_t num_msgs;
-                    read_lock(&is_active_rwlock);
-                    fractal_lock_mutex(state_lock);
+                        size_t num_msgs;
+                        read_lock(&is_active_rwlock);
+                        fractal_lock_mutex(state_lock);
 
-                    if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
-                        LOG_ERROR("Failed to copy peer update messages.");
+                        if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
+                            LOG_ERROR("Failed to copy peer update messages.");
+                        }
+                        frame->num_peer_update_msgs = (int)num_msgs;
+
+                        start_timer(&t);
+
+                        // Send video packet to client
+                        if (broadcast_udp_packet(
+                                PACKET_VIDEO, (uint8_t*)frame, get_total_frame_size(frame), id,
+                                STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
+                                video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
+                            LOG_WARNING("Could not broadcast video frame ID %d", id);
+                        } else {
+                            // Only increment ID if the send succeeded
+                            id++;
+                        }
+                        fractal_unlock_mutex(state_lock);
+                        read_unlock(&is_active_rwlock);
+
+                        // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
+                        // get_timer( t ), frame_size );
+
+                        previous_frame_size = encoder->encoded_frame_size;
+                        // double server_frame_time =
+                        // get_timer(server_frame_timer); LOG_INFO("Server Frame
+                        // Time for ID %d: %f", id, server_frame_time);
                     }
-                    frame->num_peer_update_msgs = (int)num_msgs;
-
-                    start_timer(&t);
-
-                    // Send video packet to client
-                    if (broadcast_udp_packet(
-                            PACKET_VIDEO, (uint8_t*)frame, get_total_frame_size(frame), id,
-                            STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
-                            video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
-                        LOG_WARNING("Could not broadcast video frame ID %d", id);
-                    } else {
-                        // Only increment ID if the send succeeded
-                        id++;
-                    }
-                    fractal_unlock_mutex(state_lock);
-                    read_unlock(&is_active_rwlock);
-
-                    // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
-                    // get_timer( t ), frame_size );
-
-                    previous_frame_size = encoder->encoded_frame_size;
-                    // double server_frame_time =
-                    // get_timer(server_frame_timer); LOG_INFO("Server Frame
-                    // Time for ID %d: %f", id, server_frame_time);
                 }
-            } else if (!send_new_frame) {
+            } else {
                 // If we don't have a new frame to send, let's just send an empty one
                 static char mini_buf[sizeof(VideoFrame)];
                 VideoFrame* frame = (VideoFrame*)mini_buf;
