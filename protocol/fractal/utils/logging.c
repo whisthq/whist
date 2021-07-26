@@ -69,7 +69,6 @@ static volatile FractalMutex logger_queue_mutex;
 
 // logger queue
 typedef struct LoggerQueueItem {
-    int id;
     const char* tag;
     char buf[LOGGER_BUF_SIZE];
 } LoggerQueueItem;
@@ -77,12 +76,11 @@ static volatile LoggerQueueItem logger_queue[LOGGER_QUEUE_SIZE];
 static volatile LoggerQueueItem logger_queue_cache[LOGGER_QUEUE_SIZE];
 static volatile int logger_queue_index = 0;
 static volatile int logger_queue_size = 0;
-static volatile int logger_global_id = 0;
 
 // logger global variables
 FractalThread mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
-int multi_threaded_printf(void* opaque);
+int multithreaded_printf(void* opaque);
 void mprintf(const char* tag, const char* fmt_str, va_list args);
 
 // This is written to in MultiThreaderPrintf
@@ -111,7 +109,7 @@ void init_logger() {
     logger_queue_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
     logger_queue_mutex = fractal_create_mutex();
-    mprintf_thread = fractal_create_thread((FractalThreadFunction)multi_threaded_printf,
+    mprintf_thread = fractal_create_thread((FractalThreadFunction)multithreaded_printf,
                                            "MultiThreadedPrintf", NULL);
     LOG_INFO("Logging initialized!");
 }
@@ -130,7 +128,7 @@ void destroy_logger() {
     logger_history_len = 0;
 }
 
-int multi_threaded_printf(void* opaque) {
+int multithreaded_printf(void* opaque) {
     UNUSED(opaque);
 
     while (true) {
@@ -158,7 +156,6 @@ void flush_logs() {
             safe_strncpy((char*)logger_queue_cache[i].buf,
                          (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
             logger_queue_cache[i].tag = logger_queue[logger_queue_index].tag;
-            logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
             logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
@@ -222,7 +219,7 @@ void flush_logs() {
  *                                 "some\\\tstuff\\\r\n\\\r\n"
  *                                 "some\\\tstuff\\\r\\\n\\\r\\\n" <- escape_all=true
  */
-char* escape_string(char* old_string, bool escape_all) {
+char* escape_string(const char* old_string, bool escape_all) {
     size_t old_string_len = strlen(old_string);
     char* new_string = safe_malloc(2 * (old_string_len + 1));
     int new_str_len = 0;
@@ -291,80 +288,102 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_end(args);
 }
 
+void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line) {
+    /*
+        Queues a line of a log message to be printed by the logger thread. Warns the
+        user if this queued line is overwriting an existing entry on the queue or if
+        the queue is full.
+
+        Note:
+            This should be called from `mprintf`, with a lock on `logger_queue_mutex` held.
+
+        Arguments:
+            line_fmt (const char*): How to format the line (for the first line of a
+                message, this can just be "%s\n". For subsequent lines, we need to
+                indent the line by a few spaces for clarity.)
+            tag (const char*): The tag to use for the log message
+            line (const char*): The (unsanitized) log message itself
+    */
+
+    if (logger_queue_size >= LOGGER_QUEUE_SIZE - 1) {
+        // If the queue is full, we just drop the log
+        return;
+    }
+    int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
+    char* dest = (char*)logger_queue[index].buf;
+
+    char* sanitized_line = escape_string(line, false);
+
+    if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
+        // If the queue is becoming full, warn the user
+        // Technically we should check if we are overwriting an existing message,
+        // but the only really important thing is that the queue is full.
+        snprintf(dest, LOGGER_QUEUE_SIZE, "%s\nLog buffer maxed out!\n", sanitized_line);
+
+        // Automatically make queue fills a warning
+        logger_queue[index].tag = WARNING_TAG;
+    } else if (logger_queue[index].buf[0] != '\0') {
+        // If we are overwriting an existing message, warn the user
+        // We ignore `line_fmt` here because indenting make it hard to read
+        char old_message[LOGGER_BUF_SIZE];
+        memcpy(old_message, dest, LOGGER_BUF_SIZE);
+        int written = snprintf(dest, LOGGER_BUF_SIZE, "Log overwrite!\nOLD | %s\nNEW | %s\n",
+                               old_message, sanitized_line);
+        if (written < 0 || written >= LOGGER_BUF_SIZE) {
+            // This should never happen, but just in case...
+            dest[LOGGER_BUF_SIZE - 1] = '\0';
+        }
+        // Automatically make overwrites a warning
+        logger_queue[index].tag = WARNING_TAG;
+    } else {
+        // Normally, just copy the message according to the line format
+        snprintf(dest, LOGGER_BUF_SIZE, line_fmt, sanitized_line);
+        logger_queue[index].tag = tag;
+    }
+
+    free(sanitized_line);
+
+    ++logger_queue_size;
+    fractal_post_semaphore((FractalSemaphore)logger_semaphore);
+}
+
 // Core multithreaded printf function, that accepts va_list and log boolean
 void mprintf(const char* tag, const char* fmt_str, va_list args) {
     fractal_lock_mutex((FractalMutex)logger_queue_mutex);
 
-    int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-    char* buf = NULL;
-    if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
-        logger_queue[index].tag = tag;
-        logger_queue[index].id = logger_global_id++;
-        buf = (char*)logger_queue[index].buf;
+    // After calls to function which invoke VA args, the args are
+    // undefined so we copy
+    va_list args_copy;
+    va_copy(args_copy, args);
 
-        if (buf[0] != '\0') {
-            char old_msg[LOGGER_BUF_SIZE];
-            memcpy(old_msg, buf, LOGGER_BUF_SIZE);
-            int chars_written =
-                snprintf(buf, LOGGER_BUF_SIZE,
-                         "Log buffer overwrite!\nReplacing new message: %s\nWith new message: %s\n",
-                         old_msg, logger_queue[index].buf);
-            if (!(chars_written > 0 && chars_written <= LOGGER_BUF_SIZE)) {
-                buf[0] = '\0';
-            }
-            logger_queue_size++;
-            fractal_post_semaphore((FractalSemaphore)logger_semaphore);
-        } else {
-            // After calls to function which invoke VA args, the args are
-            // undefined so we copy
-            va_list args_copy;
-            va_copy(args_copy, args);
+    // Get the length of the formatted string with args replaced.
+    int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
 
-            // Get the length of the formatted string with args replaced.
-            int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
+    // Print to a temp buf so we can split on \n
+    char* full_message = safe_malloc(sizeof(char) * (len + 1));
+    vsnprintf(full_message, len, fmt_str, args_copy);
 
-            // print to a temp buf so we can split on \n
-            char* temp_buf = safe_malloc(sizeof(char) * (len + 1));
-            vsnprintf(temp_buf, len, fmt_str, args_copy);
-            // use strtok_r over strtok due to thread safety
-            char* strtok_context = NULL;  // strtok_r context var
-            // Log the first line out of the loop because we log it with
-            // the full log formatting time | type | file | log_msg
-            // subsequent lines start with | followed by 4 spaces
-            char* line = strtok_r(temp_buf, "\n", &strtok_context);
-            char* san_line = escape_string(line, false);
-            snprintf(buf, LOGGER_BUF_SIZE, "%s \n", san_line);
-            free(san_line);
-            logger_queue_size++;
-            fractal_post_semaphore((FractalSemaphore)logger_semaphore);
+    // Make sure to close the copied args
+    va_end(args_copy);
 
-            index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-            buf = (char*)logger_queue[index].buf;
-            line = strtok_r(NULL, "\n", &strtok_context);
-            while (line != NULL) {
-                san_line = escape_string(line, false);
-                snprintf(buf, LOGGER_BUF_SIZE, "|    %s \n", san_line);
-                free(san_line);
-                logger_queue[index].tag = tag;
-                logger_queue[index].id = logger_global_id++;
-                logger_queue_size++;
-                fractal_post_semaphore((FractalSemaphore)logger_semaphore);
-                index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-                buf = (char*)logger_queue[index].buf;
-                line = strtok_r(NULL, "\n", &strtok_context);
-            }
+    // use strtok_r over strtok due to thread safety
+    char* strtok_context = NULL;  // strtok_r context var
 
-            va_end(args_copy);
-        }
+    // Log the first line out of the loop because we log it with
+    // the full log formatting time | type | file | log_msg
+    // subsequent lines start with | followed by 4 spaces
+    char* current_line = strtok_r(full_message, "\n", &strtok_context);
+    mprintf_queue_line("%s\n", tag, current_line);
 
-    } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
-        buf = (char*)logger_queue[index].buf;
-        safe_strncpy(buf, "Log buffer maxed out!\n", LOGGER_BUF_SIZE);
-        logger_queue[index].tag = tag;
-        logger_queue[index].id = logger_global_id++;
-        logger_queue_size++;
-        fractal_post_semaphore((FractalSemaphore)logger_semaphore);
+    // Now, log the rest of the lines with the indent of 4 spaces
+    current_line = strtok_r(NULL, "\n", &strtok_context);
+    while (current_line != NULL) {
+        mprintf_queue_line("|    %s\n", tag, current_line);
+        current_line = strtok_r(NULL, "\n", &strtok_context);
     }
+
+    // Free the temp buf, making sure to do it after we're done with `strtok_r`
+    free(full_message);
 
     fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
 }
