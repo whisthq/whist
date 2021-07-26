@@ -1,5 +1,5 @@
 import React from "react"
-import classNames from "classNames"
+import classNames from "classnames"
 
 import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"

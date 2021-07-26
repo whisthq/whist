@@ -282,7 +282,7 @@ const Header = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         {resources.map((item) => (
                                             <a
-                                                key={resources.name}
+                                                key={item.name}
                                                 href={item.href}
                                                 className="text-base font-medium text-gray-900 hover:text-gray-700"
                                             >
