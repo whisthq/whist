@@ -1,11 +1,11 @@
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
-import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
-import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
+import { mandelboxCreateFlow } from "@app/main/flows/mandelbox/create"
+import { hostSpinUpFlow } from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
 
-export default flow(
+export const mandelboxFlow = flow(
     "mandelboxFlow",
     (
         trigger: Observable<{

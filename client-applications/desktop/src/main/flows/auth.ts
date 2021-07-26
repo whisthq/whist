@@ -9,7 +9,7 @@ import {
 } from "@app/utils/auth"
 import { store } from "@app/utils/persist"
 
-export default flow<{
+export const authFlow = flow<{
     userEmail: string
     subClaim: string
     accessToken: string

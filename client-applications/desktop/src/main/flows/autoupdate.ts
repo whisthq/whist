@@ -4,7 +4,7 @@ import { fromEvent } from "rxjs"
 
 import { flow } from "@app/utils/flows"
 
-export default flow("autoUpdateFlow", () => {
+export const autoUpdateFlow = flow("autoUpdateFlow", () => {
     return {
         downloaded: fromEvent(autoUpdater as EventEmitter, "update-downloaded"),
         progress: fromEvent(autoUpdater as EventEmitter, "download-progress"),

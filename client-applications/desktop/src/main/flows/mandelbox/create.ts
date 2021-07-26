@@ -13,7 +13,7 @@ import { mandelboxCreate, mandelboxCreateSuccess } from "@app/utils/mandelbox"
 import { fork, flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
 
-export default flow<{
+export const mandelboxCreateFlow = flow<{
     subClaim: string
     accessToken: string
     region?: AWSRegion

@@ -8,7 +8,7 @@ import { zip, from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 
-export default flow<{
+export const hostSpinUpFlow = flow<{
     ip: string
     user_id: string
     config_encryption_token: string
