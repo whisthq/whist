@@ -60,4 +60,4 @@ class EmailTemplates(db.Model):
         s3_client = boto3.client("s3", region_name="us-east-1")
         response = s3_client.get_object(Bucket="fractal-email-templates", Key=object_key)
 
-        return response["Body"].read().decode()  # Ftype: ignore[no-any-return]
+        return response["Body"].read().decode()  # type: ignore[no-any-return]
