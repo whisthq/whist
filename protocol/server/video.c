@@ -505,12 +505,12 @@ int32_t multithreaded_send_video(void* opaque) {
                     }
                 }
 
-                if (encoder->encoded_frame_size > (int)MAX_FRAME_VIDEODATA_SIZE) {
+                if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
                     LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                 } else {
                     // Create frame struct with compressed frame data and
                     // metadata
-                    static char buf[LARGEST_FRAME_SIZE];
+                    static char buf[LARGEST_VIDEOFRAME_SIZE];
                     VideoFrame* frame = (VideoFrame*)buf;
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
