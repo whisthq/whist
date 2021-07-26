@@ -50,7 +50,7 @@ extern volatile int client_dpi;
 extern volatile CodecType client_codec_type;
 extern volatile bool update_device;
 
-extern volatile bool stop_encoding;
+extern volatile bool stop_streaming;
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
 extern InputDevice *input_device;
@@ -116,8 +116,8 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
             return handle_user_input_message(fmsg, client_id, is_controlling);
         case MESSAGE_KEYBOARD_STATE:
             return handle_keyboard_state_message(fmsg, client_id, is_controlling);
-        case MESSAGE_START_ENCODING:
-        case MESSAGE_STOP_ENCODING:
+        case MESSAGE_START_STREAMING:
+        case MESSAGE_STOP_STREAMING:
             return handle_encoding_message(fmsg, client_id, is_controlling);
         case MESSAGE_MBPS:
             return handle_bitrate_message(fmsg, client_id, is_controlling);
@@ -229,14 +229,14 @@ static int handle_encoding_message(FractalClientMessage *fmsg, int client_id, bo
 
     UNUSED(client_id);
     UNUSED(is_controlling);
-    if (fmsg->type == MESSAGE_STOP_ENCODING) {
+    if (fmsg->type == MESSAGE_STOP_STREAMING) {
         LOG_INFO("MSG RECEIVED TO STOP ENCODING");
-        stop_encoding = true;
-    } else if (fmsg->type == MESSAGE_START_ENCODING && stop_encoding == true) {
-        // Extra check that `stop_encoding == true` is to ignore erroneous extra
-        // MESSAGE_START_ENCODING messages
+        stop_streaming = true;
+    } else if (fmsg->type == MESSAGE_START_STREAMING && stop_streaming == true) {
+        // Extra check that `stop_streaming == true` is to ignore erroneous extra
+        // MESSAGE_START_STREAMING messages
         LOG_INFO("MSG RECEIVED TO START ENCODING AGAIN");
-        stop_encoding = false;
+        stop_streaming = false;
         wants_iframe = true;
     } else {
         return -1;

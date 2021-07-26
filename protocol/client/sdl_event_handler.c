@@ -431,7 +431,7 @@ int handle_sdl_event(SDL_Event *event) {
                 }
             } else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
                 FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_STOP_ENCODING;
+                fmsg.type = MESSAGE_STOP_STREAMING;
                 send_fmsg(&fmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
                 // NOTE: there is no way to see if a window was "un-minimized." The only thing we
@@ -439,7 +439,7 @@ int handle_sdl_event(SDL_Event *event) {
                 // will gracefully deal with (i.e. ignore) the extra extraneous messages that will
                 // get sent whenever the window gains focus.
                 FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_START_ENCODING;
+                fmsg.type = MESSAGE_START_STREAMING;
                 send_fmsg(&fmsg);
             }
             break;

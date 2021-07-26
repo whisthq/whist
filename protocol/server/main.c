@@ -76,7 +76,7 @@ InputDevice* input_device = NULL;
 
 static FractalMutex packet_mutex;
 
-volatile bool stop_encoding;
+volatile bool stop_streaming;
 volatile bool wants_iframe;
 volatile bool update_encoder;
 
@@ -348,7 +348,7 @@ int main(int argc, char* argv[]) {
     start_timer(&startup_time);
 
     max_mbps = STARTING_BITRATE / (1024.0 * 1024.0);
-    stop_encoding = false;
+    stop_streaming = false;
     wants_iframe = false;
     update_encoder = false;
     exiting = false;
