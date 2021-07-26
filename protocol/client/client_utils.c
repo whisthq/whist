@@ -28,8 +28,8 @@ Includes
 
 #include "client_utils.h"
 #include "network.h"
-#include <fractal/utils/logging.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/logging.h>
+#include <fractal/logging/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
 
 extern volatile char binary_aes_private_key[16];

@@ -19,7 +19,7 @@ Includes
 #include "network.h"
 
 #include <fractal/core/fractal.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/error_monitor.h>
 #include "network.h"
 #include "client_utils.h"
 #include "audio.h"

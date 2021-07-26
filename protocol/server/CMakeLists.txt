@@ -100,6 +100,7 @@ target_link_libraries(FractalServer
         fractalCursor
         fractalInput
         fractalNetwork
+        fractalLogging
         fractalUtils
         ${STATIC_SDL2}
         ${LIBMFX}

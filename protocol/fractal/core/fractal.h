@@ -62,7 +62,7 @@ Includes
 #include <fractal/utils/color.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/clock.h>
-#include <fractal/utils/logging.h>
+#include <fractal/logging/logging.h>
 
 #ifdef _WIN32
 #pragma warning(disable : 4200)

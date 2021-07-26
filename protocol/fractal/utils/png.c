@@ -11,7 +11,7 @@
 
 #include "lodepng.h"
 
-#include "logging.h"
+#include <fractal/logging/logging.h>
 
 #ifdef _WIN32
 #pragma warning(disable : 4996)

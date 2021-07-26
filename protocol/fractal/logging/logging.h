@@ -39,7 +39,7 @@ Includes
 
 #include <string.h>
 #include <fractal/core/fractal.h>
-#include "clock.h"
+#include <fractal/utils/clock.h>
 
 /*
 ============================
