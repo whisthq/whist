@@ -85,6 +85,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             LOG_INFO("Switching back to Nvidia encoder for use with Nvidia capture!");
             encoder->active_encoder = NVIDIA_ENCODER;
             video_encoder_set_iframe(encoder);
+	    start_transfer_context(device, encoder);
         }
 #ifdef __linux__
         nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->width, device->height);

@@ -47,7 +47,7 @@ typedef struct CaptureDevice {
     CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
                                             // the right encoder
     bool pending_destruction;
-    bool must_recreate_nvidia; // set to true when the device must be recreated after capture screen failure
+    bool must_recreate_nvidia;
     FractalThread nvidia_manager;
     FractalSemaphore nvidia_device_semaphore;
     // TODO: put the next four elements in some kind of resize context

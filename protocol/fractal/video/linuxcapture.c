@@ -318,7 +318,7 @@ int capture_screen(CaptureDevice* device) {
             }
             // otherwise, nvidia failed!
             device->active_capture_device = X11_DEVICE;
-            device->must_recreate_nvidia = true;
+	    device->must_recreate_nvidia = true;
         }
         case X11_DEVICE:
             device->last_capture_device = X11_DEVICE;
