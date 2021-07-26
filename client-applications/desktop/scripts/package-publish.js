@@ -18,7 +18,7 @@ const packageNotarize = (env, config, version, environment, commit) => {
     helpers.setPackagedEnv(environment)
 
     // We hardcode the commit sha to the current commit
-    helpers.setPackagedCommit(commit)
+    helpers.setPackagedCommitSha(commit)
 
     helpers.populateSecretKeys([
         "AWS_ACCESS_KEY",
