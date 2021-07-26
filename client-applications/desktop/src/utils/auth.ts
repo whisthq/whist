@@ -67,10 +67,10 @@ const extractTokens = (response: Record<string, string>) => {
         }
     } catch {
         return {
-            subClaim: null,
-            userEmail: null,
-            refreshToken: null,
-            accessToken: null,
+            subClaim: undefined,
+            userEmail: undefined,
+            refreshToken: undefined,
+            accessToken: undefined,
         }
     }
 }
@@ -140,10 +140,10 @@ export const generateRandomConfigToken = () => {
 }
 
 export const authInfoValid = (authInfo: {
-    subClaim: string
-    userEmail: string
-    accessToken: string
-    refreshToken: string
+    subClaim?: string
+    userEmail?: string
+    accessToken?: string
+    refreshToken?: string
 }) => {
     return isEmpty(pickBy(authInfo, (x) => (x ?? "") === ""))
 }
