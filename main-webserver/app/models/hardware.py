@@ -41,29 +41,6 @@ class InstanceInfo(db.Model):
     commit_hash = db.Column(db.String(250), nullable=False)
 
 
-class InstanceSorted(db.Model):
-    """
-    A list of instance IDs and info, for selecting where
-    we deploy incoming tasks to.
-    Ordered by region (for faster SQL queries) and descending by
-    number of running mandelboxes (so we preferentially fill up old
-    instances rather than creating new ones).
-    See tests/aws/test_instance_selection for a bunch of sample instance sort orders.
-
-    Attributes:
-        instance_name (string): A unique identifier generated randomly to identify the instance.
-        location (string): where is the instance?
-        ami_id (string): What image is the instance running?
-    """
-
-    __tablename__ = "instance_sorted"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
-    location = db.Column(db.String(250), nullable=False)
-    aws_ami_id = db.Column(db.String(250), nullable=False)
-    commit_hash = db.Column(db.String(40), nullable=False)
-
-
 class InstancesWithRoomForMandelboxes(db.Model):
     """
     A map linking instance information to general mandelbox information
@@ -73,6 +50,7 @@ class InstancesWithRoomForMandelboxes(db.Model):
     Attributes:
         instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
+        status (string): what's the instance's status?
         ami_id (string):  What image is the instance running?
         mandelbox_capacity (int): How many mandelboxes can the instance have?
         num_running_mandelboxes (int): and how many does it have?
@@ -84,6 +62,7 @@ class InstancesWithRoomForMandelboxes(db.Model):
     location = db.Column(db.String(250), nullable=False)
     commit_hash = db.Column(db.String(40), nullable=False)
     aws_ami_id = db.Column(db.String(250), nullable=False)
+    status = db.Column(db.String(250), nullable=False)
     mandelbox_capacity = db.Column(db.Integer)
     num_running_mandelboxes = db.Column(db.Integer)
 

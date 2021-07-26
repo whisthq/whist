@@ -66,7 +66,9 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     # occupancy which can improve resource utilization.
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
         InstancesWithRoomForMandelboxes.query.filter_by(
-            commit_hash=client_commit_hash, location=region
+            commit_hash=client_commit_hash,
+            location=region,
+            status=str(InstanceState.ACTIVE.value),
         )
         .limit(1)
         .one_or_none()
@@ -79,7 +81,10 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             InstancesWithRoomForMandelboxes.query.filter(
                 InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
             )
-            .filter_by(commit_hash=client_commit_hash)
+            .filter_by(
+                commit_hash=client_commit_hash,
+                status=str(InstanceState.ACTIVE.value),
+            )
             .limit(1)
             .one_or_none()
         )
