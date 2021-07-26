@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/MicahParks/keyfunc v0.6.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
-	github.com/NVIDIA/go-nvml v0.11.1-0
+	github.com/NVIDIA/go-nvml v0.11.1-0 // indirect
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.5.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.12.0
