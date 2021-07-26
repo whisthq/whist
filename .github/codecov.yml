@@ -3,6 +3,11 @@ codecov:
     require_ci_to_pass: no
 
 coverage:
+    status:
+        project:
+            default:
+                target: auto
+                threshold: 1%
     precision: 5 # Number of decimal places, between 0 and 5
     round: down # up, down, or nearest
     range: "70...90" # First number represents red, and second represents green (default is 70..100)
