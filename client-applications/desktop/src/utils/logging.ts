@@ -19,11 +19,11 @@ import config, {
     loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
+import { sessionID } from "@app/utils/constants"
 
 app.setPath("userData", loggingBaseFilePath)
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
-const sessionID = new Date().getTime()
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 
 // Variable to let us know whether the user's aws_region in Amplitude has been
@@ -71,16 +71,29 @@ const localLog = (
     title: string,
     data: object,
     level: LogLevel,
-    userEmail: string
+    userEmail: string,
+    msElapsed?: number
 ) => {
-    const logs = formatLogs(`${title} -- ${userEmail}`, data, level)
+    const logs = formatLogs(
+        `${title} -- ${userEmail} -- ${(msElapsed !== undefined
+            ? msElapsed
+            : 0
+        ).toString()} ms since flow was triggered`,
+        data,
+        level
+    )
 
     if (!app.isPackaged) console.log(logs)
 
     logFile.write(logs)
 }
 
-const amplitudeLog = async (title: string, data: object, userEmail: string) => {
+const amplitudeLog = async (
+    title: string,
+    data: object,
+    userEmail: string,
+    msElapsed?: number
+) => {
     if (userEmail !== "") {
         if (!regionSet) {
             const region = await chooseRegion(defaultAllowedRegions)
@@ -90,7 +103,10 @@ const amplitudeLog = async (title: string, data: object, userEmail: string) => {
                 }] ${title}`,
                 session_id: sessionID,
                 user_id: userEmail,
-                event_properties: data,
+                event_properties: {
+                    ...data,
+                    msElapsed: msElapsed !== undefined ? msElapsed : 0,
+                },
                 user_properties: {
                     aws_region: region,
                 },
@@ -103,13 +119,21 @@ const amplitudeLog = async (title: string, data: object, userEmail: string) => {
                 }] ${title}`,
                 session_id: sessionID,
                 user_id: userEmail,
-                event_properties: data,
+                event_properties: {
+                    ...data,
+                    msElapsed: msElapsed !== undefined ? msElapsed : 0,
+                },
             })
         }
     }
 }
 
-export const logBase = async (title: string, data: object, level: LogLevel) => {
+export const logBase = (
+    title: string,
+    data: object,
+    level: LogLevel,
+    msElapsed?: number
+) => {
     /*
   Description:
       Sends a log to console, client.log file, and/or logz.io depending on if the app is packaged
@@ -119,9 +143,12 @@ export const logBase = async (title: string, data: object, level: LogLevel) => {
       level (LogLevel): Log level, see enum LogLevel above
   */
     const userEmail = persistGet("userEmail") ?? ""
+    localLog(title, data, level, userEmail as string, msElapsed)
 
-    await amplitudeLog(title, data, userEmail as string)
-    localLog(title, data, level, userEmail as string)
+    if (app.isPackaged)
+        amplitudeLog(title, data, userEmail as string, msElapsed).catch((err) =>
+            console.log(err)
+        )
 }
 
 export const uploadToS3 = async () => {
@@ -137,13 +164,7 @@ export const uploadToS3 = async () => {
 
     if (userEmail === "") return
 
-    const s3FileName = `CLIENT_${userEmail}_${new Date().getTime()}.txt`
-
-    await logBase(
-        "Logs upload to S3",
-        { s3FileName: s3FileName },
-        LogLevel.DEBUG
-    )
+    const s3FileName = `CLIENT_${userEmail}_${sessionID}.txt`
 
     const uploadHelper = async (localFilePath: string) => {
         const accessKey = config.keys.AWS_ACCESS_KEY
@@ -176,7 +197,5 @@ export const uploadToS3 = async () => {
 
     const logLocation = path.join(electronLogPath, loggingFiles.protocol)
 
-    if (fs.existsSync(logLocation)) {
-        await uploadHelper(logLocation)
-    }
+    if (fs.existsSync(logLocation)) await uploadHelper(logLocation)
 }
