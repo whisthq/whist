@@ -11,7 +11,7 @@ Includes
 */
 
 #include "fractal.h"  // header file for this protocol, includes winsock
-#include "../utils/logging.h"
+#include <fractal/logging/logging.h>
 
 #include <ctype.h>
 #include <stdio.h>

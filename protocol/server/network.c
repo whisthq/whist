@@ -19,7 +19,7 @@ Includes
 #include <fractal/core/fractal.h>
 #include <fractal/network/network.h>
 #include <fractal/input/input.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/error_monitor.h>
 #include <fractal/utils/aes.h>
 #include <stdio.h>
 

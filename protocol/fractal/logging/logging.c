@@ -48,7 +48,7 @@ format strings.
 #include <stdio.h>
 
 #include <fractal/core/fractal.h>
-#include "../network/network.h"
+#include <fractal/network/network.h>
 #include "logging.h"
 #include "error_monitor.h"
 

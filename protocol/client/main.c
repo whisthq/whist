@@ -34,9 +34,9 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
-#include <fractal/utils/logging.h>
-#include <fractal/utils/log_statistic.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/logging.h>
+#include <fractal/logging/log_statistic.h>
+#include <fractal/logging/error_monitor.h>
 #include "sdlscreeninfo.h"
 #include "audio.h"
 #include "client_utils.h"

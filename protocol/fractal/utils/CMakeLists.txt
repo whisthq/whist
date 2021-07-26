@@ -2,15 +2,10 @@ add_library(fractalUtils STATIC
         aes.h
         clock.h
         avpacket_buffer.h
-        logging.h
-        error_monitor.h
         window_name.h
         aes.c
         clock.c
         avpacket_buffer.c
-        logging.c
-        log_statistic.c
-        error_monitor.c
         window_name.c
         sysinfo.c
         png.c

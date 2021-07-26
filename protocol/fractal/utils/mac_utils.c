@@ -15,7 +15,7 @@ or to delete files/folders
 #include <stdio.h>
 #include <string.h>
 
-#include "logging.h"
+#include <fractal/logging/logging.h>
 
 int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf) {
     int err_code = remove(fpath);

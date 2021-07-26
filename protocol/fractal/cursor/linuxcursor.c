@@ -19,7 +19,7 @@ Includes
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
-#include "../utils/logging.h"
+#include <fractal/logging/logging.h>
 #include "cursor.h"
 #include "string.h"
 

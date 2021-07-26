@@ -18,7 +18,7 @@ Includes
 
 #include <fractal/core/fractal.h>
 #include <fractal/core/fractalgetopt.h>
-#include <fractal/utils/error_monitor.h>
+#include <fractal/logging/error_monitor.h>
 #include "parse_args.h"
 #include "network.h"
 

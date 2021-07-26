@@ -117,6 +117,7 @@ target_link_libraries(FractalClient
         fractalVideo
         fractalClipboard
         fractalNetwork
+        fractalLogging
         fractalUtils
         ${STATIC_SDL2}
         sentry
