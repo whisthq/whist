@@ -11,6 +11,7 @@ export const routes = {
     DASHBOARD: "/dashboard",
     LANDING: "/:first?/:second?",
     PRODUCTS: "/products",
+    TECHNOLOGY: "/technology"
 }
 
 export default routes

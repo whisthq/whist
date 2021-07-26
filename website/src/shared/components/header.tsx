@@ -24,7 +24,7 @@ const about = [
     {
         name: "Technology",
         description: "How Fractal's proprietary technology works.",
-        href: "#",
+        href: "/technology",
         icon: CursorClickIcon,
     },
     {

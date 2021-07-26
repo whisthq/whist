@@ -1,7 +1,8 @@
 import React from "react"
 import { Route, Switch } from "react-router-dom"
 
-import About from "@app/pages/about"
+import Company from "@app/pages/about/company"
+import Technology from "@app/pages/about/technology"
 import Cookies from "@app/pages/legal/cookies"
 import Privacy from "@app/pages/legal/privacy"
 import TermsOfService from "@app/pages/legal/tos"
@@ -18,7 +19,9 @@ const RootApp = () => {
     */
     return (
         <Switch>
-            <Route exact path={routes.ABOUT} component={withTracker(About)} />
+            <Route exact path={routes.ABOUT} component={withTracker(Company)} />
+            <Route exact path={routes.TECHNOLOGY} component={withTracker(Technology)} />
+
             <Route
                 exact
                 path={routes.COOKIES}
