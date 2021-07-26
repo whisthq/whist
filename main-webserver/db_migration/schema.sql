@@ -92,7 +92,7 @@ CREATE FUNCTION hardware.change_trigger() RETURNS trigger
            INSERT INTO logging.t_instance_history (
              tabname, schemaname, operation, new_val, old_val
            )
-           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), 
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW),
 row_to_json(OLD));
            RETURN NEW;
          ELSIF  TG_OP = 'UPDATE'
@@ -131,7 +131,7 @@ CREATE FUNCTION hardware.change_trigger_regions() RETURNS trigger
            INSERT INTO logging.t_region_history (
              tabname, schemaname, operation, new_val, old_val
            )
-           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW), 
+           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW),
 row_to_json(OLD));
            RETURN NEW;
          ELSIF TG_OP = 'DELETE'
@@ -233,18 +233,21 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
     sub_with_running.aws_ami_id,
     sub_with_running.commit_hash,
     sub_with_running.location,
+    sub_with_running.status,
     sub_with_running.mandelbox_capacity,
     sub_with_running.num_running_mandelboxes
    FROM ( SELECT base_table.instance_name,
             base_table.aws_ami_id,
             base_table.location,
             base_table.commit_hash,
+            base_table.status,
             base_table.mandelbox_capacity,
             COALESCE(base_table.count, (0)::bigint) AS num_running_mandelboxes
            FROM (( SELECT instance_info.instance_name,
                     instance_info.aws_ami_id,
                     instance_info.location,
                     instance_info.commit_hash,
+                    instance_info.status,
                     instance_info.mandelbox_capacity
                    FROM hardware.instance_info
                   WHERE (((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text))) instances
@@ -254,20 +257,6 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
                   GROUP BY mandelbox_info.instance_name) mandelboxes ON (((instances.instance_name)::text = (mandelboxes.cont_inst)::text))) base_table) sub_with_running
   WHERE (sub_with_running.num_running_mandelboxes < sub_with_running.mandelbox_capacity)
   ORDER BY sub_with_running.location, sub_with_running.num_running_mandelboxes DESC;
-
-
---
--- Name: instance_sorted; Type: VIEW; Schema: hardware; Owner: -
---
-
-CREATE VIEW hardware.instance_sorted AS
- SELECT instance_info.instance_name,
-    instance_info.aws_ami_id,
-    instance_info.commit_hash,
-    instance_info.location
-   FROM hardware.instance_info
-  WHERE (((instance_info.instance_name)::text IN ( SELECT instances_with_room_for_mandelboxes.instance_name
-           FROM hardware.instances_with_room_for_mandelboxes)) AND (instance_info.last_updated_utc_unix_ms <> '-1'::integer) AND ((instance_info.status)::text = 'ACTIVE'::text));
 
 
 --
@@ -727,4 +716,3 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 --
 -- PostgreSQL database dump complete
 --
-
