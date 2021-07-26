@@ -318,7 +318,7 @@ Note that all conftest files contain test fixtures for their respective director
 ├── pytest.ini --> pytest config
 ├── requirements-test.txt --> test package requirements
 ├── requirements.txt --> packages you need to run the webserver
-├── runtime.txt --> desired python version
+├── runtime.txt --> desired Python version
 ├── run-web.sh --> script to spawn the web process.
 └── tests --> tests for our assorted endpoints.  All files without docs
     should be assumed to unit test the endpoints/bps they name.

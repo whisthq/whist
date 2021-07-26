@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This file sets up execution with a GitHub Actions environment. It should
 # be the ENTRYPOINT in the Dockerfile for the migration Action.

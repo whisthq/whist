@@ -38,7 +38,7 @@ jobs:
                   hadolint ./mandelbox-images/*/Dockerfile.20
                   hadolint ./mandelbox-images/*/*/Dockerfile.20
 
-    # Linting/formatting python code in mandelbox-images
+    # Linting/formatting Python code in mandelbox-images
     mandelbox-images-python-scripts-linting:
         name: Lint Mandelbox-Images Python Scripts
         runs-on: ubuntu-20.04
@@ -47,10 +47,10 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
+            - name: Set up Python 3.9.5
               uses: actions/setup-python@v2
               with:
-                  python-version: "3.8"
+                  python-version: "3.9.5"
 
             - name: Install requirements
               working-directory: mandelbox-images

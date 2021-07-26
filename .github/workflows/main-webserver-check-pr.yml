@@ -28,10 +28,10 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
+            - name: Set up Python 3.9.5
               uses: actions/setup-python@v2
               with:
-                  python-version: "3.8"
+                  python-version: "3.9.5"
 
             - name: Install Dependencies
               working-directory: main-webserver
@@ -68,10 +68,10 @@ jobs:
               with:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
-            - name: Set up Python 3.8
+            - name: Set up Python 3.9.5
               uses: actions/setup-python@v2
               with:
-                  python-version: "3.8"
+                  python-version: "3.9.5"
 
             - name: Set the workflow's environment parameters
               id: set-environment
@@ -220,10 +220,10 @@ jobs:
                   ${{ toJSON(matrix) }}
                   """
 
-            - name: Set up Python 3.8
+            - name: Set up Python 3.9.5
               uses: actions/setup-python@v2
               with:
-                  python-version: "3.8"
+                  python-version: "3.9.5"
 
             - name: Determine heroku app name
               run: |

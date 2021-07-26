@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 TITLE_ERROR = "An error occured while comparing the database schema."
 

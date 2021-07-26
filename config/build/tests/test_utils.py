@@ -1,9 +1,6 @@
-#!/usr/bin/env python
-import pytest
-import itertools
+#!/usr/bin/env python3
 import toolz
 import helpers.utils as utils
-from functools import partial
 from pathlib import Path
 
 example_dict1 = {

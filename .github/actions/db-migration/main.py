@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # The exit codes for this script will mimic the migra diff tool
 # that it depends on.

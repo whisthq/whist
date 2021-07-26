@@ -1,4 +1,3 @@
-# FROM postgres:13.3
 FROM python:3.9.5
 
 # Install lsb-release right away, as we need it to create a repository
@@ -40,7 +39,7 @@ COPY . /root
 RUN pip install -r /root/requirements.txt
 
 # Our entrypoint will be a series of commands that will start the database
-# server, create databases for the diff process, and then run our python
+# server, create databases for the diff process, and then run our Python
 # program. Because multiple steps are required, we use an external script.
 
 # The entrypoint script will append any additional arguments to its command.
