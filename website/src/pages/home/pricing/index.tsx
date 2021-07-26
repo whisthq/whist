@@ -20,17 +20,17 @@ const Pricing = () => {
             <div className="pt-12 sm:pt-16 lg:pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
-                        <div className="text-3xl text-gray-300 sm:text-4xl lg:text-5xl">
+                        <div className="text-3xl text-gray-300 sm:text-4xl lg:text-5xl mb-4">
                             Try Fractal for free
                         </div>
-                        <p className="mt-4 text-xl text-gray-500">
+                        <p className="m-auto text-lg text-gray-500 max-w-screen-sm">
                             You&lsquo;ll start with a 14 day free trial, after
-                            which we&lsquo;ll ask for a small &lsquo;supporter
-                            contribution&lsquo;.
+                            which you&lsquo;ll have to option to continue using
+                            Fractal by becoming a supporter.
                         </p>
                         <Link to="download" spy={true} smooth={true}>
                             <FractalButton
-                                className="mt-4 mb-4"
+                                className="mt-8 mb-4"
                                 contents="DOWNLOAD NOW"
                                 state={FractalButtonState.DEFAULT}
                             />
@@ -42,17 +42,27 @@ const Pricing = () => {
                 <div className="relative">
                     <div className="relative">
                         <div className="max-w-lg mx-auto overflow-hidden lg:max-w-none lg:flex lg:items-start">
-                            <div className="bg-blue-darker px-6 py-8 lg:p-12 lg:pr-36 rounded-lg">
-                                <h3 className="text-2xl text-gray-300 sm:text-3xl">
-                                    Become a Supporter
-                                </h3>
-                                <p className="mt-6 text-base text-gray-400">
-                                    Until November 1, 2021, you&lsquo;ll have
-                                    the opportunity to become a supporter. Since
-                                    our current focus is building a great
-                                    product, not revenue, we&lsquo;ll ask our
-                                    supporters to help us decide a fair,
-                                    long-term pricing model.
+                            <div className="bg-blue-darker px-6 py-8 lg:p-12 rounded-lg">
+                                <div className="flex justify-between w-full">
+                                    <h3 className="text-2xl text-gray-300 sm:text-3xl">
+                                        Become a Supporter
+                                    </h3>
+                                    <div className="flex items-center justify-center text-3xl text-gray-200">
+                                        <span>$10</span>
+                                        <span className="ml-2 text-sm text-gray-400">
+                                            USD
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="mt-6 text-base text-gray-400 tracking-wider">
+                                    You can continue using Fractal after your
+                                    14-day free trial by becoming a supporter
+                                    via a one-time, $10 supporter fee. This is
+                                    because our current focus is building a
+                                    great product, not revenue. This offer
+                                    expires on November 1, 2020, at which point
+                                    we&lsquo;ll ask our supporters to help us
+                                    decide a fair, long-term pricing model.
                                 </p>
                                 <div className="mt-8">
                                     <div className="flex items-center">
@@ -79,24 +89,6 @@ const Pricing = () => {
                                             </li>
                                         ))}
                                     </ul>
-                                </div>
-                            </div>
-                            <div className="py-8 px-6 text-center bg-blue-200 lg:flex-shrink-0 lg:flex lg:flex-col lg:justify-center lg:p-16 rounded-lg sm:mt-4 bg-gray-100 max-w-lg relative lg:right-12 lg:top-16">
-                                <p className="text-lg leading-6 font-medium text-gray-900">
-                                    Pay once, become a supporter forever
-                                </p>
-                                <div className="mt-4 flex items-center justify-center text-5xl font-extrabold text-gray-900">
-                                    <span>$10</span>
-                                    <span className="ml-3 text-xl font-medium text-gray-500">
-                                        USD
-                                    </span>
-                                </div>
-                                <div className="mt-4 text-sm">
-                                    <div className="font-medium text-gray-900">
-                                        After your 14 day free trial has
-                                        expired, you&lsquo;ll have the option to
-                                        become a supporter.
-                                    </div>
                                 </div>
                             </div>
                         </div>

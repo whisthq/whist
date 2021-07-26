@@ -30,7 +30,7 @@ export const Chrome = () => {
             )}
         >
             <div className="pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden">
-                <Header dark={dark} />
+                <Header />
                 <Top />
                 <Middle />
                 <Features />
