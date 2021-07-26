@@ -1,6 +1,6 @@
 codecov:
     branch: dev
-    require_ci_to_pass: yes
+    require_ci_to_pass: no
 
 coverage:
     precision: 5 # Number of decimal places, between 0 and 5
