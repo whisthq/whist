@@ -361,7 +361,7 @@ jobs:
               run: ./notifications/setup_notifications.sh
 
             - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+              run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -395,11 +395,11 @@ jobs:
                   data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
                   data["github_username"] = "${{ secrets.GHA_USERNAME }}"
                   data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  data["git_hash"] = "${{ env.commit_sha }}"
+                  data["git_hash"] = "${{ env.commit_hash }}"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["ami_name"] = f"fractal-ami-${{ env.commit_sha }}-{date_str}"
+                  data["ami_name"] = f"fractal-ami-${{ env.commit_hash }}-{date_str}"
                   data["source_region"] = "${{ env.aws_new_ami_source_region }}"
                   data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
                   data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
@@ -612,7 +612,7 @@ jobs:
               run: ./notifications/setup_notifications.sh
 
             - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+              run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
             - name: Install webserver dependencies for running the flask cli
               working-directory: main-webserver
@@ -630,11 +630,11 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   RUNNING_LOCALLY: true
                   APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
-                  APP_GIT_COMMIT: ${{ env.commit_sha }}
+                  APP_GIT_COMMIT: ${{ env.commit_hash }}
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
-              run: flask command ami_upgrade ${{ env.commit_sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+              run: flask command ami_upgrade ${{ env.commit_hash }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
@@ -871,6 +871,9 @@ jobs:
             #############################################################################################
             #################################### Publish Steps START ####################################
 
+            - name: Retrieve Current Git Hash as Environment Variable
+              run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
             - name: Retrieve Desktop App Version from Config Database
               id: generate-release-version
               shell: bash --noprofile --norc -eo pipefail {0}
@@ -998,7 +1001,7 @@ jobs:
             #      --config="{}" \
             #      --version=${{ env.desktop_app_new_version }} \
             #      --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
-            #       --commit=${{ env.commit_sha }}
+            #       --commit=${{ env.commit_hash }}
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
@@ -1023,7 +1026,7 @@ jobs:
                   --config="{}" \
                   --version=${{ env.desktop_app_new_version }} \
                   --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
-                  --commit=${{ env.commit_sha }}
+                  --commit=${{ env.commit_hash }}
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
