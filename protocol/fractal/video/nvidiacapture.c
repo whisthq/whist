@@ -158,7 +158,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     NVFBC_CREATE_CAPTURE_SESSION_PARAMS create_capture_params = {0};
     NVFBC_SIZE frame_size = {0, 0};
     create_capture_params.dwVersion = NVFBC_CREATE_CAPTURE_SESSION_PARAMS_VER;
-    create_capture_params.eCaptureType = NVFBC_CAPTURE_TO_GL;
+    create_capture_params.eCaptureType = NVFBC_CAPTURE_SHARED_CUDA;
     create_capture_params.bWithCursor = NVFBC_FALSE;
     create_capture_params.frameSize = frame_size;
     create_capture_params.bRoundFrameSize = NVFBC_TRUE;
