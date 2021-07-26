@@ -2,8 +2,6 @@
 
 // TODO: figure out a good max size and consolidate frame sizes
 #define MAX_RING_BUFFER_SIZE 500
-#define LARGEST_AUDIO_FRAME_SIZE 9000
-#define LARGEST_VIDEO_FRAME_SIZE 1000000
 #define MAX_VIDEO_PACKETS 500
 #define MAX_AUDIO_PACKETS 3
 
@@ -75,7 +73,7 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
 
     // determine largest frame size
     ring_buffer->largest_frame_size =
-        ring_buffer->type == FRAME_VIDEO ? LARGEST_VIDEO_FRAME_SIZE : LARGEST_AUDIO_FRAME_SIZE;
+        ring_buffer->type == FRAME_VIDEO ? LARGEST_VIDEOFRAME_SIZE : LARGEST_AUDIOFRAME_SIZE;
 
     // determine how we will allocate frames
     if (ring_buffer->type == FRAME_VIDEO) {

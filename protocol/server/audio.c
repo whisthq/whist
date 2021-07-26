@@ -135,10 +135,10 @@ int32_t multithreaded_send_audio(void* opaque) {
                     }
 
                     // TODO: make this a constant
-                    if (audio_encoder->encoded_frame_size > 9000) {
+                    if (audio_encoder->encoded_frame_size > LARGEST_AUDIOFRAME_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else {
-                        static char buf[9000];
+                        static char buf[LARGEST_AUDIOFRAME_SIZE];
                         AudioFrame* frame = (AudioFrame*)buf;
                         frame->data_length = audio_encoder->encoded_frame_size;
 

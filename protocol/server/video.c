@@ -510,7 +510,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 } else {
                     // Create frame struct with compressed frame data and
                     // metadata
-                    static char buf[LARGEST_FRAME_SIZE];
+                    static char buf[LARGEST_VIDEOFRAME_SIZE];
                     VideoFrame* frame = (VideoFrame*)buf;
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
