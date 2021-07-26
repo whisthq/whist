@@ -51,9 +51,9 @@ jobs:
                   make check
 
                   # Show format-induced diff in GitHub Actions logs
-                  printf "\n\n\n =============="
+                  printf "\n\n\n==============\n"
                   git diff HEAD --
-                  printf "\n\n\n =============="
+                  printf "\n==============\n\n\n"
 
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
