@@ -37,7 +37,7 @@ jobs:
                   python-version: "3.9.5"
 
             - name: Install webserver scripting dependencies
-              working-directory: main-webserver
+              working-directory: webserver
               run: pip install -r scripts/requirements.txt
 
             ######################## Building ECS Host Service ########################

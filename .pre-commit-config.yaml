@@ -66,8 +66,8 @@ repos:
       rev: pylint-2.7.2
       hooks:
           - id: pylint
-            name: "pylint (for /main-webserver)"
-            files: '^main-webserver/.*\.py'
+            name: "pylint (for /webserver)"
+            files: '^webserver/.*\.py'
             language_version: python3
             args: [--rcfile, pylintrc]
 
