@@ -8,6 +8,7 @@ import Cookies from "@app/pages/legal/cookies"
 import Privacy from "@app/pages/legal/privacy"
 import TermsOfService from "@app/pages/legal/tos"
 import Landing from "@app/pages/home"
+import FAQ from "@app/pages/about/faq"
 
 import routes from "@app/shared/constants/routes"
 import withTracker from "@app/shared/utils/withTracker"
@@ -26,6 +27,7 @@ const RootApp = () => {
                 path={routes.TECHNOLOGY}
                 component={withTracker(Technology)}
             />
+            <Route exact path={routes.FAQ} component={withTracker(FAQ)} />
             <Route
                 exact
                 path={routes.SECURITY}

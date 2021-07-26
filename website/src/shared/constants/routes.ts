@@ -13,6 +13,7 @@ export const routes = {
     PRODUCTS: "/products",
     TECHNOLOGY: "/technology",
     SECURITY: "/security",
+    FAQ: "/faq",
 }
 
 export default routes

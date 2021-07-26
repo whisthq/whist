@@ -35,9 +35,8 @@ const about = [
     },
     {
         name: "FAQ",
-        description:
-            "Connect with third-party tools that you're already using.",
-        href: "#",
+        description: "Answers to commonly-asked questions.",
+        href: "/faq",
         icon: ViewGridIcon,
     },
 ]
