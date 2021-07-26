@@ -1,16 +1,9 @@
-#!/usr/bin/env python
-import pytest
-import yaml
-import os
+#!/usr/bin/env python3
 import json
-import click
 import tests.mock_data as mock_data
 import helpers.cli
-import helpers.validate as validate
 import helpers.parse as parse
-from pathlib import Path
 from click.testing import CliRunner
-from contextlib import contextmanager
 from helpers.utils import temporary_fs
 
 runner = CliRunner()

@@ -1,12 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import pytest
-import yaml
-import os
-import toolz
 import tests.mock_data as mock_data
 import helpers.parse as parse
 from pathlib import Path
-from contextlib import contextmanager
 from helpers.utils import temporary_fs
 from helpers.validate import ValidationError
 

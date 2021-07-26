@@ -153,7 +153,7 @@ def copy_locally_built_protocol(cont):
     Takes in a Container object and copies the locally built version of the
     protocol into the corresponding Mandelbox.
     """
-    # The docker python API is stupid, so we first need to tar the protocol directory
+    # The docker Python API is stupid, so we first need to tar the protocol directory
     fileobj = io.BytesIO()
     with tarfile.open(fileobj=fileobj, mode="w") as tar:
         os.chdir(protocol_build_path)

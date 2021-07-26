@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This file contains a function `slack_post` to post messages to Slack. It is typically
 used in our GitHub Actions workflows and only requires the requests Python package. This
