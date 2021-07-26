@@ -32,7 +32,7 @@ typedef struct AudioFrame {
 
 // The maximum possible valid size of a VideoFrame*
 // It is guaranteed that no valid VideoFrame will be larger than this,
-// since all valid frames will have a videodata_length less than MAX_FRAME_VIDEODATA_SIZE
+// since all valid frames will have a videodata_length less than MAX_VIDEOFRAME_DATA_SIZE
 #define LARGEST_VIDEOFRAME_SIZE 1000000
 // The maximum possible valid size of an audio frame: a little more than 8192 bytes, which is the
 // frame size of the decoded data
