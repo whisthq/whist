@@ -40,6 +40,7 @@ const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
 ) as Observable<{
     subClaim: string
     accessToken: string
+    refreshToken: string
     configToken: string
     region?: AWSRegion
 }>
