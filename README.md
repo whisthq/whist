@@ -44,13 +44,13 @@ The Fractal monorepository contains 8 Fractal subrepositories:
 | Subrepository       | Description                                                                                           |
 | ------------------- | ----------------------------------------------------------------------------------------------------- |
 | client-applications | The client-side Electron-based application users download and use to launch a streamed application.   |
-| mandelbox-images    | The Dockerfiles defining the mandelbox images and helper scripts for the applications we stream.      |
 | core-ts             | The Fractal internal TypeScript library of utilities and reusable components.                         |
 | ecs-host-service    | The Fractal service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
 | host-setup          | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal mandelboxes. |
-| webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.   |
+| mandelbox-images    | The Dockerfiles defining the mandelbox images and helper scripts for the applications we stream.      |
 | microservices       | Code we deploy to other platforms, like Auth0.                                                        |
 | protocol            | The streaming technology API, both client and server, for streaming applications to users.            |
+| webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.   |
 | website             | The website hosted at `fractal.co`.                                                                   |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
