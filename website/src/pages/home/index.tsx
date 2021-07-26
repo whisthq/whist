@@ -7,10 +7,10 @@ import { withContext } from "@app/shared/utils/context"
 
 import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"
-import Top from "./top"
-import Middle from "./middle"
+import Hero from "./hero"
+import Benefits from "./benefits"
 import Features from "./features"
-import ActionPrompt from "./bottom"
+import Download from "./download"
 import Users from "./users"
 import Pricing from "./pricing"
 
@@ -23,20 +23,15 @@ export const Chrome = () => {
     const { dark } = withContext()
 
     return (
-        <div
-            className={classNames(
-                "overflow-x-hidden",
-                dark ? "dark bg-blue-darkest" : "bg-white"
-            )}
-        >
+        <div className="dark bg-blue-darkest">
             <div className="pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden">
                 <Header />
-                <Top />
-                <Middle />
+                <Hero />
+                <Benefits />
                 <Features />
                 <Users />
                 <Pricing />
-                <ActionPrompt />
+                <Download />
             </div>
             <Footer />
         </div>

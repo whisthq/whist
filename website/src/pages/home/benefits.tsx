@@ -1,16 +1,85 @@
 import React from "react"
+import { Row, Col } from "react-bootstrap"
+import { CheckIcon } from "@heroicons/react/outline"
+import { HashLink } from "react-router-hash-link"
 
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 
 import ChromeBackground from "@app/assets/largeGraphics/speedTestBackground.svg"
 import SpeedTest from "@app/assets/gifs/speedTest.gif"
-import AnimatedLineA from "./animatedLineA"
-import AnimatedLineB from "./animatedLineB"
-import Router from "@app/assets/icons/router.svg"
-import BrowsingData from "@app/assets/icons/browsingData.svg"
+import {
+    AnimatedLineA,
+    AnimatedLineB,
+} from "@app/pages/home/components/animatedLines"
 
-import VerticalTemplate from "./verticalTemplate"
+const features = [
+    {
+        name: "Built-in VPN",
+        description:
+            "When you visit websites on Fractal, you will not send the IP address of your computer but rather the IP of the datacenter that Fractal runs on.",
+    },
+    {
+        name: "Browsing Data Privacy",
+        description:
+            "Whereas Chrome caches your browsing data (history, cookies, etc.) onto your computer, Fractal encrypts it and stores it in a server that only you can access.",
+    },
+    {
+        name: "Computer Info Privacy",
+        description:
+            "Normal websites track you by pulling information about your computer's operating system, location, etc. This is impossible to do with Fractal.",
+    },
+    {
+        name: "Malware Protection",
+        description:
+            "Unwanted downloads will be downloaded onto a remote server instead of infecting your computer.",
+    },
+    {
+        name: "Local Network Protection",
+        description:
+            "All information sent over the network via Fractal is AES encrypted and protected against anyone spying on your network.",
+    },
+]
+
+export const VerticalTemplate = (props: {
+    visible: boolean
+    title: JSX.Element
+    text: JSX.Element
+    image: JSX.Element
+    background?: boolean
+}) => {
+    /*
+        Template for arranging text and images vertically
+
+        Arguments:
+            visible (boolean): Should the image be visible
+            title (Element): Title
+            text (Element): Text under title
+            image (Element): Image under text
+            background (boolean): Should the animated background be visible
+    */
+
+    const { width } = withContext()
+    const { title, text, image, visible } = props
+
+    return (
+        <div className="mt-24 md:mt-52">
+            <Row>
+                <Col md={12} className="text-center">
+                    <div className="text-gray dark:text-gray-300 text-4xl md:text-6xl mb-8 leading-relaxed">
+                        {title}
+                    </div>
+                    <div className="max-w-screen-sm m-auto text-gray dark:text-gray-400 md:text-lg tracking-wider">
+                        {text}
+                    </div>
+                </Col>
+                <Col md={12} className="text-center mt-4">
+                    {visible && image}
+                </Col>
+            </Row>
+        </div>
+    )
+}
 
 export const Middle = () => {
     /*
@@ -126,63 +195,37 @@ export const Middle = () => {
                 }
                 text={
                     <div className="mt-2 text-md text-gray-400 mb-4">
-                        Because Fractal runs in datacenters, your IP address and
-                        location are hidden from websites (similar to a VPN),
-                        and your browsing data is not stored on your computer.
+                        Because Fractal runs in a remote datacenter, your
+                        browser and all its data are entirely decoupled from
+                        your personal computer.
                     </div>
                 }
                 image={
-                    <div
-                        className="rounded border-2 border-white border-solid padding px-4 md:px-10 py-4 shadow-xl w-72 md:w-96 m-auto text-white tracking-wide mt-16 text-sm shadow-bright"
-                        style={{
-                            background: "#0E042C",
-                        }}
-                    >
-                        <div className="max-h-10 md:max-h-12 w-full pt-3">
-                            <div className="flex w-full">
-                                <div>
-                                    <img
-                                        src={Router}
-                                        className="relative w-6 mr-4 bottom-1"
-                                        alt="router"
-                                    />
+                    <>
+                        <dl className="mt-8 space-y-10 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-3 lg:gap-x-8 bg-gray-900 p-12">
+                            {features.map((feature) => (
+                                <div key={feature.name} className="relative">
+                                    <dt>
+                                        <CheckIcon
+                                            className="absolute h-6 w-6 text-green-500"
+                                            aria-hidden="true"
+                                        />
+                                        <p className="ml-9 text-lg leading-6 font-medium text-gray-300 text-left">
+                                            {feature.name}
+                                        </p>
+                                    </dt>
+                                    <dd className="mt-2 ml-9 text-base text-gray-500 text-left">
+                                        {feature.description}
+                                    </dd>
                                 </div>
-                                <div className="text-lg text-gray-300 tracking-wider">
-                                    IP Address
-                                </div>
-                            </div>
-                            <div
-                                className="relative bg-blue-light text-blue px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-8"
-                                style={{
-                                    left: width > ScreenSize.MEDIUM ? 275 : 170,
-                                }}
-                            >
-                                Not Traced
-                            </div>
-                        </div>
-                        <div className="max-h-10 md:max-h-12 w-full mt-4">
-                            <div className="flex w-full">
-                                <div>
-                                    <img
-                                        src={BrowsingData}
-                                        className="w-6 mr-4"
-                                        alt="data"
-                                    />
-                                </div>
-                                <div className="text-lg text-gray-300 tracking-wider">
-                                    Browsing Data
-                                </div>
-                            </div>
-                            <div
-                                className="relative animate-bounce bg-mint text-black px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-6 delay-500 duration-500"
-                                style={{
-                                    left: width > ScreenSize.MEDIUM ? 275 : 170,
-                                }}
-                            >
-                                Not Stored
-                            </div>
-                        </div>
-                    </div>
+                            ))}
+                        </dl>
+                        <HashLink to="/security#top">
+                            <button className="mt-12 text-gray-300 bg-blue py-2 px-8 rounded-3xl">
+                                Read more about security
+                            </button>
+                        </HashLink>
+                    </>
                 }
             />
         </div>

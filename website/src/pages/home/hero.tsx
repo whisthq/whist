@@ -5,7 +5,6 @@ import { Link } from "react-scroll"
 
 import { withContext } from "@app/shared/utils/context"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
-import Geometric from "./geometric"
 import YoutubeLogo from "@app/assets/icons/youtubeLogo.svg"
 import NotionLogo from "@app/assets/icons/notionLogo.svg"
 import ShopifyLogo from "@app/assets/icons/shopifyLogo.svg"
@@ -17,37 +16,6 @@ import {
     FractalButton,
     FractalButtonState,
 } from "@app/pages/home/components/button"
-
-const SymmetricGeometric = (props: any) => (
-    <FadeIn>
-        <div
-            className={props.className}
-            style={{
-                top: 400,
-                left: 425,
-            }}
-        >
-            <Geometric
-                className="relative pointer-events-none"
-                scale={3}
-                flip={false}
-            />
-        </div>
-        <div
-            className={props.className}
-            style={{
-                top: 400,
-                right: -840,
-            }}
-        >
-            <Geometric
-                className="relative pointer-events-none"
-                scale={3}
-                flip={true}
-            />
-        </div>
-    </FadeIn>
-)
 
 export const Top = () => {
     /*
@@ -63,9 +31,6 @@ export const Top = () => {
     return (
         <div>
             <div className="text-white text-lg m-auto text-center py-8"></div>
-            {width > ScreenSize.MEDIUM && (
-                <SymmetricGeometric className="absolute" />
-            )}
             <div className="mt-16 text-center">
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1500 : 0}>
                     <div className="text-5xl md:text-8xl dark:text-gray-300">

@@ -1,5 +1,6 @@
 import React from "react"
 import { Row } from "react-bootstrap"
+import { HashLink } from "react-router-hash-link"
 
 import Lock from "@app/assets/icons/lock.svg"
 import Cloud from "@app/assets/icons/cloud.svg"
@@ -61,6 +62,11 @@ export const Features = () => {
                     text="Fractal’s proprietary streaming technology runs at 60+ FPS with no noticeable lag."
                 />
             </Row>
+            <HashLink to="/technology#top">
+                <button className="mt-12 text-gray-300 bg-blue py-2 px-8 rounded-3xl">
+                    Read more about the technology
+                </button>
+            </HashLink>
         </div>
     )
 }

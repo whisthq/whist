@@ -18,8 +18,8 @@ const Detailed = () => {
                         consider: security of your browsing stream and security
                         of your browsing data.
                     </p>
-                    <p className="mt-8 text-xl text-mint leading-8 text-left underline">
-                        How We Secure your Browsing Stream
+                    <p className="mt-8 text-xl text-mint leading-8 text-left">
+                        How We Secure Your Browsing Stream
                     </p>
                     <p className="mt-8 text-xl text-gray-400 leading-8 text-left">
                         Each one of your packets is encrypted for every leg of
@@ -35,8 +35,8 @@ const Detailed = () => {
                         readable inside your browser, and your audio and visuals
                         only visible by you. Just like a browser should be.
                     </p>
-                    <p className="mt-8 text-xl text-mint leading-8 text-left underline">
-                        How We Secure your Browsing Data
+                    <p className="mt-8 text-xl text-mint leading-8 text-left">
+                        How We Secure Your Browsing Data
                     </p>
                     <p className="mt-8 text-xl text-gray-400 leading-8 text-left">
                         We know what you're thinking: 'if Fractal's saving

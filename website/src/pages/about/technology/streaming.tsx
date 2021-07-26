@@ -3,7 +3,7 @@ import React from "react"
 const metrics = [
     {
         id: 1,
-        stat: "300MB",
+        stat: "300 MB",
         text: "RAM usage",
     },
     {
@@ -13,13 +13,13 @@ const metrics = [
     },
     {
         id: 3,
-        stat: "<20ms",
+        stat: "<20 ms",
         text: "Latency introduced by Fractal",
     },
     {
         id: 4,
-        stat: "10Mbps",
-        text: "Bandwidth used by Fractal.",
+        stat: "60+",
+        text: "Frames per second",
     },
 ]
 

@@ -11,7 +11,7 @@ const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
 
 const Technology = () => {
     return (
-        <>
+        <div id="top">
             <div className={classNames(padded, "bg-blue-darkest")}>
                 <Header />
                 <Hero />
@@ -30,7 +30,7 @@ const Technology = () => {
             <div className={classNames(padded, "bg-blue-darker")}>
                 <Footer />
             </div>
-        </>
+        </div>
     )
 }
 
