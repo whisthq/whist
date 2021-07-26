@@ -43,8 +43,9 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
  * The implementations of the screencapture.h API internally decide what capture device to use.
  */
 typedef struct CaptureDevice {
-    CaptureDeviceType active_capture_device;
-    CaptureDeviceType last_capture_device;
+    CaptureDeviceType active_capture_device;  // the device currently used for capturing
+    CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
+                                            // the right encoder
     bool pending_destruction;
     FractalThread nvidia_manager;
     FractalSemaphore nvidia_device_semaphore;
