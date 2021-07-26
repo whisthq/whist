@@ -360,9 +360,6 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -395,11 +392,11 @@ jobs:
                   data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
                   data["github_username"] = "${{ secrets.GHA_USERNAME }}"
                   data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-                  data["git_hash"] = "${{ env.commit_hash }}"
+                  data["git_hash"] = "$GITHUB_SHA"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["ami_name"] = f"fractal-ami-${{ env.commit_hash }}-{date_str}"
+                  data["ami_name"] = f"fractal-ami-$GITHUB_SHA-{date_str}"
                   data["source_region"] = "${{ env.aws_new_ami_source_region }}"
                   data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
                   data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
@@ -611,9 +608,6 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
             - name: Install webserver dependencies for running the flask cli
               working-directory: main-webserver
               run: pip install -r requirements.txt
@@ -630,11 +624,11 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   RUNNING_LOCALLY: true
                   APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
-                  APP_GIT_COMMIT: ${{ env.commit_hash }}
+                  APP_GIT_COMMIT: $GITHUB_SHA
               id: run-main-webserver-cli-ami-upgrade
               working-directory: main-webserver
               shell: bash
-              run: flask command ami_upgrade ${{ env.commit_hash }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+              run: flask command ami_upgrade $GITHUB_SHA "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
 
             - name: Notify Slack that AMI upgrade has completed succesfully
               if: always() && (steps.run-main-webserver-cli-ami-upgrade.outcome == 'success')
@@ -871,9 +865,6 @@ jobs:
             #############################################################################################
             #################################### Publish Steps START ####################################
 
-            - name: Retrieve Current Git Hash as Environment Variable
-              run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
             - name: Retrieve Desktop App Version from Config Database
               id: generate-release-version
               shell: bash --noprofile --norc -eo pipefail {0}
@@ -913,9 +904,6 @@ jobs:
                   echo "Current prod version: $MAJOR.$MINOR.$MICRO"
                   echo "Current staging version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
                   echo "Current dev version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
-
-                  # retrieve Git commit hash for the current branch (prod, staging, or dev)
-                  echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
                   # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
                   if [[ "$BRANCH_NAME" == "prod" ]]; then
@@ -1001,7 +989,7 @@ jobs:
             #      --config="{}" \
             #      --version=${{ env.desktop_app_new_version }} \
             #      --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
-            #       --commit=${{ env.commit_hash }}
+            #       --commit=$GITHUB_SHA
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
@@ -1026,7 +1014,7 @@ jobs:
                   --config="{}" \
                   --version=${{ env.desktop_app_new_version }} \
                   --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
-                  --commit=${{ env.commit_hash }}
+                  --commit=$GITHUB_SHA
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
@@ -1041,19 +1029,19 @@ jobs:
                     curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"$GITHUB_SHA\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
                   elif [[ "$BRANCH_NAME" == "staging" ]]; then
                     curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"$GITHUB_SHA\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
                   elif [[ "$BRANCH_NAME" == "dev" ]]; then
                     curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ env.new_dev_rc_version }}, dev_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ env.new_dev_rc_version }}, dev_commit_hash: \\\"$GITHUB_SHA\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
                   fi
 
