@@ -230,12 +230,12 @@ static int handle_encoding_message(FractalClientMessage *fmsg, int client_id, bo
     UNUSED(client_id);
     UNUSED(is_controlling);
     if (fmsg->type == MESSAGE_STOP_STREAMING) {
-        LOG_INFO("MSG RECEIVED TO STOP ENCODING");
+        LOG_INFO("MSG RECEIVED TO STOP STREAMING");
         stop_streaming = true;
     } else if (fmsg->type == MESSAGE_START_STREAMING && stop_streaming == true) {
         // Extra check that `stop_streaming == true` is to ignore erroneous extra
         // MESSAGE_START_STREAMING messages
-        LOG_INFO("MSG RECEIVED TO START ENCODING AGAIN");
+        LOG_INFO("MSG RECEIVED TO START STREAMING AGAIN");
         stop_streaming = false;
         wants_iframe = true;
     } else {
