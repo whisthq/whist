@@ -73,9 +73,9 @@ void unsafe_print_statistics() {
 
     // Flush all stored statistics
     for (int i = 0; i < MAX_DIFFERENT_STATISTICS && all_statistics[i].count != 0; i++) {
-        LOG_INFO("STATISTIC—%s: avg %.2f, min %.2f, max %.2f (%u samples)", all_statistics[i].key,
-                 all_statistics[i].sum / all_statistics[i].count, all_statistics[i].min,
-                 all_statistics[i].max, all_statistics[i].count);
+        LOG_INFO("STATISTIC -- %s: avg %.2f, min %.2f, max %.2f (%u samples)",
+                 all_statistics[i].key, all_statistics[i].sum / all_statistics[i].count,
+                 all_statistics[i].min, all_statistics[i].max, all_statistics[i].count);
 
         all_statistics[i].key[0] = '\0';
         all_statistics[i].sum = 0;
