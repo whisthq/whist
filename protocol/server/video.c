@@ -380,6 +380,13 @@ int32_t multithreaded_send_video(void* opaque) {
             continue;
         }
 
+        // If capture on nvidia failed, close the transfer context and tell the device manager to recreate the nvidia device
+        if (device->must_recreate_nvidia) {
+            device->must_recreate_nvidia = false;
+            close_transfer_context(device, encoder);
+            fractal_post_semaphore(device->nvidia_device_semaphore);
+        }
+
         clock server_frame_timer;
         start_timer(&server_frame_timer);
 
