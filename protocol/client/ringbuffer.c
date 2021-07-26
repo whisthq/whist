@@ -1,6 +1,5 @@
 #include "ringbuffer.h"
 
-// TODO: figure out a good max size and consolidate frame sizes
 #define MAX_RING_BUFFER_SIZE 500
 #define MAX_VIDEO_PACKETS 500
 #define MAX_AUDIO_PACKETS 3
