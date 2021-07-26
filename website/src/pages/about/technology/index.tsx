@@ -19,7 +19,7 @@ const Technology = () => {
             <div
                 className={classNames(
                     padded,
-                    "bg-blue-darkest border-t border-gray-600"
+                    "bg-blue-darkest"
                 )}
             >
                 <Streaming />

@@ -7,23 +7,26 @@ import Logo from "@app/assets/icons/logoWhite.svg"
 
 const navigation = {
     home: [
-        { name: "Product", href: "#" },
+        { name: "Product", href: "/" },
         { name: "Pricing", href: "#" },
         { name: "Download", href: "#" },
     ],
     about: [
-        { name: "Company", href: "#" },
-        { name: "Technology", href: "#" },
-        { name: "Privacy", href: "#" },
-        { name: "FAQ", href: "#" },
+        { name: "Company", href: "/about" },
+        { name: "Technology", href: "/technology" },
+        { name: "Security", href: "/security" },
+        { name: "FAQ", href: "/faq" },
     ],
     resources: [
-        { name: "Support", href: "#" },
-        { name: "Careers", href: "#" },
+        { name: "Support", href: "/support" },
+        {
+            name: "Careers",
+            href: "https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9",
+        },
     ],
     legal: [
-        { name: "Privacy", href: "#" },
-        { name: "Terms", href: "#" },
+        { name: "Privacy", href: "/privacy" },
+        { name: "Terms", href: "/termsofservice" },
     ],
     social: [
         {

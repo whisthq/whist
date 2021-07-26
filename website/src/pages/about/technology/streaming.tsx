@@ -1,39 +1,73 @@
 import React from "react"
 
+const metrics = [
+    {
+        id: 1,
+        stat: "300MB",
+        text: "RAM usage",
+    },
+    {
+        id: 2,
+        stat: "<5%",
+        text: "CPU usage on idle",
+    },
+    {
+        id: 3,
+        stat: "<20ms",
+        text: "Latency introduced by Fractal",
+    },
+    {
+        id: 4,
+        stat: "10Mbps",
+        text: "Bandwidth used by Fractal.",
+    },
+]
+
 const Streaming = () => (
-    <div className="py-16 overflow-hidden">
+    <div className="py-16 overflow-hidden" id="details">
         <div className="max-w-7xl mx-auto space-y-8">
             <div className="text-base max-w-prose mx-auto lg:max-w-none">
-                <p className="mt-2 text-3xl leading-8 tracking-tight text-gray-300 sm:text-4xl">
+                <p className="mt-2 text-3xl leading-8 tracking-tight text-gray-300 sm:text-5xl">
                     How Fractal Works
                 </p>
             </div>
             <div className="relative z-10 text-base max-w-prose lg:max-w-5xl lg:mx-0 lg:pr-72">
                 <p className="text-lg text-gray-500">
-                    Sagittis scelerisque nulla cursus in enim consectetur quam.
-                    Dictum urna sed consectetur neque tristique pellentesque.
-                    Blandit amet, sed aenean erat arcu morbi. Cursus faucibus
-                    nunc nisl netus morbi vel porttitor vitae ut. Amet vitae
-                    fames senectus vitae.
+                    Fractal works by running Google Chrome in a powerful
+                    computer in the cloud and streaming a video of Chrome to
+                    your computer. It's like remote desktop, if remote desktop
+                    felt like using a native application.
                 </p>
             </div>
             <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
                 <div className="relative z-10">
                     <div className="prose prose-indigo text-gray-500 mx-auto lg:max-w-none md:pr-8">
                         <p>
-                            Sollicitudin tristique eros erat odio sed vitae,
-                            consequat turpis elementum. Lorem nibh vel, eget
-                            pretium arcu vitae. Eros eu viverra donec ut
-                            volutpat donec laoreet quam urna.
+                            The core of Fractal is our streaming technology,
+                            which we&lsquo;ve spent years perfecting. We obsess
+                            over every millisecond of latency and on minimizing
+                            memory, CPU, and network usage. Whereas a native
+                            install of Google Chrome consumes several gigabytes
+                            of memory and a large percentage of your CPU,
+                            Fractal uses only a fraction.
                         </p>
                         <p>
-                            Rhoncus nisl, libero egestas diam fermentum dui. At
-                            quis tincidunt vel ultricies. Vulputate aliquet
-                            velit faucibus semper. Pellentesque in venenatis
-                            vestibulum consectetur nibh id. In id ut tempus
-                            egestas. Enim sit aliquam nec, a. Morbi enim
-                            fermentum lacus in. Viverra.
+                            The end result? No spinning fan or slow page loads,
+                            no matter how many tabs or heavy web apps you have
+                            open.
                         </p>
+                    </div>
+                    <div className="mt-24 grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 border-t border-gray-600 pt-8">
+                        {metrics.map((item) => (
+                            <p key={item.id}>
+                                <span className="block text-2xl text-mint">
+                                    {item.stat}
+                                </span>
+                                <span className="mt-1 block text-base text-gray-300">
+                                    {item.text}
+                                </span>
+                            </p>
+                        ))}
                     </div>
                 </div>
                 <div className="mt-12 relative text-base max-w-prose mx-auto lg:mt-0 lg:max-w-none">

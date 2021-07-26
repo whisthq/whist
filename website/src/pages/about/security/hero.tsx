@@ -8,7 +8,7 @@ const Hero = () => (
             <div className="mx-auto max-w-md px-4 sm:max-w-2xl sm:px-6 sm:text-center lg:px-0 lg:text-left lg:flex lg:items-center">
                 <div className="lg:py-24">
                     <h1 className="mt-4 text-4xl text-gray-300 sm:mt-5 sm:text-6xl lg:mt-6 xl:text-6xl">
-                        <span>Fractal is built for&nbsp;</span>
+                        <span>Fractal is built around&nbsp;</span>
                         <span className="text-mint">security and privacy</span>
                     </h1>
                     <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
