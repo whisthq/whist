@@ -6,10 +6,6 @@ module.exports = {
     // This will allow tailwind to analyze and "purge" unused css.
     mode: "jit",
     purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
-    // We may be able to remove "darkModeVariant" soon with tailwind JIT.
-    experimental: {
-        darkModeVariant: true,
-    },
     darkMode: "class",
     // The theme section is where we define anything related to visual design.
     theme: {
