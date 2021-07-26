@@ -715,10 +715,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@typeform/embed@^1.14.0":
-  version "1.14.0"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.14.0.tgz#6cac1a86bbb87b107ec7c117b79a4a5c6303d25c"
-  integrity sha512-KFlahFHSN4OUCwjWA8xZEC84MBQbOnFsuZg6QjkJK05bnEXBJ5n/EGFGVscZAf8pcRaKbpefKTXhUyyT3qS9yA==
+"@typeform/embed@^1.15.0":
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.15.0.tgz#4b3787d8dfe71dd6a1a34913affde6192560fe13"
+  integrity sha512-EHmMjy51RydEM2EPK6fwcM6PjfRb6p++ry406ZNSeP8uy9WWpbQxjKvJ8pWm+F5FGhdI7EF277euPIDjQcQpcg==
 
 "@types/cacheable-request@^6.0.1":
   version "6.0.2"
