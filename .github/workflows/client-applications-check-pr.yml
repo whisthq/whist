@@ -129,22 +129,22 @@ jobs:
 
             ############################# Unix Configuration Steps END #############################
 
-            # - name: Build the Windows Electron Application
-            #   if: runner.os == 'Windows'
-            #   shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-            #   env:
-            #       AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-            #       AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
-            #       AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-            #   working-directory: client-applications\desktop
-            #   run: |
-            #       REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
-            #       REM We use "call" before since ancient DOS versions don't support recursively executing batch files
-            #       REM We need to increase the timeout to deal with GHA's weak VMs.
-            #       call yarn config set network-timeout 600000
-            #       call yarn cache clean
-            #       call yarn install
-            #       call yarn package:notarize --config="{}" --version 1.0.0 --commit=$GITHUB_SHA
+            - name: Build the Windows Electron Application
+              if: false && runner.os == 'Windows'
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              env:
+                  AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+                  AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+                  AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+              working-directory: client-applications\desktop
+              run: |
+                  REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
+                  REM We use "call" before since ancient DOS versions don't support recursively executing batch files
+                  REM We need to increase the timeout to deal with GHA's weak VMs.
+                  call yarn config set network-timeout 600000
+                  call yarn cache clean
+                  call yarn install
+                  call yarn package:notarize --config="{}" --version 1.0.0 --commit=${{ github.sha }}
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
@@ -165,4 +165,4 @@ jobs:
                   yarn config set network-timeout 600000
                   yarn cache clean
                   yarn install
-                  yarn package:notarize --config "{}" --version 1.0.0 --commit=$GITHUB_SHA
+                  yarn package:notarize --config "{}" --version 1.0.0 --commit=${{ github.sha }}
