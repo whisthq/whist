@@ -228,6 +228,18 @@ module.exports = {
         }
     },
 
+    // Function to set the commit sha for the packaged app, which gets
+    // hardcoded into the electron bundle via `env_overrides.json`.
+    // Acceptable arguments: a git commit sha
+    setPackagedCommitSha: (e) => {
+        if (e.length === 40 && /^[a-f0-9]+$/.test(e)) {
+            addEnvOverride({ COMMIT_SHA: e })
+        } else {
+            console.error(`setPackagedCommitSha passed a bad commit sha: ${e}`)
+            process.exit(-1)
+        }
+    },
+
     // Function that removes env_overrides.json. It is used after the packaging
     // process is complete to prevent environment pollution of future builds and
     // `yarn start` events.
