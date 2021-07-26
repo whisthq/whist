@@ -52,6 +52,14 @@ def test_no_find_full_instance(bulk_instance, region_name):
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
+def test_no_find_pre_connected_instance(bulk_instance, region_name):
+    """
+    Confirms that we don't find a pre-connection instance
+    """
+    _ = bulk_instance(location=region_name, associated_mandelboxes=0, status="PRE_CONNECTION")
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+
+
 def test_no_find_full_small_instance(bulk_instance, region_name):
     """
     Confirms that we don't find a full instance with <10 max
