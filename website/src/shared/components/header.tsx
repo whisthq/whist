@@ -44,12 +44,12 @@ const resources = [
     {
         name: "Support",
         description: "Contact our support team with any questions.",
-        href: "#",
+        href: "/contact",
     },
     {
         name: "Careers",
         description: "We're looking to recruit brilliant, motivated engineers.",
-        href: "#",
+        href: "https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9",
     },
 ]
 
@@ -288,23 +288,6 @@ const Header = () => {
                                                 {item.name}
                                             </a>
                                         ))}
-                                    </div>
-                                    <div className="mt-6">
-                                        <a
-                                            href="#"
-                                            className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                                        >
-                                            Sign up
-                                        </a>
-                                        <p className="mt-6 text-center text-base font-medium text-gray-500">
-                                            Existing customer?{" "}
-                                            <a
-                                                href="#"
-                                                className="text-indigo-600 hover:text-indigo-500"
-                                            >
-                                                Sign in
-                                            </a>
-                                        </p>
                                     </div>
                                 </div>
                             </div>

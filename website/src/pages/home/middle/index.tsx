@@ -44,7 +44,13 @@ export const Middle = () => {
                     </div>
                 }
                 image={
-                    <div className="mt-8 inline-block shadow-bright">
+                    <div
+                        className="mt-8 inline-block rounded p-2"
+                        style={{
+                            background:
+                                "linear-gradient(233.28deg, #90ACF3 0%, #F0A8F1 100%)",
+                        }}
+                    >
                         <img
                             className="relative top-0 left-0 w-full max-w-screen-sm m-auto shadow-xl"
                             src={ChromeBackground}
@@ -87,10 +93,16 @@ export const Middle = () => {
                                 scale={width > ScreenSize.MEDIUM ? 1.0 : 0.5}
                             />
                         </div>
-                        <div className="font-body absolute bg-blue-light px-10 py-3 text-blue font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl">
+                        <div
+                            style={{ background: "rgba(255,255,255,0.1)" }}
+                            className="font-body absolute px-10 py-3 text-gray-300 font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl"
+                        >
                             <div>Chrome uses 4GB RAM</div>
                         </div>
-                        <div className="font-body absolute bg-mint-light px-10 py-3 text-gray font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl">
+                        <div
+                            style={{ background: "rgba(255,255,255,0.1)" }}
+                            className="font-body absolute px-10 py-3 text-gray-300 font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl"
+                        >
                             <div>Fractal uses 0.3GB RAM</div>
                         </div>
                         <div className="font-body text-sm font-bold text-gray dark:text-gray-300 tracking-wide mt-0 md:pt-8 w-full">

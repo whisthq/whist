@@ -14,6 +14,7 @@ export const routes = {
     TECHNOLOGY: "/technology",
     SECURITY: "/security",
     FAQ: "/faq",
+    CONTACT: "/contact",
 }
 
 export default routes

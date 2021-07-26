@@ -12,12 +12,19 @@ const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
 const Technology = () => {
     return (
         <>
-            <div className={classNames(padded, "bg-blue-darker")}>
+            <div className={classNames(padded, "bg-blue-darkest")}>
                 <Header />
                 <Hero />
             </div>
-            <div className={classNames(padded, "bg-blue-darkest")}>
+            <div
+                className={classNames(
+                    padded,
+                    "bg-blue-darkest border-t border-gray-600"
+                )}
+            >
                 <Streaming />
+            </div>
+            <div className={classNames(padded, "bg-blue-darkest")}>
                 <Specs />
             </div>
             <div className={classNames(padded, "bg-blue-darker")}>
