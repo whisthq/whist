@@ -34,7 +34,7 @@ HEROKU_API_TOKEN = os.environ.get("HEROKU_DEVELOPER_API_KEY")
 SERVER_DEV = "fractal-dev-server"
 SERVER_STAGING = "fractal-staging-server"
 SERVER_PROD = "fractal-prod-server"
-PATH_BRANCH_SCHEMA = "main-webserver/db_migration/schema.sql"
+PATH_BRANCH_SCHEMA = "webserver/db_migration/schema.sql"
 COMMENT_IDENTIFIER = "AUTOMATED_DB_MIGRATION_MESSAGE"
 
 
