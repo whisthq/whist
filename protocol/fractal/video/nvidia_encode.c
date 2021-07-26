@@ -144,7 +144,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture, int width,
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width,
                                 int height) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
@@ -153,13 +153,13 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture, int
             width, height, encoder->width, encoder->height);
         return -1;
     }
-    if (p_gpu_texture) {
-        encoder->registered_resource = p_gpu_texture;
-        return 0;
-    } else {
+    /*
+    if (!p_gpu_texture) {
         LOG_ERROR("Device captured NULL texture");
         return -1;
     }
+    */
+    return 0;
 }
 
 int nvidia_encoder_encode(NvidiaEncoder* encoder) {
@@ -177,7 +177,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     map_params.registeredResource = registered_resource;
     // We've now consumed the registered resource for the purpose of mapping the buffer,
     // So we'll not clear the encoder's registered resource so as to not use it twice by accident
-    encoder->registered_resource = NULL;
+    // encoder->registered_resource = NULL;
     status = encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);

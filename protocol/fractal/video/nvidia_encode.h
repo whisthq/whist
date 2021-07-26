@@ -65,7 +65,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, void* p_gpu_texture, int width, int height);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,
