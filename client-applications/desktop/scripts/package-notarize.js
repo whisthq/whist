@@ -20,7 +20,7 @@ const packageNotarize = (env, config, version, commit) => {
     helpers.setPackagedEnv("dev")
 
     // We hardcode the commit sha to the current commit
-    helpers.setPackagedCommit(commit)
+    helpers.setPackagedCommitSha(commit)
 
     // We test setting the secret keys
     helpers.populateSecretKeys([
