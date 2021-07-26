@@ -361,7 +361,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
-        if (get_timer(last_frame_capture) > 1.0 / FPS) {
+        if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
             accumulated_frames = capture_screen(device);
             // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
         }
