@@ -41,7 +41,7 @@ result = run(
     ["python3", "/root/src/main.py", *argv[1:]],
     text=True,
     capture_output=True,
-    check=False,
+    check=True,
 )
 
 secrets = result.stdout
