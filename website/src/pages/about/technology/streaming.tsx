@@ -35,8 +35,8 @@ const Streaming = () => (
                 <p className="text-lg text-gray-500">
                     Fractal works by running Google Chrome in a powerful
                     computer in the cloud and streaming a video of Chrome to
-                    your computer. It's like remote desktop, if remote desktop
-                    felt like using a native application.
+                    your computer. It&lsquo;s like remote desktop, if remote
+                    desktop felt like using a native application.
                 </p>
             </div>
             <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">

@@ -30,21 +30,23 @@ const Detailed = () => {
                         browser.
                     </p>
                     <p className="mt-8 text-xl text-gray-400 leading-8 text-left">
-                        These packets are only decrypted once they're actually
-                        at the end of their journey — your keystrokes only
-                        readable inside your browser, and your audio and visuals
-                        only visible by you. Just like a browser should be.
+                        These packets are only decrypted once they&lsquo;re
+                        actually at the end of their journey — your keystrokes
+                        only readable inside your browser, and your audio and
+                        visuals only visible by you. Just like a browser should
+                        be.
                     </p>
                     <p className="mt-8 text-xl text-mint leading-8 text-left">
                         How We Secure Your Browsing Data
                     </p>
                     <p className="mt-8 text-xl text-gray-400 leading-8 text-left">
-                        We know what you're thinking: 'if Fractal's saving
-                        my cookies, history, and password, can't they see all of
-                        it'? No — your session data is *never* stored
-                        unencrypted — and not only that, but the encryption key
-                        for that data (using AES 256, because we aren't savages)
-                        only lives in 2 places: on your client machine, and
+                        We know what you&lsquo;re thinking: &lsquo;if
+                        Fractal&lsquo;s saving my cookies, history, and
+                        password, can&lsquo;t they see all of it&lsquo;? No —
+                        your session data is *never* stored unencrypted — and
+                        not only that, but the encryption key for that data
+                        (using AES 256, because we aren&lsquo;t savages) only
+                        lives in 2 places: on your client machine, and
                         temporarily on your cloud browser, so it can decrypt
                         your session data at the start of your session and
                         reencrypt it at the end of the session. That key never
@@ -54,16 +56,16 @@ const Detailed = () => {
                     <p className="mt-8 text-xl text-gray-400 leading-8 text-left">
                         This is powerful security, but it does come with a
                         downside — if you lose access to your logged in Fractal
-                        account, you'll have to restore your session on your
-                        own. (For now. We're cooking up something similar to the
-                        Lastpass and Bitwarden protocols to enable
-                        security-question and passphrase-based generation of
-                        those keys.) If you've ever wondered why certain
-                        products have a 'master password' you can't just reset,
-                        this is why! Security like this comes at a slight
-                        convenience cost, but your browsing data should be
-                        private. To us, to our engineers, and to everyone but
-                        you.
+                        account, you&lsquo;ll have to restore your session on
+                        your own. (For now. We&lsquo;re cooking up something
+                        similar to the Lastpass and Bitwarden protocols to
+                        enable security-question and passphrase-based generation
+                        of those keys.) If you&lsquo;ve ever wondered why
+                        certain products have a &lsquo;master password&lsquo;
+                        you can&lsquo;t just reset, this is why! Security like
+                        this comes at a slight convenience cost, but your
+                        browsing data should be private. To us, to our
+                        engineers, and to everyone but you.
                     </p>
                 </div>
             </div>

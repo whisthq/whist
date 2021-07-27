@@ -59,7 +59,6 @@ export const VerticalTemplate = (props: {
             background (boolean): Should the animated background be visible
     */
 
-    const { width } = withContext()
     const { title, text, image, visible } = props
 
     return (

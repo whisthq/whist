@@ -15,19 +15,19 @@ const features = [
         icon: GlobeAltIcon,
     },
     {
-        name: "Saved passwords and cookies",
+        name: "Passwords and Cookies",
         description:
             "All your passwords and cookies are encrypted and never touch our permanent storage.",
         icon: ScaleIcon,
     },
     {
-        name: "Video and audio",
+        name: "Video and Audio",
         description:
             "Your video and audio packets are encrypted along every step of the streaming process and are never tracked, stored, or seen by anyone besides you.",
         icon: LightningBoltIcon,
     },
     {
-        name: "Account data",
+        name: "Account Data",
         description:
             "We will never sell or release any of your data to any third-party provider without your explicit approval.",
         icon: AnnotationIcon,

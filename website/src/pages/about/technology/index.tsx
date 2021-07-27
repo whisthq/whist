@@ -16,12 +16,7 @@ const Technology = () => {
                 <Header />
                 <Hero />
             </div>
-            <div
-                className={classNames(
-                    padded,
-                    "bg-blue-darkest"
-                )}
-            >
+            <div className={classNames(padded, "bg-blue-darkest")}>
                 <Streaming />
             </div>
             <div className={classNames(padded, "bg-blue-darkest")}>

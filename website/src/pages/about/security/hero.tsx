@@ -12,8 +12,9 @@ const Hero = () => (
                         <span className="text-mint">security and privacy</span>
                     </h1>
                     <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
-                        Some of your most important information is stored on the web, which is why
-                        we take extraordinary meausres to protect it.
+                        Some of your most important information is stored on the
+                        web, which is why we take extraordinary meausres to
+                        protect it.
                     </p>
                 </div>
             </div>
