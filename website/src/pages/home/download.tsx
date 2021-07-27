@@ -25,8 +25,9 @@ export const ActionPrompt = () => {
                 </div>
                 <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
                     Fractal is early, but we&lsquo;re excited to see what
-                    you&lsquo;ll do with a lighter, faster browser! Windows,
-                    Linux, and Android support are coming soon.
+                    you&lsquo;ll do with a lighter, faster browser! For optimal experience,
+                    we recommend using Fractal only if you are located in North America 
+                    or Europe.
                 </div>
                 {width > ScreenSize.SMALL && (
                     <div className="flex justify-center" id="download">
