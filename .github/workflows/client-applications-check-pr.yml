@@ -50,11 +50,6 @@ jobs:
                   heroku_app_name: "fractal-dev-server"
                   heroku_api_token: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
 
-            - name: Log Secrets
-              shell: python3 {0}
-              run: |
-                  print(r"""${{ steps.config-secrets.outputs.secrets }}""")
-
             - name: Build Monorepo Configuration for Mac
               id: config-macos
               uses: ./.github/actions/monorepo-config
@@ -67,7 +62,7 @@ jobs:
               id: config-win32
               uses: ./.github/actions/monorepo-config
               with:
-                  secrets: ${{ toJSON(secrets) }}
+                  secrets: ${{ steps.config-secrets.outputs.secrets }}
                   os: win32
                   deploy: dev
 
