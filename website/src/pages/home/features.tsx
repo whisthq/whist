@@ -3,10 +3,16 @@ import { HashLink } from "react-router-hash-link"
 import {
     LightningBoltIcon,
     ChipIcon,
-    ShieldCheckIcon,
+    CloudDownloadIcon,
 } from "@heroicons/react/outline"
 
 const supportLinks = [
+    {
+        name: "Your Google Environment",
+        description:
+            "Signing into your Google account on Fractal loads all your extensions and settings.",
+        icon: CloudDownloadIcon,
+    },
     {
         name: "Lightning Speeds",
         description:
@@ -18,12 +24,6 @@ const supportLinks = [
         description:
             "Fractal runs Chrome on a dedicated NVIDIA graphics card for the fastest page rendering speeds.",
         icon: ChipIcon,
-    },
-    {
-        name: "Secure Environment",
-        description:
-            "Fractal never tracks your sessions. All information sent over the Internet, including your browsing session, is end-to-end encrypted.",
-        icon: ShieldCheckIcon,
     },
 ]
 
@@ -43,9 +43,13 @@ export const Features = () => {
                     <span className="text-blue dark:text-mint">
                         cloud-powered
                     </span>{" "}
-                    browser
+                    Chrome
                 </div>
             </div>
+            <p className="mt-3 text-xl text-gray-500 sm:mt-4">
+                Fractal is the same exact Google Chrome you know and love, just
+                running in the cloud.
+            </p>
             <div className="grid grid-cols-1 gap-y-20 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8 mt-12 text-left">
                 {supportLinks.map((link) => (
                     <div

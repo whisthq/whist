@@ -16,7 +16,7 @@ const includedFeatures = [
 
 const Pricing = () => {
     return (
-        <div className="mt-36">
+        <div className="mt-24">
             <div className="pt-12 sm:pt-16 lg:pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
@@ -38,7 +38,7 @@ const Pricing = () => {
                     </div>
                 </div>
             </div>
-            <div className="mt-8 pb-16 sm:mt-12 sm:pb-20 lg:pb-28">
+            <div className="mt-8 sm:mt-12">
                 <div className="relative">
                     <div className="relative">
                         <div className="max-w-lg mx-auto overflow-hidden lg:max-w-none lg:flex lg:items-start">
@@ -48,7 +48,7 @@ const Pricing = () => {
                                         Become a Supporter
                                     </h3>
                                     <div className="flex items-center justify-center text-3xl text-gray-200">
-                                        <span>$10</span>
+                                        <span>$30</span>
                                         <span className="ml-2 text-sm text-gray-400">
                                             USD
                                         </span>
@@ -57,7 +57,7 @@ const Pricing = () => {
                                 <p className="mt-6 text-base text-gray-400 tracking-wider">
                                     You can continue using Fractal after your
                                     14-day free trial by becoming a supporter
-                                    via a one-time, $10 supporter fee. This is
+                                    via a one-time, $30 supporter fee. This is
                                     because our current focus is building a
                                     great product, not revenue. This offer
                                     expires on Jan 1, 2022, at which point

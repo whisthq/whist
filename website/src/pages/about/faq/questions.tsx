@@ -26,10 +26,10 @@ const faqs = [
         question: "Can I trust Fractal with my data?",
         answer: (
             <div>
-                We take care to encrypt and protect every piece of data that you
-                input through Fractal, from your browsing data to your
-                keystrokes. You can read more about how we handle privacy and
-                security{" "}
+                We encrypt and protect every piece of data that you input
+                through Fractal so that not even our engineers can see your
+                personal browsing data. You can read more about how we handle
+                privacy and security{" "}
                 <HashLink
                     to="/security#top"
                     className="text-mint hover:text-mint"
@@ -47,13 +47,13 @@ const faqs = [
     },
     {
         id: 4,
-        question: "How is Fractal different than `X cloud streaming company?`",
+        question: `How is Fractal different than "X cloud streaming company?"`,
         answer: "Because we care only about streaming Chrome, we aim to create the user experience of running a browser on native hardware.",
     },
     {
         id: 5,
         question: "Will there be latency?",
-        answer: "Running applications in the cloud means that there will always be some latency, but there is a certain point at which latency becomes unnoticeable. We aim to reach that point.",
+        answer: "Running applications in the cloud means that there will always be some latency, but there is a certain point at which latency becomes unnoticeable.",
     },
     {
         id: 6,
@@ -72,6 +72,11 @@ const faqs = [
                 .
             </div>
         ),
+    },
+    {
+        id: 7,
+        question: "How does Fractal make money?",
+        answer: "While Fractal is in alpha, we are asking for users to become supporters via a supporter fee. Eventually, Fractal will charge a monthly subscription fee (amount TBD). We are not an advertising business and will never sell your data.",
     },
 ]
 

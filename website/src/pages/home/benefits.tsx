@@ -62,7 +62,7 @@ export const VerticalTemplate = (props: {
     const { title, text, image, visible } = props
 
     return (
-        <div className="mt-24 md:mt-52">
+        <div className="mt-24 md:mt-36">
             <Row>
                 <Col md={12} className="text-center">
                     <div className="text-gray dark:text-gray-300 text-4xl md:text-6xl mb-8 leading-relaxed">
@@ -95,12 +95,12 @@ export const Middle = () => {
                 background
                 title={
                     <>
+                        <div className="text-base font-semibold text-gray-500 tracking-wide uppercase mb-2">
+                            Features
+                        </div>
                         <div className="text-gray dark:text-gray-300">
                             {" "}
-                            Load pages{" "}
-                            <span className="text-blue dark:text-mint">
-                                instantly
-                            </span>
+                            Load pages instantly
                         </div>
                     </>
                 }

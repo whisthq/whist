@@ -18,10 +18,10 @@ export const ActionPrompt = () => {
     const { width } = withContext()
 
     return (
-        <div className="mt-16 mb-24 text-center">
-            <div className="rounded px-0 md:px-12 py-10 md:py-14">
+        <div className="mb-24 text-center pt-24">
+            <div className="px-0 md:px-12">
                 <div className="text-4xl md:text-5xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
-                    Try the <span className="text-mint">Alpha Release.</span>
+                    Try the <span className="text-mint">alpha release</span>
                 </div>
                 <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
                     Fractal is early, but we&lsquo;re excited to see what

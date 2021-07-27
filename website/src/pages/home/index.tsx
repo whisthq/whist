@@ -26,13 +26,13 @@ export const Home = () => {
             <div className={classNames(padded, "bg-blue-darkest")}>
                 <Header />
                 <Hero />
-                <Benefits />
                 <Features />
             </div>
             <div className={classNames(padded, "bg-blue-darker")}>
                 <Users />
             </div>
             <div className={classNames(padded, "bg-blue-darkest")} id="pricing">
+                <Benefits />
                 <Pricing />
             </div>
             <div

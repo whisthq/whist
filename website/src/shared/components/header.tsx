@@ -10,6 +10,7 @@ import {
     ShieldCheckIcon,
     ViewGridIcon,
     XIcon,
+    ChevronDownIcon,
 } from "@heroicons/react/outline"
 
 import Logo from "@app/assets/icons/logoWhite.svg"
@@ -66,7 +67,7 @@ const Header = () => {
                         <div className="flex justify-start lg:w-0 lg:flex-1">
                             <Link to="/">
                                 <img
-                                    className="h-5 relative bottom-1"
+                                    className="h-5 relative md:bottom-1"
                                     src={Logo}
                                     alt=""
                                 />
@@ -97,6 +98,7 @@ const Header = () => {
                                             )}
                                         >
                                             <span>About</span>
+                                            <ChevronDownIcon className="h-5 w-4 ml-2 mb-0.5" />
                                         </Popover.Button>
 
                                         <Transition
@@ -133,7 +135,7 @@ const Header = () => {
                                                                             item.name
                                                                         }
                                                                     </p>
-                                                                    <p className="mt-1 text-sm text-gray-500">
+                                                                    <p className="-mt-2 text-sm text-gray-500">
                                                                         {
                                                                             item.description
                                                                         }
@@ -160,6 +162,7 @@ const Header = () => {
                                             )}
                                         >
                                             <span>Resources</span>
+                                            <ChevronDownIcon className="h-5 w-4 ml-2 mb-0.5" />
                                         </Popover.Button>
 
                                         <Transition

@@ -22,50 +22,30 @@ const Detailed = () => {
                         How We Secure Your Browsing Stream
                     </p>
                     <p className="mt-8 text-gray-400 leading-8 text-left">
-                        Each one of your packets is encrypted for every leg of
-                        the journey between your PC and your cloud browser,
-                        using ephemeral keys for each session. Feel free to lend
-                        your shiny new account to your friends — them using
-                        Fractal is just as secure as them using an on-device
-                        browser.
+                        Each of your packets is encrypted at every leg of the
+                        journey between your PC and your cloud browser using
+                        ephemeral keys for each session.
                     </p>
                     <p className="mt-8 text-gray-400 leading-8 text-left">
-                        These packets are only decrypted once they&lsquo;re
-                        actually at the end of their journey — your keystrokes
-                        only readable inside your browser, and your audio and
-                        visuals only visible by you. Just like a browser should
-                        be.
+                        These packets are only decrypted once they&lsquo;re at
+                        the end of their journey. We discard your keystrokes,
+                        audio, and video immediately after they are replayed.
                     </p>
                     <p className="mt-8 text-xl text-mint leading-8 text-left">
                         How We Secure Your Browsing Data
                     </p>
                     <p className="mt-8 text-gray-400 leading-8 text-left">
-                        We know what you&lsquo;re thinking: &lsquo;if
-                        Fractal&lsquo;s saving my cookies, history, and
-                        password, can&lsquo;t they see all of it&lsquo;? No —
-                        your session data is *never* stored unencrypted — and
-                        not only that, but the encryption key for that data
-                        (using AES 256, because we aren&lsquo;t savages) only
-                        lives in 2 places: on your client machine, and
-                        temporarily on your cloud browser, so it can decrypt
-                        your session data at the start of your session and
-                        reencrypt it at the end of the session. That key never
-                        touches our permanent storage — and without it, your
-                        session data is a blob of binary noise.
-                    </p>
-                    <p className="mt-8 text-gray-400 leading-8 text-left">
-                        This is powerful security, but it does come with a
-                        downside — if you lose access to your logged in Fractal
-                        account, you&lsquo;ll have to restore your session on
-                        your own. (For now. We&lsquo;re cooking up something
-                        similar to the Lastpass and Bitwarden protocols to
-                        enable security-question and passphrase-based generation
-                        of those keys.) If you&lsquo;ve ever wondered why
-                        certain products have a &lsquo;master password&lsquo;
-                        you can&lsquo;t just reset, this is why! Security like
-                        this comes at a slight convenience cost, but your
-                        browsing data should be private. To us, to our
-                        engineers, and to everyone but you.
+                        We know what you&lsquo;re thinking: If Fractal saves my
+                        cookies and history, can&lsquo;t they see all of it? No
+                        — your session data is never stored unencrypted.
+                        Further, the encryption key for that data lives in 2
+                        places: on your computer and temporarily on your cloud
+                        browser so it can decrypt your session data at the start
+                        of your session and re-encrypt it at the end of the
+                        session. That key never touches our permanent storage,
+                        so even if a malicious actor were to gain access to our
+                        permanent storage, they would just see blobs of binary
+                        noise.
                     </p>
                 </div>
             </div>

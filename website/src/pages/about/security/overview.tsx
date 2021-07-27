@@ -11,13 +11,13 @@ const features = [
     {
         name: "Browsing History",
         description:
-            "Your browsing history is locked behind a master key that only you have access to.",
+            "Your browsing history is locked behind a master key that only you have access to because it is cached to your computer, not our servers.",
         icon: BookOpenIcon,
     },
     {
         name: "Passwords and Cookies",
         description:
-            "All your passwords and cookies are encrypted and never touch our permanent storage.",
+            "All your saved passwords and cookies are fully encrypted.",
         icon: KeyIcon,
     },
     {
@@ -40,12 +40,13 @@ const Overview = () => {
             <div className="max-w-7xl mx-auto px-8">
                 <div className="lg:text-center">
                     <p className="mt-2 text-2xl leading-8 text-gray-300 lg:text-4xl">
-                        What Fractal Keeps Private
+                        Overview
                     </p>
-                    <p className="mt-2 max-w-2xl text-lg lg:text-xl text-gray-500 lg:mx-auto">
-                        Fractal ensures that nobody, not even our engineers, can
-                        view your browsing information. The following things are
-                        visible only to you:
+                    <p className="mt-2 max-w-2xl text-lg lg:text-xl text-gray-400 lg:mx-auto">
+                        Fractal believes that privacy is a fundamental human
+                        right and ensures that nobody but you can view your
+                        browsing information. No engineer can view personal
+                        information about your browsing session. In particular:
                     </p>
                 </div>
 
@@ -64,7 +65,7 @@ const Overview = () => {
                                         {feature.name}
                                     </p>
                                 </dt>
-                                <dd className="mt-2 ml-20 text-base text-gray-500">
+                                <dd className="ml-20 text-base text-gray-500">
                                     {feature.description}
                                 </dd>
                             </div>

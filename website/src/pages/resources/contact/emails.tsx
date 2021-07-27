@@ -4,21 +4,21 @@ import { NewspaperIcon, PhoneIcon, SupportIcon } from "@heroicons/react/outline"
 const supportLinks = [
     {
         name: "Sales",
-        href: "#",
+        href: "sales@fractal.co",
         description:
             "For any business-related inquires including enterprise plans.",
         icon: PhoneIcon,
     },
     {
         name: "Technical Support",
-        href: "#",
+        href: "support@fractal.co",
         description:
             "For bug reports, feature suggestions, and anything product-related.",
         icon: SupportIcon,
     },
     {
         name: "Media Inquiries",
-        href: "#",
+        href: "hello@fractal.co",
         description: "For questions about press, partnerships, etc.",
         icon: NewspaperIcon,
     },
@@ -32,7 +32,16 @@ const Emails = () => (
             </h1>
             <p className="m-auto max-w-3xl text-xl text-gray-500">
                 Our support team is available over email using the links below.
-                For faster responses, you may also join our Discord.
+                For faster responses, you may also join our{" "}
+                <a
+                    href="https://discord.com/invite/HjPpDGvEeA"
+                    target="_blank"
+                    className="text-gray-300 hover:text-mint"
+                    rel="noreferrer"
+                >
+                    Discord
+                </a>
+                .
             </p>
         </div>
         <div>
@@ -65,7 +74,7 @@ const Emails = () => (
                             </div>
                             <div className="p-6 bg-blue-gray-50 rounded-bl-2xl rounded-br-2xl md:px-8">
                                 <a
-                                    href={link.href}
+                                    href={`mailto: ${link.href}`}
                                     className="text-base font-medium text-gray-300 hover:text-mint"
                                 >
                                     Contact us

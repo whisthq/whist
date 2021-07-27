@@ -25,8 +25,17 @@ const Support = () => {
                         </div>
                         <div className="mt-6 text-gray-500 space-y-6">
                             <p className="text-lg">
-                                Please join our Discord to chat with engineers
-                                and other users or contact support!
+                                Please join our{" "}
+                                <a
+                                    href="https://discord.com/invite/HjPpDGvEeA"
+                                    target="_blank"
+                                    className="text-gray-300 hover:text-mint"
+                                    rel="noreferrer"
+                                >
+                                    Discord
+                                </a>{" "}
+                                to chat with engineers and other users or
+                                contact support!
                             </p>
                         </div>
                     </div>
