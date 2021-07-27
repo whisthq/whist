@@ -239,7 +239,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     // Untrigger iframe
     encoder->wants_iframe = false;
-
     return 0;
 }
 

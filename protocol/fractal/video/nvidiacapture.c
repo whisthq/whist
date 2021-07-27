@@ -25,7 +25,6 @@ Includes
 #include "cudacontext.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
-#include <GL/glx.h>
 
 // NOTE: Using Nvidia Capture SDK 8.0.4
 // Please bump this comment if a newer Nvidia Capture SDK is going to be used
@@ -182,6 +181,12 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return NULL;
+    }
+    
+    // Capture screen once to set p_gpu_texture
+    if (nvidia_capture_screen(device) == 0) {
+	    LOG_ERROR("Preliminary capture screen failed!");
+	    return NULL;
     }
 
     /*

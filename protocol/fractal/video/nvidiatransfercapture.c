@@ -30,8 +30,6 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
         return -1;
     }
     encoder->registered_resource = register_params.registeredResource;
-
-    LOG_INFO("Successfully registered texture!");
     return 0;
 }
 
