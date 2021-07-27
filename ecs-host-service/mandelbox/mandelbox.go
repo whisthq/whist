@@ -68,10 +68,6 @@ type Mandelbox interface {
 	// accessible only to this mandelbox. These data are special because
 	// they are computed and written when the mandelbox is created.
 	WriteMandelboxParams() error
-	// WriteStartValues writes a file containing the DPI assigned to a directory
-	// accessible to only this mandelbox. These data are only known once a
-	// mandelbox is assigned to a user.
-	WriteStartValues(dpi int) error
 	// WriteProtocolTimeout writes a file containing the protocol timeout (i.e.
 	// how long it will wait for a connection) to a directory accessible to only
 	// this mandelbox.

@@ -81,7 +81,6 @@ func (r requestResult) send(w http.ResponseWriter) {
 // endpoint.
 type SpinUpMandelboxRequest struct {
 	AppImage              string                      `json:"app_image"`               // The image to spin up
-	DPI                   int                         `json:"dpi"`                     // DPI to set for the mandelbox
 	UserID                types.UserID                `json:"user_id"`                 // User ID of the mandelbox user
 	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        auth.RawJWT                 `json:"jwt_access_token"`        // User's JWT access token
