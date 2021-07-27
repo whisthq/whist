@@ -1,14 +1,13 @@
 import React from "react"
-import { ReactTypeformEmbed } from "react-typeform-embed"
+import { Widget } from '@typeform/embed-react'
+
 
 const Typeform = (props: { onSubmit: () => void }) => {
     return (
-        <div className="w-screen h-screen">
-            <ReactTypeformEmbed
-                url="https://form.typeform.com/to/Yfs4GkeN"
+            <Widget id= "Yfs4GkeN"
                 onSubmit={props.onSubmit}
+                className="w-screen h-screen"
             />
-        </div>
     )
 }
 
