@@ -852,7 +852,6 @@ jobs:
                 webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
-                webserver-update-fractal-services,
             ]
         # Only run client-apps deployment if none of the previous steps failed
         if: |
