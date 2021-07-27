@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 #!/usr/bin/env python3
+import os
 import json
 import click
 import toolz
@@ -9,54 +9,26 @@ from pathlib import Path
 SOURCES = [heroku]
 
 
-def take_options(pairs):
-    for pair in toolz.partition(2, pairs):
-        if not (isinstance(pair[0], str) and pair[0].startswith("--")):
-            break
-        yield (pair[0][2:], pair[1])
+def yield_inputs(env):
+    for key, value in env.items():
+        if key.startswith("INPUT_"):
+            new_key = key[len("INPUT_") :].lower()
+            if new_key == "secrets":
+                yield new_key, json.loads(value)
+            else:
+                yield new_key, value
 
 
-def parse_json(j):
-    if not isinstance(j, str):
-        raise click.UsageError(
-            "Arguments after --options must be JSON strings."
-        )
-    try:
-        result = json.loads(j)
-    except json.decoder.JSONDecodeError:
-        result = j
-    if not isinstance(result, dict):
-        raise click.UsageError(
-            "Arguments after --options must be JSON that decode to dict."
-        )
-    return result
+def parse_inputs(env):
+    if not env.get("INPUT_SECRETS"):
+        raise Exception("Environment INPUT_SECRETS= must be a JSON string.")
+    return dict(yield_inputs(env))
 
 
-def parse_option_pairs(pairs):
-    options = dict(take_options(pairs))
-    rest = pairs[len(options) * 2 :]
-    return toolz.merge(*(parse_json(r) for r in rest), options)
-
-
-def parse_arguments(_ctx, _param, args):
-    return parse_option_pairs(args)
-
-
-def merge_sources(secrets):
-    return toolz.merge(secrets, *(src(secrets) for src in SOURCES))
-
-
-def create_cli(main_fn):
-    @click.command(context_settings=dict(ignore_unknown_options=True))
-    @click.argument("secrets", nargs=-1, callback=parse_arguments)
-    def cli(secrets):
-        """Parse secrets, merging all values into a single
-        output JSON file.
-        """
-        print(json.dumps(main_fn(secrets)))
-
-    return cli(None)  # Pass an argument to quiet linter.
+def main():
+    inputs = parse_inputs(os.environ)
+    return toolz.merge(inputs["secrets"], *(src(**inputs) for src in SOURCES))
 
 
 if __name__ == "__main__":
-    create_cli(merge_sources)
+    print(main())
