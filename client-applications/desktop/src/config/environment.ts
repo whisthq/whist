@@ -59,4 +59,3 @@ export { FractalEnvironments } from "../../config/constants"
 export { loggingFiles } from "../../config/paths"
 
 export default config
-export const COMMIT_SHA = process.env.COMMIT_SHA ?? ""
