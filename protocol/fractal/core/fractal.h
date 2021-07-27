@@ -502,10 +502,12 @@ typedef enum FractalClientMessageType {
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
 
     MESSAGE_MOUSE_INACTIVE = 6,
-    MESSAGE_MULTIGESTURE = 7,  ///< Gesture Event
-    MESSAGE_RELEASE = 8,       ///< Message instructing the host to release all input
-                               ///< that is currently pressed.
-    MESSAGE_MBPS = 107,        ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_MULTIGESTURE = 7,       ///< Gesture Event
+    MESSAGE_RELEASE = 8,            ///< Message instructing the host to release all input
+                                    ///< that is currently pressed.
+    MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
+    MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
+    MESSAGE_MBPS = 107,             ///< `mbps` double is valid in FractClientMessage.
     MESSAGE_PING = 108,
     MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
