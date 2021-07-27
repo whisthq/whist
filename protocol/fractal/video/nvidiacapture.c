@@ -273,7 +273,6 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     if (!frame_info.bIsNewFrame) {
         return 0;
     }
-    LOG_DEBUG("device->p_gpu_texture now %x", device->p_gpu_texture);
 
     // Set the device to use the newly captured width/height
     device->width = frame_info.dwWidth;
