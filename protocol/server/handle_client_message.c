@@ -67,7 +67,8 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling);
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling);
-static int handle_encoding_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handle_streaming_toggle_message(FractalClientMessage *fmsg, int client_id,
+                                           bool is_controlling);
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
@@ -118,7 +119,7 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
             return handle_keyboard_state_message(fmsg, client_id, is_controlling);
         case MESSAGE_START_STREAMING:
         case MESSAGE_STOP_STREAMING:
-            return handle_encoding_message(fmsg, client_id, is_controlling);
+            return handle_streaming_toggle_message(fmsg, client_id, is_controlling);
         case MESSAGE_MBPS:
             return handle_bitrate_message(fmsg, client_id, is_controlling);
         case MESSAGE_PING:
@@ -214,7 +215,8 @@ static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_
     return 0;
 }
 
-static int handle_encoding_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+static int handle_streaming_toggle_message(FractalClientMessage *fmsg, int client_id,
+                                           bool is_controlling) {
     /*
         Stop encoding and sending frames if the client requests it to save resources
 
