@@ -94,7 +94,7 @@ jobs:
                   if resources:
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                     SLACK_CHANNEL = "#alerts-dev"
-                    BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: %s" % resources
+                    BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_: %s" % resources
 
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
