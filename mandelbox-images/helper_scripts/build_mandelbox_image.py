@@ -5,6 +5,7 @@
 # If --all is passed in, all image paths in the repo will be built
 
 import argparse
+import os
 import re
 import threading
 import subprocess
@@ -83,6 +84,11 @@ while i < len(image_paths):
 def build_image_path(img_path):
     # Build image path
     print("Building " + img_path + "...")
+
+    # Use docker buildkit for improved speed and a nicer UI
+    envs = os.environ.copy()
+    envs["DOCKER_BUILDKIT"] = "1"
+
     command = (
         "docker build -f "
         + img_path
@@ -95,7 +101,7 @@ def build_image_path(img_path):
     if not show_output:
         command += " >> .build_output 2>&1"
 
-    with subprocess.Popen(command, shell=True) as build_process:
+    with subprocess.Popen(command, shell=True, env=envs) as build_process:
         build_process.wait()
         if build_process.returncode != 0:
             # If _any_ build fails, we exit with return code 1
