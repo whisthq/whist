@@ -38,7 +38,7 @@ def actionify(name, data):
 # We'll run the build/main.py and pass it the /root as the --path.
 # We pull any extra CLI arguments from sys.argv, and pass it to the subprocess.
 result = run(
-    ["python", "/root/main.py", *argv[1:]],
+    ["python3", "/root/src/main.py", *argv[1:]],
     text=True,
     capture_output=True,
     check=False,
