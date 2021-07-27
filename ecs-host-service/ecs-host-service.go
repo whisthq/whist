@@ -510,7 +510,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// infinite value.
 	protocolTimeout := 30
 	if metadata.IsLocalEnv() {
-		protocolTimeout = 999999
+		protocolTimeout = -1
 	}
 	if err := fc.WriteProtocolTimeout(protocolTimeout); err != nil {
 		logAndReturnError("Error writing protocol timeout: %s", err)
