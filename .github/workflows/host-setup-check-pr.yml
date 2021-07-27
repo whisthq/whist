@@ -1,23 +1,23 @@
-# workflows/ecs-host-setup-check-pr.yml
+# workflows/host-setup-check-pr.yml
 #
-# ECS Host Setup: Check PR
-# Checks an ECS Host Setup PR for AMI building success with Packer.
+# Host Setup: Check PR
+# Checks an Host Setup PR for AMI building success with Packer.
 
-name: "ECS Host Setup: Check PR"
+name: "Host Setup: Check PR"
 
 on:
     pull_request:
         paths:
-            - "ecs-host-setup/**"
-            - "!ecs-host-setup/README.md"
-            - "!ecs-host-setup/setup_localdev_dependencies.sh"
-            - ".github/workflows/ecs-host-setup-check-pr.yml"
+            - "host-setup/**"
+            - "!host-setup/README.md"
+            - "!host-setup/setup_localdev_dependencies.sh"
+            - ".github/workflows/host-setup-check-pr.yml"
     workflow_dispatch:
 
 jobs:
     # Building
     # Check that the AMIs build.
-    ecs-host-setup-check-pr-building:
+    host-setup-check-pr-building:
         name: Building
         runs-on: ubuntu-20.04
         env:
@@ -73,11 +73,11 @@ jobs:
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
             - name: Set ECS Host Service APP_ENV based to DEV (File gets read by ecs-host-service.service)
-              working-directory: ecs-host-setup
+              working-directory: host-setup
               run: echo 'APP_ENV=DEV' > app_env.env
 
             - name: Generate packer_vars.json Packer Variables File for Building New AMI
-              working-directory: ecs-host-setup
+              working-directory: host-setup
               shell: python3 {0}
               run: |
                   import json
@@ -110,7 +110,7 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer
-              working-directory: ecs-host-setup
+              working-directory: host-setup
               shell: python3 {0}
               run: |
                   import os

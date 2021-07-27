@@ -19,7 +19,7 @@ echo "================================================"
 sudo apt-get install -y python3-pip
 cd ..
 find ./mandelbox-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
-cd ecs-host-setup
+cd host-setup
 
 echo "================================================"
 echo "Creating symlink for root user to get aws credentials..."

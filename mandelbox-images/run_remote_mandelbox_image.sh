@@ -2,7 +2,7 @@
 
 # This script runs a mandelbox image stored in GitHub Container Registry
 # (GHCR). For it to work with the Fractal mandelboxes, this script needs to be
-# run directly on a Fractal-enabled (see /ecs-host-setup) AWS EC2 instance, via
+# run directly on a Fractal-enabled (see /host-setup) AWS EC2 instance, via
 # SSH, without needing to build a mandelbox image beforehand.
 # Arguments:
 #    $1 - app name, including deploy environment (e.g. dev/browsers/chrome)

@@ -106,11 +106,11 @@ build {
   provisioner "file" {
     destination  = "/home/ubuntu"
     pause_before = "10s"
-    source       = "../ecs-host-setup"
+    source       = "../host-setup"
   }
 
   provisioner "shell" {
-    inline = ["sudo mkdir -p /usr/share/fractal", "sudo mv /home/ubuntu/ecs-host-setup/app_env.env /usr/share/fractal/app_env.env"]
+    inline = ["sudo mkdir -p /usr/share/fractal", "sudo mv /home/ubuntu/host-setup/app_env.env /usr/share/fractal/app_env.env"]
   }
 
   provisioner "file" {
@@ -119,7 +119,7 @@ build {
   }
 
   provisioner "shell" {
-    inline = ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh"]
+    inline = ["cd /home/ubuntu/host-setup", "./setup_ubuntu20_host.sh"]
   }
 
   provisioner "shell" {
@@ -128,7 +128,7 @@ build {
   }
 
   provisioner "shell" {
-    inline       = ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_ami_host.sh ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash}", "cd ..", "rm -rf ecs-host-setup"]
+    inline       = ["cd /home/ubuntu/host-setup", "./setup_ubuntu20_ami_host.sh ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash}", "cd ..", "rm -rf host-setup"]
     pause_before = "10s"
   }
 
