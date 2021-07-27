@@ -19,4 +19,4 @@ outputs:
         description: JSON object of Fractal config
 runs:
     using: docker
-    image: ../../../config/Dockerfile # note relative to this file (action.yml)
+    image: Dockerfile # note relative to this file (action.yml)
