@@ -8,7 +8,7 @@ This subfolder contains the code for the Fractal ECS host service, which is resp
 
 Before building the service, make sure you've configured (and logged into) the Heroku CLI on your EC2 instance.
 
-To build the service, install Go via your local package manager, i.e. `brew install go` on macOS, `sudo snap install --classic --channel=1.16/stable go` on Linux, or `choco install golang` on Windows, and then run `make build`. Note that the host service is only meant to build on Go versions >= 1.16. Also, be sure to add `~/go/bin` to your `$PATH` variable as follows:
+To build the service, install Go via `sudo snap install --classic --channel=1.16/stable go`, and then run `make build`. Note that the host service is only meant to build on Go versions >= 1.16 and is only supported on Linux since the introduction of [go-nvml](https://github.com/NVIDIA/go-nvml) as a dependency. Also, be sure to add `~/go/bin` to your `$PATH` variable as follows:
 
 ```shell
 PATH=$PATH:~/go/bin
