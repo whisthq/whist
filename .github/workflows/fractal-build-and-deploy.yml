@@ -603,9 +603,10 @@ jobs:
                 fractal-publish-build-config,
                 webserver-deploy-heroku,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
+                client-applications-publish-build-s3,
             ]
         concurrency: webserver-update-fractal-services-${{ github.ref }}
-        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success')
+        if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success') && (needs.client-applications-publish-build-s3.result == 'success')
         env:
             TOKEN_FILE: .access_token
         steps:
