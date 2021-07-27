@@ -65,6 +65,16 @@ updates:
             update-types: ["version-update:semver-patch"]
       open-pull-requests-limit: 10
 
+
+    - package-ecosystem: "docker"
+      directory: "/.github/actions/monorepo-secrets" # looks for Dockerfile in this directory
+      schedule:
+          interval: "monthly" # runs on the first day of each month
+      ignore:
+          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+            update-types: ["version-update:semver-patch"]
+      open-pull-requests-limit: 10
+
     - package-ecosystem: "docker"
       directory: "/.github/actions/set-environment" # looks for Dockerfile in this directory
       schedule:
