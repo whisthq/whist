@@ -13,11 +13,6 @@ import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
 
-// For the purposes of the low-level rendering which is performed by the
-// protocol, the default DPI is always 96; this is modified by a scale factor
-// on high-resolution monitors, as they scale up assets to keep sizes
-// consistent with their low-resolution counterparts.
-
 const isLocalEnv = () => {
     const isLocal = appEnvironment === FractalEnvironments.LOCAL
     if (!isLocal && (isEmpty(COMMIT_SHA) || COMMIT_SHA === undefined)) {
@@ -46,11 +41,10 @@ export const regionGet = async (subClaim: string, accessToken: string) => {
 export const mandelboxCreate = async (
     subClaim: string,
     accessToken: string,
-    dpi: number,
     region?: AWSRegion
 ) => {
     region = region ?? (await regionGet(subClaim, accessToken))
-    const response = await mandelboxRequest(subClaim, accessToken, region, dpi)
+    const response = await mandelboxRequest(subClaim, accessToken, region)
     return response
 }
 
@@ -82,8 +76,7 @@ export const mandelboxCreateErrorInternal = (
 const mandelboxRequest = async (
     username: string,
     accessToken: string,
-    region: string,
-    dpi: number
+    region: string
 ) =>
     post({
         endpoint: "/mandelbox/assign",
@@ -91,7 +84,6 @@ const mandelboxRequest = async (
         body: {
             username,
             region,
-            dpi,
             client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
         },
     })

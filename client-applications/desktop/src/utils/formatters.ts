@@ -133,7 +133,6 @@ export const formatMandelbox = (
             "statusText",
             "response",
             "status",
-            "json.output.dpi",
             "json.output.ip",
             "json.output.location",
             "json.output.port_32262",

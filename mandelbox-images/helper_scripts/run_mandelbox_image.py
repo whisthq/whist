@@ -70,12 +70,6 @@ parser.add_argument(
     ),
 )
 parser.add_argument(
-    "--dpi",
-    type=int,
-    default=96,
-    help="Deprecated. We no longer set the DPI via the host service.",
-)
-parser.add_argument(
     "--user-id",
     default="run_mandelbox_image_user",
     help="User ID to use for config retrieval. Defaults to 'run_mandelbox_image_user'.",
@@ -176,7 +170,6 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     url = HOST_SERVICE_URL + "spin_up_mandelbox"
     payload = {
         "app_image": args.image,
-        "dpi": args.dpi,
         "user_id": args.user_id,
         "config_encryption_token": args.user_config_encryption_token,
         "jwt_access_token": "bogus_jwt",

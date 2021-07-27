@@ -34,14 +34,12 @@ const imageEnv = () => {
 
 export const hostSpinUp = async ({
     ip,
-    dpi,
     user_id,
     config_encryption_token,
     jwt_access_token,
     mandelbox_id,
 }: {
     ip: string
-    dpi: number
     user_id: string
     config_encryption_token: string
     jwt_access_token: string
@@ -52,7 +50,6 @@ export const hostSpinUp = async ({
         `https://${ip}:${HostServicePort}`,
         {
             app_image: `ghcr.io/fractal/${imageEnv()}/browsers/chrome:current-build`,
-            dpi,
             user_id,
             config_encryption_token,
             jwt_access_token,

@@ -9,7 +9,6 @@ from pydantic import BaseModel
 class MandelboxAssignBody(BaseModel):
     region: str
     username: str
-    dpi: int
     client_commit_hash: str
 
 
@@ -32,7 +31,7 @@ class MandelboxAssignBody(BaseModel):
 #    'validation_error': {
 #        'query_params': [
 #           {
-#             'loc': ['dpi'],
+#             'loc': ['username'],
 #             'msg': ['field required'],
 #             'type': ['value_error.missing'],
 #           }

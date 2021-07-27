@@ -16,13 +16,12 @@ import { AWSRegion } from "@app/@types/aws"
 export default flow<{
     subClaim: string
     accessToken: string
-    dpi: number
     region?: AWSRegion
 }>("mandelboxCreateFlow", (trigger) => {
     const create = fork(
         trigger.pipe(
-            switchMap(({ subClaim, accessToken, dpi, region }) =>
-                from(mandelboxCreate(subClaim, accessToken, dpi, region))
+            switchMap(({ subClaim, accessToken, region }) =>
+                from(mandelboxCreate(subClaim, accessToken, region))
             )
         ),
         {
