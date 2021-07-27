@@ -275,7 +275,7 @@ def test_buffer_good(app, bulk_instance, region_ami_pair):
     to accomodate our desired buffer capacity for mandelboxes
     """
     region_name, ami_id = region_ami_pair
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     bulk_instance(
         aws_ami_id=ami_id, mandelbox_capacity=desired_free_mandelboxes, location=region_name
     )
@@ -287,7 +287,7 @@ def test_buffer_with_multiple(app, bulk_instance, region_ami_pair):
     Tests that we don't ask for a new instance when we have enough space in multiple instances
     """
     region_name, ami_id = region_ami_pair
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
 
     first_instance_buffer = int(desired_free_mandelboxes / 2)
@@ -309,7 +309,7 @@ def test_buffer_with_multiple_draining(app, bulk_instance, region_ami_pair):
     and also that draining instances are ignored
     """
     region_name, ami_id = region_ami_pair
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
 
     first_instance_buffer = int(desired_free_mandelboxes / 2)
@@ -345,7 +345,7 @@ def test_buffer_overfull(app, bulk_instance, region_ami_pair):
     Tests that we ask to scale down an instance when we have too much free space
     """
     region_name, ami_id = region_ami_pair
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
     buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
 
@@ -372,7 +372,7 @@ def test_buffer_not_too_full(app, bulk_instance, region_ami_pair):
     """
     region_name, ami_id = region_ami_pair
 
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
     buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
 
@@ -401,7 +401,7 @@ def test_buffer_overfull_split(app, bulk_instance, region_ami_pair):
     """
     region_name, ami_id = region_ami_pair
 
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
     buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
 
@@ -430,7 +430,7 @@ def test_buffer_not_too_full_split(app, bulk_instance, region_ami_pair):
     """
     region_name, ami_id = region_ami_pair
 
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
     buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
 
@@ -474,7 +474,7 @@ def test_buffer_region_sensitive(app, bulk_instance):
     ]
     region_ami_with_buffer, region_ami_without_buffer = region_ami_pairs
 
-    desired_free_mandelboxes = app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
     mandelbox_capacity = 10
     buffer_threshold = desired_free_mandelboxes + mandelbox_capacity
 
