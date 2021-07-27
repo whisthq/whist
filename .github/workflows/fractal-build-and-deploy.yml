@@ -70,17 +70,6 @@ jobs:
               working-directory: .github/workflows/helpers
               run: ./notifications/setup_notifications.sh
 
-            # The workflow will wait up to 15 minutes for other runs of the same workflow on the
-            # same branch to complete.
-            # TODO: Figure out how to better do `concurrency` at the job level and nix this.
-            - name: Serialize Workflows with Turnstyle
-              uses: softprops/turnstyle@v1
-              with:
-                  continue-after-seconds: 3600 # Minimum 1 hour distance between workflows (TODO: reduce this)
-                  same-branch-only: true
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
             - name: Set deploy environment
               id: set-deploy-environment
               if: ${{ github.event_name == 'push' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
@@ -277,6 +266,7 @@ jobs:
         name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelbox Images and AMIs"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
+        concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
         outputs:
             region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
@@ -497,6 +487,8 @@ jobs:
                 fractal-publish-build-config,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
+        # We must make sure that this doesn't run at the same time as another workflow's publish script!
+        concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
         if: always()
         steps:
             - name: Checkout Git Repository
@@ -665,6 +657,7 @@ jobs:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
+        concurrency: webserver-deploy-heroku-${{ github.ref }}
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|webserver-deploy-heroku|')
 
         steps:
@@ -789,6 +782,8 @@ jobs:
                 mandelboxes-and-amis-publish-ghcr-and-aws,
                 webserver-update-fractal-services,
             ]
+        concurrency: client-applications-publish-build-s3-${{ matrix.config.os }}-${{ github.ref }}
+
         # Only run client-apps deployment if none of the previous steps failed
         if: |
             always() &&
@@ -1107,6 +1102,7 @@ jobs:
         name: "Deploy Auth0 Rules"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
+        concurrency: microservices-deploy-auth0-rules-${{ github.ref }}
         if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-rules|')
 
         steps:
