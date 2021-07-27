@@ -1,10 +1,10 @@
 import React from "react"
 
 import {
-    AnnotationIcon,
-    GlobeAltIcon,
-    LightningBoltIcon,
-    ScaleIcon,
+    DatabaseIcon,
+    BookOpenIcon,
+    PlayIcon,
+    KeyIcon,
 } from "@heroicons/react/outline"
 
 const features = [
@@ -12,25 +12,25 @@ const features = [
         name: "Browsing History",
         description:
             "Your browsing history is locked behind a master key that only you have access to.",
-        icon: GlobeAltIcon,
+        icon: BookOpenIcon,
     },
     {
         name: "Passwords and Cookies",
         description:
             "All your passwords and cookies are encrypted and never touch our permanent storage.",
-        icon: ScaleIcon,
+        icon: KeyIcon,
     },
     {
         name: "Video and Audio",
         description:
             "Your video and audio packets are encrypted along every step of the streaming process and are never tracked, stored, or seen by anyone besides you.",
-        icon: LightningBoltIcon,
+        icon: PlayIcon,
     },
     {
         name: "Account Data",
         description:
             "We will never sell or release any of your data to any third-party provider without your explicit approval.",
-        icon: AnnotationIcon,
+        icon: DatabaseIcon,
     },
 ]
 
@@ -49,7 +49,7 @@ const Overview = () => {
                     </p>
                 </div>
 
-                <div className="mt-12">
+                <div className="mt-16">
                     <dl className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
                         {features.map((feature) => (
                             <div key={feature.name} className="relative">
@@ -60,11 +60,11 @@ const Overview = () => {
                                             aria-hidden="true"
                                         />
                                     </div>
-                                    <p className="ml-16 text-lg leading-6 font-medium text-gray-300">
+                                    <p className="ml-20 text-lg leading-6 font-medium text-gray-300">
                                         {feature.name}
                                     </p>
                                 </dt>
-                                <dd className="mt-2 ml-16 text-base text-gray-500">
+                                <dd className="mt-2 ml-20 text-base text-gray-500">
                                     {feature.description}
                                 </dd>
                             </div>
