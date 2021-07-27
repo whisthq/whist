@@ -65,7 +65,6 @@ updates:
             update-types: ["version-update:semver-patch"]
       open-pull-requests-limit: 10
 
-
     - package-ecosystem: "docker"
       directory: "/.github/actions/monorepo-secrets" # looks for Dockerfile in this directory
       schedule:

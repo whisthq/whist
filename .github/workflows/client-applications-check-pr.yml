@@ -46,9 +46,9 @@ jobs:
               id: config-secrets
               uses: ./.github/actions/monorepo-secrets
               with:
-                secrets: ${{ toJSON(secrets) }}
-                heroku_app_name: "fractal-dev-server"
-                heroku_api_token: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  secrets: ${{ toJSON(secrets) }}
+                  heroku_app_name: "fractal-dev-server"
+                  heroku_api_token: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
 
             - name: Log Secrets
               shell: python3 {0}
