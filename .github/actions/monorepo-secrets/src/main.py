@@ -5,6 +5,10 @@ import click
 import toolz
 from sources import heroku
 from pathlib import Path
+from rich import traceback
+
+# Better errors!
+traceback.install()
 
 SOURCES = [heroku]
 
