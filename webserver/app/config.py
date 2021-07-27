@@ -14,7 +14,7 @@ import os
 
 from collections import namedtuple
 from urllib.parse import urlsplit, urlunsplit
-from typing import Callable, Any, Union
+from typing import Any
 
 from dotenv import load_dotenv
 from flask import request
@@ -81,7 +81,7 @@ def _ensure_postgresql(conn_string: str) -> str:
     return urlunsplit(("postgresql", *parts))
 
 
-def getter(key, fetch=True, **kwargs) -> Callable[[Any, ...], Union[str, int]]:
+def getter(key, fetch=True, **kwargs) -> Any:
     """Return a getter function that can be passed to the builtin property decorator.
 
     This function attempts to retrieve the value associated with a configuration variable key. It
