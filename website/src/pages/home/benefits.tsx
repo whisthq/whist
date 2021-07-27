@@ -3,15 +3,9 @@ import { Row, Col } from "react-bootstrap"
 import { CheckIcon } from "@heroicons/react/outline"
 import { HashLink } from "react-router-hash-link"
 
-import { ScreenSize } from "@app/shared/constants/screenSizes"
-import { withContext } from "@app/shared/utils/context"
-
 import ChromeBackground from "@app/assets/graphics/speedTestBackground.svg"
 import SpeedTest from "@app/assets/gifs/speedTest.gif"
-import {
-    AnimatedLineA,
-    AnimatedLineB,
-} from "@app/shared/components/animatedLines"
+import RAMUsage from "@app/assets/graphics/ramUsage.svg"
 
 const features = [
     {
@@ -86,8 +80,6 @@ export const Middle = () => {
 
         Arguments: none
     */
-    const { width } = withContext()
-
     return (
         <div>
             <VerticalTemplate
@@ -150,32 +142,18 @@ export const Middle = () => {
                     </div>
                 }
                 image={
-                    <div className="m-auto inline-block max-w-xs md:max-w-none">
-                        <div className="relative right-32 md:right-0">
-                            <AnimatedLineB
-                                scale={width > ScreenSize.MEDIUM ? 1.0 : 0.5}
-                            />
-                        </div>
-                        <div className="relative right-32 bottom-24 md:right-0 md:bottom-0">
-                            <AnimatedLineA
-                                scale={width > ScreenSize.MEDIUM ? 1.0 : 0.5}
-                            />
-                        </div>
-                        <div
-                            style={{ background: "rgba(255,255,255,0.1)" }}
-                            className="font-body absolute px-10 py-3 text-gray-300 font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl"
-                        >
-                            <div>Chrome uses 4GB RAM</div>
-                        </div>
-                        <div
-                            style={{ background: "rgba(255,255,255,0.1)" }}
-                            className="font-body absolute px-10 py-3 text-gray-300 font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl"
-                        >
-                            <div>Fractal uses 0.3GB RAM</div>
-                        </div>
-                        <div className="font-body text-sm font-bold text-gray dark:text-gray-300 tracking-wide mt-0 md:pt-8 w-full">
-                            RAM usage vs. number of tabs open
-                        </div>
+                    <div
+                        className="mt-8 inline-block rounded p-2"
+                        style={{
+                            background:
+                                "linear-gradient(233.28deg, #F3B490 0%, #F38ECB 100%)",
+                        }}
+                    >
+                        <img
+                            className="relative top-0 left-0 w-full max-w-screen-sm m-auto shadow-xl"
+                            src={RAMUsage}
+                            alt=""
+                        />
                     </div>
                 }
             />

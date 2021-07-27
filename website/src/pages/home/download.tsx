@@ -8,7 +8,7 @@ import {
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 
-export const ActionPrompt = () => {
+const Download = () => {
     /*
         Colorful box component with Get Started prompt
 
@@ -18,7 +18,7 @@ export const ActionPrompt = () => {
     const { width } = withContext()
 
     return (
-        <div className="mb-24 text-center pt-24">
+        <div className="mb-24 text-center pt-12">
             <div className="px-0 md:px-12">
                 <div className="text-4xl md:text-5xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
                     Try the <span className="text-mint">alpha release</span>
@@ -67,4 +67,4 @@ export const ActionPrompt = () => {
     )
 }
 
-export default ActionPrompt
+export default Download
