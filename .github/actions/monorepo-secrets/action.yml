@@ -7,6 +7,13 @@ inputs:
     secrets:
         description: JSON object of GitHub secrets
         required: true
+    heroku_app_name:
+        description: Name of Heroku app
+        required: true
+    heroku_api_token:
+        description: API token for heroku access
+        required: true
+
 outputs:
     secrets:
         description: JSON object of Fractal config
