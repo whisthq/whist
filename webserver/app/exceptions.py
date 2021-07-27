@@ -47,24 +47,5 @@ class _FractalError(Exception):
         raise NotImplementedError
 
 
-class TemplateNotFound(_FractalError):
-    """This exception is raised when an email template ID is requested that does not exist
-    Args:
-        email_template_id (str): id of the selected email template
-    """
-
-    params = ("email_template_id",)
-    message = "Email_template_id: {email_template_id}"
-
-
-class SendGridException(_FractalError):
-    """This exception is raised when SendGrid email sending API throws an exception
-    Args: None
-    """
-
-    params = ()
-    message = "Sendgrid sending API threw an exception"
-
-
 class SentryInitializationError(Exception):
     pass

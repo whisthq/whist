@@ -3,8 +3,6 @@
 from http import HTTPStatus
 import pytest
 
-
-from app.models import SupportedAppImages
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
