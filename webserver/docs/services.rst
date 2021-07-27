@@ -65,7 +65,7 @@ have been initiated by API requests to the associated Fractal Webserver.
 AWS Services
 ------------
 
-The web server is responsible for scaling cloud resources. In particular, it interacts heavily with AWS EC2 and with AWS ECS. 
+The web server is responsible for scaling cloud resources. In particular, it interacts heavily with AWS EC2. 
 Specifically, the Fractal Webserver has a utility library interface over the AWS EC2 API that allows us to provision and 
 deprovision cloud resources from Python code easily. Mandelboxes are then handled directory by the Fractal Host Service on the 
 instance. We use this utility library when scaling up (adding more) or scaling down (shutting off) EC2 instances due to 

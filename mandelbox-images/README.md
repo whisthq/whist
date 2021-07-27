@@ -70,7 +70,7 @@ After cloning the repo, set up your EC2 instance with the setup script from the 
 ./setup_localdev_dependencies.sh
 ```
 
-This will begin installing all dependencies and configurations required to run our mandelbox images on an AWS EC2 host. It will also ask if you want to connect your EC2 instance to an ECS cluster, which is optional for development. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
+This will begin installing all dependencies and configurations required to run our mandelbox images on an AWS EC2 host. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
 ```shell
 ../protocol/build_server_protocol.sh && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base

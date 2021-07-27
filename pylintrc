@@ -12,7 +12,6 @@ fail-under=10
 # paths.
 ignore=CVS,
        admin_blueprint.py,
-       base_ecs_client.py,
        hash_bad_words.py,
        newsletter_blueprint.py,
        validation.py
