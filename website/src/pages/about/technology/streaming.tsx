@@ -83,11 +83,8 @@ const Streaming = () => (
                                     <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                                 </svg>
                                 <p className="relative">
-                                    Tincidunt integer commodo, cursus etiam
-                                    aliquam neque, et. Consectetur pretium in
-                                    volutpat, diam. Montes, magna cursus nulla
-                                    feugiat dignissim id lobortis amet. Laoreet
-                                    sem est phasellus eu proin massa, lectus.
+                                    I am supposed to say something nice about
+                                    Fractal and I will do so sometime this week.
                                 </p>
                             </div>
                         </div>
@@ -95,15 +92,15 @@ const Streaming = () => (
                             <div className="relative rounded-full border-2 border-white sm:absolute sm:top-0 sm:transform sm:-translate-y-1/2">
                                 <img
                                     className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-indigo-300"
-                                    src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2.5&w=160&h=160&q=80"
+                                    src="https://media-exp1.licdn.com/dms/image/C5603AQE5ly63D-E7dA/profile-displayphoto-shrink_400_400/0/1615683999893?e=1632960000&v=beta&t=Z65X7UBzuYTgrLfucjTpTxy9gkqAD9Kr_jl1bY79UMk"
                                     alt=""
                                 />
                             </div>
-                            <span className="relative ml-4 text-indigo-300 font-semibold leading-6 sm:ml-24 sm:pl-1">
-                                <p className="text-white font-semibold sm:inline">
-                                    Judith Black
+                            <span className="relative text-indigo-300 leading-6 sm:ml-24 sm:pl-1">
+                                <p className="text-white sm:inline font-semibold">
+                                    Jenny Wang
                                 </p>{" "}
-                                <p className="sm:inline">CEO at Workcation</p>
+                                <p className="sm:inline">Investor at Neo</p>
                             </span>
                         </cite>
                     </blockquote>

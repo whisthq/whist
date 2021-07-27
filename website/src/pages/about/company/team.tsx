@@ -86,9 +86,9 @@ const people = [
         linkedinUrl: "https://www.linkedin.com/in/yoel-hawa/",
     },
 ].sort((a, b) => {
-    const textA = a.name.toUpperCase();
-    const textB = b.name.toUpperCase();
-    return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+    const textA = a.name.toUpperCase()
+    const textB = b.name.toUpperCase()
+    return textA < textB ? -1 : textA > textB ? 1 : 0
 })
 
 export const Team = () => {
