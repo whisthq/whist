@@ -13,12 +13,14 @@ const {
     AWS_ACCESS_KEY = "PLACEHOLDER_CLIENTAPP_AWS_ACCESS_KEY", // only permissioned for S3 client-apps buckets
     AWS_SECRET_KEY = "PLACEHOLDER_CLIENTAPP_AWS_SECRET_KEY",
     AMPLITUDE_KEY = "PLACEHOLDER_CLIENTAPP_AMPLITUDE_KEY",
+    COMMIT_SHA = "PLACEHOLDER_CLIENTAPP_COMMIT_SHA",
 } = envOverrides
 
 const keys = {
     AWS_ACCESS_KEY,
     AWS_SECRET_KEY,
     AMPLITUDE_KEY,
+    COMMIT_SHA,
 }
 
 module.exports = {

@@ -9,7 +9,9 @@ import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
-import { COMMIT_SHA } from "@app/config/environment"
+import config from "@app/config/environment"
+
+const COMMIT_SHA = config.keys.COMMIT_SHA
 
 // For the purposes of the low-level rendering which is performed by the
 // protocol, the default DPI is always 96; this is modified by a scale factor
