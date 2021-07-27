@@ -2,8 +2,6 @@
 
 At the module level, the code is separated between blueprints, models/ serializers, and helpers. Code should only ever live in one of these, and each of these (besides models/serializers, which are only tested at the integration test level) should have their own unit tests with the other modules (as necessary) mocked out as well as integration tests.
 
-Every module should be installable via `pip install -e .` from its base directory, to enable easy testing/mocking. This is trivial, but does require that every package/module have an `init.py` at its top level (and a `setup.py` for modules you'll be installing, at the moment just primarily helpers).
-
 ## Blueprints
 
 A blueprint is a collection of related API endpoints, and is the entry point for our API. Every API request that we receive is first processed by an endpoint, which resides in a blueprint.
