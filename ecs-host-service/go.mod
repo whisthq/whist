@@ -20,7 +20,6 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-errors/errors v1.4.0 // indirect
-	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang/snappy v0.0.4 // indirect
@@ -28,6 +27,7 @@ require (
 	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgtype v1.8.1
 	github.com/jackc/pgx/v4 v4.13.0
+	github.com/jschaf/pggen v0.0.0-20210622015421-8d43ddabaecf // indirect
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
@@ -40,7 +40,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
 	google.golang.org/genproto v0.0.0-20210701191553-46259e63a0a9 // indirect
