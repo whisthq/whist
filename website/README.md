@@ -39,7 +39,7 @@ The website auto-deploys from GitHub directly to Netlify, which is our web hosti
 -   The branch `staging` deploys to https://staging.fractal.co.
 -   The branch `prod` deploys to https://fractal.co.
 
-For `dev` and `staging`, the password is `><mc?@,>YF?v&p,e`.
+For `staging` the password is `><mc?@,>YF?v&p,e`. For `dev` the password is `Mandelbox2021!`.
 
 Basic continuous integration is set up for this project. For every PR, basic Node.js tests will be compiled and run within GitHub Actions, including linting. Your code needs to pass all linting and tests to be approved for merge. If you create new functions, make sure to create tests for them and add them to the continuous integration, when relevant.
 
