@@ -85,7 +85,11 @@ const people = [
             "https://ca.slack-edge.com/TQ8RU2KE2-U024MGVNKF0-34ae41116f01-192",
         linkedinUrl: "https://www.linkedin.com/in/yoel-hawa/",
     },
-]
+].sort((a, b) => {
+    const textA = a.name.toUpperCase();
+    const textB = b.name.toUpperCase();
+    return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+})
 
 export const Team = () => {
     return (
