@@ -1,3 +1,5 @@
+#ifndef CUDA_CONTEXT_H
+#define CUDA_CONTEXT_H
 /**
  * Copyright Fractal Computers, Inc. 2021
  * @file cudacontext.h
@@ -20,6 +22,11 @@ Includes
 #include "nvidia-linux/cuda_drvapi_dynlink_cuda.h"
 #include <fractal/core/fractal.h>
 
+typedef CUresult (*CUCTXSETCURRENTPROC)(CUcontext ctx);
+extern CUCTXSETCURRENTPROC cu_ctx_set_current_ptr;
+typedef CUresult (*CUCTXGETCURRENTPROC)(CUcontext* pctx);
+extern CUCTXGETCURRENTPROC cu_ctx_get_current_ptr;
+
 /*
 ============================
 Public Functions
@@ -40,3 +47,4 @@ NVFBC_BOOL cuda_init();
  * @returns                        Pointer to the active CUDA context
  */
 CUcontext* get_active_cuda_context_ptr();
+#endif

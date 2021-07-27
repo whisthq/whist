@@ -88,6 +88,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
         LOG_ERROR("Failed to initialize CUDA!");
         return NULL;
     }
+    LOG_INFO("cuda active context at %x", *get_active_cuda_context_ptr());
 
     /*
      * Create an NvFBC instance.
@@ -223,6 +224,21 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     uint64_t t1, t2;
     t1 = NvFBCUtilsGetTimeInMillis();
 #endif
+    /*
+    static CUcontext bound_cuda_context;
+    CUresult cu_res = cu_ctx_get_current_ptr(&bound_cuda_context);
+    if (cu_res != CUDA_SUCCESS) {
+	    LOG_ERROR("couldn't get current cuda context");
+	    return -1;
+    }
+    if (!bound_cuda_context) {
+    */
+	    // LOG_INFO("Switching cuda context to this thread!");
+	    CUresult cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
+	    if (cu_res != CUDA_SUCCESS) {
+		    LOG_ERROR("couldn't set this thread's cuda context!");
+	    }
+    // }
 
     NVFBC_TOCUDA_GRAB_FRAME_PARAMS grab_params = {0};
     NVFBC_FRAME_GRAB_INFO frame_info = {0};

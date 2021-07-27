@@ -41,6 +41,8 @@ static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 
 CUcontext active_cuda_context = NULL;
+CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
+CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
 
 /*
 ============================
@@ -89,6 +91,17 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
         return NVFBC_FALSE;
     }
 
+    cu_ctx_set_current_ptr = (CUCTXSETCURRENTPROC)dlsym(lib_cuda, "cuCtxSetCurrent");
+    if (cu_ctx_set_current_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxSetCurrent'\n");
+        return NVFBC_FALSE;
+    }
+
+    cu_ctx_get_current_ptr = (CUCTXGETCURRENTPROC)dlsym(lib_cuda, "cuCtxGetCurrent");
+    if (cu_ctx_get_current_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxGetCurrent'\n");
+        return NVFBC_FALSE;
+    }
     return NVFBC_TRUE;
 }
 
