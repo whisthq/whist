@@ -99,7 +99,7 @@ jobs:
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["ami_name"] = f"fractal-ecs-host-ami-${{ github.sha }}-{date_str}"
+                  data["ami_name"] = f"fractal-host-ami-${{ github.sha }}-{date_str}"
                   data["source_region"] = "${{ env.aws_new_ami_source_region }}"
                   data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
                   data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
