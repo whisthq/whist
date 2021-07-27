@@ -24,9 +24,7 @@ def heroku(
     if not heroku_app_name:
         raise Exception(f"Invalid argument: heroku_app_name={heroku_app_name}")
     if not heroku_api_token:
-        raise Exception(
-            f"Invalid argument: heroku_api_token={heroku_api_token}"
-        )
+        raise Exception(f"Invalid argument: heroku_api_token={heroku_api_token}")
 
     url = f"{heroku_base_url}/apps/{heroku_app_name}/config-vars"
 
