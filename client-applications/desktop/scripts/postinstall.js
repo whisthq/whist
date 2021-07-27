@@ -20,8 +20,7 @@ const postInstall = (_env, ..._args) => {
     const snowpackLibIndex = path.join(
         "node_modules",
         "snowpack",
-        "lib",
-        "index.js"
+        "lib"
     )
     const oldContents = fs.readFileSync(snowpackLibIndex, "utf8")
     const newContents = oldContents
