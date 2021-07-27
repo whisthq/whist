@@ -161,7 +161,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 
     # And then figure out how many instances we need to spin up/purge to get 20 free total
     # Check config DB for the correct value for the environment.
-    desired_free_mandelboxes = current_app.config["DESIRED_FREE_MANDELBOXES"]
+    desired_free_mandelboxes = int(current_app.config["DESIRED_FREE_MANDELBOXES"])
 
     if num_free_mandelboxes < desired_free_mandelboxes:
         return int(current_app.config["DEFAULT_INSTANCE_BUFFER"])

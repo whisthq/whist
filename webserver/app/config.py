@@ -14,6 +14,7 @@ import os
 
 from collections import namedtuple
 from urllib.parse import urlsplit, urlunsplit
+from typing import Callable, Any, Union
 
 from dotenv import load_dotenv
 from flask import request
@@ -80,7 +81,7 @@ def _ensure_postgresql(conn_string: str) -> str:
     return urlunsplit(("postgresql", *parts))
 
 
-def getter(key, fetch=True, **kwargs):
+def getter(key, fetch=True, **kwargs) -> Callable[[Any, ...], Union[str, int]]:
     """Return a getter function that can be passed to the builtin property decorator.
 
     This function attempts to retrieve the value associated with a configuration variable key. It
@@ -204,7 +205,7 @@ class DeploymentConfig:
         # Having a `fetch=True` can let us dynamically change the instance type to be launched.
         getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g4dn.12xlarge")
     )
-    DESIRED_FREE_MANDELBOXES = int(property(getter("DESIRED_FREE_MANDELBOXES", fetch=True, default=20)))
+    DESIRED_FREE_MANDELBOXES = property(getter("DESIRED_FREE_MANDELBOXES", fetch=True, default=20))
     DEFAULT_INSTANCE_BUFFER = property(
         # This will be as a count to launch new instances when we don't have
         #  any instances with the current AMI running.
