@@ -1087,6 +1087,19 @@ int render_video() {
         return -1;
     }
 
+    // Cast to VideoFrame* because this variable is not volatile in this section
+    VideoFrame* frame = (VideoFrame*)render_context.frame_buffer;
+
+    // If the frame hasn't changed since the last one, the server will just send an empty frame to
+    // keep the framerate at least at MIN_FPS. We don't want to render this empty frame though.
+    if (rendering && frame->is_empty_frame) {
+        // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
+        // we're behind on frames and start requesting a bunch of iframes, which forces a render.
+        video_data.last_rendered_id = render_context.id;
+        rendering = false;
+        return -1;
+    }
+
     SDL_Renderer* renderer = video_context.renderer;
 
     if (rendering) {
@@ -1103,8 +1116,6 @@ int render_video() {
         }
         safe_SDL_UnlockMutex(render_mutex);
 
-        // Cast to VideoFrame* because this variable is not volatile in this section
-        VideoFrame* frame = (VideoFrame*)render_context.frame_buffer;
         PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
