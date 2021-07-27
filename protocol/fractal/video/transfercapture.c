@@ -79,21 +79,19 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         return -1;
     }
 
+#ifdef __linux__
     // Handle transfer capture for nvidia capture device
     if (device->last_capture_device == NVIDIA_DEVICE) {
         if (encoder->active_encoder != NVIDIA_ENCODER) {
             LOG_INFO("Switching back to Nvidia encoder for use with Nvidia capture!");
             encoder->active_encoder = NVIDIA_ENCODER;
             video_encoder_set_iframe(encoder);
-	    start_transfer_context(device, encoder);
+            start_transfer_context(device, encoder);
         }
-#ifdef __linux__
         nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->width, device->height);
-#else
-        LOG_FATAL("Cannot use NVIDIA_ENCODER on Windows!");
-#endif
         return 0;
     }
+#endif
 
     if (encoder->active_encoder != FFMPEG_ENCODER) {
         LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");
