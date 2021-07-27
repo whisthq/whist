@@ -1,9 +1,9 @@
 import React from "react"
 import {
     GlobeAltIcon,
-    LightningBoltIcon,
-    MailIcon,
-    ScaleIcon,
+    BookmarkIcon,
+    ChartPieIcon,
+    ChatAltIcon
 } from "@heroicons/react/outline"
 
 const features = [
@@ -17,29 +17,29 @@ const features = [
         name: "Product Designers",
         description:
             "When working with large assets in 2D/3D, web-based design tools like Figma and your computer cries for a dedicated graphics card.",
-        icon: ScaleIcon,
+        icon: ChartPieIcon,
     },
     {
         name: "Productivity Workers",
         description:
             "When you're the world record holder for the largest Google Slides presentation or Airtable workspace and your computer slows down.",
-        icon: LightningBoltIcon,
+        icon: BookmarkIcon,
     },
     {
         name: "Content Consumers",
         description:
             "When you want any website to load at the speed of thought and videos to never buffer.",
-        icon: MailIcon,
+        icon: ChatAltIcon,
     },
 ]
 
 const Users = () => {
     return (
-        <div className="overflow-hidden mt-36 bg-gray-900">
+        <div className="overflow-hidden mt-20">
             <div className="relative max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
                 <div className="relative lg:grid lg:grid-cols-3 lg:gap-x-8">
                     <div className="lg:col-span-1">
-                        <div className="text-3xl dark:text-gray-300 sm:text-4xl">
+                        <div className="text-3xl dark:text-gray-300 sm:text-4xl pr-8">
                             For those who push Chrome to its limit.
                         </div>
                     </div>

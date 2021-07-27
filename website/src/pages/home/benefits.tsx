@@ -220,7 +220,7 @@ export const Middle = () => {
                             ))}
                         </dl>
                         <HashLink to="/security#top">
-                            <button className="mt-12 text-gray-300 bg-blue py-2 px-8 rounded-3xl">
+                            <button className="mt-12 text-mint py-2 px-8">
                                 Read more about security
                             </button>
                         </HashLink>

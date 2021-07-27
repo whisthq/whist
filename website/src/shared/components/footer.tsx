@@ -8,8 +8,8 @@ import Logo from "@app/assets/icons/logoWhite.svg"
 const navigation = {
     home: [
         { name: "Product", href: "/" },
-        { name: "Pricing", href: "#" },
-        { name: "Download", href: "#" },
+        { name: "Pricing", href: "/#pricing" },
+        { name: "Download", href: "/#download" },
     ],
     about: [
         { name: "Company", href: "/about" },

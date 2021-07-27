@@ -1,5 +1,5 @@
 import React from "react"
-import { CheckCircleIcon } from "@heroicons/react/solid"
+import { CheckIcon } from "@heroicons/react/solid"
 import { Link } from "react-scroll"
 
 import {
@@ -8,10 +8,10 @@ import {
 } from "@app/shared/components/button"
 
 const includedFeatures = [
-    "Unlimited access after free trial",
-    "Official Fractal t-shirt and mug",
+    "Unlimited access until Jan 1, 2022",
     "Private Discord forum access",
     "Recognition on supporter board (coming soon)",
+    "Priority customer support"
 ]
 
 const Pricing = () => {
@@ -60,7 +60,7 @@ const Pricing = () => {
                                     via a one-time, $10 supporter fee. This is
                                     because our current focus is building a
                                     great product, not revenue. This offer
-                                    expires on November 1, 2020, at which point
+                                    expires on Jan 1, 2022, at which point
                                     we&lsquo;ll ask our supporters to help us
                                     decide a fair, long-term pricing model.
                                 </p>
@@ -78,7 +78,7 @@ const Pricing = () => {
                                                 className="flex items-start lg:col-span-1"
                                             >
                                                 <div className="flex-shrink-0">
-                                                    <CheckCircleIcon
+                                                    <CheckIcon
                                                         className="h-5 w-5 text-green-400"
                                                         aria-hidden="true"
                                                     />
