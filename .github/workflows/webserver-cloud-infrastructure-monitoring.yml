@@ -141,18 +141,17 @@ jobs:
               if: ${{ matrix.aws-region == 'us-east-1' }}
               run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
-            # This deletes all but the currently active AMIs and the last 20 AMIs for the AWS
-            # region it is ran on. We chose 20 as a somewhat-arbitrary comfortable buffer in case
-            # we need to debug/revert changes at some point
-            - name: Delete All but Latest 20 AMIs
-              run: amicleaner -f --keep-previous 20
+            # This deletes all but the currently active AMIs and the AMIs created within the last 30 days
+            #, which is 2 promotion-cycles for us, as a safe buffer in case we need to revert back 
+            - name: Delete All AMIs from the Last Month
+              run: amicleaner --force-delete --ami-min-days 30
 
             # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
             # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
             # with it, which can happen with regular instances, Packer builders, and more. They are
             # useless (especially since we don't store user data on instances) and thus should be deleted
             - name: Delete Orphaned EBS Volumes
-              run: amicleaner -f --check-orphans
+              run: y | amicleaner --check-orphans
 
             - name: Notify Slack on Job Error
               if: failure()
