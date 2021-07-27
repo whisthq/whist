@@ -532,7 +532,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AesKey:              aesKey,
 	}
 
-	fc.WriteStartValues(req.DPI)
 	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 	fc.AssignToUser(req.UserID)
 
