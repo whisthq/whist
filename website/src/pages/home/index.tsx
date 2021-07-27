@@ -41,9 +41,7 @@ export const Home = () => {
             >
                 <Download />
             </div>
-            <div className={classNames(padded, "bg-blue-darker")}>
-                <Footer />
-            </div>
+            <Footer />
         </>
     )
 }

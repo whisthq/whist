@@ -1,4 +1,5 @@
 import React from "react"
+import { HashLink } from "react-router-hash-link"
 
 import {
     FractalButton,
@@ -17,10 +18,12 @@ const Specs = () => {
                 </p>
             </div>
             <div className="text-center mt-16">
-                <FractalButton
-                    contents="DOWNLOAD NOW"
-                    state={FractalButtonState.DEFAULT}
-                />
+                <HashLink to="/#download">
+                    <FractalButton
+                        contents="DOWNLOAD NOW"
+                        state={FractalButtonState.DEFAULT}
+                    />
+                </HashLink>
             </div>
         </div>
     )

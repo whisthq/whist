@@ -18,9 +18,7 @@ export default function Example() {
                 <Overview />
                 <Detailed />
             </div>
-            <div className={classNames(padded, "bg-blue-darker")}>
-                <Footer />
-            </div>
+            <Footer />
         </div>
     )
 }
