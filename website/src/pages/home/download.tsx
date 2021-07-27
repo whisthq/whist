@@ -25,9 +25,13 @@ export const ActionPrompt = () => {
                 </div>
                 <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
                     Fractal is early, but we&lsquo;re excited to see what
-                    you&lsquo;ll do with a lighter, faster browser! For optimal experience,
-                    we recommend using Fractal only if you are located in <span className="text-gray-300 underline">North America 
-                    or Europe</span>.
+                    you&lsquo;ll do with a lighter, faster browser! For optimal
+                    experience, we recommend using Fractal only if you are
+                    located in{" "}
+                    <span className="text-gray-300 underline">
+                        North America or Europe
+                    </span>
+                    .
                 </div>
                 {width > ScreenSize.SMALL && (
                     <div className="flex justify-center">

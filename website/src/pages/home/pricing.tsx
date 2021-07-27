@@ -11,7 +11,7 @@ const includedFeatures = [
     "Unlimited access until Jan 1, 2022",
     "Private Discord forum access",
     "Recognition on supporter board (coming soon)",
-    "Priority customer support"
+    "Priority customer support",
 ]
 
 const Pricing = () => {

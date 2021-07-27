@@ -1,6 +1,10 @@
 import React from "react"
 import { HashLink } from "react-router-hash-link"
-import { LightningBoltIcon, ChipIcon, ShieldCheckIcon } from "@heroicons/react/outline"
+import {
+    LightningBoltIcon,
+    ChipIcon,
+    ShieldCheckIcon,
+} from "@heroicons/react/outline"
 
 const supportLinks = [
     {

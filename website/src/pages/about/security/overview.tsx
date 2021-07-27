@@ -36,13 +36,13 @@ const features = [
 
 const Overview = () => {
     return (
-        <div className="py-16 mt-12 bg-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="py-16 mt-36 lg:mt-12 bg-gray-800">
+            <div className="max-w-7xl mx-auto px-8">
                 <div className="lg:text-center">
-                    <p className="mt-2 text-3xl leading-8 text-gray-300 sm:text-4xl">
+                    <p className="mt-2 text-2xl leading-8 text-gray-300 lg:text-4xl">
                         What Fractal Keeps Private
                     </p>
-                    <p className="mt-2 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    <p className="mt-2 max-w-2xl text-lg lg:text-xl text-gray-500 lg:mx-auto">
                         Fractal ensures that nobody, not even our engineers, can
                         view your browsing information. The following things are
                         visible only to you:

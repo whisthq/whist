@@ -20,6 +20,18 @@ const people = [
             "https://media-exp1.licdn.com/dms/image/C4D0BAQHb0p21AeBPGw/company-logo_200_200/0/1519922057504?e=1635379200&v=beta&t=ClSIF4c0_ibu9q4Y99PDbdVchRuVfKG__zrcn-aFZGA",
     },
     {
+        name: "Rough Draft Ventures",
+        role: "Venture Capital",
+        imageUrl:
+            "https://media-exp1.licdn.com/dms/image/C4D0BAQHqWFIqhd_3ZQ/company-logo_200_200/0/1519904523552?e=1635379200&v=beta&t=3tDgSvrqDMC61oFFyEPdIv2iyRgP-hEIq2GvA_NY0UE",
+    },
+    {
+        name: "DRF",
+        role: "Venture Capital",
+        imageUrl:
+            "https://media-exp1.licdn.com/dms/image/C560BAQG6PkyvkmtgqQ/company-logo_200_200/0/1600364918804?e=1635379200&v=beta&t=IgmeRTIlHxtDipnx71BPLoaGRbVYMOja83d_dL3dqxU",
+    },
+    {
         name: "Pankaj Patel",
         role: "Former Cisco Chief Development Officer",
         imageUrl:
@@ -58,7 +70,7 @@ const Investors = () => {
                             <li key={person.name}>
                                 <div className="flex items-center space-x-4 lg:space-x-6">
                                     <img
-                                        className="w-16 h-16 rounded-full lg:w-20 lg:h-20 border-2"
+                                        className="w-16 h-16 rounded-full border-2 filter grayscale mr-4"
                                         src={person.imageUrl}
                                         alt=""
                                     />

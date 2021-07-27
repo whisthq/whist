@@ -3,7 +3,7 @@ import {
     GlobeAltIcon,
     BookmarkIcon,
     ChartPieIcon,
-    ChatAltIcon
+    ChatAltIcon,
 } from "@heroicons/react/outline"
 
 const features = [

@@ -35,7 +35,10 @@ export const Home = () => {
             <div className={classNames(padded, "bg-blue-darkest")} id="pricing">
                 <Pricing />
             </div>
-            <div className={classNames(padded, "bg-blue-darkest")} id="download">
+            <div
+                className={classNames(padded, "bg-blue-darkest")}
+                id="download"
+            >
                 <Download />
             </div>
             <div className={classNames(padded, "bg-blue-darker")}>

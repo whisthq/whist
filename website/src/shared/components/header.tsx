@@ -1,7 +1,7 @@
 /* This example requires Tailwind CSS v2.0+ */
 import React, { Fragment } from "react"
 import { Link } from "react-router-dom"
-import { Link as LinkScroll } from "react-scroll"
+import { HashLink } from "react-router-hash-link"
 import { Popover, Transition } from "@headlessui/react"
 import {
     ChartBarIcon,
@@ -49,7 +49,7 @@ const resources = [
     {
         name: "Careers",
         description: "We're looking to recruit brilliant, motivated engineers.",
-        href: "https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9",
+        href: "/contact#careers",
     },
 ]
 
@@ -59,7 +59,7 @@ function classNames(...classes: any[]) {
 
 const Header = () => {
     return (
-        <Popover className="relative">
+        <Popover className="relative z-50">
             {({ open }) => (
                 <>
                     <div className="flex justify-between items-center px-4 py-6 sm:px-6 md:justify-start md:space-x-10">
@@ -73,7 +73,7 @@ const Header = () => {
                             </Link>
                         </div>
                         <div className="-mr-2 -my-2 md:hidden">
-                            <Popover.Button className="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-300 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                            <Popover.Button className="rounded-md p-2 inline-flex items-center justify-center text-gray-300 focus:outline-none">
                                 <span className="sr-only">Open menu</span>
                                 <MenuIcon
                                     className="h-6 w-6"
@@ -209,11 +209,11 @@ const Header = () => {
                                     </>
                                 )}
                             </Popover>
-                            <LinkScroll to="download" spy={true} smooth={true}>
+                            <HashLink to="/#download">
                                 <span className="text-base font-medium text-gray-300 hover:text-mint cursor-pointer">
                                     Download
                                 </span>
-                            </LinkScroll>
+                            </HashLink>
                         </Popover.Group>
                         <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0"></div>
                     </div>
@@ -236,15 +236,9 @@ const Header = () => {
                             <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white divide-y-2 divide-gray-50">
                                 <div className="pt-5 pb-6 px-5">
                                     <div className="flex items-center justify-between">
-                                        <div>
-                                            <img
-                                                className="h-8 w-auto"
-                                                src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
-                                                alt="Workflow"
-                                            />
-                                        </div>
+                                        <div></div>
                                         <div className="-mr-2">
-                                            <Popover.Button className="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-300 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                                            <Popover.Button className="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-600 focus:outline-none">
                                                 <span className="sr-only">
                                                     Close menu
                                                 </span>

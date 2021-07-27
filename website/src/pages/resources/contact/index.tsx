@@ -14,6 +14,8 @@ const Contact = () => {
             <div className={classNames(padded, "bg-blue-darkest")}>
                 <Header />
                 <Emails />
+            </div>
+            <div className={classNames(padded, "bg-blue-darkest")}>
                 <Careers />
             </div>
             <div className={classNames(padded, "bg-blue-darker")}>
