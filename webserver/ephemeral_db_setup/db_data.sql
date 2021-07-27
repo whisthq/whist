@@ -33,29 +33,5 @@ INSERT INTO hardware.region_to_ami (region_name, ami_id, client_commit_hash, ami
 
 
 --
--- Data for Name: supported_app_images; Type: TABLE DATA; Schema: hardware; Owner: uap4ch2emueqo9
---
-
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('Base', NULL, NULL, NULL, NULL, NULL, NULL, true, 0);
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('Google Chrome', 'https://fractal-supported-app-images.s3.amazonaws.com/chrome-256.svg', 'Browser', 'The modern web browser.', 'With Google apps like Gmail, Google Pay, and Google Assistant, Chrome can help you stay productive and get more out of your browser.', 'https://www.google.com/chrome/', 'https://www.google.com/chrome/terms/', true, 0.8);
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('Firefox', 'https://fractal-supported-app-images.s3.amazonaws.com/firefox-256.svg', 'Browser', 'The browser is just the beginning.', 'Firefox is a free web browser that handles your data with respect and is built for privacy anywhere you go online.', 'https://www.mozilla.org/en-US/firefox/', 'https://www.mozilla.org/en-US/about/legal/terms/services/', true, 0);
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('Blender', 'https://fractal-supported-app-images.s3.amazonaws.com/blender-256.svg', 'Creative', 'The free and open source 3D creation suite.', 'Blender supports the entirety of the 3D pipeline—modeling, rigging, animation, simulation, rendering, compositing and motion tracking, video editing and 2D animation pipeline.', 'https://www.blender.org/', 'https://id.blender.org/terms-of-service', true, 1);
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('Sidekick', 'https://fractal-supported-app-images.s3.amazonaws.com/sidekick-256.svg', 'Browser', 'The fastest work environment ever made', 'Sidekick is a revolutionary new work OS based on the Chromium browser. Designed to be the ultimate online work experience, it brings together your team and every web tool you use – all in one interface.', 'https://www.meetsidekick.com/', 'https://cdn.meetsidekick.com/Terms+of+Service.pdf', true, 0);
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('GIMP', 'https://fractal-dev-supported-app-images.s3.amazonaws.com/gimp-256.svg', 'Creative', 'The free & open source image editor.', 'GIMP is a cross-platform image editor available for GNU/Linux, OS X, Windows and more operating systems. It is free software, so you can change its source code and distribute your changes.', 'https://www.gimp.org/', 'https://www.gimp.org/about/COPYING', true, 0);
-INSERT INTO hardware.supported_app_images (app_id, logo_url, category, description, long_description, url, tos, active, preboot_number) VALUES ('Brave', 'https://fractal-supported-app-images.s3.amazonaws.com/brave-256.svg', 'Browser', 'A fast, private and secure web browser.', 'Brave stops online surveillance, loads content faster, and uses 35% less battery.', 'https://brave.com/', 'https://brave.com/terms-of-use/', true, 0);
-
-
---
--- Data for Name: email_templates; Type: TABLE DATA; Schema: sales; Owner: uap4ch2emueqo9
---
-
-INSERT INTO sales.email_templates (id, url, title) VALUES ('EMAIL_VERIFICATION', 'https://fractal-email-templates.s3.amazonaws.com/email_verification.html', '[Fractal] Please verify your email');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('PASSWORD_RESET', 'https://fractal-email-templates.s3.amazonaws.com/password_reset.html', 'Reset your password');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('PAYMENT_FAILURE', 'https://fractal-email-templates.s3.amazonaws.com/payment_failure.html', 'Action Required: Your payment method failed');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('PAYMENT_SUCCESSFUL', 'https://fractal-email-templates.s3.amazonaws.com/payment_successful.html', 'Thank you for choosing Fractal');
-INSERT INTO sales.email_templates (id, url, title) VALUES ('FEEDBACK', 'https://fractal-email-templates.s3.amazonaws.com/feedback.html', 'A user has just cancelled their plan');
-
-
---
 -- PostgreSQL database dump complete
 --

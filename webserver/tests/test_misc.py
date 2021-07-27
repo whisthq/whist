@@ -46,7 +46,7 @@ def test_callback_webserver_hostname_localhost_with_port():
 @pytest.mark.skipif(
     "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
 )
-def test_webserver_sigterm(client):
+def test_webserver_sigterm(client, make_user):
     """
     Make sure SIGTERM is properly handled by webserver. After a SIGTERM, all new web requests should
     error out with code RESOURCE_UNAVAILABLE. For more info, see app/signals.py.
@@ -55,8 +55,13 @@ def test_webserver_sigterm(client):
     handlers. Waitress is only used in deployments (local or in Procfile with Heroku), not during
     tests. It has been independently verified that waitress does not override our SIGTERM handler.
     """
+
+    user = make_user()
+
+    client.login(user)
+
     # this is a dummy endpoint that we hit to make sure web requests are ok
-    resp = client.post("/newsletter/post")
+    resp = client.get("/regions")
     assert resp.status_code == HTTPStatus.OK
 
     self_pid = os.getpid()
@@ -65,29 +70,15 @@ def test_webserver_sigterm(client):
     assert not can_process_requests()
 
     # web requests should be rejected
-    resp = client.post("/newsletter/post")
+    resp = client.get("/regions")
     assert resp.status_code == HTTPStatus.SERVICE_UNAVAILABLE
 
     # re-enable web requests
     assert set_web_requests_status(True)
 
     # should be ok
-    resp = client.post("/newsletter/post")
+    resp = client.get("/regions")
     assert resp.status_code == HTTPStatus.OK
-
-
-def test_rate_limiter(client):
-    """
-    Test the rate limiter decorator. The first 10 requests should succeed,
-    but the 11th should error out with `TOO_MANY_REQUESTS`.
-    """
-    for _ in range(10):
-        resp = client.post("/newsletter/post")
-        assert resp.status_code == HTTPStatus.OK
-        g._rate_limiting_complete = False
-
-    resp = client.post("/newsletter/post")
-    assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
 def test_local_lock_timeout(app, region_name):

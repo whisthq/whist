@@ -5,6 +5,4 @@ from .hardware import (
     MandelboxInfo,
     InstanceInfo,
     RegionToAmi,
-    SupportedAppImages,
 )
-from .sales import EmailTemplates

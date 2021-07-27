@@ -315,23 +315,6 @@ CREATE TABLE hardware.region_to_ami (
 
 
 --
--- Name: supported_app_images; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.supported_app_images (
-    app_id character varying NOT NULL,
-    logo_url character varying,
-    category character varying,
-    description character varying,
-    long_description character varying,
-    url character varying,
-    tos character varying,
-    active boolean NOT NULL,
-    preboot_number double precision DEFAULT 0.0 NOT NULL
-);
-
-
---
 -- Name: hdb_action_log; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -503,17 +486,6 @@ ALTER SEQUENCE logging.t_region_history_id_seq OWNED BY logging.t_region_history
 
 
 --
--- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
---
-
-CREATE TABLE sales.email_templates (
-    id character varying NOT NULL,
-    url character varying NOT NULL,
-    title text
-);
-
-
---
 -- Name: t_instance_history id; Type: DEFAULT; Schema: logging; Owner: -
 --
 
@@ -557,14 +529,6 @@ ALTER TABLE ONLY hardware.mandelbox_info
 
 ALTER TABLE ONLY hardware.region_to_ami
     ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
-
-
---
--- Name: supported_app_images supported_app_images_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.supported_app_images
-    ADD CONSTRAINT supported_app_images_pkey PRIMARY KEY (app_id);
 
 
 --
@@ -637,14 +601,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_schema_notifications
 
 ALTER TABLE ONLY hdb_catalog.hdb_version
     ADD CONSTRAINT hdb_version_pkey PRIMARY KEY (hasura_uuid);
-
-
---
--- Name: email_templates email_templates_pkey; Type: CONSTRAINT; Schema: sales; Owner: -
---
-
-ALTER TABLE ONLY sales.email_templates
-    ADD CONSTRAINT email_templates_pkey PRIMARY KEY (id);
 
 
 --
