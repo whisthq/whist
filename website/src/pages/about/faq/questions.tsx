@@ -76,7 +76,7 @@ const faqs = [
     {
         id: 7,
         question: "How does Fractal make money?",
-        answer: "While Fractal is in alpha, we are asking for users to become supporters via a supporter fee. Eventually, Fractal will charge a monthly subscription fee (amount TBD). We are not an advertising business and will never sell your data.",
+        answer: "Currently, we are in alpha release mode and are asking for users to become supporters via a supporter fee. In 2022, Fractal will charge a monthly subscription fee, amount TBD. We are not an advertising business and will never sell your data.",
     },
 ]
 
