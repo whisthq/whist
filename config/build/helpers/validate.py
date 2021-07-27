@@ -102,9 +102,13 @@ def validate_schema_yamls(profile_map, schemas):
     for match in find_matching_keys(reserved, merged):
         return {"message": "schema/profile name collision", "found": match}
 
-    verified_child = (validate_child(profile_sets, v, path=[k]) for k, v in merged.items())
+    verified_child = (
+        validate_child(profile_sets, v, path=[k]) for k, v in merged.items()
+    )
 
-    return validate_root(merged) or next((i for i in verified_child if i is not None), None)
+    return validate_root(merged) or next(
+        (i for i in verified_child if i is not None), None
+    )
 
 
 def validate_root(dct):
@@ -128,7 +132,8 @@ def validate_child(key_sets, dct, path=()):
 
     if not any(find_matching([set(keys)], [set(s) for s in key_sets])):
         return {
-            "message": "no matching profile set," + " should match a valid group in profile.yml",
+            "message": "no matching profile set,"
+            + " should match a valid group in profile.yml",
             "path": path,
             "found": keys,
             "valid": key_sets,
@@ -166,12 +171,6 @@ def validate_secrets(schema, secrets):
         return {
             "message": "wrong type for secrets map, expected dict",
             "found": secrets,
-        }
-
-    for missing in find_missing_keys(set(schema.keys()), secrets):
-        return {
-            "message": "key in secrets map not present in config schema",
-            "found": missing,
         }
 
 

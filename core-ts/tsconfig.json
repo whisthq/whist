@@ -12,7 +12,9 @@
             "types/*": ["./types/*"],
             "constants/*": ["./constants/*"],
             "http/*": ["./http/*"],
-            "utilities/*": ["./utilities/*"]
+            "payment/*": ["./payment/*"],
+            "auth/*": ["./auth/*"],
+            "config/*": ["./config/*"]
         }
     }
 }
