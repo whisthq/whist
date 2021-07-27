@@ -105,6 +105,10 @@ Public Function Implementations
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
 NVFBC_BOOL cuda_init() {
+	if (active_cuda_context) {
+		LOG_INFO("Already have a cuda context! Nothing will be done.");
+		return NVFBC_TRUE;
+	}
     void* lib_cuda = NULL;
     if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
         LOG_ERROR("Failed to load CUDA library!");
