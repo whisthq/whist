@@ -237,6 +237,9 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
         LOG_ERROR("Calling reconfigure_encoder on a NULL encoder!");
         return false;
     }
+    encoder->in_width = width;
+    encoder->in_height = height;
+    encoder->codec_type = codec;
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
 #ifdef __linux__
