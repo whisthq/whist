@@ -8,9 +8,11 @@
 # make any Action-specific decisions without checking for CI first.
 import os
 import re
+import json
 from sys import exit, argv, stderr
 from subprocess import run
 from rich import traceback
+from main import main
 
 # Better errors!
 traceback.install()
@@ -37,14 +39,8 @@ def actionify(name, data):
 # The Action folder will be copied to /root inside the container.
 # We'll run the build/main.py and pass it the /root as the --path.
 # We pull any extra CLI arguments from sys.argv, and pass it to the subprocess.
-result = run(
-    ["python3", "/root/src/main.py", *argv[1:]],
-    text=True,
-    capture_output=True,
-    check=True,
-)
 
-secrets = result.stdout
+secrets = json.dumps(main())
 
 if os.environ.get("CI"):
     # We're running in CI through a GitHub Action, which means we
@@ -55,7 +51,3 @@ else:
     # We're not in CI, and we may want to use the stdout directly,
     # so we won't print any headers.
     print(secrets)
-
-if result.stderr:
-    print(result.stderr, file=stderr)
-exit(result.returncode)
