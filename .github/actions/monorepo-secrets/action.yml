@@ -1,5 +1,5 @@
-name: Monorepo Config
-description: Build /config folder into .json files.
+name: Monorepo Secrets
+description: Retrieve monorepo secrets from providers
 branding:
     icon: command
     color: blue
