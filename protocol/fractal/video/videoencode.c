@@ -244,7 +244,9 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
         case NVIDIA_ENCODER:
 #ifdef __linux__
             return false;
-            // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource registration somehow.
+            // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
+            // registration somehow.
+
             // return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate,
             //                                   codec);
 #else

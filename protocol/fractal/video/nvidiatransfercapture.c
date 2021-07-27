@@ -13,8 +13,8 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
             (int): 0 on success, -1 on failure
         */
     if (device->p_gpu_texture == NULL) {
-	    LOG_ERROR("Nothing to register! Device GPU texture was NULL");
-	    return -1;
+        LOG_ERROR("Nothing to register! Device GPU texture was NULL");
+        return -1;
     }
 
     NV_ENC_REGISTER_RESOURCE register_params;
@@ -49,10 +49,10 @@ int nvidia_close_transfer_context(NvidiaEncoder* encoder) {
         Returns:
             (int): 0 on success, -1 on failure
         */
-	if (!encoder->registered_resource) {
-		LOG_INFO("Trying to unregister NULL resource - nothing to do!");
-		return 0;
-	}
+    if (!encoder->registered_resource) {
+        LOG_INFO("Trying to unregister NULL resource - nothing to do!");
+        return 0;
+    }
 
     // unregister all resources in encoder->registered_resources
     int status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,

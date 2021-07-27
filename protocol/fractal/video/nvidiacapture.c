@@ -182,11 +182,11 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return NULL;
     }
-    
+
     // Capture screen once to set p_gpu_texture
     if (nvidia_capture_screen(device) == 0) {
-	    LOG_ERROR("Preliminary capture screen failed!");
-	    return NULL;
+        LOG_ERROR("Preliminary capture screen failed!");
+        return NULL;
     }
 
     /*
