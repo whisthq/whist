@@ -42,11 +42,19 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Load Monorepo Secrets
+              id: config-secrets
+              uses: ./.github/actions/monorepo-secrets
+              with:
+                secrets: ${{ toJSON(secrets) }}
+                heroku_app_name: "fractal-dev-server"
+                herolu_api_token: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+
             - name: Build Monorepo Configuration for Mac
               id: config-macos
               uses: ./.github/actions/monorepo-config
               with:
-                  secrets: ${{ toJSON(secrets) }}
+                  secrets: ${{ steps.config-secrets.outputs.secrets }}
                   os: macos
                   deploy: dev
 
