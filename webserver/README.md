@@ -178,7 +178,7 @@ Before making a pull request, ensure that the following steps are taken:
 
 1. Make sure that your code follows the guidelines outlined in our [Python Webserver Coding Philosophy](https://www.notion.so/tryfractal/Code-Philosophy-Webserver-backend-d036205444464f8b8a61dc36eeae7dbb).
 
-2. Lint your code by running `black .` and `pylint app` from the `webserver` directory. If this does not pass, your code will fail Github CI. NOTE: Depending on where the directory containing your virtual environment is located, `black .` may attempt to lint the source code for all of the packages specified in your requirements files. In this case, use the --exclude flag.
+2. Lint your code by running `black --config ../pyproject.toml .` and `pylint --rcfile=../pylintrc app auth0.py payments` from the `webserver` directory. If this does not pass, your code will fail Github CI. NOTE: Depending on where the directory containing your virtual environment is located, `black --config ../pyproject.toml .` may attempt to lint the source code for all of the packages specified in your requirements files. In this case, specify `--extend-exclude` (see `black --help`).
 
 3. Run all test files by running `bash run_tests.sh` in the `webserver/tests` directory. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
 
@@ -188,14 +188,14 @@ Finally, you can open a PR to `dev`.
 
 ## Styling
 
-The code in this directory is formatted with [`black`](https://black.readthedocs.io/en/stable/) and linted with [`pylint`](https://www.pylint.org/). [`mypy`](http://mypy-lang.org/) is used to perform static type checking based on type hints. You can run each program in your terminal emulator from the `webserver` directory using the following commands:
+The code in this directory is formatted with [`black`](https://black.readthedocs.io/en/stable/) and linted with [`pylint`](https://www.pylint.org/). [`mypy`](http://mypy-lang.org/) is used to perform static type checking based on type hints. Be sure to install the version of `black` specified in `.github/workflows/helpers/requirements.txt`. You can run each program in your terminal emulator from the `webserver` directory using the following commands:
 
 ```bash
 # Format code with black
-$ black .
+$ black --config ../pyproject.toml .
 
 # Lint with pylint
-$ pylint --rcfile=../pylintrc app
+$ pylint --rcfile=../pylintrc app auth0.py payments
 
 # Perform static type checking with mypy
 $ mypy

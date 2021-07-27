@@ -59,16 +59,6 @@ jobs:
             - name: Add pylint-wrapper to the PATH
               run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
 
-            - name: Check if Code is Linted with Python Black
-              working-directory: mandelbox-images
-              run: |
-                  result=$(black . --check) # Returns 0 if the code is already linted
-                  if [ "$result" -ne "0" ]; then
-                    (echo "To pass this check please lint the code with Python Black" && false)
-                  else
-                    (echo "Code is linted with Python Black" && true)
-                  fi
-
             - name: Check if Code Matches Pylint Standards
               run: pylint-wrapper mandelbox-images/helper_scripts mandelbox-images/testing_scripts
 
