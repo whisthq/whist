@@ -101,8 +101,16 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
   force_deregister      = true
   force_delete_snapshot = true
   run_tag {
-    key = "Name"
-    value = "Packer-Builder-${var.source_region}-${var.pr_number}-${var.git_commit_sha}"
+    key = "PR Number"
+    value = "${var.pr_number}"
+  }
+  run_tag {
+    key = "Instance Region"
+    value = "${var.source_region}"
+  }
+  run_tag {
+    key = "Git Commit SHA"
+    value = "${var.git_commit_sha}"
   }
 }
 
