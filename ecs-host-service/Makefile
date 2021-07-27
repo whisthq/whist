@@ -84,8 +84,8 @@ vet: build
 
 # Note that we should build before we lint or vet, since build updates the fractal dependencies.
 .NOTPARALLEL:
-check: build vet format lint
-	echo "All checks (build, vet, format, and lint) succeeded!"
+check: clean build vet format lint
+	echo "All checks (clean, build, vet, format, and lint) succeeded!"
 
 clean:
 	$(GOCLEAN)
