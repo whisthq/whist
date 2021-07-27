@@ -6,7 +6,7 @@ import { HashLink } from "react-router-hash-link"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 
-import ChromeBackground from "@app/assets/largeGraphics/speedTestBackground.svg"
+import ChromeBackground from "@app/assets/graphics/speedTestBackground.svg"
 import SpeedTest from "@app/assets/gifs/speedTest.gif"
 import {
     AnimatedLineA,

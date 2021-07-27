@@ -1,7 +1,7 @@
 import React from "react"
 import { Link } from "react-scroll"
 
-import LaptopMan from "@app/assets/largeGraphics/laptopMan.svg"
+import LaptopMan from "@app/assets/graphics/laptopMan.svg"
 import {
     FractalButton,
     FractalButtonState,

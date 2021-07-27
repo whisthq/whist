@@ -1,6 +1,6 @@
 import React from "react"
 
-import QuestionMan from "@app/assets/largeGraphics/questionMan.svg"
+import QuestionMan from "@app/assets/graphics/questionMan.svg"
 
 const Support = () => {
     return (

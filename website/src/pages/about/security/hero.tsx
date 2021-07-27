@@ -1,6 +1,6 @@
 import React from "react"
 
-import SecurityMan from "@app/assets/largeGraphics/securityMan.svg"
+import SecurityMan from "@app/assets/graphics/securityMan.svg"
 
 const Hero = () => (
     <div className="pt-10 sm:pt-16 lg:pt-8 lg:pb-14 lg:overflow-hidden">

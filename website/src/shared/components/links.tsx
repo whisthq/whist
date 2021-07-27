@@ -1,7 +1,6 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import classNames from "classnames"
-import LogoBlack from "@app/assets/icons/logoBlack.svg"
 import LogoWhite from "@app/assets/icons/logoWhite.svg"
 
 export const AboutLink = (props: { className: string }) => (
@@ -37,13 +36,7 @@ export const LogoLink = (props: { className?: string; dark?: boolean }) => (
         to="/"
     >
         <img
-            src={
-                props.dark !== undefined
-                    ? props.dark
-                        ? LogoWhite
-                        : LogoBlack
-                    : LogoBlack
-            }
+            src={LogoWhite}
             className="w-full h-full"
             alt="Logo"
         />
