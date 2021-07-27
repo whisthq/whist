@@ -47,15 +47,14 @@ def app_record_metrics(
 
     Example:
 
-    TODO: Update the example to show metrics for web
-    * at the end of a celery task:
-        app_record_metrics(metrics={
-            "celery.task_duration.success.ms": task_duration,
-            "celery.tasks.count": -1
-        }, extra_dims={
-            "task_name": "assign_mandelbox",
-            "task_id": task_id,
-        })
+    TODO: Update the example to show metrics for web at the end of a celery task:
+    app_record_metrics(metrics={
+        "celery.task_duration.success.ms": task_duration,
+        "celery.tasks.count": -1
+    }, extra_dims={
+        "task_name": "assign_mandelbox",
+        "task_id": task_id,
+    })
     """
     if extra_dims is None:
         extra_dims = {}
