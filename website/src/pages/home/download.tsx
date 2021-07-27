@@ -4,7 +4,7 @@ import { FaApple, FaWindows } from "react-icons/fa"
 import {
     FractalButton,
     FractalButtonState,
-} from "@app/pages/home/components/button"
+} from "@app/shared/components/button"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 

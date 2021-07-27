@@ -3,7 +3,7 @@ import React from "react"
 import {
     FractalButton,
     FractalButtonState,
-} from "@app/pages/home/components/button"
+} from "@app/shared/components/button"
 
 const Specs = () => {
     return (

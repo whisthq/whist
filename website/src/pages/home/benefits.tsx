@@ -11,7 +11,7 @@ import SpeedTest from "@app/assets/gifs/speedTest.gif"
 import {
     AnimatedLineA,
     AnimatedLineB,
-} from "@app/pages/home/components/animatedLines"
+} from "@app/shared/components/animatedLines"
 
 const features = [
     {

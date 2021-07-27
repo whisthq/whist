@@ -15,7 +15,7 @@ import GoogleDriveLogo from "@app/assets/icons/googleDriveLogo.svg"
 import {
     FractalButton,
     FractalButtonState,
-} from "@app/pages/home/components/button"
+} from "@app/shared/components/button"
 
 export const Top = () => {
     /*

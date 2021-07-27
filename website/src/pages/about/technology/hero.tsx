@@ -5,7 +5,7 @@ import LaptopMan from "@app/assets/graphics/laptopMan.svg"
 import {
     FractalButton,
     FractalButtonState,
-} from "@app/pages/home/components/button"
+} from "@app/shared/components/button"
 
 const Hero = () => (
     <div className="pt-10 sm:pt-16 lg:pt-8 lg:pb-14 lg:overflow-hidden">
