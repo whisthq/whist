@@ -6,84 +6,78 @@ const people = [
         role: "Founder",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-UPTRX7MGA-51c2ecce0b3b-512",
-        linkedinUrl: "https://www.linkedin.com/in/philippemnoel/",
     },
     {
         name: "Ming Ying",
         role: "Founder",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-UPTRXFK98-89ab30c74d35-192",
-        linkedinUrl: "https://www.linkedin.com/in/ming-ying/",
+    },
+    {
+        name: "Owen Niles",
+        role: "Backend Engineer",
+        imageUrl:
+            "https://ca.slack-edge.com/TQ8RU2KE2-U01A493UNTT-76d91cabde41-512",
     },
     {
         name: "Raviteja Guttula",
         role: "Backend Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U0243QG947L-7e40b38b0d88-512",
-        linkedinUrl: "https://www.linkedin.com/in/thisisgvrt/",
     },
     {
         name: "Jannie Zhong",
         role: "Full Stack Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U01J380KFS8-0642358c2177-512",
-        linkedinUrl: "https://www.linkedin.com/in/janniezhong/",
     },
     {
         name: "Neil Hansen",
         role: "Full Stack Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U01JS94Q8UF-eb6b84b7179a-192",
-        linkedinUrl: "",
     },
     {
         name: "Leor Fishman",
         role: "Backend Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U01997UQJGK-1c4fa8641f69-192",
-        linkedinUrl: "https://www.linkedin.com/in/leor-f-63490785/",
     },
     {
         name: "Suriya Kandaswamy",
         role: "Systems Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U018FBSHUC8-e07952d1d5e3-512",
-        linkedinUrl: "https://www.linkedin.com/in/suriyak/",
     },
     {
         name: "Roshan Padaki",
         role: "Systems Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U01125TJ6EB-241dcde74e6b-192",
-        linkedinUrl: "https://www.linkedin.com/in/roshan-padaki-261a7b132/",
     },
     {
         name: "Savvy Raghuvanshi",
         role: "Systems Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U019K89H3N2-ebcb96e31c54-192",
-        linkedinUrl: "https://www.linkedin.com/in/savvy-raghuvanshi/",
     },
     {
         name: "Nicholas Pipitone",
         role: "Systems Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-USEKRDGH1-8672b16c3d84-512",
-        linkedinUrl: "https://www.linkedin.com/in/nicholas-pipitone-5736a2107/",
     },
     {
         name: "Serina Hu",
         role: "Systems Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U022KK7URP0-c124ebf8b079-192",
-        linkedinUrl: "https://www.linkedin.com/in/serina-h-710776102/",
     },
     {
         name: "Yoel Hawa",
         role: "Systems Engineer",
         imageUrl:
             "https://ca.slack-edge.com/TQ8RU2KE2-U024MGVNKF0-34ae41116f01-192",
-        linkedinUrl: "https://www.linkedin.com/in/yoel-hawa/",
     },
 ].sort((a, b) => {
     const textA = a.name.toUpperCase()

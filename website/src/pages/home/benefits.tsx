@@ -162,10 +162,7 @@ export const Middle = () => {
                 title={
                     <>
                         <div className="text-gray dark:text-gray-300">
-                            Always{" "}
-                            <span className="text-blue dark:text-mint">
-                                incognito
-                            </span>
+                            Always private
                         </div>
                     </>
                 }
