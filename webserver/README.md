@@ -307,7 +307,6 @@ Note that all conftest files contain test fixtures for their respective director
 └── tests --> tests for our assorted endpoints.  All files without docs
     should be assumed to unit test the endpoints/bps they name.
     ├── aws
-    │   ├── config.py
     │   ├── test_assign.py
     │   ├── test_instance_scaling.py
     │   ├── test_instance_selection.py
