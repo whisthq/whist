@@ -33,7 +33,6 @@ Includes
 #else
 #include <signal.h>
 #include <unistd.h>
-#include <fractal/video/linuxcapture.h>  // TODO: delete this later!
 #endif
 
 #include <fractal/video/transfercapture.h>
@@ -374,16 +373,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
             fractal_sleep(100);
             continue;
-        }
-
-        // If capture on nvidia failed, close the transfer context and tell the device manager to
-        // recreate the nvidia device
-        if (device->must_recreate_nvidia) {
-            static CUcontext current_context;
-            LOG_DEBUG("must recreate true: closing transfer context and destroying device");
-            device->must_recreate_nvidia = false;
-            close_transfer_context(device, encoder);
-            fractal_post_semaphore(device->nvidia_device_semaphore);
         }
 
         if (!transfer_context_active) {
