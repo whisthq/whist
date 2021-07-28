@@ -844,6 +844,7 @@ jobs:
                 fractal-publish-build-config,
                 webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
+                mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: client-applications-publish-build-s3-${{ matrix.config.os }}-${{ github.ref }}
 
@@ -853,8 +854,7 @@ jobs:
             (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
             (needs.webserver-deploy-heroku.result == 'success') &&
             (needs.microservices-deploy-auth0-rules.result == 'success') &&
-            (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') &&
-            (needs.webserver-update-fractal-services.result == 'success')
+            (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
 
         strategy:
             matrix:
