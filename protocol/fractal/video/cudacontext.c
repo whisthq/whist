@@ -138,8 +138,8 @@ Public Function Implementations
 NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
     void* lib_cuda = NULL;
     if (*cuda_context) {
-	    LOG_DEBUG("Cuda context already exists! Doing nothing.");
-	    return NVFBC_TRUE;
+        LOG_DEBUG("Cuda context already exists! Doing nothing.");
+        return NVFBC_TRUE;
     }
     if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
         LOG_ERROR("Failed to load CUDA library!");
