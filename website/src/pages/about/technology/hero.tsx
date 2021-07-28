@@ -24,7 +24,7 @@ const Hero = () => (
                     <Link to="details" spy={true} smooth={true}>
                         <FractalButton
                             className="mt-8 mb-4"
-                            contents="HOW IT WORKS"
+                            contents="Learn More"
                             state={FractalButtonState.DEFAULT}
                         />
                     </Link>

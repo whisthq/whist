@@ -38,12 +38,10 @@ export const Hero = () => {
                             href="/contact#careers"
                             className="inline-flex items-center text-gray-300 bg-gray-900 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
                         >
-                            <span className="font-semibold px-4 py-1.5 text-gray-100 text-xs leading-5 uppercase tracking-wide bg-blue rounded-full">
+                            <span className="font-semibold px-4 py-1.5 text-gray-100 text-xs leading-5 tracking-wide bg-blue rounded-full">
                                 We&lsquo;re hiring
                             </span>
-                            <span className="ml-4 text-sm">
-                                Visit our careers page
-                            </span>
+                            <span className="ml-4 text-sm">Browse careers</span>
                             <ChevronRightIcon
                                 className="ml-2 w-5 h-5 text-gray-500"
                                 aria-hidden="true"
@@ -75,7 +73,7 @@ export const Hero = () => {
                         <a href="/download#top">
                             <FractalButton
                                 className="mt-12"
-                                contents="DOWNLOAD NOW"
+                                contents="Download Now"
                                 state={FractalButtonState.DEFAULT}
                             />
                         </a>

@@ -42,7 +42,7 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
 
     <button
         className={classNames(
-            "text-md rounded text-gray-300 duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold bg-blue",
+            "text-md rounded text-gray-300 duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold bg-gray-800",
             "transition-colors",
             props.className
         )}
@@ -74,7 +74,7 @@ export const FractalButton: FC<FractalButtonProps> = (
 
     const disabledClassName = classNames(
         props.className,
-        "opacity-50 pointer-events-none"
+        "opacity-30 pointer-events-none"
     )
 
     const enabledClassName = classNames(props.className)

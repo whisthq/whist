@@ -23,14 +23,14 @@ const Pricing = () => {
                             Try Fractal for free
                         </div>
                         <p className="m-auto text-lg text-gray-500 max-w-screen-sm">
-                            You&lsquo;ll start with a 14 day free trial, after
+                            You&lsquo;ll start with a one week free trial, after
                             which you&lsquo;ll have to option to continue using
                             Fractal by becoming a supporter.
                         </p>
                         <a href="/download#top">
                             <FractalButton
                                 className="mt-8 mb-4"
-                                contents="DOWNLOAD NOW"
+                                contents="Download Now"
                                 state={FractalButtonState.DEFAULT}
                             />
                         </a>
@@ -55,7 +55,7 @@ const Pricing = () => {
                                 </div>
                                 <p className="mt-6 text-base text-gray-400 tracking-wider">
                                     You can continue using Fractal after your
-                                    14-day free trial by becoming a supporter
+                                    one week free trial by becoming a supporter
                                     via a one-time, $30 supporter fee. This is
                                     because our current focus is building a
                                     great product, not revenue. This offer
