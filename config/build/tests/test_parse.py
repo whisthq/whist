@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import pytest
 import tests.mock_data as mock_data
 import helpers.parse as parse

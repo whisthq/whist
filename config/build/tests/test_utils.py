@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import toolz
 import helpers.utils as utils
 from pathlib import Path

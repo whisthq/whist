@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import tests.mock_data as mock_data
 import helpers.validate as valid
 import helpers.utils as utils
