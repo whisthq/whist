@@ -60,7 +60,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         if (device->pending_destruction) {
             break;
         }
-	    CUresult cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
+	    CUresult cu_res = cu_ctx_push_current_ptr(*get_active_cuda_context_ptr());
 	    if (cu_res != CUDA_SUCCESS) {
 		    LOG_ERROR("Unable to push current context onto nvidia thread, restul %d", cu_res);
 	    }
@@ -75,6 +75,10 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             device->nvidia_capture_device = create_nvidia_capture_device();
             fractal_sleep(500);
         }
+	cu_res = cu_ctx_pop_current_ptr(get_active_cuda_context_ptr());
+	if (cu_res != CUDA_SUCCESS) {
+		LOG_ERROR("Unable to pop current context from nvidia thread, result %d", cu_res);
+	}
         device->active_capture_device = NVIDIA_DEVICE;
     }
     return 0;
