@@ -29,15 +29,20 @@ const Careers = () => (
                         </h2>
                         <p className="text-lg text-gray-300">
                             If working on a product that pushes the boundaries
-                            of network protocols, virtualization, or browser
-                            OSes excites you, you can apply to work with us!
+                            of networking, virtualization, or browser OSes
+                            excites you, you can apply to work with us!
                         </p>
                         <a
                             href="https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9"
                             target="_blank"
                             rel="noreferrer"
                         >
-                            <button className="mt-8 no-underline block w-full py-3 px-5 text-center bg-white rounded text-gray sm:inline-block sm:w-auto">
+                            <button
+                                className="mt-8 block w-full py-3 px-5 text-center rounded text-gray-100 sm:inline-block sm:w-auto"
+                                style={{
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                }}
+                            >
                                 Explore open positions
                             </button>
                         </a>

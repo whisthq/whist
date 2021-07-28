@@ -1,5 +1,11 @@
 import React from "react"
-import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM } from "react-icons/fa"
+import {
+    FaLinkedinIn,
+    FaTwitter,
+    FaInstagram,
+    FaMediumM,
+    FaDiscord,
+} from "react-icons/fa"
 
 import Logo from "@app/assets/icons/logoWhite.svg"
 
@@ -30,19 +36,24 @@ const navigation = {
     ],
     social: [
         {
+            name: "Discord",
+            href: "https://discord.com/invite/HjPpDGvEeA",
+            icon: FaDiscord,
+        },
+        {
             name: "Medium",
             href: "https://fractal.medium.com/",
             icon: FaMediumM,
         },
         {
-            name: "LinkedIn",
-            href: "https://www.linkedin.com/company/fractal/",
-            icon: FaLinkedinIn,
-        },
-        {
             name: "Twitter",
             href: "https://twitter.com/tryfractal",
             icon: FaTwitter,
+        },
+        {
+            name: "LinkedIn",
+            href: "https://www.linkedin.com/company/fractal/",
+            icon: FaLinkedinIn,
         },
         {
             name: "Instagram",
