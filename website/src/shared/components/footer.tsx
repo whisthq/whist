@@ -7,8 +7,6 @@ import {
     FaDiscord,
 } from "react-icons/fa"
 
-import Logo from "@app/assets/icons/logoWhite.svg"
-
 /* eslint-disable react/display-name */
 
 const navigation = {
@@ -72,7 +70,11 @@ const Footer = () => {
             <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
                 <div className="xl:grid xl:grid-cols-3 xl:gap-8">
                     <div className="space-y-8 xl:col-span-1">
-                        <img className="h-6" src={Logo} alt="" />
+                        <img
+                            className="h-10 w-10 rounded"
+                            src="https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2_borderless.png"
+                            alt=""
+                        />
                         <p className="text-gray-500 text-base">
                             Fractal is a lighter, faster version of Google
                             Chrome that runs in the cloud.

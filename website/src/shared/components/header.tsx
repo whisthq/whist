@@ -11,8 +11,6 @@ import {
     ChevronDownIcon,
 } from "@heroicons/react/outline"
 
-import Logo from "@app/assets/icons/logoWhite.svg"
-
 const about = [
     {
         name: "Company",
@@ -65,8 +63,8 @@ const Header = () => {
                         <div className="flex justify-start lg:w-0 lg:flex-1">
                             <a href="/">
                                 <img
-                                    className="h-5 relative md:bottom-1"
-                                    src={Logo}
+                                    className="h-9 w-9 relative md:bottom-1 rounded"
+                                    src="https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2_borderless.png"
                                     alt=""
                                 />
                             </a>
