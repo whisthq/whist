@@ -70,12 +70,24 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set deploy environment
+              id: set-deploy-environment
+              if: ${{ github.event_name == 'push' || contains(fromJSON('["", "dev", "staging", "prod"]'), github.event.inputs.target) }}
+              uses: ./.github/actions/set-environment
+              with:
+                  # Deploy the git ref corresponding to the event that
+                  # triggered the workflow unless the event that triggered the
+                  # workflow was a manual workflow_dispatch event. In such a
+                  # case, the branch specified by the target input should be
+                  # deployed.
+                  ref: ${{ github.event.inputs.target || github.ref }}
+
             - name: Load Monorepo Secrets
               id: config-secrets
               uses: ./.github/actions/monorepo-secrets
               with:
                   secrets: ${{ toJSON(secrets) }}
-                  heroku_app_name: "fractal-dev-server"
+                  heroku_app_name: "fractal-${{ steps.set-deploy-environment.outputs.environment }}-server"
                   heroku_api_token: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
 
             - name: Build Monorepo Configuration for Mac
@@ -84,7 +96,7 @@ jobs:
               with:
                   secrets: ${{ steps.config-secrets.outputs.secrets }}
                   os: macos
-                  deploy: dev
+                  deploy: ${{ steps.set-deploy-environment.outputs.environment }}
 
             - name: Build Monorepo Configuration for Windows
               id: config-win32
@@ -92,7 +104,7 @@ jobs:
               with:
                   secrets: ${{ steps.config-secrets.outputs.secrets }}
                   os: win32
-                  deploy: dev
+                  deploy: ${{ steps.set-deploy-environment.outputs.environment }}
 
             - name: Encode Configuration
               id: encoded-config
