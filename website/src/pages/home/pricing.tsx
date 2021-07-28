@@ -15,7 +15,7 @@ const includedFeatures = [
 
 const Pricing = () => {
     return (
-        <div className="mt-24">
+        <div className="mt-24" id="pricing">
             <div className="pt-12 sm:pt-16 lg:pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">

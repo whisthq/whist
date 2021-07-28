@@ -43,7 +43,7 @@ const features = [
 
 const Requirements = () => {
     return (
-        <div className="overflow-hidden mt-20">
+        <div className="overflow-hidden mt-20" id="requirements">
             <div className="relative max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div className="relative lg:grid lg:grid-cols-3 lg:gap-x-8">
                     <div className="lg:col-span-1">
