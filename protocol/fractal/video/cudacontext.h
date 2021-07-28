@@ -30,6 +30,8 @@ typedef CUresult (*CUCTXPOPCURRENTPROC)(CUcontext* pctx);
 extern CUCTXPOPCURRENTPROC cu_ctx_pop_current_ptr;
 typedef CUresult (*CUCTXPUSHCURRENTPROC)(CUcontext ctx);
 extern CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr;
+typedef CUresult (*CUCTXSYNCHRONIZEPROC)();
+extern CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr;
 
 /*
 ============================

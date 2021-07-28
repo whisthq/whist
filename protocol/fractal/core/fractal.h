@@ -41,6 +41,7 @@ Includes
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif

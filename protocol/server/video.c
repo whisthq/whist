@@ -33,7 +33,7 @@ Includes
 #else
 #include <signal.h>
 #include <unistd.h>
-#include <fractal/video/linuxcapture.h> // TODO: delete this later!
+#include <fractal/video/linuxcapture.h>  // TODO: delete this later!
 #endif
 
 #include <fractal/video/transfercapture.h>
@@ -381,16 +381,24 @@ int32_t multithreaded_send_video(void* opaque) {
             continue;
         }
 
-        // If capture on nvidia failed, close the transfer context and tell the device manager to recreate the nvidia device
+        // If capture on nvidia failed, close the transfer context and tell the device manager to
+        // recreate the nvidia device
         if (device->must_recreate_nvidia) {
-		LOG_DEBUG("must recreate true: closing transfer context and destroying device");
+            static CUcontext current_context;
+            LOG_DEBUG("must recreate true: closing transfer context and destroying device");
             device->must_recreate_nvidia = false;
             close_transfer_context(device, encoder);
-	    CUresult cu_res = cu_ctx_pop_current_ptr(get_active_cuda_context_ptr());
-	    if (cu_res != CUDA_SUCCESS) {
-		    LOG_ERROR("pop current failed with result %d", cu_res);
-	    }
-	    LOG_INFO("active cuda context: %x", *get_active_cuda_context_ptr());
+            // CUresult cu_res = cu_ctx_pop_current_ptr(get_active_cuda_context_ptr());
+	    CUresult cu_res = cu_ctx_set_current_ptr(NULL);
+            if (cu_res != CUDA_SUCCESS) {
+                LOG_ERROR("unbind current failed with result %d", cu_res);
+            } else {
+                LOG_INFO("Successfully unbound active cuda context: %x",
+                         *get_active_cuda_context_ptr());
+                cu_ctx_get_current_ptr(&current_context);
+                LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid),
+                         current_context);
+            }
             fractal_post_semaphore(device->nvidia_device_semaphore);
         }
 

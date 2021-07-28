@@ -228,15 +228,15 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     static CUcontext bound_cuda_context;
     CUresult cu_res = cu_ctx_get_current_ptr(&bound_cuda_context);
     if (cu_res != CUDA_SUCCESS) {
-	    LOG_ERROR("couldn't get current cuda context");
-	    return -1;
+        LOG_ERROR("couldn't get current cuda context");
+        return -1;
     }
     if (!bound_cuda_context) {
-	    // LOG_INFO("Switching cuda context to this thread!");
-	    CUresult cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
-	    if (cu_res != CUDA_SUCCESS) {
-		    LOG_ERROR("couldn't set this thread's cuda context!");
-	    }
+        // LOG_INFO("Switching cuda context to this thread!");
+        CUresult cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
+        if (cu_res != CUDA_SUCCESS) {
+            LOG_ERROR("couldn't set this thread's cuda context!");
+        }
     }
     */
 
@@ -321,6 +321,7 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
         LOG_ERROR("destroy_nvidia_capture_device received NULL device!");
         return;
     }
+    LOG_DEBUG("Thread %d called destroy_nvidia_capture_device", syscall(SYS_gettid));
     NVFBCSTATUS status;
 
     /*

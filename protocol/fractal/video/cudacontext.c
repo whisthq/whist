@@ -45,6 +45,7 @@ CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
 CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
 CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr = NULL;
 CUCTXPOPCURRENTPROC cu_ctx_pop_current_ptr = NULL;
+CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr = NULL;
 
 /*
 ============================
@@ -112,6 +113,11 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
     cu_ctx_push_current_ptr = (CUCTXPUSHCURRENTPROC)dlsym(lib_cuda, "cuCtxPushCurrent");
     if (cu_ctx_push_current_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'cuCtxPushCurrent'\n");
+        return NVFBC_FALSE;
+    }
+    cu_ctx_synchronize_ptr = (CUCTXSYNCHRONIZEPROC)dlsym(lib_cuda, "cuCtxSynchronize");
+    if (cu_ctx_synchronize_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxSychronizeCurrent'\n");
         return NVFBC_FALSE;
     }
     return NVFBC_TRUE;
