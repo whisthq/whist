@@ -232,13 +232,13 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 	    return -1;
     }
     if (!bound_cuda_context) {
-    */
 	    // LOG_INFO("Switching cuda context to this thread!");
 	    CUresult cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
 	    if (cu_res != CUDA_SUCCESS) {
 		    LOG_ERROR("couldn't set this thread's cuda context!");
 	    }
-    // }
+    }
+    */
 
     NVFBC_TOCUDA_GRAB_FRAME_PARAMS grab_params = {0};
     NVFBC_FRAME_GRAB_INFO frame_info = {0};
