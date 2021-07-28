@@ -54,20 +54,24 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
     */
     fractal_sleep(500);
     CaptureDevice* device = (CaptureDevice*)opaque;
+    /*
+    CUcontext nvidia_manager_cuda_context = NULL;
+    cuda_init(&nvidia_manager_cuda_context);
+    */
 
     while (true) {
         fractal_wait_semaphore(device->nvidia_device_semaphore);
         if (device->pending_destruction) {
             break;
         }
-	CUresult cu_res;
+		CUresult cu_res;
         static CUcontext current_context;
-        // cu_res = cu_ctx_push_current_ptr(*get_active_cuda_context_ptr());
-	cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
+        // cu_res = cu_ctx_push_current_ptr(*get_main_thread_cuda_context_ptr());
+	cu_res = cu_ctx_set_current_ptr(*get_main_thread_cuda_context_ptr());
         if (cu_res != CUDA_SUCCESS) {
             LOG_ERROR("Unable to set current context onto nvidia thread, restul %d", cu_res);
         } else {
-            LOG_INFO("Successfully set active cuda context: %x", *get_active_cuda_context_ptr());
+            LOG_INFO("Successfully set active cuda context: %x", *get_main_thread_cuda_context_ptr());
             cu_ctx_get_current_ptr(&current_context);
             LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid), current_context);
         }
@@ -78,6 +82,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
 	} else {
 		LOG_DEBUG("Synchronize finished");
 	}
+	bind_context(device);
         // Nvidia requires recreation
         if (device->nvidia_capture_device) {
             destroy_nvidia_capture_device(device->nvidia_capture_device);
@@ -88,18 +93,12 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             device->nvidia_capture_device = create_nvidia_capture_device();
             fractal_sleep(500);
         }
-	cu_res = cu_ctx_synchronize_ptr();
-	if (cu_res != CUDA_SUCCESS) {
-		LOG_ERROR("Synchronize returned error %d", cu_res);
-	} else {
-		LOG_DEBUG("Synchronize finished");
-	}
-        // cu_res = cu_ctx_pop_current_ptr(get_active_cuda_context_ptr());
-	cu_res = cu_ctx_set_current_ptr(NULL);
+	release_context(device);
+		cu_res = cu_ctx_set_current_ptr(NULL);
         if (cu_res != CUDA_SUCCESS) {
             LOG_ERROR("Unable to unbind current context from nvidia thread, result %d", cu_res);
         } else {
-            LOG_INFO("Successfully unbound active cuda context: %x", *get_active_cuda_context_ptr());
+            LOG_INFO("Successfully unbound active cuda context: %x", *get_main_thread_cuda_context_ptr());
         }
         device->active_capture_device = NVIDIA_DEVICE;
     }
@@ -314,6 +313,15 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     }
 }
 
+int release_context(CaptureDevice* device) {
+	return nvidia_release_context(device->nvidia_capture_device);
+}
+
+int bind_context(CaptureDevice* device) {
+	return nvidia_bind_context(device->nvidia_capture_device);
+}
+
+
 int capture_screen(CaptureDevice* device) {
     /*
         Capture the screen that device is attached to. If using Nvidia, since we can't specify what
@@ -334,15 +342,15 @@ int capture_screen(CaptureDevice* device) {
         case NVIDIA_DEVICE: {
             // first check if we just switched to nvidia
             if (device->last_capture_device != NVIDIA_DEVICE) {
-                static CUcontext current_context;
-                // CUresult cu_res = cu_ctx_push_current_ptr(*get_active_cuda_context_ptr());
-		CUresult cu_res = cu_ctx_set_current_ptr(*get_active_cuda_context_ptr());
+		                    static CUcontext current_context;
+                // CUresult cu_res = cu_ctx_push_current_ptr(*get_main_thread_cuda_context_ptr());
+		CUresult cu_res = cu_ctx_set_current_ptr(*get_main_thread_cuda_context_ptr());
                 if (cu_res != CUDA_SUCCESS) {
                     LOG_ERROR("Unable to set current context onto video thread, result %d",
                               cu_res);
                 } else {
                     LOG_INFO("Successfully set active cuda context: %x",
-                             *get_active_cuda_context_ptr());
+                             *get_main_thread_cuda_context_ptr());
                     cu_ctx_get_current_ptr(&current_context);
                     LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid),
                              current_context);
@@ -353,7 +361,8 @@ int capture_screen(CaptureDevice* device) {
 	} else {
 		LOG_DEBUG("Synchronize finished");
 	}
-            }
+		    bind_context(device);
+	    }
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
             if (ret >= 0) {
                 if (device->width == device->nvidia_capture_device->width &&

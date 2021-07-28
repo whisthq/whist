@@ -67,4 +67,7 @@ typedef struct CaptureDevice {
     X11CaptureDevice* x11_capture_device;
 } CaptureDevice;
 
+int bind_context(CaptureDevice* device);
+int release_context(CaptureDevice* device);
+
 #endif

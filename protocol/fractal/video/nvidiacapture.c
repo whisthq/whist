@@ -83,12 +83,11 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     /*
      * Initialize CUDA.
      */
-    NVFBC_BOOL fbc_bool = cuda_init();
+    NVFBC_BOOL fbc_bool = cuda_init(get_main_thread_cuda_context_ptr());
     if (fbc_bool != NVFBC_TRUE) {
         LOG_ERROR("Failed to initialize CUDA!");
         return NULL;
     }
-    LOG_INFO("cuda active context at %x", *get_active_cuda_context_ptr());
 
     /*
      * Create an NvFBC instance.
@@ -188,11 +187,13 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
         return NULL;
     }
 
+    /*
     // Capture screen once to set p_gpu_texture
     if (nvidia_capture_screen(device) == 0) {
         LOG_ERROR("Preliminary capture screen failed!");
         return NULL;
     }
+    */
 
     /*
      * We are now ready to start grabbing frames.
@@ -202,6 +203,28 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
         "the display is refreshed or when the mouse cursor moves.");
 
     return device;
+}
+
+int nvidia_bind_context(NvidiaCaptureDevice* device) {
+	NVFBC_BIND_CONTEXT_PARAMS bind_params = {0};
+	bind_params.dwVersion = NVFBC_BIND_CONTEXT_PARAMS_VER;
+	NVFBCSTATUS status = device->p_fbc_fn.nvFBCBindContext(device->fbc_handle, &bind_params);
+	if (status != NVFBC_SUCCESS) {
+		LOG_ERROR("Error %d: %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+		return -1;
+	}
+	return 0;
+}
+
+int nvidia_release_context(NvidiaCaptureDevice* device) {
+	NVFBC_RELEASE_CONTEXT_PARAMS release_params = {0};
+	release_params.dwVersion = NVFBC_RELEASE_CONTEXT_PARAMS_VER;
+	NVFBCSTATUS status = device->p_fbc_fn.nvFBCReleaseContext(device->fbc_handle, &release_params);
+	if (status != NVFBC_SUCCESS) {
+		LOG_ERROR("Error %d: %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+		return -1;
+	}
+	return 0;
 }
 
 #define SHOW_DEBUG_FRAMES false

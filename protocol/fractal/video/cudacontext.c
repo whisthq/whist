@@ -40,7 +40,7 @@ static CUDEVICEGETPROC cu_device_get_ptr = NULL;
 static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 
-CUcontext active_cuda_context = NULL;
+CUcontext main_thread_cuda_context = NULL;
 CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
 CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
 CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr = NULL;
@@ -135,12 +135,12 @@ Public Function Implementations
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-NVFBC_BOOL cuda_init() {
-    if (active_cuda_context) {
-        LOG_INFO("Already have a cuda context! Nothing will be done.");
-        return NVFBC_TRUE;
-    }
+NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
     void* lib_cuda = NULL;
+    if (*cuda_context) {
+	    LOG_DEBUG("Cuda context already exists! Doing nothing.");
+	    return NVFBC_TRUE;
+    }
     if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
         LOG_ERROR("Failed to load CUDA library!");
         return NVFBC_FALSE;
@@ -161,7 +161,7 @@ NVFBC_BOOL cuda_init() {
         return NVFBC_FALSE;
     }
 
-    cu_res = cu_ctx_create_v2_ptr(&active_cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
+    cu_res = cu_ctx_create_v2_ptr(cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
     if (cu_res != CUDA_SUCCESS) {
         LOG_ERROR("Unable to create CUDA context (result: %d)\n", cu_res);
         return NVFBC_FALSE;
@@ -170,7 +170,7 @@ NVFBC_BOOL cuda_init() {
     return NVFBC_TRUE;
 }
 
-CUcontext* get_active_cuda_context_ptr() {
+CUcontext* get_main_thread_cuda_context_ptr() {
     /*
         Return a pointer to the active CUDA context.
 
@@ -178,5 +178,5 @@ CUcontext* get_active_cuda_context_ptr() {
             (CUcontext*): pointer to the active CUDA context
     */
 
-    return &active_cuda_context;
+    return &main_thread_cuda_context;
 }
