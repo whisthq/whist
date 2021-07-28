@@ -22,42 +22,48 @@ const RootApp = () => {
             accessToken(string): Access token, if any
     */
     return (
-        <Switch>
-            <Route exact path={routes.DOWNLOAD} component={Download} />
-            <Route exact path={routes.CONTACT} component={Contact} />
-            <Route exact path={routes.ABOUT} component={withTracker(Company)} />
-            <Route
-                exact
-                path={routes.TECHNOLOGY}
-                component={withTracker(Technology)}
-            />
-            <Route exact path={routes.FAQ} component={withTracker(FAQ)} />
-            <Route
-                exact
-                path={routes.SECURITY}
-                component={withTracker(Security)}
-            />
-            <Route
-                exact
-                path={routes.COOKIES}
-                component={withTracker(Cookies)}
-            />
-            <Route
-                exact
-                path={routes.PRIVACY}
-                component={withTracker(Privacy)}
-            />
-            <Route
-                exact
-                path={routes.TOS}
-                component={withTracker(TermsOfService)}
-            />
-            <Route
-                exact
-                path={routes.LANDING}
-                component={withTracker(Landing)}
-            />
-        </Switch>
+        <div className="bg-blue-darkest">
+            <Switch>
+                <Route exact path={routes.DOWNLOAD} component={Download} />
+                <Route exact path={routes.CONTACT} component={Contact} />
+                <Route
+                    exact
+                    path={routes.ABOUT}
+                    component={withTracker(Company)}
+                />
+                <Route
+                    exact
+                    path={routes.TECHNOLOGY}
+                    component={withTracker(Technology)}
+                />
+                <Route exact path={routes.FAQ} component={withTracker(FAQ)} />
+                <Route
+                    exact
+                    path={routes.SECURITY}
+                    component={withTracker(Security)}
+                />
+                <Route
+                    exact
+                    path={routes.COOKIES}
+                    component={withTracker(Cookies)}
+                />
+                <Route
+                    exact
+                    path={routes.PRIVACY}
+                    component={withTracker(Privacy)}
+                />
+                <Route
+                    exact
+                    path={routes.TOS}
+                    component={withTracker(TermsOfService)}
+                />
+                <Route
+                    exact
+                    path={routes.LANDING}
+                    component={withTracker(Landing)}
+                />
+            </Switch>
+        </div>
     )
 }
 
