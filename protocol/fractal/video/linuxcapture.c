@@ -70,7 +70,6 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         Returns:
             (int): 0 on exit
     */
-    fractal_sleep(500);
     CaptureDevice* device = (CaptureDevice*)opaque;
     /*
     CUcontext nvidia_manager_cuda_context = NULL;
