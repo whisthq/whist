@@ -326,11 +326,13 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
-    FractalMouseWheelMomentumType momentum_phase = (FractalMouseWheelMomentumType) event->wheel.momentum_phase;
+    FractalMouseWheelMomentumType momentum_phase =
+        (FractalMouseWheelMomentumType)event->wheel.momentum_phase;
 
     if (momentum_phase == MOUSEWHEEL_MOMENTUM_BEGIN) {
         active_momentum_scroll = true;
-    } else if (momentum_phase == MOUSEWHEEL_MOMENTUM_END) {
+    } else if (momentum_phase == MOUSEWHEEL_MOMENTUM_END ||
+               momentum_phase == MOUSEWHEEL_MOMENTUM_NONE) {
         active_momentum_scroll = false;
     }
 
