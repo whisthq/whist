@@ -844,7 +844,6 @@ jobs:
                 fractal-publish-build-config,
                 webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
-                mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         concurrency: client-applications-publish-build-s3-${{ matrix.config.os }}-${{ github.ref }}
 
