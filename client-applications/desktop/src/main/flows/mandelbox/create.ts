@@ -9,11 +9,15 @@
 import { from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
 
-import { mandelboxCreate, mandelboxCreateSuccess } from "@app/utils/mandelbox"
+import {
+    mandelboxCreate,
+    mandelboxCreateSuccess,
+    mandelboxCreateErrorTokenExpired,
+} from "@app/utils/mandelbox"
 import { fork, flow } from "@app/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
 
-export default flow<{
+export const mandelboxCreateFlow = flow<{
     subClaim: string
     accessToken: string
     region?: AWSRegion
@@ -26,6 +30,7 @@ export default flow<{
         ),
         {
             success: (req) => mandelboxCreateSuccess(req),
+            expired: (req) => mandelboxCreateErrorTokenExpired(req),
             failure: (req) => !mandelboxCreateSuccess(req),
         }
     )
@@ -37,6 +42,7 @@ export default flow<{
                 ip: response.json.ip,
             }))
         ),
+        expired: create.expired,
         failure: create.failure,
     }
 })

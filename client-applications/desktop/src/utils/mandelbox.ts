@@ -56,9 +56,13 @@ export const mandelboxCreateErrorNoAccess = (
     response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 402
 
+export const mandelboxCreateErrorTokenExpired = (
+    response: AsyncReturnType<typeof mandelboxCreate>
+) => response.status === 401
+
 export const mandelboxCreateErrorUnauthorized = (
     response: AsyncReturnType<typeof mandelboxCreate>
-) => response.status === 422 || response.status === 401
+) => response.status === 422
 
 export const mandelboxCreateErrorMaintenance = (
     response: AsyncReturnType<typeof mandelboxCreate>
