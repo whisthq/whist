@@ -38,13 +38,12 @@ typedef struct {
     int width;
     int height;
 
-    // Nvidia API structs
+    // The gpu texture of the most recently captured frame
+    void* p_gpu_texture;
+
+    // Internal Nvidia API structs
     NVFBC_SESSION_HANDLE fbc_handle;
     NVFBC_API_FUNCTION_LIST p_fbc_fn;
-    // Contains pointers to the GPU textures that the Nvidia Capture Device will capture into
-    NVFBC_TOGL_SETUP_PARAMS togl_setup_params;
-    // TODO: document
-    uint32_t dw_texture_index;
 } NvidiaCaptureDevice;
 
 /*

@@ -83,9 +83,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
 #ifdef __linux__
     if (device->active_capture_device == NVIDIA_DEVICE) {
         if (encoder->active_encoder == NVIDIA_ENCODER) {
-            nvidia_encoder_frame_intake(encoder->nvidia_encoder,
-                                        device->nvidia_capture_device->dw_texture_index,
-                                        device->width, device->height);
+            nvidia_encoder_frame_intake(encoder->nvidia_encoder, device->width, device->height);
             return 0;
         } else {
             LOG_ERROR(

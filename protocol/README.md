@@ -97,6 +97,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── window_name.c <- Linux Getter for the window name of the application
 │   │   └── windows_utils.c <- Log-in past windows start screen
 │   └── video
+│       ├── cudacontext.c <- Set up CUDA context for NVIDIA encoder
 │       ├── dxgicapture.c <- Capture screen using DXGI
 │       ├── nvidia-linux
 │       │   └── NvFBCUtils.c (NVDA Header)

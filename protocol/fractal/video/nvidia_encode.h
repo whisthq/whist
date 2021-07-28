@@ -4,13 +4,13 @@
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
+#include "cudacontext.h"
 
 typedef struct {
     NV_ENCODE_API_FUNCTION_LIST p_enc_fn;
     void* internal_nvidia_encoder;
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
-    NV_ENC_REGISTERED_PTR registered_resources[NVFBC_TOGL_TEXTURES_MAX];
     NV_ENC_REGISTERED_PTR registered_resource;
 
     NV_ENC_OUTPUT_PTR output_buffer;
@@ -56,7 +56,6 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  * @brief                          Put the input data into the nvidia encoder
  *
  * @param encoder                  The encoder to encode with
- * @param dw_texture_index         The index into registered_resources corresponding to the frame
  * @param width                    The width of the inputted frame
  * @param height                   The height of the inputted frame
  *
@@ -65,8 +64,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index, int width,
-                                int height);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,
