@@ -40,7 +40,6 @@
         "react-modal": "^3.13.1",
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
-        "react-router-hash-link": "^2.4.3",
         "react-scroll": "^1.8.2",
         "react-spring": "^9.2.1",
         "reactjs-popup": "^2.0.4"

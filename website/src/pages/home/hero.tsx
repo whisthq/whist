@@ -1,7 +1,6 @@
 import React from "react"
 import FadeIn from "react-fade-in"
 import { TypeWriter } from "@app/shared/components/typewriter"
-import { HashLink } from "react-router-hash-link"
 
 import { withContext } from "@app/shared/utils/context"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
@@ -55,13 +54,13 @@ export const Top = () => {
                             complete privacy. Fractal is a supercharged version
                             of Chrome that runs in the cloud.
                         </p>
-                        <HashLink to="/download#top">
+                        <a href="/download#top">
                             <FractalButton
                                 className="mt-12"
                                 contents="DOWNLOAD NOW"
                                 state={FractalButtonState.DEFAULT}
                             />
-                        </HashLink>
+                        </a>
                     </div>
                 </FadeIn>
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1900 : 200}>

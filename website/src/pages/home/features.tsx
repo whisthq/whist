@@ -1,5 +1,4 @@
 import React from "react"
-import { HashLink } from "react-router-hash-link"
 import {
     LightningBoltIcon,
     ChipIcon,
@@ -73,11 +72,11 @@ export const Features = () => {
                     </div>
                 ))}
             </div>
-            <HashLink to="/technology#top">
+            <a href="/technology#top">
                 <button className="mt-12 text-mint py-2 px-8 rounded-3xl mb-32 hover:text-mint">
                     Read more about the technology
                 </button>
-            </HashLink>
+            </a>
         </div>
     )
 }

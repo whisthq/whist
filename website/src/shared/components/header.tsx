@@ -1,7 +1,5 @@
 /* This example requires Tailwind CSS v2.0+ */
 import React, { Fragment } from "react"
-import { Link } from "react-router-dom"
-import { HashLink } from "react-router-hash-link"
 import { Popover, Transition } from "@headlessui/react"
 import {
     ChartBarIcon,
@@ -65,13 +63,13 @@ const Header = () => {
                 <>
                     <div className="flex justify-between items-center px-4 py-6 sm:px-6 md:justify-start md:space-x-10">
                         <div className="flex justify-start lg:w-0 lg:flex-1">
-                            <Link to="/">
+                            <a href="/">
                                 <img
                                     className="h-5 relative md:bottom-1"
                                     src={Logo}
                                     alt=""
                                 />
-                            </Link>
+                            </a>
                         </div>
                         <div className="-mr-2 -my-2 md:hidden">
                             <Popover.Button className="rounded-md p-2 inline-flex items-center justify-center text-gray-300 focus:outline-none">
@@ -212,11 +210,14 @@ const Header = () => {
                                     </>
                                 )}
                             </Popover>
-                            <HashLink to="/download#top" className="hover:no-underline">
+                            <a
+                                href="/download#top"
+                                className="hover:no-underline"
+                            >
                                 <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
                                     Download
                                 </span>
-                            </HashLink>
+                            </a>
                         </Popover.Group>
                         <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0"></div>
                     </div>

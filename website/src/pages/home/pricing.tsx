@@ -1,6 +1,5 @@
 import React from "react"
 import { CheckIcon } from "@heroicons/react/solid"
-import { HashLink } from "react-router-hash-link"
 
 import {
     FractalButton,
@@ -28,13 +27,13 @@ const Pricing = () => {
                             which you&lsquo;ll have to option to continue using
                             Fractal by becoming a supporter.
                         </p>
-                        <HashLink to="/download#top">
+                        <a href="/download#top">
                             <FractalButton
                                 className="mt-8 mb-4"
                                 contents="DOWNLOAD NOW"
                                 state={FractalButtonState.DEFAULT}
                             />
-                        </HashLink>
+                        </a>
                     </div>
                 </div>
             </div>

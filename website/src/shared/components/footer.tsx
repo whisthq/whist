@@ -9,7 +9,7 @@ const navigation = {
     home: [
         { name: "Product", href: "/" },
         { name: "Pricing", href: "/#pricing" },
-        { name: "Download", href: "/#download" },
+        { name: "Download", href: "/download#top" },
     ],
     about: [
         { name: "Company", href: "/about" },
@@ -18,10 +18,10 @@ const navigation = {
         { name: "FAQ", href: "/faq" },
     ],
     resources: [
-        { name: "Support", href: "/support" },
+        { name: "Support", href: "/contact" },
         {
             name: "Careers",
-            href: "https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9",
+            href: "/contact#careers",
         },
     ],
     legal: [
@@ -147,8 +147,10 @@ const Footer = () => {
                                     {navigation.legal.map((item) => (
                                         <li key={item.name}>
                                             <a
+                                                target="_blank"
                                                 href={item.href}
                                                 className="text-base text-gray-500 hover:text-mint"
+                                                rel="noreferrer"
                                             >
                                                 {item.name}
                                             </a>
@@ -158,6 +160,13 @@ const Footer = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+                <div className="w-full text-center mt-4">
+                    <a href="/download#top">
+                        <button className="rounded bg-blue text-gray-300 px-12 py-3">
+                            Get Started
+                        </button>
+                    </a>
                 </div>
                 <div className="mt-12 border-t border-gray-600 pt-8">
                     <p className="text-base text-gray-400 xl:text-center">

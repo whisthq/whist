@@ -1,7 +1,6 @@
 import React from "react"
 import { Row, Col } from "react-bootstrap"
 import { CheckIcon } from "@heroicons/react/outline"
-import { HashLink } from "react-router-hash-link"
 
 import ChromeBackground from "@app/assets/graphics/speedTestBackground.svg"
 import SpeedTest from "@app/assets/gifs/speedTest.gif"
@@ -197,11 +196,11 @@ export const Middle = () => {
                                 </div>
                             ))}
                         </dl>
-                        <HashLink to="/security#top">
+                        <a href="/security#top">
                             <button className="mt-12 text-mint py-2 px-8">
                                 Read more about security
                             </button>
-                        </HashLink>
+                        </a>
                     </>
                 }
             />

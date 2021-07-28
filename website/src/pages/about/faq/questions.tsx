@@ -1,5 +1,4 @@
 import React from "react"
-import { HashLink } from "react-router-hash-link"
 
 /* This example requires Tailwind CSS v2.0+ */
 const faqs = [
@@ -11,12 +10,9 @@ const faqs = [
                 Fractal is like remote desktop, but with a much greater emphasis
                 on performance and user experience. You can read more about our
                 technology{" "}
-                <HashLink
-                    to="/technology#top"
-                    className="text-mint hover:text-mint"
-                >
+                <a href="/technology#top" className="text-mint hover:text-mint">
                     here
-                </HashLink>
+                </a>
                 .
             </div>
         ),
@@ -30,12 +26,9 @@ const faqs = [
                 through Fractal so that not even our engineers can see your
                 personal browsing data. You can read more about how we handle
                 privacy and security{" "}
-                <HashLink
-                    to="/security#top"
-                    className="text-mint hover:text-mint"
-                >
+                <a href="/security#top" className="text-mint hover:text-mint">
                     here
-                </HashLink>
+                </a>
                 .
             </div>
         ),

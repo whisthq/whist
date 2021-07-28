@@ -1,5 +1,4 @@
 import React from "react"
-import { HashLink } from "react-router-hash-link"
 
 const people = [
     {
@@ -103,12 +102,12 @@ export const Team = () => {
                     <p className="text-lg text-gray-500">
                         We’re engineers passionate about the future of personal
                         computing. To join our team, click{" "}
-                        <HashLink
-                            to="/contact#careers"
+                        <a
+                            href="/contact#careers"
                             className="text-gray-300 hover:text-mint"
                         >
                             here
-                        </HashLink>
+                        </a>
                         .
                     </p>
                 </div>
@@ -138,7 +137,7 @@ export const Team = () => {
                         </li>
                     ))}
                     <li className="relative pt-64 pb-10 rounded overflow-hidden">
-                        <HashLink to="/contact#careers">
+                        <a href="/contact#careers">
                             <img
                                 className="absolute inset-0 h-full w-full object-cover"
                                 src="https://images.unsplash.com/photo-1521510895919-46920266ddb3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&fp-x=0.5&fp-y=0.6&fp-z=3&width=1440&height=1440&sat=-100"
@@ -159,7 +158,7 @@ export const Team = () => {
                                     </div>
                                 </blockquote>
                             </div>
-                        </HashLink>
+                        </a>
                     </li>
                 </ul>
             </div>
