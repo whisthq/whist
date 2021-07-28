@@ -27,39 +27,6 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, uint32_t dw_texture,
-                                        uint32_t dw_tex_target, int width, int height) {
-    NV_ENC_INPUT_RESOURCE_OPENGL_TEX tex_params = {0};
-    tex_params.texture = dw_texture;
-    tex_params.target = dw_tex_target;
-
-    NV_ENC_REGISTER_RESOURCE register_params = {0};
-    register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
-    register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_OPENGL_TEX;
-    register_params.width = width;
-    register_params.height = height;
-    register_params.pitch = width;
-    register_params.resourceToRegister = &tex_params;
-    register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
-
-    NVENCSTATUS status =
-        encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to register texture, status = %d", status);
-        return NULL;
-    }
-
-    return register_params.registeredResource;
-}
-
-void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR registered_resource) {
-    NVENCSTATUS status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
-                                                                   registered_resource);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to unregister resource, status = %d", status);
-    }
-}
-
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height) {
     NVENCSTATUS status;
 
@@ -117,7 +84,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
 
     encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     encode_session_params.apiVersion = NVENCAPI_VERSION;
-    encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_OPENGL;
+    encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
+    encode_session_params.device = *get_active_cuda_context_ptr();
 
     status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params,
                                                         &encoder->internal_nvidia_encoder);
@@ -176,8 +144,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_index, int width,
-                                int height) {
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
             "Nvidia Encoder has received a frame_intake of dimensions %dx%d, "
@@ -185,15 +152,13 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, uint32_t dw_texture_inde
             width, height, encoder->width, encoder->height);
         return -1;
     }
-    NV_ENC_REGISTERED_PTR registered_resource = encoder->registered_resources[dw_texture_index];
-    if (registered_resource) {
-        encoder->registered_resource = registered_resource;
-        return 0;
-    } else {
-        LOG_ERROR("Device captured to texture at index %d, but encoder resource is NULL!",
-                  dw_texture_index);
+    /*
+    if (!p_gpu_texture) {
+        LOG_ERROR("Device captured NULL texture");
         return -1;
     }
+    */
+    return 0;
 }
 
 int nvidia_encoder_encode(NvidiaEncoder* encoder) {
@@ -211,7 +176,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     map_params.registeredResource = registered_resource;
     // We've now consumed the registered resource for the purpose of mapping the buffer,
     // So we'll not clear the encoder's registered resource so as to not use it twice by accident
-    encoder->registered_resource = NULL;
+    // encoder->registered_resource = NULL;
     status = encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to map the resource, status = %d\n", status);
@@ -273,7 +238,6 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     // Untrigger iframe
     encoder->wants_iframe = false;
-
     return 0;
 }
 

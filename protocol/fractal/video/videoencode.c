@@ -237,11 +237,18 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
         LOG_ERROR("Calling reconfigure_encoder on a NULL encoder!");
         return false;
     }
+    encoder->in_width = width;
+    encoder->in_height = height;
+    encoder->codec_type = codec;
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
 #ifdef __linux__
-            return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate,
-                                              codec);
+            return false;
+            // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
+            // registration somehow.
+
+            // return nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate,
+            //                                   codec);
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
