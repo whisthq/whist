@@ -245,11 +245,10 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
     bool nvidia_reconfigured = true;
     if (encoder->nvidia_encoder) {
 #ifdef __linux__
-        nvidia_reconfigured = false;
         // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
         // registration somehow.
-        // nvidia_reconfigured = nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height,
-        // bitrate, codec);
+        nvidia_reconfigured =
+            nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate, codec);
 #else
         LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
