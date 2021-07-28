@@ -36,7 +36,7 @@ const features = [
     {
         name: "Post-2016 Mac",
         description:
-            "Fractal uses your Mac's hardware decoding chip, which exists on all Macs producted during or after 2016.",
+            "Fractal uses your Mac's hardware decoding chip, which exists on all Macs produced during or after 2016.",
         icon: DesktopComputerIcon,
     },
 ]
