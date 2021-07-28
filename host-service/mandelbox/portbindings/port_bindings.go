@@ -8,12 +8,6 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 )
 
-func init() {
-	// This is for the ECS-Agent's "introspection endpoint", whatever that is. We
-	// do this to avoid triggering some sentry errors.
-	Reserve(51678, TransportProtocolTCP)
-}
-
 // A PortBinding represents a single port that is bound inside a mandelbox to a
 // port with the same protocol on the host.
 type PortBinding struct {

@@ -28,18 +28,11 @@ Application Streaming is Fractal's core service. It consists of running an appli
 
 At a high-level, Fractal works the following way:
 
--   Users download the Fractal Electron application for their OS and log in to launch the streamed application(s).
--   The login and launch processes are REST API requests to the Fractal webserver, which is responsible for handling EC2 instances scaling and passing mandelbox requests to the Host S.
--   When the webserver receives a launch request, it sends a message
-
-
-
-task definition JSON to AWS ECS, to tell it to run a specific mandelbox.
--   The webserver will then provision a mandelbox associated with the specific streamed application/task definition requested.
+-   Users download the Fractal Electron application for their OS and log in to launch the streamed application, like Chrome.
+-   The login and launch processes are REST API requests to the Fractal webserver, which is responsible for picking an EC2 instance with available space (or creating a new one if there aren't any) and passing the request over to the Host Service on the chosen EC2 instance, which is responsible for allocating the user to a container (mandelbox) on that EC2 instance.
     -   If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/host-setup` scripts and has the `/host-service` preinstalled, and tell the `/host-service` that this user needs a mandelbox.
--   If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker mandelbox for the requested application on the chosen EC2 instance. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver that it is ready to stream.
-    -   The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
--   Once the webserver receives a confirmation that the mandelbox is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
+-   If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the `/host-service` running on the chosen EC2 instance will allocate the user to a mandelbox. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver/Electron application that it is ready to stream, and the Electron application will launch the Fractal protocol client, which will start the stream.
+    -   The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where our Host Servicepulls the images from.
 
 ### Repository Structure
 
