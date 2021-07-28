@@ -3,13 +3,13 @@ ICON_FILE_NAME:
     local: "icon_local"
     dev: "icon_dev"
     staging: "icon_staging"
-    production: "icon"
+    prod: "icon"
 
 EXECUTABLE_NAME:
     local: "Fractal (local)"
     dev: "Fractal (development)"
     staging: "Fractal (staging)"
-    production: "Fractal"
+    prod: "Fractal"
 
 # client-applications/desktop/config/paths.js
 CLIENT_LOG_FILE_NAME: "client.log"
@@ -19,7 +19,7 @@ CLIENT_PERSISTENCE_FOLDER_NAME:
     local: "Electron"
     dev: "fractal"
     staging: "fractal"
-    production: "fractal"
+    prod: "fractal"
 
 CLIENT_LOG_FOLDERNAME: "logs"
 
