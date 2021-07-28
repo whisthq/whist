@@ -120,7 +120,7 @@ export const Team = () => {
                         >
                             <div className="space-y-6 xl:space-y-10">
                                 <img
-                                    className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56 filter grayscale"
+                                    className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56"
                                     src={person.imageUrl}
                                     alt=""
                                 />
@@ -153,8 +153,8 @@ export const Team = () => {
                                 <blockquote className="mt-2">
                                     <div className="relative text-md font-medium text-gray-300 md:flex-grow">
                                         <p className="relative text-sm">
-                                            If you see yourself working with us,
-                                            you can apply here.
+                                            Want to build the future of the
+                                            browser? Join our team here!
                                         </p>
                                     </div>
                                 </blockquote>

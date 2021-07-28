@@ -44,8 +44,7 @@ const Detailed = () => {
                         of your session and re-encrypt it at the end of the
                         session. That key never touches our permanent storage,
                         so even if a malicious actor were to gain access to our
-                        permanent storage, they would just see blobs of binary
-                        noise.
+                        system, they would just see blobs of binary noise.
                     </p>
                 </div>
             </div>

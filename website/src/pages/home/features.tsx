@@ -47,8 +47,8 @@ export const Features = () => {
                 </div>
             </div>
             <p className="mt-3 text-xl text-gray-500 sm:mt-4">
-                Fractal is the same exact Google Chrome you know and love, just
-                running in the cloud.
+                Fractal is the Google Chrome you love, running at breathtaking
+                speeds in the cloud.
             </p>
             <div className="grid grid-cols-1 gap-y-20 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8 mt-12 text-left">
                 {supportLinks.map((link) => (

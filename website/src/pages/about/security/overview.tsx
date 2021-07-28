@@ -17,7 +17,7 @@ const features = [
     {
         name: "Passwords and Cookies",
         description:
-            "All your saved passwords and cookies are fully encrypted.",
+            "All your saved passwords and cookies are fully encrypted and locked behind the same master key.",
         icon: KeyIcon,
     },
     {
@@ -29,7 +29,7 @@ const features = [
     {
         name: "Account Data",
         description:
-            "We will never sell or release any of your data to any third-party provider without your explicit approval.",
+            "Even if we wanted to, we couldn’t sell any of your data to a third-party service. That’s how serious we are about privacy.",
         icon: DatabaseIcon,
     },
 ]
