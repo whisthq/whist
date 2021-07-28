@@ -1,8 +1,7 @@
 package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
 // This package, and its children, are meant to be low-level enough that it can
-// be imported by both `https://github.com/fractal/ecs-agent` AND higher-level
-// host service packages.
+// be imported by higher-level host service packages.
 
 import (
 	"context"
@@ -22,8 +21,7 @@ import (
 )
 
 // Mandelbox represents a mandelbox as it is kept track of in this
-// package. Both the ECS agent and higher layers of the host service use this
-// interface.
+// package. Higher layers of the host service use this interface.
 type Mandelbox interface {
 	GetMandelboxID() types.MandelboxID
 

@@ -12,8 +12,6 @@ fail-under=10
 # paths.
 ignore=CVS,
        admin_blueprint.py,
-       hash_bad_words.py,
-       newsletter_blueprint.py,
        validation.py
 
 # Add files or directories matching the regex patterns to the blacklist. The
