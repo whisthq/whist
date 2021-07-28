@@ -347,11 +347,6 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
-        if (!transfer_context_active) {
-            start_transfer_context(device, encoder);
-            transfer_context_active = true;
-        }
-
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
         // call to capture_screen, If we are using Nvidia, the captured frame is also
@@ -388,18 +383,23 @@ int32_t multithreaded_send_video(void* opaque) {
             LOG_DEBUG("must recreate true: closing transfer context and destroying device");
             device->must_recreate_nvidia = false;
             close_transfer_context(device, encoder);
-            // CUresult cu_res = cu_ctx_pop_current_ptr(get_active_cuda_context_ptr());
-	    CUresult cu_res = cu_ctx_set_current_ptr(NULL);
+	    release_context(device);
+CUresult cu_res = cu_ctx_set_current_ptr(NULL);
             if (cu_res != CUDA_SUCCESS) {
                 LOG_ERROR("unbind current failed with result %d", cu_res);
             } else {
                 LOG_INFO("Successfully unbound active cuda context: %x",
-                         *get_active_cuda_context_ptr());
+                         *get_main_thread_cuda_context_ptr());
                 cu_ctx_get_current_ptr(&current_context);
                 LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid),
                          current_context);
             }
             fractal_post_semaphore(device->nvidia_device_semaphore);
+        }
+
+        if (!transfer_context_active) {
+            start_transfer_context(device, encoder);
+            transfer_context_active = true;
         }
 
         clock server_frame_timer;

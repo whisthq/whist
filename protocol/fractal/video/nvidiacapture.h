@@ -80,4 +80,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device);
  */
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device);
 
+int nvidia_bind_context(NvidiaCaptureDevice* device);
+int nvidia_release_context(NvidiaCaptureDevice* device);
+
 #endif  // CAPTURE_X11NVIDIACAPTURE_H

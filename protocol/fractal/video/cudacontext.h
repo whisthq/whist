@@ -45,12 +45,12 @@ Public Functions
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-NVFBC_BOOL cuda_init();
+NVFBC_BOOL cuda_init(CUcontext* cuda_context);
 
 /**
  * @brief                          Returns a pointer to the active CUDA context.
  *
  * @returns                        Pointer to the active CUDA context
  */
-CUcontext* get_active_cuda_context_ptr();
+CUcontext* get_main_thread_cuda_context_ptr();
 #endif

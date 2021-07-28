@@ -85,7 +85,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     encode_session_params.apiVersion = NVENCAPI_VERSION;
     encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
-    encode_session_params.device = *get_active_cuda_context_ptr();
+    encode_session_params.device = *get_main_thread_cuda_context_ptr();
 
     status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params,
                                                         &encoder->internal_nvidia_encoder);
