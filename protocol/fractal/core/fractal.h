@@ -400,6 +400,17 @@ typedef struct FractalMouseButtonMessage {
 } FractalMouseButtonMessage;
 
 /**
+ * @brief   Scroll momentum type.
+ * @details The type of scroll momentum.
+ */
+typedef enum FractalMouseWheelMomentumType {
+    MOUSEWHEEL_MOMENTUM_NONE = 0,
+    MOUSEWHEEL_MOMENTUM_BEGIN = 1,
+    MOUSEWHEEL_MOMENTUM_ACTIVE = 2,
+    MOUSEWHEEL_MOMENTUM_END = 3,
+} FractalMouseWheelMomentumType;
+
+/**
  * @brief   Mouse wheel message.
  * @details Message from mouse wheel.
  */
@@ -442,11 +453,11 @@ typedef struct FractalMouseMotionMessage {
  * @details The type of multigesture.
  */
 typedef enum FractalMultigestureType {
-    NONE = 0,
-    PINCH_OPEN = 1,
-    PINCH_CLOSE = 2,
-    ROTATE = 3,
-    CANCEL = 4,
+    MULTIGESTURE_NONE = 0,
+    MULTIGESTURE_PINCH_OPEN = 1,
+    MULTIGESTURE_PINCH_CLOSE = 2,
+    MULTIGESTURE_ROTATE = 3,
+    MULTIGESTURE_CANCEL = 4,
 } FractalMultigestureType;
 
 /**

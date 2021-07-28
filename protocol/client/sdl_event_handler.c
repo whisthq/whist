@@ -48,7 +48,16 @@ extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
+// This variable represents whether there is an active pinch gesture
 bool active_pinch = false;
+
+// This variable represents whether or not we are actively sending momentum scrolls
+//     On MOMENTUM_BEGIN, we set this to true, and start sending momentum scrolls
+//     On MOMENTUM_END, or on other non-scroll input, we set this to false, and ignore future
+//     momentum scrolls.
+//     This is primarily to make cmd keypresses kill momentum scrolls, otherwise
+//     scroll + a later cmd causes an unintentional cmd+scroll zoom event
+bool active_momentum_scroll = false;
 
 /*
 ============================
@@ -325,6 +334,21 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
+    FractalMouseWheelMomentumType momentum_phase =
+        (FractalMouseWheelMomentumType)event->wheel.momentum_phase;
+
+    if (momentum_phase == MOUSEWHEEL_MOMENTUM_BEGIN) {
+        active_momentum_scroll = true;
+    } else if (momentum_phase == MOUSEWHEEL_MOMENTUM_END ||
+               momentum_phase == MOUSEWHEEL_MOMENTUM_NONE) {
+        active_momentum_scroll = false;
+    }
+
+    // The active momentum scroll has been interrupted and aborted
+    if (momentum_phase == MOUSEWHEEL_MOMENTUM_ACTIVE && !active_momentum_scroll) {
+        return 0;
+    }
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
@@ -356,16 +380,16 @@ int handle_pinch(SDL_Event *event) {
                                                      .num_fingers = 2,
                                                      .active_gesture = active_pinch};
 
-    fmsg.multigesture.gesture_type = NONE;
+    fmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
     if (event->pinch.magnification < 0) {
-        fmsg.multigesture.gesture_type = PINCH_CLOSE;
+        fmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_CLOSE;
         active_pinch = true;
     } else if (event->pinch.magnification > 0) {
-        fmsg.multigesture.gesture_type = PINCH_OPEN;
+        fmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_OPEN;
         active_pinch = true;
     } else if (active_pinch) {
         // 0 magnification means that the pinch gesture is complete
-        fmsg.multigesture.gesture_type = CANCEL;
+        fmsg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
         active_pinch = false;
     }
 
@@ -382,7 +406,7 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers,
-                                                     .gesture_type = NONE};
+                                                     .gesture_type = MULTIGESTURE_NONE};
     send_fmsg(&fmsg);
 
     return 0;
@@ -418,6 +442,11 @@ int handle_sdl_event(SDL_Event *event) {
         Return:
             (int): 0 on success, -1 on failure
     */
+
+    // Allow non-scroll events to interrupt momentum scrolls
+    if (event->type != SDL_MOUSEWHEEL && active_momentum_scroll) {
+        active_momentum_scroll = false;
+    }
 
     switch (event->type) {
         case SDL_WINDOWEVENT: {
