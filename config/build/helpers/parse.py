@@ -15,6 +15,7 @@ from .validate import (
     validate_paths,
     validate_inputs,
     validate_secrets,
+    validate_secrets_keys,
 )
 
 
@@ -44,7 +45,15 @@ def parse(dir_path, secrets=None, profiles=None):
     if not secrets:
         return dict(sorted(schema.items()))
 
-    if error := validate_secrets(schema, secrets):
+    if error := validate_secrets(secrets):
+        raise ValidationError(error)
+
+    key_errors = [e for e in validate_secrets_keys(schema, secrets)]
+    if any(key_errors):
+        error = {
+            "message": key_errors[0].get("message"),
+            "found": [err["found"] for err in key_errors],
+        }
         raise ValidationError(error)
 
     # Merge secrets arguments into schema dictionary
