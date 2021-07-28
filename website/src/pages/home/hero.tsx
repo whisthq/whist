@@ -1,6 +1,7 @@
 import React from "react"
 import FadeIn from "react-fade-in"
 import { TypeWriter } from "@app/shared/components/typewriter"
+import { ChevronRightIcon } from "@heroicons/react/solid"
 
 import { withContext } from "@app/shared/utils/context"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
@@ -30,19 +31,36 @@ export const Top = () => {
     return (
         <div>
             <div className="text-white text-lg m-auto text-center py-8"></div>
-            <div className="mt-16 text-center">
+            <div className="text-center">
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1500 : 0}>
-                    <div className="text-5xl md:text-8xl dark:text-gray-300">
-                        <div>
-                            Chrome,
-                            <div className="flex justify-center relative">
-                                <div className="mr-3 py-2">just</div>
-                                <TypeWriter
-                                    words={adjectives}
-                                    startAt={5}
-                                    classNameCursor="bg-blue-800"
-                                    classNameText="py-2 text-blue dark:text-mint relative"
-                                />
+                    <div>
+                        <a
+                            href="/contact#careers"
+                            className="inline-flex items-center text-white bg-gray-900 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
+                        >
+                            <span className="font-semibold px-4 py-1.5 text-gray-100 text-xs leading-5 uppercase tracking-wide bg-blue rounded-full">
+                                We&lsquo;re hiring
+                            </span>
+                            <span className="ml-4 text-sm">
+                                Visit our careers page
+                            </span>
+                            <ChevronRightIcon
+                                className="ml-2 w-5 h-5 text-gray-500"
+                                aria-hidden="true"
+                            />
+                        </a>
+                        <div className="text-5xl md:text-8xl dark:text-gray-300 mt-16">
+                            <div>
+                                Chrome,
+                                <div className="flex justify-center relative">
+                                    <div className="mr-3 py-2">just</div>
+                                    <TypeWriter
+                                        words={adjectives}
+                                        startAt={5}
+                                        classNameCursor="bg-blue-800"
+                                        classNameText="py-2 text-blue dark:text-mint relative"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

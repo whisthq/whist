@@ -27,8 +27,8 @@ const Hero = () => {
                 </div>
                 <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
                     Fractal is early, but we&lsquo;re excited to see what
-                    you&lsquo;ll do with a lighter, faster browser. For optimal
-                    experience, please review the{" "}
+                    you&lsquo;ll do with a lighter, faster Google Chrome. For
+                    optimal experience, please review the{" "}
                     <Link to="requirements" spy={true} smooth={true}>
                         <span className="text-mint cursor-pointer">
                             requirements below
