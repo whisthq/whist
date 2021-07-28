@@ -410,18 +410,21 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
         return false;
     }
     try_update_dimensions(device, width, height, dpi);
-    static CUcontext current_context;
-    release_context(device);
-    CUresult cu_res = cu_ctx_set_current_ptr(NULL);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("unbind current failed with result %d", cu_res);
-    } else {
-        LOG_INFO("Successfully unbound active cuda context: %x",
-                 *get_main_thread_cuda_context_ptr());
-        cu_ctx_get_current_ptr(&current_context);
-        LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid), current_context);
+    if (device->active_capture_device == NVIDIA_DEVICE) {
+        static CUcontext current_context;
+        release_context(device);
+        CUresult cu_res = cu_ctx_set_current_ptr(NULL);
+        if (cu_res != CUDA_SUCCESS) {
+            LOG_ERROR("unbind current failed with result %d", cu_res);
+        } else {
+            LOG_INFO("Successfully unbound active cuda context: %x",
+                     *get_main_thread_cuda_context_ptr());
+            cu_ctx_get_current_ptr(&current_context);
+            LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid), current_context);
+        }
+        device->active_capture_device = X11_DEVICE;
+        fractal_post_semaphore(device->nvidia_device_semaphore);
     }
-    fractal_post_semaphore(device->nvidia_device_semaphore);
     return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
 }
 
