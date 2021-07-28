@@ -133,6 +133,24 @@ echo "================================================"
 sudo cp fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
 
 echo "================================================"
+echo "Installing monitoring services.."
+echo "================================================"
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+
+# Install filebeat via apt
+sudo apt-get update -y
+sudo apt-get install -y filebeat
+
+# For HTTPS shipping, download the Logz.io public certificate to your certificate authority folder. 
+# https://app.logz.io/#/dashboard/send-your-data/log-sources/filebeat
+sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt
+
+# filebeat by default doesn't startup on system boot/install by default.
+sudo systemctl enable filebeat
+sudo systemctl start filebeat
+
+echo "================================================"
 echo "Updating resource limits..."
 echo "================================================"
 # We use inotify to communicate between mandelboxes and the host service. We
