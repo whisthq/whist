@@ -422,8 +422,8 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
             cu_ctx_get_current_ptr(&current_context);
             LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid), current_context);
         }
-    	device->active_capture_device = X11_DEVICE;
-    	fractal_post_semaphore(device->nvidia_device_semaphore);
+        device->active_capture_device = X11_DEVICE;
+        fractal_post_semaphore(device->nvidia_device_semaphore);
     }
     return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
 }
