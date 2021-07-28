@@ -77,14 +77,14 @@ jobs:
               uses: ./.github/actions/monorepo-config
               with:
                   os: macos
-                  deploy: dev
+                  deploy: ${{ github.ref##*/ }}
 
             - name: Build Monorepo Configuration for Windows
               id: config-win32
               uses: ./.github/actions/monorepo-config
               with:
                   os: win32
-                  deploy: dev
+                  deploy: ${{ github.ref##*/ }}
 
             - name: Log MacOS Configuration
               shell: python3 {0}
