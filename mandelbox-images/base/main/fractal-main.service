@@ -10,6 +10,8 @@ Type=exec
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/fractal/.Xauthority
 ExecStart=/usr/share/fractal/run-fractal-server.sh
+StandardOutput=file:/var/log/fractal/protocol-out.log
+StandardError=file:/var/log/fractal/protocol-err.log
 
 [Install]
 WantedBy=default.target

@@ -5,6 +5,8 @@ Description=Fractal Entrypoint
 [Service]
 Type=oneshot
 ExecStart=/usr/share/fractal/fractal-startup.sh
+StandardOutput=file:/var/log/fractal/entry-out.log
+StandardError=file:/var/log/fractal/entry-err.log
 
 [Install]
 WantedBy=multi-user.target
