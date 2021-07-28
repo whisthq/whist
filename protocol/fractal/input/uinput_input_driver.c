@@ -534,7 +534,7 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
             (int): 0 on success, -1 on failure
     */
 
-    if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
+    if (gesture_type == MULTIGESTURE_PINCH_OPEN || gesture_type == MULTIGESTURE_PINCH_CLOSE) {
         // If the gesture is not active yet, then start holding the LCTRL key
         if (!active_gesture) {
             emit_key_event(input_device, FK_LCTRL, true);
@@ -542,7 +542,7 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
 
         // Pass a scroll event equivalent to the pinch distance
         emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta), d_dist * cos(d_theta));
-    } else if (gesture_type == CANCEL) {
+    } else if (gesture_type == MULTIGESTURE_CANCEL) {
         // When the pinch action has been changed, then release the lctrl key
         emit_key_event(input_device, FK_LCTRL, false);
     }
