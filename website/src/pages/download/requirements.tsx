@@ -9,7 +9,7 @@ const features = [
     {
         name: "North America or Europe",
         description:
-            "Our servers are located various parts of the United States, southern Canada, and Europe. If you are not in these areas, you will experience high network latency.",
+            "Our servers are located in various parts of the United States, southern Canada, and Europe. If you are not in these areas, you will experience high network latency.",
         icon: GlobeIcon,
     },
     {
