@@ -206,25 +206,27 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 }
 
 int nvidia_bind_context(NvidiaCaptureDevice* device) {
-	NVFBC_BIND_CONTEXT_PARAMS bind_params = {0};
-	bind_params.dwVersion = NVFBC_BIND_CONTEXT_PARAMS_VER;
-	NVFBCSTATUS status = device->p_fbc_fn.nvFBCBindContext(device->fbc_handle, &bind_params);
-	if (status != NVFBC_SUCCESS) {
-		LOG_ERROR("Error %d: %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-		return -1;
-	}
-	return 0;
+    NVFBC_BIND_CONTEXT_PARAMS bind_params = {0};
+    bind_params.dwVersion = NVFBC_BIND_CONTEXT_PARAMS_VER;
+    NVFBCSTATUS status = device->p_fbc_fn.nvFBCBindContext(device->fbc_handle, &bind_params);
+    if (status != NVFBC_SUCCESS) {
+        LOG_ERROR("Error %d: %s", status,
+                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        return -1;
+    }
+    return 0;
 }
 
 int nvidia_release_context(NvidiaCaptureDevice* device) {
-	NVFBC_RELEASE_CONTEXT_PARAMS release_params = {0};
-	release_params.dwVersion = NVFBC_RELEASE_CONTEXT_PARAMS_VER;
-	NVFBCSTATUS status = device->p_fbc_fn.nvFBCReleaseContext(device->fbc_handle, &release_params);
-	if (status != NVFBC_SUCCESS) {
-		LOG_ERROR("Error %d: %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-		return -1;
-	}
-	return 0;
+    NVFBC_RELEASE_CONTEXT_PARAMS release_params = {0};
+    release_params.dwVersion = NVFBC_RELEASE_CONTEXT_PARAMS_VER;
+    NVFBCSTATUS status = device->p_fbc_fn.nvFBCReleaseContext(device->fbc_handle, &release_params);
+    if (status != NVFBC_SUCCESS) {
+        LOG_ERROR("Error %d: %s", status,
+                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        return -1;
+    }
+    return 0;
 }
 
 #define SHOW_DEBUG_FRAMES false
