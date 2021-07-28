@@ -42,16 +42,12 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
 
     <button
         className={classNames(
-            "text-md rounded text-white duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold border-gray",
+            "text-md rounded text-gray-300 duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold bg-blue",
             "transition-colors",
             props.className
         )}
         onClick={props.onClick}
         disabled={props.disabled}
-        style={{
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,.1)",
-        }}
     >
         {props.contents}
     </button>

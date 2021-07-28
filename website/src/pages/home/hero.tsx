@@ -17,7 +17,7 @@ import {
     FractalButtonState,
 } from "@app/shared/components/button"
 
-export const Top = () => {
+export const Hero = () => {
     /*
         Top section of Chrome product page
 
@@ -36,7 +36,7 @@ export const Top = () => {
                     <div>
                         <a
                             href="/contact#careers"
-                            className="inline-flex items-center text-white bg-gray-900 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
+                            className="inline-flex items-center text-gray-300 bg-gray-900 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
                         >
                             <span className="font-semibold px-4 py-1.5 text-gray-100 text-xs leading-5 uppercase tracking-wide bg-blue rounded-full">
                                 We&lsquo;re hiring
@@ -57,8 +57,8 @@ export const Top = () => {
                                     <TypeWriter
                                         words={adjectives}
                                         startAt={5}
-                                        classNameCursor="bg-blue-800"
-                                        classNameText="py-2 text-blue dark:text-mint relative"
+                                        classNameCursor="bg-gray-300"
+                                        classNameText="py-2 text-mint relative"
                                     />
                                 </div>
                             </div>
@@ -167,4 +167,4 @@ export const Top = () => {
     )
 }
 
-export default Top
+export default Hero
