@@ -166,11 +166,19 @@ def validate_profiles(profile_map, profiles):
             }
 
 
-def validate_secrets(schema, secrets):
+def validate_secrets(secrets):
     if not isinstance(secrets, dict):
         return {
             "message": "wrong type for secrets map, expected dict",
             "found": secrets,
+        }
+
+
+def validate_secrets_keys(schema, secrets):
+    for missing in find_missing_keys(set(schema.keys()), secrets):
+        yield {
+            "message": "key in secrets map not present in config schema",
+            "found": missing,
         }
 
 

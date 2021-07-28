@@ -40,17 +40,17 @@ def test_validate_secrets():
     schema = {"key1": None, "key2": None, "key3": "value3"}
     not_dict = [{"key1": "value1", "key2": "value2"}]
     assert valid.validate_secrets(
-        schema, not_dict
+        not_dict
     ), "should fail if secrets argument is not a dictionary"
 
     missing = {"key1": "value1", "key4": "value4"}
-    assert valid.validate_secrets(
+    assert valid.validate_secrets_keys(
         schema, missing
     ), "should fail if secrets argument contains key not in config schema"
 
     secrets = {"key1": "value1", "key2": "value2"}
     assert not valid.validate_secrets(
-        schema, secrets
+        secrets
     ), "should pass with well-formed secrets argument"
 
 
