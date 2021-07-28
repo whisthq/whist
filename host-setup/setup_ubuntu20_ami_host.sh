@@ -30,7 +30,7 @@ echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo deb
 sudo apt-get install -y iptables-persistent
 
 # Disable mandelboxes from accessing the instance metadata service on the host.
-# Critical to prevent IAM escalation from within mandelboxes while still using ECS.
+# Critical to prevent IAM escalation from within mandelboxes while still using Dockero.
 sudo iptables -I DOCKER-USER -i docker0 -d 169.254.169.254 -p tcp -m multiport --dports 80,443 -j DROP
 sudo iptables -I DOCKER-USER -i docker0 -d 169.254.170.2   -p tcp -m multiport --dports 80,443 -j DROP
 
