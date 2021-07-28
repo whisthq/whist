@@ -1,7 +1,7 @@
 import React from "react"
 import FadeIn from "react-fade-in"
 import { TypeWriter } from "@app/shared/components/typewriter"
-import { Link } from "react-scroll"
+import { HashLink } from "react-router-hash-link"
 
 import { withContext } from "@app/shared/utils/context"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
@@ -49,19 +49,19 @@ export const Top = () => {
                     </div>
                 </FadeIn>
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1700 : 100}>
-                    <div className="mt-10 md:mt-12 relative">
+                    <div className="mt-6 md:mt-8relative">
                         <p className="text-md m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
                             Load pages instantly. Use 10x less memory. Enjoy
                             complete privacy. Fractal is a supercharged version
                             of Chrome that runs in the cloud.
                         </p>
-                        <Link to="download" spy={true} smooth={true}>
+                        <HashLink to="/download#top">
                             <FractalButton
                                 className="mt-12"
                                 contents="DOWNLOAD NOW"
                                 state={FractalButtonState.DEFAULT}
                             />
-                        </Link>
+                        </HashLink>
                     </div>
                 </FadeIn>
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1900 : 200}>

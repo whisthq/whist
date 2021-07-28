@@ -100,7 +100,7 @@ const Streaming = () => (
                                 <p className="text-white sm:inline font-semibold">
                                     Jenny Wang
                                 </p>{" "}
-                                <p className="sm:inline">Investor at Neo</p>
+                                <p className="sm:inline">Founder at re-inc</p>
                             </span>
                         </cite>
                     </blockquote>

@@ -10,6 +10,7 @@ import TermsOfService from "@app/pages/legal/tos"
 import Landing from "@app/pages/home"
 import FAQ from "@app/pages/about/faq"
 import Contact from "@app/pages/resources/contact"
+import Download from "@app/pages/download"
 
 import routes from "@app/shared/constants/routes"
 import withTracker from "@app/shared/utils/withTracker"
@@ -22,6 +23,7 @@ const RootApp = () => {
     */
     return (
         <Switch>
+            <Route exact path={routes.DOWNLOAD} component={Download} />
             <Route exact path={routes.CONTACT} component={Contact} />
             <Route exact path={routes.ABOUT} component={withTracker(Company)} />
             <Route

@@ -7,8 +7,9 @@ import {
 } from "@app/shared/components/button"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
+import { config } from "@app/shared/constants/config"
 
-const Download = () => {
+const Hero = () => {
     /*
         Colorful box component with Get Started prompt
 
@@ -18,27 +19,19 @@ const Download = () => {
     const { width } = withContext()
 
     return (
-        <div className="mb-24 text-center pt-12">
+        <div className="mb-24 text-center pt-36">
             <div className="px-0 md:px-12">
-                <div className="text-4xl md:text-5xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
+                <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
                     Try the <span className="text-mint">alpha release</span>
                 </div>
                 <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
                     Fractal is early, but we&lsquo;re excited to see what
                     you&lsquo;ll do with a lighter, faster browser! For optimal
-                    experience, we recommend using Fractal only if you are
-                    located in{" "}
-                    <span className="text-gray-300 underline">
-                        North America or Europe
-                    </span>
-                    .
+                    experience, please review the requirements below.
                 </div>
-                {width > ScreenSize.SMALL && (
+                {width > ScreenSize.SMALL ? (
                     <div className="flex justify-center">
-                        <a
-                            href="https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
-                            download
-                        >
+                        <a href={config.client_download_urls.macOS} download>
                             <FractalButton
                                 className="mt-12 mx-2"
                                 contents={
@@ -61,10 +54,24 @@ const Download = () => {
                             state={FractalButtonState.DISABLED}
                         />
                     </div>
+                ) : (
+                    <div className="flex justify-center">
+                        {" "}
+                        <FractalButton
+                            className="mt-12 mx-2"
+                            contents={
+                                <div className="flex">
+                                    <FaApple className="relative mr-3 top-0.5" />
+                                    Mac Only
+                                </div>
+                            }
+                            state={FractalButtonState.DISABLED}
+                        />
+                    </div>
                 )}
             </div>
         </div>
     )
 }
 
-export default Download
+export default Hero

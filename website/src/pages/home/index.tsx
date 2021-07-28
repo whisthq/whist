@@ -9,7 +9,6 @@ import Footer from "@app/shared/components/footer"
 import Hero from "@app/pages/home/hero"
 import Benefits from "@app/pages/home/benefits"
 import Features from "@app/pages/home/features"
-import Download from "@app/pages/home/download"
 import Users from "@app/pages/home/users"
 import Pricing from "@app/pages/home/pricing"
 
@@ -34,12 +33,6 @@ export const Home = () => {
             <div className={classNames(padded, "bg-blue-darkest")} id="pricing">
                 <Benefits />
                 <Pricing />
-            </div>
-            <div
-                className={classNames(padded, "bg-blue-darkest")}
-                id="download"
-            >
-                <Download />
             </div>
             <Footer />
         </>

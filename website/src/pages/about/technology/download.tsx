@@ -6,7 +6,7 @@ import {
     FractalButtonState,
 } from "@app/shared/components/button"
 
-const Specs = () => {
+const Download = () => {
     return (
         <div className="max-w-7xl mx-auto mt-12 py-12 px-4 sm:py-16 lg:py-20">
             <div className="max-w-4xl mx-auto text-center">
@@ -17,8 +17,8 @@ const Specs = () => {
                     Fractal runs Google Chrome on datacenter-grade hardware
                 </p>
             </div>
-            <div className="text-center mt-16">
-                <HashLink to="/#download">
+            <div className="text-center mt-12">
+                <HashLink to="/download#top">
                     <FractalButton
                         contents="DOWNLOAD NOW"
                         state={FractalButtonState.DEFAULT}
@@ -29,4 +29,4 @@ const Specs = () => {
     )
 }
 
-export default Specs
+export default Download
