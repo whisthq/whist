@@ -73,7 +73,7 @@ export const Features = () => {
                 ))}
             </div>
             <a href="/technology#top">
-                <button className="mt-12 text-mint py-2 px-8 rounded-3xl mb-32 hover:text-mint">
+                <button className="mt-12 text-mint py-2 px-8 rounded-3xl mb-12 hover:text-mint">
                     Read more about the technology
                 </button>
             </a>

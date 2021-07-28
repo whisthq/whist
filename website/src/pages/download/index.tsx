@@ -21,7 +21,10 @@ const Download = () => {
                 <Header />
                 <Hero />
             </div>
-            <div className={classNames(padded, "bg-blue-darker")}>
+            <div
+                className={classNames(padded, "bg-blue-darker")}
+                id="requirements"
+            >
                 <Requirements />
             </div>
             <Footer />
