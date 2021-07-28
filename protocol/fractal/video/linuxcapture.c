@@ -342,9 +342,9 @@ int capture_screen(CaptureDevice* device) {
     }
     switch (device->active_capture_device) {
         case NVIDIA_DEVICE: {
+            static CUcontext current_context;
             // first check if we just switched to nvidia
             if (device->last_capture_device != NVIDIA_DEVICE) {
-                static CUcontext current_context;
                 // CUresult cu_res = cu_ctx_push_current_ptr(*get_main_thread_cuda_context_ptr());
                 CUresult cu_res = cu_ctx_set_current_ptr(*get_main_thread_cuda_context_ptr());
                 if (cu_res != CUDA_SUCCESS) {
