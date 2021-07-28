@@ -48,7 +48,15 @@ extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
+// This variable represents whether there is an active pinch gesture
 bool active_pinch = false;
+
+// This variable represents whether or not we are actively sending momentum scrolls
+//     On MOMENTUM_BEGIN, we set this to true, and start sending momentum scrolls
+//     On MOMENTUM_END, or on other non-scroll input, we set this to false, and ignore future
+//     momentum scrolls.
+//     This is primarily to make cmd keypresses kill momentum scrolls, otherwise
+//     scroll + a later cmd causes an unintentional cmd+scroll zoom event
 bool active_momentum_scroll = false;
 
 /*
