@@ -212,8 +212,8 @@ const Header = () => {
                                     </>
                                 )}
                             </Popover>
-                            <HashLink to="/download#top">
-                                <span className="text-base font-medium text-gray-300 hover:text-mint cursor-pointer">
+                            <HashLink to="/download#top" className="hover:no-underline">
+                                <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
                                     Download
                                 </span>
                             </HashLink>
