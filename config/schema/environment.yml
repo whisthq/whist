@@ -3,11 +3,11 @@ NODEJS:
     local: "local"
     dev: "development"
     staging: "staging"
-    production: "production"
+    prod: "prod"
 
 # client-applications/desktop/config/contstants.js: FractalEnvironments
 ENV:
     local: "local"
     dev: "dev"
     staging: "staging"
-    production: "prod"
+    prod: "prod"

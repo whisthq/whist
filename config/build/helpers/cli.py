@@ -14,8 +14,8 @@ def parse_cli_profiles(_ctx, _param, args):
     """A helper callback that converts a list of --key value pairs
     into a dictionary. Example:
 
-    args = ["--os", "macos", "--env", "production"]
-           ... returns => {"os": "macos", "env": "production"}
+    args = ["--os", "macos", "--env", "prod"]
+           ... returns => {"os": "macos", "env": "prod"}
     """
     result = {}
     for chunk in toolz.partition(2, args):
@@ -101,7 +101,7 @@ def create_cli(main_fn):
     @click.option(
         "--deploy",
         type=click.Choice(
-            ["local", "dev", "staging", "production"], case_sensitive=False
+            ["local", "dev", "staging", "prod"], case_sensitive=False
         ),
         help="A choice of 'deploy', must be declared in config/profile.yml",
     )
@@ -125,7 +125,7 @@ def create_cli(main_fn):
 
            "key1":  {"macos": "mac-value", "win32": "win-value"}
 
-           "key2":  {"dev": "dev-value", "production": "production-value"}
+           "key2":  {"dev": "dev-value", "prod": "prod-value"}
 
         }
 
