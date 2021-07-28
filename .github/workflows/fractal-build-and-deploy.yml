@@ -527,9 +527,7 @@ jobs:
 
     ##########################################################################################
 
-    # Uses webserver maintenance mode to update the following:
-    # 1. new task definitions if new task defs have been pushed to EC2
-    # 2. new AMIs if new AMIs have been built
+    # Uses webserver's cli command to update AMIs if new AMIs have been built
     webserver-update-fractal-services:
         name: "Update Fractal Services using Webserver"
         runs-on: ubuntu-20.04
