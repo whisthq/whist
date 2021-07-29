@@ -60,7 +60,6 @@ def actionify(name, data):
 
 if os.environ.get("CI"):
     maps = {
-        "--secrets": os.environ.get("INPUT_SECRETS"),
         "--os": os.environ.get("INPUT_OS"),
         "--deploy": os.environ.get("INPUT_DEPLOY"),
     }
