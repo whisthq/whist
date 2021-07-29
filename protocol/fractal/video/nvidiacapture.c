@@ -199,7 +199,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 int nvidia_bind_context(NvidiaCaptureDevice* device) {
     if (device == NULL) {
         LOG_ERROR("nvidia_bind_context received null device, doing nothing!");
-        return -1;
+        return 0;
     }
     NVFBC_BIND_CONTEXT_PARAMS bind_params = {0};
     bind_params.dwVersion = NVFBC_BIND_CONTEXT_PARAMS_VER;
@@ -215,7 +215,7 @@ int nvidia_bind_context(NvidiaCaptureDevice* device) {
 int nvidia_release_context(NvidiaCaptureDevice* device) {
     if (device == NULL) {
         LOG_ERROR("nvidia_release_context received null device, doing nothing!");
-        return -1;
+        return 0;
     }
     NVFBC_RELEASE_CONTEXT_PARAMS release_params = {0};
     release_params.dwVersion = NVFBC_RELEASE_CONTEXT_PARAMS_VER;
