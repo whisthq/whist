@@ -395,7 +395,6 @@ int capture_screen(CaptureDevice* device) {
                         device->nvidia_capture_device->height);
                 }
             }
-            LOG_FATAL("Nvidia capture failed!");
             // otherwise, nvidia failed!
             device->active_capture_device = X11_DEVICE;
         }
