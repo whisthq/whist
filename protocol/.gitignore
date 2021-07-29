@@ -30,16 +30,6 @@ share/
 build/
 build-*/
 
-# includes
-include/openssl
-include/SDL2
-include/ffmpeg
-
-# libs
-lib/64/openssl
-lib/64/SDL2
-lib/64/ffmpeg
-
 # Docs
 docs/html
 docs/latex

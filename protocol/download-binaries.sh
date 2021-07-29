@@ -12,7 +12,7 @@ set -Eeuo pipefail
 OS="$1"
 CLIENT_DIR="$2"
 SERVER_DIR="$3"
-SOURCE_DIR="$4"
+DEST_DIR="$4"
 CACHE_DIR="$5"
 mkdir -p "$CLIENT_DIR"
 mkdir -p "$SERVER_DIR"
@@ -51,7 +51,7 @@ function has_updated {
 # If the include/SDL2 directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
 LIB="fractal-sdl2-headers.tar.gz"
-SDL_DIR="$SOURCE_DIR/include/SDL2"
+SDL_DIR="$DEST_DIR/include/SDL2"
 if has_updated "$LIB" || [[ ! -d "$SDL_DIR" ]]; then
     rm -rf "$SDL_DIR"
     mkdir -p "$SDL_DIR"
@@ -67,7 +67,7 @@ fi
 ###############################
 
 # Select SDL lib dir and SDL lib targz name based on OS
-SDL_LIB_DIR="$SOURCE_DIR/lib/64/SDL2/$OS"
+SDL_LIB_DIR="$DEST_DIR/lib/64/SDL2/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
     SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
@@ -90,7 +90,7 @@ fi
 # If the include/openssl directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
 LIB="fractal-libcrypto-headers.tar.gz"
-OPENSSL_DIR="$SOURCE_DIR/include/openssl"
+OPENSSL_DIR="$DEST_DIR/include/openssl"
 if has_updated "$LIB" || [[ ! -d "$OPENSSL_DIR" ]]; then
     rm -rf "$OPENSSL_DIR"
     mkdir -p "$OPENSSL_DIR"
@@ -106,7 +106,7 @@ fi
 ###############################
 
 # Select OpenSSL lib dir and OpenSSL lib targz name based on OS
-OPENSSL_LIB_DIR="$SOURCE_DIR/lib/64/openssl/$OS"
+OPENSSL_LIB_DIR="$DEST_DIR/lib/64/openssl/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
     OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
@@ -129,7 +129,7 @@ fi
 # If the include/ffmpeg directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
 LIB="fractal-ffmpeg-headers.tar.gz"
-FFMPEG_DIR="$SOURCE_DIR/include/ffmpeg"
+FFMPEG_DIR="$DEST_DIR/include/ffmpeg"
 if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
     rm -rf "$FFMPEG_DIR"
     mkdir -p "$FFMPEG_DIR"
@@ -144,7 +144,7 @@ fi
 ###############################
 
 # Select FFmpeg lib dir and targz name
-FFMPEG_LIB_DIR="$SOURCE_DIR/lib/64/ffmpeg"
+FFMPEG_LIB_DIR="$DEST_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
     FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
