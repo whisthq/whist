@@ -48,7 +48,7 @@ const Requirements = () => {
                 <div className="relative lg:grid lg:grid-cols-3 lg:gap-x-8">
                     <div className="lg:col-span-1">
                         <div className="text-3xl text-gray-300 sm:text-4xl pr-8">
-                            Fractal download requirements
+                            Download requirements
                         </div>
                     </div>
                     <dl className="mt-10 space-y-10 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-10 lg:mt-0 lg:col-span-2">

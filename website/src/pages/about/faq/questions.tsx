@@ -10,7 +10,10 @@ const faqs = [
                 Fractal is like remote desktop, but with a much greater emphasis
                 on performance and user experience. You can read more about our
                 technology{" "}
-                <a href="/technology#top" className="text-mint hover:text-mint">
+                <a
+                    href="/technology#top"
+                    className="text-gray-300 hover:text-mint"
+                >
                     here
                 </a>
                 .
@@ -26,7 +29,10 @@ const faqs = [
                 through Fractal so that not even our engineers can see your
                 personal browsing data. You can read more about how we handle
                 privacy and security{" "}
-                <a href="/security#top" className="text-mint hover:text-mint">
+                <a
+                    href="/security#top"
+                    className="text-gray-300 hover:text-mint"
+                >
                     here
                 </a>
                 .
@@ -46,7 +52,21 @@ const faqs = [
     {
         id: 5,
         question: "Will there be latency?",
-        answer: "Running applications in the cloud means that there will always be some latency, but there is a certain point at which latency becomes unnoticeable.",
+        answer: (
+            <div>
+                Running applications in the cloud means that there will always
+                be some latency, but there is a certain point at which latency
+                becomes unnoticeable. To see if Fractal can perform well for
+                you, please review Fractal&lsquo;s download requirements{" "}
+                <a
+                    href="/download#requirements"
+                    className="text-gray-300 hover:text-mint"
+                >
+                    here
+                </a>
+                .
+            </div>
+        ),
     },
     {
         id: 6,
@@ -56,7 +76,7 @@ const faqs = [
                 Yes! You can see our job postings{" "}
                 <a
                     href="https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9"
-                    className="text-mint hover:text-mint"
+                    className="text-gray-300 hover:text-mint"
                     target="_blank"
                     rel="noreferrer"
                 >
@@ -75,7 +95,7 @@ const faqs = [
 
 const Questions = () => {
     return (
-        <div className="bg-gray-800 my-16">
+        <div className="bg-gray-900 my-16">
             <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
                 <div className="lg:max-w-2xl lg:mx-auto lg:text-center">
                     <h2 className="text-3xl text-gray-300 sm:text-4xl">

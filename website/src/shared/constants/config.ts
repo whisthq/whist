@@ -7,9 +7,6 @@ import type {
 
 const environment: FractalEnvironment = {
     development: {
-        url: {
-            TYPEFORM_FORM_ID: "RsOsBSSu",
-        },
         keys: {
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
@@ -21,9 +18,6 @@ const environment: FractalEnvironment = {
         },
     },
     staging: {
-        url: {
-            TYPEFORM_FORM_ID: "RsOsBSSu",
-        },
         keys: {
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
@@ -35,9 +29,6 @@ const environment: FractalEnvironment = {
         },
     },
     production: {
-        url: {
-            TYPEFORM_FORM_ID: "RsOsBSSu",
-        },
         keys: {
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },

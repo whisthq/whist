@@ -8,7 +8,7 @@ import Support from "@app/pages/about/faq/support"
 
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
 
-export const FAQ = () => {
+const FAQ = () => {
     return (
         <>
             <div className={classNames(padded, "bg-blue-darkest")}>
