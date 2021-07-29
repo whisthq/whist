@@ -147,8 +147,8 @@ sudo apt-get install -y filebeat
 sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt
 
 # filebeat by default doesn't startup on system boot/install by default.
-sudo systemctl enable filebeat
-sudo systemctl start filebeat
+# So, filebeat will be currently disabled. This being done intentionally to not ship logs from local-dev.
+# If you want to enable it, look at `setup_ubuntu20_ami_host.sh` for further instructions.
 
 echo "================================================"
 echo "Updating resource limits..."

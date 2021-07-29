@@ -16,6 +16,7 @@ GH_USERNAME=${1}
 GH_PAT=${2}
 GIT_BRANCH=${3}
 GIT_HASH=${4}
+LOGZ_TOKEN=${5}
 
 # Prevent user from running script as root, to guarantee that all steps are
 # associated with the fractal user.
@@ -64,6 +65,14 @@ docker pull "$pull_image"
 # but I strongly suspect our deployment pipeline is not up to snuff for us to
 # actually get rid of this quite yet.
 docker tag "$pull_image" "$pull_image_base:current-build"
+
+
+# replace the dummy token in filebeat config with correct token. 
+# This will be done in GHA when the AMI for {dev,staging,prod} is being built through CI
+sudo sed -i "s/DUMMY_TOKEN_REPLACE_ME/$LOGZ_TOKEN/g" /etc/filebeat/filebeat.yml
+# Enable & Start the installed services for filebeat.
+sudo systemctl enable filebeat
+sudo systemctl start filebeat
 
 echo
 echo "Install complete. Make sure you do not reboot when creating the AMI (check NO REBOOT)"
