@@ -370,7 +370,13 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
     return true;
 }
 
-void nvidia_set_iframe(NvidiaEncoder* encoder) { encoder->wants_iframe = true; }
+void nvidia_set_iframe(NvidiaEncoder* encoder) {
+    if (encoder == NULL) {
+        LOG_ERROR("nvidia_set_iframe received NULL encoder!");
+        return;
+    }
+    encoder->wants_iframe = true;
+}
 
 void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     // Try to free the encoder's frame
