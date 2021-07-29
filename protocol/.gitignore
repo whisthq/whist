@@ -19,20 +19,8 @@ tags
 .DS_Store
 
 # Sentry
-*.sentry-native
 sentry-native
-
-# Fractal
-share/
-._share
 
 # Cmake
 build/
 build-*/
-
-# Docs
-docs/html
-docs/latex
-
-# Logs
-**/*.log
