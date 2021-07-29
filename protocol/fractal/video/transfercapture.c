@@ -66,6 +66,8 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
             }
         }
     }
+    // destroy the whole encoder (sorry)
+    destroy_video_encoder(encoder);
 #endif
     return success;
 }

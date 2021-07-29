@@ -1,4 +1,5 @@
 #include "nvidia_encode.h"
+#include "cudacontext.h"
 
 #include <dlfcn.h>
 #include <string.h>

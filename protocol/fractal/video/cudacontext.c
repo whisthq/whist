@@ -39,6 +39,7 @@ static CUINITPROC cu_init_ptr = NULL;
 static CUDEVICEGETPROC cu_device_get_ptr = NULL;
 static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
+static bool cuda_initialized = false;
 
 CUcontext main_thread_cuda_context = NULL;
 CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
@@ -149,10 +150,13 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
     CUresult cu_res;
     CUdevice cu_dev;
 
-    cu_res = cu_init_ptr(0);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
-        return NVFBC_FALSE;
+    if (!cuda_initialized) {
+        cu_res = cu_init_ptr(0);
+        if (cu_res != CUDA_SUCCESS) {
+            LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
+            return NVFBC_FALSE;
+        }
+        cuda_initialized = true;
     }
 
     cu_res = cu_device_get_ptr(&cu_dev, 0);
