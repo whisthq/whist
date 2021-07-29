@@ -22,11 +22,8 @@ const isLocalEnv = () => {
   return isLocal
 }
 
-export const regionGet = async (subClaim: string, accessToken: string) => {
-  const regions: Record<string, any> = await regionRequest(
-    subClaim,
-    accessToken
-  )
+export const regionGet = async (accessToken: string) => {
+  const regions: Record<string, any> = await regionRequest(accessToken)
   const allowedRegions = (regions?.json as AWSRegion[]) ?? []
 
   if (allowedRegions.length === 0) {
@@ -37,12 +34,11 @@ export const regionGet = async (subClaim: string, accessToken: string) => {
 }
 
 export const mandelboxCreate = async (
-  subClaim: string,
   accessToken: string,
   region?: AWSRegion
 ) => {
-  region = region ?? (await regionGet(subClaim, accessToken))
-  const response = await mandelboxRequest(subClaim, accessToken, region)
+  region = region ?? (await regionGet(accessToken))
+  const response = await mandelboxRequest(accessToken, region)
   return response
 }
 
@@ -71,23 +67,18 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorMaintenance(response)
 
 // Helper functions
-const mandelboxRequest = async (
-  username: string,
-  accessToken: string,
-  region: string
-) =>
+const mandelboxRequest = async (accessToken: string, region: string) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
     body: {
-      username,
       region,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
     },
   })
 
-const regionRequest = async (username: string, accessToken: string) =>
+const regionRequest = async (accessToken: string) =>
   get({
-    endpoint: `/regions?username=${username}`,
+    endpoint: "/regions",
     accessToken,
   })
