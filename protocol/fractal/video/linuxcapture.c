@@ -299,20 +299,29 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     // if we can create the nvidia capture device, do so
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
-    // The first nvidia device creation must be synchronous, so that we can also create the encoder
-    device->nvidia_capture_device = create_nvidia_capture_device();
-    if (device->nvidia_capture_device) {
-        device->active_capture_device = NVIDIA_DEVICE;
+    // call cuda_init() so we can create the encoder
+    bool res = cuda_init(get_main_thread_cuda_context_ptr());
+    if (!res) {
+        LOG_ERROR("Failed to initialize cuda!");
     }
+    // set up semaphore and nvidia manager
     device->nvidia_device_semaphore = fractal_create_semaphore(0);
     device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
                                                    "multithreaded_nvidia_manager", device);
+    // unset current cuda context for use with nvidai thread
+    CUresult cu_res = cu_ctx_set_current_ptr(NULL);
+    if (cu_res != CUDA_SUCCESS) {
+        LOG_ERROR("unbind current failed with result %d", cu_res);
+    } else {
+        LOG_INFO("Successfully unbound active cuda context: %x",
+                 *get_main_thread_cuda_context_ptr());
+    }
+    fractal_post_semaphore(device->nvidia_device_semaphore);
 #endif
 
-    // Create the X11 capture device
-    if (!device->nvidia_capture_device) {
-        device->active_capture_device = X11_DEVICE;
-    }
+    // Create the X11 capture device; when the nvidia manager thread finishes creation, active
+    // capture device will change
+    device->active_capture_device = X11_DEVICE;
     device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
 #if !USING_SHM
