@@ -151,11 +151,11 @@ export const authInfoValid = (authInfo: {
 
 export const isExpired = (accessToken: string) => {
     // Extract the expiry in seconds since epoch
-    const { exp } = jwtDecode(accessToken)
+    const profile: { exp: number } = jwtDecode(accessToken)
     // Get current time in seconds since epoch
     const currentTime = Date.now() / 1000
     // Allow for ten seconds so we don't compare the access token to the current time right
     // before the expiry
     const secondsBuffer = 10
-    return currentTime + secondsBuffer > exp
+    return currentTime + secondsBuffer > profile.exp
 }
