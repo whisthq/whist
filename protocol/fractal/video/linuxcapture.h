@@ -49,6 +49,7 @@ typedef struct CaptureDevice {
     bool pending_destruction;
     FractalThread nvidia_manager;
     FractalSemaphore nvidia_device_semaphore;
+    bool recreate_just_finished; // TODO: better name please!
     // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
