@@ -41,7 +41,7 @@ Includes
 ============================
 */
 
-#include <sentry.h>
+#include <sentry/sentry.h>
 #include <fractal/core/fractal.h>
 #include "error_monitor.h"
 
