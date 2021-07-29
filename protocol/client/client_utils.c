@@ -555,7 +555,7 @@ int read_piped_arguments(bool *keep_waiting) {
         available_chars = 0;
     }
 
-    if (strlen((char *)server_ip) == 0) {
+    if (*keep_waiting && strlen((char *)server_ip) == 0) {
         LOG_ERROR(
             "Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
         return -1;

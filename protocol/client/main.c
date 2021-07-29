@@ -603,7 +603,7 @@ int sync_keyboard_state(void) {
 
 volatile bool continue_pumping = false;
 
-int read_piped_arguments_thread_function(void* keep_piping) {
+int multithreaded_read_piped_arguments(void* keep_piping) {
     /*
         Thread function to read piped arguments from stdin
 
@@ -792,15 +792,30 @@ int main(int argc, char* argv[]) {
     continue_pumping = true;
     bool keep_piping = true;
     SDL_Thread* pipe_arg_thread =
-        SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
+        SDL_CreateThread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
         exit_code = FRACTAL_EXIT_CLI;
     } else {
         SDL_Event event;
         while (continue_pumping) {
-            if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
-                exiting = true;
-                keep_piping = false;
+            if (SDL_PollEvent(&event)) {
+                switch (event.type) {
+                    case SDL_QUIT: {
+                        exiting = true;
+                        keep_piping = false;
+                        break;
+                    }
+                    case SDL_WINDOWEVENT: {
+                        if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                            output_width = get_window_pixel_width((SDL_Window*)window);
+                            output_height = get_window_pixel_height((SDL_Window*)window);
+                        }
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
             }
         }
         int pipe_arg_ret;
