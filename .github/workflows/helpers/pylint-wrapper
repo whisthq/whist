@@ -1,0 +1,31 @@
+#!/bin/bash
+# pylint-wrapper
+
+set -euo pipefail
+
+# The --msg-template option causes pylint to print errors as GHA Workflow
+# commands. The sed script groups error messages by module. The script contains
+# three commands:
+#
+# '/./!d': This command deletes all empty lines.
+#
+# 's/*\{13\}\ /::group::/': This command replaces every occurrence of thirteen
+# asterisks followed by a space at the beginning of a line with ::group::.
+#
+# '1,2!i ::endgroup::': This command prints ::endgroup:: on its own line before
+# every line except the first two. We don't print ::endgroup:: before the first
+# two lines to account for the edge case in which there are no errors. In this
+# case, the first line will be empty and the second line will contain all
+# hyphens.
+#
+# The latter two commands are only applied to all lines that either a) start
+# with thirteen asterisks followed by a space or b) contain only hyphens. For
+# this reason, we only see ::endgroup:: before lines after the second line that
+# either start with thirteen asterisks followed by a space or contain only
+# hyphens rather than before every line after the second line.
+
+pylint --msg-template="::error file={path},line={line},col={column}::{msg_id}: {msg} ({symbol})" \
+       -j 0 "$@" \
+    | sed -u '/./!d ; /^*\{13\}\ \|^-\+$/{ s/^*\{13\}\ /::group::/ ; 1,2!i\
+::endgroup::
+}'

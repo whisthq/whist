@@ -1,8 +1,8 @@
-from typing import Tuple
-from flask import jsonify
 from http import HTTPStatus
+from typing import Tuple
 
 import stripe
+from flask import jsonify
 
 
 def get_billing_portal_url(customer_id: str, return_url: str) -> Tuple[str, int]:
