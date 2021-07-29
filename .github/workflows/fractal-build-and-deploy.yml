@@ -457,7 +457,10 @@ jobs:
                   data["source_ami"] = "${{ env.aws_source_ami_id }}"
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
                   # defined as a string of comma-separated values (no spaces) as required by Packer.
-                  data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
+                  if data["git_branch"] == "prod":
+                        data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-central-1", "eu-west-1"]
+                  else:
+                        data["destination_regions"] = ["us-west-1"]
                   fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
