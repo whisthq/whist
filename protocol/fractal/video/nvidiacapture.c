@@ -81,15 +81,6 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
     }
 
     /*
-     * Initialize CUDA.
-     */
-    NVFBC_BOOL fbc_bool = cuda_init(get_main_thread_cuda_context_ptr());
-    if (fbc_bool != NVFBC_TRUE) {
-        LOG_ERROR("Failed to initialize CUDA!");
-        return NULL;
-    }
-
-    /*
      * Create an NvFBC instance.
      *
      * API function pointers are accessible through p_fbc_fn.
@@ -206,6 +197,10 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 }
 
 int nvidia_bind_context(NvidiaCaptureDevice* device) {
+    if (device == NULL) {
+        LOG_ERROR("nvidia_bind_context received null device, doing nothing!");
+        return -1;
+    }
     NVFBC_BIND_CONTEXT_PARAMS bind_params = {0};
     bind_params.dwVersion = NVFBC_BIND_CONTEXT_PARAMS_VER;
     NVFBCSTATUS status = device->p_fbc_fn.nvFBCBindContext(device->fbc_handle, &bind_params);
@@ -218,6 +213,10 @@ int nvidia_bind_context(NvidiaCaptureDevice* device) {
 }
 
 int nvidia_release_context(NvidiaCaptureDevice* device) {
+    if (device == NULL) {
+        LOG_ERROR("nvidia_release_context received null device, doing nothing!");
+        return -1;
+    }
     NVFBC_RELEASE_CONTEXT_PARAMS release_params = {0};
     release_params.dwVersion = NVFBC_RELEASE_CONTEXT_PARAMS_VER;
     NVFBCSTATUS status = device->p_fbc_fn.nvFBCReleaseContext(device->fbc_handle, &release_params);
