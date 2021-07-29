@@ -37,8 +37,8 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: ${{ steps.encoded-config.outputs.macos }}
-            win32: ${{ steps.encoded-config.outputs.win32 }}
+            macos: ${{ steps.config-macos.outputs.config }}
+            win32: ${{ steps.config-win32.outputs.config }}
 
         steps:
             - name: Checkout Git Repository
@@ -48,7 +48,6 @@ jobs:
               id: config-macos
               uses: ./.github/actions/monorepo-config
               with:
-                  secrets: ${{ toJSON(secrets) }}
                   os: macos
                   deploy: dev
 
@@ -56,22 +55,8 @@ jobs:
               id: config-win32
               uses: ./.github/actions/monorepo-config
               with:
-                  secrets: ${{ toJSON(secrets) }}
                   os: win32
                   deploy: dev
-
-            - name: Encode Configuration
-              id: encoded-config
-              shell: python3 {0}
-              run: |
-                  from base64 import b64encode
-                  macos = r"""${{ steps.config-macos.outputs.config }}"""
-                  win32 = r"""${{ steps.config-win32.outputs.config }}"""
-                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b64encode() works with bytes.
-                  encoded_macos = b64encode(b64encode(macos.encode())).decode()
-                  encoded_win32 = b64encode(b64encode(win32.encode())).decode()
-                  print(f"::set-output name=macos::{encoded_macos}")
-                  print(f"::set-output name=win32::{encoded_win32}")
 
             - name: Log MacOS Configuration
               shell: python3 {0}
@@ -128,17 +113,6 @@ jobs:
               shell: python3 {0}
               run: |
                   print(r"""${{ toJSON(needs) }}""")
-
-            - name: Decode MacOS Config
-              id: config-macos
-              shell: python3 {0}
-              run: |
-                  from base64 import b64decode
-                  encoded = "${{ needs.config.outputs.macos }}"
-                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b64encode() works with bytes.
-                  config = b64decode(b64decode(encoded.encode())).decode()
-                  print(config)
-                  print(f"::set-output name=config::{config}")
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -214,7 +188,7 @@ jobs:
               if: false && runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               env:
-                  CONFIG: ${{ steps.config-win32.outputs.config }}
+                  CONFIG: ${{ needs.config.outputs.win32 }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
@@ -231,7 +205,7 @@ jobs:
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
-                  CONFIG: ${{ steps.config-macos.outputs.config }}
+                  CONFIG: ${{ needs.config.outputs.macos }}
                   AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
                   AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
                   AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
