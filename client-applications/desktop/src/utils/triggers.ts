@@ -47,4 +47,5 @@ export default {
     mandelboxFlowFailure: "mandelboxFlowFailure",
     authFlowSuccess: "authFlowSuccess",
     authFlowFailure: "authFlowFailure",
+    authRefreshSuccess: "authRefreshSuccess"
 }
