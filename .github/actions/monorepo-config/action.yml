@@ -4,9 +4,6 @@ branding:
     icon: command
     color: blue
 inputs:
-    secrets:
-        description: JSON string of secrets map
-        required: false
     os:
         description: Either 'macos', 'win32', or 'linux'
         required: false
