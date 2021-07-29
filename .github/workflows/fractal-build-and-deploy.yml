@@ -65,8 +65,8 @@ jobs:
         name: Building config
         runs-on: ubuntu-20.04
         outputs:
-            macos: ${{ steps.encoded-config.outputs.macos }}
-            win32: ${{ steps.encoded-config.outputs.win32 }}
+            macos: ${{ steps.config-macos.outputs.config }}
+            win32: ${{ steps.config-win32.outputs.config }}
 
         steps:
             - name: Checkout Git Repository
@@ -87,19 +87,6 @@ jobs:
                   secrets: ${{ toJSON(secrets) }}
                   os: win32
                   deploy: dev
-
-            - name: Encode Configuration
-              id: encoded-config
-              shell: python3 {0}
-              run: |
-                  from base64 import b64encode
-                  macos = r"""${{ steps.config-macos.outputs.config }}"""
-                  win32 = r"""${{ steps.config-win32.outputs.config }}"""
-                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b64encode() works with bytes.
-                  encoded_macos = b64encode(b64encode(macos.encode())).decode()
-                  encoded_win32 = b64encode(b64encode(win32.encode())).decode()
-                  print(f"::set-output name=macos::{encoded_macos}")
-                  print(f"::set-output name=win32::{encoded_win32}")
 
             - name: Log MacOS Configuration
               shell: python3 {0}
@@ -1003,20 +990,6 @@ jobs:
                   cat packageOld.json | jq '.version = "${{ env.desktop_app_new_version }}"' > package.json
                   rm packageOld.json
 
-            # Decode configs so they are readable by the `--config` argument passed to `yarn package:publish`.
-            - name: Decode Configs
-              id: configs-decoded
-              shell: python3 {0}
-              run: |
-                  from base64 import b64decode
-                  macos_encoded = "${{ needs.config.outputs.macos }}"
-                  win32_encoded = "${{ needs.config.outputs.win32 }}"
-                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b64encode() works with bytes.
-                  macos_config = b64decode(b64decode(macos_encoded.encode())).decode()
-                  win32_config = b64decode(b64decode(win32_encoded.encode())).decode()
-                  print(f"::set-output name=macos::{macos_config}")
-                  print(f"::set-output name=win32::{win32_config}")
-
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the Windows Electron Application
               if: false && runner.os == 'Windows'
@@ -1033,7 +1006,7 @@ jobs:
                   call yarn cache clean
                   call yarn install
                   call yarn package:publish \
-                  --config='${{ steps.configs-decoded.outputs.win32 }}' \
+                  --config='${{ needs.config.outputs.win32 }}' \
                   --version='${{ env.desktop_app_new_version }}' \
                   --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
                   --commit='${{ github.sha }}'
@@ -1058,7 +1031,7 @@ jobs:
                   yarn cache clean
                   yarn install
                   yarn package:publish \
-                  --config='${{ steps.configs-decoded.outputs.macos }}' \
+                  --config='${{ needs.config.outputs.macos }}' \
                   --version='${{ env.desktop_app_new_version }}' \
                   --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
                   --commit='${{ github.sha }}'
