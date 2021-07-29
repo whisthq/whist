@@ -65,6 +65,7 @@ jobs:
                   from base64 import b85encode
                   macos = r"""${{ steps.config-macos.outputs.config }}"""
                   win32 = r"""${{ steps.config-win32.outputs.config }}"""
+                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b85encode() works with bytes.
                   encoded_macos = b85encode(macos.encode()).decode()
                   encoded_win32 = b85encode(win32.encode()).decode()
                   print(f"::set-output name=macos::{encoded_macos}")
@@ -132,6 +133,7 @@ jobs:
               run: |
                   from base64 import b85decode
                   encoded = "${{ needs.config.outputs.macos }}"
+                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b85encode() works with bytes.
                   config = b85decode(encoded.encode()).decode()
                   print(config)
                   print(f"::set-output name=config::{config}")

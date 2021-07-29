@@ -93,6 +93,7 @@ jobs:
                   from base64 import b85encode
                   macos = r"""${{ steps.config-macos.outputs.config }}"""
                   win32 = r"""${{ steps.config-win32.outputs.config }}"""
+                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b85encode() works with bytes.
                   encoded_macos = b85encode(macos.encode()).decode()
                   encoded_win32 = b85encode(win32.encode()).decode()
                   print(f"::set-output name=macos::{encoded_macos}")
@@ -1000,6 +1001,20 @@ jobs:
                   cat packageOld.json | jq '.version = "${{ env.desktop_app_new_version }}"' > package.json
                   rm packageOld.json
 
+            # Decode configs so they are readable by the `--config` argument passed to `yarn package:publish`.
+            - name: Decode Configs
+              id: configs-decoded
+              shell: python3 {0}
+              run: |
+                  from base64 import b85decode
+                  macos_encoded = "${{ needs.config.outputs.macos }}"
+                  win32_encoded = "${{ needs.config.outputs.win32 }}"
+                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b85encode() works with bytes.
+                  macos_config = b85decode(macos_encoded.encode()).decode()
+                  win32_config = b85decode(win32_encoded.encode()).decode()
+                  print(f"::set-output name=macos::{macos_config}")
+                  print(f"::set-output name=win32::{win32_config}")
+
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the Windows Electron Application
               if: false && runner.os == 'Windows'
@@ -1016,10 +1031,10 @@ jobs:
                   call yarn cache clean
                   call yarn install
                   call yarn package:publish \
-                  --config=${{ needs.config.outputs.win32 }} \
-                  --version=${{ env.desktop_app_new_version }} \
-                  --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
-                  --commit=${{ github.sha }}
+                  --config='${{ steps.configs-decoded.outputs.win32 }}' \
+                  --version='${{ env.desktop_app_new_version }}' \
+                  --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
+                  --commit='${{ github.sha }}'
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
@@ -1041,10 +1056,10 @@ jobs:
                   yarn cache clean
                   yarn install
                   yarn package:publish \
-                  --config=${{ needs.config.outputs.macos }} \
-                  --version=${{ env.desktop_app_new_version }} \
-                  --environment=${{ needs.fractal-publish-build-config.outputs.branch }} \
-                  --commit=${{ github.sha }}
+                  --config='${{ steps.configs-decoded.outputs.macos }}' \
+                  --version='${{ env.desktop_app_new_version }}' \
+                  --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
+                  --commit='${{ github.sha }}'
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
