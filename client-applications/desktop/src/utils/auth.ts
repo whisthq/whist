@@ -59,6 +59,7 @@ const extractTokens = (response: Record<string, string>) => {
             response.id_token ?? ""
         )
         const { sub, email } = profile
+
         return {
             subClaim: sub,
             userEmail: email,
@@ -84,7 +85,6 @@ export const generateRefreshedAuthInfo = async (refreshToken: string) => {
   Returns:
     {userEmail, subClaim, accessToken, refreshToken}
   */
-
     const response = await post({
         endpoint: "/oauth/token",
         headers: { "content-type": "application/json" },
@@ -94,6 +94,7 @@ export const generateRefreshedAuthInfo = async (refreshToken: string) => {
             refresh_token: refreshToken,
         },
     })
+
     const data = response.json
     return extractTokens(data)
 }
@@ -146,4 +147,15 @@ export const authInfoValid = (authInfo: {
     refreshToken: string
 }) => {
     return isEmpty(pickBy(authInfo, (x) => (x ?? "") === ""))
+}
+
+export const isExpired = (accessToken: string) => {
+    // Extract the expiry in seconds since epoch
+    const profile: { exp: number } = jwtDecode(accessToken)
+    // Get current time in seconds since epoch
+    const currentTime = Date.now() / 1000
+    // Allow for ten seconds so we don't compare the access token to the current time right
+    // before the expiry
+    const secondsBuffer = 10
+    return currentTime + secondsBuffer > profile.exp
 }
