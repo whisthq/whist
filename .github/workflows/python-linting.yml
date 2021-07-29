@@ -1,0 +1,33 @@
+# workflows/python-linting.yml
+#
+# Python: Linting
+# Check Python formatting by running Black on the entire monorepo.
+
+name: "Python: Linting"
+
+on:
+    pull_request:
+        paths:
+            - "**.py"
+            - .github/workflows/python-linting.yml
+    workflow_dispatch:
+
+jobs:
+    python-linting:
+        name: Check Python Formatting
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.9.5
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.9.5"
+
+            - name: Install Black
+              run: pip install $(grep -i ^black .github/workflows/helpers/requirements.txt)
+
+            - name: Check Python formatting with Black
+              run: black --check .

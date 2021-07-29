@@ -81,7 +81,9 @@ def get_stripe_customer_id() -> Optional[str]:
         the access token.
     """
 
-    return get_jwt().get(current_app.config["STRIPE_CUSTOMER_ID_CLAIM"])  # type: ignore[no-any-return]
+    return get_jwt().get(  # type: ignore[no-any-return]
+        current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]
+    )
 
 
 def payment_required(view_func):
