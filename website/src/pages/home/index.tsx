@@ -3,60 +3,55 @@ import classNames from "classnames"
 import { Switch, Route } from "react-router-dom"
 
 import withTracker from "@app/shared/utils/withTracker"
-import { withContext } from "@app/shared/utils/context"
 
 import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"
-import Top from "./top"
-import Middle from "./middle"
-import Features from "./features"
-import ActionPrompt from "./bottom"
+import Hero from "@app/pages/home/hero"
+import Benefits from "@app/pages/home/benefits"
+import Features from "@app/pages/home/features"
+import Users from "@app/pages/home/users"
+import Pricing from "@app/pages/home/pricing"
 
-export const Chrome = () => {
+const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
+
+export const Home = () => {
     /*
         Product page for Chrome
 
         Arguments: none
     */
-    const { dark } = withContext()
-
     return (
-        <div
-            className={classNames(
-                "overflow-x-hidden",
-                dark ? "dark bg-blue-darkest" : "bg-white"
-            )}
-        >
-            <div className="pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden">
-                <Header dark={dark} />
-                <Top />
-                <Middle />
+        <>
+            <div className={classNames(padded, "bg-blue-darkest")}>
+                <Header />
+                <Hero />
                 <Features />
-                <ActionPrompt />
+            </div>
+            <div className={classNames(padded, "bg-blue-darker")}>
+                <Users />
+            </div>
+            <div className={classNames(padded, "bg-blue-darkest")}>
+                <Benefits />
+                <Pricing />
             </div>
             <Footer />
-        </div>
+        </>
     )
 }
 
-const Products = () => {
+const Router = () => {
     /*
-        Sub-router for products page
-
+        Sub-router for home page
         Arguments: none
     */
 
     return (
         <div>
             <Switch>
-                <Route exact path="/" component={withTracker(Chrome)} />
-                {/* <Route
-                    path="/dashboard/settings"
-                    component={withTracker(Settings)}
-                /> */}
+                <Route exact path="/" component={withTracker(Home)} />
             </Switch>
         </div>
     )
 }
 
-export default Products
+export default Router

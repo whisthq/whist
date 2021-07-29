@@ -1,7 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 
 import React from "react"
-import { HashLink } from "react-router-hash-link"
 import classNames from "classnames"
 
 import { ScreenSize } from "@app/shared/constants/screenSizes"
@@ -422,12 +421,12 @@ const Privacy = () => {
                     web beacons and pixels) to access or store information.
                     Specific information about how we use such technologies and
                     how you can refuse certain cookies is set out in our{" "}
-                    <HashLink to="/cookies#top">Cookie Policy</HashLink>. Our
-                    Services are not officially offered in the European Union,
-                    but they may be accessible from that area; we take no
-                    responsibility for access from the European Union region
-                    with regards to cookies and other tracking technologies, as
-                    defined in the GDPR.
+                    <a href="/cookies#top">Cookie Policy</a>. Our Services are
+                    not officially offered in the European Union, but they may
+                    be accessible from that area; we take no responsibility for
+                    access from the European Union region with regards to
+                    cookies and other tracking technologies, as defined in the
+                    GDPR.
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     5. How Do We Handle Your Social Logins?
