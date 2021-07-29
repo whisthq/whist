@@ -1,9 +1,9 @@
 import { merge, Observable } from "rxjs"
 import { map, take } from "rxjs/operators"
 
-import { authFlow } from "@app/main/flows/auth"
-import { mandelboxFlow } from "@app/main/flows/mandelbox"
-import { autoUpdateFlow } from "@app/main/flows/autoupdate"
+import authFlow from "@app/main/flows/auth"
+import mandelboxFlow from "@app/main/flows/mandelbox"
+import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
@@ -40,7 +40,6 @@ const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
 ) as Observable<{
     subClaim: string
     accessToken: string
-    refreshToken: string
     configToken: string
     region?: AWSRegion
 }>
