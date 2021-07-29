@@ -123,7 +123,9 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             LOG_INFO("Successfully unbound active cuda context: %x",
                      *get_main_thread_cuda_context_ptr());
         }
-	device->recreate_just_finished = true;
+        // Tell the main thread to bind the nvidia context again
+        device->nvidia_context_is_stale = true;
+        // Tell the main thread nvidia is active again
         device->active_capture_device = NVIDIA_DEVICE;
     }
     return 0;
@@ -348,7 +350,7 @@ int capture_screen(CaptureDevice* device) {
         case NVIDIA_DEVICE: {
             static CUcontext current_context;
             // first check if we just switched to nvidia
-            if (device->recreate_just_finished) {
+            if (device->nvidia_context_is_stale) {
                 // CUresult cu_res = cu_ctx_push_current_ptr(*get_main_thread_cuda_context_ptr());
                 CUresult cu_res = cu_ctx_set_current_ptr(*get_main_thread_cuda_context_ptr());
                 if (cu_res != CUDA_SUCCESS) {
@@ -367,11 +369,10 @@ int capture_screen(CaptureDevice* device) {
                     LOG_DEBUG("Synchronize finished");
                 }
                 bind_context(device);
-		device->recreate_just_finished = false;
+                device->nvidia_context_is_stale = false;
             }
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
-            if (ret > 0)
-                LOG_INFO("Capturing with Nvidia!");
+            if (ret > 0) LOG_INFO("Capturing with Nvidia!");
             if (ret >= 0) {
                 if (device->width == device->nvidia_capture_device->width &&
                     device->height == device->nvidia_capture_device->height) {
