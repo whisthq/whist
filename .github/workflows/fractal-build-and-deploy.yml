@@ -57,9 +57,10 @@ jobs:
     # will silently ignore any "outputs" that contain values inside the GitHub secrets
     # store. This is for security purposes, but it's rather inconvenient when we're trying
     # to pass around a configuration object that may contain secret values. To get around
-    # GitHub's limitation, we first double-encode the configuration string to base-64. Other
-    # jobs will need to double-decode the base-64 string to produce the JSON configuration
-    # object.
+    # GitHub's limitation, we first double-encode the configuration string to base-64. (We
+    # need to double-encode since GitHub also checks for a base64 representation of each
+    # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
+    # configuration object.
     config:
         name: Building config
         runs-on: ubuntu-20.04
