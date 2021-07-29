@@ -129,6 +129,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 
     if (status_params.bCanCreateNow == NVFBC_FALSE) {
         LOG_ERROR("It is not possible to create a capture session on this system.");
+        destroy_nvidia_capture_device(device);
         return NULL;
     }
 
@@ -343,8 +344,6 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
         device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        free(device);
-        return;
     }
 
     /*
@@ -356,8 +355,6 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
-        free(device);
-        return;
     }
     free(device);
 }
