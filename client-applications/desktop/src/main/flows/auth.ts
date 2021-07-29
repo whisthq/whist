@@ -1,34 +1,28 @@
-import { from, zip, merge } from "rxjs"
-import { switchMap, map, filter, tap } from "rxjs/operators"
+import { from, merge } from "rxjs"
+import { switchMap, map, filter } from "rxjs/operators"
 
 import { flow, fork } from "@app/utils/flows"
 import {
     generateRefreshedAuthInfo,
     generateRandomConfigToken,
     authInfoValid,
-    isExpired
+    isExpired,
 } from "@app/utils/auth"
 import { store } from "@app/utils/persist"
 
 export const authRefreshFlow = flow<{
-    userEmail: string
-    subClaim: string
-    accessToken: string
     refreshToken: string
-}>("authFlow", (trigger) => {
-    const expired = trigger.pipe(filter((tokens) => isExpired(tokens.accessToken)))
-    const notExpired = trigger.pipe(filter((tokens) => !isExpired(tokens.accessToken)))
-
-    const refreshed = expired.pipe(
+}>("authRefreshFlow", (trigger) => {
+    const refreshed = trigger.pipe(
         switchMap((tokens) =>
             from(generateRefreshedAuthInfo(tokens.refreshToken))
         )
     )
 
-    return {
-        success: merge(notExpired, refreshed).pipe(filter((result) => authInfoValid(result))),
-        failure: merge(notExpired, refreshed).pipe(filter((result) => !authInfoValid(result))),
-    }
+    return fork(refreshed, {
+        success: (result: any) => authInfoValid(result),
+        failure: (result: any) => !authInfoValid(result),
+    })
 })
 
 export default flow<{
@@ -38,9 +32,20 @@ export default flow<{
     refreshToken: string
     configToken?: string
 }>("authFlow", (trigger) => {
-    const refreshedAuthInfo = authRefreshFlow(trigger)
+    const expired = trigger.pipe(
+        filter((tokens) => isExpired(tokens.accessToken))
+    )
+    const notExpired = trigger.pipe(
+        filter((tokens) => !isExpired(tokens.accessToken))
+    )
 
-    const authInfoWithConfig = merge(refreshedAuthInfo.success, refreshedAuthInfo.failure).pipe(
+    const refreshedAuthInfo = authRefreshFlow(expired)
+
+    const authInfoWithConfig = merge(
+        notExpired,
+        refreshedAuthInfo.success,
+        refreshedAuthInfo.failure
+    ).pipe(
         map((tokens) => ({
             ...tokens,
             configToken:

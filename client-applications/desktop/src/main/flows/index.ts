@@ -46,17 +46,18 @@ const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)
+
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
-// const refresh = authRefreshFlow(merge(mandelbox.success, mandelbox.failure))
-
+const refresh = authRefreshFlow(fromSignal(launchTrigger, mandelbox.success))
+merge(refresh.success, refresh.failure).subscribe()
 
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
 createTrigger(TRIGGER.downloadProgress, update.progress)
 
 createTrigger(TRIGGER.authFlowSuccess, auth.success)
 createTrigger(TRIGGER.authFlowFailure, auth.failure)
-// createTrigger(TRIGGER.authRefreshSuccess, refresh.success)
+createTrigger(TRIGGER.authRefreshSuccess, refresh.success)
 
 createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)

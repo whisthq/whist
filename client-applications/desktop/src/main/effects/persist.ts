@@ -6,7 +6,10 @@ import { persist } from "@app/utils/persist"
 
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
-merge(fromTrigger("authFlowSuccess")).subscribe(
+merge(
+    fromTrigger("authFlowSuccess"),
+    fromTrigger("authRefreshSuccess")
+).subscribe(
     (args: {
         userEmail: string
         subClaim: string
