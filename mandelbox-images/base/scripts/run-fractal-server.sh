@@ -50,8 +50,11 @@ function cleanup {
     sudo shutdown now
 }
 
-# Make sure `cleanup` gets called on script exit.
-trap cleanup EXIT ERR
+export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
+if [ "$ENV_NAME" != "LOCALDEV" ]; then
+    # Make sure `cleanup` gets called on script exit in all environments except localdev.
+    trap cleanup EXIT ERR
+fi
 
 # Start the application that this mandelbox runs.
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
