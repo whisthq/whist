@@ -15,6 +15,10 @@ coverage:
 fixes:
     - "::webserver/"
 
+ignore:
+    - "webserver/app/sentry.py"
+    - "app/sentry.py"
+
 parsers:
     gcov:
         branch_detection:
