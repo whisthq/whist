@@ -67,7 +67,7 @@ docker pull "$pull_image"
 docker tag "$pull_image" "$pull_image_base:current-build"
 
 
-# replace the dummy token in filebeat config with correct token. 
+# replace the dummy token in filebeat config with correct token.
 # This will be done in GHA when the AMI for {dev,staging,prod} is being built through CI
 sudo sed -i "s/DUMMY_TOKEN_REPLACE_ME/$LOGZ_TOKEN/g" /etc/filebeat/filebeat.yml
 # Enable & Start the installed services for filebeat.

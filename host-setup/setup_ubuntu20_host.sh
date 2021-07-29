@@ -142,7 +142,7 @@ echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee 
 sudo apt-get update -y
 sudo apt-get install -y filebeat
 
-# For HTTPS shipping, download the Logz.io public certificate to your certificate authority folder. 
+# For HTTPS shipping, download the Logz.io public certificate to your certificate authority folder.
 # https://app.logz.io/#/dashboard/send-your-data/log-sources/filebeat
 sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt
 
