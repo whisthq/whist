@@ -337,6 +337,13 @@ void print_memory_info() {
 // Get __cpuid compiler intrinsic
 #include <intrin.h>
 #endif
+
+#if defined __arm__ && defined __APPLE__
+#define M1
+#endif
+
+#ifndef M1
+// On x86 processors, we can use cpuid function call
 void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
@@ -347,8 +354,16 @@ void cpu_id(unsigned i, unsigned regs[4]) {
     // ECX is set to zero for CPUID function 4
 #endif
 }
+#endif
 
 void print_cpu_info() {
+#ifdef M1
+    const char* cpu_vender = "AppleM1";
+    const char* cpu_brand_string = "Apple M1 8-Core @ 3.2GHz";
+    unsigned logical = 8;
+    unsigned cores = 8;
+    bool hyper_threads = false;
+#else
     // https://stackoverflow.com/questions/2901694/how-to-detect-the-number-of-physical-processors-cores-on-windows-mac-and-linu
     unsigned regs[4];
 
@@ -358,8 +373,6 @@ void print_cpu_info() {
     ((unsigned*)cpu_vendor)[0] = regs[1];  // EBX
     ((unsigned*)cpu_vendor)[1] = regs[3];  // EDX
     ((unsigned*)cpu_vendor)[2] = regs[2];  // ECX
-
-    LOG_INFO("CPU Vendor: %s", cpu_vendor);
 
     // Get Brand String
     unsigned int n_ex_ids = 0;
@@ -377,13 +390,10 @@ void print_cpu_info() {
         else if (i == 0x80000004)
             memcpy(cpu_brand_string + 32, regs, sizeof(regs));
     }
-    // string includes manufacturer, model and clockspeed
-    LOG_INFO("CPU Type: %s", cpu_brand_string);
 
     // Logical core count per CPU
     cpu_id(1, regs);
     unsigned logical = (regs[1] >> 16) & 0xff;  // EBX[23:16]
-    LOG_INFO("Logical Cores: %d", logical);
     unsigned cores = logical;
 
     if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
@@ -399,15 +409,19 @@ void print_cpu_info() {
         LOG_WARNING("Unrecognized processor: %s", cpu_vendor);
     }
 
-    LOG_INFO("Physical Cores: %d", cores);
-
     // Get CPU features
     cpu_id(1, regs);
     unsigned cpu_features = regs[3];  // EDX
 
     // Detect hyper-threads
     bool hyper_threads = cpu_features & (1 << 28) && cores < logical;
+#endif
 
+    // string includes manufacturer, model and clockspeed
+    LOG_INFO("CPU Vendor: %s", cpu_vendor);
+    LOG_INFO("CPU Type: %s", cpu_brand_string);
+    LOG_INFO("Logical Cores: %d", logical);
+    LOG_INFO("Physical Cores: %d", cores);
     LOG_INFO("HyperThreaded: %s", (hyper_threads ? "true" : "false"));
 
 // add CPU usage at beginning of Fractal
