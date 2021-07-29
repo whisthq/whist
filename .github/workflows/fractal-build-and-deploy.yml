@@ -57,8 +57,10 @@ jobs:
     # will silently ignore any "outputs" that contain values inside the GitHub secrets
     # store. This is for security purposes, but it's rather inconvenient when we're trying
     # to pass around a configuration object that may contain secret values. To get around
-    # GitHub's limitation, we first encode the configuration string to base-85. Other jobs
-    # will need to decode the base-85 string to produce the JSON configuration object.
+    # GitHub's limitation, we first double-encode the configuration string to base-64. (We
+    # need to double-encode since GitHub also checks for a base64 representation of each
+    # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
+    # configuration object.
     config:
         name: Building config
         runs-on: ubuntu-20.04
@@ -90,12 +92,12 @@ jobs:
               id: encoded-config
               shell: python3 {0}
               run: |
-                  from base64 import b85encode
+                  from base64 import b64encode
                   macos = r"""${{ steps.config-macos.outputs.config }}"""
                   win32 = r"""${{ steps.config-win32.outputs.config }}"""
-                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b85encode() works with bytes.
-                  encoded_macos = b85encode(macos.encode()).decode()
-                  encoded_win32 = b85encode(win32.encode()).decode()
+                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b64encode() works with bytes.
+                  encoded_macos = b64encode(b64encode(macos.encode())).decode()
+                  encoded_win32 = b64encode(b64encode(win32.encode())).decode()
                   print(f"::set-output name=macos::{encoded_macos}")
                   print(f"::set-output name=win32::{encoded_win32}")
 
@@ -1006,12 +1008,12 @@ jobs:
               id: configs-decoded
               shell: python3 {0}
               run: |
-                  from base64 import b85decode
+                  from base64 import b64decode
                   macos_encoded = "${{ needs.config.outputs.macos }}"
                   win32_encoded = "${{ needs.config.outputs.win32 }}"
-                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b85encode() works with bytes.
-                  macos_config = b85decode(macos_encoded.encode()).decode()
-                  win32_config = b85decode(win32_encoded.encode()).decode()
+                  # Note that the calls to encode() and decode() are to convert from string to bytes, and vice versa, since b64encode() works with bytes.
+                  macos_config = b64decode(b64decode(macos_encoded.encode())).decode()
+                  win32_config = b64decode(b64decode(win32_encoded.encode())).decode()
                   print(f"::set-output name=macos::{macos_config}")
                   print(f"::set-output name=win32::{win32_config}")
 
