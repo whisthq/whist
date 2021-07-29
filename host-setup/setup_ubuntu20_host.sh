@@ -146,6 +146,7 @@ sudo apt-get install -y filebeat
 # https://app.logz.io/#/dashboard/send-your-data/log-sources/filebeat
 sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt
 
+sudo cp filebeat-config/filebeat.yml /etc/filebeat/filebeat.yml
 # filebeat by default doesn't startup on system boot/install by default.
 # So, filebeat will be currently disabled. This being done intentionally to not ship logs from local-dev.
 # If you want to enable it, look at `setup_ubuntu20_ami_host.sh` for further instructions.
