@@ -31,4 +31,4 @@ declare module "*.css" {
     export = classNames
 }
 
-declare module "react-typeform-embed"
+declare module "@typeform/embed-react"

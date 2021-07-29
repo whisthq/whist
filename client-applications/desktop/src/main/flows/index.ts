@@ -1,7 +1,7 @@
 import { merge, Observable } from "rxjs"
 import { map, take } from "rxjs/operators"
 
-import authFlow from "@app/main/flows/auth"
+import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
@@ -47,11 +47,16 @@ const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)
 
+// After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
+// every time but don't impede startup time
+const refresh = authRefreshFlow(fromSignal(launchTrigger, mandelbox.success))
+
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
 createTrigger(TRIGGER.downloadProgress, update.progress)
 
 createTrigger(TRIGGER.authFlowSuccess, auth.success)
 createTrigger(TRIGGER.authFlowFailure, auth.failure)
+createTrigger(TRIGGER.authRefreshSuccess, refresh.success)
 
 createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
