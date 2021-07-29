@@ -156,11 +156,13 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         "serverside scaling");
     encoder->active_encoder = FFMPEG_ENCODER;
 #else
+    LOG_INFO("Creating nvidia encoder...");
     encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
     if (!encoder->nvidia_encoder) {
         LOG_ERROR("Failed to create nvidia encoder!");
         encoder->active_encoder = FFMPEG_ENCODER;
     } else {
+        LOG_INFO("Created nvidia encoder!");
         // nvidia creation succeeded!
         encoder->active_encoder = NVIDIA_ENCODER;
     }
@@ -170,12 +172,14 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     encoder->active_encoder = FFMPEG_ENCODER;
 #endif  // USING_NVIDIA_CAPTURE_AND_ENCODE
 
+    LOG_INFO("Creating ffmpeg encoder...");
     encoder->ffmpeg_encoder =
         create_ffmpeg_encoder(in_width, in_height, out_width, out_height, bitrate, codec_type);
     if (!encoder->ffmpeg_encoder) {
         LOG_ERROR("FFmpeg encoder creation failed!");
         return NULL;
     }
+    LOG_INFO("Created ffmpeg encoder!");
 
     encoder->codec_type = codec_type;
 
@@ -303,13 +307,17 @@ void destroy_video_encoder(VideoEncoder *encoder) {
     // Destroy the nvidia encoder, if any
     if (encoder->nvidia_encoder) {
 #ifdef __linux__
+        LOG_INFO("Destroying nvidia encoder...");
         destroy_nvidia_encoder(encoder->nvidia_encoder);
+        LOG_INFO("Done destroying nvidia encoder!");
 #else
         LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
     }
     if (encoder->ffmpeg_encoder) {
+        LOG_INFO("Destroying ffmpeg encoder...");
         destroy_ffmpeg_encoder(encoder->ffmpeg_encoder);
+        LOG_INFO("Done destroying ffmpeg encoder!");
     }
 
     // free packets
@@ -317,4 +325,6 @@ void destroy_video_encoder(VideoEncoder *encoder) {
         av_packet_unref(&encoder->packets[i]);
     }
     free(encoder);
+
+    LOG_INFO("Done destroying encoder!");
 }

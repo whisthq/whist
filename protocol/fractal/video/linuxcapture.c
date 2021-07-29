@@ -103,14 +103,18 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         bind_context(device);
         // Nvidia requires recreation
         if (device->nvidia_capture_device) {
+            LOG_INFO("Destroying nvidia capture device...");
             destroy_nvidia_capture_device(device->nvidia_capture_device);
+            LOG_INFO("Destroyed nvidia capture device!");
             device->nvidia_capture_device = NULL;
         }
 
         while (device->nvidia_capture_device == NULL) {
+            LOG_INFO("Creating nvidia capture device...");
             device->nvidia_capture_device = create_nvidia_capture_device();
             fractal_sleep(500);
         }
+        LOG_INFO("Created nvidia capture device!");
         release_context(device);
         cu_res = cu_ctx_set_current_ptr(NULL);
         if (cu_res != CUDA_SUCCESS) {
@@ -364,6 +368,8 @@ int capture_screen(CaptureDevice* device) {
                 bind_context(device);
             }
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
+            if (ret > 0)
+                LOG_INFO("Capturing with Nvidia!");
             if (ret >= 0) {
                 if (device->width == device->nvidia_capture_device->width &&
                     device->height == device->nvidia_capture_device->height) {
@@ -377,11 +383,13 @@ int capture_screen(CaptureDevice* device) {
                         device->nvidia_capture_device->height);
                 }
             }
+            LOG_FATAL("Nvidia capture failed!");
             // otherwise, nvidia failed!
             device->active_capture_device = X11_DEVICE;
         }
         case X11_DEVICE:
             device->last_capture_device = X11_DEVICE;
+            LOG_INFO("X11 capture!");
             return x11_capture_screen(device->x11_capture_device);
         default:
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);

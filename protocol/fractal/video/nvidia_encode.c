@@ -372,10 +372,10 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
 void nvidia_set_iframe(NvidiaEncoder* encoder) { encoder->wants_iframe = true; }
 
 void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
-    LOG_INFO("Destroying nvidia encoder...");
-
     // Try to free the encoder's frame
+    LOG_INFO("Trying to free frame...");
     try_free_frame(encoder);
+    LOG_INFO("Freed frame!");
 
     NVENCSTATUS status;
 
@@ -383,25 +383,31 @@ void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
     enc_params.version = NV_ENC_PIC_PARAMS_VER;
     enc_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
 
+    LOG_INFO("Sending EOS to encoder...");
     status = encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to flush the encoder, status = %d", status);
     }
+    LOG_INFO("Sent EOS!");
 
     if (encoder->output_buffer) {
+        LOG_INFO("Destroying bitstream buffer...");
         status = encoder->p_enc_fn.nvEncDestroyBitstreamBuffer(encoder->internal_nvidia_encoder,
                                                                encoder->output_buffer);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to destroy buffer, status = %d", status);
         }
         encoder->output_buffer = NULL;
+        LOG_INFO("Destroyed bitstream buffer!");
     }
 
     // Destroy the encode session
+    LOG_INFO("Destroying nvenc device...");
     status = encoder->p_enc_fn.nvEncDestroyEncoder(encoder->internal_nvidia_encoder);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to destroy encoder, status = %d", status);
     }
+    LOG_INFO("Destroyed nvenc device!");
 
     // Free the encoder struct itself
     free(encoder);
