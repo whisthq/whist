@@ -17,6 +17,7 @@ module.exports = {
                     DEFAULT: "#4F35DE",
                     light: "#e3defa",
                     lightest: "#f6f9ff",
+                    darker: "#151636",
                     darkest: "#0d0f21",
                 },
                 mint: {

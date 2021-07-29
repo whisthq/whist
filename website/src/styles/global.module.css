@@ -53,25 +53,6 @@
     font-weight: 800;
 }
 
-.investorImage {
-    background: var(--white-background-color);
-    padding: 15px;
-    text-align: center;
-    height: 125px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.investorImage:hover {
-    cursor: pointer;
-}
-
-.carousel-indicators li {
-    background-color: #000000 !important;
-}
-
-@randomMargin: `Math.round(Math.random() * 100)`;
 
 body,
 html,
@@ -87,28 +68,10 @@ html {
     font-family: --font-family-primary;
 }
 
-h1 {
-    font-size: 80px;
-    font-weight: bold;
-}
-
-h2 {
-    font-size: 40px !important;
-    font-weight: bold !important;
-    letter-spacing: 1.2px !important;
-}
-
 p {
     font-size: 18px;
     letter-spacing: 1px;
-    line-height: 1.6;
-}
-
-.logo {
-    font-weight: bold;
-    color: var(--white-background-color);
-    font-size: 20px;
-    letter-spacing: 6px;
+    line-height: 1.5;
 }
 
 button {
@@ -119,115 +82,9 @@ button {
     cursor: pointer !important;
 }
 
-@media only screen and (max-width: 576px) {
-    h1 {
-        font-size: 45px !important;
-    }
-
-    h2 {
-        font-size: 30px !important;
-    }
-
-    .logo {
-        font-size: 16px;
-        position: relative;
-        top: 6px;
-    }
-
-    p {
-        font-size: 16px;
-    }
-}
-
 a {
-    outline: none !important;
-}
-
-.footer {
-    width: 100%;
-    padding-top: 60px;
-    font-size: 14px;
-    margin: auto;
-    max-width: 1920px;
-}
-
-.footer .title {
-    font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 22px;
-    text-align: left;
-    letter-spacing: 6px;
-}
-
-.footer .text {
-    margin-top: 10px;
-    color: var(--light-text-color);
-    text-decoration: none;
-    margin-bottom: 4px;
-    line-height: 1.7;
-    text-align: left;
-    letter-spacing: 1.8px;
-}
-
-.pageLink {
-    color: var(--light-text-color) !important;
-    border: none !important;
     text-decoration: none !important;
-    margin-bottom: 0px !important;
-    padding-left: 0px !important;
-    font-size: 14px !important;
-    padding-bottom: 0px !important;
-    background: none !important;
-}
-
-.pageLink:hover {
-    color: var(--accent-text-color) !important;
-    background: none !important;
     outline: none !important;
-}
-
-.sectionName {
-    font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
-.resizableContainer {
-    width: 500px;
-    margin: auto;
-    margin-top: 70px;
-}
-
-@media only screen and (max-width: 576px) {
-    .pageLink {
-        font-size: 13px !important;
-    }
-
-    .sectionName {
-        font-size: 14px;
-    }
-
-    .resizableContainer {
-        width: 100%;
-        margin-top: 40px;
-    }
-}
-
-.iconBox {
-    width: 40px;
-    height: 40px;
-    position: relative;
-    margin-right: 15px;
-    border-radius: 2px;
-    border: solid 0.5px var(--accent-background-color);
-}
-
-.iconBox .icon {
-    color: var(--accent-background-color);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
 }
 
 .bounce {
@@ -297,157 +154,5 @@ a {
     }
     60% {
         transform: translateY(-8px);
-    }
-}
-
-.fractalContainer {
-    padding-bottom: 60px;
-    max-width: 1600px;
-    margin: auto;
-    padding-left: 50px;
-    padding-right: 50px;
-    overflow-x: hidden;
-}
-
-.whiteButton,
-.whiteButtonLight {
-    padding: 15px 50px;
-    font-size: 18px;
-    outline: none !important;
-    letter-spacing: 1.1px;
-    border: solid 0.8px var(--light-border-color);
-    background: rgba(0, 0, 0, 0);
-    color: var(--black-text-color);
-}
-
-.whiteButtonLight {
-    color: var(--white-text-color);
-    border: solid 0.8px var(--white-background-color);
-}
-
-.whiteButtonLight:hover {
-    border: solid 0.8px var(--accent-border-color);
-    color: var(--accent-text-color);
-}
-
-.whiteButton:hover {
-    background: var(--accent-background-color);
-    border: solid 0.8px var(--accent-background-color);
-    color: var(--black-text-color);
-}
-
-.headerLink,
-.headerLinkLight,
-.accountButton,
-.accountButtonLight {
-    outline: none !important;
-    text-decoration: none !important;
-    margin-right: 30px;
-    color: black;
-    top: 4.5px;
-    position: relative;
-    letter-spacing: 1.2px;
-    border: none;
-    outline: none;
-    background: none;
-}
-
-.mobileHeaderLink {
-    color: black;
-    font-size: 15px;
-    margin: 5px 0 5px 0;
-    letter-spacing: 1px;
-}
-
-.accountButton,
-.accountButtonLight {
-    margin-right: 0px;
-    font-weight: bold;
-}
-
-.accountButtonLight {
-    color: var(--white-text-color);
-}
-
-.accountButton:hover {
-    color: var(--primary-background-color);
-}
-
-.headerLinkLight {
-    color: var(--white-text-color);
-}
-
-.headerLinkLight:hover {
-    color: var(--accent-text-color) !important;
-    cursor: pointer;
-}
-
-.headerLink:hover {
-    color: var(--primary-background-color) !important;
-    cursor: pointer;
-}
-
-.dropdownToggle::after {
-    content: none !important;
-}
-
-.dropdownMenu.show {
-    margin-top: 5px !important;
-    border-radius: 0px;
-    padding: 0px;
-}
-
-.dropdownItem {
-    padding: 0.75rem 2rem !important;
-    letter-spacing: 1.2px;
-}
-
-.dropdownItem:hover {
-    background: var(--accent-background-color) !important;
-}
-
-.pointerHover:hover {
-    cursor: pointer;
-}
-
-.pointerHover:hover {
-    cursor: pointer;
-}
-
-.inputForm,
-.inputForm:focus,
-.inputForm:active,
-.inputForm.active {
-    width: 100%;
-    background-color: var(--white-background-color);
-    border: solid 1px var(--light-background-color);
-    padding: 15px 20px;
-    outline: none !important;
-    border-radius: 0px;
-    color: var(--black-background-color);
-}
-
-::placeholder {
-    color: var(--light-text-color);
-    font-size: 16px;
-}
-
-.saved {
-    font-style: italic;
-    font-size: 14px;
-    margin-right: 10px;
-    animation: FadeAnimation 0.5s ease-in 1s forwards;
-}
-
-@keyframes FadeAnimation {
-    0% {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    100% {
-        opacity: 0;
-        visibility: hidden;
-        display: none;
     }
 }

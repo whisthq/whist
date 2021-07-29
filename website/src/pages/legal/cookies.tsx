@@ -1,7 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 
 import React from "react"
-import { HashLink } from "react-router-hash-link"
 import classNames from "classnames"
 
 import { ScreenSize } from "@app/shared/constants/screenSizes"
@@ -35,8 +34,7 @@ const Cookies = () => {
                 <p>
                     Fractal Computers, Inc. (“we” or “us” or “our”) may use
                     cookies and other tracking technologies when you visit our
-                    website,{" "}
-                    <HashLink to="/privacy#top">www.fractal.co</HashLink>,
+                    website, <a href="/privacy#top">www.fractal.co</a>,
                     including any other media form, media channel, mobile
                     website, or mobile application related or connected thereto
                     (collectively, the “Site”) to help customize the Site and
@@ -198,10 +196,10 @@ const Cookies = () => {
                 <p>
                     For more information about how we use information collected
                     by cookies and other tracking technologies, please refer to
-                    our <HashLink to="/privacy#top">Privacy Policy</HashLink>.
-                    This Cookie Policy is part of and is incorporated into our
-                    Privacy Policy. By using the Site, you agree to be bound by
-                    this Cookie Policy and our Privacy Policy.
+                    our <a href="/privacy#top">Privacy Policy</a>. This Cookie
+                    Policy is part of and is incorporated into our Privacy
+                    Policy. By using the Site, you agree to be bound by this
+                    Cookie Policy and our Privacy Policy.
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     More Information

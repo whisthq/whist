@@ -11,6 +11,11 @@ export const routes = {
     DASHBOARD: "/dashboard",
     LANDING: "/:first?/:second?",
     PRODUCTS: "/products",
+    TECHNOLOGY: "/technology",
+    SECURITY: "/security",
+    FAQ: "/faq",
+    CONTACT: "/contact",
+    DOWNLOAD: "/download",
 }
 
 export default routes
