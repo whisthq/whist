@@ -199,6 +199,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 if (transfer_context_active) {
                     close_transfer_context(device, encoder);
                     transfer_context_active = false;
+                    encoder = NULL;
                 }
 
                 if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
@@ -259,6 +260,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 LOG_INFO("Update encoder request received, will update the encoder now!");
             }
 
+            /*
             // First, try to simply reconfigure the encoder to
             // handle the update_encoder event
             if (encoder != NULL) {
@@ -277,6 +279,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     LOG_INFO("Reconfiguration failed! Creating a new encoder!");
                 }
             }
+            */
 
             // If reconfiguration didn't happen, we still need to update the encoder
             if (update_encoder) {
@@ -322,6 +325,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // the old encoder, since we'll no longer be able to pass captured frames into
                     // it
                     // For now, we'll just always destroy the encoder right here
+                    /*
                     if (encoder != NULL) {
                         if (transfer_context_active) {
                             close_transfer_context(device, encoder);
@@ -330,7 +334,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         destroy_video_encoder(encoder);
                         encoder = NULL;
                     }
-
+                    */
                     if (encoder == NULL) {
                         // Run on this thread bc we have to wait for it anyway since encoder == NULL
                         multithreaded_encoder_factory(NULL);
