@@ -8,24 +8,24 @@
 name: "Dockerfiles: Check PR"
 
 on:
-    pull_request:
-        paths:
-            - "**/*Dockerfile"
-            - ".github/workflows/dockerfiles-check-pr.yml"
-    workflow_dispatch:
+  pull_request:
+    paths:
+      - "**/*Dockerfile"
+      - ".github/workflows/dockerfiles-check-pr.yml"
+  workflow_dispatch:
 
 jobs:
-    # Linting
-    # Checks for formatting and Dockerfile standards using Hadolint.
-    container-images-lint-dockerfiles:
-        name: Linting
-        runs-on: ubuntu-20.04
-        container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
+  # Linting
+  # Checks for formatting and Dockerfile standards using Hadolint.
+  container-images-lint-dockerfiles:
+    name: Linting
+    runs-on: ubuntu-20.04
+    container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
 
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            # Start from top-level folder to use .hadolint.yaml config
-            - name: Check if Development Dockerfiles Follow Hadolint Standards
-              run: hadolint ./**/*Dockerfile
+      # Start from top-level folder to use .hadolint.yaml config
+      - name: Check if Development Dockerfiles Follow Hadolint Standards
+        run: hadolint ./**/*Dockerfile

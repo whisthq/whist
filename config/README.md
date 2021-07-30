@@ -53,11 +53,11 @@ The schema files can use nested keys to define "profiles". These profiles are us
 
 ```json
 {
-    "PROTOCOL_FILE_NAME": {
-        "macos": "_Fractal",
-        "win32": "Fractal.exe",
-        "linux": "Fractal"
-    }
+  "PROTOCOL_FILE_NAME": {
+    "macos": "_Fractal",
+    "win32": "Fractal.exe",
+    "linux": "Fractal"
+  }
 }
 ```
 
@@ -65,7 +65,7 @@ The schema files can use nested keys to define "profiles". These profiles are us
 
 ```json
 {
-    "PROTOCOL_FILE_NAME": "_Fractal"
+  "PROTOCOL_FILE_NAME": "_Fractal"
 }
 ```
 
@@ -92,22 +92,22 @@ Depending on the data in the YAML files, this might output JSON like you see bel
 
 ```json
 {
-    "APPLE_API_KEY_ID": "a-really-secret-value",
-    "AUTH_CLIENT_ID": "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I",
-    "AUTH_DOMAIN": "fractal-dev.us.auth0.com",
-    "AUTH_IDENTIFIER_API": "https://api.fractal.co",
-    "CLIENT_DOWNLOAD": "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
-    "CLIENT_LOG_FILE_NAME": "client.log",
-    "CLIENT_LOG_FOLDERNAME": "logs",
-    "CLIENT_PERSISTENCE_FOLDER_NAME": "fractal",
-    "ENV": "dev",
-    "EXECUTABLE_NAME": "Fractal (development)",
-    "FRONTEND": "dev.fractal.co",
-    "ICON_FILE_NAME": "icon_dev",
-    "NODEJS": "development",
-    "PROTOCOL_FILE_NAME": "_Fractal",
-    "PROTOCOL_FOLDER_PATH": "../../MacOS",
-    "PROTOCOL_LOG_FILE_NAME": "protocol.log",
-    "WEBSERVER": "https://dev-server.fractal.co"
+  "APPLE_API_KEY_ID": "a-really-secret-value",
+  "AUTH_CLIENT_ID": "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I",
+  "AUTH_DOMAIN": "fractal-dev.us.auth0.com",
+  "AUTH_IDENTIFIER_API": "https://api.fractal.co",
+  "CLIENT_DOWNLOAD": "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+  "CLIENT_LOG_FILE_NAME": "client.log",
+  "CLIENT_LOG_FOLDERNAME": "logs",
+  "CLIENT_PERSISTENCE_FOLDER_NAME": "fractal",
+  "ENV": "dev",
+  "EXECUTABLE_NAME": "Fractal (development)",
+  "FRONTEND": "dev.fractal.co",
+  "ICON_FILE_NAME": "icon_dev",
+  "NODEJS": "development",
+  "PROTOCOL_FILE_NAME": "_Fractal",
+  "PROTOCOL_FOLDER_PATH": "../../MacOS",
+  "PROTOCOL_LOG_FILE_NAME": "protocol.log",
+  "WEBSERVER": "https://dev-server.fractal.co"
 }
 ```

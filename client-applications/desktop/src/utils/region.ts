@@ -10,17 +10,17 @@ import { values } from "lodash"
 import { AWSRegion } from "@app/@types/aws"
 
 const findLowest = (arr: number[]) => {
-    let min = Number.MAX_SAFE_INTEGER
-    for (let i = 0; i < arr.length; i += 1) {
-        if (arr[i] < min) {
-            min = arr[i]
-        }
+  let min = Number.MAX_SAFE_INTEGER
+  for (let i = 0; i < arr.length; i += 1) {
+    if (arr[i] < min) {
+      min = arr[i]
     }
-    return min
+  }
+  return min
 }
 
 const fractalPingTime = async (host: string, numberPings: number) => {
-    /*
+  /*
     Description:
         Measures the average ping time (in ms) to ping a host (IP address or URL)
 
@@ -31,21 +31,21 @@ const fractalPingTime = async (host: string, numberPings: number) => {
         (number): Average ping time to ping host (in ms)
     */
 
-    // Create list of Promises, where each Promise resolves to a ping time
-    const pingPromises = []
-    for (let i = 0; i < numberPings; i += 1) {
-        pingPromises.push(ping.promise.probe(host))
-    }
+  // Create list of Promises, where each Promise resolves to a ping time
+  const pingPromises = []
+  for (let i = 0; i < numberPings; i += 1) {
+    pingPromises.push(ping.promise.probe(host))
+  }
 
-    // Resolve list of Promises synchronously to get a list of ping outputs
-    const pingResults = await Promise.all(pingPromises)
-    const pingTimes = pingResults.map((res) => Number(res.avg))
+  // Resolve list of Promises synchronously to get a list of ping outputs
+  const pingResults = await Promise.all(pingPromises)
+  const pingTimes = pingResults.map((res) => Number(res.avg))
 
-    return findLowest(pingTimes)
+  return findLowest(pingTimes)
 }
 
 export const chooseRegion = async (regions: AWSRegion[]) => {
-    /*
+  /*
     Description:
         Pulls AWS regions from SQL and pings each region, and finds the closest region
         by shortest ping time
@@ -56,29 +56,29 @@ export const chooseRegion = async (regions: AWSRegion[]) => {
         (string): Closest region e.g. us-east-1
     */
 
-    // Ping each region and find the closest region by lowest ping time
-    let closestRegion = regions[0]
-    let lowestPingTime = Number.MAX_SAFE_INTEGER
+  // Ping each region and find the closest region by lowest ping time
+  let closestRegion = regions[0]
+  let lowestPingTime = Number.MAX_SAFE_INTEGER
 
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < regions.length; i += 1) {
-        const region = regions[i]
-        const averagePingTime = await fractalPingTime(
-            `dynamodb.${region}.amazonaws.com`,
-            3
-        )
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < regions.length; i += 1) {
+    const region = regions[i]
+    const averagePingTime = await fractalPingTime(
+      `dynamodb.${region}.amazonaws.com`,
+      3
+    )
 
-        if (averagePingTime < lowestPingTime) {
-            closestRegion = region
-            lowestPingTime = averagePingTime
-        }
+    if (averagePingTime < lowestPingTime) {
+      closestRegion = region
+      lowestPingTime = averagePingTime
     }
+  }
 
-    return closestRegion
+  return closestRegion
 }
 
 export const getRegionFromArgv = (argv: string[]) => {
-    return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
-        ? argv[argv.length - 1]
-        : undefined
+  return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
+    ? argv[argv.length - 1]
+    : undefined
 }

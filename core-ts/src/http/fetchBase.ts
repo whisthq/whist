@@ -1,8 +1,8 @@
 import {
-    FractalHTTPContent,
-    ServerResponse,
-    ServerRequest,
-    ServerEffect,
+  FractalHTTPContent,
+  ServerResponse,
+  ServerRequest,
+  ServerEffect,
 } from "../types/api"
 import { isNode } from "browser-or-node"
 import nodeFetch from "node-fetch"
@@ -21,16 +21,16 @@ import nodeFetch from "node-fetch"
  * @returns a ServerResponse wrapped in a Promise
  */
 export const fetchBase: ServerEffect = async (req: ServerRequest) => {
-    const fetchFunc = isNode ? nodeFetch : fetch
-    const response = await fetchFunc(req.url || "", {
-        method: req.method || "",
-        // mode: "cors",
-        headers: {
-            "Content-Type": FractalHTTPContent.JSON,
-            Authorization: `Bearer ${req.token}`,
-        },
-        body: JSON.stringify(req.body),
-    })
+  const fetchFunc = isNode ? nodeFetch : fetch
+  const response = await fetchFunc(req.url || "", {
+    method: req.method || "",
+    // mode: "cors",
+    headers: {
+      "Content-Type": FractalHTTPContent.JSON,
+      Authorization: `Bearer ${req.token}`,
+    },
+    body: JSON.stringify(req.body),
+  })
 
-    return { request: req, response } as ServerResponse
+  return { request: req, response } as ServerResponse
 }

@@ -4,17 +4,17 @@ The custom `set-environment` Action is used to aggregate environment-specific co
 
 ### Inputs
 
--   `ref`: A git ref. This ref is used to determine the environment in which the Workflow should run. This input's default value is [`github.ref`][0].
+- `ref`: A git ref. This ref is used to determine the environment in which the Workflow should run. This input's default value is [`github.ref`][0].
 
 ### Outputs
 
--   `environment`: The name of the environment in which the Workflow should run. The `environment` output will be `"prod"` if the input ref matches `prod$`, `"staging"` if the input ref matches `staging$`, and `"dev"` otherwise.
+- `environment`: The name of the environment in which the Workflow should run. The `environment` output will be `"prod"` if the input ref matches `prod$`, `"staging"` if the input ref matches `staging$`, and `"dev"` otherwise.
 
--   `auth0-domain`: The domain name of the environment-specific Auth0 tenant with which Workflow steps may communicate.
+- `auth0-domain`: The domain name of the environment-specific Auth0 tenant with which Workflow steps may communicate.
 
--   `auth0-client-id`: The client ID of the GitHub Actions application registered to the environment-specific Auth0 tenant.
+- `auth0-client-id`: The client ID of the GitHub Actions application registered to the environment-specific Auth0 tenant.
 
--   `auth0-client-secret-key`: The name of the GitHub Secret containing the client secret of the GitHub Actions application registered to the environment-specific Auth0 tenant.
+- `auth0-client-secret-key`: The name of the GitHub Secret containing the client secret of the GitHub Actions application registered to the environment-specific Auth0 tenant.
 
 ## Using the Action
 
@@ -24,19 +24,19 @@ Here is an example of how the Action may be used in a Workflow:
 name: My Workflow
 on: push
 jobs:
-    my-job:
-        name: My Job
-        runs-on: ubuntu:20.04
-        steps:
-            # The repository must be checked out before the custom Action may be used
-            # in the Workflow.
-            - name: Checkout git repository
-              uses: actions/checkout@v2
-            - name: Aggegrate environment-specific configuration data
-              id: environment
-              uses: ./.github/actions/set-environment
-            - name: Echo the name of the environment
-              run: echo "${{ steps.environment.outputs.environment }}"
+  my-job:
+    name: My Job
+    runs-on: ubuntu:20.04
+    steps:
+      # The repository must be checked out before the custom Action may be used
+      # in the Workflow.
+      - name: Checkout git repository
+        uses: actions/checkout@v2
+      - name: Aggegrate environment-specific configuration data
+        id: environment
+        uses: ./.github/actions/set-environment
+      - name: Echo the name of the environment
+        run: echo "${{ steps.environment.outputs.environment }}"
 ```
 
 ## Developing the Action

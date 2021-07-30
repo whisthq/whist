@@ -56,11 +56,11 @@ The inputs to the Python program include a "config" path (config folder in monor
 
 ```json
 {
-    "PROTOCOL_FILE_NAME": {
-        "macos": "_Fractal",
-        "win32": "Fractal.exe",
-        "linux": "Fractal"
-    }
+  "PROTOCOL_FILE_NAME": {
+    "macos": "_Fractal",
+    "win32": "Fractal.exe",
+    "linux": "Fractal"
+  }
 }
 ```
 
@@ -68,7 +68,7 @@ The inputs to the Python program include a "config" path (config folder in monor
 
 ```json
 {
-    "PROTOCOL_FILE_NAME": "_Fractal"
+  "PROTOCOL_FILE_NAME": "_Fractal"
 }
 ```
 
