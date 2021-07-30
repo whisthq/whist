@@ -141,9 +141,14 @@ jobs:
               if: ${{ matrix.aws-region == 'us-east-1' }}
               run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
-            # This deletes all but the currently active AMIs and the past 10 AMIs, in case we need to revert back
+            # This deletes all but the currently active deployment AMIs and the past 10 deployment AMIs, 
+            # in case we need to revert back
             - name: Delete All AMIs Older Than 1 Month
               run: amicleaner --full-report --keep-previous 10 --force-delete --mapping-key name --mapping-values fractal-ami
+
+            # This deletes all the test AMIs, from `host-setup-check-pr.yml`, since we don't need to keep any of them            
+            - name: Delete All AMIs Older Than 1 Month
+              run: amicleaner --full-report --keep-previous 0 --force-delete --mapping-key name --mapping-values fractal-ami
 
             # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
             # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
