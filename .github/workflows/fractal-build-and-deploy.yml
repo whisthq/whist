@@ -1001,7 +1001,7 @@ jobs:
                   call yarn cache clean
                   call yarn install
                   call yarn package:publish \
-                  --config='${{ needs.config.outputs.win32 }}' \
+                  --config='${{ needs.fractal-build-monorepo-config.outputs.win32 }}' \
                   --version='${{ env.desktop_app_new_version }}' \
                   --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
                   --commit='${{ github.sha }}'
@@ -1026,7 +1026,7 @@ jobs:
                   yarn cache clean
                   yarn install
                   yarn package:publish \
-                  --config='${{ needs.config.outputs.macos }}' \
+                  --config='${{ needs.fractal-build-monorepo-config.outputs.macos }}' \
                   --version='${{ env.desktop_app_new_version }}' \
                   --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
                   --commit='${{ github.sha }}'
