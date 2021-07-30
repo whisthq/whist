@@ -28,7 +28,7 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height) {
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height, CUcontext cuda_context) {
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -37,6 +37,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encoder->codec_type = codec;
     encoder->width = out_width;
     encoder->height = out_height;
+    encoder->cuda_context = cuda_context;
 
     // Set initial frame pointer to NULL, nvidia will overwrite this later with the framebuffer
     // pointer
@@ -86,7 +87,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encode_session_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
     encode_session_params.apiVersion = NVENCAPI_VERSION;
     encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
-    encode_session_params.device = *get_main_thread_cuda_context_ptr();
+    encode_session_params.device = cuda_context;
 
     status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params,
                                                         &encoder->internal_nvidia_encoder);

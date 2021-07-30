@@ -41,7 +41,8 @@ static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
 static bool cuda_initialized = false;
 
-CUcontext main_thread_cuda_context = NULL;
+CUcontext video_thread_cuda_context = NULL;
+CUcontext nvidia_thread_cuda_context = NULL;
 CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
 CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
 CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr = NULL;
@@ -142,15 +143,14 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
         LOG_DEBUG("Cuda context already exists! Doing nothing.");
         return NVFBC_TRUE;
     }
-    if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
-        LOG_ERROR("Failed to load CUDA library!");
-        return NVFBC_FALSE;
-    }
-
     CUresult cu_res;
     CUdevice cu_dev;
-
     if (!cuda_initialized) {
+        if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
+            LOG_ERROR("Failed to load CUDA library!");
+            return NVFBC_FALSE;
+        }
+
         cu_res = cu_init_ptr(0);
         if (cu_res != CUDA_SUCCESS) {
             LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
@@ -174,7 +174,7 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
     return NVFBC_TRUE;
 }
 
-CUcontext* get_main_thread_cuda_context_ptr() {
+CUcontext* get_video_thread_cuda_context_ptr() {
     /*
         Return a pointer to the active CUDA context.
 
@@ -182,5 +182,7 @@ CUcontext* get_main_thread_cuda_context_ptr() {
             (CUcontext*): pointer to the active CUDA context
     */
 
-    return &main_thread_cuda_context;
+    return &video_thread_cuda_context;
 }
+
+CUcontext* get_nvidia_thread_cuda_context_ptr() { return &nvidia_thread_cuda_context; }

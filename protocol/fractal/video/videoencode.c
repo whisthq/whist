@@ -157,7 +157,16 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     encoder->active_encoder = FFMPEG_ENCODER;
 #else
     LOG_INFO("Creating nvidia encoder...");
-    encoder->nvidia_encoder = create_nvidia_encoder(bitrate, codec_type, out_width, out_height);
+    // find next nonempty entry in nvidia_encoders
+    int index = 0;
+    while (encoder->nvidia_encoders[index] != NULL && index < NUM_ENCODERS) {
+        index++;
+    }
+    if (index == NUM_ENCODERS) {
+        LOG_ERROR("create_video_encoder will replace one of the nvidia encoders!");
+        index = 0;
+    }
+    encoder->nvidia_encoders[index] = create_nvidia_encoder(bitrate, codec_type, out_width, out_height, *get_video_thread_cuda_context_ptr());
     if (!encoder->nvidia_encoder) {
         LOG_ERROR("Failed to create nvidia encoder!");
         encoder->active_encoder = FFMPEG_ENCODER;
@@ -165,6 +174,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         LOG_INFO("Created nvidia encoder!");
         // nvidia creation succeeded!
         encoder->active_encoder = NVIDIA_ENCODER;
+        encoder->active_encoder_idx = index;
+        return encoder;
     }
 #endif  // USING_SERVERSIDE_SCALE
 #else

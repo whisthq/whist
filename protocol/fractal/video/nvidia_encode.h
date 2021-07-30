@@ -15,6 +15,7 @@ typedef struct {
 
     NV_ENC_OUTPUT_PTR output_buffer;
     NV_ENC_BUFFER_FORMAT buffer_fmt;
+    CUcontext cuda_context;
     CodecType codec_type;
     uint32_t frame_idx;
     int width;

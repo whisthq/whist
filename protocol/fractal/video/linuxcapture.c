@@ -64,24 +64,17 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         if (device->pending_destruction) {
             break;
         }
-        // TODO: check for errors
-        bind_fbc_cuda_context(device);
+        // set current context
+        CUresult cu_res = cu_ctx_push_current_ptr(*get_nvidia_thread_cuda_context_ptr());
         // Nvidia requires recreation
-        if (device->nvidia_capture_device) {
-            LOG_INFO("Destroying nvidia capture device...");
-            destroy_nvidia_capture_device(device->nvidia_capture_device);
-            LOG_INFO("Destroyed nvidia capture device!");
-            device->nvidia_capture_device = NULL;
-        }
-
         while (device->nvidia_capture_device == NULL) {
             LOG_INFO("Creating nvidia capture device...");
             device->nvidia_capture_device = create_nvidia_capture_device();
             fractal_sleep(500);
         }
         LOG_INFO("Created nvidia capture device!");
-        // TODO: check for errors
-        unbind_fbc_cuda_context(device);
+        cu_res = cu_ctx_pop_current_ptr(get_video_thread_cuda_context_ptr());
+        nvidia_release_context(device->nvidia_capture_device);
         // Tell the main thread to bind the nvidia context again
         device->nvidia_context_is_stale = true;
         // Tell the main thread nvidia is active again
@@ -258,8 +251,17 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     // if we can create the nvidia capture device, do so
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
-    // call cuda_init() so we can create the encoder
-    bool res = cuda_init(get_main_thread_cuda_context_ptr());
+    // cuda_init two contexts
+    bool res = cuda_init(get_video_thread_cuda_context_ptr());
+    if (!res) {
+        LOG_ERROR("Failed to initialize cuda!");
+    }
+    res = cuda_init(get_nvidia_thread_cuda_context_ptr());
+    if (!res) {
+        LOG_ERROR("Failed to initialize second cuda context!");
+    }
+    // pop the second context, since it will belong to nvidia
+    CUresult cu_res = cu_ctx_pop_current_ptr(get_nvidia_thread_cuda_context_ptr());
     if (!res) {
         LOG_ERROR("Failed to initialize cuda!");
     }
@@ -267,8 +269,6 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     device->nvidia_device_semaphore = fractal_create_semaphore(0);
     device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
                                                    "multithreaded_nvidia_manager", device);
-    // TODO: check for errors
-    unbind_fbc_cuda_context(device);
     fractal_post_semaphore(device->nvidia_device_semaphore);
 #endif
 
@@ -313,8 +313,16 @@ int capture_screen(CaptureDevice* device) {
             static CUcontext current_context;
             // first check if we just switched to nvidia
             if (device->nvidia_context_is_stale) {
-                // TODO: check for errors
-                bind_fbc_cuda_context(device);
+                // the nvidia device's context should be in video_context_ptr
+                CUresult cu_res = cu_ctx_pop_current_ptr(get_nvidia_thread_cuda_context_ptr());
+                if (cu_res != CUDA_SUCCESS) {
+                    LOG_ERROR("Failed to pop video thread context into nvidia thread context");
+                }
+                cu_res = cu_ctx_push_current_ptr(*get_video_thread_cuda_context_ptr());
+                if (cu_res != CUDA_SUCCESS) {
+                    LOG_ERROR("Failed to swap contexts!");
+                }
+                nvidia_bind_context(device->nvidia_capture_device);
                 device->nvidia_context_is_stale = false;
             }
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
@@ -425,8 +433,8 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
     }
     try_update_dimensions(device, width, height, dpi);
     if (device->active_capture_device == NVIDIA_DEVICE) {
-        // TODO: check for errors
-        unbind_fbc_cuda_context(device);
+        // destroy the device
+        destroy_nvidia_capture_device(device->nvidia_capture_device);
         device->active_capture_device = X11_DEVICE;
         fractal_post_semaphore(device->nvidia_device_semaphore);
     }
