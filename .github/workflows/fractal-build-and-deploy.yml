@@ -45,6 +45,48 @@ on:
                 default: true
 
 jobs:
+    # We use a separate job for building the monorepo configuration. The monorepo
+    # configuration is built in a Docker container, and Docker Actions can only be
+    # run on Linux environments on GitHub. As we need to build the client application
+    # in Mac and Windows environments, we need to run the configuration builder as a
+    # separate job. We set the JSON configuration data as "outputs" of this job step,
+    # so that it can be consumed by other jobs.
+    # configuration object.
+    config:
+        name: Building config
+        runs-on: ubuntu-20.04
+        outputs:
+            macos: ${{ steps.config-macos.outputs.config }}
+            win32: ${{ steps.config-win32.outputs.config }}
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Build Monorepo Configuration for Mac
+              id: config-macos
+              uses: ./.github/actions/monorepo-config
+              with:
+                  os: macos
+                  deploy: dev
+
+            - name: Build Monorepo Configuration for Windows
+              id: config-win32
+              uses: ./.github/actions/monorepo-config
+              with:
+                  os: win32
+                  deploy: dev
+
+            - name: Log MacOS Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-macos.outputs.config }}""")
+
+            - name: Log Win32 Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-win32.outputs.config }}""")
+
     # Configure Jobs
     # Detect the branch using regex matching and store as an output to regulate downstream actions.
     # Access branch with `fractal-publish-build-config.outputs.branch`.
