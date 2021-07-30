@@ -85,7 +85,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         if (old_encoder->cuda_context != *get_video_thread_cuda_context_ptr()) {
             LOG_INFO("Switching to other Nvidia encoder!");
             encoder->active_encoder_idx = 0 ? encoder->active_encoder_idx == 1 : 1;
-            if (encoder->nvidia_encoders[encoder->active_encoder_idx]->cuda_context == NULL) {
+            if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
                 encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
                     old_encoder->encoder_params.encodeConfig->rcParams.averageBitRate,
                     old_encoder->codec_type, old_encoder->width, old_encoder->height,

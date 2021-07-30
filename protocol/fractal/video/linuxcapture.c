@@ -76,8 +76,8 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             fractal_sleep(500);
         }
         LOG_INFO("Created nvidia capture device!");
-        cu_res = cu_ctx_pop_current_ptr(get_video_thread_cuda_context_ptr());
         nvidia_release_context(device->nvidia_capture_device);
+        cu_res = cu_ctx_pop_current_ptr(get_video_thread_cuda_context_ptr());
         // Tell the main thread to bind the nvidia context again
         device->nvidia_context_is_stale = true;
         // Tell the main thread nvidia is active again
