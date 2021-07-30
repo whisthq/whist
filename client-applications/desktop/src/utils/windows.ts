@@ -276,6 +276,7 @@ export const createTypeformWindow = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashTypeform,
     closeOtherWindows: false,
+    customURL: "https://form.typeform.com/to/Yfs4GkeN",
   })
 
 export const createProtocolWindow = async () => {

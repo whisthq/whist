@@ -40,7 +40,6 @@ export default {
   trayRegionAction: "trayRegionAction",
   trayFeedbackAction: "trayFeedbackAction",
   showPaymentWindow: "showPaymentWindow",
-  persistTypeform: "persistTypeform",
 
   // Flow triggers
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
