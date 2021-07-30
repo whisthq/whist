@@ -6,7 +6,7 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Begin wait loop to get TTY number and port mapping from Fractal ECS host service
+# Begin wait loop to get TTY number and port mapping from Fractal Host Service
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/fractal/app-config-map.json
@@ -48,7 +48,7 @@ done
 # Delete broken symlinks from config
 find $USER_CONFIGS_DIR -xtype l -delete
 
-# Register TTY once it was assigned via writing to a file by Fractal ECS host service
+# Register TTY once it was assigned via writing to a file by Fractal Host Service
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 
 # Create a TTY within the mandelbox so we don't have to hook it up to one of the host's.

@@ -75,39 +75,39 @@ repos:
       rev: master
       hooks:
           - id: go-fmt
-            name: "go-fmt (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-fmt (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-vet
-            name: "go-vet (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-vet (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-lint
-            name: "go-lint (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-lint (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-imports
-            name: "go-imports (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-imports (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-cyclo
-            name: "go-cyclo (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-cyclo (for /host-service)"
+            files: '^host-service/.*\.go'
             args: [-over=25]
           - id: validate-toml
-            name: "validate-toml (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "validate-toml (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: no-go-testing
-            name: "no-go-testing (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "no-go-testing (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: golangci-lint
-            name: "golangci-lint (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "golangci-lint (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-critic
-            name: "go-critic (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-critic (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-unit-tests
-            name: "go-unit-tests (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-unit-tests (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-build
-            name: "go-build (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-build (for /host-service)"
+            files: '^host-service/.*\.go'
           - id: go-mod-tidy
-            name: "go-mod-tidy (for /ecs-host-service)"
-            files: '^ecs-host-service/.*\.go'
+            name: "go-mod-tidy (for /host-service)"
+            files: '^host-service/.*\.go'

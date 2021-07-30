@@ -44,11 +44,11 @@ def compare_days(timestamp):
 
 def read_tags(tags, resource):
     """
-    Reads tags for a given resource, either EC2 or ECS and returns tags
+    Reads tags for a given EC2 resource and returns tags
 
     Args:
         tags (arr): array of key value pairs
-        resource (str): current aws resource, either EC2 or ECS
+        resource (str): current AWS EC2 resource
 
     Returns:
         tuple: the branch, commit, name of the resource, and whether it was created on test
@@ -80,7 +80,7 @@ def delete_if_older_than_one_day(region, task, cluster, time):
         str: indicator of whether stop was triggered or not
     """
     if has_elapsed_hours(time, 24):
-        client = boto3.client("ecs", region_name=region)
+        client = boto3.client("ec2", region_name=region)
         client.stop_task(
             cluster=cluster,
             task=task,

@@ -31,8 +31,8 @@ jobs:
                       sentry-project: webserver
                     - name: Protocol (macOS, Windows, Linux Ubuntu)
                       sentry-project: protocol
-                    - name: ECS Host Service
-                      sentry-project: ecs-host-service
+                    - name: Host Service
+                      sentry-project: host-service
                     - name: Client Applications (macOS, Windows, Linux Ubuntu)
                       sentry-project: client-applications
         env:
@@ -114,6 +114,6 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
                   TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-                  BODY = f"Sentry Releases for Fractal Sentry Projects `webserver`, `protocol`, `ecs-host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f"Sentry Releases for Fractal Sentry Projects `webserver`, `protocol`, `host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
