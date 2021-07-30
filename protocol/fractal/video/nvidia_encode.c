@@ -318,7 +318,11 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.inputWidth = encoder->width;
     enc_params.inputHeight = encoder->height;
     enc_params.inputPitch = encoder->width;
-    enc_params.inputBuffer = map_params.mappedResource;
+    if (registered_resource.device_type == NVIDIA_DEVICE) {
+        enc_params.inputBuffer = map_params.mappedResource;
+    } else {
+        enc_params.inputBuffer = registered_resource.handle;
+    }
     enc_params.bufferFmt = encoder->buffer_fmt;
     // frame_idx starts at -1, so first frame has idx 0
     enc_params.frameIdx = ++encoder->frame_idx;
