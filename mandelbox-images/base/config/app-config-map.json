@@ -1,12 +1,12 @@
 [
-    {
-        "source": "firefox-mozilla",
-        "destination": "/home/fractal/.mozilla",
-        "type": "folder"
-    },
-    {
-        "source": "google-chrome",
-        "destination": "/home/fractal/.config/google-chrome",
-        "type": "folder"
-    }
+  {
+    "source": "firefox-mozilla",
+    "destination": "/home/fractal/.mozilla",
+    "type": "folder"
+  },
+  {
+    "source": "google-chrome",
+    "destination": "/home/fractal/.config/google-chrome",
+    "type": "folder"
+  }
 ]

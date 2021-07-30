@@ -1,113 +1,113 @@
 # pre-commit top-level map configuration
 
 repos:
-    #
-    # Global hooks that run on all repositories/subfolders
-    #
-    - repo: https://github.com/pre-commit/pre-commit-hooks.git
-      rev: v3.2.0
-      hooks:
-          - id: trailing-whitespace
-          - id: end-of-file-fixer
-          - id: check-case-conflict
-          - id: check-merge-conflict
-          - id: check-symlinks
-          - id: detect-private-key
+  #
+  # Global hooks that run on all repositories/subfolders
+  #
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v3.2.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: detect-private-key
 
-    - repo: https://github.com/pre-commit/mirrors-prettier
-      rev: v2.2.1
-      hooks:
-          - id: prettier
-            name: "Prettier (for all repositories)"
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.2.1
+    hooks:
+      - id: prettier
+        name: "Prettier (for all repositories)"
 
-    - repo: https://github.com/psf/black
-      rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
-      hooks:
-          - id: black
-            name: "Python Black (for all repositories)"
-            language_version: python3
+  - repo: https://github.com/psf/black
+    rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
+    hooks:
+      - id: black
+        name: "Python Black (for all repositories)"
+        language_version: python3
 
-    # To use beautysh, you first need to install it locally via `pip install beautysh`
-    - repo: local
-      hooks:
-          - id: beautysh
-            name: "BeautySH (for all repositories)"
-            language: python
-            additional_dependencies: [beautysh]
-            entry: beautysh
-            types: [shell]
+  # To use beautysh, you first need to install it locally via `pip install beautysh`
+  - repo: local
+    hooks:
+      - id: beautysh
+        name: "BeautySH (for all repositories)"
+        language: python
+        additional_dependencies: [beautysh]
+        entry: beautysh
+        types: [shell]
 
-    - repo: local
-      hooks:
-          - id: hadolint
-            name: "Hadolint (for all repositories)"
-            language: docker_image
-            entry: hadolint/hadolint:v1.23.0 hadolint
-            files: ^.*Dockerfile.*$
+  - repo: local
+    hooks:
+      - id: hadolint
+        name: "Hadolint (for all repositories)"
+        language: docker_image
+        entry: hadolint/hadolint:v1.23.0 hadolint
+        files: ^.*Dockerfile.*$
 
-    #
-    # Hooks that only run on specific repositories/subfolders
-    #
-    - repo: git://github.com/doublify/pre-commit-clang-format
-      rev: master
-      hooks:
-          - id: clang-format
-            name: "clang-format (for /protocol)"
-            files: '^protocol/.*\.(?:c|h)'
+  #
+  # Hooks that only run on specific repositories/subfolders
+  #
+  - repo: git://github.com/doublify/pre-commit-clang-format
+    rev: master
+    hooks:
+      - id: clang-format
+        name: "clang-format (for /protocol)"
+        files: '^protocol/.*\.(?:c|h)'
 
-    - repo: https://github.com/iconmaster5326/cmake-format-pre-commit-hook
-      rev: master
-      hooks:
-          - id: cmake-format
-            name: "cmake-format (for /protocol)"
-            files: '^protocol/.*\.(?:c|h)'
+  - repo: https://github.com/iconmaster5326/cmake-format-pre-commit-hook
+    rev: master
+    hooks:
+      - id: cmake-format
+        name: "cmake-format (for /protocol)"
+        files: '^protocol/.*\.(?:c|h)'
 
-    - repo: https://github.com/pycqa/pylint
-      rev: pylint-2.7.2
-      hooks:
-          - id: pylint
-            name: "pylint (for /webserver)"
-            files: '^webserver/.*\.py'
-            language_version: python3
-            args: [--rcfile, pylintrc]
+  - repo: https://github.com/pycqa/pylint
+    rev: pylint-2.7.2
+    hooks:
+      - id: pylint
+        name: "pylint (for /webserver)"
+        files: '^webserver/.*\.py'
+        language_version: python3
+        args: [--rcfile, pylintrc]
 
-    - repo: git://github.com/dnephin/pre-commit-golang
-      rev: master
-      hooks:
-          - id: go-fmt
-            name: "go-fmt (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-vet
-            name: "go-vet (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-lint
-            name: "go-lint (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-imports
-            name: "go-imports (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-cyclo
-            name: "go-cyclo (for /host-service)"
-            files: '^host-service/.*\.go'
-            args: [-over=25]
-          - id: validate-toml
-            name: "validate-toml (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: no-go-testing
-            name: "no-go-testing (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: golangci-lint
-            name: "golangci-lint (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-critic
-            name: "go-critic (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-unit-tests
-            name: "go-unit-tests (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-build
-            name: "go-build (for /host-service)"
-            files: '^host-service/.*\.go'
-          - id: go-mod-tidy
-            name: "go-mod-tidy (for /host-service)"
-            files: '^host-service/.*\.go'
+  - repo: git://github.com/dnephin/pre-commit-golang
+    rev: master
+    hooks:
+      - id: go-fmt
+        name: "go-fmt (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-vet
+        name: "go-vet (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-lint
+        name: "go-lint (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-imports
+        name: "go-imports (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-cyclo
+        name: "go-cyclo (for /host-service)"
+        files: '^host-service/.*\.go'
+        args: [-over=25]
+      - id: validate-toml
+        name: "validate-toml (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: no-go-testing
+        name: "no-go-testing (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: golangci-lint
+        name: "golangci-lint (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-critic
+        name: "go-critic (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-unit-tests
+        name: "go-unit-tests (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-build
+        name: "go-build (for /host-service)"
+        files: '^host-service/.*\.go'
+      - id: go-mod-tidy
+        name: "go-mod-tidy (for /host-service)"
+        files: '^host-service/.*\.go'

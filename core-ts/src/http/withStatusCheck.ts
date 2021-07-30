@@ -10,10 +10,10 @@ import { ServerDecorator, FractalHTTPCode } from "../types/api"
  * @returns a ServerResponse wrapped in a Promise
  */
 export const withStatusCheck: ServerDecorator = async (fn, req) => {
-    const result = await fn(req)
-    const { response } = result
-    return response?.status === FractalHTTPCode.SUCCESS ||
-        response?.status === FractalHTTPCode.ACCEPTED
-        ? result
-        : { ...result, error: "Failure Status: " + response?.status }
+  const result = await fn(req)
+  const { response } = result
+  return response?.status === FractalHTTPCode.SUCCESS ||
+    response?.status === FractalHTTPCode.ACCEPTED
+    ? result
+    : { ...result, error: "Failure Status: " + response?.status }
 }

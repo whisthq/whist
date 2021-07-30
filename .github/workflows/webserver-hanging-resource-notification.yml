@@ -5,164 +5,164 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    schedule:
-        - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
-    workflow_dispatch:
+  schedule:
+    - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+  workflow_dispatch:
 
 jobs:
-    webserver-enumerate-all-instances:
-        name: Main Webserver Enumerate All Instances
-        runs-on: ubuntu-20.04
-        env:
-            AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-west-1 eu-central-1"
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+  webserver-enumerate-all-instances:
+    name: Main Webserver Enumerate All Instances
+    runs-on: ubuntu-20.04
+    env:
+      AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-west-1 eu-central-1"
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            - name: Setup Python-based notification and resource modules
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
+      - name: Setup Python-based notification and resource modules
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
-            - name: Install boto3
-              run: pip install boto3
+      - name: Install boto3
+        run: pip install boto3
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-            - name: List Number of Instances in Slack
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-                  from aws.resource_helpers import num_aws_instances
+      - name: List Number of Instances in Slack
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          from aws.resource_helpers import num_aws_instances
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
-                  BODY = "*Number of Instances:*"
-                  for region in "${{ env.AWS_REGIONS }}".split():
-                    (running_instances, total_instances) = num_aws_instances(region)
-                    BODY += "\n     _%s_: `%d running (%d total)`" % (region, running_instances, total_instances)
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
+          BODY = "*Number of Instances:*"
+          for region in "${{ env.AWS_REGIONS }}".split():
+            (running_instances, total_instances) = num_aws_instances(region)
+            BODY += "\n     _%s_: `%d running (%d total)`" % (region, running_instances, total_instances)
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    webserver-hanging-resource-notification:
-        name: Main Webserver Hanging Resource Notification
-        runs-on: ubuntu-20.04
-        strategy:
-            matrix:
-                aws-region:
-                    - us-east-1
-                    - us-east-2
-                    - us-west-1
-                    - us-west-2
-                    - ca-central-1
-                    - eu-west-1
-                    - eu-central-1
+  webserver-hanging-resource-notification:
+    name: Main Webserver Hanging Resource Notification
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        aws-region:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - ca-central-1
+          - eu-west-1
+          - eu-central-1
 
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            - name: Setup Python-based notification and resource modules
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
+      - name: Setup Python-based notification and resource modules
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
-            - name: Install boto3
-              run: pip install boto3
+      - name: Install boto3
+        run: pip install boto3
 
-            - name: Install Utility to Get Date and Time
-              run: pip install python-dateutil
+      - name: Install Utility to Get Date and Time
+        run: pip install python-dateutil
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-            - name: Flag Old EC2 Instances and Notify in Slack if They Exist
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-                  from aws.resource_helpers import flag_instances
+      - name: Flag Old EC2 Instances and Notify in Slack if They Exist
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          from aws.resource_helpers import flag_instances
 
-                  resources = flag_instances("${{ matrix.aws-region }}")
+          resources = flag_instances("${{ matrix.aws-region }}")
 
-                  if resources:
-                    SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                    SLACK_CHANNEL = "#alerts-dev"
-                    BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_: %s" % resources
+          if resources:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_CHANNEL = "#alerts-dev"
+            BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_: %s" % resources
 
-                    slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+            slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    webserver-hanging-packer-instance-notification:
-        name: Main Webserver AWS Packer Instance Notification
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+  webserver-hanging-packer-instance-notification:
+    name: Main Webserver AWS Packer Instance Notification
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
-            - name: Install Utility to Kill Lingering AWS Packer Builder Instances
-              run: pip install aws-hashicorp-packer-reaper
+      - name: Install Utility to Kill Lingering AWS Packer Builder Instances
+        run: pip install aws-hashicorp-packer-reaper
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-            - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
-              working-directory: webserver
-              shell: python3 {0}
-              run: |
-                  import subprocess
-                  from notifications.slack_bot import slack_post
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
+      - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
+        working-directory: webserver
+        shell: python3 {0}
+        run: |
+          import subprocess
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
 
-                  ret = subprocess.run("aws-hashicorp-packer-reaper list", capture_output=True, shell=True)
-                  assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
-                  # example output is shown here: https://pypi.org/project/aws-hashicorp-packer-reaper/
-                  reaper_output_lines = ret.stdout.decode("utf-8").strip().split("\n")
+          ret = subprocess.run("aws-hashicorp-packer-reaper list", capture_output=True, shell=True)
+          assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
+          # example output is shown here: https://pypi.org/project/aws-hashicorp-packer-reaper/
+          reaper_output_lines = ret.stdout.decode("utf-8").strip().split("\n")
 
-                  for line in reaper_output_lines:
-                    if "running" in line:
-                      BODY = f"Dangling Packer Instance: `{line}`"
-                      slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          for line in reaper_output_lines:
+            if "running" in line:
+              BODY = f"Dangling Packer Instance: `{line}`"
+              slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    notify-if-hanging-resource-fails:
-        name: "Notify Slack if Hanging Resource Workflow Fails"
-        needs:
-            [
-                webserver-hanging-packer-instance-notification,
-                webserver-hanging-resource-notification,
-                webserver-enumerate-all-instances,
-            ]
-        if: failure()
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
+  notify-if-hanging-resource-fails:
+    name: "Notify Slack if Hanging Resource Workflow Fails"
+    needs:
+      [
+        webserver-hanging-packer-instance-notification,
+        webserver-hanging-resource-notification,
+        webserver-enumerate-all-instances,
+      ]
+    if: failure()
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
 
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
-            - name: Notify Slack if Hanging Resource Workflow Fails
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
+      - name: Notify Slack if Hanging Resource Workflow Fails
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
-                  BODY = ":rotating_light: @releases Hanging Resource Notification Failed"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
+          BODY = ":rotating_light: @releases Hanging Resource Notification Failed"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

@@ -6,9 +6,9 @@
 let envOverrides = {}
 
 try {
-    envOverrides = require("../env_overrides.json") || {}
+  envOverrides = require("../env_overrides.json") || {}
 } catch (err) {
-    console.log(`No "env_overrides.json" file found.`)
+  console.log(`No "env_overrides.json" file found.`)
 }
 
 module.exports = envOverrides

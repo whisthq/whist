@@ -33,13 +33,13 @@ import TRIGGER from "@app/utils/triggers"
 // observables can initialize.
 
 createTrigger(
-    TRIGGER.eventIPC,
-    fromEvent(ipcMain, StateChannel).pipe(
-        map((args) => {
-            if (!Array.isArray(args)) return {} as Partial<StateIPC>
-            return args[1] as Partial<StateIPC>
-        }),
-        startWith({}),
-        share()
-    )
+  TRIGGER.eventIPC,
+  fromEvent(ipcMain, StateChannel).pipe(
+    map((args) => {
+      if (!Array.isArray(args)) return {} as Partial<StateIPC>
+      return args[1] as Partial<StateIPC>
+    }),
+    startWith({}),
+    share()
+  )
 )

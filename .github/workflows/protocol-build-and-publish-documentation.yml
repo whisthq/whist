@@ -8,128 +8,128 @@
 name: "Protocol: Build & Publish Documentation"
 
 on:
-    pull_request:
-        branches:
-            - dev
-        paths:
-            - ".github/workflows/protocol-build-and-publish-documentation.yml"
-            - "protocol/**"
-    push:
-        branches:
-            - dev
-        paths:
-            - "protocol/**"
-            - ".github/workflows/protocol-build-and-publish-documentation.yml"
-    workflow_dispatch:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/protocol-build-and-publish-documentation.yml"
+      - "protocol/**"
+  push:
+    branches:
+      - dev
+    paths:
+      - "protocol/**"
+      - ".github/workflows/protocol-build-and-publish-documentation.yml"
+  workflow_dispatch:
 
 jobs:
-    protocol-build-documentation:
-        name: Build & Publish Protocol Documentation to fractal/docs
-        runs-on: ubuntu-20.04
+  protocol-build-documentation:
+    name: Build & Publish Protocol Documentation to fractal/docs
+    runs-on: ubuntu-20.04
 
-        steps:
-            ################################# CONFIG STEPS START ###############################
+    steps:
+      ################################# CONFIG STEPS START ###############################
 
-            - name: Checkout the fractal Git Repository
-              uses: actions/checkout@v2
-              with:
-                  path: fractal
+      - name: Checkout the fractal Git Repository
+        uses: actions/checkout@v2
+        with:
+          path: fractal
 
-            - name: Checkout the fractal/docs Git Repository
-              uses: actions/checkout@v2
-              with:
-                  repository: fractal/docs
-                  token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  path: docs
+      - name: Checkout the fractal/docs Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: fractal/docs
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          path: docs
 
-            - name: Setup Python-based notifications
-              working-directory: fractal/.github/workflows/helpers
-              run: ./notifications/setup_notifications.sh
+      - name: Setup Python-based notifications
+        working-directory: fractal/.github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
-            # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
-            - name: Configure AWS S3 CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+      # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-            - name: Install Linux Protocol Dependencies
-              working-directory: fractal/protocol
-              run: |
-                  sudo apt-get update
-                  ./setup-linux-build-environment.sh
-                  sudo apt install coreutils doxygen
+      - name: Install Linux Protocol Dependencies
+        working-directory: fractal/protocol
+        run: |
+          sudo apt-get update
+          ./setup-linux-build-environment.sh
+          sudo apt install coreutils doxygen
 
-            - name: Build Protocol Documentation
-              working-directory: fractal/protocol
-              run: |
-                  cmake -S . -B build
-                  cd build
-                  make -j docs
+      - name: Build Protocol Documentation
+        working-directory: fractal/protocol
+        run: |
+          cmake -S . -B build
+          cd build
+          make -j docs
 
-            - name: Diff Old and New Documentation
-              id: diff
-              run: |
-                  git diff --no-index fractal/protocol/build/docs/html docs/protocol && echo "No changes detected"
-                  echo "::set-output name=changed::$?"
+      - name: Diff Old and New Documentation
+        id: diff
+        run: |
+          git diff --no-index fractal/protocol/build/docs/html docs/protocol && echo "No changes detected"
+          echo "::set-output name=changed::$?"
 
-            ###################################################################################
-            ################################# PUBLISH STEPS START #############################
+      ###################################################################################
+      ################################# PUBLISH STEPS START #############################
 
-            - name: Copy New Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
-              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
-              run: rm -r docs/protocol && cp -r fractal/protocol/build/docs/html docs/protocol
+      - name: Copy New Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
+        run: rm -r docs/protocol && cp -r fractal/protocol/build/docs/html docs/protocol
 
-            - name: Commit the Documentation Changes to fractal/docs (Only on Push/Workflow_dispatch Events)
-              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
-              working-directory: docs
-              run: |
-                  # Set the author of the commit in fractal/docs to be the user
-                  # who just pushed to the dev branch of the monorepo.
-                  git config user.name "${{ github.event.pusher.name }}"
-                  git config user.email "${{ github.event.pusher.email }}"
+      - name: Commit the Documentation Changes to fractal/docs (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
+        working-directory: docs
+        run: |
+          # Set the author of the commit in fractal/docs to be the user
+          # who just pushed to the dev branch of the monorepo.
+          git config user.name "${{ github.event.pusher.name }}"
+          git config user.email "${{ github.event.pusher.email }}"
 
-                  # Authenticate Git as Phil with GitHub
-                  git config credential.helper store
-                  git credential approve <<EOF
-                  protocol=https
-                  host=github.com
-                  username=phil@fractal.co
-                  password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  EOF
+          # Authenticate Git as Phil with GitHub
+          git config credential.helper store
+          git credential approve <<EOF
+          protocol=https
+          host=github.com
+          username=phil@fractal.co
+          password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          EOF
 
-                  # Stage, commit, and push documentation changes
-                  git add protocol
-                  git commit -F - <<EOF
-                  Update protocol documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
-                  EOF
-                  git show --stat
-                  git push
+          # Stage, commit, and push documentation changes
+          git add protocol
+          git commit -F - <<EOF
+          Update protocol documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
+          EOF
+          git show --stat
+          git push
 
-            ###################################################################################
+      ###################################################################################
 
-            - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && failure() }}
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
-                  BODY = "@releases :rotating_light: Failed to deploy `protocol` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
+          BODY = "@releases :rotating_light: Failed to deploy `protocol` Internal Documentation to `docs.fractal.co`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-            - name: Notify Slack (Only on Push/Workflow_dispatch Events)
-              if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && success() }}
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
+      - name: Notify Slack (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true && success() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
-                  TITLE = ":orange_book: Protocol Internal Documentation Deployed :orange_book:"
-                  BODY = "Fractal `protocol` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
+          TITLE = ":orange_book: Protocol Internal Documentation Deployed :orange_book:"
+          BODY = "Fractal `protocol` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

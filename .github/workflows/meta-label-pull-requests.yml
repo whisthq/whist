@@ -8,16 +8,16 @@ name: "Meta: Label Pull Requests"
 on: pull_request
 
 jobs:
-    meta-label-pull-requests-main:
-        name: Label Pull Request
-        runs-on: ubuntu-20.04
+  meta-label-pull-requests-main:
+    name: Label Pull Request
+    runs-on: ubuntu-20.04
 
-        steps:
-            - name: Label Pull Request
-              uses: adamzolyak/monorepo-pr-labeler-action@3.0.0
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  # Match how we've been labeling our PRs before the action 3.0.0 changed
-                  # its default behavior to remove the prefix.
-                  prefix: "📁 Repo:"
+    steps:
+      - name: Label Pull Request
+        uses: adamzolyak/monorepo-pr-labeler-action@3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Match how we've been labeling our PRs before the action 3.0.0 changed
+          # its default behavior to remove the prefix.
+          prefix: "📁 Repo:"
