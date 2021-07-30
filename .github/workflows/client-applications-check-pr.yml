@@ -44,19 +44,25 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set the workflow's environment parameters
+              id: set-environment
+              uses: ./.github/actions/set-environment
+              with:
+                  ref: ${{ github.base_ref }} # The git ref of the target branch
+
             - name: Build Monorepo Configuration for Mac
               id: config-macos
               uses: ./.github/actions/monorepo-config
               with:
                   os: macos
-                  deploy: dev
+                  deploy: ${{ steps.set-environment.outputs.environment }}
 
             - name: Build Monorepo Configuration for Windows
               id: config-win32
               uses: ./.github/actions/monorepo-config
               with:
                   os: win32
-                  deploy: dev
+                  deploy: ${{ steps.set-environment.outputs.environment }}
 
             - name: Log MacOS Configuration
               shell: python3 {0}
