@@ -32,6 +32,7 @@ void try_free_frame(NvidiaEncoder* encoder) {
 
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
                                      CUcontext cuda_context) {
+    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %x", bitrate, codec, out_width, out_height, cuda_context);
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -184,16 +185,19 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
                     LOG_ERROR("Failed to lock input buffer, error %d", status);
                     return -1;
                 }
+                encoder->pitch = lock_params.pitch;
                 // memcpy input data
                 memcpy(
                     lock_params.bufferDataPtr, encoder->registered_resource.texture_pointer,
-                    encoder->registered_resource.width * encoder->registered_resource.height * 4);
+                    encoder->pitch * encoder->registered_resource.height);
                 status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
                                                                   lock_params.inputBuffer);
                 if (status != NV_ENC_SUCCESS) {
                     LOG_ERROR("Failed to unlock input buffer, error %d", status);
                     return -1;
                 }
+            } else {
+                encoder->pitch = encoder->registered_resource.width;
             }
             return 0;
         }
@@ -317,7 +321,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
     enc_params.inputWidth = encoder->width;
     enc_params.inputHeight = encoder->height;
-    enc_params.inputPitch = encoder->width;
+    enc_params.inputPitch = encoder->pitch;
     if (registered_resource.device_type == NVIDIA_DEVICE) {
         enc_params.inputBuffer = map_params.mappedResource;
     } else {
@@ -430,6 +434,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
             (int): 0 on success, -1 on failure
     */
 
+    LOG_INFO("Reconfiguring encoder to width %d, height %d, bitrate %d, codec %d", width, height, bitrate, codec);
     NVENCSTATUS status;
     // If dimensions or codec type changes,
     // then we need to send an IDR frame

@@ -32,6 +32,7 @@ typedef struct {
     uint32_t frame_idx;
     int width;
     int height;
+    int pitch;
     bool wants_iframe;
     // Output
     void* frame;
