@@ -76,7 +76,6 @@ jobs:
               id: config-macos
               uses: ./.github/actions/monorepo-config
               with:
-                  secrets: ${{ toJSON(secrets) }}
                   os: macos
                   deploy: dev
 
@@ -84,7 +83,6 @@ jobs:
               id: config-win32
               uses: ./.github/actions/monorepo-config
               with:
-                  secrets: ${{ toJSON(secrets) }}
                   os: win32
                   deploy: dev
 
