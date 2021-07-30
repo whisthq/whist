@@ -254,7 +254,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
 		if err != nil {
-			return utils.MakeError("Error running `docker create` for %s:\n%s", containerName, err)
+			return utils.MakeError("Error running `create` for %s:\n%s", containerName, err)
 		}
 		logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
 
@@ -268,7 +268,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
 		if err != nil {
-			return utils.MakeError("Error running `docker start` for %s:\n%s", containerName, err)
+			return utils.MakeError("Error running `start` for %s:\n%s", containerName, err)
 		}
 		logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
 
@@ -284,7 +284,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		_ = client.ContainerStop(globalCtx, createBody.ID, &stopTimeout)
 		err = client.ContainerRemove(globalCtx, createBody.ID, dockertypes.ContainerRemoveOptions{Force: true})
 		if err != nil {
-			return utils.MakeError("Error running `docker remove` for %s:\n%s", containerName, err)
+			return utils.MakeError("Error running `remove` for %s:\n%s", containerName, err)
 		}
 		logger.Infof("warmUpDockerClient(): Removed container %s with image %s", containerName, image)
 
@@ -500,21 +500,21 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, mandelboxName)
 	if err != nil {
-		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetMandelboxID(), err)
+		logAndReturnError("Error running `create` for %s:\n%s", fc.GetMandelboxID(), err)
 		return
 	}
 
 	logger.Infof("Value returned from ContainerCreate: %#v", dockerBody)
 	dockerID := types.DockerID(dockerBody.ID)
 
-	logger.Infof("SpinUpMandelbox(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
+	logger.Infof("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID)
 
 	err = fc.RegisterCreation(dockerID, req.AppName)
 	if err != nil {
-		logAndReturnError("Error registering mandelbox creation with DockerID %s and AppName %s: %s", dockerID, req.AppName, err)
+		logAndReturnError("Error registering mandelbox creation with runtime ID %s and AppName %s: %s", dockerID, req.AppName, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with DockerID %s and AppName %s", dockerID, req.AppName)
+	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, req.AppName)
 
 	if err := fc.WriteMandelboxParams(); err != nil {
 		logAndReturnError("Error writing mandelbox params: %s", err)
@@ -535,7 +535,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
-		logAndReturnError("Error starting mandelbox with dockerID %s and MandelboxID %s: %s", dockerID, req.MandelboxID, err)
+		logAndReturnError("Error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, req.MandelboxID, err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, req.MandelboxID)
