@@ -45,7 +45,8 @@ typedef struct {
  *
  * @returns                        The newly created nvidia encoder
  */
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height, CUcontext cuda_context);
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
+                                     CUcontext cuda_context);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder
@@ -73,7 +74,8 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height, void* texture_pointer);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height,
+                                void* texture_pointer);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,

@@ -66,6 +66,9 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         }
         // set current context
         CUresult cu_res = cu_ctx_push_current_ptr(*get_nvidia_thread_cuda_context_ptr());
+        if (cu_res != CUDA_SUCCESS) {
+            LOG_ERROR("Failed to push current context, status %d!");
+        }
         // Nvidia requires recreation
         while (device->nvidia_capture_device == NULL) {
             LOG_INFO("Creating nvidia capture device...");
@@ -351,64 +354,6 @@ int capture_screen(CaptureDevice* device) {
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return -1;
     }
-}
-
-int bind_fbc_cuda_context(CaptureDevice* device) {
-    /*
-        Set the cuda context in cuda_init() as current to the calling thread, and bind the FBC
-       context of device to the calling thread.
-    */
-    if (device == NULL) {
-        LOG_ERROR("Tried to bind the FBC context of a null device! Doing nothing.");
-        return 0;
-    }
-    static CUcontext current_context;
-    static CUresult cu_res;
-    cu_res = cu_ctx_set_current_ptr(*get_main_thread_cuda_context_ptr());
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Unable to set current cuda context onto nvidia thread, result %d", cu_res);
-        return -1;
-    } else {
-        LOG_INFO("Successfully set active cuda context: %x", *get_main_thread_cuda_context_ptr());
-        cu_ctx_get_current_ptr(&current_context);
-        LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid), current_context);
-    }
-    cu_res = cu_ctx_synchronize_ptr();
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Synchronize returned error %d", cu_res);
-        return -1;
-    } else {
-        LOG_DEBUG("Synchronize finished");
-    }
-    if (nvidia_bind_context(device->nvidia_capture_device) != 0) {
-        LOG_ERROR("Failed to bind the FBC context!");
-        return -1;
-    }
-    return 0;
-}
-
-int unbind_fbc_cuda_context(CaptureDevice* device) {
-    if (device == NULL) {
-        LOG_ERROR("Tried to release the FBC context of a null device! Doing nothing.");
-        return 0;
-    }
-    static CUcontext current_context;
-    static CUresult cu_res;
-    if (nvidia_release_context(device->nvidia_capture_device) != 0) {
-        LOG_ERROR("Failed to release the FBC context!");
-        return -1;
-    }
-    cu_res = cu_ctx_set_current_ptr(NULL);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("unbind current cuda context failed with result %d", cu_res);
-        return -1;
-    } else {
-        LOG_INFO("Successfully unbound active cuda context: %x",
-                 *get_main_thread_cuda_context_ptr());
-        cu_ctx_get_current_ptr(&current_context);
-        LOG_INFO("Thread %d now has current context %x", syscall(SYS_gettid), current_context);
-    }
-    return 0;
 }
 
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,

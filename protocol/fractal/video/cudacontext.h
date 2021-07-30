@@ -52,5 +52,6 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context);
  *
  * @returns                        Pointer to the active CUDA context
  */
-CUcontext* get_main_thread_cuda_context_ptr();
+CUcontext* get_video_thread_cuda_context_ptr();
+CUcontext* get_nvidia_thread_cuda_context_ptr();
 #endif

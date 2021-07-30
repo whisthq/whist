@@ -153,11 +153,13 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
 int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height,
                                 void* texture_pointer) {
     if (width != encoder->width || height != encoder->height) {
-        LOG_ERROR(
-            "Nvidia Encoder has received a frame_intake of dimensions %dx%d, "
-            "but the Nvidia Encoder is only configured for dimensions %dx%d",
-            width, height, encoder->width, encoder->height);
-        return -1;
+        // reconfigure the encoder
+        if (!nvidia_reconfigure_encoder(
+                encoder, width, height,
+                encoder->encoder_params.encodeConfig->rcParams.averageBitRate, encoder->codec_type)) {
+            LOG_ERROR("Reconfigure failed!");
+            return -1;
+        }
     }
     if (!texture_pointer) {
         LOG_ERROR("NULL texture passed into encoder! Doing nothing.");
@@ -193,7 +195,7 @@ NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int h
                                         void* texture_pointer) {
     if (texture_pointer == NULL) {
         LOG_ERROR("Tried to register NULL resource, exiting");
-        return -1;
+        return NULL;
     }
     NV_ENC_REGISTER_RESOURCE register_params;
     // register the device's resources to the encoder
@@ -217,7 +219,7 @@ NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int h
 void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR handle) {
     if (!handle) {
         LOG_INFO("Trying to unregister NULL resource - nothing to do!");
-        return 0;
+        return;
     }
 
     // unregister all resources in encoder->registered_resources
@@ -225,9 +227,8 @@ void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR handle) {
         encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder, handle);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to unregister resource, status = %d", status);
-        return -1;
+        return;
     }
-    return 0;
 }
 
 int nvidia_encoder_encode(NvidiaEncoder* encoder) {
