@@ -7,36 +7,36 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.1.1.tgz#9274ec7460652f9c632c59addf24efb1684ef876"
   integrity sha512-sAP4LldeWNz0lNzmTird3uWfFDWWTeg6V/MsmyyLR9X1idwKBWIgt/ZvinqQldJm3LecKEs1emkbquO6PCiLVQ==
 
-"@amplitude/identify@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.7.0.tgz#ea8e435d55e55027ced0abfe1a5e250038e75f6c"
-  integrity sha512-AhaYj76cExvABu2C2Q6oO4aRNQhQkP7foQb7Lk7qW5ZPhdiWpAOGThdMre0pu5CSYF21G+FUnM6/1WQ5Cfkw3A==
+"@amplitude/identify@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.8.0.tgz#ac88e13861008f9e516ef05d1eac23b188bf1170"
+  integrity sha512-YMYFQDgmFH0aILwvkV9Bcf6qyqvBuW/MmyVIe2G1F5pOfV/PVmt48S8N9cBcD6IctGnQPXjuj92zt87rYvDdtg==
   dependencies:
-    "@amplitude/types" "^1.7.0"
-    "@amplitude/utils" "^1.7.0"
+    "@amplitude/types" "^1.8.0"
+    "@amplitude/utils" "^1.8.0"
     tslib "^1.9.3"
 
-"@amplitude/node@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.7.0.tgz#534745e79a621ef74b1153c19c5683559ff930ac"
-  integrity sha512-+2z0V+3fVbSihbJipADvFPb2bDCLvpgDnzLkNUka606DTyLWPuoDKzawUgl2yanuFXowFYEmQ2EltuQHoXd3YQ==
+"@amplitude/node@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.8.0.tgz#c2989065394c3ff3438cd1107e2e2f6f3159c015"
+  integrity sha512-11m5Ws/6hKTYjI0ObBIRgxdAcb7npTKUb9Ifba5d9dPmmPagu22+wvtzlbUiNQlPWQFI1ogq0qP2NOamEuZWkA==
   dependencies:
-    "@amplitude/identify" "^1.7.0"
-    "@amplitude/types" "^1.7.0"
-    "@amplitude/utils" "^1.7.0"
+    "@amplitude/identify" "^1.8.0"
+    "@amplitude/types" "^1.8.0"
+    "@amplitude/utils" "^1.8.0"
     tslib "^1.9.3"
 
-"@amplitude/types@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.7.0.tgz#c9f6636245f2de0ab58ee667b442cef58c42c453"
-  integrity sha512-zPENZDWlh64WHj/7Jjghu2HGWywMPundf25ycxn0tYXtxTvPmK2m/MMV6GvUN5uW0kg65eeKETCfge1UJ9MXlQ==
+"@amplitude/types@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.8.0.tgz#58f65f52c05b5ba844322f66b2158eab35651b24"
+  integrity sha512-Jomb5ypMM4fuS+4LThY33mbiLdNgDa3KAypH7bRmTqGnXKd3h2olM0HkHrQtAAbl2tln/hd9IPiSKjRVqoQ3fQ==
 
-"@amplitude/utils@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.7.0.tgz#91ef07f203223ad4f5309f0c8950ebb5de6bd8eb"
-  integrity sha512-+WsKdFbA+rR/xSTlho90C+GlzDL7Sn51J4bmmGtOSTZk5oEPohvHzHO8pVBGDB8UvNAs2LjQQ7q7b2qRWdUtvA==
+"@amplitude/utils@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.8.0.tgz#e687d8bb89579bc64455704a6f6d7badee78d3be"
+  integrity sha512-Hl9U2jc8Xp/2/c3QcCQ2ulKzYrdd6DISSHp6Un7v/lW9GdCXwk8aZU8B0MEvmBaAkvMnzJqJsIKqfVOU9iT0Gg==
   dependencies:
-    "@amplitude/types" "^1.7.0"
+    "@amplitude/types" "^1.8.0"
     tslib "^1.9.3"
 
 "@babel/code-frame@7.12.11":
