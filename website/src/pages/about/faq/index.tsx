@@ -9,16 +9,16 @@ import Support from "@app/pages/about/faq/support"
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
 
 const FAQ = () => {
-    return (
-        <>
-            <div className={classNames(padded, "bg-blue-darkest")}>
-                <Header />
-                <Questions />
-                <Support />
-            </div>
-            <Footer />
-        </>
-    )
+  return (
+    <>
+      <div className={classNames(padded, "bg-blue-darkest")}>
+        <Header />
+        <Questions />
+        <Support />
+      </div>
+      <Footer />
+    </>
+  )
 }
 
 export default FAQ

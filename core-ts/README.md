@@ -76,8 +76,8 @@ const url = "www.my-test-server/endpoint"
 
 let x
 const _ = (async () => {
-    x = await get({ url })
-    console.log(x)
+  x = await get({ url })
+  console.log(x)
 })()
 ```
 

@@ -15,15 +15,15 @@ import { fromTrigger } from "@app/utils/flows"
 // they become available from when a successful mandelbox status response.
 
 fromTrigger("mandelboxFlowSuccess").subscribe(
-    (info: {
-        mandelboxIP: string
-        mandelboxSecret: string
-        mandelboxPorts: {
-            port_32262: number
-            port_32263: number
-            port_32273: number
-        }
-    }) => {
-        protocolStreamInfo(info)
+  (info: {
+    mandelboxIP: string
+    mandelboxSecret: string
+    mandelboxPorts: {
+      port_32262: number
+      port_32263: number
+      port_32273: number
     }
+  }) => {
+    protocolStreamInfo(info)
+  }
 )

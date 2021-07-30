@@ -10,24 +10,24 @@ The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host 
 
 To set up your Fractal development instance:
 
--   Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image).
+- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image).
 
-    -   Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything.
-    -   Note that the EC2 instance type must be **g4** or **g3** for GPU compatibility with our containers and streaming technology. We use g4 instances in because they have better performance and cost for our purposes.
+  - Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything.
+  - Note that the EC2 instance type must be **g4** or **g3** for GPU compatibility with our containers and streaming technology. We use g4 instances in because they have better performance and cost for our purposes.
 
--   Add your EC2 instance to the security group **container-tester**, to enable proper networking rules. If you decide to set up your EC2 instance in a different AWS region, you will need to add it to the appropriate security group for that region, which may vary per region.
+- Add your EC2 instance to the security group **container-tester**, to enable proper networking rules. If you decide to set up your EC2 instance in a different AWS region, you will need to add it to the appropriate security group for that region, which may vary per region.
 
--   Name your instance by making a new tag with key `Name` and value the desired name. (We now tag instances because we used to have all sorts of instances burning money for no reason, so we name all instances.) If an instance is unnamed, it is liable to be terminated!
+- Name your instance by making a new tag with key `Name` and value the desired name. (We now tag instances because we used to have all sorts of instances burning money for no reason, so we name all instances.) If an instance is unnamed, it is liable to be terminated!
 
--   Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
+- Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
 
--   Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
+- Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
 
--   SSH/SSM into your instance and install the latest stable version of `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)).
+- SSH/SSM into your instance and install the latest stable version of `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)).
 
--   If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
+- If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
--   Then, run the following commands (adding the `-o` flag to shell scripts if you want to see output, see the README for each individual repository):
+- Then, run the following commands (adding the `-o` flag to shell scripts if you want to see output, see the README for each individual repository):
 
 ```
 # clones `dev` by default
@@ -56,23 +56,23 @@ cd ~/fractal/container-images
 ./run_local_container_image.sh base
 ```
 
--   If `./setup_ubuntu20_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
+- If `./setup_ubuntu20_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
--   Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
+- Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
 
--   Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://tryfractal.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
+- Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://tryfractal.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
 
 ## Setting Up an AMI
 
 To create an AMI:
 
--   Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of persistent, EBS storage in addition to the 125 GB of ephemeral storage.
+- Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of persistent, EBS storage in addition to the 125 GB of ephemeral storage.
 
--   Add your EC2 instance to the relevant production-ready security group(s) for the region you created it in. You can see which security group(s) currently-running production EC2 instances are attached to in the AWS console.
+- Add your EC2 instance to the relevant production-ready security group(s) for the region you created it in. You can see which security group(s) currently-running production EC2 instances are attached to in the AWS console.
 
--   Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
+- Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
 
--   SSH/SSM into your instance and run the following commands:
+- SSH/SSM into your instance and run the following commands:
 
 ```
 # clones `dev` by default
@@ -94,7 +94,7 @@ cd ~
 rm -rf fractal
 ```
 
--   Manually test that this instance can be attached to an AWS EC2 instances cluster and that it can be connected to, and then save it as an AMI in the AWS console.
+- Manually test that this instance can be attached to an AWS EC2 instances cluster and that it can be connected to, and then save it as an AMI in the AWS console.
 
 **NOTE**: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the subfolder `webserver` in the file [`app/helpers/utils/aws/base_userdata_template.sh`](https://github.com/fractal/fractal/blob/dev/webserver/app/helpers/utils/aws/base_userdata_template.sh).
 

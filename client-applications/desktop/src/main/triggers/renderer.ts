@@ -5,26 +5,25 @@ import { createTrigger, fromTrigger } from "@app/utils/flows"
 import TRIGGER from "@app/utils/triggers"
 
 const filterByName = (
-    observable: Observable<{ name: string; payload: any }>,
-    name: string
+  observable: Observable<{ name: string; payload: any }>,
+  name: string
 ) =>
-    observable.pipe(
-        filter(
-            (x: { name: string; payload: any }) =>
-                x !== undefined && x.name === name
-        ),
-        map((x: { name: string; payload: any }) => x.payload)
-    )
+  observable.pipe(
+    filter(
+      (x: { name: string; payload: any }) => x !== undefined && x.name === name
+    ),
+    map((x: { name: string; payload: any }) => x.payload)
+  )
 
 ;[
-    TRIGGER.relaunchAction, // Fires when "Continue" button is clicked on error window popup
-    TRIGGER.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
-    TRIGGER.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
-    TRIGGER.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
-    TRIGGER.persistTypeform, // Fires when "Leave feedback" button is clicked
+  TRIGGER.relaunchAction, // Fires when "Continue" button is clicked on error window popup
+  TRIGGER.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
+  TRIGGER.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
+  TRIGGER.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
+  TRIGGER.persistTypeform, // Fires when "Leave feedback" button is clicked
 ].forEach((trigger: string) => {
-    createTrigger(
-        trigger,
-        filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), trigger)
-    )
+  createTrigger(
+    trigger,
+    filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), trigger)
+  )
 })

@@ -1,34 +1,34 @@
 # client-applications/desktop/config/build.js
 ICON_FILE_NAME:
-    local: "icon_local"
-    dev: "icon_dev"
-    staging: "icon_staging"
-    prod: "icon"
+  local: "icon_local"
+  dev: "icon_dev"
+  staging: "icon_staging"
+  prod: "icon"
 
 EXECUTABLE_NAME:
-    local: "Fractal (local)"
-    dev: "Fractal (development)"
-    staging: "Fractal (staging)"
-    prod: "Fractal"
+  local: "Fractal (local)"
+  dev: "Fractal (development)"
+  staging: "Fractal (staging)"
+  prod: "Fractal"
 
 # client-applications/desktop/config/paths.js
 CLIENT_LOG_FILE_NAME: "client.log"
 PROTOCOL_LOG_FILE_NAME: "protocol.log"
 
 CLIENT_PERSISTENCE_FOLDER_NAME:
-    local: "Electron"
-    dev: "fractal"
-    staging: "fractal"
-    prod: "fractal"
+  local: "Electron"
+  dev: "fractal"
+  staging: "fractal"
+  prod: "fractal"
 
 CLIENT_LOG_FOLDERNAME: "logs"
 
 PROTOCOL_FILE_NAME:
-    macos: "_Fractal"
-    win32: "Fractal.exe"
-    linux: "Fractal"
+  macos: "_Fractal"
+  win32: "Fractal.exe"
+  linux: "Fractal"
 
 PROTOCOL_FOLDER_PATH:
-    macos: "../../MacOS"
-    win32: "../../protocol-build/client"
-    linux: "../../../protocol-build/client"
+  macos: "../../MacOS"
+  win32: "../../protocol-build/client"
+  linux: "../../../protocol-build/client"

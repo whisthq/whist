@@ -9,219 +9,219 @@
 version: 2
 
 updates:
-    ################### GitHub Actions ##################
+  ################### GitHub Actions ##################
 
-    - package-ecosystem: "github-actions"
-      directory: "/" # default location of `.github/workflows`
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "github-actions"
+    directory: "/" # default location of `.github/workflows`
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/.github/workflows/helpers" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/helpers" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/.github/workflows/helpers/notifications" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/helpers/notifications" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/.github/workflows/helpers/aws" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/helpers/aws" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/config/build" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/config/build" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "docker"
-      directory: "/.github/actions/db-migration" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/.github/actions/db-migration" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "docker"
-      directory: "/.github/actions/set-environment" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/.github/actions/set-environment" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ################ Client-Applications ################
+  #####################################################
+  ################ Client-Applications ################
 
-    - package-ecosystem: "npm"
-      directory: "/client-applications/desktop" # looks for package.json and [package-lock/yarn].lock file in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/client-applications/desktop" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ################## Mandelbox-Images #################
+  #####################################################
+  ################## Mandelbox-Images #################
 
-    - package-ecosystem: "docker"
-      directory: "/mandelbox-images/base" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/mandelbox-images/base" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "docker"
-      directory: "/mandelbox-images/browsers/chrome" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/mandelbox-images/browsers/chrome" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "docker"
-      directory: "/mandelbox-images/browsers/firefox" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/mandelbox-images/browsers/firefox" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/mandelbox-images/helper_scripts" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/mandelbox-images/helper_scripts" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/mandelbox-images/testing_scripts" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/mandelbox-images/testing_scripts" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ###################### Core-ts ######################
+  #####################################################
+  ###################### Core-ts ######################
 
-    - package-ecosystem: "npm"
-      directory: "/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    #################### Host-Service ###################
+  #####################################################
+  #################### Host-Service ###################
 
-    - package-ecosystem: "gomod"
-      directory: "/host-service" # looks for go.mod and go.sum in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "gomod"
+    directory: "/host-service" # looks for go.mod and go.sum in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ################### Webserver ##################
+  #####################################################
+  ################### Webserver ##################
 
-    - package-ecosystem: "pip"
-      directory: "/webserver/scripts" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/webserver/scripts" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "docker"
-      directory: "/webserver/docker" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/webserver/docker" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    - package-ecosystem: "pip"
-      directory: "/webserver" # looks for requirements.txt in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/webserver" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ################### Microservices ###################
+  #####################################################
+  ################### Microservices ###################
 
-    - package-ecosystem: "npm"
-      directory: "/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ###################### Protocol #####################
+  #####################################################
+  ###################### Protocol #####################
 
-    - package-ecosystem: "docker"
-      directory: "/protocol" # looks for Dockerfile in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "docker"
+    directory: "/protocol" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
-    ###################### Website ######################
+  #####################################################
+  ###################### Website ######################
 
-    - package-ecosystem: "npm"
-      directory: "/website" # looks for package.json and [package-lock/yarn].lock file in this directory
-      schedule:
-          interval: "monthly" # runs on the first day of each month
-      ignore:
-          - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-            update-types: ["version-update:semver-patch"]
-      open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/website" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
-    #####################################################
+  #####################################################
