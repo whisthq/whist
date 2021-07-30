@@ -15,6 +15,9 @@ const packageLocal = (env, config) => {
     // For testing, we just hardcode the environment to dev
     helpers.setPackagedEnv("local")
 
+    // Add the config to env_overrides.json
+    helpers.setPackagedConfig(config)
+
     // For package-local, we don't want to increment the version so we use existing version
     helpers.snowpackBuild({
         ...env,
