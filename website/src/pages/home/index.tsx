@@ -15,43 +15,43 @@ import Pricing from "@app/pages/home/pricing"
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
 
 export const Home = () => {
-    /*
+  /*
         Product page for Chrome
 
         Arguments: none
     */
-    return (
-        <>
-            <div className={classNames(padded, "bg-blue-darkest")}>
-                <Header />
-                <Hero />
-                <Features />
-            </div>
-            <div className={classNames(padded, "bg-blue-darker")}>
-                <Users />
-            </div>
-            <div className={classNames(padded, "bg-blue-darkest")}>
-                <Benefits />
-                <Pricing />
-            </div>
-            <Footer />
-        </>
-    )
+  return (
+    <>
+      <div className={classNames(padded, "bg-blue-darkest")}>
+        <Header />
+        <Hero />
+        <Features />
+      </div>
+      <div className={classNames(padded, "bg-blue-darker")}>
+        <Users />
+      </div>
+      <div className={classNames(padded, "bg-blue-darkest")}>
+        <Benefits />
+        <Pricing />
+      </div>
+      <Footer />
+    </>
+  )
 }
 
 const Router = () => {
-    /*
+  /*
         Sub-router for home page
         Arguments: none
     */
 
-    return (
-        <div>
-            <Switch>
-                <Route exact path="/" component={withTracker(Home)} />
-            </Switch>
-        </div>
-    )
+  return (
+    <div>
+      <Switch>
+        <Route exact path="/" component={withTracker(Home)} />
+      </Switch>
+    </div>
+  )
 }
 
 export default Router

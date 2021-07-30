@@ -6,11 +6,11 @@ This directory contains a Dockerfile used to containerize the Flask server compo
 
 Before deploying `bash docker/local_deploy.sh`, it is necessary to save a `.env` file, which contains lines of the form `KEY=VALUE` specifiying environment variables that are used to configure the processes running inside of the containers. Specifically, the following five environment variables must be set:
 
--   `CONFIG_DB_URL`
--   `POSTGRES_DB`
--   `POSTGRES_HOST`
--   `POSTGRES_PASSWORD`
--   `POSTGRES_USER`
+- `CONFIG_DB_URL`
+- `POSTGRES_DB`
+- `POSTGRES_HOST`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_USER`
 
 See `webserver/README.md` for a description of each one.
 

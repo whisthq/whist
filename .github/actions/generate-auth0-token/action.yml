@@ -7,45 +7,45 @@ name: Generate an Auth0 Access Token for Management API
 description: Call an Auth0 tenant's /oauth/token endpoint in order to obtain a valid access token.
 
 inputs:
-    domain:
-        description: The Auth0 tenant's domain name
-        required: true
-    client-id:
-        description: The client ID of the GHA client registered to the tenant
-        required: true
-    client-secret:
-        description: The client secret of the GHA client registered to the tenant
-        required: true
+  domain:
+    description: The Auth0 tenant's domain name
+    required: true
+  client-id:
+    description: The client ID of the GHA client registered to the tenant
+    required: true
+  client-secret:
+    description: The client secret of the GHA client registered to the tenant
+    required: true
 outputs:
-    access-token:
-        description: The access token for the management API
-        value: ${{ steps.get-token.outputs.token }}
+  access-token:
+    description: The access token for the management API
+    value: ${{ steps.get-token.outputs.token }}
 runs:
-    using: composite
-    steps:
-        - name: Install the Python requests package
-          shell: bash --noprofile --norc -eo pipefail {0}
-          run: python3 -m pip install requests
+  using: composite
+  steps:
+    - name: Install the Python requests package
+      shell: bash --noprofile --norc -eo pipefail {0}
+      run: python3 -m pip install requests
 
-        - name: Obtain an access token
-          id: get-token
-          shell: python3 {0}
-          run: |
-              import requests
+    - name: Obtain an access token
+      id: get-token
+      shell: python3 {0}
+      run: |
+        import requests
 
-              # The API request is documented here: https://auth0.com/docs/flows/call-your-api-using-the-client-credentials-flow
-              response = requests.post(
-              "https://${{ inputs.domain }}/oauth/token",
-                  json={
-                      "grant_type": "client_credentials",
-                      "client_id": "${{ inputs.client-id }}",
-                      "client_secret": "${{ inputs.client-secret }}",
-                      "audience": "https://api.fractal.co"
-                  }
-              )
+        # The API request is documented here: https://auth0.com/docs/flows/call-your-api-using-the-client-credentials-flow
+        response = requests.post(
+        "https://${{ inputs.domain }}/oauth/token",
+            json={
+                "grant_type": "client_credentials",
+                "client_id": "${{ inputs.client-id }}",
+                "client_secret": "${{ inputs.client-secret }}",
+                "audience": "https://api.fractal.co"
+            }
+        )
 
-              response.raise_for_status()
+        response.raise_for_status()
 
-              access_token = response.json()["access_token"]
+        access_token = response.json()["access_token"]
 
-              print(f"::set-output name=token::{access_token}")
+        print(f"::set-output name=token::{access_token}")

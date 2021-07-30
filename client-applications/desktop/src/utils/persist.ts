@@ -22,7 +22,7 @@ export const store = new Store({ watch: true })
 export const persisted = new events.EventEmitter()
 
 interface Cache {
-    [k: string]: string | boolean
+  [k: string]: string | boolean
 }
 
 type CacheName = "auth" | "data"
@@ -30,32 +30,32 @@ type CacheName = "auth" | "data"
 const persistedAuth = store.get("auth") as Cache
 
 export const emitAuthCache = () => {
-    const authCache = {
-        accessToken: persistedAuth?.accessToken ?? "",
-        configToken: persistedAuth?.configToken ?? "",
-        refreshToken: persistedAuth?.refreshToken ?? "",
-        userEmail: persistedAuth?.userEmail ?? "",
-        subClaim: persistedAuth?.subClaim ?? "",
-    } as Cache
+  const authCache = {
+    accessToken: persistedAuth?.accessToken ?? "",
+    configToken: persistedAuth?.configToken ?? "",
+    refreshToken: persistedAuth?.refreshToken ?? "",
+    userEmail: persistedAuth?.userEmail ?? "",
+    subClaim: persistedAuth?.subClaim ?? "",
+  } as Cache
 
-    if (isEmpty(pickBy(authCache, (x) => x === ""))) {
-        persisted.emit("data-persisted", authCache)
-    } else {
-        persisted.emit("data-not-persisted")
-    }
+  if (isEmpty(pickBy(authCache, (x) => x === ""))) {
+    persisted.emit("data-persisted", authCache)
+  } else {
+    persisted.emit("data-not-persisted")
+  }
 }
 
 export const persist = (
-    key: string,
-    value: string | boolean,
-    cache?: CacheName
+  key: string,
+  value: string | boolean,
+  cache?: CacheName
 ) => {
-    store.set(`${cache ?? "auth"}.${key}`, value)
+  store.set(`${cache ?? "auth"}.${key}`, value)
 }
 
 export const persistClear = (cache?: CacheName) => {
-    store.delete(cache ?? "auth")
+  store.delete(cache ?? "auth")
 }
 
 export const persistGet = (key: keyof Cache, cache?: CacheName) =>
-    (store.get(cache ?? "auth") as Cache)?.[key]
+  (store.get(cache ?? "auth") as Cache)?.[key]

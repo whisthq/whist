@@ -9,7 +9,7 @@ import { ServerDecorator } from "../types/api"
  * @returns a string representing a HTTP request URL
  */
 const serverUrl = (server: string, endpoint: string): string =>
-    `${server}${endpoint}`
+  `${server}${endpoint}`
 
 /*
  * Ensures that a url is present on a ServerRequest object.
@@ -24,23 +24,23 @@ const serverUrl = (server: string, endpoint: string): string =>
  * @returns a ServerResponse wrapped in a Promise
  */
 export const withURL: ServerDecorator = async (fn, req) => {
-    const { url, server, endpoint } = req
+  const { url, server, endpoint } = req
 
-    if (isString(url)) {
-        return await fn(req)
+  if (isString(url)) {
+    return await fn(req)
+  } else {
+    if (isString(server) && isString(endpoint)) {
+      return await fn({
+        ...req,
+        url: serverUrl(server || "", endpoint || ""),
+      })
     } else {
-        if (isString(server) && isString(endpoint)) {
-            return await fn({
-                ...req,
-                url: serverUrl(server || "", endpoint || ""),
-            })
-        } else {
-            return {
-                request: req,
-                error: Error(
-                    "Server API not configured with: url or [server, endpoint]."
-                ),
-            }
-        }
+      return {
+        request: req,
+        error: Error(
+          "Server API not configured with: url or [server, endpoint]."
+        ),
+      }
     }
+  }
 }

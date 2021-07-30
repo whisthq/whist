@@ -7,22 +7,22 @@ import { persist } from "@app/utils/persist"
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
 merge(
-    fromTrigger("authFlowSuccess"),
-    fromTrigger("authRefreshSuccess")
+  fromTrigger("authFlowSuccess"),
+  fromTrigger("authRefreshSuccess")
 ).subscribe(
-    (args: {
-        userEmail: string
-        subClaim: string
-        accessToken: string
-        refreshToken: string
-        configToken: string
-    }) => {
-        toPairs(args).forEach(([key, value]) => {
-            persist(key, value)
-        })
-    }
+  (args: {
+    userEmail: string
+    subClaim: string
+    accessToken: string
+    refreshToken: string
+    configToken: string
+  }) => {
+    toPairs(args).forEach(([key, value]) => {
+      persist(key, value)
+    })
+  }
 )
 
 fromTrigger("persistTypeform").subscribe(() => {
-    persist("typeformFeedbackSubmitted", true, "data")
+  persist("typeformFeedbackSubmitted", true, "data")
 })

@@ -1,4 +1,4 @@
 ignored:
-    - DL3008 # Pin versions in apt-get install. Instead of `apt-get install <package>` use `apt-get install <package>=<version>`.
-    - DL3003 # Use WORKDIR to switch to a directory.
-    - DL4001 # Either use Wget or Curl but not both.
+  - DL3008 # Pin versions in apt-get install. Instead of `apt-get install <package>` use `apt-get install <package>=<version>`.
+  - DL3003 # Use WORKDIR to switch to a directory.
+  - DL4001 # Either use Wget or Curl but not both.
