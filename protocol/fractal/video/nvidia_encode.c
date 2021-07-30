@@ -32,7 +32,8 @@ void try_free_frame(NvidiaEncoder* encoder) {
 
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
                                      CUcontext cuda_context) {
-    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %x", bitrate, codec, out_width, out_height, cuda_context);
+    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %x",
+             bitrate, codec, out_width, out_height, cuda_context);
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -42,6 +43,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encoder->width = out_width;
     encoder->height = out_height;
     encoder->cuda_context = cuda_context;
+    encoder->bitrate = bitrate;
 
     // Set initial frame pointer to NULL, nvidia will overwrite this later with the framebuffer
     // pointer
@@ -156,7 +158,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         // reconfigure the encoder
         if (!nvidia_reconfigure_encoder(
                 encoder, resource_to_register.width, resource_to_register.height,
-                encoder->encoder_params.encodeConfig->rcParams.averageBitRate,
+                encoder->bitrate,
                 encoder->codec_type)) {
             LOG_ERROR("Reconfigure failed!");
             return -1;
@@ -166,6 +168,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         LOG_ERROR("NULL texture passed into encoder! Doing nothing.");
         return -1;
     }
+    bool cache_hit = false;
     // check the cache for a registered resource
     for (int i = 0; i < RESOURCE_CACHE_SIZE; i++) {
         RegisteredResource cached_resource = encoder->resource_cache[i];
@@ -174,48 +177,51 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             cached_resource.height == resource_to_register.height &&
             cached_resource.device_type == resource_to_register.device_type) {
             encoder->registered_resource = encoder->resource_cache[i];
-            // TODO: if X11, memcpy?
-            if (encoder->registered_resource.device_type == X11_DEVICE) {
-                NV_ENC_LOCK_INPUT_BUFFER lock_params = {0};
-                lock_params.version = NV_ENC_LOCK_INPUT_BUFFER_VER;
-                lock_params.inputBuffer = encoder->registered_resource.handle;
-                NVENCSTATUS status = encoder->p_enc_fn.nvEncLockInputBuffer(
-                    encoder->internal_nvidia_encoder, &lock_params);
-                if (status != NV_ENC_SUCCESS) {
-                    LOG_ERROR("Failed to lock input buffer, error %d", status);
-                    return -1;
-                }
-                encoder->pitch = lock_params.pitch;
-                // memcpy input data
-                memcpy(
-                    lock_params.bufferDataPtr, encoder->registered_resource.texture_pointer,
-                    encoder->pitch * encoder->registered_resource.height);
-                status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
-                                                                  lock_params.inputBuffer);
-                if (status != NV_ENC_SUCCESS) {
-                    LOG_ERROR("Failed to unlock input buffer, error %d", status);
-                    return -1;
-                }
-            } else {
-                encoder->pitch = encoder->registered_resource.width;
-            }
-            return 0;
+            cache_hit = true;
         }
     }
-    // no cache hit: we register the resource
-    if (encoder->resource_cache[RESOURCE_CACHE_SIZE - 1].texture_pointer != NULL) {
-        unregister_resource(encoder, encoder->resource_cache[RESOURCE_CACHE_SIZE - 1]);
+    if (!cache_hit) {
+        // no cache hit: we register the resource
+        if (encoder->resource_cache[RESOURCE_CACHE_SIZE - 1].texture_pointer != NULL) {
+            unregister_resource(encoder, encoder->resource_cache[RESOURCE_CACHE_SIZE - 1]);
+        }
+        for (int i = RESOURCE_CACHE_SIZE - 1; i > 0; i--) {
+            encoder->resource_cache[i] = encoder->resource_cache[i - 1];
+        }
+        int result = register_resource(encoder, &resource_to_register);
+        if (result < 0) {
+            LOG_ERROR("Failed to register resource!");
+            return -1;
+        }
+        encoder->resource_cache[0] = resource_to_register;
+        encoder->registered_resource = encoder->resource_cache[0];
     }
-    for (int i = RESOURCE_CACHE_SIZE - 1; i > 0; i--) {
-        encoder->resource_cache[i] = encoder->resource_cache[i - 1];
+    // TODO: if X11, memcpy?
+    if (encoder->registered_resource.device_type == X11_DEVICE) {
+        NV_ENC_LOCK_INPUT_BUFFER lock_params = {0};
+        lock_params.version = NV_ENC_LOCK_INPUT_BUFFER_VER;
+        lock_params.inputBuffer = encoder->registered_resource.handle;
+        NVENCSTATUS status =
+            encoder->p_enc_fn.nvEncLockInputBuffer(encoder->internal_nvidia_encoder, &lock_params);
+        if (status != NV_ENC_SUCCESS) {
+            LOG_ERROR("Failed to lock input buffer, error %d", status);
+            return -1;
+        }
+        // encoder->pitch = lock_params.pitch;
+        encoder->pitch = encoder->registered_resource.width * 4;
+        LOG_DEBUG("width: %d, pitch: %d", encoder->registered_resource.width, encoder->pitch);
+        // memcpy input data
+        memcpy(lock_params.bufferDataPtr, encoder->registered_resource.texture_pointer,
+               encoder->pitch * encoder->registered_resource.height);
+        status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
+                                                          lock_params.inputBuffer);
+        if (status != NV_ENC_SUCCESS) {
+            LOG_ERROR("Failed to unlock input buffer, error %d", status);
+            return -1;
+        }
+    } else {
+        encoder->pitch = encoder->registered_resource.width;
     }
-    int result = register_resource(encoder, &resource_to_register);
-    if (result < 0) {
-        LOG_ERROR("Failed to register resource!");
-        return -1;
-    }
-    encoder->resource_cache[0] = resource_to_register;
-    encoder->registered_resource = encoder->resource_cache[0];
     return 0;
 }
 
@@ -434,7 +440,8 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
             (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("Reconfiguring encoder to width %d, height %d, bitrate %d, codec %d", width, height, bitrate, codec);
+    LOG_INFO("Reconfiguring encoder to width %d, height %d, bitrate %d, codec %d", width, height,
+             bitrate, codec);
     NVENCSTATUS status;
     // If dimensions or codec type changes,
     // then we need to send an IDR frame

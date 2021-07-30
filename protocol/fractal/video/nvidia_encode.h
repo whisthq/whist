@@ -29,6 +29,7 @@ typedef struct {
     NV_ENC_BUFFER_FORMAT buffer_fmt;
     CUcontext cuda_context;
     CodecType codec_type;
+    int bitrate;
     uint32_t frame_idx;
     int width;
     int height;
