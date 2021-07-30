@@ -625,10 +625,10 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    # Main Webserver: Deploy to Heroku
+    # Webserver: Deploy to Heroku
     # Push the webserver subtree to the appropriate Heroku app.
     webserver-deploy-heroku:
-        name: "Main Webserver: Deploy to Heroku"
+        name: "Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         concurrency: webserver-deploy-heroku-${{ github.ref }}

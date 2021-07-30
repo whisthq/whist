@@ -1,10 +1,10 @@
 # workflows/webserver-cloud-infrastructure-monitoring.yml
 #
-# Main Webserver: Cloud Infrastructure Monitoring
+# Webserver: Cloud Infrastructure Monitoring
 # Checks for Dangling Auto-Scaling Groups, Clusters, EC2 instances, and Packer Build Instances,
 # and cleans dangling Packer instances, AMIs, and EBS snapshots
 
-name: "Main Webserver: Cloud Infrastructure Monitoring"
+name: "Webserver: Cloud Infrastructure Monitoring"
 on:
     schedule:
         - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
@@ -14,7 +14,7 @@ jobs:
     # Find the number of AWS EC2 instances we have across all instance states (running, stopped)
     # running in each region, and notify Slack
     webserver-enumerate-all-instances:
-        name: Main Webserver Enumerate All Instances
+        name: Webserver Enumerate All Instances
         runs-on: ubuntu-20.04
         env:
             AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-west-1 eu-central-1"
@@ -54,7 +54,7 @@ jobs:
     # Find whether we have hanging cloud resources, which are defined as resources that are
     # not in one of our databases, but still exist in AWS, and notify Slack
     webserver-hanging-resource-notification:
-        name: Main Webserver Hanging Resource Notification
+        name: Webserver Hanging Resource Notification
         runs-on: ubuntu-20.04
         strategy:
             matrix:
@@ -141,17 +141,16 @@ jobs:
               if: ${{ matrix.aws-region == 'us-east-1' }}
               run: aws-hashicorp-packer-reaper terminate --older-than 45m
 
-            # This deletes all but the currently active AMIs and the AMIs created within the last 30 days
-            #, which is 2 promotion-cycles for us, as a safe buffer in case we need to revert back
-            - name: Delete All AMIs from the Last Month
-              run: amicleaner --force-delete --ami-min-days 30
+            # This deletes all but the currently active AMIs and the past 10 AMIs, in case we need to revert back
+            - name: Delete All AMIs Older Than 1 Month
+              run: amicleaner --full-report --keep-previous 10 --force-delete --mapping-key name --mapping-values fractal-ami
 
             # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
             # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
             # with it, which can happen with regular instances, Packer builders, and more. They are
             # useless (especially since we don't store user data on instances) and thus should be deleted
             - name: Delete Orphaned EBS Volumes
-              run: y | amicleaner --check-orphans
+              run: echo "y" | amicleaner --check-orphans
 
             - name: Notify Slack on Job Error
               if: failure()
