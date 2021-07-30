@@ -7,7 +7,6 @@
 import { AsyncReturnType } from "@app/@types/state"
 import { apiPut } from "@app/utils/api"
 import { HostServicePort } from "@app/utils/constants"
-import { appEnvironment, FractalEnvironments } from "../../config/configs"
 
 // This file directly interacts with data returned from the webserver, which
 // has keys labelled in Python's snake_case format. We want to be able to pass
