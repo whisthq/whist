@@ -156,10 +156,9 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
     if (resource_to_register.width != encoder->width ||
         resource_to_register.height != encoder->height) {
         // reconfigure the encoder
-        if (!nvidia_reconfigure_encoder(
-                encoder, resource_to_register.width, resource_to_register.height,
-                encoder->bitrate,
-                encoder->codec_type)) {
+        if (!nvidia_reconfigure_encoder(encoder, resource_to_register.width,
+                                        resource_to_register.height, encoder->bitrate,
+                                        encoder->codec_type)) {
             LOG_ERROR("Reconfigure failed!");
             return -1;
         }
@@ -177,7 +176,9 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             cached_resource.height == resource_to_register.height &&
             cached_resource.device_type == resource_to_register.device_type) {
             encoder->registered_resource = encoder->resource_cache[i];
+            LOG_DEBUG("Using cached resource at entry %d", i);
             cache_hit = true;
+            break;
         }
     }
     if (!cache_hit) {
@@ -196,6 +197,10 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         encoder->resource_cache[0] = resource_to_register;
         encoder->registered_resource = encoder->resource_cache[0];
     }
+    LOG_DEBUG("Registered resource data: texture %x, width %d, height %d, device %s",
+              encoder->registered_resource.texture_pointer, encoder->registered_resource.width,
+              encoder->registered_resource.height,
+              encoder->registered_resource.device_type == NVIDIA_DEVICE ? "Nvidia" : "X11");
     // TODO: if X11, memcpy?
     if (encoder->registered_resource.device_type == X11_DEVICE) {
         NV_ENC_LOCK_INPUT_BUFFER lock_params = {0};

@@ -137,7 +137,7 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
         return false;
     }
     device->frame_data = device->image->data;
-    device->pitch = device->width * 4;
+    device->pitch = device->image->bytes_per_line;
 #endif
     return true;
 }

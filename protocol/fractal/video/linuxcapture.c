@@ -69,6 +69,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         if (cu_res != CUDA_SUCCESS) {
             LOG_ERROR("Failed to push current context, status %d!");
         }
+        cu_ctx_synchronize_ptr();
         // Nvidia requires recreation
         while (device->nvidia_capture_device == NULL) {
             LOG_INFO("Creating nvidia capture device...");
@@ -76,6 +77,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             fractal_sleep(500);
         }
         LOG_INFO("Created nvidia capture device!");
+        LOG_DEBUG("device handle: %d", device->nvidia_capture_device->fbc_handle);
         nvidia_release_context(device->nvidia_capture_device);
         cu_res = cu_ctx_pop_current_ptr(get_video_thread_cuda_context_ptr());
         // Tell the main thread to bind the nvidia context again
@@ -326,6 +328,7 @@ int capture_screen(CaptureDevice* device) {
                 if (cu_res != CUDA_SUCCESS) {
                     LOG_ERROR("Failed to swap contexts!");
                 }
+                cu_ctx_synchronize_ptr();
                 nvidia_bind_context(device->nvidia_capture_device);
                 device->nvidia_context_is_stale = false;
             }
@@ -386,6 +389,7 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
     if (device->active_capture_device == NVIDIA_DEVICE) {
         // destroy the device
         destroy_nvidia_capture_device(device->nvidia_capture_device);
+        device->nvidia_capture_device = NULL;
         device->active_capture_device = X11_DEVICE;
         fractal_post_semaphore(device->nvidia_device_semaphore);
     }
