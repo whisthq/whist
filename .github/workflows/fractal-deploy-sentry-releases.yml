@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         project:
-          - name: webserver
+          - name: Webserver
             sentry-project: webserver
           - name: Protocol (macOS, Windows, Linux Ubuntu)
             sentry-project: protocol
