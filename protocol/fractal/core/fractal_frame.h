@@ -20,7 +20,7 @@ typedef struct VideoFrame {
     int num_peer_update_msgs;
 
     bool has_cursor;
-    bool is_empty_frame;  // indicates whether this frame is identical to the one last sent
+    bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
                              // the server is wrong, it can correct it
     int videodata_length;
