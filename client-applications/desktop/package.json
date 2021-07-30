@@ -28,7 +28,6 @@
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
     "@fortawesome/react-fontawesome": "^0.1.14",
     "@fractal/core-ts": "file:../../core-ts",
-    "@typeform/embed-react": "^1.0.7",
     "@types/node-fetch": "^2.5.10",
     "@types/ping": "^0.2.0",
     "@types/react-router": "^5.1.13",

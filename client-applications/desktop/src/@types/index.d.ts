@@ -30,5 +30,3 @@ declare module "*.css" {
   const classNames: IClassNames
   export = classNames
 }
-
-declare module "@typeform/embed-react"
