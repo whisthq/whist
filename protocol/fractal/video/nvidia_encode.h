@@ -5,11 +5,15 @@
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
 #include "cudacontext.h"
+#include "linuxcapture.h"
 
 #define RESOURCE_CACHE_SIZE 4
 
 typedef struct {
     NV_ENC_REGISTERED_PTR handle;
+    CaptureDeviceType device_type;
+    int width;
+    int height;
     void* texture_pointer;
 } RegisteredResource;
 
@@ -19,7 +23,7 @@ typedef struct {
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
     RegisteredResource resource_cache[RESOURCE_CACHE_SIZE];
-    NV_ENC_REGISTERED_PTR registered_resource;
+    RegisteredResource registered_resource;
 
     NV_ENC_OUTPUT_PTR output_buffer;
     NV_ENC_BUFFER_FORMAT buffer_fmt;
@@ -74,9 +78,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height,
-                                void* texture_pointer);
-
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resource_to_register);
 /**
  * @brief                          Set the next frame to be an IDR-frame,
  *                                 with SPS/PPS headers included as well.

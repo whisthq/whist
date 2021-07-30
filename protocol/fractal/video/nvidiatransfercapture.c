@@ -12,6 +12,7 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
         Returns:
             (int): 0 on success, -1 on failure
         */
+    /*
     if (device->p_gpu_texture == NULL) {
         LOG_ERROR("Nothing to register! Device GPU texture was NULL");
         return -1;
@@ -34,6 +35,7 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
         return -1;
     }
     encoder->registered_resource = register_params.registeredResource;
+    */
     return 0;
 }
 

@@ -268,6 +268,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     if (!res) {
         LOG_ERROR("Failed to initialize cuda!");
     }
+    LOG_DEBUG("Nvidia context: %x, Video context: %x", *get_nvidia_thread_cuda_context_ptr(), *get_video_thread_cuda_context_ptr());
     // set up semaphore and nvidia manager
     device->nvidia_device_semaphore = fractal_create_semaphore(0);
     device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
@@ -334,6 +335,7 @@ int capture_screen(CaptureDevice* device) {
                 if (device->width == device->nvidia_capture_device->width &&
                     device->height == device->nvidia_capture_device->height) {
                     device->last_capture_device = NVIDIA_DEVICE;
+                    device->frame_data = device->nvidia_capture_device->p_gpu_texture;
                     return ret;
                 } else {
                     LOG_ERROR(
@@ -349,7 +351,11 @@ int capture_screen(CaptureDevice* device) {
         case X11_DEVICE:
             device->last_capture_device = X11_DEVICE;
             // LOG_INFO("X11 capture!");
-            return x11_capture_screen(device->x11_capture_device);
+            int ret = x11_capture_screen(device->x11_capture_device);
+            if (ret >= 0) {
+                device->frame_data = device->x11_capture_device->frame_data;
+            }
+            return ret;
         default:
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);
             return -1;

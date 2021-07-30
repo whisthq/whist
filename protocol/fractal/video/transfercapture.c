@@ -94,19 +94,13 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             video_encoder_set_iframe(encoder);
             // start_transfer_context(device, encoder);
         }
-        switch (device->active_capture_device) {
-            case NVIDIA_DEVICE:
-                return nvidia_encoder_frame_intake(
-                    encoder->nvidia_encoders[encoder->active_encoder_idx], device->width,
-                    device->height, device->nvidia_capture_device->p_gpu_texture);
-            case X11_DEVICE:
-                return nvidia_encoder_frame_intake(
-                    encoder->nvidia_encoders[encoder->active_encoder_idx], device->width,
-                    device->height, device->x11_capture_device->frame_data);
-            default:
-                LOG_ERROR("Device type unknown: %d!");
-                return -1;
-        }
+        RegisteredResource resource_to_register = {0};
+        resource_to_register.width = device->width;
+        resource_to_register.height = device->height;
+        resource_to_register.device_type = device->active_capture_device;
+        resource_to_register.texture_pointer = device->frame_data;
+        return nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx],
+                                           resource_to_register);
     }
 #endif
 
