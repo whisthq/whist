@@ -354,6 +354,13 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}()
 
+	// Verify that this user sent in a (nontrivial) config encryption token
+	if len(req.ConfigEncryptionToken) < 10 {
+		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
+		return
+	}
+	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
+
 	// Request port bindings for the mandelbox.
 	if err := fc.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -532,18 +539,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AesKey:              aesKey,
 	}
 
-	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 	fc.AssignToUser(req.UserID)
 
 	err = fc.PopulateUserConfigs()
-	// TODO: check that the config token is actually good? This might happen
-	// automatically.
 	if err != nil {
-		// Not a fatal error --- we still want to spin up a mandelbox, but without
-		// app config saving at the end of the session, so we set a blank
-		// encryption token.
+		// Not a fatal error --- we still want to spin up a mandelbox, and we will
+		// just use the provided encryption token to save configs when the
+		// mandelbox dies.
 		logger.Error(err)
-		fc.SetConfigEncryptionToken("")
 	}
 
 	err = fc.MarkReady()
