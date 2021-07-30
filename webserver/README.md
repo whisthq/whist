@@ -254,7 +254,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── blueprint_helpers --> any complex synchronous computation that's part of our endpoints
 │   │   ├── helpers_tests
 │   │   │   ├── aws_tests
-│   │   │   │   └── test_ecs_client.py --> basic tests of ECSClient functionality
 │   │   │   │   └── test_ec2_client.py --> basic tests of EC2Client functionality
 │   │   └── utils
 │   │       ├── cloud_interface -- > our cloud-general library/interface
@@ -265,7 +264,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── aws_resource_integrity.py --> scripts that ensure certain AWS resources exist
 │   │       │   ├── aws_resource_locks.py --> scripts to ensure atomicity on AWS resource use
 │   │       │   ├── base_ec2_client.py -->  Utility libraries for monitoring and orchestrating EC2 instances.
-│   │       │   ├── ecs_deletion.py --> code used for cluster deletion
 │   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
 │   │       ├── general
 │   │       │   ├── auth.py  --> decorators for authenticating users/devs
@@ -309,7 +307,6 @@ Note that all conftest files contain test fixtures for their respective director
 └── tests --> tests for our assorted endpoints.  All files without docs
     should be assumed to unit test the endpoints/bps they name.
     ├── aws
-    │   ├── config.py
     │   ├── test_assign.py
     │   ├── test_instance_scaling.py
     │   ├── test_instance_selection.py

@@ -40,9 +40,9 @@ jobs:
               working-directory: webserver
               run: pip install -r scripts/requirements.txt
 
-            ######################## Building ECS Host Service ########################
+            ########################## Building Host Service ##########################
 
-            # To build ECS Host Service
+            # To build Host Service
             - name: Setup Go environment
               uses: actions/setup-go@v2.1.3
               with:
@@ -55,7 +55,7 @@ jobs:
               run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
 
             - name: Build Go Project
-              working-directory: ecs-host-service
+              working-directory: host-service
               env:
                   HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
                   HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
@@ -72,7 +72,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
-            - name: Set ECS Host Service APP_ENV based to DEV (File gets read by ecs-host-service.service)
+            - name: Set Host Service APP_ENV based to DEV (File gets read by host-service.service)
               working-directory: host-setup
               run: echo 'APP_ENV=DEV' > app_env.env
 
@@ -99,7 +99,7 @@ jobs:
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["ami_name"] = f"fractal-ecs-host-ami-${{ github.sha }}-{date_str}"
+                  data["ami_name"] = f"fractal-host-ami-${{ github.sha }}-{date_str}"
                   data["source_region"] = "${{ env.aws_new_ami_source_region }}"
                   data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
                   data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"

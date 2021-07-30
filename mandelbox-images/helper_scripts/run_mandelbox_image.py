@@ -128,7 +128,7 @@ def ensure_host_service_is_running():
     if not running:
         sys.exit(
             (
-                "Cannot start mandelbox because the ecs-host-service is not "
+                "Cannot start mandelbox because the host-service is not "
                 "listening on port 4678. Is it running successfully?"
             )
         )
