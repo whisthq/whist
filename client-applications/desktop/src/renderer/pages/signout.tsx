@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
 import classNames from "classnames"
@@ -12,6 +12,12 @@ const Signout = (props: { onClick: () => void }) => {
             onClick (() => void): Function to execute when signout button is pressed
     */
 
+  const [checked, setChecked] = useState(false)
+
+  const handleCheck = () => {
+    setChecked(!checked)
+  }
+
   return (
     <div
       className={classNames(
@@ -23,9 +29,8 @@ const Signout = (props: { onClick: () => void }) => {
         Are you sure you want to sign out?
       </div>
       <div className="mt-2 mb-4">
-        To protect your privacy, signing out will <i>permanently</i> delete your
-        Fractal browsing session data, including any saved passwords, cookies,
-        history, etc.
+        Signing out will terminate your browser and you&lsquo;ll need to sign
+        back in nex time.
       </div>
       <div className="w-full">
         <div>
@@ -36,6 +41,10 @@ const Signout = (props: { onClick: () => void }) => {
             onClick={props.onClick}
           />
         </div>
+      </div>
+      <div>
+        <input type="checkbox" checked={checked} onChange={handleCheck} />
+        Also wipe all my browsing data (saved passwords, history, cookies, etc.)
       </div>
     </div>
   )
