@@ -273,6 +273,7 @@ jobs:
     fractal-build-monorepo-config:
      name: "Building Monorepo Config"
         runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
         outputs:
             macos: ${{ steps.config-macos.outputs.config }}
             win32: ${{ steps.config-win32.outputs.config }}
@@ -281,28 +282,27 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Build Monorepo Configuration for Mac
+            - name: Build Monorepo Configuration for macOS
               id: config-macos
               uses: ./.github/actions/monorepo-config
               with:
                   os: macos
-                  deploy: dev
+                  deploy: ${{ needs.fractal-publish-build-config.outputs.branch }}
 
             - name: Build Monorepo Configuration for Windows
               id: config-win32
               uses: ./.github/actions/monorepo-config
               with:
                   os: win32
-                  deploy: dev
+                  deploy: ${{ needs.fractal-publish-build-config.outputs.branch }}
 
-            - name: Log MacOS Configuration
+            - name: Log macOS Configuration
               shell: python3 {0}
-              run: |
-                  print(r"""${{ steps.config-macos.outputs.config }}""")
+              run: print(r"""${{ steps.config-macos.outputs.config }}""")
+
             - name: Log Win32 Configuration
               shell: python3 {0}
-              run: |
-                  print(r"""${{ steps.config-win32.outputs.config }}""")
+              run: print(r"""${{ steps.config-win32.outputs.config }}""")
 
     # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
     # This job does:
