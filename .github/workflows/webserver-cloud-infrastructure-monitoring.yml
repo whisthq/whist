@@ -1,0 +1,188 @@
+# workflows/webserver-cloud-infrastructure-monitoring.yml
+#
+# Webserver: Cloud Infrastructure Monitoring
+# Checks for Dangling Auto-Scaling Groups, Clusters, EC2 instances, and Packer Build Instances,
+# and cleans dangling Packer instances, AMIs, and EBS snapshots
+
+name: "Webserver: Cloud Infrastructure Monitoring"
+on:
+  schedule:
+    - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+  workflow_dispatch:
+
+jobs:
+  # Find the number of AWS EC2 instances we have across all instance states (running, stopped)
+  # running in each region, and notify Slack
+  webserver-enumerate-all-instances:
+    name: Webserver Enumerate All Instances
+    runs-on: ubuntu-20.04
+    env:
+      AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-west-1 eu-central-1"
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Python-based Notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Install boto3
+        run: pip install boto3
+
+      - name: List Number of AWS EC2 Instances in Slack
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          from aws.resource_helpers import num_aws_instances
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
+          BODY = "*Number of Instances:*"
+          for region in "${{ env.AWS_REGIONS }}".split():
+            (running_instances, total_instances) = num_aws_instances(region)
+            BODY += "\n     _%s_: `%d running (%d total)`" % (region, running_instances, total_instances)
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+  # Find whether we have hanging cloud resources, which are defined as resources that are
+  # not in one of our databases, but still exist in AWS, and notify Slack
+  webserver-hanging-resource-notification:
+    name: Webserver Hanging Resource Notification
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        aws-region:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - ca-central-1
+          - eu-west-1
+          - eu-central-1
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based Notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install boto3 and python-dateutil
+        run: pip install boto3 python-dateutil
+
+      - name: Flag Old EC2 Instances and Notify in Slack if They Exist
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          from aws.resource_helpers import flag_instances
+          resources = flag_instances("${{ matrix.aws-region }}")
+          if resources:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_CHANNEL = "#alerts-dev"
+            BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_: %s" % resources
+            slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+  # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
+  # EBS volumes from CI and old dev/staging/production AMIs
+  # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
+  webserver-cleanup-lingering-packer-builders-and-ami-resources:
+    name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        aws-region:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - ca-central-1
+          - eu-west-1
+          - eu-central-1
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-region: ${{ matrix.aws-region }}
+
+      - name: Setup Python-based Notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Install Utilities to Delete Lingering Packer Builders & AMI Resources
+        run: pip install aws-hashicorp-packer-reaper aws-amicleaner
+
+      # Packer takes about 25-30 minutes to build new AMIs across all of our enabled regions,
+      # so any Packer instance over 45 minutes old has failed to delete and should be force-deleted
+      # We only run Packer Builders on us-east-1
+      - name: Kill All Packer Instances Older Than 45 Minutes
+        if: ${{ matrix.aws-region == 'us-east-1' }}
+        run: aws-hashicorp-packer-reaper terminate --older-than 45m
+
+      # This deletes all but the currently active deployment AMIs and the past 10 deployment AMIs,
+      # in case we need to revert back
+      - name: Delete All AMIs Older Than 1 Month
+        run: amicleaner --full-report --keep-previous 10 --force-delete --mapping-key name --mapping-values fractal-ami
+
+      # This deletes all the test AMIs, from `host-setup-check-pr.yml`, since we don't need to keep any of them
+      - name: Delete All AMIs Older Than 1 Month
+        run: amicleaner --full-report --keep-previous 0 --force-delete --mapping-key name --mapping-values fractal-ami
+
+      # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
+      # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
+      # with it, which can happen with regular instances, Packer builders, and more. They are
+      # useless (especially since we don't store user data on instances) and thus should be deleted
+      - name: Delete Orphaned EBS Volumes
+        run: echo "y" | amicleaner --check-orphans
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+  # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
+  notify-slack-on-workflow-failure:
+    name: "Notify Slack if Cloud Infrastructure Monitoring Workflow Fails"
+    needs:
+      [
+        webserver-enumerate-all-instances,
+        webserver-hanging-resource-notification,
+        webserver-cleanup-lingering-packer-builders-and-ami-resources,
+      ]
+    if: failure()
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based Notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Failure
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-dev"
+          BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

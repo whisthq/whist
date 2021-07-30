@@ -1,4 +1,4 @@
-# Fractal Main Webserver
+# Fractal webserver
 
 [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal)
 

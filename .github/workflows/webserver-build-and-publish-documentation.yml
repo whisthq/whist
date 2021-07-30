@@ -1,11 +1,11 @@
 # workflows/webserver-build-and-publish-documentation.yml
 #
-# Main Webserver: Build & Publish Documentation
+# Webserver: Build & Publish Documentation
 # Build and conditionally deploy webserver documentation. Although this
 # workflow is triggered by both pull requests and pushes, the steps that deploy
 # the built documentation only run when the triggering event is a push.
 
-name: "Main Webserver: Build & Publish Documentation"
+name: "Webserver: Build & Publish Documentation"
 
 on:
   pull_request:
