@@ -45,6 +45,7 @@ on:
                 default: true
 
 jobs:
+<<<<<<< HEAD
     # We use a separate job for building the monorepo configuration. The monorepo
     # configuration is built in a Docker container, and Docker Actions can only be
     # run on Linux environments on GitHub. As we need to build the client application
@@ -96,6 +97,8 @@ jobs:
               run: |
                   print(r"""${{ steps.config-win32.outputs.config }}""")
 
+=======
+>>>>>>> ea77fac5a (actually fix by reordering jobs and using var)
     # Configure Jobs
     # Detect the branch using regex matching and store as an output to regulate downstream actions.
     # Access branch with `fractal-publish-build-config.outputs.branch`.
@@ -306,6 +309,70 @@ jobs:
                   BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+    # We use a separate job for building the monorepo configuration. The monorepo
+    # configuration is built in a Docker container, and Docker Actions can only be
+    # run on Linux environments on GitHub. As we need to build the client application
+    # in Mac and Windows environments, we need to run the configuration builder as a
+    # separate job. We set the JSON configuration data as "outputs" of this job step,
+    # so that it can be consumed by other jobs.
+    #
+    # Before we set the "outputs" of this job step, we need to perform a small trick
+    # to get around a implementation detail of GitHub Actions. The GitHub Actions runner
+    # will silently ignore any "outputs" that contain values inside the GitHub secrets
+    # store. This is for security purposes, but it's rather inconvenient when we're trying
+    # to pass around a configuration object that may contain secret values. To get around
+    # GitHub's limitation, we first encode the configuration string to base-85. Other jobs
+    # will need to decode the base-85 string to produce the JSON configuration object.
+    fractal-build-monorepo-config:
+        name: Building config
+        runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
+        outputs:
+            macos: ${{ steps.encoded-config.outputs.macos }}
+            win32: ${{ steps.encoded-config.outputs.win32 }}
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Build Monorepo Configuration for macOS
+              id: config-macos
+              uses: ./.github/actions/monorepo-config
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+                  os: macos
+                  deploy: ${{ needs.fractal-publish-build-config.outputs.branch }}
+
+            - name: Build Monorepo Configuration for Windows
+              id: config-win32
+              uses: ./.github/actions/monorepo-config
+              with:
+                  secrets: ${{ toJSON(secrets) }}
+                  os: win32
+                  deploy: ${{ needs.fractal-publish-build-config.outputs.branch }}
+
+            - name: Encode Configuration
+              id: encoded-config
+              shell: python3 {0}
+              run: |
+                  from base64 import b85encode
+                  macos = r"""${{ steps.config-macos.outputs.config }}"""
+                  win32 = r"""${{ steps.config-win32.outputs.config }}"""
+                  encoded_macos = b85encode(macos.encode()).decode()
+                  encoded_win32 = b85encode(win32.encode()).decode()
+                  print(f"::set-output name=macos::{encoded_macos}")
+                  print(f"::set-output name=win32::{encoded_win32}")
+
+            - name: Log MacOS Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-macos.outputs.config }}""")
+
+            - name: Log Win32 Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-win32.outputs.config }}""")
 
     # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
     # This job does:
@@ -538,7 +605,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [
-                fractal-publish-build-config,
+                fractal-publish-build-
                 mandelboxes-and-amis-publish-ghcr-and-aws,
             ]
         # We must make sure that this doesn't run at the same time as another workflow's publish script!
@@ -583,7 +650,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [
-                fractal-publish-build-config,
+                fractal-publish-build-
                 webserver-deploy-heroku,
                 mandelboxes-and-amis-publish-ghcr-and-aws,
                 client-applications-publish-build-s3,
@@ -800,7 +867,7 @@ jobs:
             release_version: ${{ steps.generate-release-version.outputs.release_version }}
         needs:
             [
-                config,
+                fractal-build-monorepo-config,
                 fractal-publish-build-config,
                 webserver-deploy-heroku,
                 microservices-deploy-auth0-rules,
