@@ -41,13 +41,17 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           from aws.resource_helpers import num_aws_instances
+
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-dev"
           BODY = "*Number of Instances:*"
+
           for region in "${{ env.AWS_REGIONS }}".split():
             (running_instances, total_instances) = num_aws_instances(region)
             BODY += "\n     _%s_: `%d running (%d total)`" % (region, running_instances, total_instances)
+
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
   # Find whether we have hanging cloud resources, which are defined as resources that are
   # not in one of our databases, but still exist in AWS, and notify Slack
   webserver-hanging-resource-notification:
@@ -63,7 +67,6 @@ jobs:
           - ca-central-1
           - eu-west-1
           - eu-central-1
-
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -87,12 +90,16 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           from aws.resource_helpers import flag_instances
+
           resources = flag_instances("${{ matrix.aws-region }}")
+
           if resources:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
             SLACK_CHANNEL = "#alerts-dev"
             BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_: %s" % resources
+
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
   # EBS volumes from CI and old dev/staging/production AMIs
   # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
@@ -141,7 +148,7 @@ jobs:
 
       # This deletes all the test AMIs, from `host-setup-check-pr.yml`, since we don't need to keep any of them
       - name: Delete All AMIs Older Than 1 Month
-        run: amicleaner --full-report --keep-previous 0 --force-delete --mapping-key name --mapping-values fractal-ami
+        run: amicleaner --full-report --keep-previous 0 --force-delete --mapping-key name --mapping-values fractal-test-ami
 
       # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
       # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
@@ -155,10 +162,13 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
+
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
   # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
   notify-slack-on-workflow-failure:
     name: "Notify Slack if Cloud Infrastructure Monitoring Workflow Fails"
@@ -182,7 +192,9 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
+
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-dev"
           BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
