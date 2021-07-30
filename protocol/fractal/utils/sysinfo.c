@@ -338,7 +338,7 @@ void print_memory_info() {
 #include <intrin.h>
 #endif
 
-#if defined __arm__ && defined __APPLE__
+#if defined __arm64__ && defined __APPLE__
 #define M1
 #endif
 
@@ -358,7 +358,7 @@ void cpu_id(unsigned i, unsigned regs[4]) {
 
 void print_cpu_info() {
 #ifdef M1
-    const char* cpu_vender = "AppleM1";
+    const char* cpu_vendor = "AppleM1";
     const char* cpu_brand_string = "Apple M1 8-Core @ 3.2GHz";
     unsigned logical = 8;
     unsigned cores = 8;
