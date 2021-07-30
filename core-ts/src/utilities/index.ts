@@ -6,9 +6,9 @@
  * @returns a function to select the element by index
  */
 const index = (idx: number) => {
-  return function getIndex(arr: any[]) {
-    return arr[idx]
-  }
+    return function getIndex(arr: any[]) {
+        return arr[idx]
+    }
 }
 
 /*
@@ -30,14 +30,14 @@ const lengths = (arr: any[]) => arr.length
  * @returns an array with the interleaved elements
  */
 const interleave = (...arrays: any[]) => {
-  let length = Math.min.apply(Math, arrays.map(lengths))
-  let result: Array<any> = []
+    let length = Math.min.apply(Math, arrays.map(lengths))
+    let result: Array<any> = []
 
-  for (var idx = 0; idx < length; ++idx) {
-    result = result.concat(arrays.map(index(idx)))
-  }
+    for (var idx = 0; idx < length; ++idx) {
+        result = result.concat(arrays.map(index(idx)))
+    }
 
-  return result
+    return result
 }
 
 /*
@@ -54,16 +54,16 @@ const interleave = (...arrays: any[]) => {
  * @returns a function that pipelines func and { ...decs }
  */
 const logDecorator = (
-  logPrefix: (...args: any[]) => any,
-  inputFn: (...args: any[]) => any,
-  outputFn: (...args: any[]) => any
+    logPrefix: (...args: any[]) => any,
+    inputFn: (...args: any[]) => any,
+    outputFn: (...args: any[]) => any
 ) => {
-  return async (fn: (...args: any[]) => any, ...args: any[]) => {
-    console.log(logPrefix(...args), "in: ", inputFn(...args))
-    const response = await fn(...args)
-    console.log(logPrefix(response), "out:", outputFn(response))
-    return response
-  }
+    return async (fn: (...args: any[]) => any, ...args: any[]) => {
+        console.log(logPrefix(...args), "in: ", inputFn(...args))
+        const response = await fn(...args)
+        console.log(logPrefix(response), "out:", outputFn(response))
+        return response
+    }
 }
 
 /*
@@ -80,29 +80,29 @@ const logDecorator = (
  * @returns a function that pipelines func and { ...decs }
  */
 export const decorateDebug = (
-  fn: (...args: any[]) => any,
-  ...decs: ((...args: any[]) => any)[]
+    fn: (...args: any[]) => any,
+    ...decs: ((...args: any[]) => any)[]
 ) => {
-  let counter = 0
-  const prefix = () => {
-    const msg = "log " + counter
-    counter++
-    return msg
-  }
-  const inputFn = (x: any) => x
-  const outputFn = (x: any) => x
+    let counter = 0
+    const prefix = () => {
+        const msg = "log " + counter
+        counter++
+        return msg
+    }
+    const inputFn = (x: any) => x
+    const outputFn = (x: any) => x
 
-  const initDbg = logDecorator(prefix, inputFn, outputFn)
-  const decsDbg = logDecorator(prefix, inputFn, outputFn)
-  interleave([], [])
-  return decorate(
-    fn,
-    initDbg,
-    ...interleave(
-      decs,
-      decs.map(() => decsDbg)
+    const initDbg = logDecorator(prefix, inputFn, outputFn)
+    const decsDbg = logDecorator(prefix, inputFn, outputFn)
+    interleave([], [])
+    return decorate(
+        fn,
+        initDbg,
+        ...interleave(
+            decs,
+            decs.map(() => decsDbg)
+        )
     )
-  )
 }
 
 /*
@@ -128,11 +128,11 @@ export const decorateDebug = (
  * @returns a function that pipelines func and { ...decs }
  */
 export function decorate<
-  F extends (...args: any[]) => any,
-  D extends (f: F, ...args: Parameters<F>) => ReturnType<F>
+    F extends (...args: any[]) => any,
+    D extends (f: F, ...args: Parameters<F>) => ReturnType<F>
 >(func: F, ...decs: D[]): (...xs: Parameters<F>) => ReturnType<F> {
-  return decs.reduceRight(
-    (d2, d1) => ((...args: Parameters<F>) => d1(d2, ...args)) as F,
-    func
-  )
+    return decs.reduceRight(
+        (d2, d1) => ((...args: Parameters<F>) => d1(d2, ...args)) as F,
+        func
+    )
 }

@@ -1,157 +1,157 @@
 :root {
-  --accent-border-color: #69f5b2;
-  --dark-border-color: #aaaaaa;
-  --light-border-color: #dfdfdf;
+    --accent-border-color: #69f5b2;
+    --dark-border-color: #aaaaaa;
+    --light-border-color: #dfdfdf;
 
-  --alert-background-color: #cf1720;
-  --accent-background-color: #69f5b2;
-  --primary-background-color: #553de9;
-  --white-background-color: #ffffff;
-  --light-background-color: #f6f9ff;
-  --dark-background-color: #bbbbbb;
-  --black-background-color: #000000;
+    --alert-background-color: #cf1720;
+    --accent-background-color: #69f5b2;
+    --primary-background-color: #553de9;
+    --white-background-color: #ffffff;
+    --light-background-color: #f6f9ff;
+    --dark-background-color: #bbbbbb;
+    --black-background-color: #000000;
 
-  --accent-text-color: #69f5b2;
-  --white-text-color: #ffffff;
-  --light-text-color: #efefef;
-  --dark-text-color: #555555;
-  --black-text-color: #000000;
+    --accent-text-color: #69f5b2;
+    --white-text-color: #ffffff;
+    --light-text-color: #efefef;
+    --dark-text-color: #555555;
+    --black-text-color: #000000;
 
-  --font-family-primary: "Josefin Sans";
-  --font-family-secondary: "Myriad Pro";
+    --font-family-primary: "Josefin Sans";
+    --font-family-secondary: "Myriad Pro";
 }
 
 @font-face {
-  font-family: --font-family-primary;
-  src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
-  font-weight: normal; /* normal == 400 */
-  font-style: normal;
+    font-family: --font-family-primary;
+    src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+    font-weight: normal; /* normal == 400 */
+    font-style: normal;
 }
 
 @font-face {
-  font-family: --font-family-primary;
-  src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
-  font-weight: bold; /* bold == 700 */
-  font-style: bold;
+    font-family: --font-family-primary;
+    src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+    font-weight: bold; /* bold == 700 */
+    font-style: bold;
 }
 
 @font-face {
-  font-family: "Myriad-Pro";
-  src: url("../assets/fonts/MyriadPro-Light.otf");
-  font-weight: 300;
+    font-family: "Myriad-Pro";
+    src: url("../assets/fonts/MyriadPro-Light.otf");
+    font-weight: 300;
 }
 
 @font-face {
-  font-family: "Myriad-Pro";
-  src: url("../assets/fonts/MyriadPro-Semibold.otf");
-  font-weight: 600;
+    font-family: "Myriad-Pro";
+    src: url("../assets/fonts/MyriadPro-Semibold.otf");
+    font-weight: 600;
 }
 
 @font-face {
-  font-family: "Myriad-Pro";
-  src: url("../assets/fonts/MyriadPro-Bold.otf");
-  font-weight: 800;
+    font-family: "Myriad-Pro";
+    src: url("../assets/fonts/MyriadPro-Bold.otf");
+    font-weight: 800;
 }
 
 body,
 html,
 #root {
-  overflow-x: hidden;
-  margin: 0px !important;
-  width: 100vw !important;
+    overflow-x: hidden;
+    margin: 0px !important;
+    width: 100vw !important;
 }
 
 body,
 div,
 html {
-  font-family: --font-family-primary;
+    font-family: --font-family-primary;
 }
 
 p {
-  font-size: 18px;
-  letter-spacing: 1px;
-  line-height: 1.5;
+    font-size: 18px;
+    letter-spacing: 1px;
+    line-height: 1.5;
 }
 
 button {
-  outline: none !important;
+    outline: none !important;
 }
 
 .hover:hover {
-  cursor: pointer !important;
+    cursor: pointer !important;
 }
 
 a {
-  text-decoration: none !important;
-  outline: none !important;
+    text-decoration: none !important;
+    outline: none !important;
 }
 
 .bounce {
-  animation: bounce 5s infinite;
-  -webkit-animation: bounce 5s infinite;
-  -moz-animation: bounce 5s infinite;
-  -o-animation: bounce 5s infinite;
+    animation: bounce 5s infinite;
+    -webkit-animation: bounce 5s infinite;
+    -moz-animation: bounce 5s infinite;
+    -o-animation: bounce 5s infinite;
 }
 
 @-webkit-keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    -webkit-transform: translateY(0);
-  }
-  30% {
-    -webkit-transform: translateY(-5px);
-  }
-  60% {
-    -webkit-transform: translateY(-8px);
-  }
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -webkit-transform: translateY(0);
+    }
+    30% {
+        -webkit-transform: translateY(-5px);
+    }
+    60% {
+        -webkit-transform: translateY(-8px);
+    }
 }
 
 @-moz-keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    -moz-transform: translateY(0);
-  }
-  30% {
-    -moz-transform: translateY(-5px);
-  }
-  60% {
-    -moz-transform: translateY(-8px);
-  }
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -moz-transform: translateY(0);
+    }
+    30% {
+        -moz-transform: translateY(-5px);
+    }
+    60% {
+        -moz-transform: translateY(-8px);
+    }
 }
 
 @-o-keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    -o-transform: translateY(0);
-  }
-  30% {
-    -o-transform: translateY(-5px);
-  }
-  60% {
-    -o-transform: translateY(-8px);
-  }
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        -o-transform: translateY(0);
+    }
+    30% {
+        -o-transform: translateY(-5px);
+    }
+    60% {
+        -o-transform: translateY(-8px);
+    }
 }
 @keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  30% {
-    transform: translateY(-5px);
-  }
-  60% {
-    transform: translateY(-8px);
-  }
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+    60% {
+        transform: translateY(-8px);
+    }
 }

@@ -13,33 +13,33 @@ import { decorate, decorateDebug } from "../utilities"
 import { identity } from "lodash"
 
 export const configGet = (c: ConfigHTTP) => {
-  const decFn = c.debug ? decorateDebug : decorate
+    const decFn = c.debug ? decorateDebug : decorate
 
-  return decFn(
-    fetchBase,
-    withGet,
-    withCatch,
-    withServer(c.server),
-    withHandleAuth(c.handleAuth || identity),
-    withTokenRefresh(c.endpointRefreshToken || ""),
-    withURL,
-    withStatus,
-    withJSON
-  )
+    return decFn(
+        fetchBase,
+        withGet,
+        withCatch,
+        withServer(c.server),
+        withHandleAuth(c.handleAuth || identity),
+        withTokenRefresh(c.endpointRefreshToken || ""),
+        withURL,
+        withStatus,
+        withJSON
+    )
 }
 
 export const configPost = (c: ConfigHTTP) => {
-  const decFn = c.debug ? decorateDebug : decorate
+    const decFn = c.debug ? decorateDebug : decorate
 
-  return decFn(
-    fetchBase,
-    withPost,
-    withCatch,
-    withServer(c.server),
-    withHandleAuth(c.handleAuth || identity),
-    withTokenRefresh(c.endpointRefreshToken || ""),
-    withURL,
-    withStatus,
-    withJSON
-  )
+    return decFn(
+        fetchBase,
+        withPost,
+        withCatch,
+        withServer(c.server),
+        withHandleAuth(c.handleAuth || identity),
+        withTokenRefresh(c.endpointRefreshToken || ""),
+        withURL,
+        withStatus,
+        withJSON
+    )
 }

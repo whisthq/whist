@@ -1,12 +1,12 @@
 {
-  "syscalls": [
-    {
-      "names": ["clone", "unshare"],
-      "action": "SCMP_ACT_ALLOW",
-      "args": [],
-      "comment": "Fractal enables these syscalls for Chromium sandboxing to function.",
-      "includes": {},
-      "excludes": {}
-    }
-  ]
+    "syscalls": [
+        {
+            "names": ["clone", "unshare"],
+            "action": "SCMP_ACT_ALLOW",
+            "args": [],
+            "comment": "Fractal enables these syscalls for Chromium sandboxing to function.",
+            "includes": {},
+            "excludes": {}
+        }
+    ]
 }

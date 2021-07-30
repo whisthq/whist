@@ -1,17 +1,17 @@
 {
-  "problemMatcher": [
-    {
-      "owner": "gcc",
-      "pattern": [
+    "problemMatcher": [
         {
-          "regexp": "^((?:.(?!include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\\.[ch]|lodepng\\.[ch]))*):(\\d+):(\\d+):\\s*(?:(?:fatal)?\\s(warning|error)):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
+            "owner": "gcc",
+            "pattern": [
+                {
+                    "regexp": "^((?:.(?!include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\\.[ch]|lodepng\\.[ch]))*):(\\d+):(\\d+):\\s*(?:(?:fatal)?\\s(warning|error)):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

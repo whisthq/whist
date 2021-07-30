@@ -17,7 +17,7 @@ import { map } from "rxjs/operators"
 const omitJson = ["status", "statusText", "response"]
 
 export const formatObservable = (
-  /*
+    /*
     Description:
       General purpose formatter observable that applies a formatter function
       to the emitted output of a given observable
@@ -29,12 +29,12 @@ export const formatObservable = (
     Returns:
       An observable that emits the formatted output from obs
   */
-  obs: Observable<any>,
-  formatter: (res: any) => void
+    obs: Observable<any>,
+    formatter: (res: any) => void
 ) => obs.pipe(map((res) => formatter(res)))
 
 export const formatChildProcess = (
-  /*
+    /*
     Description:
       formats debug output from protocol observables
 
@@ -45,25 +45,25 @@ export const formatChildProcess = (
       function omitting unecessary fields such as 'stdin' and 'stdio'
       using lodash's 'omit' function,
   */
-  process: ChildProcess
+    process: ChildProcess
 ) =>
-  omit(process, [
-    "stdin",
-    "stdio",
-    "stdout",
-    "stderr",
-    "_events",
-    "_eventsCount",
-    "_closesNeeded",
-    "_closesGot",
-    "_handle",
-  ])
+    omit(process, [
+        "stdin",
+        "stdio",
+        "stdout",
+        "stderr",
+        "_events",
+        "_eventsCount",
+        "_closesNeeded",
+        "_closesGot",
+        "_handle",
+    ])
 
 const pickMap = <
-  T extends Record<string, any>,
-  K extends { [P in keyof T]?: ((v: T[P]) => any) | K }
+    T extends Record<string, any>,
+    K extends { [P in keyof T]?: ((v: T[P]) => any) | K }
 >(
-  /*
+    /*
     Description:
       Recursively flattens json objects into a single level of key-value pairs
 
@@ -74,20 +74,20 @@ const pickMap = <
     Returns:
       JSON object from flattend obj and fmap
   */
-  obj: T,
-  fmap: K
+    obj: T,
+    fmap: K
 ): T => ({
-  ...obj,
-  ...fromPairs(
-    toPairs(fmap).map(([key, value]) => [
-      key,
-      isFunction(value) ? value(obj[key]) : pickMap(obj[key], value),
-    ])
-  ),
+    ...obj,
+    ...fromPairs(
+        toPairs(fmap).map(([key, value]) => [
+            key,
+            isFunction(value) ? value(obj[key]) : pickMap(obj[key], value),
+        ])
+    ),
 })
 
 export const formatLogin = (
-  /*
+    /*
     Description:
       Formats login json response using pickMap, applies truncate() to
       user hash tokens
@@ -98,19 +98,19 @@ export const formatLogin = (
     Returns:
       Function that formats given JSON object
   */
-  res: any
+    res: any
 ) =>
-  pickMap(omit(res, [...omitJson]), {
-    json: {
-      access_token: (token: string) => truncate(token, { length: 15 }),
-      refresh_token: (token: string) => truncate(token, { length: 15 }),
-      encrypted_config_token: (token: string) =>
-        truncate(token, { length: 15 }),
-    },
-  })
+    pickMap(omit(res, [...omitJson]), {
+        json: {
+            access_token: (token: string) => truncate(token, { length: 15 }),
+            refresh_token: (token: string) => truncate(token, { length: 15 }),
+            encrypted_config_token: (token: string) =>
+                truncate(token, { length: 15 }),
+        },
+    })
 
 export const formatMandelbox = (
-  /*
+    /*
     Description:
       Formats output from mandelbox observables. Only returns full output if state is
       something other than polling, aside from the usual unecessary JSON values in omitJson
@@ -124,25 +124,25 @@ export const formatMandelbox = (
       from omitJson
   */
 
-  res: any
+    res: any
 ) => {
-  if (res.state !== "POLLING") {
-    return omit(res, [...omitJson, "json.output"])
-  } else {
-    return omit(res, [
-      "statusText",
-      "response",
-      "status",
-      "json.output.ip",
-      "json.output.location",
-      "json.output.port_32262",
-      "json.output.port_32263",
-      "json.output.port_32273",
-      "json.output.secret_key",
-      "json.output.user_id",
-      "json.output.last_updated_utc_unix_ms",
-    ])
-  }
+    if (res.state !== "POLLING") {
+        return omit(res, [...omitJson, "json.output"])
+    } else {
+        return omit(res, [
+            "statusText",
+            "response",
+            "status",
+            "json.output.ip",
+            "json.output.location",
+            "json.output.port_32262",
+            "json.output.port_32263",
+            "json.output.port_32273",
+            "json.output.secret_key",
+            "json.output.user_id",
+            "json.output.last_updated_utc_unix_ms",
+        ])
+    }
 }
 
 // formats hostConfig obsrvables by picking only necessary fields
@@ -156,5 +156,5 @@ export const formatTokens = (token: string) => truncate(token, { length: 15 })
 
 // formats tokens array from user login/sign up through truncation
 export const formatTokensArray = (res: [string, string]) => {
-  return [res[0], truncate(res[1], { length: 15 })]
+    return [res[0], truncate(res[1], { length: 15 })]
 }

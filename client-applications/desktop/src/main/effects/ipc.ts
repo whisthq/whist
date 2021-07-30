@@ -27,19 +27,22 @@ import { mapValues } from "lodash"
 // We can only send serializable values over IPC, so the subscribed map is
 // constrained to observables that emit serializable values.
 const subscribed = combineLatest(
-  mapValues(
-    {
-      updateInfo: fromTrigger("downloadProgress").pipe(
-        map((obj) => JSON.stringify(obj))
-      ),
-    },
-    (obs) => concat(of(undefined), obs)
-  )
+    mapValues(
+        {
+            updateInfo: fromTrigger("downloadProgress").pipe(
+                map((obj) => JSON.stringify(obj))
+            ),
+        },
+        (obs) => concat(of(undefined), obs)
+    )
 )
 
 combineLatest([
-  subscribed,
-  fromTrigger("eventIPC").pipe(startWith({})),
+    subscribed,
+    fromTrigger("eventIPC").pipe(startWith({})),
 ]).subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
-  ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getElectronWindows())
+    ipcBroadcast(
+        { ...state, ...subs } as Partial<StateIPC>,
+        getElectronWindows()
+    )
 })

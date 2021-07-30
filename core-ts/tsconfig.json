@@ -1,20 +1,20 @@
 {
-  "extends": "@tsconfig/recommended/tsconfig.json",
-  "include": ["src/**/*"],
-  "compilerOptions": {
-    "outDir": "dist",
-    "target": "es2018",
-    "moduleResolution": "node",
-    "declaration": true,
-    "baseUrl": ".",
-    "paths": {
-      "components/*": ["./components/*"],
-      "types/*": ["./types/*"],
-      "constants/*": ["./constants/*"],
-      "http/*": ["./http/*"],
-      "payment/*": ["./payment/*"],
-      "auth/*": ["./auth/*"],
-      "config/*": ["./config/*"]
+    "extends": "@tsconfig/recommended/tsconfig.json",
+    "include": ["src/**/*"],
+    "compilerOptions": {
+        "outDir": "dist",
+        "target": "es2018",
+        "moduleResolution": "node",
+        "declaration": true,
+        "baseUrl": ".",
+        "paths": {
+            "components/*": ["./components/*"],
+            "types/*": ["./types/*"],
+            "constants/*": ["./constants/*"],
+            "http/*": ["./http/*"],
+            "payment/*": ["./payment/*"],
+            "auth/*": ["./auth/*"],
+            "config/*": ["./config/*"]
+        }
     }
-  }
 }

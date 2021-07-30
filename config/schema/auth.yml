@@ -1,14 +1,14 @@
 AUTH_DOMAIN_URL:
-  local: "fractal-dev.us.auth0.com"
-  dev: "fractal-dev.us.auth0.com"
-  staging: "fractal-staging.us.auth0.com"
-  prod: "fractal-prod.us.auth0.com"
+    local: "fractal-dev.us.auth0.com"
+    dev: "fractal-dev.us.auth0.com"
+    staging: "fractal-staging.us.auth0.com"
+    prod: "fractal-prod.us.auth0.com"
 
 AUTH_CLIENT_ID:
-  local: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
-  dev: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
-  staging: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz"
-  prod: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD"
+    local: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
+    dev: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
+    staging: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz"
+    prod: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD"
 
 AUTH_API_IDENTIFIER: "https://api.fractal.co"
 

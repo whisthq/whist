@@ -5,47 +5,47 @@
  */
 
 export default {
-  // App triggers
-  appReady: "appReady",
-  windowInfo: "windowInfo",
-  windowsAllClosed: "windowsAllClosed",
+    // App triggers
+    appReady: "appReady",
+    windowInfo: "windowInfo",
+    windowsAllClosed: "windowsAllClosed",
 
-  // Auth triggers
-  authInfo: "authInfo",
+    // Auth triggers
+    authInfo: "authInfo",
 
-  // Update triggers
-  updateAvailable: "updateAvailable",
-  updateNotAvailable: "updateNotAvailable",
-  downloadProgress: "downloadProgress",
-  updateDownloaded: "updateDownloaded",
-  updateError: "updateError",
-  updateChecking: "updateChecking",
+    // Update triggers
+    updateAvailable: "updateAvailable",
+    updateNotAvailable: "updateNotAvailable",
+    downloadProgress: "downloadProgress",
+    updateDownloaded: "updateDownloaded",
+    updateError: "updateError",
+    updateChecking: "updateChecking",
 
-  // IPC triggers
-  eventIPC: "eventIPC",
+    // IPC triggers
+    eventIPC: "eventIPC",
 
-  // Persist triggers
-  persisted: "persisted",
-  notPersisted: "notPersisted",
+    // Persist triggers
+    persisted: "persisted",
+    notPersisted: "notPersisted",
 
-  // Renderer triggers
-  loginAction: "loginAction",
-  signupAction: "signupAction",
-  relaunchAction: "relaunchAction",
-  clearCacheAction: "clearCacheAction",
+    // Renderer triggers
+    loginAction: "loginAction",
+    signupAction: "signupAction",
+    relaunchAction: "relaunchAction",
+    clearCacheAction: "clearCacheAction",
 
-  // Tray triggers
-  showSignoutWindow: "showSignoutWindow",
-  trayQuitAction: "trayQuitAction",
-  trayRegionAction: "trayRegionAction",
-  trayFeedbackAction: "trayFeedbackAction",
-  showPaymentWindow: "showPaymentWindow",
-  persistTypeform: "persistTypeform",
+    // Tray triggers
+    showSignoutWindow: "showSignoutWindow",
+    trayQuitAction: "trayQuitAction",
+    trayRegionAction: "trayRegionAction",
+    trayFeedbackAction: "trayFeedbackAction",
+    showPaymentWindow: "showPaymentWindow",
+    persistTypeform: "persistTypeform",
 
-  // Flow triggers
-  mandelboxFlowSuccess: "mandelboxFlowSuccess",
-  mandelboxFlowFailure: "mandelboxFlowFailure",
-  authFlowSuccess: "authFlowSuccess",
-  authFlowFailure: "authFlowFailure",
-  authRefreshSuccess: "authRefreshSuccess",
+    // Flow triggers
+    mandelboxFlowSuccess: "mandelboxFlowSuccess",
+    mandelboxFlowFailure: "mandelboxFlowFailure",
+    authFlowSuccess: "authFlowSuccess",
+    authFlowFailure: "authFlowFailure",
+    authRefreshSuccess: "authRefreshSuccess",
 }

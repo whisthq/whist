@@ -8,26 +8,26 @@ name: Set Workflow Environment
 description: Retrieve values of environment-specific workflow parameters
 
 inputs:
-  ref:
-    description: |
-      Workflow environment is a function of git ref. This input can be
-      used to specify a particular git ref that should be used to
-      configure the workflow.
-    required: false
-    default: ${{ github.ref }}
+    ref:
+        description: |
+            Workflow environment is a function of git ref. This input can be
+            used to specify a particular git ref that should be used to
+            configure the workflow.
+        required: false
+        default: ${{ github.ref }}
 
 outputs:
-  environment:
-    description: Either "dev", "staging", or "prod"
-  auth0-domain:
-    description: The environment-specific Auth0 tenant's domain
-  auth0-client-id:
-    description: The ID of the GHA client registered to the Auth0 tenant
-  auth0-client-secret-key:
-    description: The name of the secret containing the GHA client secret
+    environment:
+        description: Either "dev", "staging", or "prod"
+    auth0-domain:
+        description: The environment-specific Auth0 tenant's domain
+    auth0-client-id:
+        description: The ID of the GHA client registered to the Auth0 tenant
+    auth0-client-secret-key:
+        description: The name of the secret containing the GHA client secret
 
 runs:
-  using: docker
-  image: Dockerfile
-  args:
-    - ${{ inputs.ref }}
+    using: docker
+    image: Dockerfile
+    args:
+        - ${{ inputs.ref }}

@@ -1,21 +1,21 @@
 {
-  "include": ["src", "scripts", ".", ".eslintrc.js", "config"],
-  "compilerOptions": {
-    "allowJs": true,
-    "module": "esnext",
-    "sourceMap": true,
-    "target": "esnext",
-    "moduleResolution": "node",
-    "jsx": "react-jsx",
-    "baseUrl": "./",
-    "paths": { "@app/*": ["src/*"] },
-    "noEmit": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "importsNotUsedAsValues": "remove",
-    "typeRoots": ["./src/@types", "./node_modules/@types"]
-  }
+    "include": ["src", "scripts", ".", ".eslintrc.js", "config"],
+    "compilerOptions": {
+        "allowJs": true,
+        "module": "esnext",
+        "sourceMap": true,
+        "target": "esnext",
+        "moduleResolution": "node",
+        "jsx": "react-jsx",
+        "baseUrl": "./",
+        "paths": { "@app/*": ["src/*"] },
+        "noEmit": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "importsNotUsedAsValues": "remove",
+        "typeRoots": ["./src/@types", "./node_modules/@types"]
+    }
 }

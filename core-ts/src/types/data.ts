@@ -9,11 +9,11 @@ export type authCallbackURL = { authCallbackURL: string }
 // mandelbox
 export type mandelboxIP = { mandelboxIP: string }
 export type mandelboxPorts = {
-  mandelboxPorts: {
-    port_32262: number
-    port_32263: number
-    port_32273: number
-  }
+    mandelboxPorts: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
+    }
 }
 export type mandelboxSecret = { mandelboxSecret: string }
 export type regionAWS = { regionAWS: string }

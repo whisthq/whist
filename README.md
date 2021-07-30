@@ -4,23 +4,23 @@ This repository contains the end-to-end code for the Fractal Application Streami
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-  - [Repository Structure](#repository-structure)
-- [Development](#introduction)
-  - [Branch Conventions](#branches-convention)
-    - [`prod` is for releases only; `staging` is "almost `prod`"](#prod-is-for-releases-only-staging-is-almost-prod)
-    - [`dev` is for development](#dev-is-for-development)
-    - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
-  - [Git Best Practices](#git-best-practices)
-    - [On feature branches, rebase onto dev instead of merging dev into your branch](#on-feature-branches-rebase-onto-dev-instead-of-merging-dev-into-your-branch)
-    - [Options to mainline your PRs](#options-to-mainline-your-prs)
-    - [On commit logs](#on-commit-logs)
-  - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
-- [Publishing](#publishing)
-- [Styling](#styling)
-- [Appendix](#appendix)
-  - [Useful Monorepo Git Tricks](#useful-monorepo-git-tricks)
-  - [Example of Bad Commit History](#example-of-bad-commit-history)
+-   [Introduction](#introduction)
+    -   [Repository Structure](#repository-structure)
+-   [Development](#introduction)
+    -   [Branch Conventions](#branches-convention)
+        -   [`prod` is for releases only; `staging` is "almost `prod`"](#prod-is-for-releases-only-staging-is-almost-prod)
+        -   [`dev` is for development](#dev-is-for-development)
+        -   [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
+    -   [Git Best Practices](#git-best-practices)
+        -   [On feature branches, rebase onto dev instead of merging dev into your branch](#on-feature-branches-rebase-onto-dev-instead-of-merging-dev-into-your-branch)
+        -   [Options to mainline your PRs](#options-to-mainline-your-prs)
+        -   [On commit logs](#on-commit-logs)
+    -   [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
+-   [Publishing](#publishing)
+-   [Styling](#styling)
+-   [Appendix](#appendix)
+    -   [Useful Monorepo Git Tricks](#useful-monorepo-git-tricks)
+    -   [Example of Bad Commit History](#example-of-bad-commit-history)
 
 ## Introduction
 
@@ -28,11 +28,11 @@ Application Streaming is Fractal's core service. It consists of running an appli
 
 At a high-level, Fractal works the following way:
 
-- Users download the Fractal Electron application for their OS and log in to launch the streamed application, like Chrome.
-- The login and launch processes are REST API requests to the Fractal webserver, which is responsible for picking an EC2 instance with available space (or creating a new one if there aren't any) and passing the request over to the Host Service on the chosen EC2 instance, which is responsible for allocating the user to a container (mandelbox) on that EC2 instance.
-  - If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/host-setup` scripts and has the `/host-service` preinstalled, and tell the `/host-service` that this user needs a mandelbox.
-- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the `/host-service` running on the chosen EC2 instance will allocate the user to a mandelbox. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver/Electron application that it is ready to stream, and the Electron application will launch the Fractal protocol client, which will start the stream.
-  - The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where our Host Servicepulls the images from.
+-   Users download the Fractal Electron application for their OS and log in to launch the streamed application, like Chrome.
+-   The login and launch processes are REST API requests to the Fractal webserver, which is responsible for picking an EC2 instance with available space (or creating a new one if there aren't any) and passing the request over to the Host Service on the chosen EC2 instance, which is responsible for allocating the user to a container (mandelbox) on that EC2 instance.
+    -   If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/host-setup` scripts and has the `/host-service` preinstalled, and tell the `/host-service` that this user needs a mandelbox.
+-   If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the `/host-service` running on the chosen EC2 instance will allocate the user to a mandelbox. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver/Electron application that it is ready to stream, and the Electron application will launch the Fractal protocol client, which will start the stream.
+    -   The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where our Host Servicepulls the images from.
 
 ### Repository Structure
 
@@ -54,10 +54,10 @@ For more in-depth explanations of each subrepository, see that subrepository's R
 
 Note that there is also additional documentation for some subrepos (and other Fractal repos) at [docs.fractal.co](https://docs.fractal.co):
 
-- [docs.fractal.co/protocol](https://docs.fractal.co/protocol)
-- [docs.fractal.co/webserver](https://docs.fractal.co/webserver)
-- [docs.fractal.co/SDL](https://docs.fractal.co/SDL)
-- [docs.fractal.co/FFmpeg](https://docs.fractal.co/FFmpeg)
+-   [docs.fractal.co/protocol](https://docs.fractal.co/protocol)
+-   [docs.fractal.co/webserver](https://docs.fractal.co/webserver)
+-   [docs.fractal.co/SDL](https://docs.fractal.co/SDL)
+-   [docs.fractal.co/FFmpeg](https://docs.fractal.co/FFmpeg)
 
 ## Development
 
@@ -91,8 +91,8 @@ We do all feature development and most bug-fixing on feature branches that are f
 
 **Feature branches are named as follows:**
 
-- Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the Host Service llama-themed would be called `djsavvy/host-service/add-llama-theme`.
-- Broader feature branches that touch multiple projects should be named in the form `<author>/<feature-verb>`.
+-   Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the Host Service llama-themed would be called `djsavvy/host-service/add-llama-theme`.
+-   Broader feature branches that touch multiple projects should be named in the form `<author>/<feature-verb>`.
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.
 
@@ -141,9 +141,9 @@ Like branch names, commit messages should be descriptive and contain enough cont
 
 Some good rules of thumb:
 
-- Commit messages, like branch suffixes, should be _actions_ instead of objects. If you're parsing a `git log` from a year ago, trying to understand some design decisions, what's more helpful: `"network connections"`, or `"Cut down on extra network connections in handshake"`?
-- Add as much context as you possibly can. Imagine you're digging though a commit history, trying to figure out which one may have introduced a critical bug into production. Which helps more: `"increase timeout"`, or `"Increase service A timeout waiting for service B to complete handshake"`?
-- Forget the "50 characters max" or whatever artificially-low number Github and Linus Torvalds start complaining at. It's far more useful to have a clear, contextualized commit message that spills over than an artificially terse mess. In the first case, future you (or a colleague) simply has to click once to show the rest of the commit message on Github, or maybe run `git log` in her terminal. In the second case, she's simply left wondering what you meant.
+-   Commit messages, like branch suffixes, should be _actions_ instead of objects. If you're parsing a `git log` from a year ago, trying to understand some design decisions, what's more helpful: `"network connections"`, or `"Cut down on extra network connections in handshake"`?
+-   Add as much context as you possibly can. Imagine you're digging though a commit history, trying to figure out which one may have introduced a critical bug into production. Which helps more: `"increase timeout"`, or `"Increase service A timeout waiting for service B to complete handshake"`?
+-   Forget the "50 characters max" or whatever artificially-low number Github and Linus Torvalds start complaining at. It's far more useful to have a clear, contextualized commit message that spills over than an artificially terse mess. In the first case, future you (or a colleague) simply has to click once to show the rest of the commit message on Github, or maybe run `git log` in her terminal. In the second case, she's simply left wondering what you meant.
 
 In general, if you find yourself staring at a historic commit log, it's probably because something's gone wrong, and you're trying to piece together what happened. Or maybe you're trying to understand why some code is organized the way it is, and seeing how it evolved can lead you to that understanding. Either way, you've probably lost the mental context you had when writing the code (or you never even had it), so the quality of breadcrumbs (i.e. commit messages) left in the commit log correlates directly with the quality of your well-being in that situation.
 
@@ -185,8 +185,8 @@ Each subfolder in this monorepository is its own project with its dedicated styl
 
 ### Useful Monorepo git Tricks
 
-- Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
-- Making sure you don't accidentally introduce merge commits from a `git pull`: `git config pull.ff only`
+-   Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
+-   Making sure you don't accidentally introduce merge commits from a `git pull`: `git config pull.ff only`
 
 ### Example of Bad Commit History
 

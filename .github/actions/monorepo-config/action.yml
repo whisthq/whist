@@ -1,26 +1,26 @@
 name: Monorepo Config
 description: Build /config folder into .json files.
 branding:
-  icon: command
-  color: blue
+    icon: command
+    color: blue
 inputs:
-  os:
-    description: Either 'macos', 'win32', or 'linux'
-    required: false
-  deploy:
-    description: Either 'dev', 'staging', or 'production'
-    required: false
+    os:
+        description: Either 'macos', 'win32', or 'linux'
+        required: false
+    deploy:
+        description: Either 'dev', 'staging', or 'production'
+        required: false
 outputs:
-  config:
-    description: JSON object of Fractal config
+    config:
+        description: JSON object of Fractal config
 runs:
-  using: docker
-  image: ../../../config/Dockerfile # note relative to this file (action.yml)
+    using: docker
+    image: ../../../config/Dockerfile # note relative to this file (action.yml)
 
 
-  # If you're trying to runs.image a Dockerfile from outside this folder,
-  # note that any Dockerfile in this folder will always silently override
-  # whatever you put in runs.image.
+    # If you're trying to runs.image a Dockerfile from outside this folder,
+    # note that any Dockerfile in this folder will always silently override
+    # whatever you put in runs.image.
 
-  # Make sure your Dockerfile is using ENTRYPOINT and not CMD, or else
-  # runs.args will fail silently. Make sure to use the "exec" form.
+    # Make sure your Dockerfile is using ENTRYPOINT and not CMD, or else
+    # runs.args will fail silently. Make sure to use the "exec" form.

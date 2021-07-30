@@ -9,13 +9,13 @@ import { ServerDecorator, ServerResponse } from "../types/api"
  * @returns a ServerResponse wrapped in a Promise
  */
 export const withCatch: ServerDecorator = async (fn, req) => {
-  try {
-    return await fn(req)
-  } catch (err) {
-    return {
-      request: req,
-      error: err,
-      response: { status: 500 },
-    } as ServerResponse
-  }
+    try {
+        return await fn(req)
+    } catch (err) {
+        return {
+            request: req,
+            error: err,
+            response: { status: 500 },
+        } as ServerResponse
+    }
 }

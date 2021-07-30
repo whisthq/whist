@@ -16,20 +16,20 @@ const { execute } = require("../node_modules/eslint/lib/cli")
 // The first two arguments here are simply placeholders, as ESLint CLI expects to be called in this way
 
 const lint = (_env, ...args) => {
-  execute([
-    "yarn",
-    "eslint",
-    ...args,
-    "--max-warnings=0",
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./scripts/**/*.js",
-    "./config/**/*.{js,ts}",
-    "./*.js",
-  ]).then((ret) => process.exit(ret))
+    execute([
+        "yarn",
+        "eslint",
+        ...args,
+        "--max-warnings=0",
+        "./src/**/*.{js,jsx,ts,tsx}",
+        "./scripts/**/*.js",
+        "./config/**/*.{js,ts}",
+        "./*.js",
+    ]).then((ret) => process.exit(ret))
 }
 
 module.exports = lint
 
 if (require.main === module) {
-  lint({}, ...process.argv.slice(2))
+    lint({}, ...process.argv.slice(2))
 }

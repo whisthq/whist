@@ -6,226 +6,226 @@
 name: "Client Applications: Check PR"
 
 on:
-  pull_request:
-    paths:
-      - "client-applications/**"
-      - "core-ts/**"
-      - ".github/workflows/client-applications-check-pr.yml"
-      - ".github/workflows/core-ts-check-pr.yml"
-      - "!client-applications/README.md"
-      - "!core-ts/README.md"
-  workflow_dispatch:
+    pull_request:
+        paths:
+            - "client-applications/**"
+            - "core-ts/**"
+            - ".github/workflows/client-applications-check-pr.yml"
+            - ".github/workflows/core-ts-check-pr.yml"
+            - "!client-applications/README.md"
+            - "!core-ts/README.md"
+    workflow_dispatch:
 
 jobs:
-  # We use a separate job for building the monorepo configuration. The monorepo
-  # configuration is built in a Docker container, and Docker Actions can only be
-  # run on Linux environments on GitHub. As we need to build the client application
-  # in Mac and Windows environments, we need to run the configuration builder as a
-  # separate job. We set the JSON configuration data as "outputs" of this job step,
-  # so that it can be consumed by other jobs.
-  #
-  # Before we set the "outputs" of this job step, we need to perform a small trick
-  # to get around a implementation detail of GitHub Actions. The GitHub Actions runner
-  # will silently ignore any "outputs" that contain values inside the GitHub secrets
-  # store. This is for security purposes, but it's rather inconvenient when we're trying
-  # to pass around a configuration object that may contain secret values. To get around
-  # GitHub's limitation, we first double-encode the configuration string to base-64. (We
-  # need to double-encode since GitHub also checks for a base64 representation of each
-  # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
-  # configuration object.
-  config:
-    name: Building config
-    runs-on: ubuntu-20.04
-    outputs:
-      macos: ${{ steps.config-macos.outputs.config }}
-      win32: ${{ steps.config-win32.outputs.config }}
+    # We use a separate job for building the monorepo configuration. The monorepo
+    # configuration is built in a Docker container, and Docker Actions can only be
+    # run on Linux environments on GitHub. As we need to build the client application
+    # in Mac and Windows environments, we need to run the configuration builder as a
+    # separate job. We set the JSON configuration data as "outputs" of this job step,
+    # so that it can be consumed by other jobs.
+    #
+    # Before we set the "outputs" of this job step, we need to perform a small trick
+    # to get around a implementation detail of GitHub Actions. The GitHub Actions runner
+    # will silently ignore any "outputs" that contain values inside the GitHub secrets
+    # store. This is for security purposes, but it's rather inconvenient when we're trying
+    # to pass around a configuration object that may contain secret values. To get around
+    # GitHub's limitation, we first double-encode the configuration string to base-64. (We
+    # need to double-encode since GitHub also checks for a base64 representation of each
+    # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
+    # configuration object.
+    config:
+        name: Building config
+        runs-on: ubuntu-20.04
+        outputs:
+            macos: ${{ steps.config-macos.outputs.config }}
+            win32: ${{ steps.config-win32.outputs.config }}
 
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
 
-      - name: Set the workflow's environment parameters
-        id: set-environment
-        uses: ./.github/actions/set-environment
-        with:
-          ref: ${{ github.base_ref }} # The git ref of the target branch
+            - name: Set the workflow's environment parameters
+              id: set-environment
+              uses: ./.github/actions/set-environment
+              with:
+                  ref: ${{ github.base_ref }} # The git ref of the target branch
 
-      - name: Build Monorepo Configuration for Mac
-        id: config-macos
-        uses: ./.github/actions/monorepo-config
-        with:
-          os: macos
-          deploy: ${{ steps.set-environment.outputs.environment }}
+            - name: Build Monorepo Configuration for Mac
+              id: config-macos
+              uses: ./.github/actions/monorepo-config
+              with:
+                  os: macos
+                  deploy: ${{ steps.set-environment.outputs.environment }}
 
-      - name: Build Monorepo Configuration for Windows
-        id: config-win32
-        uses: ./.github/actions/monorepo-config
-        with:
-          os: win32
-          deploy: ${{ steps.set-environment.outputs.environment }}
+            - name: Build Monorepo Configuration for Windows
+              id: config-win32
+              uses: ./.github/actions/monorepo-config
+              with:
+                  os: win32
+                  deploy: ${{ steps.set-environment.outputs.environment }}
 
-      - name: Log MacOS Configuration
-        shell: python3 {0}
-        run: |
-          print(r"""${{ steps.config-macos.outputs.config }}""")
+            - name: Log MacOS Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-macos.outputs.config }}""")
 
-      - name: Log Win32 Configuration
-        shell: python3 {0}
-        run: |
-          print(r"""${{ steps.config-win32.outputs.config }}""")
+            - name: Log Win32 Configuration
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ steps.config-win32.outputs.config }}""")
 
-  client-applications-check-pr-linting:
-    name: Linting
-    runs-on: ubuntu-20.04
+    client-applications-check-pr-linting:
+        name: Linting
+        runs-on: ubuntu-20.04
 
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
 
-      - name: Install Node.js 15
-        uses: actions/setup-node@v2.3.0
-        with:
-          node-version: "15"
+            - name: Install Node.js 15
+              uses: actions/setup-node@v2.3.0
+              with:
+                  node-version: "15"
 
-      - name: Run yarn install in /desktop
-        working-directory: client-applications/desktop
-        run: |
-          # We need to increase the timeout to deal with GHA's weak VMs.
-          yarn config set network-timeout 600000
-          yarn cache clean
-          yarn install
+            - name: Run yarn install in /desktop
+              working-directory: client-applications/desktop
+              run: |
+                  # We need to increase the timeout to deal with GHA's weak VMs.
+                  yarn config set network-timeout 600000
+                  yarn cache clean
+                  yarn install
 
-      - name: Check if Code Follows ESLint Standards
-        working-directory: client-applications/desktop
-        run: yarn run lint:check
+            - name: Check if Code Follows ESLint Standards
+              working-directory: client-applications/desktop
+              run: yarn run lint:check
 
-  # Building
-  # Check that the Client Applications build.
-  client-applications-check-pr-building:
-    name: Building on ${{ matrix.config.name }}
-    needs: [config]
-    runs-on: ${{ matrix.config.os }}
+    # Building
+    # Check that the Client Applications build.
+    client-applications-check-pr-building:
+        name: Building on ${{ matrix.config.name }}
+        needs: [config]
+        runs-on: ${{ matrix.config.os }}
 
-    strategy:
-      matrix:
-        config:
-          - name: Windows
-            os: windows-2019
-          - name: macOS
-            os: macos-10.15
+        strategy:
+            matrix:
+                config:
+                    - name: Windows
+                      os: windows-2019
+                    - name: macOS
+                      os: macos-10.15
 
-    steps:
-      - name: Log needs
-        shell: python3 {0}
-        run: |
-          print(r"""${{ toJSON(needs) }}""")
+        steps:
+            - name: Log needs
+              shell: python3 {0}
+              run: |
+                  print(r"""${{ toJSON(needs) }}""")
 
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-        with:
-          # Get the whole git history. We must do this because the
-          # client app calls `git describe` in order to bake the
-          # version number into the react frontend.
-          fetch-depth: 0
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  # Get the whole git history. We must do this because the
+                  # client app calls `git describe` in order to bake the
+                  # version number into the react frontend.
+                  fetch-depth: 0
 
-      - name: Install Node.js 15
-        uses: actions/setup-node@v2.3.0
-        with:
-          node-version: "15"
+            - name: Install Node.js 15
+              uses: actions/setup-node@v2.3.0
+              with:
+                  node-version: "15"
 
-      # To retrieve Fractal protocol libraries from AWS S3
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+            # To retrieve Fractal protocol libraries from AWS S3
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
-      - name: Set Deploy Environment Based on Git Branch
-        shell: bash --noprofile --norc -eo pipefail {0}
-        run: |
-          if [ "${GITHUB_REF##*/}" == "prod" ]; then
-              echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
-          elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-              echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
-          else
-              echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
-          fi
-          echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
+            - name: Set Deploy Environment Based on Git Branch
+              shell: bash --noprofile --norc -eo pipefail {0}
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "prod" ]; then
+                      echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  else
+                      echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
+                  echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
 
-      ############################# Windows Configuration Steps START #############################
+            ############################# Windows Configuration Steps START #############################
 
-      - name: Install cmake via Chocolatey on Windows GHA Machine
-        if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
+            - name: Install cmake via Chocolatey on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: crazy-max/ghaction-chocolatey@v1
+              with:
+                  args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
 
-      - name: Set up Visual Studio Developer Command Prompt (for nmake)
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+            - name: Set up Visual Studio Developer Command Prompt (for nmake)
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1
 
-      ############################# Windows Configuration Steps END #############################
+            ############################# Windows Configuration Steps END #############################
 
-      ############################# Unix Configuration Steps START #############################
+            ############################# Unix Configuration Steps START #############################
 
-      - name: Install macOS Codesigning Certificates on macOS GHA Machine
-        if: runner.os == 'macOS'
-        uses: apple-actions/import-codesign-certs@v1
-        with:
-          p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
-          p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+            - name: Install macOS Codesigning Certificates on macOS GHA Machine
+              if: runner.os == 'macOS'
+              uses: apple-actions/import-codesign-certs@v1
+              with:
+                  p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+                  p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
 
-      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
-      - name: Install macOS Notarization API Key
-        if: runner.os == 'macOS'
-        run: |
-          mkdir -p ~/private_keys
-          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+            # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
+            - name: Install macOS Notarization API Key
+              if: runner.os == 'macOS'
+              run: |
+                  mkdir -p ~/private_keys
+                  aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
-      - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
-        if: runner.os == 'Linux'
-        working-directory: protocol
-        run: ./setup-linux-build-environment.sh
+            - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
+              if: runner.os == 'Linux'
+              working-directory: protocol
+              run: ./setup-linux-build-environment.sh
 
-      ############################# Unix Configuration Steps END #############################
+            ############################# Unix Configuration Steps END #############################
 
-      - name: Build the Windows Electron Application
-        if: false && runner.os == 'Windows'
-        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-        env:
-          CONFIG: ${{ needs.config.outputs.win32 }}
-          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-        working-directory: client-applications\desktop
-        run: |
-          REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
-          REM We use "call" before since ancient DOS versions don't support recursively executing batch files
-          REM We need to increase the timeout to deal with GHA's weak VMs.
-          call yarn config set network-timeout 600000
-          call yarn cache clean
-          call yarn install
-          call yarn package:notarize --config=$CONFIG --version=1.0.0 --commit=${{ github.sha }}
+            - name: Build the Windows Electron Application
+              if: false && runner.os == 'Windows'
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              env:
+                  CONFIG: ${{ needs.config.outputs.win32 }}
+                  AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+                  AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+                  AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+              working-directory: client-applications\desktop
+              run: |
+                  REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
+                  REM We use "call" before since ancient DOS versions don't support recursively executing batch files
+                  REM We need to increase the timeout to deal with GHA's weak VMs.
+                  call yarn config set network-timeout 600000
+                  call yarn cache clean
+                  call yarn install
+                  call yarn package:notarize --config=$CONFIG --version=1.0.0 --commit=${{ github.sha }}
 
-      - name: Build the macOS Electron Application
-        if: runner.os == 'macOS'
-        env:
-          CONFIG: ${{ needs.config.outputs.macos }}
-          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+            - name: Build the macOS Electron Application
+              if: runner.os == 'macOS'
+              env:
+                  CONFIG: ${{ needs.config.outputs.macos }}
+                  AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+                  AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+                  AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
 
-          # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
+                  # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
+                  APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+                  APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
 
-        working-directory: client-applications/desktop
-        run: |
-          # Build the Fractal protocol and package the Electron application, using a hardcoded test version
-          # We need to increase the timeout to deal with GHA's weak VMs.
-          yarn config set network-timeout 600000
-          yarn cache clean
-          yarn install
-          yarn package:notarize --config $CONFIG --version 1.0.0 --commit=${{ github.sha }}
+              working-directory: client-applications/desktop
+              run: |
+                  # Build the Fractal protocol and package the Electron application, using a hardcoded test version
+                  # We need to increase the timeout to deal with GHA's weak VMs.
+                  yarn config set network-timeout 600000
+                  yarn cache clean
+                  yarn install
+                  yarn package:notarize --config $CONFIG --version 1.0.0 --commit=${{ github.sha }}

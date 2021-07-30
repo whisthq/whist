@@ -10,10 +10,10 @@ import { ServerDecorator } from "../types/api"
  * @returns a ServerResponse wrapped in a Promise
  */
 export const withStatus: ServerDecorator = async (fn, req) => {
-  const result = await fn(req)
-  return {
-    ...result,
-    status: result.response?.status,
-    statusText: result.response?.statusText,
-  }
+    const result = await fn(req)
+    return {
+        ...result,
+        status: result.response?.status,
+        statusText: result.response?.statusText,
+    }
 }

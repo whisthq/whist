@@ -16,25 +16,25 @@ This folder builds a client to receive a server stream via Fractal. It supports 
 
 In order to give the user their low-latency high-FPS experience, the protocol executes the following processes in order from top-to-bottom:
 
-- `create_capture_device` from either `./fractal/video/dxgicapture.c` or `./fractal/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
-- `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
-- A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/fractal.h` for the `Frame` struct.
-- `broadcast_udp_packet` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
-- On the client, these packets are received in `./client/main.c` and passed into `receive_video` in `./client/video.c`.
-- `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
-- Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./fractal/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
-- Finally, `SDL_RenderPresent` will be called, rendering the Frame.
-- If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./client/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
+-   `create_capture_device` from either `./fractal/video/dxgicapture.c` or `./fractal/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
+-   `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
+-   A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/fractal.h` for the `Frame` struct.
+-   `broadcast_udp_packet` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
+-   On the client, these packets are received in `./client/main.c` and passed into `receive_video` in `./client/video.c`.
+-   `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
+-   Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./fractal/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
+-   Finally, `SDL_RenderPresent` will be called, rendering the Frame.
+-   If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./client/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
 
 The same process is used for audio capture, encoding, decoding, and playing. See `send_audio` of `./server/main.c`, `./fractal/audio/audio{capture,encode,decode}.c`, and `receive_audio` of `./client/audio.c`
 
 Throughout the life of the protocol, various messages will be send to and from the client and server. For example, if the client and server are of different resolution, the image will appear stretched, so to fix this the client will send a message to server to ask the server to change resolutions to match the client.
 
-- To send a message from client to server, call `send_fmsg`. See `./client/main.c` for usage.
-- To send a message from server to client, create a `FractalServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
-- To handle a server message on the client, see `./client/handle_server_message.c`
-- To handle a client message on the server, see `./server/handle_client_message.c`
-- See `./fractal/core/fractal.h` for struct definitions.
+-   To send a message from client to server, call `send_fmsg`. See `./client/main.c` for usage.
+-   To send a message from server to client, create a `FractalServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
+-   To handle a server message on the client, see `./client/handle_server_message.c`
+-   To handle a client message on the server, see `./server/handle_client_message.c`
+-   See `./fractal/core/fractal.h` for struct definitions.
 
 Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
 

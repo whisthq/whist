@@ -20,17 +20,17 @@ Right now, in order to be _sure_ that changes you make to the web stack won't br
 
 The web application stack is comprised of two main components:
 
-- The web server itself, which is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework.
-- A database. The database is a Postgres instance that is shared by multiple developers.
+-   The web server itself, which is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework.
+-   A database. The database is a Postgres instance that is shared by multiple developers.
 
 We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server. There is also a `pytest` test suite that developers may run locally. None of these commands are run directly, and are instead wrapped by bash scripts that do a bit of preparation (namely `docker/local_deploy.sh` and `tests/setup/setup_tests.sh`).
 
 The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them).
 
-- `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
-- `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
-- `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
-- `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
+-   `POSTGRES_DB` &ndash; The name of the Postgres database to which to connect.
+-   `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
+-   `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
+-   `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
 
 All of local deployment, local testing, and CI use ephemeral DBs that are mostly empty copies of the dev database. The copying script (see `db_setup/`) looks at the database specified by those environment variables.
 

@@ -20,21 +20,21 @@ AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:
-  AfterClass: false
-  AfterControlStatement: false
-  AfterEnum: false
-  AfterFunction: false
-  AfterNamespace: false
-  AfterObjCDeclaration: false
-  AfterStruct: false
-  AfterUnion: false
-  AfterExternBlock: false
-  BeforeCatch: false
-  BeforeElse: false
-  IndentBraces: false
-  SplitEmptyFunction: true
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
+    AfterClass: false
+    AfterControlStatement: false
+    AfterEnum: false
+    AfterFunction: false
+    AfterNamespace: false
+    AfterObjCDeclaration: false
+    AfterStruct: false
+    AfterUnion: false
+    AfterExternBlock: false
+    BeforeCatch: false
+    BeforeElse: false
+    IndentBraces: false
+    SplitEmptyFunction: true
+    SplitEmptyRecord: true
+    SplitEmptyNamespace: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
 BreakBeforeInheritanceComma: false
@@ -55,19 +55,19 @@ DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
 ForEachMacros:
-  - foreach
-  - Q_FOREACH
-  - BOOST_FOREACH
+    - foreach
+    - Q_FOREACH
+    - BOOST_FOREACH
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<ext/.*\.h>'
-    Priority: 2
-  - Regex: '^<.*\.h>'
-    Priority: 1
-  - Regex: "^<.*"
-    Priority: 2
-  - Regex: ".*"
-    Priority: 3
+    - Regex: '^<ext/.*\.h>'
+      Priority: 2
+    - Regex: '^<.*\.h>'
+      Priority: 1
+    - Regex: "^<.*"
+      Priority: 2
+    - Regex: ".*"
+      Priority: 3
 IncludeIsMainRegex: "([-_](test|unittest))?$"
 IndentCaseLabels: true
 IndentPPDirectives: None
@@ -92,10 +92,10 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Left
 RawStringFormats:
-  - Language: Cpp
-    BasedOnStyle: google
-  - Language: TextProto
-    BasedOnStyle: google
+    - Language: Cpp
+      BasedOnStyle: google
+    - Language: TextProto
+      BasedOnStyle: google
 ReflowComments: true
 SortIncludes: false
 SortUsingDeclarations: true
