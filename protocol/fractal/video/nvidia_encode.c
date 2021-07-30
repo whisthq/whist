@@ -9,7 +9,8 @@
 int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
                              NV_ENC_PRESET_CONFIG* p_preset_config);
 GUID get_codec_guid(CodecType codec);
-NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int height, void* texture_pointer);
+NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int height,
+                                        void* texture_pointer);
 void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR handle);
 
 void try_free_frame(NvidiaEncoder* encoder) {
@@ -30,7 +31,8 @@ void try_free_frame(NvidiaEncoder* encoder) {
     }
 }
 
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height, CUcontext cuda_context) {
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
+                                     CUcontext cuda_context) {
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -148,7 +150,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     return encoder;
 }
 
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height, void* texture_pointer) {
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height,
+                                void* texture_pointer) {
     if (width != encoder->width || height != encoder->height) {
         LOG_ERROR(
             "Nvidia Encoder has received a frame_intake of dimensions %dx%d, "
@@ -186,7 +189,8 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height, v
     return 0;
 }
 
-NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int height, void* texture_pointer) {
+NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int height,
+                                        void* texture_pointer) {
     if (texture_pointer == NULL) {
         LOG_ERROR("Tried to register NULL resource, exiting");
         return -1;
@@ -195,9 +199,9 @@ NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int h
     // register the device's resources to the encoder
     register_params.version = NV_ENC_REGISTER_RESOURCE_VER;
     register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_CUDADEVICEPTR;
-    register_params.width = device->width;
-    register_params.height = device->height;
-    register_params.pitch = device->width;
+    register_params.width = width;
+    register_params.height = height;
+    register_params.pitch = width;
     register_params.resourceToRegister = texture_pointer;
     register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
 
@@ -205,7 +209,7 @@ NV_ENC_REGISTERED_PTR register_resource(NvidiaEncoder* encoder, int width, int h
         encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to register texture, status = %d", status);
-        return -1;
+        return NULL;
     }
     return register_params.registeredResource;
 }
@@ -217,8 +221,8 @@ void unregister_resource(NvidiaEncoder* encoder, NV_ENC_REGISTERED_PTR handle) {
     }
 
     // unregister all resources in encoder->registered_resources
-    int status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
-                                                           handle);
+    int status =
+        encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder, handle);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to unregister resource, status = %d", status);
         return -1;
