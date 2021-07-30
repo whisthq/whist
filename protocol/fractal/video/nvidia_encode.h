@@ -6,11 +6,19 @@
 #include <fractal/core/fractal.h>
 #include "cudacontext.h"
 
+#define RESOURCE_CACHE_SIZE 4
+
+typedef struct {
+    NV_ENC_REGISTERED_PTR handle;
+    void* texture_pointer;
+} RegisteredResource;
+
 typedef struct {
     NV_ENCODE_API_FUNCTION_LIST p_enc_fn;
     void* internal_nvidia_encoder;
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
+    RegisteredResource resource_cache[RESOURCE_CACHE_SIZE];
     NV_ENC_REGISTERED_PTR registered_resource;
 
     NV_ENC_OUTPUT_PTR output_buffer;
@@ -37,7 +45,7 @@ typedef struct {
  *
  * @returns                        The newly created nvidia encoder
  */
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height);
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height, CUcontext cuda_context);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder
@@ -65,7 +73,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height);
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height, void* texture_pointer);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,

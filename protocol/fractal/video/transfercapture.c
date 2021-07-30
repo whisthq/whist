@@ -28,18 +28,10 @@ int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
     return 0;
 #else  // __linux__
     if (encoder->active_encoder == NVIDIA_ENCODER) {
-        switch (device->active_capture_device) {
-            case NVIDIA_DEVICE:
-                return nvidia_start_transfer_context(
-                    device->nvidia_capture_device,
-                    encoder->nvidia_encoders[encoder->active_encoder_idx]);
-            case X11_DEVICE:
-                return x11_start_transfer_context(
-                    device->x11_capture_device,
-                    encoder->nvidia_encoders[encoder->active_encoder_idx]);
-            default:
-                LOG_ERROR("Device type unknown: %d", device->active_capture_device);
-                return -1;
+        if (device->active_capture_device == NVIDIA_DEVICE) {
+            return nvidia_start_transfer_context(
+                device->nvidia_capture_device,
+                encoder->nvidia_encoders[encoder->active_encoder_idx]);
         }
     }
     return 0;
@@ -91,74 +83,83 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     if (encoder->active_encoder == NVIDIA_ENCODER) {
         NvidiaEncoder* old_encoder = encoder->nvidia_encoders[encoder->active_encoder_idx];
         if (old_encoder->cuda_context != *get_video_thread_cuda_context_ptr()) {
-                    LOG_INFO("Switching to other Nvidia encoder!");
+            LOG_INFO("Switching to other Nvidia encoder!");
             encoder->active_encoder_idx = 0 ? encoder->active_encoder_idx == 1 : 1;
-            encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
-                old_encoder->encoder_params.encodeConfig->rcParams.averageBitRate,
-                old_encoder->codec_type, old_encoder->width, old_encoder->height,
-                *get_video_thread_cuda_context_ptr());
-                    encoder->active_encoder = NVIDIA_ENCODER;
-                    video_encoder_set_iframe(encoder);
-                    start_transfer_context(device, encoder);
-                }
+            if (encoder->nvidia_encoders[encoder->active_encoder_idx]->cuda_context == NULL) {
+                encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
+                    old_encoder->encoder_params.encodeConfig->rcParams.averageBitRate,
+                    old_encoder->codec_type, old_encoder->width, old_encoder->height,
+                    *get_video_thread_cuda_context_ptr());
             }
+            video_encoder_set_iframe(encoder);
+            // start_transfer_context(device, encoder);
         }
-                nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx], device->width, device->height);
-                return 0;
+        switch (device->active_capture_device) {
+            case NVIDIA_DEVICE:
+                return nvidia_encoder_frame_intake(
+                    encoder->nvidia_encoders[encoder->active_encoder_idx], device->width,
+                    device->height, device->nvidia_capture_device->p_gpu_texture);
+            case X11_DEVICE:
+                return nvidia_encoder_frame_intake(
+                    encoder->nvidia_encoders[encoder->active_encoder_idx], device->width,
+                    device->height, device->x11_capture_device->frame_data);
+            default:
+                LOG_ERROR("Device type unknown: %d!");
+                return -1;
+        }
     }
 #endif
 
-            if (encoder->active_encoder != FFMPEG_ENCODER) {
-                LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");
-                encoder->active_encoder = FFMPEG_ENCODER;
-                video_encoder_set_iframe(encoder);
-            }
-            // Handle the normal active_capture_device
+    if (encoder->active_encoder != FFMPEG_ENCODER) {
+        LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");
+        encoder->active_encoder = FFMPEG_ENCODER;
+        video_encoder_set_iframe(encoder);
+    }
+// Handle the normal active_capture_device
 #ifdef _WIN32
-            // Handle cuda optimized transfer on windows
-            if (encoder->ffmpeg_encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
-                device->texture_on_gpu) {
-                // if dxgi_cuda is setup and we have a dxgi texture on the gpu
-                if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
-                    return 0;
-                } else {
-                    LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
-                    // otherwise, do the cpu transfer below
-                }
-            }
+    // Handle cuda optimized transfer on windows
+    if (encoder->ffmpeg_encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
+        device->texture_on_gpu) {
+        // if dxgi_cuda is setup and we have a dxgi texture on the gpu
+        if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
+            return 0;
+        } else {
+            LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
+            // otherwise, do the cpu transfer below
+        }
+    }
 #endif
 
-            // CPU transfer, if hardware transfer doesn't work
-            static int times_measured = 0;
-            static double time_spent = 0.0;
+    // CPU transfer, if hardware transfer doesn't work
+    static int times_measured = 0;
+    static double time_spent = 0.0;
 
-            clock cpu_transfer_timer;
-            start_timer(&cpu_transfer_timer);
+    clock cpu_transfer_timer;
+    start_timer(&cpu_transfer_timer);
 
-            if (transfer_screen(device)) {
-                LOG_ERROR("Unable to transfer screen to CPU buffer.");
-                return -1;
-            }
+    if (transfer_screen(device)) {
+        LOG_ERROR("Unable to transfer screen to CPU buffer.");
+        return -1;
+    }
 #ifdef _WIN32
-            if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data,
-                                            device->pitch)) {
+    if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data, device->pitch)) {
 #else  // __linux
     if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->x11_capture_device->frame_data,
                                     device->x11_capture_device->pitch)) {
 #endif
-                LOG_ERROR("Unable to load data to AVFrame");
-                return -1;
-            }
+        LOG_ERROR("Unable to load data to AVFrame");
+        return -1;
+    }
 
-            times_measured++;
-            time_spent += get_timer(cpu_transfer_timer);
+    times_measured++;
+    time_spent += get_timer(cpu_transfer_timer);
 
-            if (times_measured == 10) {
-                LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
-                         time_spent / times_measured);
-                times_measured = 0;
-                time_spent = 0.0;
-            }
+    if (times_measured == 10) {
+        LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",
+                 time_spent / times_measured);
+        times_measured = 0;
+        time_spent = 0.0;
+    }
 
-            return 0;
-        }
+    return 0;
+}

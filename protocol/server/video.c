@@ -387,10 +387,12 @@ int32_t multithreaded_send_video(void* opaque) {
             continue;
         }
 
+        /*
         if (!transfer_context_active) {
             start_transfer_context(device, encoder);
             transfer_context_active = true;
         }
+        */
 
         clock server_frame_timer;
         start_timer(&server_frame_timer);
