@@ -54,4 +54,5 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context);
  */
 CUcontext* get_video_thread_cuda_context_ptr();
 CUcontext* get_nvidia_thread_cuda_context_ptr();
+NVFBC_BOOL cuda_destroy(CUcontext cuda_context);
 #endif

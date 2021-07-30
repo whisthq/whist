@@ -412,6 +412,10 @@ void destroy_capture_device(CaptureDevice* device) {
     if (device->nvidia_capture_device) {
         destroy_nvidia_capture_device(device->nvidia_capture_device);
     }
+    cuda_destroy(*get_video_thread_cuda_context_ptr());
+    *get_video_thread_cuda_context_ptr() = NULL;
+    cuda_destroy(*get_nvidia_thread_cuda_context_ptr());
+    *get_nvidia_thread_cuda_context_ptr() = NULL;
     if (device->x11_capture_device) {
         destroy_x11_capture_device(device->x11_capture_device);
     }

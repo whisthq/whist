@@ -34,11 +34,13 @@ typedef CUresult (*CUINITPROC)(unsigned int flags);
 typedef CUresult (*CUDEVICEGETPROC)(CUdevice* device, int ordinal);
 typedef CUresult (*CUCTXCREATEV2PROC)(CUcontext* pctx, unsigned int flags, CUdevice dev);
 typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dst_host, CUdeviceptr src_device, size_t byte_count);
+typedef CUresult (*CUCTXDESTROYV2PROC)(CUcontext ctx);
 
 static CUINITPROC cu_init_ptr = NULL;
 static CUDEVICEGETPROC cu_device_get_ptr = NULL;
 static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
+static CUCTXDESTROYV2PROC cu_ctx_destroy_v2_ptr = NULL;
 static bool cuda_initialized = false;
 
 CUcontext video_thread_cuda_context = NULL;
@@ -89,6 +91,12 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
         LOG_ERROR("Unable to resolve symbol 'cuCtxCreate_v2'\n");
         return NVFBC_FALSE;
     }
+    
+    cu_ctx_destroy_v2_ptr = (CUCTXDESTROYV2PROC)dlsym(lib_cuda, "cuCtxDestroy_v2");
+    if (cu_ctx_destroy_v2_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxDestroy_v2'\n");
+        return NVFBC_FALSE;
+    }
 
     cu_memcpy_dtoh_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(lib_cuda, "cuMemcpyDtoH_v2");
     if (cu_memcpy_dtoh_v2_ptr == NULL) {
@@ -130,6 +138,15 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
 Public Function Implementations
 ============================
 */
+
+NVFBC_BOOL cuda_destroy(CUcontext cuda_context) {
+    CUresult cu_res = cu_ctx_destroy_v2_ptr(cuda_context);
+    if (cu_res != CUDA_SUCCESS) {
+        LOG_ERROR("Unable to destroy CUDA context (result: %d)\n", cu_res);
+        return NVFBC_FALSE;
+    }
+    return NVFBC_TRUE;
+}
 
 /**
  * Initializes CUDA and creates a CUDA context.
