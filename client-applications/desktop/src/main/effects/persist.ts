@@ -22,7 +22,3 @@ merge(
     })
   }
 )
-
-fromTrigger("persistTypeform").subscribe(() => {
-  persist("typeformFeedbackSubmitted", true, "data")
-})
