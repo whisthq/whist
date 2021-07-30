@@ -271,7 +271,7 @@ jobs:
     # GitHub's limitation, we first encode the configuration string to base-85. Other jobs
     # will need to decode the base-85 string to produce the JSON configuration object.
     fractal-build-monorepo-config:
-     name: "Building Monorepo Config"
+        name: "Building Monorepo Config"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         outputs:
