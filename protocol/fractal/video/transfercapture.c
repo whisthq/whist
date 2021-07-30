@@ -97,6 +97,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         RegisteredResource resource_to_register = {0};
         resource_to_register.width = device->width;
         resource_to_register.height = device->height;
+        resource_to_register.pitch = device->pitch;
         resource_to_register.device_type = device->active_capture_device;
         resource_to_register.texture_pointer = device->frame_data;
         return nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx],

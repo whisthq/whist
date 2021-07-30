@@ -197,9 +197,9 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         encoder->resource_cache[0] = resource_to_register;
         encoder->registered_resource = encoder->resource_cache[0];
     }
-    LOG_DEBUG("Registered resource data: texture %x, width %d, height %d, device %s",
+    LOG_DEBUG("Registered resource data: texture %x, width %d, height %d, pitch %d, device %s",
               encoder->registered_resource.texture_pointer, encoder->registered_resource.width,
-              encoder->registered_resource.height,
+              encoder->registered_resource.height, encoder->registered_resource.pitch,
               encoder->registered_resource.device_type == NVIDIA_DEVICE ? "Nvidia" : "X11");
     // TODO: if X11, memcpy?
     if (encoder->registered_resource.device_type == X11_DEVICE) {
@@ -212,12 +212,16 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             LOG_ERROR("Failed to lock input buffer, error %d", status);
             return -1;
         }
-        // encoder->pitch = lock_params.pitch;
-        encoder->pitch = encoder->registered_resource.width * 4;
-        LOG_DEBUG("width: %d, pitch: %d", encoder->registered_resource.width, encoder->pitch);
+        encoder->pitch = lock_params.pitch;
+       // encoder->pitch = encoder->registered_resource.pitch;
+        LOG_DEBUG("width: %d, pitch: %d (lock pitch %d)", encoder->registered_resource.width, encoder->pitch, lock_params.pitch);
         // memcpy input data
-        memcpy(lock_params.bufferDataPtr, encoder->registered_resource.texture_pointer,
-               encoder->pitch * encoder->registered_resource.height);
+        for(int i = 0; i < encoder->registered_resource.height; i++) {
+            memcpy(
+                lock_params.bufferDataPtr + i * lock_params.pitch,
+                encoder->registered_resource.texture_pointer + i * encoder->registered_resource.pitch,
+                encoder->registered_resource.pitch);
+        }
         status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
                                                           lock_params.inputBuffer);
         if (status != NV_ENC_SUCCESS) {
@@ -225,7 +229,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             return -1;
         }
     } else {
-        encoder->pitch = encoder->registered_resource.width;
+        encoder->pitch = encoder->registered_resource.pitch;
     }
     return 0;
 }
@@ -244,7 +248,7 @@ int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_re
             register_params.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_CUDADEVICEPTR;
             register_params.width = resource_to_register->width;
             register_params.height = resource_to_register->height;
-            register_params.pitch = resource_to_register->width;
+            register_params.pitch = resource_to_register->pitch;
             register_params.resourceToRegister = resource_to_register->texture_pointer;
             register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
 
@@ -332,7 +336,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     enc_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
     enc_params.inputWidth = encoder->width;
     enc_params.inputHeight = encoder->height;
-    enc_params.inputPitch = encoder->pitch;
+    enc_params.inputPitch = encoder->width;
     if (registered_resource.device_type == NVIDIA_DEVICE) {
         enc_params.inputBuffer = map_params.mappedResource;
     } else {

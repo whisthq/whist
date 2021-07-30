@@ -339,6 +339,8 @@ int capture_screen(CaptureDevice* device) {
                     device->height == device->nvidia_capture_device->height) {
                     device->last_capture_device = NVIDIA_DEVICE;
                     device->frame_data = device->nvidia_capture_device->p_gpu_texture;
+                    // GPU captures need the pitch to just be width
+                    device->pitch = device->width;
                     return ret;
                 } else {
                     LOG_ERROR(
@@ -357,6 +359,7 @@ int capture_screen(CaptureDevice* device) {
             int ret = x11_capture_screen(device->x11_capture_device);
             if (ret >= 0) {
                 device->frame_data = device->x11_capture_device->frame_data;
+                device->pitch = device->x11_capture_device->pitch;
             }
             return ret;
         default:

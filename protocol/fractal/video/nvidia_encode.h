@@ -14,6 +14,7 @@ typedef struct {
     CaptureDeviceType device_type;
     int width;
     int height;
+    int pitch;
     void* texture_pointer;
 } RegisteredResource;
 
