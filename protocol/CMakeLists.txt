@@ -164,12 +164,12 @@ option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
     message(STATUS "Downloading binaries from AWS S3")
     if (WSL)
-        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_SOURCE_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
+        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_BINARY_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
         execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
     else()
-        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
+        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
         execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
@@ -193,7 +193,7 @@ FOREACH(LIB ${FFMPEG_LIBS})
     set(LIB_VAR "LIB_${LIB}")
     find_library(${LIB_VAR}
             NAMES ${LIB}
-            PATHS lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
+            PATHS ${CMAKE_BINARY_DIR}/lib/${arch}/ffmpeg/${CMAKE_SYSTEM_NAME}
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
             NO_CMAKE_PATH
@@ -212,7 +212,7 @@ message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 # For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
             NO_CMAKE_PATH
@@ -221,7 +221,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             NO_CMAKE_FIND_ROOT_PATH)
 
     if (NOT LIB_OPENSSL)
-        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
+        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
     endif()
 else()
     find_package(OpenSSL REQUIRED)
@@ -229,7 +229,7 @@ endif()
 
 
 
-find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
+find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
         NO_CMAKE_PATH
@@ -237,7 +237,7 @@ find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_SOURCE_DIR}/lib/$
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 if (NOT STATIC_SDL2)
-    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
+    message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
 find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
@@ -318,9 +318,9 @@ endif()
 # Use SYSTEM flag to not get warnings from their files
 include_directories(${CMAKE_SOURCE_DIR}) # For #include <fractal/**> semantics
 include_directories(SYSTEM include)
-include_directories(SYSTEM include/ffmpeg)
-include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
 include_directories(SYSTEM sentry-native/include)
+include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
+include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
