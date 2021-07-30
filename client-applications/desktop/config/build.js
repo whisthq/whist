@@ -8,7 +8,9 @@ const envOverrides = require("./envOverrides")
 const assert = require("assert").strict
 
 // Set the CONFIG environment variable so that it can be parsed by core-ts.
-process.env.CONFIG = envOverrides.CONFIG
+if (!process.env.CONFIG) {
+    process.env.CONFIG = envOverrides.CONFIG
+}
 
 const { appEnvironment = FractalEnvironments.LOCAL } = envOverrides
 
