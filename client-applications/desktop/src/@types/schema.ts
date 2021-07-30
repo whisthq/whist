@@ -5,7 +5,9 @@ import { Observable } from "rxjs"
 // to hijack, ex. authFlow
 
 export interface MockSchema {
-    [key: string]: (trigger: Observable<any>) => {
+    [key: string]: (
+        trigger: Observable<any>
+    ) => {
         [key: string]: Observable<any>
     }
 }

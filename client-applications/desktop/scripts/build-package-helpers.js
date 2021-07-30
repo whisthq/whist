@@ -229,7 +229,7 @@ module.exports = {
     },
 
     // Function to set add the CONFIG= environment variabled to the overrides.
-    setPackagedConfig: (config) => addEnvOverride({CONFIG: config}),
+    setPackagedConfig: (config) => addEnvOverride({ CONFIG: config }),
 
     // Function to set the commit sha for the packaged app, which gets
     // hardcoded into the electron bundle via `env_overrides.json`.
