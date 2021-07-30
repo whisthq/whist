@@ -201,6 +201,14 @@ int32_t multithreaded_send_video(void* opaque) {
                     encoder = NULL;
                 }
 
+                // Eh hacky kill bc reconfigure stops the cuda ctx
+                if (encoder) {
+                    LOG_INFO("Destroying encoder...");
+                    destroy_video_encoder(encoder);
+                    encoder = NULL;
+                    update_encoder = true;
+                }
+
                 if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
                     // Reconfigured the capture device!
                     // No need to recreate it, the device has now been updated
