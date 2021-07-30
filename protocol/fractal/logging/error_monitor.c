@@ -186,7 +186,7 @@ void error_monitor_initialize(bool is_client) {
     sentry_options_set_environment(options, error_monitor_environment);
 
     // Set this to true to enable verbose Sentry debugging.
-    sentry_options_set_debug(options, true);
+    sentry_options_set_debug(options, false);
 
     // For GDPR, etc., we will need to eventually prompt the user to give/revoke consent.
     // If user is set and consent is required but not given, sentry will drop all events.
