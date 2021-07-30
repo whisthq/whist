@@ -7,36 +7,36 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.1.1.tgz#9274ec7460652f9c632c59addf24efb1684ef876"
   integrity sha512-sAP4LldeWNz0lNzmTird3uWfFDWWTeg6V/MsmyyLR9X1idwKBWIgt/ZvinqQldJm3LecKEs1emkbquO6PCiLVQ==
 
-"@amplitude/identify@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.7.0.tgz#ea8e435d55e55027ced0abfe1a5e250038e75f6c"
-  integrity sha512-AhaYj76cExvABu2C2Q6oO4aRNQhQkP7foQb7Lk7qW5ZPhdiWpAOGThdMre0pu5CSYF21G+FUnM6/1WQ5Cfkw3A==
+"@amplitude/identify@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.8.0.tgz#ac88e13861008f9e516ef05d1eac23b188bf1170"
+  integrity sha512-YMYFQDgmFH0aILwvkV9Bcf6qyqvBuW/MmyVIe2G1F5pOfV/PVmt48S8N9cBcD6IctGnQPXjuj92zt87rYvDdtg==
   dependencies:
-    "@amplitude/types" "^1.7.0"
-    "@amplitude/utils" "^1.7.0"
+    "@amplitude/types" "^1.8.0"
+    "@amplitude/utils" "^1.8.0"
     tslib "^1.9.3"
 
-"@amplitude/node@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.7.0.tgz#534745e79a621ef74b1153c19c5683559ff930ac"
-  integrity sha512-+2z0V+3fVbSihbJipADvFPb2bDCLvpgDnzLkNUka606DTyLWPuoDKzawUgl2yanuFXowFYEmQ2EltuQHoXd3YQ==
+"@amplitude/node@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.8.0.tgz#c2989065394c3ff3438cd1107e2e2f6f3159c015"
+  integrity sha512-11m5Ws/6hKTYjI0ObBIRgxdAcb7npTKUb9Ifba5d9dPmmPagu22+wvtzlbUiNQlPWQFI1ogq0qP2NOamEuZWkA==
   dependencies:
-    "@amplitude/identify" "^1.7.0"
-    "@amplitude/types" "^1.7.0"
-    "@amplitude/utils" "^1.7.0"
+    "@amplitude/identify" "^1.8.0"
+    "@amplitude/types" "^1.8.0"
+    "@amplitude/utils" "^1.8.0"
     tslib "^1.9.3"
 
-"@amplitude/types@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.7.0.tgz#c9f6636245f2de0ab58ee667b442cef58c42c453"
-  integrity sha512-zPENZDWlh64WHj/7Jjghu2HGWywMPundf25ycxn0tYXtxTvPmK2m/MMV6GvUN5uW0kg65eeKETCfge1UJ9MXlQ==
+"@amplitude/types@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.8.0.tgz#58f65f52c05b5ba844322f66b2158eab35651b24"
+  integrity sha512-Jomb5ypMM4fuS+4LThY33mbiLdNgDa3KAypH7bRmTqGnXKd3h2olM0HkHrQtAAbl2tln/hd9IPiSKjRVqoQ3fQ==
 
-"@amplitude/utils@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.7.0.tgz#91ef07f203223ad4f5309f0c8950ebb5de6bd8eb"
-  integrity sha512-+WsKdFbA+rR/xSTlho90C+GlzDL7Sn51J4bmmGtOSTZk5oEPohvHzHO8pVBGDB8UvNAs2LjQQ7q7b2qRWdUtvA==
+"@amplitude/utils@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.8.0.tgz#e687d8bb89579bc64455704a6f6d7badee78d3be"
+  integrity sha512-Hl9U2jc8Xp/2/c3QcCQ2ulKzYrdd6DISSHp6Un7v/lW9GdCXwk8aZU8B0MEvmBaAkvMnzJqJsIKqfVOU9iT0Gg==
   dependencies:
-    "@amplitude/types" "^1.7.0"
+    "@amplitude/types" "^1.8.0"
     tslib "^1.9.3"
 
 "@babel/code-frame@7.12.11":
@@ -299,33 +299,6 @@
     dir-compare "^2.4.0"
     fs-extra "^9.0.1"
 
-"@emotion/hash@^0.6.2":
-  version "0.6.6"
-  resolved "https://registry.yarnpkg.com/@emotion/hash/-/hash-0.6.6.tgz#62266c5f0eac6941fece302abad69f2ee7e25e44"
-  integrity sha512-ojhgxzUHZ7am3D2jHkMzPpsBAiB005GF5YU4ea+8DNPybMk01JJUM9V9YRlF/GE95tcOm8DxQvWA2jq19bGalQ==
-
-"@emotion/is-prop-valid@^0.6.1":
-  version "0.6.8"
-  resolved "https://registry.yarnpkg.com/@emotion/is-prop-valid/-/is-prop-valid-0.6.8.tgz#68ad02831da41213a2089d2cab4e8ac8b30cbd85"
-  integrity sha512-IMSL7ekYhmFlILXcouA6ket3vV7u9BqStlXzbKOF9HBtpUPMMlHU+bBxrLOa2NvleVwNIxeq/zL8LafLbeUXcA==
-  dependencies:
-    "@emotion/memoize" "^0.6.6"
-
-"@emotion/memoize@^0.6.1", "@emotion/memoize@^0.6.6":
-  version "0.6.6"
-  resolved "https://registry.yarnpkg.com/@emotion/memoize/-/memoize-0.6.6.tgz#004b98298d04c7ca3b4f50ca2035d4f60d2eed1b"
-  integrity sha512-h4t4jFjtm1YV7UirAFuSuFGyLa+NNxjdkq6DpFLANNQY5rHueFZHVY+8Cu1HYVP6DrheB0kv4m5xPjo7eKT7yQ==
-
-"@emotion/stylis@^0.7.0":
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/@emotion/stylis/-/stylis-0.7.1.tgz#50f63225e712d99e2b2b39c19c70fff023793ca5"
-  integrity sha512-/SLmSIkN13M//53TtNxgxo57mcJk/UJIDFRKwOiLIBEyBHEcipgR6hNMQ/59Sl4VjCJ0Z/3zeAZyvnSLPG/1HQ==
-
-"@emotion/unitless@^0.6.2":
-  version "0.6.7"
-  resolved "https://registry.yarnpkg.com/@emotion/unitless/-/unitless-0.6.7.tgz#53e9f1892f725b194d5e6a1684a7b394df592397"
-  integrity sha512-Arj1hncvEVqQ2p7Ega08uHLr1JuRYBuO5cIvcA+WWEQ5+VmkOE3ZXzl04NbQxeQpWX78G7u6MqxKuNX3wvYZxg==
-
 "@eslint/eslintrc@^0.4.3":
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@eslint/eslintrc/-/eslintrc-0.4.3.tgz#9e42981ef035beb3dd49add17acb96e8ff6f394c"
@@ -371,6 +344,7 @@
   version "1.0.0"
   dependencies:
     browser-or-node "^1.3.0"
+    jwt-decode "^3.1.2"
     lodash "^4.17.21"
     node-fetch "^2.6.1"
 
