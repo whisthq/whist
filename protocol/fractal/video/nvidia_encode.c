@@ -174,6 +174,27 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             cached_resource.device_type == resource_to_register.device_type) {
             encoder->registered_resource = encoder->resource_cache[i];
             // TODO: if X11, memcpy?
+            if (encoder->registered_resource.device_type == X11_DEVICE) {
+                NV_ENC_LOCK_INPUT_BUFFER lock_params = {0};
+                lock_params.version = NV_ENC_LOCK_INPUT_BUFFER_VER;
+                lock_params.inputBuffer = encoder->registered_resource.handle;
+                NVENCSTATUS status = encoder->p_enc_fn.nvEncLockInputBuffer(
+                    encoder->internal_nvidia_encoder, &lock_params);
+                if (status != NV_ENC_SUCCESS) {
+                    LOG_ERROR("Failed to lock input buffer, error %d", status);
+                    return -1;
+                }
+                // memcpy input data
+                memcpy(
+                    lock_params.bufferDataPtr, encoder->registered_resource.texture_pointer,
+                    encoder->registered_resource.width * encoder->registered_resource.height * 4);
+                status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
+                                                                  lock_params.inputBuffer);
+                if (status != NV_ENC_SUCCESS) {
+                    LOG_ERROR("Failed to unlock input buffer, error %d", status);
+                    return -1;
+                }
+            }
             return 0;
         }
     }
@@ -228,7 +249,7 @@ int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_re
             input_params.width = resource_to_register->width;
             input_params.height = resource_to_register->height;
             input_params.bufferFmt = NV_ENC_BUFFER_FORMAT_ARGB;
-            input_params.pSysMemBuffer = resource_to_register->texture_pointer;
+            // input_params.pSysMemBuffer = resource_to_register->texture_pointer;
             int status = encoder->p_enc_fn.nvEncCreateInputBuffer(encoder->internal_nvidia_encoder,
                                                                   &input_params);
             if (status != NV_ENC_SUCCESS) {
