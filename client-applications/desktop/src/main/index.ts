@@ -9,6 +9,11 @@
 // If you've created a new file in "main/" and you're not seeing it run, you
 // probably haven't imported it here.
 
+// Import the /config folder first to make sure that CONFIG is set in
+// process.env, which is required by core-ts. Once all values are moved into
+// monorepo config, this will no longer be necessary.
+import "@app/config/environment"
+
 import "@app/main/triggers"
 import "@app/main/flows"
 import "@app/main/effects"
