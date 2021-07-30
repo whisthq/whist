@@ -268,7 +268,6 @@ int32_t multithreaded_send_video(void* opaque) {
                 LOG_INFO("Update encoder request received, will update the encoder now!");
             }
 
-            /*
             // First, try to simply reconfigure the encoder to
             // handle the update_encoder event
             if (encoder != NULL) {
@@ -287,7 +286,6 @@ int32_t multithreaded_send_video(void* opaque) {
                     LOG_INFO("Reconfiguration failed! Creating a new encoder!");
                 }
             }
-            */
 
             // If reconfiguration didn't happen, we still need to update the encoder
             if (update_encoder) {

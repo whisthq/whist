@@ -149,6 +149,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     memset(encoder, 0, sizeof(VideoEncoder));
     encoder->in_width = in_width;
     encoder->in_height = in_height;
+    encoder->codec_type = codec_type;
 
 #if USING_NVIDIA_CAPTURE_AND_ENCODE
 #if USING_SERVERSIDE_SCALE
@@ -185,8 +186,6 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
         return NULL;
     }
     LOG_INFO("Created ffmpeg encoder!");
-
-    encoder->codec_type = codec_type;
 
     return encoder;
 }
@@ -250,23 +249,16 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
     encoder->in_width = width;
     encoder->in_height = height;
     encoder->codec_type = codec;
-    return true;
-    /*
-    // reconfigure both encoders
-    bool nvidia_reconfigured = true;
-    if (encoder->nvidia_encoder) {
+    if (encoder->nvidia_encoders[encoder->active_encoder_idx]) {
 #ifdef __linux__
         // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
         // registration somehow.
-        nvidia_reconfigured =
-            nvidia_reconfigure_encoder(encoder->nvidia_encoder, width, height, bitrate, codec);
+        return nvidia_reconfigure_encoder(encoder->nvidia_encoders[encoder->active_encoder_idx], width, height, bitrate, codec);
 #else
         LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
     }
-    return nvidia_reconfigured && ffmpeg_reconfigure_encoder(encoder->ffmpeg_encoder, width, height,
-                                                             width, height, bitrate, codec);
-                                                             */
+    return false;
 }
 
 void video_encoder_set_iframe(VideoEncoder *encoder) {
