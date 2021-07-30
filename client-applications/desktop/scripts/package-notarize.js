@@ -19,6 +19,9 @@ const packageNotarize = (env, config, version, commit) => {
     // For testing, we just hardcode the environment to dev
     helpers.setPackagedEnv("dev")
 
+    // Add the config to env_overrides.json
+    helpers.setPackagedConfig(config)
+
     // We hardcode the commit sha to the current commit
     helpers.setPackagedCommitSha(commit)
 
