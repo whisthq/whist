@@ -17,21 +17,6 @@ import { appEnvironment, FractalEnvironments } from "../../config/configs"
 // So we choose to just ignore the linter rule.
 /* eslint-disable @typescript-eslint/naming-convention */
 
-const imageEnv = () => {
-  switch (appEnvironment) {
-    case FractalEnvironments.LOCAL:
-      return "dev"
-    case FractalEnvironments.DEVELOPMENT:
-      return "dev"
-    case FractalEnvironments.STAGING:
-      return "staging"
-    case FractalEnvironments.PRODUCTION:
-      return "prod"
-    default:
-      return "dev"
-  }
-}
-
 export const hostSpinUp = async ({
   ip,
   user_id,
