@@ -794,6 +794,7 @@ jobs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
     needs:
       [
+        config,
         fractal-build-monorepo-config,
         fractal-publish-build-config,
         webserver-deploy-heroku,
