@@ -400,10 +400,18 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
 
-	appName := types.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
-
-	logger.Infof(`SpinUpMandelbox(): app name: "%s"`, appName)
-	logger.Infof(`SpinUpMandelbox(): app image: "%s"`, req.AppImage)
+	// We need to compute the docker image to use for this mandelbox. In local
+	// development, we want to accept any string so that we can run arbitrary
+	// containers as mandelboxes, including custom-tagged ones. However, in
+	// deployments we only want to accept the specific apps that are enabled, and
+	// don't want to leak the fact that we're using containers as the technology
+	// for mandelboxes, so we construct the image string ourselves.
+	var image string
+	if metadata.IsLocalEnv() {
+		image = string(req.AppName)
+	} else {
+		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), req.AppName)
+	}
 
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
@@ -421,7 +429,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
 		Env:          envs,
-		Image:        req.AppImage,
+		Image:        image,
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -486,7 +494,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		},
 	}
 	// TODO: investigate whether putting all GPUs in all mandelboxes (i.e. the default here) is beneficial.
-	mandelboxName := utils.Sprintf("%s-%s", req.AppImage, req.MandelboxID)
+	mandelboxName := utils.Sprintf("%s-%s", req.AppName, req.MandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	mandelboxName = re.ReplaceAllString(mandelboxName, "-")
 
@@ -501,12 +509,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
 
-	err = fc.RegisterCreation(dockerID, appName)
+	err = fc.RegisterCreation(dockerID, req.AppName)
 	if err != nil {
-		logAndReturnError("Error registering mandelbox creation with DockerID %s and AppName %s: %s", dockerID, appName, err)
+		logAndReturnError("Error registering mandelbox creation with DockerID %s and AppName %s: %s", dockerID, req.AppName, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with DockerID %s and AppName %s", dockerID, appName)
+	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with DockerID %s and AppName %s", dockerID, req.AppName)
 
 	if err := fc.WriteMandelboxParams(); err != nil {
 		logAndReturnError("Error writing mandelbox params: %s", err)
