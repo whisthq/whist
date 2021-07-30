@@ -1090,13 +1090,27 @@ int render_video() {
     // Cast to VideoFrame* because this variable is not volatile in this section
     VideoFrame* frame = (VideoFrame*)render_context.frame_buffer;
 
-    // If the frame hasn't changed since the last one, the server will just send an empty frame to
-    // keep the framerate at least at MIN_FPS. We don't want to render this empty frame though.
-    if (rendering && frame->is_empty_frame) {
+    // If the frame hasn't changed since the last one (or we've minimized or are occluded), the
+    // server will just send an empty frame to keep the framerate at least at MIN_FPS. We don't want
+    // to render this empty frame though. To avoid a MacOS bug where rendering hangs for 1 second
+    // upon window occlusion, we immediately block rendering when that happens. The server will send
+    // an iframe when the window is visible again.
+    if (rendering &&
+        (frame->is_empty_frame || SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED)) {
         // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
         // we're behind on frames and start requesting a bunch of iframes, which forces a render.
         video_data.last_rendered_id = render_context.id;
         rendering = false;
+        if (!frame->is_window_visible && !(SDL_GetWindowFlags((SDL_Window*)window) &
+                                           (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED))) {
+            // The server thinks the client window is occluded/minimized, but it isn't. So we'll
+            // correct it.
+            // NOTE: Most of the time, this is just because there was a delay between the window
+            // losing visibility and the server reacting.
+            FractalClientMessage fmsg = {0};
+            fmsg.type = MESSAGE_START_STREAMING;
+            send_fmsg(&fmsg);
+        }
         return -1;
     }
 
