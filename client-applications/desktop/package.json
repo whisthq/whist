@@ -33,7 +33,7 @@
         "@types/ping": "^0.2.0",
         "@types/react-router": "^5.1.13",
         "@types/react-router-dom": "^5.1.7",
-        "aws-sdk": "^2.954.0",
+        "aws-sdk": "^2.957.0",
         "classnames": "^2.3.1",
         "electron-store": "^8.0.0",
         "electron-updater": "4.4.0",
