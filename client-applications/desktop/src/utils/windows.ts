@@ -12,7 +12,11 @@ import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { FractalCallbackUrls } from "@app/config/urls"
-import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
+import {
+  authPortalURL,
+  authInfoParse,
+  authInfoCallbackRequest,
+} from "@fractal/core-ts"
 import {
   WindowHashAuth,
   WindowHashSignout,
@@ -27,6 +31,9 @@ import {
   protocolStreamKill,
 } from "@app/utils/protocol"
 import { stripeBillingPortalCreate } from "@app/utils/payment"
+
+// Custom Event Emitter for Auth0 events
+export const auth0Event = new events.EventEmitter()
 
 const { buildRoot } = config
 
@@ -175,7 +182,7 @@ export const createAuthWindow = () => {
       height: 16 * 37,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashAuth,
-    customURL: authenticationURL,
+    customURL: authPortalURL(),
     closeOtherWindows: true,
   })
 
@@ -190,8 +197,8 @@ export const createAuthWindow = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   webRequest.onBeforeRequest(filter, async ({ url }) => {
-    const data = await authInfo(url)
-    auth0Event.emit("auth-info", data)
+    const response = await authInfoCallbackRequest({ authCallbackURL: url })
+    auth0Event.emit("auth-info", authInfoCallbackParse(response))
   })
 
   return win
