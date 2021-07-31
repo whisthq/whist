@@ -8,7 +8,6 @@ from pydantic import BaseModel
 # fully mypy compatible.
 class MandelboxAssignBody(BaseModel):
     region: str
-    username: str
     client_commit_hash: str
 
 
