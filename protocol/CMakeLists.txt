@@ -113,10 +113,7 @@ if (CPPCHECK AND ${CI} MATCHES "TRUE" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "--error-exitcode=1" # Propagate cppcheck errors to cmake
             "--suppress=shiftTooManyBitsSigned"
             "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-            "--suppress=*:*/sentry-native/*.c" # Ignore errors that occur in sentry-native c files. We shouldn't ignore errors in sentry-native h files
-            "--suppress=*:*/sentry-native/vendor/*" # However, we should ignore errors in the c and h files of sentry-native's build dependencies
             "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
-            "-D__linux" # Needed for sentry.h to pass
             "--inline-suppr" # Allow cppcheck-suppress comments in code
             )
 else()
@@ -227,7 +224,16 @@ else()
     find_package(OpenSSL REQUIRED)
 endif()
 
-
+find_library(LIB_SENTRY NAMES sentry PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if (NOT LIB_SENTRY)
+    message(FATAL_ERROR "Library sentry was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
+endif()
 
 find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
@@ -252,40 +258,6 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
-#download and install Sentry CMake project
-# This is fixed to sdk version 0.4.8
-set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.10/sentry-native.zip)
-set(sentry_dir sentry-native)
-MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
-    MESSAGE(STATUS "Downloading Sentry")
-    file(DOWNLOAD ${sentry_url} "${CMAKE_SOURCE_DIR}/${sentry_dir}.zip"
-            STATUS sentry_dl_status)
-    MESSAGE(VERBOSE ${sentry_dl_status})
-    file(MAKE_DIRECTORY ${sentry_dir})
-
-    execute_process(
-            COMMAND ${CMAKE_COMMAND} -E tar -xzf ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${sentry_dir}
-    )
-    execute_process(
-            COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_SOURCE_DIR}/${sentry_dir}.zip
-    )
-endif()
-
-# Do this before setting the OSX compiler so we do not mess with the sentry-native build
-message("Setting Sentry options")
-set(SENTRY_BUILD_SHARED_LIBS ON CACHE BOOL "sentry create shared lib" FORCE)
-set(SENTRY_BUILD_RUNTIMESTATIC ON CACHE BOOL "sentry runtimestatic" FORCE)
-set(SENTRY_BACKEND crashpad CACHE STRING "sentry backend" FORCE)
-add_subdirectory(sentry-native)
-
-# set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
-set_target_properties(sentry PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sentry-native
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sentry-native
-        )
-
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_COMPILER clang)
@@ -297,28 +269,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15) # deployment target must be <= than compiler SDK above
 endif()
 
-# Store compiler options of native libraries, for now, we simply pass in "-w" to disable warnings
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(NONFRACTAL_COMPILE_OPTIONS -w)
-    target_compile_options(mini_chromium PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_compile_options(crashpad_compat PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    endif()
-    target_compile_options(crashpad_util PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(crashpad_client PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(crashpad_snapshot PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(crashpad_minidump PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(crashpad_handler_lib PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(crashpad_tools PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(crashpad_handler PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-    target_compile_options(sentry PRIVATE ${NONFRACTAL_COMPILE_OPTIONS})
-endif()
-
 # Tell CMake where to look for includes
 # Use SYSTEM flag to not get warnings from their files
 include_directories(${CMAKE_SOURCE_DIR}) # For #include <fractal/**> semantics
 include_directories(SYSTEM include)
-include_directories(SYSTEM sentry-native/include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 

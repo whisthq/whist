@@ -1,4 +1,4 @@
-# workflows/protocol-build-depdendencies.yml
+# workflows/protocol-build-dependencies.yml
 #
 # Build & Publish Fractal protocol dependencies
 # Build and publish Fractal version-compatible builds of the Fractal protocol dependencies to AWS S3
@@ -92,7 +92,7 @@ jobs:
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
-          make
+          make -j
 
       ###################################################################################
       ############################# LINUX UBUNTU STEPS START ############################
@@ -102,7 +102,7 @@ jobs:
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
-          make
+          make -j
 
       ###################################################################################
       ################################# PUBLISH STEPS START #############################
@@ -140,11 +140,14 @@ jobs:
 
       ###################################################################################
 
-      - name: Checkout Git Repository
+      - name: Checkout Fractal Git Repository
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         uses: actions/checkout@v2
 
       - name: Setup Python-based notifications
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         working-directory: .github/workflows/helpers
+        shell: bash
         run: ./notifications/setup_notifications.sh
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
@@ -160,7 +163,7 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   notify-slack-openssl:
-    name: Notify Slack
+    name: Notify Slack for OpenSSL Build
     needs: [build-and-publish-openssl]
     if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
     runs-on: ubuntu-20.04
@@ -181,5 +184,205 @@ jobs:
           SLACK_CHANNEL = "#alerts-prod"
           TITLE = ":openssl: OpenSSL Libcrypto Static Library Deployed :openssl:"
           BODY = f"Fractal `OpenSSL libcrypto` Static Library Deployed to Production via Upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+  build-and-publish-sentry:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    # Platforms to build on/for
+    strategy:
+      matrix:
+        config:
+          - name: "Sentry (Windows)"
+            os: windows-2019
+          - name: "Sentry (macOS)"
+            os: macos-10.15
+          - name: "Sentry (Linux Ubuntu)"
+            os: ubuntu-20.04
+
+    env:
+      windows-tar-name: fractal-windows-sentry-shared-lib.tar.gz
+      macos-tar-name: fractal-macos-sentry-shared-lib.tar.gz
+      linux-tar-name: fractal-linux-sentry-shared-lib.tar.gz
+      headers-tar-name: fractal-sentry-headers.tar.gz
+      s3-bucket-uri: s3://fractal-protocol-shared-libs
+      s3-bucket-region: us-east-1
+
+    steps:
+      ################################# CONFIG STEPS START ###############################
+
+      - name: Checkout Sentry Native Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: getsentry/sentry-native
+          ref: "0.4.10" # GitHub Tag of the Sentry release we use
+          submodules: recursive # Sentry uses (nested) submodules for external dependencies
+
+      # To publish Sentry shared library and crashpad executable to AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.s3-bucket-region }}
+
+      ###################################################################################
+      ################################ WINDOWS STEPS START ##############################
+
+      - name: Install cmake via Chocolatey on Windows GHA Machine
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
+
+      - name: On Windows, Set up Visual Studio Developer Command Prompt (for nmake)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: On Windows, Set up NASM
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Build Sentry Native on Windows
+        if: runner.os == 'Windows'
+        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+        run: |
+          REM configure and build Sentry Native for Windows on the GitHub Actions Windows OS Version
+          cmake -S . ^
+                -B build ^
+                -D CMAKE_BUILD_TYPE=Release ^
+                -D SENTRY_BUILD_SHARED_LIBS=ON ^
+                -D SENTRY_BUILD_RUNTIMESTATIC=ON ^
+                -D SENTRY_BUILD_TESTS=OFF ^
+                -D SENTRY_BACKEND=crashpad ^
+                -G Ninja
+          ninja -C build
+          move build\crashpad_build\handler\crashpad_handler.exe .
+          move build\sentry.dll .
+          move build\sentry.lib .
+
+      ###################################################################################
+      ################################# MACOS STEPS START ###############################
+
+      - name: Build Sentry Native on macOS
+        if: runner.os == 'macOS'
+        env:
+          FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+        run: |
+          # configure and build Sentry Native
+          cmake -S . \
+                -B build \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D SENTRY_BUILD_SHARED_LIBS=ON \
+                -D SENTRY_BUILD_RUNTIMESTATIC=ON \
+                -D SENTRY_BUILD_TESTS=OFF \
+                -D SENTRY_BACKEND=crashpad
+          cd build
+          make -j
+
+          # move files to location for publish steps to tar
+          mv crashpad_build/handler/crashpad_handler ..
+          mv libsentry.dylib ..
+
+      ###################################################################################
+      ############################# LINUX UBUNTU STEPS START ############################
+
+      - name: Build Sentry Native on Linux Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          # install needed dependencies
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+          # configure and build Sentry Native
+          cmake -S . \
+                -B build \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D SENTRY_BUILD_SHARED_LIBS=ON \
+                -D SENTRY_BUILD_RUNTIMESTATIC=ON \
+                -D SENTRY_BUILD_TESTS=OFF \
+                -D SENTRY_BACKEND=crashpad
+          cd build
+          make -j
+
+          # move files to location for publish steps to tar
+          mv crashpad_build/handler/crashpad_handler ..
+          mv libsentry.so ..
+
+      ###################################################################################
+      ################################# PUBLISH STEPS START #############################
+
+      # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
+      - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              tar -zcvf ${{ env.linux-tar-name }} libsentry.so crashpad_handler
+              aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              tar -zcvf ${{ env.windows-tar-name }} sentry.dll sentry.lib crashpad_handler.exe
+              aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
+          else
+              tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
+              aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+          fi
+
+      # Only run once, as headers are identical on every OS
+      - name: Tar Sentry headers and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && runner.os == 'Linux'}}
+        run: |
+          # tar and upload the Sentry headers
+          tar -zcvf ${{ env.headers-tar-name }} include
+          aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
+
+      ###################################################################################
+
+      - name: Checkout Fractal Git Repository
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        working-directory: .github/workflows/helpers
+        shell: bash
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          BODY = f"@releases :rotating_light: Failed to deploy Sentry Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  notify-slack-sentry:
+    name: Notify Slack for Sentry Build
+    needs: [build-and-publish-sentry]
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Success
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          TITLE = ":sentry: Sentry Shared Library Deployed :sentry:"
+          BODY = f"Fractal Sentry Static Library Deployed to Production via Upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
