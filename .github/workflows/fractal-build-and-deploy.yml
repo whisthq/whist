@@ -527,50 +527,6 @@ jobs:
 
   ##########################################################################################
 
-  # AMI: Kill "Packer Builder" Instances
-  # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
-  # Runs unconditionally after mandelboxes-and-amis-publish-ghcr-and-aws
-  kill-packer-builder-instances:
-    name: "Kill Packer Builder Tagged EC2 Instances"
-    runs-on: ubuntu-20.04
-    needs:
-      [fractal-publish-build-config, mandelboxes-and-amis-publish-ghcr-and-aws]
-    # We must make sure that this doesn't run at the same time as another workflow's publish script!
-    concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
-    if: always()
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Install Utility to Kill Lingering AWS Packer Builder Instances
-        run: pip install aws-hashicorp-packer-reaper
-
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Kill All Packer Instances Older Than 45 Minutes
-        run: aws-hashicorp-packer-reaper terminate --older-than 45m
-
-      - name: Notify Slack on Job Error
-        if: failure()
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
   # Uses webserver's cli command to update AMIs if new AMIs have been built
   webserver-update-fractal-services:
     name: "Update Fractal Services using Webserver"
@@ -700,10 +656,10 @@ jobs:
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-  # Main Webserver: Deploy to Heroku
+  # Webserver: Deploy to Heroku
   # Push the webserver subtree to the appropriate Heroku app.
   webserver-deploy-heroku:
-    name: "Main Webserver: Deploy to Heroku"
+    name: "Webserver: Deploy to Heroku"
     runs-on: ubuntu-20.04
     needs: [fractal-publish-build-config]
     concurrency: webserver-deploy-heroku-${{ github.ref }}

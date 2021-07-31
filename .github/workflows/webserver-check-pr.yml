@@ -1,11 +1,11 @@
 # workflows/webserver-check-pr.yml
 #
-# Main Webserver: Check PR
+# Webserver: Check PR
 # Checks a webserver PR for linting and unit/integration testing success, and
 # compare the schema of the live database with webserver/db-migration/schema.sql,
 # notifying the PR if schema changes are detected
 
-name: "Main Webserver: Check PR"
+name: "Webserver: Check PR"
 
 on:
   pull_request:
