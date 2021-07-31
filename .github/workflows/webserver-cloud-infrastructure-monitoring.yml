@@ -165,7 +165,7 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Killing Packer instances failed: could not kill Packer EC2 instances in `kill-packer-builder-instances` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-          
+
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
@@ -195,5 +195,5 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-dev"
           BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-          
+
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
