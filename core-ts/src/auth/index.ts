@@ -2,7 +2,7 @@ import jwtDecode from "jwt-decode"
 import { randomBytes } from "crypto"
 import { config } from "../config"
 import { configPost } from "../"
-import { authCallbackURL, refreshToken } from "../types/data"
+import { authCallbackURL, refreshToken, accessToken } from "../types/data"
 
 const post = configPost({ server: `https://${config.AUTH_DOMAIN_URL}` })
 
@@ -128,4 +128,15 @@ export const generateRandomConfigToken = () => {
 
   const buffer = randomBytes(48)
   return buffer.toString("base64")
+}
+
+export const isTokenExpired = ({ accessToken }: accessToken) => {
+  // Extract the expiry in seconds since epoch
+  const profile: { exp: number } = jwtDecode(accessToken)
+  // Get current time in seconds since epoch
+  const currentTime = Date.now() / 1000
+  // Allow for ten seconds so we don't compare the access token to the current time right
+  // before the expiry
+  const secondsBuffer = 10
+  return currentTime + secondsBuffer > profile.exp
 }
