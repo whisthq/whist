@@ -1,26 +1,27 @@
 import { from, merge } from "rxjs"
+import { has } from "lodash"
 import { switchMap, map, filter } from "rxjs/operators"
-
-import { flow, fork } from "@app/utils/flows"
+import { flow } from "@app/utils/flows"
 import {
-  generateRefreshedAuthInfo,
   generateRandomConfigToken,
-  authInfoValid,
-  isExpired,
-} from "@app/utils/auth"
+  authInfoRefreshRequest,
+  authInfoParse,
+  isTokenExpired,
+} from "@fractal/core-ts"
 import { store } from "@app/utils/persist"
 
 export const authRefreshFlow = flow<{
   refreshToken: string
 }>("authRefreshFlow", (trigger) => {
   const refreshed = trigger.pipe(
-    switchMap((tokens) => from(generateRefreshedAuthInfo(tokens.refreshToken)))
+    switchMap((tokens) => from(authInfoRefreshRequest(tokens))),
+    map(authInfoParse)
   )
 
-  return fork(refreshed, {
-    success: (result: any) => authInfoValid(result),
-    failure: (result: any) => !authInfoValid(result),
-  })
+  return {
+    success: refreshed.pipe(filter((res) => !has(res, "error"))),
+    failure: refreshed.pipe(filter((res) => has(res, "error"))),
+  }
 })
 
 export default flow<{
@@ -30,10 +31,10 @@ export default flow<{
   configToken?: string
 }>("authFlow", (trigger) => {
   const expired = trigger.pipe(
-    filter((tokens) => isExpired(tokens.accessToken))
+    filter((tokens) => isTokenExpired(tokens.accessToken))
   )
   const notExpired = trigger.pipe(
-    filter((tokens) => !isExpired(tokens.accessToken))
+    filter((tokens) => !isTokenExpired(tokens.accessToken))
   )
 
   const refreshedAuthInfo = authRefreshFlow(expired)
@@ -52,8 +53,8 @@ export default flow<{
     }))
   )
 
-  return fork(authInfoWithConfig, {
-    success: (result: any) => authInfoValid(result),
-    failure: (result: any) => !authInfoValid(result),
-  })
+  return {
+    success: authInfoWithConfig.pipe(filter((res) => !has(res, "error"))),
+    failure: authInfoWithConfig.pipe(filter((res) => has(res, "error"))),
+  }
 })
