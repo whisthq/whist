@@ -891,14 +891,15 @@ int main(int argc, char* argv[]) {
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
-            // Check if the window is minimized. If it is, we can just sleep for a bit and then
-            // check again.
+            // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
+            // and then check again.
             // NOTE: internally within SDL, the window flags are maintained and updated upon
             // catching a window event, and `SDL_GetWindowFlags()` simply returns those stored
             // flags, so this is an efficient call
-            if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
-                // Even though the window is minized, we still need to handle SDL events or else the
-                // application will permanently hang
+            if (SDL_GetWindowFlags((SDL_Window*)window) &
+                (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED)) {
+                // Even though the window is minized/occluded, we still need to handle SDL events or
+                // else the application will permanently hang
                 if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
                     // unable to handle event
                     exit_code = FRACTAL_EXIT_FAILURE;

@@ -523,6 +523,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         frame->height = encoder->out_height;
                         frame->codec_type = encoder->codec_type;
                         frame->is_empty_frame = false;
+                        frame->is_window_visible = true;
 
                         static FractalCursorImage cursor_cache[2];
                         static int last_cursor_id = 0;
@@ -599,6 +600,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 frame->is_empty_frame = true;
                 // This signals that the screen hasn't changed, so don't bother rendering
                 // this frame and just keep showing the last one.
+                frame->is_window_visible = !stop_streaming;
                 // We don't need to fill out the rest of the fields of the VideoFrame because
                 // is_empty_frame is true, so it will just be ignored by the client.
 

@@ -458,19 +458,29 @@ int handle_sdl_event(SDL_Event *event) {
                 if (handle_mouse_left_window(event) != 0) {
                     return -1;
                 }
-            } else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
+            }
+#ifdef __APPLE__
+            else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
                 FractalClientMessage fmsg = {0};
                 fmsg.type = MESSAGE_STOP_STREAMING;
+                fractal_sleep(100);
                 send_fmsg(&fmsg);
-            } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-                // NOTE: there is no way to see if a window was "un-minimized." The only thing we
-                // can check is if it gained focus, which also happens in other cases. The server
-                // will gracefully deal with (i.e. ignore) the extra extraneous messages that will
-                // get sent whenever the window gains focus.
+            } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
                 FractalClientMessage fmsg = {0};
                 fmsg.type = MESSAGE_START_STREAMING;
                 send_fmsg(&fmsg);
             }
+#else
+            else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
+                FractalClientMessage fmsg = {0};
+                fmsg.type = MESSAGE_STOP_STREAMING;
+                send_fmsg(&fmsg);
+            } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
+                FractalClientMessage fmsg = {0};
+                fmsg.type = MESSAGE_START_STREAMING;
+                send_fmsg(&fmsg);
+            }
+#endif
             break;
         }
         case SDL_AUDIODEVICEADDED:
