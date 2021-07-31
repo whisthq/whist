@@ -30,7 +30,7 @@ import {
   childProcess,
   protocolStreamKill,
 } from "@app/utils/protocol"
-import { stripeBillingPortalCreate } from "@app/utils/payment"
+import { paymentPortalRequest, paymentPortalParse } from "@fractal/core-ts"
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()
@@ -205,8 +205,13 @@ export const createAuthWindow = () => {
   return win
 }
 
-export const createPaymentWindow = async () => {
-  const billingPortalURL = await stripeBillingPortalCreate()
+export const createPaymentWindow = async ({
+  accessToken,
+}: {
+  accessToken: string
+}) => {
+  const response = await paymentPortalRequest({ accessToken })
+  const { paymentPortalURL } = paymentPortalParse(response)
   const win = createWindow({
     show: WindowHashPayment,
     options: {
@@ -216,7 +221,7 @@ export const createPaymentWindow = async () => {
       alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
-    customURL: billingPortalURL,
+    customURL: paymentPortalURL,
   })
 
   const {

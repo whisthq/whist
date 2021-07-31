@@ -26,7 +26,7 @@ import {
 } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
-import { emitAuthCache, persistClear } from "@app/utils/persist"
+import { emitAuthCache, persistClear, store } from "@app/utils/persist"
 import { hideAppDock } from "@app/utils/dock"
 
 // Apply autoupdate config
@@ -141,5 +141,6 @@ fromTrigger("trayFeedbackAction").subscribe(() => {
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 fromTrigger("showPaymentWindow").subscribe(async () => {
-  await createPaymentWindow()
+  const accessToken = (store.get("accessToken") ?? "") as string
+  await createPaymentWindow({ accessToken })
 })
