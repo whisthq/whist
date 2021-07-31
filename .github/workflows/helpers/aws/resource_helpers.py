@@ -131,7 +131,7 @@ def num_aws_instances(region):
 
 def flag_instances(region):
     """
-    Flags all the instances in a given region
+    Flags all the EC2 instances in a given region
 
     Args:
         region (str): current region
