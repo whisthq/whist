@@ -198,7 +198,8 @@ export const createAuthWindow = () => {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   webRequest.onBeforeRequest(filter, async ({ url }) => {
     const response = await authInfoCallbackRequest({ authCallbackURL: url })
-    auth0Event.emit("auth-info", authInfoCallbackParse(response))
+    auth0Event.emit("auth-info", authInfoParse(response))
+    return response
   })
 
   return win

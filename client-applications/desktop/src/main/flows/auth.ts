@@ -30,12 +30,8 @@ export default flow<{
   refreshToken: string
   configToken?: string
 }>("authFlow", (trigger) => {
-  const expired = trigger.pipe(
-    filter((tokens) => isTokenExpired(tokens.accessToken))
-  )
-  const notExpired = trigger.pipe(
-    filter((tokens) => !isTokenExpired(tokens.accessToken))
-  )
+  const expired = trigger.pipe(filter((tokens) => isTokenExpired(tokens)))
+  const notExpired = trigger.pipe(filter((tokens) => !isTokenExpired(tokens)))
 
   const refreshedAuthInfo = authRefreshFlow(expired)
 
