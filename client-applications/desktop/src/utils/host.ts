@@ -7,7 +7,6 @@
 import { AsyncReturnType } from "@app/@types/state"
 import { apiPut } from "@app/utils/api"
 import { HostServicePort } from "@app/utils/constants"
-import { appEnvironment, FractalEnvironments } from "../../config/configs"
 
 // This file directly interacts with data returned from the webserver, which
 // has keys labelled in Python's snake_case format. We want to be able to pass
@@ -16,21 +15,6 @@ import { appEnvironment, FractalEnvironments } from "../../config/configs"
 // to obfuscate the server's data format by converting everything to camelCase.
 // So we choose to just ignore the linter rule.
 /* eslint-disable @typescript-eslint/naming-convention */
-
-const imageEnv = () => {
-  switch (appEnvironment) {
-    case FractalEnvironments.LOCAL:
-      return "dev"
-    case FractalEnvironments.DEVELOPMENT:
-      return "dev"
-    case FractalEnvironments.STAGING:
-      return "staging"
-    case FractalEnvironments.PRODUCTION:
-      return "prod"
-    default:
-      return "dev"
-  }
-}
 
 export const hostSpinUp = async ({
   ip,
@@ -49,7 +33,7 @@ export const hostSpinUp = async ({
     "/spin_up_mandelbox",
     `https://${ip}:${HostServicePort}`,
     {
-      app_image: `ghcr.io/fractal/${imageEnv()}/browsers/chrome:current-build`,
+      app_name: `browsers/chrome`,
       user_id,
       config_encryption_token,
       jwt_access_token,

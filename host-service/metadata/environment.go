@@ -9,7 +9,9 @@ import (
 // instance), dev (i.e. talking to the dev webserver), staging, or prod
 type AppEnvironment string
 
-// Constants for the various AppEnvironments
+// Constants for the various AppEnvironments. DO NOT CHANGE THESE without
+// understanding how any consumers of GetAppEnvironment() and
+// GetAppEnvironmentLowercase() are using them!
 const (
 	EnvLocalDevWithDB AppEnvironment = "LOCALDEVWITHDB"
 	EnvLocalDev       AppEnvironment = "LOCALDEV"
@@ -56,4 +58,11 @@ var GetAppEnvironment func() AppEnvironment = func(unmemoized func() AppEnvironm
 func IsLocalEnv() bool {
 	env := GetAppEnvironment()
 	return env == EnvLocalDev || env == EnvLocalDevWithDB
+}
+
+// GetAppEnvironmentLowercase returns the app environment string, but just
+// converted to lowercase. This is helpful to construct larger strings (i.e.
+// Docker image names) that depend on the current environment.
+func GetAppEnvironmentLowercase() string {
+	return strings.ToLower(string(GetAppEnvironment()))
 }

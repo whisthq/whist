@@ -80,7 +80,7 @@ func (r requestResult) send(w http.ResponseWriter) {
 // SpinUpMandelboxRequest defines the (unauthenticated) `spin_up_mandelbox`
 // endpoint.
 type SpinUpMandelboxRequest struct {
-	AppImage              string                      `json:"app_image"`               // The image to spin up
+	AppName               types.AppName               `json:"app_name"`                // The app name to spin up (in localdev, this can be an arbitrary container image, but in deployment it must be a mandelbox image name).
 	UserID                types.UserID                `json:"user_id"`                 // User ID of the mandelbox user
 	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        auth.RawJWT                 `json:"jwt_access_token"`        // User's JWT access token
