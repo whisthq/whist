@@ -84,6 +84,45 @@ if has_updated "$SDL_LIB"; then
 fi
 
 ###############################
+# Download Sentry headers
+###############################
+
+# If the include/sentry directory doesn't exist, make it and fill it
+# Or, if the lib has updated, refill the directory
+LIB="fractal-sentry-headers.tar.gz"
+SENTRY_DIR="$DEST_DIR/include/sentry"
+if has_updated "$LIB" || [[ ! -d "$SENTRY_DIR" ]]; then
+    rm -rf "$SENTRY_DIR"
+    mkdir -p "$SENTRY_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SENTRY_DIR"
+
+    # Pull all SDL2 include files up a level and delete encapsulating folder
+    mv "$SENTRY_DIR/include"/* "$SENTRY_DIR"
+    rmdir "$SENTRY_DIR/include"
+fi
+
+###############################
+# Download Sentry libraries
+###############################
+
+# Select sentry lib dir and sentry lib targz name based on OS
+SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
+if [[ "$OS" =~ "Windows" ]]; then
+    SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
+elif [[ "$OS" == "Darwin" ]]; then
+    SENTRY_LIB="fractal-macos-sentry-shared-lib.tar.gz"
+elif [[ "$OS" == "Linux" ]]; then
+    SENTRY_LIB="fractal-linux-sentry-shared-lib.tar.gz"
+fi
+
+# Check if SENTRY_LIB has updated, and if so, create the dir and copy the libs into the source dir
+if has_updated "$SENTRY_LIB"; then
+    rm -rf "$SENTRY_LIB_DIR"
+    mkdir -p "$SENTRY_LIB_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$SENTRY_LIB" - | tar -xz -C "$SENTRY_LIB_DIR"
+fi
+
+###############################
 # Download OpenSSL headers
 ###############################
 
