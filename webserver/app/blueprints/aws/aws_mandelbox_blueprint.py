@@ -4,7 +4,7 @@ import uuid
 from http import HTTPStatus
 from flask import Blueprint, current_app
 from flask.json import jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_pydantic import validate
 from app.validation import MandelboxAssignBody
 
@@ -48,11 +48,10 @@ def regions():
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     start_time = time.time() * 1000
     care_about_active = False
-    if care_about_active and is_user_active(body.username):
+    username = get_jwt_identity()
+    if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
-        fractal_logger.debug(
-            f"Returning 503 to user {body.username} because they are already active."
-        )
+        fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
     if (
         current_app.config["ENVIRONMENT"] == DEVELOPMENT
@@ -106,7 +105,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
                 )
                 scaling_thread.start()
         fractal_logger.debug(
-            f"Returning 503 to user {body.username} because we didn't find an instance for them."
+            f"Returning 503 to user {username} because we didn't find an instance for them."
         )
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
@@ -115,7 +114,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     obj = MandelboxInfo(
         mandelbox_id=mandelbox_id,
         instance_name=instance.instance_name,
-        user_id=body.username,
+        user_id=username,
         status="ALLOCATED",
         creation_time_utc_unix_ms=int(time.time() * 1000),
     )

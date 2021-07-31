@@ -44,7 +44,6 @@ def test_assign(client, bulk_instance, monkeypatch):
 
     args = {
         "region": get_random_region_name(),
-        "username": "test@fractal.co",
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
     }
     response = client.post("/mandelbox/assign", json=args)
@@ -71,7 +70,6 @@ def test_assign_active(client, bulk_instance, monkeypatch):
 
     args = {
         "region": get_random_region_name(),
-        "username": "test@fractal.co",
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
     }
     response = client.post("/mandelbox/assign", json=args)
@@ -94,7 +92,6 @@ def test_client_commit_hash_local_dev_override_fail(
 
     args = {
         "region": region_name,
-        "username": "test@fractal.co",
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
     }
     response = client.post("/mandelbox/assign", json=args)
@@ -117,7 +114,6 @@ def test_client_commit_hash_local_dev_override_success(
 
     args = {
         "region": region_name,
-        "username": "test@fractal.co",
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
     }
     response = client.post("/mandelbox/assign", json=args)
@@ -140,7 +136,6 @@ def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed)
     response = client.post(
         "/mandelbox/assign",
         json={
-            "username": user,
             "app": "Google Chrome",
             "region": get_random_region_name(),
         },
