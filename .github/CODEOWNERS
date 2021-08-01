@@ -11,14 +11,16 @@
 # The folders are ordered as follows:
 
 /.github/               @philippemnoel @rpadaki @npip99
-/client-applications/   @neilyio @mingy98 @philippemnoel
-/mandelbox-images/      @djsavvy @rpadaki @philippemnoel
-/core-ts/               @neilyio @mingy98 @janniezhong
+/client-applications/   @mingy98 @rpadaki @philippemnoel
+/config/                @djsavvy @philippemnoel @sardination
+/core-ts/               @mingy98 @owenniles @sardination
 /host-service/          @djsavvy @sardination @rpadaki
 /host-setup/            @rpadaki @djsavvy @philippemnoel
+/mandelbox-images/      @djsavvy @rpadaki @philippemnoel
+/microservices/         @owenniles @rpadaki @philippemnoel
 /protocol/              @npip99 @rpadaki @sardination
 /webserver/             @FishmanL @owenniles @djsavvy
-/website/               @neilyio @mingy98 @janniezhong
+/website/               @mingy98 @rpadaki @philippemnoel
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
