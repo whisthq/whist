@@ -622,7 +622,7 @@ jobs:
           RUNNING_LOCALLY: true
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
-        id: run-main-webserver-cli-ami-upgrade
+        id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         shell: bash
         run: flask command ami_upgrade ${{ github.sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
