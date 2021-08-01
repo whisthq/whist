@@ -511,18 +511,6 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@typeform/embed-react@^1.0.7":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@typeform/embed-react/-/embed-react-1.0.7.tgz#3a40a2ba3962a69f3bd48dccda207daea433a61a"
-  integrity sha512-dMxWITJ38KtJ/eInIlD/oC6gsAYEpczribjzR1cifob0PezPw5aDoD7HZpuJupqMPr5BcxpADA4SuDG6G/LgIA==
-  dependencies:
-    "@typeform/embed" "^1.10.0"
-
-"@typeform/embed@^1.10.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.15.0.tgz#4b3787d8dfe71dd6a1a34913affde6192560fe13"
-  integrity sha512-EHmMjy51RydEM2EPK6fwcM6PjfRb6p++ry406ZNSeP8uy9WWpbQxjKvJ8pWm+F5FGhdI7EF277euPIDjQcQpcg==
-
 "@types/classnames@^2.3.1":
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-2.3.1.tgz#3c2467aa0f1a93f1f021e3b9bcf938bd5dfdc0dd"
@@ -2235,10 +2223,10 @@ eslint-visitor-keys@^2.0.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-2.1.0.tgz#f65328259305927392c938ed44eb0a5c9b2bd303"
   integrity sha512-0rSmRBzXgDzIsD6mGdJgevzgezI534Cer5L/vyMX0kHzT/jiB43jRhd9YUlMGYLQy2zprNmoT8qasCGtY+QaKw==
 
-eslint@^7.31.0:
-  version "7.31.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-7.31.0.tgz#f972b539424bf2604907a970860732c5d99d3aca"
-  integrity sha512-vafgJpSh2ia8tnTkNUkwxGmnumgckLh5aAbLa1xRmIn9+owi8qBNGKL+B881kNKNTy7FFqTEkpNkUvmw0n6PkA==
+eslint@^7.32.0:
+  version "7.32.0"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-7.32.0.tgz#c6d328a14be3fb08c8d1d21e12c02fdb7a2a812d"
+  integrity sha512-VHZ8gX+EDfz+97jGcgyGCyRia/dPOd6Xh9yPv8Bl1+SoaIwD+a/vlrOmGRUyOYu7MwUhc7CxqeaDZU13S4+EpA==
   dependencies:
     "@babel/code-frame" "7.12.11"
     "@eslint/eslintrc" "^0.4.3"
