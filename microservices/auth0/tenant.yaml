@@ -45,7 +45,6 @@ clients:
     grant_types:
       - authorization_code
       - refresh_token
-      - implicit
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
     jwt_configuration:
@@ -79,9 +78,6 @@ clients:
     description: A service that performs administrative operations on the fractal
       webservers on behalf of Fractal developers.
     grant_types:
-      - password
-      - http://auth0.com/oauth/grant-type/password-realm
-      - refresh_token
       - client_credentials
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
