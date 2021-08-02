@@ -1,13 +1,13 @@
 import random, requests
 
-from app.models import RegionToAmi, db
+from app.models import RegionToAmi
 from tests.patches import function
 
 from app.helpers.command_helpers import ami_upgrade
 from app.helpers.command_helpers.ami_upgrade import (
     launch_new_ami_buffer,
     perform_upgrade,
-    fetch_current_running_instances,
+    swapover_amis,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 
@@ -140,7 +140,8 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
         new_ami_list.append(newer_ami)
         region_to_new_ami_map[region] = newer_ami
 
-    perform_upgrade(generate_name("new-client-hash", True), region_to_new_ami_map)
+    new_amis = perform_upgrade(generate_name("new-client-hash", True), region_to_new_ami_map)
+    swapover_amis(new_amis)
 
     region_wise_new_amis_added_to_db_session = {
         item["args"].region_name: item["args"]
