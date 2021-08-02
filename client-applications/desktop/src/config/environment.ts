@@ -29,10 +29,12 @@ const getDevelopmentConfig = () => {
 
 const getProductionConfig = () => {
   if (!app.isPackaged) {
-    return configs.PRODUCTION
+    return configs.DEVELOPMENT
   }
 
   switch (appEnvironment) {
+    case FractalEnvironments.LOCAL:
+      return configs.LOCAL
     case FractalEnvironments.DEVELOPMENT:
       return configs.DEVELOPMENT
     case FractalEnvironments.STAGING:
@@ -40,7 +42,7 @@ const getProductionConfig = () => {
     case FractalEnvironments.PRODUCTION:
       return configs.PRODUCTION
     default:
-      return configs.PRODUCTION
+      return configs.DEVELOPMENT
   }
 }
 

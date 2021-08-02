@@ -27,6 +27,7 @@ import {
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { emitAuthCache, persistClear } from "@app/utils/persist"
+import { hideAppDock } from "@app/utils/dock"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -74,7 +75,11 @@ fromTrigger("notPersisted").subscribe(() => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
+  // Launch the protocol
   createProtocolWindow().catch((err) => console.error(err))
+  // On MacOS, hide the app dock when the protocol is open
+  hideAppDock()
+  // Present the tray (top right corner of screen)
   toggleSignedInTray(x.userEmail)
 })
 
