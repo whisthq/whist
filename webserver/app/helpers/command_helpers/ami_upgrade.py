@@ -182,7 +182,7 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
 
 def perform_upgrade(
     client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]
-) -> List[RegionToAmi]:
+) -> List[str]:
     """
     Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
     This happens in the following steps:
