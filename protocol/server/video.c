@@ -561,7 +561,8 @@ int32_t multithreaded_send_video(void* opaque) {
                         log_double_statistic("Video frame size", encoder->encoded_frame_size);
 
                         previous_frame_size = encoder->encoded_frame_size;
-                        log_double_statistic("Video frame processing time (ms)", get_timer(server_frame_timer) * 1000);
+                        log_double_statistic("Video frame processing time (ms)",
+                                             get_timer(server_frame_timer) * 1000);
                     }
                 }
             } else {
