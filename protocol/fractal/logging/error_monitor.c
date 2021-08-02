@@ -81,6 +81,8 @@ void error_monitor_set_environment(char *environment) {
         strcmp(environment, "development") == 0) {
         safe_strncpy(error_monitor_environment, environment, sizeof(error_monitor_environment));
         error_monitor_environment_set = true;
+    } else if (strcmp(environment, "LOCALDEV") == 0) {
+        LOG_INFO("On local development - will not initialize sentry!");
     } else {
         LOG_WARNING("Invalid environment %s set! Ignoring it.", environment);
     }
