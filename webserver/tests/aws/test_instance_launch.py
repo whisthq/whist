@@ -71,7 +71,7 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
 
-def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, bulk_instance, reset_region_to_ami):
+def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, bulk_instance, db_session):
     """
     In this test case, we are testing the whole AMI upgrade flow. This involves the
     following checks

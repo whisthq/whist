@@ -6,6 +6,7 @@ pytest==6.2.4
 pytest-cov==2.12.1
 pytest-dotenv==0.5.2
 pytest-flask==1.2.0
+pytest-flask-sqlalchemy==1.0.2
 Sphinx==4.1.0
 types-Flask==1.1.1
 types-Jinja2==2.11.2

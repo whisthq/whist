@@ -65,6 +65,11 @@ def app():
 
 
 @pytest.fixture
+def _db(app):
+    return db
+
+
+@pytest.fixture
 def authorized(client, user, monkeypatch):
     """Bypass authorization decorators.
 
