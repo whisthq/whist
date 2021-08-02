@@ -66,4 +66,8 @@ int send_server_quit_messages(int num_messages);
  */
 int send_fmsg(FractalClientMessage* fmsg);
 
+void update_ping();
+
+void receive_pong(int pong_id);
+
 #endif  // CLIENT_NETWORK_H

@@ -37,6 +37,14 @@ extern SocketContext packet_receive_context;
 extern SocketContext packet_tcp_context;
 extern char *server_ip;
 extern int uid;
+extern bool connected;
+extern volatile double latency;
+
+clock last_ping_timer;
+volatile extern int last_ping_id;
+volatile extern int ping_failures;
+int last_pong_id;
+const double ping_lambda = 0.8;
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
@@ -146,6 +154,63 @@ int discover_ports(bool *using_stun) {
     free_tcp_packet(tcp_packet);
 
     return 0;
+}
+
+void send_ping(int ping_id) {
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_PING;
+    fmsg.ping_id = ping_id;
+
+    LOG_INFO("Ping! %d", ping_id);
+    if (send_fmsg(&fmsg) != 0) {
+        LOG_WARNING("Failed to ping server! (ID: %d)", ping_id);
+    }
+    last_ping_id = ping_id;
+    start_timer(&last_ping_timer);
+}
+
+void update_ping() {
+    // If it's been 1 second since the last ping, we should warn
+    if (get_timer(last_ping_timer) > 1.0) {
+        LOG_WARNING("No ping sent or pong received in over a second");
+    }
+
+    // If we're waiting for a ping, and it's been 600ms, then that ping will be
+    // noted as failed
+    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.6) {
+        LOG_WARNING("Ping received no response: %d", last_ping_id);
+        // Keep track of failures, and exit if too many failures
+        last_pong_id = last_ping_id;
+        ping_failures++;
+        if (ping_failures == 3) {
+            LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
+            connected = false;
+        }
+    }
+
+    // if we've received the last ping, send another
+    if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
+        send_ping(last_ping_id + 1);
+    }
+
+    // if we haven't received the last ping, send the same ping
+    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
+        send_ping(last_ping_id);
+    }
+}
+
+void receive_pong(int pong_id) {
+    if (pong_id == last_ping_id) {
+        // the server received the last ping we sent!
+        double ping_time = get_timer(last_ping_timer);
+        LOG_INFO("Pong %d received: took %f seconds", pong_id, ping_time);
+
+        latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
+        ping_failures = 0;
+        last_pong_id = pong_id;
+    } else {
+        LOG_WARNING("Received old pong (ID %d), expected ID %d", pong_id, last_ping_id);
+    }
 }
 
 int connect_to_server(bool using_stun) {

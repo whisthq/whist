@@ -74,7 +74,7 @@ volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile double latency;
-volatile int ping_id;
+volatile int last_ping_id;
 volatile int ping_failures;
 
 volatile FractalRGBColor* native_window_color = NULL;
@@ -166,7 +166,7 @@ void init_update() {
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its declaration above. We start at 25ms before the first ping.
     latency = 25.0 / 1000.0;
-    ping_id = 1;
+    last_ping_id = 1;
     ping_failures = -2;
 
     init_clipboard_synchronizer(true);
@@ -218,55 +218,7 @@ void update() {
         send_fmsg(&fmsg);
     }
 
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(latency_timer) > 1.0) {
-        LOG_WARNING("Whoah, ping timer is way too old");
-    }
-
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
-    // noted as failed
-    if (is_timing_latency && get_timer(latency_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", ping_id);
-        is_timing_latency = false;
-
-        // Keep track of failures, and exit if too many failures
-        ping_failures++;
-        if (ping_failures == 3) {
-            LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
-            connected = false;
-        }
-    }
-
-    static int num_ping_tries = 0;
-
-    // If 210ms has past since last ping, then it's taking a bit
-    // Ie, a ping try will occur every 210ms
-    bool taking_a_bit = is_timing_latency && get_timer(latency_timer) > 0.21 * (1 + num_ping_tries);
-    // If 500ms has past since the last resolved ping, then it's been a while
-    // and we should ping again (Last resolved ping is a ping that either has
-    // been received, or was noted as failed)
-    bool awhile_since_last_resolved_ping = !is_timing_latency && get_timer(latency_timer) > 0.5;
-
-    // If either of the two above conditions hold, then send a new ping
-    if (awhile_since_last_resolved_ping || taking_a_bit) {
-        if (is_timing_latency) {
-            // A continuation of an existing ping that's been taking a bit
-            num_ping_tries++;
-        } else {
-            // A brand new ping
-            ping_id++;
-            is_timing_latency = true;
-            start_timer((clock*)&latency_timer);
-            num_ping_tries = 0;
-        }
-
-        fmsg.type = MESSAGE_PING;
-        fmsg.ping_id = ping_id;
-
-        LOG_INFO("Ping! %d", ping_id);
-        send_fmsg(&fmsg);
-    }
-    // End Ping
+    update_ping();
 }
 
 int sync_tcp_packets(void* opaque) {
