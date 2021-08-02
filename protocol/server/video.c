@@ -39,6 +39,7 @@ Includes
 #include <fractal/video/screencapture.h>
 #include <fractal/video/videoencode.h>
 #include <fractal/utils/avpacket_buffer.h>
+#include <fractal/logging/log_statistic.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -431,35 +432,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // filter graph is empty
                     break;
                 }
-                // else we have an encoded frame, so handle it!
-
-                static int frame_stat_number = 0;
-                static double total_frame_time = 0.0;
-                static double max_frame_time = 0.0;
-                static double total_frame_sizes = 0.0;
-                static double max_frame_size = 0.0;
-
-                frame_stat_number++;
-                total_frame_time += get_timer(t);
-                max_frame_time = max(max_frame_time, get_timer(t));
-                total_frame_sizes += encoder->encoded_frame_size;
-                max_frame_size = max(max_frame_size, encoder->encoded_frame_size);
-
-                if (frame_stat_number % 30 == 0) {
-                    LOG_INFO("Longest Encode Time: %f", max_frame_time);
-                    LOG_INFO("Average Encode Time: %f", total_frame_time / 30);
-                    LOG_INFO("Longest Encode Size: %f", max_frame_size);
-                    LOG_INFO("Average Encode Size: %f", total_frame_sizes / 30);
-                    total_frame_time = 0.0;
-                    max_frame_time = 0.0;
-                    total_frame_sizes = 0.0;
-                    max_frame_size = 0.0;
-                }
-
-                // LOG_INFO("Encode Time: %f (%d) (%d)", get_timer(t),
-                //        frames_since_first_iframe % gop_size,
-                //        encoder->encoded_frame_size);
-
+                log_double_statistic("Video encode time (ms)", get_timer(t));
                 bitrate_tested_frames++;
                 bytes_tested_frames += encoder->encoded_frame_size;
 
@@ -584,13 +557,11 @@ int32_t multithreaded_send_video(void* opaque) {
                         fractal_unlock_mutex(state_lock);
                         read_unlock(&is_active_rwlock);
 
-                        // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
-                        // get_timer( t ), frame_size );
+                        log_double_statistic("Video frame send time (ms)", get_timer(t) * 1000);
+                        log_double_statistic("Video frame size", frame_size);
 
                         previous_frame_size = encoder->encoded_frame_size;
-                        // double server_frame_time =
-                        // get_timer(server_frame_timer); LOG_INFO("Server Frame
-                        // Time for ID %d: %f", id, server_frame_time);
+                        log_double_statistic("Video frame processing time (ms)", get_timer(server_frame_timer) * 1000);
                     }
                 }
             } else {

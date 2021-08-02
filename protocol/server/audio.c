@@ -37,6 +37,7 @@ Includes
 
 #include <fractal/audio/audiocapture.h>
 #include <fractal/audio/audioencode.h>
+#include <fractal/logging/log_statistic.h>
 #include <fractal/utils/avpacket_buffer.h>
 #include "client.h"
 #include "network.h"
@@ -120,20 +121,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                         // no data or need more data
                         break;
                     }
-                    static int audio_frame_number = 0;
-                    static double audio_total_encode_time = 0.0;
-                    static int audio_frame_size = 0;
-                    audio_total_encode_time += get_timer(t);
-                    audio_frame_number++;
-                    audio_frame_size += audio_encoder->encoded_frame_size;
-
-                    if (audio_frame_number % 300 == 0) {
-                        LOG_INFO("Average Audio Encode Time: %f", audio_total_encode_time / 30);
-                        audio_total_encode_time = 0.0;
-                        LOG_INFO("Average Audio Frame Size: %f", audio_frame_size / 30.0);
-                        audio_frame_size = 0;
-                    }
-
+                    log_double_statistic("Audio encode time (ms)", get_timer(t) * 1000);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else {
