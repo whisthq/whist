@@ -191,8 +191,6 @@ class DeploymentConfig:
     JWT_ALGORITHM = "RS256"
     JWT_DECODE_ALGORITHMS = ("RS256",)
     JWT_DECODE_AUDIENCE = "https://api.fractal.co"
-    JWT_QUERY_STRING_NAME = "access_token"
-    JWT_TOKEN_LOCATION = ("headers", "query_string")
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SILENCED_ENDPOINTS = ("/status", "/ping")
