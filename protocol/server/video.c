@@ -558,7 +558,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         read_unlock(&is_active_rwlock);
 
                         log_double_statistic("Video frame send time (ms)", get_timer(t) * 1000);
-                        log_double_statistic("Video frame size", frame_size);
+                        log_double_statistic("Video frame size", encoder->encoded_frame_size);
 
                         previous_frame_size = encoder->encoded_frame_size;
                         log_double_statistic("Video frame processing time (ms)", get_timer(server_frame_timer) * 1000);
