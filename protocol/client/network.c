@@ -41,8 +41,8 @@ extern bool connected;
 extern volatile double latency;
 
 clock last_ping_timer;
-volatile extern int last_ping_id;
-volatile extern int ping_failures;
+extern volatile int last_ping_id;
+extern volatile int ping_failures;
 int last_pong_id;
 const double ping_lambda = 0.8;
 
@@ -157,6 +157,12 @@ int discover_ports(bool *using_stun) {
 }
 
 void send_ping(int ping_id) {
+    /*
+        Send a ping to the server with the given ping_id.
+
+        Arguments:
+            ping_id (int): Ping ID to send to the server
+    */
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_PING;
     fmsg.ping_id = ping_id;
@@ -170,6 +176,12 @@ void send_ping(int ping_id) {
 }
 
 void update_ping() {
+    /*
+        Check if we should send more pings, disconnect, etc. If no valid pong has been received for
+       600ms, we mark that as a ping failure. If we successfully received a pong and it has been
+       500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
+       pong and it has been 210 ms, resend the ping.
+    */
     // If it's been 1 second since the last ping, we should warn
     if (get_timer(last_ping_timer) > 1.0) {
         LOG_WARNING("No ping sent or pong received in over a second");
@@ -200,6 +212,12 @@ void update_ping() {
 }
 
 void receive_pong(int pong_id) {
+    /*
+        Mark the ping with ID pong_id as received, and warn if pong_id is outdated.
+
+        Arguments:
+            pong_id (int): ID of pong to receive
+    */
     if (pong_id == last_ping_id) {
         // the server received the last ping we sent!
         double ping_time = get_timer(last_ping_timer);

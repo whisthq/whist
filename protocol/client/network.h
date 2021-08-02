@@ -66,8 +66,16 @@ int send_server_quit_messages(int num_messages);
  */
 int send_fmsg(FractalClientMessage* fmsg);
 
+/**
+ * @brief                           Handle pinging the server if enough time has passed
+ */
 void update_ping();
 
+/**
+ * @brief                           Handle a pong with ID pong_id
+ *
+ * @param pong_id                   ID of the received pong
+ */
 void receive_pong(int pong_id);
 
 #endif  // CLIENT_NETWORK_H
