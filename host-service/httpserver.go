@@ -1,4 +1,4 @@
-package httpserver // import "github.com/fractal/fractal/host-service/httpserver"
+package main
 
 import (
 	"context"
@@ -260,8 +260,8 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	return nil
 }
 
-// Start returns a channel of events from the webserver as its first return value
-func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (<-chan ServerRequest, error) {
+// StartHTTPServer returns a channel of events from the webserver as its first return value
+func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
 	err := initializeTLS()

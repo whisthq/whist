@@ -25,7 +25,6 @@ import (
 
 	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
-	"github.com/fractal/fractal/host-service/httpserver"
 	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
@@ -300,7 +299,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 }
 
 // Drain and shutdown the host service
-func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.DrainAndShutdownRequest) {
+func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *DrainAndShutdownRequest) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
 
 	// Note that the caller won't actually know if the `shutdown` command failed.
@@ -316,7 +315,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 // ------------------------------------
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
-func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *httpserver.SpinUpMandelboxRequest) {
+func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *SpinUpMandelboxRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
@@ -540,7 +539,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, req.MandelboxID)
 
-	result := httpserver.SpinUpMandelboxRequestResult{
+	result := SpinUpMandelboxRequestResult{
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
@@ -791,7 +790,7 @@ func main() {
 	// Now we start all the goroutines that actually do work.
 
 	// Start the HTTP server and listen for events
-	httpServerEvents, err := httpserver.Start(globalCtx, globalCancel, &goroutineTracker)
+	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
@@ -820,7 +819,7 @@ func main() {
 // (including Docker events).
 var eventLoopKeepalive = make(chan interface{}, 1)
 
-func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan httpserver.ServerRequest) {
+func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan ServerRequest) {
 	// Note that we don't use globalCtx for the docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
@@ -887,12 +886,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case serverevent := <-httpServerEvents:
 			switch serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
-			case *httpserver.SpinUpMandelboxRequest:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
+			case *SpinUpMandelboxRequest:
+				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*SpinUpMandelboxRequest))
 
-			case *httpserver.DrainAndShutdownRequest:
+			case *DrainAndShutdownRequest:
 				// Don't do this in a separate goroutine, since there's no reason to.
-				drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.DrainAndShutdownRequest))
+				drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*DrainAndShutdownRequest))
 
 			default:
 				if serverevent != nil {
