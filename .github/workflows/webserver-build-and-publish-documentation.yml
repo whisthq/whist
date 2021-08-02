@@ -54,7 +54,7 @@ jobs:
 
       - name: Build the Latest Documentation
         working-directory: fractal/webserver/docs
-        run: sphinx-apidoc -f -o . ../app && make html
+        run: sphinx-apidoc --no-toc -fo . ../app && make html
 
       - name: Diff Old and New Documentation
         id: diff

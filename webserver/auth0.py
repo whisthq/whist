@@ -1,8 +1,10 @@
 """Utilities for enforcing scoped access.
 
-Example usage:
+Example usage::
 
-    from auth0 import scope_required
+    # wsgi.py
+
+    from auth0 import scope_required, ScopeError
     from flask import Flask
 
     app = Flask(__name__)
@@ -11,11 +13,13 @@ Example usage:
     app.config["JWT_DECODE_ALGORITHMS"] = ("RS256",)
     app.config["JWT_DECODE_AUDIENCE"] = "https://api.fractal.co/"
 
-    auth0 = Auth0(app)
+    @app.errorhandler(ScopeError)
+    def _handle_scope_error(_e: ScopeError) -> Any:
+        return "Unauthorized", 401
 
     @app.route("/")
     @scope_required("admin")
-    def hello():
+    def hello() -> Any:
         return "Hello world"
 
 """
@@ -58,6 +62,9 @@ def scope_required(scope: str) -> Callable[..., Any]:
 
     Returns:
         A decorator that can be applied to a Flask view function to enforce authentication.
+
+    Raises:
+        ScopeError: The access token does not authorize access to the specified API scope.
     """
 
     def view_decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:

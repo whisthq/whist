@@ -179,25 +179,46 @@ class DeploymentConfig:
 
         self.session = Session(bind=engine)
 
-    database_url = property(getter("DATABASE_URL", fetch=False))
+    _database_url = property(getter("DATABASE_URL", fetch=False))
 
+    #: str: A domain name identifying the Auth0 tenant with which the Webserver should communicate.
+    #: Examples include ``fractal-dev.us.auth0.com`` and ``login.fractal.co``.
     AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
+
+    #: str: The client ID of the OAuth 2.0 client representing the Webserver registered to the
+    #: Auth0 tenant whose domain is :attr:`AUTH0_DOMAIN`.
+    #:
+    #: .. image:: /images/clients.png
     AUTH0_WEBSERVER_CLIENT_ID = property(getter("AUTH0_WEBSERVER_CLIENT_ID"))
+
+    #: str: The client secret of the OAuth 2.0 client representing the Webserver registered to the
+    #: Auth0 tenant whose domain is :attr:`AUTH0_DOMAIN`.
+    #:
+    #: .. image:: /images/client_webserver.png
     AUTH0_WEBSERVER_CLIENT_SECRET = property(getter("AUTH0_WEBSERVER_CLIENT_SECRET"))
-    ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
-    FRONTEND_URL = property(getter("FRONTEND_URL"))
+
+    #: int: The port on on each EC2 instance on which the host service runs.
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
     JWT_ALGORITHM = "RS256"
     JWT_DECODE_ALGORITHMS = ("RS256",)
     JWT_DECODE_AUDIENCE = "https://api.fractal.co"
-    SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
-    SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SILENCED_ENDPOINTS = ("/status", "/ping")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    #: str: The name of the access token claim containing the ID of the Stripe Customer record
+    #: associated with an authenticated user's Fractal account.
     STRIPE_CUSTOMER_ID_CLAIM = "https://api.fractal.co/stripe_customer_id"
-    STRIPE_SECRET = property(getter("STRIPE_SECRET"))
-    STRIPE_SUBSCRIPTION_STATUS_CLAIM = "https://api.fractal.co/subscription_status"
+
+    #: str: The ID of the Stripe Price object
     STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
+
+    #: str: The API key that the Webserver should use to authenticate itself with the Stripe API.
+    STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+
+    #: str: The name of the access token claim containing the user's stripe subscription status.
+    #: See https://stripe.com/docs/api/subscriptions/object#subscription_object-status for a list
+    #: of possible values.
+    STRIPE_SUBSCRIPTION_STATUS_CLAIM = "https://api.fractal.co/subscription_status"
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     AWS_INSTANCE_TYPE_TO_LAUNCH = property(
         # Having a `fetch=True` can let us dynamically change the instance type to be launched.
@@ -234,12 +255,12 @@ class DeploymentConfig:
         this property. If a heroku environment is not being used, this method will fail
         (unless ENVIRONMENT is set).
 
-            * If Heroku is being used, but the app name is unrecognized, this will default to
-            development since it's assumed that a review app is being used (which is effectively a
-            development deployment).
+        * If Heroku is being used, but the app name is unrecognized, this will default to
+          development since it's assumed that a review app is being used (which is effectively a
+          development deployment).
 
-            * If Heroku is being used, and the app is in a test environment, then development
-            will be returned as the environment.
+        * If Heroku is being used, and the app is in a test environment, then development
+          will be returned as the environment.
 
         Returns:
             @see app.constants.env_names
@@ -344,7 +365,7 @@ class DeploymentConfig:
             A PostgreSQL connection string whose scheme is guaranteed to be "postgresql".
         """
 
-        return _ensure_postgresql(self.database_url)
+        return _ensure_postgresql(self._database_url)
 
 
 class LocalConfig(DeploymentConfig):
