@@ -288,7 +288,7 @@ def swapover_amis(new_amis_str: List[str]) -> None:
     Returns:
         None
     """
-    new_amis = [RegionToAmi.query.get(ami_id) for ami_id in new_amis_str]
+    new_amis = [RegionToAmi.query.filter_by(ami_id=ami_id).first() for ami_id in new_amis_str]
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
     for current_active_ami in current_active_amis:
