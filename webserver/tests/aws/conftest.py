@@ -79,3 +79,18 @@ def set_amis_state():
     yield _setter
     for ami, original_enabled_value in zip(amis, amis_original_enabled_value):
         ami.ami_active = original_enabled_value
+
+
+@pytest.fixture
+def reset_region_to_ami():
+    # Saves the state of the region_to_ami table before a test
+    # and restores it after
+    original_state = list(RegionToAmi.query.all())
+
+    yield
+
+    for item in RegionToAmi.query.all():
+        db.session.delete(item)
+    for item in original_state:
+        db.session.add(item)
+    db.session.commit()
