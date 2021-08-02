@@ -1,6 +1,6 @@
 """commands.py
 
-This file contains the functions that can be invoked through 
+This file contains the functions that can be invoked through
 flask CLI - https://flask.palletsprojects.com/en/2.0.x/cli/
 
 """
@@ -11,7 +11,7 @@ import click
 from flask import Blueprint
 
 
-from app.helpers.command_helpers.ami_upgrade import perform_upgrade
+from app.helpers.command_helpers.ami_upgrade import perform_upgrade, swapover_amis
 from tests.helpers.data.test_data_generator import populate_test_data
 
 # Blueprint for registering the functions under 'command'
@@ -44,7 +44,8 @@ def ami_upgrade(
     """
     region_to_ami_id_mapping: Dict[str, str] = loads(region_to_ami_id_mapping_str)
 
-    perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
+    new_amis = perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
+    swapover_amis(new_amis)
 
 
 # This function generates data required for running the test cases and populates it in the database.

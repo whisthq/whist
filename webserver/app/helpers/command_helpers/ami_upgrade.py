@@ -180,7 +180,9 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
     )
 
 
-def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]) -> None:
+def perform_upgrade(
+    client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]
+) -> List[RegionToAmi]:
     """
     Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
     This happens in the following steps:
@@ -215,12 +217,12 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Mapping[s
             None
     """
     global region_wise_upgrade_threads
-    region_current_active_ami_map = {}
-    current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
-    for current_active_ami in current_active_amis:
-        region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
+    new_amis_str = [
+        new_ami.ami_id for new_ami in new_amis
+    ]  # Fetching the AMI strings for instances running with new AMIs.
+    # This will be used to select only the instances with current/older AMIs
 
     for region_name, ami_id in region_to_ami_id_mapping.items():
         # grab a lock here
@@ -271,11 +273,26 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Mapping[s
             mark_instance_for_draining(instanceinfo)
         # If any thread here failed, fail the workflow
         raise Exception("AMIS failed to upgrade, see logs")
+    return new_amis_str
 
-    new_amis_str = [
-        new_ami.ami_id for new_ami in new_amis
-    ]  # Fetching the AMI strings for instances running with new AMIs.
-    # This will be used to select only the instances with current/older AMIs
+
+def swapover_amis(new_amis_str: List[str]) -> None:
+    """
+    Actually swaps over which AMIs are active, once a new buffer is spun up
+    STEPS:
+        1) Drains all instances of old AMIs
+        2) Sets the old AMIs to inactive and the new ones to active.
+    Args:
+        new_amis: The new AMI rows we want to be active.
+
+    Returns:
+        None
+    """
+    new_amis = [RegionToAmi.query.get(ami_id) for ami_id in new_amis_str]
+    region_current_active_ami_map = {}
+    current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
+    for current_active_ami in current_active_amis:
+        region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
     current_running_instances = fetch_current_running_instances(new_amis_str)
     for active_instance in current_running_instances:
@@ -306,8 +323,6 @@ def perform_upgrade(client_commit_hash: str, region_to_ami_id_mapping: Mapping[s
     for current_ami in current_active_amis:
         current_ami.ami_active = False
 
-    # Reset the list here to ensure no thread status info leaks
-    region_wise_upgrade_threads = []
     db.session.commit()
 
     fractal_logger.info("Finished performing AMI upgrade.")
