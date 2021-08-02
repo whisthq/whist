@@ -50,6 +50,23 @@ def get_base_free_mandelboxes(instance_type: str) -> int:
     return type_to_number_map[instance_type]
 
 
+def terminate_instance(instance: InstanceInfo) -> None:
+    """
+    Terminates a given instance using the AWS client
+    Args:
+        instance: which instance to terminate
+
+    Returns: None
+
+    """
+    instance_id = instance.cloud_provider_id.strip("aws-")
+    ec2_client = EC2Client(region_name=instance.location)
+    if ec2_client.check_if_instances_up([instance_id]):
+        ec2_client.stop_instances([instance_id])
+    db.session.delete(instance)
+    db.session.commit()
+
+
 def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
     Given a region, finds (if it can) an instance in that region or a neighboring region with space
@@ -264,33 +281,37 @@ def drain_instance(instance: InstanceInfo) -> None:
     # We need to modify the status to DRAINING to ensure that we don't assign a new
     # mandelbox to the instance. We need to commit here as we don't want to enter a
     # deadlock with host service where it tries to modify the instance_info row.
+    old_status = instance.status
     instance.status = InstanceState.DRAINING
     db.session.commit()
-    try:
-        auth0_client = Auth0Client(
-            current_app.config["AUTH0_DOMAIN"],
-            current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
-            current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
-        )
-        auth_token = auth0_client.token().access_token
-        base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-        resp = requests.post(
-            f"{base_url}/drain_and_shutdown",
-            json={
-                "auth_secret": auth_token,
-            },
-            verify=False,
-        )
-        resp.raise_for_status()
-    except requests.exceptions.RequestException as error:
-        fractal_logger.error(
-            (
-                f"Unable to send drain_and_shutdown request to host service"
-                f" on instance {instance.instance_name}: {error}"
+    if old_status == InstanceState.PRE_CONNECTION:
+        terminate_instance(instance)
+    else:
+        try:
+            auth0_client = Auth0Client(
+                current_app.config["AUTH0_DOMAIN"],
+                current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
+                current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
             )
-        )
-        instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
-        db.session.commit()
+            auth_token = auth0_client.token().access_token
+            base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+            resp = requests.post(
+                f"{base_url}/drain_and_shutdown",
+                json={
+                    "auth_secret": auth_token,
+                },
+                verify=False,
+            )
+            resp.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            fractal_logger.error(
+                (
+                    f"Unable to send drain_and_shutdown request to host service"
+                    f" on instance {instance.instance_name}: {error}"
+                )
+            )
+            instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+            db.session.commit()
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:

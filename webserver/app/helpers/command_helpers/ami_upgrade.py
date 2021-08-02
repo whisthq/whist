@@ -8,7 +8,10 @@ from sqlalchemy import or_, and_
 from app.models import db, RegionToAmi, InstanceInfo
 from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.helpers.blueprint_helpers.aws.aws_instance_post import (
+    do_scale_up_if_necessary,
+    terminate_instance,
+)
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.instance_state_values import InstanceState
 
@@ -111,11 +114,11 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         f"mark_instance_for_draining called for instance {active_instance.instance_name}"
     )
     if str(active_instance.ip) == "":
-        active_instance.status = InstanceState.DRAINING
-        fractal_logger.info(f"instance {active_instance.instance_name} marked as draining")
-        job_status = True
-        db.session.commit()
-        return job_status
+        try:
+            terminate_instance(active_instance)
+            job_status = True
+        except:
+            job_status = False
     try:
         auth0_client = Auth0Client(
             current_app.config["AUTH0_DOMAIN"],
