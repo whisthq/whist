@@ -35,8 +35,8 @@ const configs = {
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: FractalWebservers.local,
-      FRONTEND_URL: "http://localhost:3000",
+      WEBSERVER_URL: FractalWebservers.dev,
+      FRONTEND_URL: "https://dev.fractal.co",
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",

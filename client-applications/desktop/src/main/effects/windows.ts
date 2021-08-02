@@ -6,6 +6,12 @@ import { destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
+import { showAppDock, hideAppDock } from "@app/utils/dock"
+
+const quit = () => {
+  hideAppDock()
+  app.quit()
+}
 
 fromTrigger("windowsAllClosed")
   .pipe(
@@ -31,26 +37,30 @@ fromTrigger("windowInfo")
       {
         numberWindowsRemaining: number
         crashed: boolean
+        event: string
         hash: string
       },
       boolean
     ]) => {
+      // If the protocol closed, show the dock icon
+      if (args.hash === WindowHashProtocol && args.event === "close")
+        showAppDock()
       // If there are still windows open, ignore
       if (args.numberWindowsRemaining !== 0) return
       // If all windows are closed and the protocol wasn't the last open window, quit
       if (args.hash !== WindowHashProtocol) {
-        app.quit()
+        quit()
         return
       }
       // If the protocol was the last window to be closed, upload logs and quit the app
       destroyTray()
       uploadToS3()
         .then(() => {
-          if (!args.crashed) app.quit()
+          if (!args.crashed) quit()
         })
         .catch((err) => {
           console.error(err)
-          if (!args.crashed) app.quit()
+          if (!args.crashed) quit()
         })
     }
   )
