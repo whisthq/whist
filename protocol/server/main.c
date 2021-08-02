@@ -42,6 +42,7 @@ Includes
 #include <fractal/input/input.h>
 #include <fractal/logging/error_monitor.h>
 #include <fractal/video/transfercapture.h>
+#include <fractal/logging/log_statistic.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "parse_args.h"
@@ -289,6 +290,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 int main(int argc, char* argv[]) {
     fractal_init_multithreading();
     init_logger();
+    init_statistic_logger();
 
     int ret = server_parse_args(argc, argv);
     if (ret == -1) {
