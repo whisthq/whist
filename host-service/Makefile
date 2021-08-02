@@ -66,7 +66,7 @@ build: checkCI
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
-		" -o $(BUILD_FOLDER)/$(BINARY_NAME) host-service.go
+		" -o $(BUILD_FOLDER)/$(BINARY_NAME) .
 
 upload: build
 	aws s3api put-object --bucket fractal-host-service --key $(GIT_BRANCH) --body build/host-service
