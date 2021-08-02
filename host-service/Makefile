@@ -1,12 +1,5 @@
-# Go parameters
+# Go command (configurable for testing different installations, etc.)
 GOCMD        = go
-GOBUILD      = $(GOCMD) build
-GORUN        = $(GOCMD) run
-GOCLEAN      = $(GOCMD) clean
-GOTEST       = $(GOCMD) test
-GOGET        = $(GOCMD) get
-GOMODTIDY    = $(GOCMD) mod tidy
-GOGEN        = $(GOCMD) generate
 
 # Build parameters
 BUILD_FOLDER = build
@@ -55,12 +48,12 @@ else
 endif
 
 build: checkCI
-	$(GOMODTIDY)
-	$(GOGET) github.com/jschaf/pggen/cmd/pggen
+	$(GOCMD) mod tidy
+	$(GOCMD) get github.com/jschaf/pggen/cmd/pggen
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
-	$(GOGEN) ./...
-	$(GOBUILD) -ldflags "\
+	$(GOCMD) generate ./...
+	$(GOCMD) build -ldflags "\
 		-X 'github.com/fractal/fractal/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
@@ -72,15 +65,15 @@ upload: build
 	aws s3api put-object --bucket fractal-host-service --key $(GIT_BRANCH) --body build/host-service
 
 format:
-	(cd ~ && $(GOGET) -u golang.org/x/tools/cmd/goimports)
+	(cd ~ && $(GOCMD) get -u golang.org/x/tools/cmd/goimports)
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | grep --invert-match ".sql.go" | xargs)
 
 lint: build
-	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
-	go list ./... | grep -v /agent/ | xargs golint -set_exit_status
+	(cd ~ && $(GOCMD) get -u golang.org/x/lint/golint)
+	$(GOCMD) list ./... | grep -v /agent/ | xargs golint -set_exit_status
 
 vet: build
-	go list ./... | grep -v /agent/ | xargs go vet
+	$(GOCMD) list ./... | grep -v /agent/ | xargs $(GOCMD) vet
 
 test: build
 	echo "Running go tests..."
@@ -93,7 +86,7 @@ check: clean build vet format lint test
 	echo "All checks (clean, build, vet, format, lint, and test) succeeded!"
 
 clean:
-	$(GOCLEAN)
+	$(GOCMD) clean
 	rm -rf $(BUILD_FOLDER)
 
 run: build
