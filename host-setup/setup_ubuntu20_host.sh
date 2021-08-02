@@ -22,7 +22,7 @@ echo "================================================"
 echo "Replacing potentially outdated Docker runtime..."
 echo "================================================"
 
-# Attempt to remove potentially oudated Docker runtime
+# Attempt to remove potentially outdated Docker runtime
 # Allow failure with ||:, in case they're not installed yet
 sudo apt-get remove -y docker docker-engine docker.io containerd runc ||:
 sudo apt-get clean -y
