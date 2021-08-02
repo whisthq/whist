@@ -432,7 +432,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // filter graph is empty
                     break;
                 }
-                log_double_statistic("Video encode time (ms)", get_timer(t));
+                log_double_statistic("Video encode time (ms)", get_timer(t) * 1000);
                 bitrate_tested_frames++;
                 bytes_tested_frames += encoder->encoded_frame_size;
 
