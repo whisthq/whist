@@ -59,13 +59,13 @@ clients:
         enabled: false
     oidc_conformant: true
     refresh_token:
-      expiration_type: expiring
+      expiration_type: non-expiring
       leeway: 0
-      infinite_token_lifetime: false
+      infinite_token_lifetime: true
       infinite_idle_token_lifetime: true
       token_lifetime: 2592000
       idle_token_lifetime: 1296000
-      rotation_type: rotating
+      rotation_type: non-rotating
     sso_disabled: false
     token_endpoint_auth_method: none
   - name: GitHub Actions
