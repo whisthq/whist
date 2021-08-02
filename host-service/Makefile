@@ -82,10 +82,15 @@ lint: build
 vet: build
 	go list ./... | grep -v /agent/ | xargs go vet
 
+test: build
+	echo "Running go tests..."
+	# We need to run some tests as root since the host service init() checks for root perms.
+	sudo env "PATH=$(PATH)" go test ./...
+
 # Note that we should build before we lint or vet, since build updates the fractal dependencies.
 .NOTPARALLEL:
-check: clean build vet format lint
-	echo "All checks (clean, build, vet, format, and lint) succeeded!"
+check: clean build vet format lint test
+	echo "All checks (clean, build, vet, format, lint, and test) succeeded!"
 
 clean:
 	$(GOCLEAN)
