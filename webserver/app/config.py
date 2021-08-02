@@ -184,7 +184,6 @@ class DeploymentConfig:
     AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
     AUTH0_WEBSERVER_CLIENT_ID = property(getter("AUTH0_WEBSERVER_CLIENT_ID"))
     AUTH0_WEBSERVER_CLIENT_SECRET = property(getter("AUTH0_WEBSERVER_CLIENT_SECRET"))
-    RUNNING_LOCALLY = property(getter("RUNNING_LOCALLY", default=False))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
