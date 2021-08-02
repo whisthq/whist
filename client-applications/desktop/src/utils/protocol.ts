@@ -12,7 +12,6 @@ import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath } from "@app/utils/logging"
-import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 export let childProcess: ChildProcess | undefined
 
@@ -90,13 +89,9 @@ export const protocolLaunch = async () => {
     protocol.stdout.pipe(process.stdout)
   }
 
-  // On MacOS, hide the app dock
-  hideAppDock()
-
   // When the protocol closes, reset the childProcess to undefined and show the app dock on MacOS
   protocol.on("close", () => {
     childProcess = undefined
-    showAppDock()
   })
 
   childProcess = protocol
