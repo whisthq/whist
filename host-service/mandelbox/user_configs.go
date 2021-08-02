@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-
+	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 )
 
@@ -163,7 +163,7 @@ func (c *mandelboxData) getUserConfigDir() string {
 }
 
 func (c *mandelboxData) getS3ConfigPath() string {
-	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s", c.userID, c.appName, c.getEncryptedArchiveFilename())
+	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
 }
 
 func (c *mandelboxData) getEncryptedArchiveFilename() string {
