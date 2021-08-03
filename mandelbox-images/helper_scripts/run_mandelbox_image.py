@@ -87,7 +87,6 @@ args = parser.parse_args()
 
 # Define some helper functions and variables
 HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
-HOST_SERVICE_AUTH_SECRET = "testwebserverauthsecretdev"
 HOST_SERVICE_CERT_PATH = "/fractalprivate/cert.pem"
 local_host_service = args.host_address == "127.0.0.1"
 protocol_build_path = os.path.abspath("../protocol/build-docker/server/build64")
