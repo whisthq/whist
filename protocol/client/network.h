@@ -11,8 +11,14 @@
 ============================
 Usage
 ============================
+discover_ports, connect_to_server, close_connections, and send_server_quit_messages are used to
+start and end connections to the Fractal server. To connect, call discover_ports, then
+connect_to_server. To disconnect, send_server_quit_messages and then close_connections.
 
-Use these functions for any client-specific networking needs.
+To communicate with the server, use send_fmsg to send Fractal messages to the server. Large fmsg's
+(e.g. clipboard messages) are sent over TCP; otherwise, messages are sent over UDP. Use update_ping
+to ping the server at regular intervals, and receive_pong to receive pongs (ping acknowledgements)
+from the server.
 */
 
 /*
@@ -65,5 +71,17 @@ int send_server_quit_messages(int num_messages);
  * @returns                        0 if succeeded, else -1
  */
 int send_fmsg(FractalClientMessage* fmsg);
+
+/**
+ * @brief                           Handle pinging the server if enough time has passed
+ */
+void update_ping();
+
+/**
+ * @brief                           Handle a pong (ping acknowledgement) with ID pong_id
+ *
+ * @param pong_id                   ID of the received pong
+ */
+void receive_pong(int pong_id);
 
 #endif  // CLIENT_NETWORK_H
