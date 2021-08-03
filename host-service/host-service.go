@@ -42,6 +42,8 @@ import (
 	dockernat "github.com/docker/go-connections/nat"
 	dockerunits "github.com/docker/go-units"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+
+	"github.com/golang-jwt/jwt"
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
@@ -316,23 +318,27 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *SpinUpMandelboxRequest) {
+	claims := new(auth.FractalClaims)
+	parser := &jwt.Parser{SkipClaimsValidation: true}
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
 
-	// First, verify that the request access token is valid for the given userID.
-	// We only do this in a non-local environment.
-	if !metadata.IsLocalEnv() {
-		if _, err := auth.VerifyWithUserID(req.JwtAccessToken, req.UserID); err != nil {
-			logAndReturnError("Invalid JWT access token: %s", err)
-			return
-		}
+	// Decode the access token without validating any of its claims or
+	// verifying its signature because we've already done that. All we want to
+	// know is the value of the sub (subject) claim.
+	_, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims)
+
+	if err != nil {
+		logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
+		return
 	}
 
 	// Then, verify that we are expecting this user to request a mandelbox.
-	err := dbdriver.VerifyAllocatedMandelbox(req.UserID, req.MandelboxID)
+	err = dbdriver.VerifyAllocatedMandelbox(types.UserID(claims.Subject), req.MandelboxID)
+
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
 		return
@@ -546,7 +552,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AesKey:              aesKey,
 	}
 
-	fc.AssignToUser(req.UserID)
+	fc.AssignToUser(types.UserID(claims.Subject))
 
 	err = fc.PopulateUserConfigs()
 	if err != nil {

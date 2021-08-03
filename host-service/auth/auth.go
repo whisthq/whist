@@ -8,10 +8,6 @@ algorithm.
 package auth // import "github.com/fractal/fractal/host-service/auth"
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
-	"errors"
 	"strings"
 	"time"
 
@@ -20,16 +16,25 @@ import (
 	"github.com/MicahParks/keyfunc"
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	"github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 )
 
-// A RawJWT is a custom type we define to make sure we never pass in the wrong
-// field to a JWT. This would have prevented some bugs we've ran into before.
-type RawJWT string
+// Scopes is an alias for []string with some custom deserialization behavior.
+// It is used to store the value of an access token's "scope" claim.
+type Scopes []string
 
-// A JwtScope is another custom type we define to enforce correctness.
-type JwtScope string
+// FractalClaims is a struct type that models the claims that must be present
+// in an Auth0-issued Fractal access token.
+type FractalClaims struct {
+	jwt.StandardClaims
+
+	// Scopes stores the value of the access token's "scope" claim. The value
+	// of the "scope" claim is a string of one or more space-separated words.
+	// The *Scopes type implements the encoding.TextUnmarshaler interface such
+	// that the string of space-separated words is deserialized into a string
+	// slice.
+	Scopes Scopes `json:"scope"`
+}
 
 var config authConfig = getAuthConfig()
 var jwks *keyfunc.JWKs
@@ -53,106 +58,64 @@ func init() {
 	logger.Infof("Successfully got JWKs from %s on startup.", config.getJwksURL())
 }
 
-func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode([]byte(pubPEM))
-	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the public key")
+// UnmarshalText implements the encoding.TextUnmarshaler interface on the
+// *Scopes type such that a string of space-separated words is serialized into
+// a string slice. UnmarshalText overwrites the contents of *scopes with the
+// unmarshaled data.
+func (scopes *Scopes) UnmarshalText(data []byte) error {
+	if scopes == nil {
+		return utils.MakeError("auth.Scopes: UnmarshalText on nil pointer")
 	}
 
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, errors.New("failed to parse DER encoded public key: " + err.Error())
-	}
-
-	switch pub := pub.(type) {
-	case *rsa.PublicKey:
-		return pub, nil
-	default:
-		return nil, errors.New("unknown PEM format or not public key")
-	}
-}
-
-func validateClaims(claims jwt.MapClaims) error {
-	// Verify audience
-	audSlice := claims["aud"]
-	var audValid bool
-	switch audSlice.(type) {
-	case string:
-		audValid = audSlice == config.Aud
-	default:
-		// If not a string, must be an array.
-		audSlice := audSlice.([]interface{})
-		audValid = utils.SliceContains(audSlice, config.Aud)
-	}
-	if !audValid {
-		return utils.MakeError(`Invalid JWT audience. Expected "%s", Got "%s".`, config.Aud, audSlice)
-	}
-
-	// Verify issuer
-	issValid := claims["iss"] == config.Iss
-	if !issValid {
-		return utils.MakeError(`Invalid JWT issuer. Expected "%s", Got "%s"`, config.Iss, claims["iss"])
-	}
-
-	// Verify JWT is not expired
-	err := claims.Valid()
-	if err != nil {
-		return utils.MakeError("Couldn't validate JWT claims: %s", err)
-	}
+	// The following line is borrowed from
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.16.6:src/encoding/json/stream.go;l=271.
+	// @djsavvy and @owenniles's best guess is that the (*scopes)[0:0] syntax
+	// decreases the likelihood that new memory must be allocated for the
+	// data that are written to the slice.
+	*scopes = append((*scopes)[0:0], strings.Fields(string(data))...)
 
 	return nil
 }
 
-// Verify verifies that a JWT is valid.
-// If valid, the JWT's claims are returned.
-func Verify(accessToken RawJWT) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(string(accessToken), jwks.KeyFunc)
-	if err != nil {
-		return nil, utils.MakeError("Error parsing JWT: %s", err)
-	}
+// Verify parses an raw access token string, verifies the token's signature,
+// ensures that it is valid at the current moment in time, and checks that it
+// was issued by the proper issuer for the proper audience. It returns a
+// pointer to a FractalClaims type containing the values of its claims if all
+// checks are successful.
+func Verify(tokenString string) (*FractalClaims, error) {
+	claims := new(FractalClaims)
+	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.KeyFunc)
 
-	claims := token.Claims.(jwt.MapClaims)
-	err = validateClaims(claims)
-	if err != nil {
-		return nil, utils.MakeError("Error verifying JWT since couldn't validate claims: %s", err)
-	}
-	return claims, nil
-}
-
-// VerifyWithUserID verifies that a JWT is valid and corresponds to the user
-// with userID. If valid, the JWT's claims are returned.
-func VerifyWithUserID(accessToken RawJWT, userID types.UserID) (jwt.MapClaims, error) {
-	claims, err := Verify(accessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	// Note that we need to do this cast, since `claims["sub"]` is an
-	// interface{}. Therefore, naively comparing `claims["sub"]` with userID will
-	// always result in non-equality, even if they are equal strings.
-	jwtID, ok := claims["sub"].(string)
-	if !ok {
-		return nil, utils.MakeError("Couldn't cast JWT-provided sub %v into string!", claims["sub"])
+	if !claims.VerifyAudience(config.Aud, true) {
+		return nil, jwt.NewValidationError(
+			utils.Sprintf("Bad audience %s", claims.Audience),
+			jwt.ValidationErrorAudience,
+		)
 	}
-	if jwtID != string(userID) {
-		return nil, utils.MakeError(`userID "%s" does not match JWT's provided "%s"`, userID, jwtID)
+
+	if !claims.VerifyIssuer(config.Iss, true) {
+		return nil, jwt.NewValidationError(
+			utils.Sprintf("Bad issuer %s", claims.Issuer),
+			jwt.ValidationErrorIssuer,
+		)
 	}
 
 	return claims, nil
 }
 
-// HasScope returns true if the given jwt.MapClaims has
-// a scope matching a string, and false if not.
-func HasScope(claims jwt.MapClaims, scope JwtScope) bool {
-	scopes, ok := claims["scope"].(string)
-	if !ok {
-		return false
-	}
-	scopeSlice := strings.Split(scopes, " ")
-	for _, s := range scopeSlice {
-		if s == string(scope) {
+// VerifyScope returns true if claims.Scopes contains the requested scope and
+// false otherwise. This function's name and type signature is inspired by
+// those of the Verify* methods defined on jwt.StandardClaims.
+func (claims *FractalClaims) VerifyScope(scope string) bool {
+	for _, s := range claims.Scopes {
+		if s == scope {
 			return true
 		}
 	}
+
 	return false
 }
