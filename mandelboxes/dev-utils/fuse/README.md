@@ -4,7 +4,7 @@ This project contains the code to integrate a FUSE filesystem into a C program r
 
 ### Preliminaries
 
-This project assumes running in an environment where an AppArmor config is available which allows the `mount` syscall, and the Seccomp filter enables `mount`, `umount`, `umount2`, and `unshare`. See fractal/fractal#2930 for an example setting up such an environment.
+This project assumes running in an environment where an AppArmor config is available which allows the `mount` syscall, and the Seccomp filter enables `mount`, `umount`, `umount2`, and `unshare`. See https://github.com/fractal/fractal/pull/2930 for an example of setting up such an environment.
 
 ### Building
 
