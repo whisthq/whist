@@ -235,8 +235,19 @@ tenant:
     colors:
       page_background: "#ffffff"
       primary: "#4f35de"
-emailProvider: {}
-emailTemplates: []
+emailProvider:
+  name: sendgrid
+  credentials:
+    api_key: "##SENDGRID_API_KEY##"
+  default_from_address: Fractal <support@fractal.co>
+  enabled: true
+emailTemplates:
+  - template: welcome_email
+    body: ./emailTemplates/welcome_email.html
+    enabled: true
+    from: Fractal <noreply@fractal.co>
+    subject: Welcome to Fractal!
+    syntax: liquid
 clientGrants:
   - client_id: Webserver
     audience: "##FRACTAL_AUTHENTICATION_API##"
