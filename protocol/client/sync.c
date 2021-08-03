@@ -108,12 +108,14 @@ void update_initial_dimensions() {
 }
 
 void update_bitrate() {
-    update_mbps = false;
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MBPS;
-    fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
-    LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
-    send_fmsg(&fmsg);
+    if (update_mbps) {
+        update_mbps = false;
+        FractalClientMessage fmsg = {0};
+        fmsg.type = MESSAGE_MBPS;
+        fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
+        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
+        send_fmsg(&fmsg);
+    }
 }
 
 // This function polls for UDP packets from the server
@@ -312,8 +314,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         //    the clipboard is actively being written or read
         if (!is_clipboard_synchronizing() &&
             get_timer(last_tcp_check_timer) < 25.0 / MS_IN_SECOND) {
-            SDL_Delay(
-                max((int)(25.0 - MS_IN_SECOND * get_timer(last_tcp_check_timer)), 1));
+            SDL_Delay(max((int)(25.0 - MS_IN_SECOND * get_timer(last_tcp_check_timer)), 1));
         }
     }
 
