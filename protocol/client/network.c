@@ -44,6 +44,7 @@ extern SocketContext packet_tcp_context;
 extern char *server_ip;
 extern int uid;
 
+extern volatile double latency;
 extern clock last_ping_timer;
 extern volatile int last_ping_id;
 extern volatile int ping_failures;
