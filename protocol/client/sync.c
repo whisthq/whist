@@ -18,7 +18,7 @@ volatile int last_ping_id;
 volatile int last_pong_id;
 volatile int ping_failures;
 extern volatile bool update_mbps;
-extern volatile clock latency_timer;
+clock latency_timer;
 extern volatile double latency;
 extern volatile bool run_sync_udp_packets;
 extern volatile bool run_sync_tcp_packets;

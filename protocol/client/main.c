@@ -73,7 +73,6 @@ volatile bool should_update_window_title;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
-volatile clock latency_timer;
 volatile double latency;
 
 volatile FractalRGBColor* native_window_color = NULL;
