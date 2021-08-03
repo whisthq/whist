@@ -73,9 +73,9 @@ int send_server_quit_messages(int num_messages);
 int send_fmsg(FractalClientMessage* fmsg);
 
 /**
- * @brief                           Handle pinging the server if enough time has passed
+ * @brief                           Send a ping with ID ping_id to the server
  */
-void update_ping();
+void send_ping(int ping_id);
 
 /**
  * @brief                           Handle a pong (ping acknowledgement) with ID pong_id
