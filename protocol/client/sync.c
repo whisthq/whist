@@ -12,10 +12,9 @@
 bool tried_to_update_dimension;
 bool updater_initialized;
 clock last_tcp_check_timer;
-clock last_ping_timer;
-volatile int last_ping_id;
-volatile int last_pong_id;
-volatile int ping_failures;
+extern clock last_ping_timer;
+extern volatile int last_ping_id;
+extern volatile int last_pong_id;
 extern volatile bool update_mbps;
 extern volatile clock latency_timer;
 extern volatile double latency;
