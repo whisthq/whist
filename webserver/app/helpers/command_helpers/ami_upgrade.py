@@ -39,7 +39,7 @@ def insert_new_amis(
                                     with the <client_commit_hash>.
 
     Returns:
-        A list of the created RegionToAmi objects that are created.
+        A list of the regionToAmi objects for this set of regions and commit hashes.
     """
     prior_amis = []
     new_amis = []
