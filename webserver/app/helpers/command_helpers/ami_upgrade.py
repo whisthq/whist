@@ -31,6 +31,7 @@ def insert_new_amis(
     Inserts new AMIs (but doesn't mark them as active) into the RegionToAmi table.
     Will be invoked from the Flask CLI command to upgrade the AMIs for regions.
     We should mark the new AMIs as active only after we cleanup the existing instances and AMIs.
+    If an AMI is already present, returns its row.
     Args:
         client_commit_hash: Commit hash of the client that is compatible with the AMIs
                             that are going to be passed in as the other argument.
