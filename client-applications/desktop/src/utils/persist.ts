@@ -54,9 +54,9 @@ export const persist = (
 }
 
 export const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {
-    keys.forEach((key) => {
-        store.delete(`${cache as string}.${key as string}`)
-    })
+  keys.forEach((key) => {
+    store.delete(`${cache as string}.${key as string}`)
+  })
 }
 
 export const persistGet = (key: keyof Cache, cache?: CacheName) =>

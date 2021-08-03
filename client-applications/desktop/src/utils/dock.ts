@@ -7,11 +7,11 @@
 import { app } from "electron"
 
 export const showAppDock = () => {
-    // In case it's hidden, show the app dock
-    app?.dock?.show().catch((err) => console.error(err))
+  // In case it's hidden, show the app dock
+  app?.dock?.show().catch((err) => console.error(err))
 }
 
 export const hideAppDock = () => {
-    // Hide the app dock just in case
-    app?.dock?.hide()
+  // Hide the app dock just in case
+  app?.dock?.hide()
 }

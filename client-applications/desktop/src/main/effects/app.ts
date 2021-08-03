@@ -104,20 +104,25 @@ fromTrigger("updateAvailable")
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
-fromTrigger("clearCacheAction").subscribe(() => {
+fromTrigger("clearCacheAction").subscribe(
+  (payload: { clearConfig: boolean }) => {
     persistClear(
-        ["accessToken", "refreshToken", "subClaim", "userEmail"],
-        "auth"
+      [
+        ...["accessToken", "refreshToken", "subClaim", "userEmail"],
+        ...(payload.clearConfig ? ["configToken"] : []),
+      ],
+      "auth"
     )
     // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
     // a partition called "auth0", so we clear the "auth0" partition here
     session
-        .fromPartition("auth0")
-        .clearStorageData()
-        .catch((err) => console.error(err))
+      .fromPartition("auth0")
+      .clearStorageData()
+      .catch((err) => console.error(err))
     // Restart the app
     relaunch()
-})
+  }
+)
 
 // On signout or relaunch, update the tray to the signed out version
 fromTrigger("clearCacheAction").subscribe(() => {

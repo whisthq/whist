@@ -54,9 +54,9 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showPaymentWindow, payload: undefined },
     })
 
-  const clearCache = () =>
+  const handleSignout = (clearConfig: boolean) =>
     setMainState({
-      trigger: { name: TRIGGER.clearCacheAction, payload: undefined },
+      trigger: { name: TRIGGER.clearCacheAction, payload: { clearConfig } },
     })
 
   const showSignoutWindow = () =>
@@ -65,7 +65,7 @@ const RootComponent = () => {
     })
 
   if (show === WindowHashUpdate) return <Update />
-  if (show === WindowHashSignout) return <Signout onClick={clearCache} />
+  if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <TwoButtonError

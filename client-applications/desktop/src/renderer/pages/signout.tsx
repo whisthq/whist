@@ -3,19 +3,23 @@ import React, { useState } from "react"
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
 import classNames from "classnames"
 
-const Signout = (props: { onClick: () => void }) => {
+const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
   /*
         Description:
             Error pop-up
 
         Arguments:
-            onClick (() => void): Function to execute when signout button is pressed
+            onClick ((clearConfig: boolean) => void): Function to execute when signout button is pressed
     */
 
-  const [checked, setChecked] = useState(false)
+  const [clearConfig, setClearConfig] = useState(false)
 
   const handleCheck = () => {
-    setChecked(!checked)
+    setClearConfig(!clearConfig)
+  }
+
+  const handleSignout = () => {
+    props.onClick(clearConfig)
   }
 
   return (
@@ -38,13 +42,16 @@ const Signout = (props: { onClick: () => void }) => {
             contents="Sign Out"
             className="mt-8 px-12 mx-aut0 py-3"
             state={FractalButtonState.DEFAULT}
-            onClick={props.onClick}
+            onClick={handleSignout}
           />
         </div>
       </div>
       <div>
-        <input type="checkbox" checked={checked} onChange={handleCheck} />
-        Also wipe all my browsing data (saved passwords, history, cookies, etc.)
+        <input type="checkbox" checked={clearConfig} onChange={handleCheck} />
+        <div>
+          Also permanently wipe all my browsing data (saved passwords, history,
+          cookies, etc.).
+        </div>
       </div>
     </div>
   )
