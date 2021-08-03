@@ -51,7 +51,7 @@ RUN apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Retrieve patches for libinput source
-COPY depends/libinput/patch/hi-res-scroll.patch hi-res-scroll.patch
+COPY input/libinput/patch/hi-res-scroll.patch hi-res-scroll.patch
 
 # Download and patch libinput source
 RUN wget -qO - https://freedesktop.org/software/libinput/libinput-1.15.5.tar.xz \
@@ -74,7 +74,7 @@ RUN mkdir /libinput-fractal \
     && DESTDIR=/libinput-fractal ninja -C build install
 
 # Setup debian package information
-COPY depends/libinput/debian/control /libinput-fractal/DEBIAN/control
+COPY input/libinput/debian/control /libinput-fractal/DEBIAN/control
 
 # Build debian package
 RUN dpkg-deb --build libinput-fractal
@@ -127,7 +127,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Retrieve patches for xf86-input-libiput source
-COPY depends/xf86-input-libinput/patch/hi-res-scroll.patch hi-res-scroll.patch
+COPY input/xf86-input-libinput/patch/hi-res-scroll.patch hi-res-scroll.patch
 
 # Download and patch xf86-input-libinput source
 RUN wget -qO - https://xorg.freedesktop.org/releases/individual/driver/xf86-input-libinput-0.29.0.tar.bz2 \
@@ -140,8 +140,8 @@ RUN wget -qO - https://xorg.freedesktop.org/releases/individual/driver/xf86-inpu
 RUN cd xf86-input-libinput-0.29.0 \
     && autoreconf -vif \
     && ./configure \
-       --disable-static \
-       --prefix=/usr \
+    --disable-static \
+    --prefix=/usr \
     && make -j
 
 # Install xf86-input-libinput to package folder
@@ -150,7 +150,7 @@ RUN mkdir /xf86-input-libinput-fractal \
     && make DESTDIR=/xf86-input-libinput-fractal install
 
 # Setup debian package information
-COPY depends/xf86-input-libinput/debian/control /xf86-input-libinput-fractal/DEBIAN/control
+COPY input/xf86-input-libinput/debian/control /xf86-input-libinput-fractal/DEBIAN/control
 
 # Build debian package
 RUN dpkg-deb --build xf86-input-libinput-fractal
@@ -195,23 +195,23 @@ RUN chmod +x nvidia-driver-installer.run && \
 RUN mkdir /dist /ignore && \
     cd NVIDIA* && \
     ./nvidia-installer --silent \
-                       --x-prefix=/dist/usr \
-                       --opengl-prefix=/dist/usr \
-                       --compat32-prefix=/dist/usr \
-                       --install-compat32-libs \
-                       --utility-prefix=/dist/usr \
-                       --documentation-prefix=/ignore \
-                       --no-nvidia-modprobe \
-                       --no-rpms \
-                       --no-backup \
-                       --no-kernel-module \
-                       --no-nouveau-check \
-                       --no-libglx-indirect \
-                       --no-distro-scripts \
-                       --no-drm \
-                       --no-check-for-alternate-installs \
-                       --no-install-libglvnd \
-                       --skip-depmod
+    --x-prefix=/dist/usr \
+    --opengl-prefix=/dist/usr \
+    --compat32-prefix=/dist/usr \
+    --install-compat32-libs \
+    --utility-prefix=/dist/usr \
+    --documentation-prefix=/ignore \
+    --no-nvidia-modprobe \
+    --no-rpms \
+    --no-backup \
+    --no-kernel-module \
+    --no-nouveau-check \
+    --no-libglx-indirect \
+    --no-distro-scripts \
+    --no-drm \
+    --no-check-for-alternate-installs \
+    --no-install-libglvnd \
+    --skip-depmod
 
 # Copy configuration files needed for Vulkan to work
 RUN mkdir /dist/etc && \
@@ -241,6 +241,11 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
+
+#########################
+# Systemd
+#########################
+
 # Install systemd
 RUN apt-get install --no-install-recommends -y \
     systemd \
@@ -267,6 +272,24 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/plymouth* \
     /lib/systemd/system/systemd-update-utmp*
 
+# Disable some extra systemd services
+RUN systemctl mask plymouth
+RUN systemctl mask systemd-hostnamed
+RUN systemctl mask acpid
+RUN systemctl mask NetworkManager-wait-online
+RUN systemctl disable sshd
+
+# Remove ProtectHostname=yes lines from logind and timedate systemd services
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-logind.service
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
+
+ENV init /sbin/init
+
+#########################
+# Input
+#########################
+
 # Install libinput driver for XServer input
 # This must happen very early to preempt conflicts with
 # upstream packages such as libinput10 and libinput-bin
@@ -283,98 +306,26 @@ RUN apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* /deb
 
-# Install some useful utilities and their dependencies for debugging/testing
-# These packages need to be installed before installing/updating Python
+# Install dependencies/utils
 RUN apt-get install --no-install-recommends -y \
-    liblua5.2-0 \
-    libsmbclient \
-    libuchardet0 \
-    libevent-2.1-7 \
-    libutempter0 \
-    tmux \
-    sudo \
-    less \
-    vim \
-    git \
-    mesa-utils \
-    mpv \
-    psmisc \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install X Server and window manager dependencies and basic Ubuntu packages
-# These packages need to be installed before installing/updating Python
-RUN apt-get install --no-install-recommends -y \
-    lsb-release \
-    ufw \
     keyboard-configuration \
     libxtst-dev \
-    libxdamage-dev \
-    libasound2-data \
-    libasound2 \
-    libasound2-dev \
-    xclip \
-    x11-xserver-utils \
-    libx11-dev \
-    gtk-chtheme \
-    xserver-xorg-video-dummy \
     xinput \
     evtest \
-    dkms \
-    awesome \
-    awesome-extra \
-    xsettingsd \
-    lxappearance \
-    xinit \
     xdotool \
-    materia-gtk-theme \
-    yaru-theme-gtk \
-    gtk2-engines-murrine \
-    gtk2-engines-pixbuf \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
 
-# Install Pulse Audio & XDummy dependencies explicitly
-# These packages need to be installed before installing/updating Python
-RUN apt-get install --no-install-recommends -y \
-    libunwind8 \
-    xserver-xorg-core-hwe-18.04 \
-    libgstreamer-plugins-base1.0-0 \
-    libgstreamer1.0-0 \
-    liborc-0.4-0 \
-    libpulse0 \
-    libsnapd-glib1 \
-    libsndfile1 \
-    libsoxr0 \
-    libspeexdsp1 \
-    libwebrtc-audio-processing1 \
-    libasound2-plugins \
-    pulseaudio-utils \
-    libltdl7 \
-    libtdb1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
+COPY input/Xmodmap /root/.Xmodmap
 
-# Install Nvidia CUDA Drivers dependencies explicitly
-# These packages need to be installed before installing/updating Python
-RUN apt-get install --no-install-recommends -y \
-    pkg-config \
-    screen-resolution-extra \
-    libgtk2.0-0 \
-    libjansson4 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
+#########################
+# General Utilities
+#########################
 
-# Install general Ubuntu packages
+# Install general utility packages
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
-    apt-utils \
-    x11vnc \
     xvfb \
     wmctrl \
     ca-certificates \
@@ -382,39 +333,14 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     gnupg2 \
     libfido2-1 \
     libgbm1 \
+    lsb-release \
+    ufw \
     libxcb-dri3-0 \
     libcurl4 \
+    git \
+    sudo \
     curl \
     jq \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install xterm dependencies explicitly
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
-    libc6 \
-    libfontconfig1 \
-    libfreetype6 \
-    libice6 \
-    libtinfo6 \
-    libutempter0 \
-    libx11-6 \
-    libxaw7 \
-    libxext6 \
-    libxft2 \
-    libxinerama1 \
-    libxmu6 \
-    libxpm4 \
-    libxt6 \
-    xbitmaps \
-    x11-utils \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install xterm
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
-    xterm \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -426,6 +352,138 @@ RUN apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
+
+# Install utilities for debugging/testing
+RUN apt-get install --no-install-recommends -y \
+    less \
+    vim \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+#########################
+# Permissions
+#########################
+
+# Create fractal user with dynamic, random password and do NOT add to sudo group
+RUN useradd --create-home fractal \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo fractal:"${password}" | chpasswd
+
+# Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
+# Mount cgroup from host (Is this needed?)
+VOLUME [ "/sys/fs/cgroup" ]
+
+# Set appropriate user permissions
+RUN chown -vR fractal:fractal /home/fractal
+RUN chown root:root /run/user
+
+# Create fractal Directory and Subdirectories in /usr/share
+RUN mkdir -p /usr/share/fractal/private
+
+# Set /usr/share/fractal to root-only
+RUN chgrp root -R /usr/share/fractal
+RUN chown root:root /usr/share/fractal
+RUN chmod 600 -R /usr/share/fractal
+
+# Set up script to run a program as user `fractal` (make sure to do
+# this after setting /usr/share/fractal to 600)
+COPY utils/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
+RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
+
+
+#########################
+# Hardware Acceleration
+#########################
+
+# Install the Nvidia GRID Driver
+RUN apt-get install --no-install-recommends -y \
+    libglvnd0 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+COPY --from=nvidia-grid-driver /dist /
+
+# Install libraries for (limited) hardware acceleration
+RUN apt-get install --no-install-recommends -y \
+    vainfo \
+    vdpauinfo \
+    mesa-vdpau-drivers \
+    libvdpau-va-gl1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+#########################
+# Display
+#########################
+
+# Install dependencies
+RUN apt-get install --no-install-recommends -y \
+    libxdamage-dev \
+    xclip \
+    x11-xserver-utils \
+    xserver-xorg-video-dummy \
+    awesome \
+    xsettingsd \
+    xserver-xorg-core-hwe-18.04 \
+    libgstreamer-plugins-base1.0-0 \
+    libgstreamer1.0-0 \
+    screen-resolution-extra \
+    xinit \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Copy configuration for X11 display
+COPY display/fractal-display.conf /usr/share/X11/xorg.conf.d/01-fractal-display.conf
+
+# Set up Fractal service that starts before X to fix the Nvidia GPU bus ID and device paths
+COPY display/fractal-update-xorg-conf.service /etc/systemd/system/
+COPY display/update-xorg-conf.sh /usr/share/fractal/
+RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
+RUN systemctl enable fractal-update-xorg-conf
+
+# Install playerctl for media keys support. We install playerctl straight from
+# Github releases because as usual the Ubuntu package is horribly out of date
+# (and in particular don't support daemon mode).
+RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
+    && dpkg -i ./playerctl-2.3.1_amd64.deb \
+    && rm ./playerctl-2.3.1_amd64.deb
+
+# Set up Fractal service to launch X11 display
+COPY display/fractal-display-config.env /usr/share/fractal
+COPY display/xinitrc /root/.xinitrc
+COPY display/fractal-display.service /etc/systemd/system
+RUN systemctl enable fractal-display
+
+# Set up script to update display DPI on-the-fly
+COPY display/update-fractal-dpi.sh /usr/share/fractal/update-fractal-dpi.sh
+RUN chmod +x /usr/share/fractal/update-fractal-dpi.sh
+
+# Set display environment variable
+ENV DISPLAY :10
+
+#########################
+# Theme
+#########################
+
+# Install dependencies
+RUN apt-get install --no-install-recommends -y \
+    awesome \
+    awesome-extra \
+    lxappearance \
+    materia-gtk-theme \
+    yaru-theme-gtk \
+    gtk-chtheme \
+    gtk2-engines-murrine \
+    gtk2-engines-pixbuf \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+# Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
 
 # Install fonts for full Unicode support (or as close as we can get)
 RUN apt-get install --no-install-recommends -y \
@@ -445,13 +503,40 @@ RUN apt-get install --no-install-recommends -y \
 # Use twemoji font
 RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
 
-# Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
-RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+# Set up window manager running on X server, with GTK/QT theming
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
+COPY display/theme/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
+COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
+COPY --chown=fractal display/theme/gtkrc-2.0 /home/fractal/.gtkrc-2.0
+COPY display/theme/qt4-settings.conf /root/.config/Trolltech.conf
+COPY --chown=fractal display/theme/qt4-settings.conf /home/fractal/.config/Trolltech.conf
+COPY display/theme/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
 
-# Create fractal user with dynamic, random password and do NOT add to sudo group
-RUN useradd --create-home fractal \
-    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo fractal:"${password}" | chpasswd
+#########################
+# Audio
+#########################
+
+# Install dependencies
+RUN apt-get install --no-install-recommends -y \
+    libunwind8 \
+    liborc-0.4-0 \
+    libpulse0 \
+    libsnapd-glib1 \
+    libsndfile1 \
+    libsoxr0 \
+    libasound2-data \
+    libasound2 \
+    libasound2-dev \
+    libspeexdsp1 \
+    libwebrtc-audio-processing1 \
+    libasound2-plugins \
+    pulseaudio-utils \
+    libltdl7 \
+    libtdb1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install Pulse Audio
 RUN apt-get install --no-install-recommends -y \
@@ -468,48 +553,69 @@ RUN adduser root pulse-access \
 RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
 RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
-COPY config/pulse-client.conf /etc/pulse/client.conf
 
-# Install playerctl for media keys support. We install playerctl straight from
-# Github releases because as usual the Ubuntu package is horribly out of date
-# (and in particular don't support daemon mode).
-RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
-    && dpkg -i ./playerctl-2.3.1_amd64.deb \
-    && rm ./playerctl-2.3.1_amd64.deb
+# Set up service to start pulseaudio
+COPY audio/pulse-client.conf /etc/pulse/client.conf
+COPY audio/fractal-audio.service /etc/systemd/system
+RUN systemctl enable fractal-audio
 
+#########################
+# Startup
+#########################
 
-# Create fractal Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/sync /usr/share/fractal/private
-# Set /usr/share/fractal/to root-only
-RUN chgrp root -R /usr/share/fractal
-RUN chown root:root /usr/share/fractal/
-RUN chmod 600 -R /usr/share/fractal/
+# Set up user config map for mandelbox startup 
+COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
 
-# Install FractalServer scripts
-COPY scripts/entry.sh /usr/share/fractal
-RUN chmod +x /usr/share/fractal/entry.sh
-COPY config/fractal-display-config.env /usr/share/fractal
+# Set up first systemd service
+COPY startup/fractal-startup.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/fractal-startup.sh
+COPY startup/fractal-startup.service /etc/systemd/system
+RUN systemctl enable fractal-startup
 
-# Install and enable OpenSSH
-RUN apt-get install --no-install-recommends -y \
-    openssh-client \
-    openssh-sftp-server \
-    openssh-server \
+# Set up the entrypoint for the mandelbox (which starts systemd)
+COPY startup/entrypoint.sh /usr/share/fractal/entrypoint.sh
+RUN chmod +x /usr/share/fractal/entrypoint.sh
+CMD ["/usr/share/fractal/entrypoint.sh"]
+
+#########################
+# Main
+#########################
+
+# Set up the default Fractal application (xterm)
+
+# Install xterm and dependencies
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    libc6 \
+    libfontconfig1 \
+    libfreetype6 \
+    libice6 \
+    libtinfo6 \
+    libutempter0 \
+    libx11-6 \
+    libxaw7 \
+    libxext6 \
+    libxft2 \
+    libxinerama1 \
+    libxmu6 \
+    libxpm4 \
+    libxt6 \
+    xbitmaps \
+    x11-utils \
+    xterm \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-RUN systemctl enable ssh
+# Set up the default Fractal application symlink
+RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 
-# Set appropriate user permissions
-RUN chown -vR fractal:fractal /home/fractal
-RUN chown root:root /run/user
+# Set up script to launch `fractal-application` as the `fractal` user
+COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
+RUN chmod +x /usr/bin/run-fractal-application.sh
 
-# Set up the entrypoint for the mandelbox
-COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
-RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
+# Set up the Fractal server protocol
 
-# Install Protocol Dependencies
+# Install protocol dependencies
 COPY build-temp/setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
 RUN /usr/share/fractal/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
@@ -517,109 +623,29 @@ RUN /usr/share/fractal/setup-linux-build-environment.sh \
     && rm -rf /tmp/* /var/tmp/*
 RUN rm /usr/share/fractal/setup-linux-build-environment.sh
 
-# Install the Nvidia GRID Driver
-RUN apt-get install --no-install-recommends -y \
-    libglvnd0 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-COPY --from=nvidia-grid-driver /dist /
 
-# Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID and device paths
-COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
-COPY services/fractal-update-xorg-conf.service /etc/systemd/system/
-COPY scripts/update-xorg-conf.sh /usr/share/fractal/
-RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
+# Set up Fractal Protocol symlink
+RUN mkdir /usr/share/fractal/bin
+RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
-# Enable update script
-RUN systemctl enable fractal-update-xorg-conf
+# Set up the service which launches both the server protocol and the application
 
-# Set display environment variable to our Nvidia-powered display
-ENV DISPLAY :10
-
-# Install libraries for (limited) hardware acceleration
-RUN apt-get install --no-install-recommends -y \
-    vainfo \
-    vdpauinfo \
-    mesa-vdpau-drivers \
-    libvdpau-va-gl1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Set up window manager running on X server, with GTK/QT theming
-RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
-RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
-
-COPY config/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
-COPY config/.gtkrc-2.0 /root/.gtkrc-2.0
-COPY --chown=fractal config/.gtkrc-2.0 /home/fractal/.gtkrc-2.0
-COPY config/qt4-settings.conf /root/.config/Trolltech.conf
-COPY --chown=fractal config/qt4-settings.conf /home/fractal/.config/Trolltech.conf
-COPY scripts/xinitrc /root/.xinitrc
-COPY config/Xmodmap /root/.Xmodmap
-COPY config/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
-
-# Install Fractal services
-COPY services/fractal-entrypoint.service /etc/systemd/system
-RUN systemctl enable fractal-entrypoint
-
-COPY services/fractal-display.service /etc/systemd/system
-RUN systemctl enable fractal-display
-
-COPY services/fractal-protocol.service /etc/systemd/system
-RUN systemctl enable fractal-protocol
-
-COPY services/fractal-audio.service /etc/systemd/system
-RUN systemctl enable fractal-audio
-
-COPY scripts/run-fractal-server.sh /usr/share/fractal/run-fractal-server.sh
+COPY main/run-fractal-server.sh /usr/share/fractal/run-fractal-server.sh
 RUN chmod +x /usr/share/fractal/run-fractal-server.sh
+COPY main/fractal-main.service /etc/systemd/system
+RUN systemctl enable fractal-main
 
-COPY scripts/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
-RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
-
-COPY scripts/run-fractal-application.sh /usr/bin/run-fractal-application.sh
-RUN chmod +x /usr/bin/run-fractal-application.sh
-
-COPY scripts/update-fractal-dpi.sh /usr/share/fractal/update-fractal-dpi.sh
-RUN chmod +x /usr/share/fractal/update-fractal-dpi.sh
-
-VOLUME [ "/sys/fs/cgroup" ]
-
-# As opposed to graphical.target, which is the default
-# RUN systemctl set-default multi-user.target
-ENV init /sbin/init
-
-# Disable some extra systemd services
-RUN systemctl mask plymouth
-RUN systemctl mask systemd-hostnamed
-RUN systemctl mask acpid
-RUN systemctl mask NetworkManager-wait-online
-RUN systemctl disable sshd
-
-# Remove ProtectHostname=yes lines from logind and timedate systemd services
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-logind.service
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
+#########################
+# Cleanup
+#########################
 
 # Set our fractal systemd files to be root-visible only
 RUN chgrp root /etc/systemd/system/fractal*
 RUN chown root:root /etc/systemd/system/fractal*
 RUN chmod 600 /etc/systemd/system/fractal*
 
-# Set up Fractal Protocol symlink
-RUN mkdir /usr/share/fractal/bin
-RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
-
-# Setup Fractal application symlink (xterm by default)
-RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
-
 # Install Fractal Protocol binaries and helper files
+# We do this last and symlink `/usr/share/fractal/bin` earlier
+# to make it easier to modify the protocol and rebuild the base
+# Dockerfile without needing to redo many steps
 COPY build-temp/protocol/* /usr/share/fractal/bin/
-
-# Copy config reference to mandelbox 
-COPY config/app-config-map.json /usr/share/fractal/app-config-map.json
-
-# Enter the mandelbox via the entrypoint script
-CMD ["/usr/share/fractal/docker-entrypoint.sh"]

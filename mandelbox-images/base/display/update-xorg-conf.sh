@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# This script updates the NVIDIA BusID to the current GPU's BusID. It must
-# be run before the X Server starts.
+# This script updates the X11 config file in /etc/X11/xorg.conf.d/01-fractal-display.conf
+# to use the correct Nvidia bus ID and the correct uinput devices for absolute/relative
+# mouse input and keyboard input.
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -14,11 +15,15 @@ GPU_INDEX=$(cat $FRACTAL_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
 echo "Using GPU Index ${GPU_INDEX}"
 
 # Retrieve the Fractal NVIDIA display config
-XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf"
+XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-display.conf"
 if [ ! -f ${XCONFIG} ]; then
     echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
     exit 1
 fi
+
+####################
+# Update Bus ID
+####################
 
 # Retrieve the current NVIDIA BusID and the new NVIDIA BusID
 OLDBUSID=`awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG}`
@@ -32,6 +37,10 @@ else
     echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
     sed -i -e 's|BusID.*|BusID          '\"${NEWBUSID}\"'|' ${XCONFIG}
 fi
+
+############################
+# Update uinput devices
+############################
 
 # Loop through files /dev/input/eventN to determine which correspond to which device
 for filename in /dev/input/event*; do

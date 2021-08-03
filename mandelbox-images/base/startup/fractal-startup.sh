@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is the entrance for Fractal within the Fractal mandelboxes. It retrieves
+# This script is the first systemd service run after systemd starts up. It retrieves
 # the relevant parameters for the mandelbox and starts the fractal systemd user
 
 # Exit on subcommand errors

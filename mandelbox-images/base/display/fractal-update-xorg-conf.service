@@ -1,6 +1,6 @@
-# Updates Nvidia BUSID and device paths in /usr/share/X11/xorg.conf.d/01-nvidia.conf before X starts, runs as root
+# Updates Nvidia BUSID and device paths in /usr/share/X11/xorg.conf.d/01-fractal-display.conf before X starts, runs as root
 [Unit]
-Description=Xorg Config Update
+Description=Update X11 Config
 DefaultDependencies=yes
 After=syslog.target
 Before=display-manager.service multi-user.target
