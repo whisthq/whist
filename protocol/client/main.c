@@ -581,8 +581,8 @@ int main(int argc, char* argv[]) {
 
         run_sync_tcp_packets = false;
         SDL_WaitThread(sync_tcp_packets_thread, NULL);
-        run_receive_packets = false;
-        SDL_WaitThread(receive_packets_thread, NULL);
+        run_sync_udp_packets = false;
+        SDL_WaitThread(sync_udp_packets_thread, NULL);
         destroy_audio();
         close_connections();
         connected = false;
