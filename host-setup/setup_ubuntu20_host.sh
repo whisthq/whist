@@ -150,7 +150,7 @@ Wants=syslog.target
 Restart=yes
 User=root
 Type=forking
-ExecStart=/usr/bin/nvidia-persistenced
+ExecStart=/usr/bin/nvidia-persistenced -V
 
 [Install]
 WantedBy=multi-user.target
