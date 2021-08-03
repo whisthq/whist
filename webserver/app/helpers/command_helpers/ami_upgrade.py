@@ -43,7 +43,7 @@ def insert_new_amis(
     prior_amis = []
     new_amis = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
-        if (old_ami := RegionToAmi.query.get(region_name, client_commit_hash)) is not None:
+        if (old_ami := RegionToAmi.query.get((region_name, client_commit_hash))) is not None:
             prior_amis.append(old_ami)
         else:
             new_ami = RegionToAmi(
