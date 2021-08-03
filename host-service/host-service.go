@@ -705,7 +705,7 @@ func main() {
 
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
 		// process.
-		goroutineTracker.Wait()
+		utils.WaitWithDebugPrints(&goroutineTracker, 2*time.Minute, 2)
 
 		// Stop processing new events
 		close(eventLoopKeepalive)
