@@ -6,95 +6,84 @@ import (
 	"testing"
 
 	"github.com/fractal/fractal/host-service/auth"
+
+	"github.com/golang-jwt/jwt"
 )
 
 func TestUnmarshalScopes(t *testing.T) {
-	// Ensure that UnmarshalText returns an error when called on a nil scopes
-	// pointer.
-	t.Run("NilPointer", func(t *testing.T) {
-		t.Parallel()
-
-		nilPtr := (*auth.Scopes)(nil)
-		err := nilPtr.UnmarshalText([]byte(""))
-
-		if err == nil {
-			t.Fatal("UnmarshalText should return an error")
-		}
-	})
-
-	// Ensure that UnmarshalText unmarshals an empty scopes type when passed an
+	// Ensure that UnmarshalJSON unmarshals an empty scopes type when passed an
 	// empty byte slice.
 	t.Run("EmptyString", func(t *testing.T) {
 		t.Parallel()
 
 		want := auth.Scopes{}
 		got := make(auth.Scopes, 0)
-		err := got.UnmarshalText([]byte(""))
+		err := got.UnmarshalJSON([]byte(`""`))
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("UnmarshalText should unmarshal %v", want)
+			t.Fatalf("UnmarshalJSON should unmarshal %v", want)
 		}
 	})
 
-	// Ensure that UnmarshalText unmarshals a scopes type containing a single
+	// Ensure that UnmarshalJSON unmarshals a scopes type containing a single
 	// scope when passed a byte slice that does not contain ' '.
 	t.Run("Singleton", func(t *testing.T) {
 		t.Parallel()
 
 		want := auth.Scopes{"hello"}
 		got := make(auth.Scopes, 1)
-		err := got.UnmarshalText([]byte("hello"))
+		err := got.UnmarshalJSON([]byte(`"hello"`))
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("UnmarshalText should unmarshal %v", want)
+			t.Fatalf("UnmarshalJSON should unmarshal %v", want)
 		}
 	})
 
-	// Ensure that UnmarshalText unmarshals a scopes type containing two scopes
+	// Ensure that UnmarshalJSON unmarshals a scopes type containing two scopes
 	// when passed a byte slice containing a single ' '.
 	t.Run("Multi", func(t *testing.T) {
 		t.Parallel()
 
 		want := auth.Scopes{"hello", "world"}
 		got := make(auth.Scopes, 2)
-		err := got.UnmarshalText([]byte("hello world"))
+		err := got.UnmarshalJSON([]byte(`"hello world"`))
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("UnmarshalText should unmarshal %v", want)
+			t.Fatalf("UnmarshalJSON should unmarshal %v", want)
 		}
 	})
 
-	// Ensure that UnmarshalText overwrites any data that is already present in
+	// Ensure that UnmarshalJSON overwrites any data that is already present in
 	// the scopes type on which it is called.
 	t.Run("Overwrite", func(t *testing.T) {
 		t.Parallel()
 
 		want := auth.Scopes{"hello"}
 		got := auth.Scopes{"hi"}
-		err := got.UnmarshalText([]byte("hello"))
+		err := got.UnmarshalJSON([]byte(`"hello"`))
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("UnmarshalText should unmarshal %v", want)
+			t.Fatalf("UnmarshalJSON should unmarshal %v", want)
 		}
 	})
 
-	// Ensure that UnmarshalText unmarshals JSON strings correctly.
+	// Ensure that json.Unmarshal calls UnmarshalJSON.
 	t.Run("UnmarshalValue", func(t *testing.T) {
 		t.Parallel()
 
@@ -111,7 +100,7 @@ func TestUnmarshalScopes(t *testing.T) {
 		}
 	})
 
-	// Ensure that UnmarshalText unmarshals JSON strings correctly.
+	// Ensure that json.Unmarshal calls UnmarshalJSON.
 	t.Run("UnmarshalStruct", func(t *testing.T) {
 		t.Parallel()
 
@@ -129,6 +118,50 @@ func TestUnmarshalScopes(t *testing.T) {
 
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("json.Unmarshal should unmarshal %+v", want)
+		}
+	})
+}
+
+func TestParseToken(t *testing.T) {
+	// Ensure that tokens whose "aud" claim is a string are parsed correctly.
+	t.Run("OneAudience", func(t *testing.T) {
+		t.Parallel()
+
+		// rawToken is an H256-signed JWT whose payload is {"aud": "foo"}
+		const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJmb28ifQ.h44sAymzUhQYXbdOqrCkr7aEf0HkU-wbgWQdQ74Q288"
+
+		claims := new(auth.FractalClaims)
+		parser := new(jwt.Parser)
+		_, _, err := parser.ParseUnverified(rawToken, claims)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !claims.VerifyAudience("foo", true) {
+			t.Fatal("VerifyAudience should return true")
+		}
+	})
+
+	// Ensure that tokens whose "aud" claim is a list of strings are parsed
+	// correctly.
+	t.Run("MultiAudience", func(t *testing.T) {
+		t.Parallel()
+
+		// rawToken is an H256-signed JWT whose payload is
+		// {"aud": ["hello", "world"]}.
+		const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiaGVsbG8iLCJ3b3JsZCJdfQ.ckOGyW7IkarMXd8-KxlDXB9LbdFwN06tVqraRXjRRyk"
+
+		claims := new(auth.FractalClaims)
+		parser := new(jwt.Parser)
+		_, _, err := parser.ParseUnverified(rawToken, claims)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !claims.VerifyAudience("hello", true) {
+			t.Fatal("VerifyAudience should return true")
 		}
 	})
 }

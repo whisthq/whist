@@ -8,6 +8,7 @@ algorithm.
 package auth // import "github.com/fractal/fractal/host-service/auth"
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -19,6 +20,10 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 )
 
+// Audience is an alias for []string with some custom deserialization behavior.
+// It is used to store the value of an access token's "aud" claim.
+type Audience []string
+
 // Scopes is an alias for []string with some custom deserialization behavior.
 // It is used to store the value of an access token's "scope" claim.
 type Scopes []string
@@ -27,6 +32,12 @@ type Scopes []string
 // in an Auth0-issued Fractal access token.
 type FractalClaims struct {
 	jwt.StandardClaims
+
+	// Audience stores the value of the access token's "aud" claim. Inside the
+	// token's payload, the value of the "aud" claim can be either a JSON
+	// string or list of strings. We implement custom deserialization on the
+	// Audience type to handle both of these cases.
+	Audience Audience `json:"aud"`
 
 	// Scopes stores the value of the access token's "scope" claim. The value
 	// of the "scope" claim is a string of one or more space-separated words.
@@ -58,13 +69,43 @@ func init() {
 	logger.Infof("Successfully got JWKs from %s on startup.", config.getJwksURL())
 }
 
-// UnmarshalText implements the encoding.TextUnmarshaler interface on the
-// *Scopes type such that a string of space-separated words is serialized into
-// a string slice. UnmarshalText overwrites the contents of *scopes with the
-// unmarshaled data.
-func (scopes *Scopes) UnmarshalText(data []byte) error {
-	if scopes == nil {
-		return utils.MakeError("auth.Scopes: UnmarshalText on nil pointer")
+// UnmarshalJSON unmarshals a JSON string or list of strings into an *Audience
+// type. It overwrites the contents of *audience with the unmarshalled data.
+func (audience *Audience) UnmarshalJSON(data []byte) error {
+	var aud string
+
+	// Try to unmarshal the input data into a string slice.
+	err := json.Unmarshal(data, (*[]string)(audience))
+
+	switch v := err.(type) {
+	case *json.UnmarshalTypeError:
+		// Ignore *json.UnmarshalTypeErrors, which are returned when the input
+		// data cannot be unmarshalled into a string slice. Instead, we will
+		// try to unmarshal the data into a string type below.
+	default:
+		// Return an error if err was non-nil or nil otherwise.
+		return v
+	}
+
+	// Try to unmarshal the input data into a string.
+	if err := json.Unmarshal(data, &aud); err != nil {
+		return err
+	}
+
+	// Overwrite any pre-existing data in *audience. Avoid creating a new
+	// allocation if possible by truncating and reusing the existing slice.
+	*audience = append((*audience)[0:0], aud)
+
+	return nil
+}
+
+// UnmarshalJSON unmarshals a space-separate string of words into a *Scopes
+// type. It overwrites the contents of *scopes with the unmarshalled data.
+func (scopes *Scopes) UnmarshalJSON(data []byte) error {
+	var s string
+
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
 	}
 
 	// The following line is borrowed from
@@ -72,7 +113,7 @@ func (scopes *Scopes) UnmarshalText(data []byte) error {
 	// @djsavvy and @owenniles's best guess is that the (*scopes)[0:0] syntax
 	// decreases the likelihood that new memory must be allocated for the
 	// data that are written to the slice.
-	*scopes = append((*scopes)[0:0], strings.Fields(string(data))...)
+	*scopes = append((*scopes)[0:0], strings.Fields(s)...)
 
 	return nil
 }
@@ -105,6 +146,14 @@ func Verify(tokenString string) (*FractalClaims, error) {
 	}
 
 	return claims, nil
+}
+
+// VerifyAudience compares the "aud" claim against cmp. If req is false, this
+// method will return true if the value of the "aud" claim matches cmp or is
+// unset.
+func (claims *FractalClaims) VerifyAudience(cmp string, req bool) bool {
+	c := &jwt.MapClaims{"aud": []string(claims.Audience)}
+	return c.VerifyAudience(cmp, req)
 }
 
 // VerifyScope returns true if claims.Scopes contains the requested scope and
