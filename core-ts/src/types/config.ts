@@ -3,8 +3,6 @@ export type FractalConfig = {
   url: {
     WEBSERVER_URL: string | undefined
     FRONTEND_URL: string | undefined
-    GRAPHQL_HTTP_URL: string | undefined
-    GRAPHQL_WS_URL: string | undefined
     GOOGLE_REDIRECT_URI: string | undefined
   }
   keys: {

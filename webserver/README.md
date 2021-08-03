@@ -105,14 +105,6 @@ For continuous integration and delivery, we leverage Heroku pipelines, which pro
 
 While our Heroku pipeline should not be modified without codeowner permission, it is helpful to understand how it works by consulting our wiki [here](https://www.notion.so/tryfractal/Heroku-CI-CD-Pipeline-Webservers-f8ef5b43edc84c969cf005fcac4641ba).
 
-### GraphQL
-
-We leverage Hasura GraphQL (hosted on Heroku) to enable real-time database access and serverless database retrieval. For pure SQL requests, we encourage using GraphQL instead of writing your own server endpoint to minimize the amount of code we write and because GraphQL has a lot of really nice built-in features.
-
-GraphQL is already set up, but here's a [setup doc](https://hasura.io/docs/1.0/graphql/core/deployment/deployment-guides/heroku.html) for reference. Hasura GraphQL also provides a console for easy interfacing with the database. The prod database console is [here](prod-database.fractal.co) using access key stored as a config variable in the Heroku `fractal-graphql` application.
-
-If you want to test with local GraphQL endpoints, running `bash hasura_run.sh` in the `docker` subdirectory will create a local instance of Hasura at `localhost:8080`. It currently uses the dev database with admin secret `secret` and auth hook `http://host.docker.internal:7730/hasura/auth` (assuming that you're running a local instance of the webserver through docker), but change as needed to get the ports you want.
-
 ## Testing
 
 ### Setting Up
@@ -293,7 +285,6 @@ Note that all conftest files contain test fixtures for their respective director
 ├── docker --> scripts for running a local config of the webserver
 │   ├── Dockerfile --> docker container for local webserver
 │   ├── docker-compose.yml --> container instructions for local webserver
-│   ├── hasura_run.sh --> script to enable hasura console on local server
 │   ├── local_deploy.sh --> script to run to turn on local server
 │   ├── pgparse.py --> util for pulling down config info for local server
 │   └── retrieve_config.sh --> script to pull down config info for local server
