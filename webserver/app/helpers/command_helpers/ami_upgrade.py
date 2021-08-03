@@ -40,18 +40,22 @@ def insert_new_amis(
     Returns:
         A list of the created RegionToAmi objects that are created.
     """
+    prior_amis = []
     new_amis = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
-        new_ami = RegionToAmi(
-            region_name=region_name,
-            ami_id=ami_id,
-            client_commit_hash=client_commit_hash,
-            ami_active=False,
-        )
-        new_amis.append(new_ami)
+        if old_ami := RegionToAmi.query.get(region_name, client_commit_hash) is not None:
+            prior_amis.append(old_ami)
+        else:
+            new_ami = RegionToAmi(
+                region_name=region_name,
+                ami_id=ami_id,
+                client_commit_hash=client_commit_hash,
+                ami_active=False,
+            )
+            new_amis.append(new_ami)
     db.session.add_all(new_amis)
     db.session.commit()
-    return new_amis
+    return new_amis + prior_amis
 
 
 def launch_new_ami_buffer(
