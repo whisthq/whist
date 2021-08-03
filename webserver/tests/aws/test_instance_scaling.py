@@ -73,6 +73,37 @@ def test_scale_down_single_available(
     assert instance.status == InstanceState.HOST_SERVICE_UNRESPONSIVE.value
 
 
+def test_terminate_single_available(
+    monkeypatch, hijack_ec2_calls, mock_get_num_new_instances, bulk_instance, region_name
+):
+    """
+    Tests that we scale down an instance when desired
+    tests the correct requests, db, and ec2 calls are made.
+    Also tests that preconnection is handled properly.
+    """
+    post_list = []
+    call_list = hijack_ec2_calls
+
+    def _helper(*args, **kwargs):
+        nonlocal post_list
+        post_list.append({"args": args, "kwargs": kwargs})
+        raise requests.exceptions.RequestException()
+
+    monkeypatch.setattr(requests, "post", _helper)
+    instance = bulk_instance(
+        instance_name="test_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=InstanceState.PRE_CONNECTION,
+    )
+    assert instance.status != InstanceState.DRAINING.value
+    mock_get_num_new_instances(-1)
+    aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
+    assert len(post_list) == []
+    assert len(call_list) == 1
+    assert call_list[0]["args"][0][0] == instance.instance_name
+
+
 def test_scale_down_single_unavailable(
     hijack_ec2_calls, mock_get_num_new_instances, bulk_instance, region_name
 ):
