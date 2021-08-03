@@ -134,6 +134,27 @@ sudo sh -c "echo 'fs.inotify.max_user_instances=2048' >> /etc/sysctl.conf" # def
 sudo sysctl -p
 
 echo "================================================"
+echo "Installing NVIDIA Persistence Daemon Unit..."
+echo "================================================"
+sudo cat << EOF > /etc/systemd/system/nvidia-persistenced.service
+[Unit]
+Description=NVIDIA Persistence Daemon
+Wants=syslog.target
+
+[Service]
+Restart=yes
+User=root
+Type=forking
+ExecStart=/usr/bin/nvidia-persistenced
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo /bin/systemctl daemon-reload
+sudo systemctl enable --now nvidia-persistenced.service
+echo "Enabled NVIDIA Persistence Daemon"
+
+echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 
