@@ -27,16 +27,13 @@ Includes
 #include <fractal/utils/window_name.h>
 #include "client_utils.h"
 #include "audio.h"
+#include "network.h"
 
 #include <stddef.h>
 
 extern bool exiting;
 extern int audio_frequency;
-extern volatile bool is_timing_latency;
 extern volatile double latency;
-extern volatile clock latency_timer;
-extern volatile int ping_id;
-extern volatile int ping_failures;
 extern volatile int try_amount;
 extern volatile char *window_title;
 extern volatile bool should_update_window_title;
@@ -109,17 +106,7 @@ static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
             " (type: pong message)!");
         return -1;
     }
-    if (ping_id == fmsg->ping_id) {
-        double latency_time = get_timer(latency_timer);
-        LOG_INFO("Latency: %f", latency_time);
-        // Save latency as a geometric sum (Latency per ping capped at 1 second)
-        latency = 0.5 * latency + 0.5 * min(latency_time, 1.0);
-        is_timing_latency = false;
-        ping_failures = 0;
-        try_amount = 0;
-    } else {
-        LOG_INFO("Old Ping ID found: Got %d but expected %d", fmsg->ping_id, ping_id);
-    }
+    receive_pong(fmsg->ping_id);
     return 0;
 }
 
