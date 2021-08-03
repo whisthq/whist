@@ -29,7 +29,7 @@ resourceServers:
 
 The Auth0 CLI will replace these with the variables defined in the config JSON at deploy-time. Thus, it's important to note that **the `tenant.yaml` file is the same for each of our three tenants**. Any tenant-specific configuration should be moved to its respective config json file.
 
-If you make changes in the Auth0 UI, make sure to run `yarn update-tenant` to download your changes in the local `tenant.yaml`. Changes made in the UI should only be done on the dev tenant. You may notice that this pulls the dev configuration -- this is by design. The flow for updating Auth0 configuration across the tenants is, broadly:
+If you make changes in the Auth0 UI, make sure to run `yarn dump:dev` to download your changes in the local `tenant.yaml`. Changes made in the UI should only be done on the dev tenant. The flow for updating Auth0 configuration across the tenants should be, broadly:
 
 -   Change Auth0 config in dev tenant (with web UI, API, etc.)
 -   Pull the new `tenant.yml`, commit and push to `dev` branch on GitHub
@@ -37,11 +37,11 @@ If you make changes in the Auth0 UI, make sure to run `yarn update-tenant` to do
 
 This ensures that the `tenant.yaml` in source control is the definite source-of-truth for that branch's Auth0 configuration. It also helps by minimizing the differences between our dev and prod Auth0 tenants -- so that no issues will be introduced upon promoting `dev` to `staging` to `prod`.
 
-Note that `yarn update-tenant` may make undesirable changes to `tenant.yaml` or add unnecessary files to your git working tree. Be sure to review all changes made by `yarn update-tenant` in order to ensure that you only commit the changes you intend to commit.
+Note that `yarn dump:dev` may make undesirable changes to `tenant.yaml` or add unnecessary files to your git working tree. Be sure to review all changes made by `yarn dump:dev` in order to ensure that you only commit the changes you intend to commit.
 
 ### Clients
 
-The `tenant.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop application) or trusted "machine-to-machine" clients such as GitHub Actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn update-tenant`.
+The `tenant.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop application) or trusted "machine-to-machine" clients such as GitHub Actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn dump:dev`.
 
 Here's an example client configuration:
 

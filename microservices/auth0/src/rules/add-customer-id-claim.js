@@ -10,10 +10,13 @@
 function addCustomerIdClaim(user, context, callback) {
     const app_metadata = user.app_metadata || {}
     const stripe_customer_id = app_metadata.stripe_customer_id || null
+    const customer_lifetime_price = app_metadata.customer_lifetime_price || null
 
     context.accessToken[
         "https://api.fractal.co/stripe_customer_id"
     ] = stripe_customer_id
+
+    context.accessToken["https://api.fractal.co/customer_lifetime_price"] = customer_lifetime_price
 
     return callback(null, user, context)
 }
