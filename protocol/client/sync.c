@@ -1,3 +1,20 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file sync.h
+ * @brief This file contains code for high-level communication with the server
+============================
+Usage
+============================
+Use multithreaded_sync_udp_packets to send and receive UDP messages to and from the server, such as
+audio and video packets. Use multithreaded_sync_tcp_packets to send and receive TCP messages, mostly
+clipboard packets.
+*/
+
+/*
+============================
+Includes
+============================
+*/
 #include <fractal/core/fractal.h>
 #include <fractal/utils/clock.h>
 #include <fractal/network/network.h>
@@ -10,34 +27,48 @@
 #include "sync.h"
 #include "client_utils.h"
 
+// Updater variables
 bool tried_to_update_dimension;
 bool updater_initialized;
 clock last_tcp_check_timer;
+extern SocketContext packet_tcp_context;
+extern volatile bool run_sync_udp_packets;
+extern volatile bool run_sync_tcp_packets;
+extern bool connected;
+// Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;
 volatile int last_pong_id;
 volatile int ping_failures;
-extern volatile bool update_mbps;
 clock latency_timer;
 extern volatile double latency;
-extern volatile bool run_sync_udp_packets;
-extern volatile bool run_sync_tcp_packets;
-extern bool connected;
+// MBPS variables
+extern volatile bool update_mbps;
+extern volatile int max_bitrate;
+// dimension variables
 extern volatile int server_width;
 extern volatile int server_height;
 extern volatile CodecType server_codec_type;
 extern volatile CodecType output_codec_type;
 extern volatile int output_width;
 extern volatile int output_height;
-extern volatile int max_bitrate;
-extern SocketContext packet_tcp_context;
 
+/*
+============================
+Private Functions
+============================
+*/
 void init_updater();
 void destroy_updater();
 void update_bitrate();
 void update_ping();
 void update_initial_dimensions();
 
+/*
+============================
+Private Function Implementations
+============================
+*/
 // TODO: better name
 void init_updater() {
     /*
@@ -99,6 +130,9 @@ void update_ping() {
 }
 
 void update_initial_dimensions() {
+    /*
+        Send the initial client width/height to the server. This should only run once.
+    */
     if (!tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height ||
          server_codec_type != output_codec_type)) {
@@ -108,6 +142,9 @@ void update_initial_dimensions() {
 }
 
 void update_bitrate() {
+    /*
+        Tell the server to update the bitrate of its video if needed.
+    */
     if (update_mbps) {
         update_mbps = false;
         FractalClientMessage fmsg = {0};
@@ -118,6 +155,19 @@ void update_bitrate() {
     }
 }
 
+void destroy_updater() {
+    /*
+        Destroy the client update handler - currently, just the clipboard
+    */
+    updater_initialized = false;
+    destroy_clipboard_synchronizer();
+}
+
+/*
+============================
+Public Function Implementations
+============================
+*/
 // This function polls for UDP packets from the server
 // NOTE: This contains a very sensitive hotpath,
 // as recvp will potentially receive tens of thousands packets per second.
@@ -129,6 +179,10 @@ void update_bitrate() {
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int multithreaded_sync_udp_packets(void* opaque) {
+    /*
+        Send, receive, and process UDP packets - dimension messages, bitrate messages, nack
+       messages, pings, audio and video packets.
+    */
     SocketContext socket_context = *(SocketContext*)opaque;
     /****
     Timers
@@ -246,11 +300,6 @@ int multithreaded_sync_udp_packets(void* opaque) {
     destroy_updater();
 
     return 0;
-}
-
-void destroy_updater() {
-    updater_initialized = false;
-    destroy_clipboard_synchronizer();
 }
 
 int multithreaded_sync_tcp_packets(void* opaque) {
