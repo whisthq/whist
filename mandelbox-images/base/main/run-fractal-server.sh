@@ -1,14 +1,12 @@
 #!/bin/bash
 
-# This script starts the Fractal protocol server, and assumes that it is
-# being run within a Fractal mandelbox.
+# This script starts the Fractal protocol server and the Fractal application.
 
 # Exit on subcommand errors
 set -Eeuo pipefail
 
 # Set/Retrieve Mandelbox parameters
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
-USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
