@@ -370,20 +370,6 @@ int receive_packets(void* opaque) {
     Timers
     ****/
 
-    clock world_timer;
-    start_timer(&world_timer);
-
-    double recvfrom_time = 0;
-    double update_video_time = 0;
-    double update_audio_time = 0;
-    double hash_time = 0;
-    double video_time = 0;
-    double audio_time = 0;
-    double message_time = 0;
-
-    double max_audio_time = 0;
-    double max_video_time = 0;
-
     clock recvfrom_timer;
     clock update_video_timer;
     clock update_audio_timer;
@@ -422,36 +408,19 @@ int receive_packets(void* opaque) {
         // Handle all pending updates
         update();
 
-        // TODO hash_time is never updated, leaving it in here in case it is
-        // used in the future
-        // casting to suppress warnings.
-        (void)hash_time;
-        // Post statistics every 5 seconds
-        if (get_timer(world_timer) > 5) {
-            LOG_INFO("world_time: %f", get_timer(world_timer));
-            LOG_INFO("recvfrom_time: %f", recvfrom_time);
-            LOG_INFO("update_video_time: %f", update_video_time);
-            LOG_INFO("update_audio_time: %f", update_audio_time);
-            LOG_INFO("hash_time: %f", hash_time);
-            LOG_INFO("video_time: %f", video_time);
-            LOG_INFO("max_video_time: %f", max_video_time);
-            LOG_INFO("audio_time: %f", audio_time);
-            LOG_INFO("max_audio_time: %f", max_audio_time);
-            LOG_INFO("message_time: %f", message_time);
-            start_timer(&world_timer);
-        }
-
         // Video and Audio should be updated at least every 5ms
         // We will do it here, after receiving each packet or if the last recvp
         // timed out
 
         start_timer(&update_video_timer);
         update_video();
-        update_video_time += get_timer(update_video_timer);
+        log_double_statistic("update_video time (ms)",
+                             get_timer(update_video_timer) * MS_IN_SECOND);
 
         start_timer(&update_audio_timer);
         update_audio();
-        update_audio_time += get_timer(update_audio_timer);
+        log_double_statistic("update_audio time (ms)",
+                             get_timer(update_audio_timer) * MS_IN_SECOND);
 
         // Time the following recvfrom code
         start_timer(&recvfrom_timer);
@@ -484,7 +453,7 @@ int receive_packets(void* opaque) {
         double recvfrom_short_time = get_timer(recvfrom_timer);
 
         // Total amount of time spent in recvfrom / decrypt_packet
-        recvfrom_time += recvfrom_short_time;
+        log_double_statistic("recvfrom_time (ms)", recvfrom_short_time * MS_IN_SECOND);
         // Total amount of cumulative time spend in recvfrom, since the last
         // time recv_size was > 0
         lastrecv += recvfrom_short_time;
@@ -510,22 +479,23 @@ int receive_packets(void* opaque) {
                     // Video packet
                     start_timer(&video_timer);
                     receive_video(packet);
-                    video_time += get_timer(video_timer);
-                    max_video_time = max(max_video_time, get_timer(video_timer));
+                    log_double_statistic("receive_video time (ms)",
+                                         get_timer(video_timer) * MS_IN_SECOND);
                     break;
                 case PACKET_AUDIO:
                     // Audio packet
                     start_timer(&audio_timer);
                     receive_audio(packet);
-                    audio_time += get_timer(audio_timer);
-                    max_audio_time = max(max_audio_time, get_timer(audio_timer));
+                    log_double_statistic("receive_audio time (ms)",
+                                         get_timer(audio_timer) * MS_IN_SECOND);
                     break;
                 case PACKET_MESSAGE:
                     // A FractalServerMessage for other information
                     start_timer(&message_timer);
                     handle_server_message((FractalServerMessage*)packet->data,
                                           (size_t)packet->payload_size);
-                    message_time += get_timer(message_timer);
+                    log_double_statistic("handle_server_message time (ms)",
+                                         get_timer(message_timer) * MS_IN_SECOND);
                     break;
                 default:
                     LOG_WARNING("Unknown Packet");
