@@ -75,10 +75,6 @@ volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile double latency;
-volatile int last_ping_id;
-volatile int last_pong_id;
-volatile int ping_failures;
-clock last_ping_timer;
 
 volatile FractalRGBColor* native_window_color = NULL;
 volatile bool native_window_color_update = false;

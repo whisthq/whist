@@ -8,13 +8,15 @@
 #include "audio.h"
 #include "video.h"
 #include "sync.h"
+#include "client_utils.h"
 
 bool tried_to_update_dimension;
 bool updater_initialized;
 clock last_tcp_check_timer;
-extern clock last_ping_timer;
-extern volatile int last_ping_id;
-extern volatile int last_pong_id;
+clock last_ping_timer;
+volatile int last_ping_id;
+volatile int last_pong_id;
+volatile int ping_failures;
 extern volatile bool update_mbps;
 extern volatile clock latency_timer;
 extern volatile double latency;
@@ -23,11 +25,12 @@ extern volatile bool run_sync_tcp_packets;
 extern bool connected;
 extern volatile int server_width;
 extern volatile int server_height;
-extern volatile int server_codec_type;
+extern volatile CodecType server_codec_type;
 extern volatile CodecType output_codec_type;
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile int max_bitrate;
+extern SocketContext packet_tcp_context;
 
 void init_updater();
 void destroy_updater();
@@ -238,7 +241,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
     SDL_Delay(50);
 
-    destroy_update();
+    destroy_updater();
 
     return 0;
 }
@@ -273,7 +276,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         }
 
         // Update the last TCP check timer
-        start_timer((clock*)&update_data.last_tcp_check_timer);
+        start_timer(&last_tcp_check_timer);
 
         // Receive tcp buffer, if a full packet has been received
         FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
@@ -308,9 +311,9 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // Wait until 25 ms have elapsed since we started interacting with the TCP socket, unless
         //    the clipboard is actively being written or read
         if (!is_clipboard_synchronizing() &&
-            get_timer(update_data.last_tcp_check_timer) < 25.0 / MS_IN_SECOND) {
+            get_timer(last_tcp_check_timer) < 25.0 / MS_IN_SECOND) {
             SDL_Delay(
-                max((int)(25.0 - MS_IN_SECOND * get_timer(update_data.last_tcp_check_timer)), 1));
+                max((int)(25.0 - MS_IN_SECOND * get_timer(last_tcp_check_timer)), 1));
         }
     }
 
