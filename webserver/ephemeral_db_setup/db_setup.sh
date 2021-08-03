@@ -46,6 +46,7 @@ psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< $cmds
 cmds="ALTER ROLE $POSTGRES_USER SUPERUSER;\q"
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< $cmds
 
+# Get rid of 0 width spaces.
 POSTGRES_DB=$( (echo $POSTGRES_DB) | sed $'s/[^[:print:]\t]//g')
 
 
