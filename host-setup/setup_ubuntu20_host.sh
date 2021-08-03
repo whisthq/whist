@@ -7,6 +7,11 @@
 
 set -Eeuo pipefail
 
+# Retrieve source directory of this script
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
 # If we run this script as root, then the "ubuntu"/default user will not be
 # added to the "docker" group, only root will.
 if [ "$EUID" -eq 0 ]; then
