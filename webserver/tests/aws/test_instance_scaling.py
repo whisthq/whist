@@ -99,9 +99,9 @@ def test_terminate_single_available(
     assert instance.status != InstanceState.DRAINING.value
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    assert len(post_list) == []
+    assert len(post_list) == 0
     assert len(call_list) == 1
-    assert call_list[0]["args"][0][0] == instance.instance_name
+    assert call_list[0]["args"][1][0] == instance.instance_name
 
 
 def test_scale_down_single_unavailable(
