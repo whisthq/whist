@@ -16,6 +16,8 @@ import {
   authPortalURL,
   authInfoParse,
   authInfoCallbackRequest,
+  paymentPortalRequest,
+  paymentPortalParse,
 } from "@fractal/core-ts"
 import {
   WindowHashAuth,
@@ -30,7 +32,6 @@ import {
   childProcess,
   protocolStreamKill,
 } from "@app/utils/protocol"
-import { paymentPortalRequest, paymentPortalParse } from "@fractal/core-ts"
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()

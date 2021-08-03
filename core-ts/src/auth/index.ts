@@ -130,7 +130,7 @@ export const generateRandomConfigToken = () => {
   return buffer.toString("base64")
 }
 
-export const isTokenExpired = ({ accessToken }: accessToken) => {
+export const isTokenExpired = ({ accessToken }: accessToken) : boolean => {
   // Extract the expiry in seconds since epoch
   const profile: { exp: number } = jwtDecode(accessToken)
   // Get current time in seconds since epoch
