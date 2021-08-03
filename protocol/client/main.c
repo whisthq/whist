@@ -115,8 +115,8 @@ volatile bool pending_resize_message =
 
 // Function Declarations
 
-SocketContext packet_send_context = {0};
-SocketContext packet_receive_context = {0};
+SocketContext packet_send_udp_context = {0};
+SocketContext packet_receive_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 
 volatile bool connected = true;
@@ -216,7 +216,7 @@ int32_t multithreaded_renderer(void* opaque) {
         start_timer(&ack_timer);
 
         if (get_timer(ack_timer) > 5) {
-            ack(&packet_send_context);
+            ack(&packet_send_udp_context);
             ack(&packet_tcp_context);
             start_timer(&ack_timer);
         }
@@ -453,7 +453,7 @@ int main(int argc, char* argv[]) {
         // Create thread to receive all packets and handle them as needed
         run_sync_udp_packets = true;
         SDL_Thread* sync_udp_packets_thread = SDL_CreateThread(
-            multithreaded_sync_udp_packets, "ReceivePackets", &packet_receive_context);
+            multithreaded_sync_udp_packets, "ReceivePackets", &packet_receive_udp_context);
 
         // Create thread to send and receive TCP packets
         run_sync_tcp_packets = true;
