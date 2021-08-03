@@ -61,6 +61,9 @@ echo "================================================"
 echo "Installing NVIDIA drivers..."
 echo "================================================"
 
+# Stop any running nvidia-persistenced service
+sudo systemctl stop nvidia-persistenced.service ||:
+
 # Install Linux headers
 sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
 
@@ -141,7 +144,7 @@ sudo sysctl -p
 echo "================================================"
 echo "Installing NVIDIA Persistence Daemon Unit..."
 echo "================================================"
-sudo cat << EOF > /etc/systemd/system/nvidia-persistenced.service
+cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
 [Unit]
 Description=NVIDIA Persistence Daemon
 Wants=syslog.target
@@ -151,6 +154,7 @@ Restart=yes
 User=root
 Type=forking
 ExecStart=/usr/bin/nvidia-persistenced -V
+ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
 
 [Install]
 WantedBy=multi-user.target
