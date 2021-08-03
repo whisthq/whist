@@ -4,7 +4,7 @@ Description=Fractal Entrypoint
 
 [Service]
 Type=oneshot
-ExecStart=/usr/share/fractal/entry.sh
+ExecStart=/usr/share/fractal/fractal-startup.sh
 
 [Install]
 WantedBy=multi-user.target

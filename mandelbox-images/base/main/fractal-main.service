@@ -1,4 +1,4 @@
-# Starts the Fractal Protocol Server with the right environment variables and NVIDIA display, runs as root
+# Starts the Fractal server protocol and the symlinked application. Runs as root.
 [Unit]
 Description=Fractal Protocol
 After=fractal-display.service fractal-audio.service
