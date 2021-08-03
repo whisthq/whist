@@ -153,7 +153,8 @@ def bulk_instance():
     yield _instance
 
     for instance in instances:
-        db.session.delete(instance)
+        if InstanceInfo.query.get(instance.instance_name) is not None:
+            db.session.delete(instance)
     # We only need to delete the instances for cleanup. mandelboxes have a foreign key
     # relationship with instances on instance_name column and due to cascade on delete/update
     # the mandelboxes will be deleted on deletion of corresponding instances.
