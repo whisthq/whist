@@ -155,6 +155,7 @@ ExecStart=/usr/bin/nvidia-persistenced
 [Install]
 WantedBy=multi-user.target
 EOF
+
 sudo /bin/systemctl daemon-reload
 sudo systemctl enable --now nvidia-persistenced.service
 echo "Enabled NVIDIA Persistence Daemon"
