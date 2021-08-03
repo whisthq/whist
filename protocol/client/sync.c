@@ -107,7 +107,7 @@ void update_ping() {
 
     // If we're waiting for a ping, and it's been 600ms, then that ping will be
     // noted as failed
-    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.6) {
+    if (last_ping_id != last_pong_id && get_timer(latency_timer) > 0.6) {
         LOG_WARNING("Ping received no response: %d", last_ping_id);
         // Keep track of failures, and exit if too many failures
         last_pong_id = last_ping_id;
@@ -121,6 +121,7 @@ void update_ping() {
     // if we've received the last ping, send another
     if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
         send_ping(last_ping_id + 1);
+        start_timer(&latency_timer);
     }
 
     // if we haven't received the last ping, send the same ping

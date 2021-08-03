@@ -176,10 +176,8 @@ void send_ping(int ping_id) {
     if (send_fmsg(&fmsg) != 0) {
         LOG_WARNING("Failed to ping server! (ID: %d)", ping_id);
     }
-    if (last_ping_id != ping_id) {
-        last_ping_id = ping_id;
-        start_timer(&last_ping_timer);
-    }
+    last_ping_id = ping_id;
+    start_timer(&last_ping_timer);
 }
 
 void receive_pong(int pong_id) {
