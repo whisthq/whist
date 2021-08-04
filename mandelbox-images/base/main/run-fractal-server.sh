@@ -12,7 +12,9 @@ PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
-LOG_FILENAME=/usr/share/fractal/server.log
+PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
+TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
+
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -37,6 +39,10 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   export TIMEOUT=$(cat $TIMEOUT_FILENAME)
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
+
+# We use named pipe redirection for consistency with our FractalServer launch setup
+# &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
+/usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either FractalServer or the Fractal
@@ -83,7 +89,7 @@ sync # Necessary so that even if the container exits very soon the host service 
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
-/usr/share/fractal/FractalServer $OPTIONS > >(tee $LOG_FILENAME) &
+/usr/share/fractal/FractalServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
 fractal_server_pid=$!
 
 # Wait for either fractal-application or FractalServer to exit (both backgrounded processes).
