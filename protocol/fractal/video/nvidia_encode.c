@@ -231,10 +231,12 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         encoder->resource_cache[0] = resource_to_register;
         encoder->registered_resource = encoder->resource_cache[0];
     }
+#if LOG_VIDEO
     LOG_DEBUG("Registered resource data: texture %x, width %d, height %d, pitch %d, device %s",
               encoder->registered_resource.texture_pointer, encoder->registered_resource.width,
               encoder->registered_resource.height, encoder->registered_resource.pitch,
               encoder->registered_resource.device_type == NVIDIA_DEVICE ? "Nvidia" : "X11");
+#endif
     // If on X11, we need to memcpy the capture into the encoder buffer
     // In accordance with Nvidia documentation, first we lock the buffer, then memcpy, then unlock
     // the buffer
