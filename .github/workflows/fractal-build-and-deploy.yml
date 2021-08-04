@@ -440,6 +440,14 @@ jobs:
           data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
           data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
+
+          if data["git_branch"] == "prod":
+                data["logz_shipping_token"] = "${{ secrets.PROD_LOGZ_SHIPPING_TOKEN }}"
+          elif data["git_branch"] == "staging":
+                data["logz_shipping_token"] = "${{ secrets.STAGING_LOGZ_SHIPPING_TOKEN }}"
+          elif data["git_branch"] == "dev":
+                data["logz_shipping_token"] = "${{ secrets.DEV_LOGZ_SHIPPING_TOKEN }}"
+          
           # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
           # defined as a string of comma-separated values (no spaces) as required by Packer.
           if data["git_branch"] == "prod":
