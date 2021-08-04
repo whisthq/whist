@@ -213,14 +213,15 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             return -1;
         }
         encoder->pitch = lock_params.pitch;
-       // encoder->pitch = encoder->registered_resource.pitch;
-        LOG_DEBUG("width: %d, pitch: %d (lock pitch %d)", encoder->registered_resource.width, encoder->pitch, lock_params.pitch);
+        // encoder->pitch = encoder->registered_resource.pitch;
+        LOG_DEBUG("width: %d, pitch: %d (lock pitch %d)", encoder->registered_resource.width,
+                  encoder->pitch, lock_params.pitch);
         // memcpy input data
-        for(int i = 0; i < encoder->registered_resource.height; i++) {
-            memcpy(
-                lock_params.bufferDataPtr + i * lock_params.pitch,
-                encoder->registered_resource.texture_pointer + i * encoder->registered_resource.pitch,
-                encoder->registered_resource.pitch);
+        for (int i = 0; i < encoder->registered_resource.height; i++) {
+            memcpy((char*)lock_params.bufferDataPtr + i * lock_params.pitch,
+                   (char*)encoder->registered_resource.texture_pointer +
+                       i * encoder->registered_resource.pitch,
+                   encoder->registered_resource.pitch);
         }
         status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
                                                           lock_params.inputBuffer);

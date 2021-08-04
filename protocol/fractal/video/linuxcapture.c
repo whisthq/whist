@@ -258,7 +258,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     bool res;
 #if USING_NVIDIA_ENCODE
     // cuda_init the encoder context
-    bool res = cuda_init(get_video_thread_cuda_context_ptr());
+    res = cuda_init(get_video_thread_cuda_context_ptr());
     if (!res) {
         LOG_ERROR("Failed to initialize cuda!");
     }
@@ -379,9 +379,9 @@ int capture_screen(CaptureDevice* device) {
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
                                 uint32_t dpi) {
     /*
-       Attempt to reconfigure the capture device to the given width, height, and dpi. In
-       Nvidia case, we resize the display and wait for the Nvidia device to tell us we must recreate
-       it. In X11 case, we don't update in place.
+       Attempt to reconfigure the capture device to the given width, height, and dpi. Resize the
+       display. In Nvidia case, we resize the display and signal another thread to create the
+       thread. In X11 case, we reconfigure the device.
 
         Arguments:
             device (CaptureDevice*): pointer to device we want to reconfigure
@@ -432,7 +432,7 @@ void destroy_capture_device(CaptureDevice* device) {
     }
     cuda_destroy(*get_nvidia_thread_cuda_context_ptr());
     *get_nvidia_thread_cuda_context_ptr() = NULL;
-#endif // USING_NVIDIA_CAPTURE
+#endif  // USING_NVIDIA_CAPTURE
     cuda_destroy(*get_video_thread_cuda_context_ptr());
     *get_video_thread_cuda_context_ptr() = NULL;
     if (device->x11_capture_device) {

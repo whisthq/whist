@@ -49,6 +49,7 @@ typedef struct {
  * @param codec                    Which codec type (h264 or h265) to use
  * @param out_width                Width of the output frame
  * @param out_height               Height of the output frame
+ * @param cuda_context             The CUDA context to use for the encoding session
  *
  * @returns                        The newly created nvidia encoder
  */
@@ -73,8 +74,8 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  * @brief                          Put the input data into the nvidia encoder
  *
  * @param encoder                  The encoder to encode with
- * @param width                    The width of the inputted frame
- * @param height                   The height of the inputted frame
+ * @param resource_to_register     The resource to register - contains data about capture device,
+ *                                 width, height, and texture
  *
  * @returns                        0 on success, else -1
  *                                 This function will return -1 if width/height do not match

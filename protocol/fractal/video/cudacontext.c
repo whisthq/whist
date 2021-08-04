@@ -91,7 +91,7 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
         LOG_ERROR("Unable to resolve symbol 'cuCtxCreate_v2'\n");
         return NVFBC_FALSE;
     }
-    
+
     cu_ctx_destroy_v2_ptr = (CUCTXDESTROYV2PROC)dlsym(lib_cuda, "cuCtxDestroy_v2");
     if (cu_ctx_destroy_v2_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'cuCtxDestroy_v2'\n");
@@ -193,13 +193,21 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
 
 CUcontext* get_video_thread_cuda_context_ptr() {
     /*
-        Return a pointer to the active CUDA context.
+        Return a pointer to the CUDA context that will be used next by the video thread.
 
         Returns:
-            (CUcontext*): pointer to the active CUDA context
+            (CUcontext*): pointer to the video thread CUDA context
     */
 
     return &video_thread_cuda_context;
 }
 
-CUcontext* get_nvidia_thread_cuda_context_ptr() { return &nvidia_thread_cuda_context; }
+CUcontext* get_nvidia_thread_cuda_context_ptr() {
+    /*
+        Return a pointer to the CUDA context that will be used next by the nvidia thread.
+
+        Returns:
+            (CUcontext*): pointer to the nvidia thread CUDA context
+    */
+    return &nvidia_thread_cuda_context;
+}

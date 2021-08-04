@@ -48,11 +48,26 @@ Public Functions
 NVFBC_BOOL cuda_init(CUcontext* cuda_context);
 
 /**
- * @brief                          Returns a pointer to the active CUDA context.
+ * @brief                          Returns a pointer to the CUDA context that will be used next by
+ * the video thread
  *
- * @returns                        Pointer to the active CUDA context
+ * @returns                        Pointer to the video thread CUDA context
  */
 CUcontext* get_video_thread_cuda_context_ptr();
+/**
+ * @brief                           Returns a pointer to the CUDA context that will be used next by
+ * the Nvidia device manager thread
+ *
+ * @returns                         Pointer to nvidia thread CUDA context
+ */
 CUcontext* get_nvidia_thread_cuda_context_ptr();
+
+/**
+ * @brief                           Destroys the CUDA context given.
+ *
+ * @param cuda_context              CUDA context to destroy
+ *
+ * @returns                         NVFBC_TRUE on success, NVFBC_FALSE otherwise.
+ */
 NVFBC_BOOL cuda_destroy(CUcontext cuda_context);
 #endif
