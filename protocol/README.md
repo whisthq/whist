@@ -38,6 +38,12 @@ Throughout the life of the protocol, various messages will be send to and from t
 
 Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
 
+### Current Encoding Status
+
+Our current status of using encoders is a bit tricky.
+
+In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. However, there's some nasty bugs in the currently available versions our our interfaces with them (namely device creation fails sometimes and hangs the protocol for 10 seconds). At the moment, we're using X11 capture with ffmpeg, which has been our fallback capturing mechanism. We are currently in the process of switching to X11 capture with direct NVIDIA encoding, since it's slightly faster and reconfigurable on the fly. If we can figure out how to safely switch back to NVIDIA capture as well, then we will do that for simplicity and performance.
+
 ## File Structure
 
 `tree -I "share|sentry-native|lib|include|build*|CMakeFiles|docs|loading|cmake" -P "*.c" .`
