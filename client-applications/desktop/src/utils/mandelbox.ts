@@ -4,7 +4,7 @@
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
 import { isEmpty } from "lodash"
-import { get, post, addSessionId } from "@app/utils/api"
+import { get, post } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
