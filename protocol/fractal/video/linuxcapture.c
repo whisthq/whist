@@ -340,7 +340,9 @@ int capture_screen(CaptureDevice* device) {
                 device->nvidia_context_is_stale = false;
             }
             int ret = nvidia_capture_screen(device->nvidia_capture_device);
-            // if (ret > 0) LOG_INFO("Capturing with Nvidia!");
+#if LOG_VIDEO
+            if (ret > 0) LOG_INFO("Captured with Nvidia!");
+#endif
             if (ret >= 0) {
                 if (device->width == device->nvidia_capture_device->width &&
                     device->height == device->nvidia_capture_device->height) {
@@ -363,8 +365,10 @@ int capture_screen(CaptureDevice* device) {
 #endif  // USING_NVIDIA_CAPTURE
         case X11_DEVICE:
             device->last_capture_device = X11_DEVICE;
-            // LOG_INFO("X11 capture!");
             int ret = x11_capture_screen(device->x11_capture_device);
+#if LOG_VIDEO
+            if (ret > 0) LOG_INFO("Captured with X11!");
+#endif
             if (ret >= 0) {
                 device->frame_data = device->x11_capture_device->frame_data;
                 device->pitch = device->x11_capture_device->pitch;
