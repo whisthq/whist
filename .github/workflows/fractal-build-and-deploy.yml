@@ -447,7 +447,7 @@ jobs:
                 data["logz_shipping_token"] = "${{ secrets.STAGING_LOGZ_SHIPPING_TOKEN }}"
           elif data["git_branch"] == "dev":
                 data["logz_shipping_token"] = "${{ secrets.DEV_LOGZ_SHIPPING_TOKEN }}"
-          
+
           # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
           # defined as a string of comma-separated values (no spaces) as required by Packer.
           if data["git_branch"] == "prod":
