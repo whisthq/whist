@@ -217,10 +217,55 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: fractal-base ################
+################ STAGE 4: fractal-teleport-fuse  ################
+# - Copy and build the FUSE service to handle teleport drag-drop
+#   events
+# EXPOSES the teleport fuse service
+#################################################################
+FROM ubuntu:20.04 as fractal-teleport-fuse
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+RUN apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install FUSE build dependencies
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    gcc \
+    fuse3 \
+    libfuse3-dev \
+    pkg-config \
+    build-essential \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /fractal-teleport-fuse/{src,build}
+
+COPY teleport/teleport-fuse /fractal-teleport-fuse/src
+
+# hadolint ignore=SC2046
+RUN cd /fractal-teleport-fuse/src \
+    && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
+    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/fractal-teleport-fuse
+
+################ STAGE 5: fractal-base ################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
+# - Copy grid driver installation from
+#   nvidia-grid-driver
+# - Copy and install teleport FUSE service from
+#   fractal-teleport-fuse
 # - Install and configure all necessary components for
 #   our base mandelbox image
 # EXPOSES all of fractal-base as the final image
@@ -615,6 +660,21 @@ RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
 RUN chmod 0555 /usr/bin/run-fractal-application.sh
 
+# Set up the teleport FUSE service
+
+# Install FUSE dependencies
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    fuse3 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+COPY --from=fractal-teleport-fuse /fractal-teleport-fuse/build/fractal-teleport-fuse /usr/bin/fractal-teleport-fuse
+
+# Set up script to launch teleport functionality
+COPY teleport/run-fractal-teleport.sh /usr/bin/run-fractal-teleport.sh
+RUN chmod +x /usr/bin/run-fractal-teleport.sh
+
 # Set up the Fractal server protocol
 
 # Install protocol dependencies
@@ -624,7 +684,6 @@ RUN /usr/share/fractal/setup-linux-build-environment.sh \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 RUN rm /usr/share/fractal/setup-linux-build-environment.sh
-
 
 # Set up Fractal Protocol symlink
 RUN mkdir /usr/share/fractal/bin
