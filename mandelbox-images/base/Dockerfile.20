@@ -332,6 +332,8 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     wget \
     gnupg2 \
     libfido2-1 \
+    # for `killall` in display/update-fractal-dpi.sh
+    psmisc \
     libgbm1 \
     lsb-release \
     ufw \
