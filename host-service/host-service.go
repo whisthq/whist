@@ -562,7 +562,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// Not a fatal error --- we still want to spin up a mandelbox, and we will
 		// just use the provided encryption token to save configs when the
 		// mandelbox dies.
-		logger.Error(err)
+		logger.Warning(err)
 	}
 
 	err = fc.MarkReady()
