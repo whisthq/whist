@@ -766,6 +766,10 @@ void init_video() {
 int last_rendered_index = 0;
 
 void trigger_loading_animation() {
+    /*
+        Set video_data.loading_index to 0, thus triggering the loading animation again. This is
+       called when the client disconnects.
+    */
     if (video_data.loading_index < 0) {
         video_data.loading_index = 0;
     }

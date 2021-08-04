@@ -36,6 +36,10 @@ Public Functions
  */
 void init_video();
 
+/**
+ * @brief                       Have the video thread begin rendering loading screen animation after
+ *                              renders finish
+ */
 void trigger_loading_animation();
 
 /**
