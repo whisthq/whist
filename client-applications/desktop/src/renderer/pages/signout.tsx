@@ -33,8 +33,8 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
         Are you sure you want to sign out?
       </div>
       <div className="mt-2 mb-4">
-        Signing out will terminate your browser and you&lsquo;ll need to sign
-        back in nex time.
+        Signing out will close Fractal and you will need to sign back in next
+        time.
       </div>
       <div className="w-full">
         <div>
@@ -46,11 +46,15 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
           />
         </div>
       </div>
-      <div>
-        <input type="checkbox" checked={clearConfig} onChange={handleCheck} />
-        <div>
-          Also permanently wipe all my browsing data (saved passwords, history,
-          cookies, etc.).
+      <div className="flex mt-6">
+        <input
+          type="checkbox"
+          checked={clearConfig}
+          onChange={handleCheck}
+          className="mt-1"
+        />
+        <div className="ml-3">
+          Also permanently erase all my browsing data (history, cookies, etc.)
         </div>
       </div>
     </div>
