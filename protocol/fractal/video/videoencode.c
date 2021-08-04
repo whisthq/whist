@@ -160,8 +160,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 #else
     LOG_INFO("Creating nvidia encoder...");
     // find next nonempty entry in nvidia_encoders
-    encoder->nvidia_encoders[0] = create_nvidia_encoder(
-        bitrate, codec_type, out_width, out_height, *get_video_thread_cuda_context_ptr());
+    encoder->nvidia_encoders[0] = create_nvidia_encoder(bitrate, codec_type, out_width, out_height,
+                                                        *get_video_thread_cuda_context_ptr());
     if (!encoder->nvidia_encoders[0]) {
         LOG_ERROR("Failed to create nvidia encoder!");
         encoder->active_encoder = FFMPEG_ENCODER;
@@ -253,7 +253,8 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
 #ifdef __linux__
         // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
         // registration somehow.
-        return nvidia_reconfigure_encoder(encoder->nvidia_encoders[encoder->active_encoder_idx], width, height, bitrate, codec);
+        return nvidia_reconfigure_encoder(encoder->nvidia_encoders[encoder->active_encoder_idx],
+                                          width, height, bitrate, codec);
 #else
         LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
