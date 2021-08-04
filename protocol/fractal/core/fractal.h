@@ -104,7 +104,8 @@ Defines
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
-#define USING_NVIDIA_CAPTURE_AND_ENCODE true
+#define USING_NVIDIA_CAPTURE false
+#define USING_NVIDIA_ENCODE true
 #define USING_SHM true
 
 #endif

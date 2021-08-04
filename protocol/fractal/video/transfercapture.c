@@ -27,13 +27,8 @@ int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
     }
     return 0;
 #else  // __linux__
-    if (encoder->active_encoder == NVIDIA_ENCODER) {
-        if (device->active_capture_device == NVIDIA_DEVICE) {
-            return nvidia_start_transfer_context(
-                device->nvidia_capture_device,
-                encoder->nvidia_encoders[encoder->active_encoder_idx]);
-        }
-    }
+    // On linux, because we register resources on the fly and cache resources, there's no need to
+    // start and close transfer contexts anymore
     return 0;
 #endif
 }
@@ -59,12 +54,9 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
             success = -1;
         }
     }
-#else  // __linux__
-    if (encoder->active_encoder == NVIDIA_ENCODER) {
-        success =
-            nvidia_close_transfer_context(encoder->nvidia_encoders[encoder->active_encoder_idx]);
-    }
 #endif
+    // On linux, because we register resources on the fly and cache resources, there's no need to
+    // start and close transfer contexts anymore
     return success;
 }
 
@@ -81,19 +73,20 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     // Handle transfer capture for nvidia capture device
     // check if we need to switch our active encoder
     if (encoder->active_encoder == NVIDIA_ENCODER) {
+#if USING_NVIDIA_CAPTURE
+        // We need to account for switching contexts
         NvidiaEncoder* old_encoder = encoder->nvidia_encoders[encoder->active_encoder_idx];
         if (old_encoder->cuda_context != *get_video_thread_cuda_context_ptr()) {
             LOG_INFO("Switching to other Nvidia encoder!");
             encoder->active_encoder_idx = encoder->active_encoder_idx == 1 ? 0 : 1;
             if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
                 encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
-                    old_encoder->bitrate,
-                    old_encoder->codec_type, old_encoder->width, old_encoder->height,
-                    *get_video_thread_cuda_context_ptr());
+                    old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
+                    old_encoder->height, *get_video_thread_cuda_context_ptr());
             }
             video_encoder_set_iframe(encoder);
-            // start_transfer_context(device, encoder);
         }
+#endif  // USING_NVIDIA_CAPTURE
         RegisteredResource resource_to_register = {0};
         resource_to_register.width = device->width;
         resource_to_register.height = device->height;
@@ -103,7 +96,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         return nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx],
                                            resource_to_register);
     }
-#endif
+#endif  // linux
 
     if (encoder->active_encoder != FFMPEG_ENCODER) {
         LOG_INFO("Switching back to FFmpeg encoder for use with X11 capture!");

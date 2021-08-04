@@ -151,7 +151,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     encoder->in_height = in_height;
     encoder->codec_type = codec_type;
 
-#if USING_NVIDIA_CAPTURE_AND_ENCODE
+#if USING_NVIDIA_ENCODE
 #if USING_SERVERSIDE_SCALE
     LOG_ERROR(
         "Cannot create nvidia encoder, does not accept in_width and in_height when using "
@@ -176,7 +176,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 #else
     // No nvidia found
     encoder->active_encoder = FFMPEG_ENCODER;
-#endif  // USING_NVIDIA_CAPTURE_AND_ENCODE
+#endif  // USING_NVIDIA_ENCODE
 
     LOG_INFO("Creating ffmpeg encoder...");
     encoder->ffmpeg_encoder =
