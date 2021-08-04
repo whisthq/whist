@@ -21,10 +21,17 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
-      - name: Run Beautysh to Check Scripts Formatting
-        uses: illvart/beautysh-action@latest
+      - name: Set up Python 3.9.5
+        uses: actions/setup-python@v2
         with:
-          args: "**/*.sh --indent-size 4 --check"
+          python-version: "3.9.5"
+
+      - name: Install beautysh
+        working-directory: mandelbox-images/helper_scripts
+        run: pip install -r requirements.txt
+
+      - name: Run Beautysh to Check Scripts Formatting
+        run: beautysh **/*.sh --indent-size 4 --check
 
       - name: Check that All Bash Scripts Start with "#!/bin/bash"
         run: .github/workflows/helpers/shell-scripts/check-shebang.sh

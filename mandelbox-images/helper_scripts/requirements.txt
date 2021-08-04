@@ -3,3 +3,4 @@ pylint==2.9.3
 docker==5.0.0
 psutil==5.8.0
 requests==2.26.0
+beautysh==6.1.0
