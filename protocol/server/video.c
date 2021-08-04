@@ -199,7 +199,6 @@ int32_t multithreaded_send_video(void* opaque) {
                 if (transfer_context_active) {
                     close_transfer_context(device, encoder);
                     transfer_context_active = false;
-                    encoder = NULL;
                 }
 
                 if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
