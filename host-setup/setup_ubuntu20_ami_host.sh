@@ -6,6 +6,11 @@
 
 set -Eeuo pipefail
 
+# Retrieve source directory of this script
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
 # Parse input variables
 GH_USERNAME=${1}
 GH_PAT=${2}
