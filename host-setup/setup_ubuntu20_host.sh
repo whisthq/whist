@@ -144,6 +144,10 @@ sudo sysctl -p
 echo "================================================"
 echo "Installing NVIDIA Persistence Daemon Unit..."
 echo "================================================"
+
+# Some research online indicates that this might be beneficial towards ensuring that our mandelboxes 
+# start up more quickly. This is likely not a complete solution, but it might provide some nice benefits.
+
 cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
 [Unit]
 Description=NVIDIA Persistence Daemon
