@@ -571,12 +571,15 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	logger.Infof("Waiting for fractal application to start up...")
-	if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", req.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
-		logAndReturnError("Error warming up fractal application: %s", err)
-		return
+	// Don't wait for fractal application to start up in local environment
+	if !metadata.IsLocalEnv() {
+		logger.Infof("Waiting for fractal application to start up...")
+		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", req.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+			logAndReturnError("Error warming up fractal application: %s", err)
+			return
+		}
+		logger.Infof("Finished waiting for fractal application to start up.")
 	}
-	logger.Infof("Finished waiting for fractal application to start up.")
 
 	err = dbdriver.WriteMandelboxStatus(req.MandelboxID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
