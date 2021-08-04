@@ -72,7 +72,12 @@ export const authPortalURL = () =>
     `&redirect_uri=${config.CLIENT_CALLBACK_URL}`,
   ].join("")
 
-export const authInfoParse = (res: any) => {
+export const authInfoParse = (res: {
+  json?: {
+    id_token?: string,
+    access_token?: string
+  }
+}) => {
   /*
   Description:
     Helper function that takes an Auth0 response and extracts a {email, sub, accessToken, refreshToken} object
@@ -86,7 +91,6 @@ export const authInfoParse = (res: any) => {
   const jwtIdentity = decoded?.sub
   const userEmail = decoded?.email
   const accessToken = res?.json?.access_token
-  const refreshToken = res?.json?.refresh_token
   if (typeof jwtIdentity !== "string")
     return {
       error: {
@@ -108,14 +112,7 @@ export const authInfoParse = (res: any) => {
         data: res,
       },
     }
-  if (typeof refreshToken !== "string")
-    return {
-      error: {
-        message: "Response does not have .json.refresh_token",
-        data: res,
-      },
-    }
-  return { jwtIdentity, userEmail, accessToken, refreshToken }
+  return { jwtIdentity, userEmail, accessToken }
 }
 
 export const generateRandomConfigToken = () => {
