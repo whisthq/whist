@@ -42,13 +42,8 @@ echo "===            Initializing db                  ==="
 cmds="CREATE ROLE $POSTGRES_USER WITH LOGIN CREATEDB;\q"
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< $cmds
 
-# superuser privileges are needed to install pg_extensions needed for Hasura.
-cmds="ALTER ROLE $POSTGRES_USER SUPERUSER;\q"
-psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< $cmds
-
 # Get rid of 0 width spaces.
 POSTGRES_DB=$( (echo $POSTGRES_DB) | sed $'s/[^[:print:]\t]//g')
-
 
 cmds="CREATE DATABASE $POSTGRES_DB;\q"
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres <<< $cmds
