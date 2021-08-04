@@ -45,7 +45,7 @@ Includes
 #include "sdl_utils.h"
 #include "handle_server_message.h"
 #include "video.h"
-#include "sync.h"
+#include "sync_packets.h"
 #include <SDL2/SDL_syswm.h>
 #include <fractal/utils/color.h>
 #include "native_window_utils.h"
