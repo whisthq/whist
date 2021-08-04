@@ -26,8 +26,9 @@ type logzioSender logzio.LogzioSender
 type logzioMessageType string
 
 const (
-	logzioTypeInfo  logzioMessageType = "info"
-	logzioTypeError logzioMessageType = "error"
+	logzioTypeInfo    logzioMessageType = "info"
+	logzioTypeWarning logzioMessageType = "warning"
+	logzioTypeError   logzioMessageType = "error"
 )
 
 func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
