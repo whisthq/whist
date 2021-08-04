@@ -45,6 +45,7 @@ Includes
 #include "sdl_utils.h"
 #include "handle_server_message.h"
 #include "video.h"
+#include "sync_packets.h"
 #include <SDL2/SDL_syswm.h>
 #include <fractal/utils/color.h>
 #include "native_window_utils.h"
@@ -69,13 +70,10 @@ volatile char hex_aes_private_key[33];
 volatile SDL_Window* window;
 volatile char* window_title;
 volatile bool should_update_window_title;
-volatile bool run_receive_packets;
+volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
-volatile clock latency_timer;
 volatile double latency;
-volatile int last_ping_id;
-volatile int ping_failures;
 
 volatile FractalRGBColor* native_window_color = NULL;
 volatile bool native_window_color_update = false;
@@ -117,10 +115,8 @@ volatile bool pending_resize_message =
 
 // Function Declarations
 
-int receive_packets(void* opaque);
-
-SocketContext packet_send_context = {0};
-SocketContext packet_receive_context = {0};
+SocketContext packet_send_udp_context = {0};
+SocketContext packet_receive_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 
 volatile bool connected = true;
@@ -129,344 +125,6 @@ volatile int try_amount;
 
 // Defines
 #define MAX_APP_PATH_LEN 1024
-
-/*
-============================
-Custom Types
-============================
-*/
-
-// UPDATER CODE - HANDLES ALL PERIODIC UPDATES
-struct UpdateData {
-    bool tried_to_update_dimension;
-    bool has_initialized_updated;
-    clock last_tcp_check_timer;
-} volatile update_data;
-
-/*
-============================
-Private Function Implementations
-============================
-*/
-
-static bool updater_initialized = false;
-
-void init_update() {
-    /*
-        Initialize client update handler.
-        Anything that will be continuously be called (within `update()`)
-        that changes program state should be initialized in here.
-    */
-
-    update_data.tried_to_update_dimension = false;
-
-    start_timer((clock*)&update_data.last_tcp_check_timer);
-    start_timer((clock*)&latency_timer);
-
-    // we initialize latency here because on macOS, latency would not initialize properly in
-    // its declaration above. We start at 25ms before the first ping.
-    latency = 25.0 / 1000.0;
-    last_ping_id = 1;
-    ping_failures = -2;
-
-    init_clipboard_synchronizer(true);
-
-    updater_initialized = true;
-}
-
-void destroy_update() {
-    /*
-        Runs the destruction sequence for anything that
-        was initialized in `init_update()` and needs to be
-        destroyed.
-    */
-
-    updater_initialized = false;
-    destroy_clipboard_synchronizer();
-}
-
-void update() {
-    /*
-        Check all pending updates, and act on those pending updates
-        to actually update the state of our program.
-        This function expects to be called at minimum every 5ms to keep
-        the program up-to-date.
-    */
-
-    if (!updater_initialized) {
-        LOG_ERROR("Tried to update, but updater not initialized!");
-    }
-
-    FractalClientMessage fmsg = {0};
-
-    // If we haven't yet tried to update the dimension, and the dimensions don't
-    // line up, then request the proper dimension
-    if (!update_data.tried_to_update_dimension &&
-        (server_width != output_width || server_height != output_height ||
-         server_codec_type != output_codec_type)) {
-        send_message_dimensions();
-        update_data.tried_to_update_dimension = true;
-    }
-
-    // If the code has triggered a mbps update, then notify the server of the
-    // newly desired mbps
-    if (update_mbps) {
-        update_mbps = false;
-        fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
-        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
-        send_fmsg(&fmsg);
-    }
-
-    update_ping();
-}
-
-int sync_tcp_packets(void* opaque) {
-    /*
-        Thread to send and receive all TCP packets (clipboard and file)
-
-        Arguments:
-            opaque (void*): any arg to be passed to thread
-
-        Return:
-            (int): 0 on success
-    */
-
-    UNUSED(opaque);
-    LOG_INFO("sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
-
-    // TODO: compartmentalize each part into its own function
-    while (run_sync_tcp_packets) {
-        // RECEIVE TCP PACKET HANDLER
-        // Check if TCP connection is active
-        int result = ack(&packet_tcp_context);
-        if (result < 0) {
-            LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
-            continue;
-        }
-
-        // Update the last TCP check timer
-        start_timer((clock*)&update_data.last_tcp_check_timer);
-
-        // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
-        if (tcp_packet) {
-            handle_server_message((FractalServerMessage*)tcp_packet->data,
-                                  (size_t)tcp_packet->payload_size);
-            free_tcp_packet(tcp_packet);
-        }
-
-        // SEND TCP PACKET HANDLERS:
-
-        // GET CLIPBOARD HANDLER
-        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
-        if (clipboard_chunk) {
-            // Alloc an fmsg
-            FractalClientMessage* fmsg_clipboard = allocate_region(
-                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
-            // Build the fmsg
-            // Init metadata to 0 to prevent sending uninitialized packets over the network
-            memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
-            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard_chunk,
-                   sizeof(ClipboardData) + clipboard_chunk->size);
-            // Send the fmsg
-            send_fmsg(fmsg_clipboard);
-            // Free the fmsg
-            deallocate_region(fmsg_clipboard);
-            // Free the clipboard chunk
-            deallocate_region(clipboard_chunk);
-        }
-
-        // Wait until 25 ms have elapsed since we started interacting with the TCP socket, unless
-        //    the clipboard is actively being written or read
-        if (!is_clipboard_synchronizing() &&
-            get_timer(update_data.last_tcp_check_timer) < 25.0 / MS_IN_SECOND) {
-            SDL_Delay(
-                max((int)(25.0 - MS_IN_SECOND * get_timer(update_data.last_tcp_check_timer)), 1));
-        }
-    }
-
-    return 0;
-}
-
-// END UPDATER CODE
-
-// This function polls for UDP packets from the server
-// NOTE: This contains a very sensitive hotpath,
-// as recvp will potentially receive tens of thousands packets per second.
-// The total execution time of inner for loop must not take longer than 0.01ms-0.1ms
-// i.e., this function should not take any more than 10,000 assembly instructions per loop.
-// Please do not put any for loops, and do not make any non-trivial system calls.
-// Please label any functions in the hotpath with the following lines:
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-int receive_packets(void* opaque) {
-    /*
-        Receive any packets from the server and handle them appropriately
-
-        Arguments:
-            opaque (void*): any arg to be passed to thread
-
-        Return:
-            (int): 0 on success
-    */
-
-    LOG_INFO("receive_packets running on Thread %p", SDL_GetThreadID(NULL));
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
-    SocketContext socket_context = *(SocketContext*)opaque;
-
-    /****
-    Timers
-    ****/
-
-    clock recvfrom_timer;
-    clock update_video_timer;
-    clock update_audio_timer;
-    clock video_timer;
-    clock audio_timer;
-    clock message_timer;
-
-    /****
-    End Timers
-    ****/
-
-    double lastrecv = 0.0;
-
-    clock last_ack;
-    start_timer(&last_ack);
-
-    // NOTE: FOR DEBUGGING
-    // This code will drop packets intentionally to test protocol's ability to
-    // handle such events drop_distance_sec is the number of seconds in-between
-    // simulated drops drop_time_ms is how long the drop will last for
-    clock drop_test_timer;
-    int drop_time_ms = 250;
-    int drop_distance_sec = -1;
-    bool is_currently_dropping = false;
-    start_timer(&drop_test_timer);
-
-    // Initialize update handler
-    init_update();
-
-    while (run_receive_packets) {
-        if (get_timer(last_ack) > 5.0) {
-            ack(&socket_context);
-            start_timer(&last_ack);
-        }
-
-        // Handle all pending updates
-        update();
-
-        // Video and Audio should be updated at least every 5ms
-        // We will do it here, after receiving each packet or if the last recvp
-        // timed out
-
-        start_timer(&update_video_timer);
-        update_video();
-        log_double_statistic("update_video time (ms)",
-                             get_timer(update_video_timer) * MS_IN_SECOND);
-
-        start_timer(&update_audio_timer);
-        update_audio();
-        log_double_statistic("update_audio time (ms)",
-                             get_timer(update_audio_timer) * MS_IN_SECOND);
-
-        // Time the following recvfrom code
-        start_timer(&recvfrom_timer);
-
-        // START DROP EMULATION
-        if (is_currently_dropping) {
-            if (drop_time_ms > 0 && get_timer(drop_test_timer) * MS_IN_SECOND > drop_time_ms) {
-                is_currently_dropping = false;
-                start_timer(&drop_test_timer);
-            }
-        } else {
-            if (drop_distance_sec > 0 && get_timer(drop_test_timer) > drop_distance_sec) {
-                is_currently_dropping = true;
-                start_timer(&drop_test_timer);
-            }
-        }
-        // END DROP EMULATION
-
-        FractalPacket* packet;
-
-        if (is_currently_dropping) {
-            // Simulate dropping packets by just not calling recvp
-            SDL_Delay(1);
-            LOG_INFO("DROPPING");
-            packet = NULL;
-        } else {
-            packet = read_udp_packet(&socket_context);
-        }
-
-        double recvfrom_short_time = get_timer(recvfrom_timer);
-
-        // Total amount of time spent in recvfrom / decrypt_packet
-        log_double_statistic("recvfrom_time (ms)", recvfrom_short_time * MS_IN_SECOND);
-        // Total amount of cumulative time spend in recvfrom, since the last
-        // time recv_size was > 0
-        lastrecv += recvfrom_short_time;
-
-        if (packet) {
-            // Log if it's been a while since the last packet was received
-            if (lastrecv > 50.0 / MS_IN_SECOND) {
-                LOG_WARNING(
-                    "Took more than 50ms to receive something!! Took %fms "
-                    "total!",
-                    lastrecv * MS_IN_SECOND);
-            }
-            lastrecv = 0.0;
-        }
-
-        // LOG_INFO("Recv wait time: %f", get_timer(recvfrom_timer));
-
-        if (packet) {
-            // Check packet type and then redirect packet to the proper packet
-            // handler
-            switch (packet->type) {
-                case PACKET_VIDEO:
-                    // Video packet
-                    start_timer(&video_timer);
-                    receive_video(packet);
-                    log_double_statistic("receive_video time (ms)",
-                                         get_timer(video_timer) * MS_IN_SECOND);
-                    break;
-                case PACKET_AUDIO:
-                    // Audio packet
-                    start_timer(&audio_timer);
-                    receive_audio(packet);
-                    log_double_statistic("receive_audio time (ms)",
-                                         get_timer(audio_timer) * MS_IN_SECOND);
-                    break;
-                case PACKET_MESSAGE:
-                    // A FractalServerMessage for other information
-                    start_timer(&message_timer);
-                    handle_server_message((FractalServerMessage*)packet->data,
-                                          (size_t)packet->payload_size);
-                    log_double_statistic("handle_server_message time (ms)",
-                                         get_timer(message_timer) * MS_IN_SECOND);
-                    break;
-                default:
-                    LOG_WARNING("Unknown Packet");
-                    break;
-            }
-        }
-    }
-
-    if (lastrecv > 20.0 / MS_IN_SECOND) {
-        LOG_INFO("Took more than 20ms to receive something!! Took %fms total!",
-                 lastrecv * MS_IN_SECOND);
-    }
-
-    SDL_Delay(50);
-
-    destroy_update();
-
-    return 0;
-}
 
 int sync_keyboard_state(void) {
     /*
@@ -558,7 +216,7 @@ int32_t multithreaded_renderer(void* opaque) {
         start_timer(&ack_timer);
 
         if (get_timer(ack_timer) > 5) {
-            ack(&packet_send_context);
+            ack(&packet_send_udp_context);
             ack(&packet_tcp_context);
             start_timer(&ack_timer);
         }
@@ -793,14 +451,14 @@ int main(int argc, char* argv[]) {
         init_audio();
 
         // Create thread to receive all packets and handle them as needed
-        run_receive_packets = true;
-        SDL_Thread* receive_packets_thread =
-            SDL_CreateThread(receive_packets, "ReceivePackets", &packet_receive_context);
+        run_sync_udp_packets = true;
+        SDL_Thread* sync_udp_packets_thread = SDL_CreateThread(
+            multithreaded_sync_udp_packets, "SyncUDPPackets", &packet_receive_udp_context);
 
         // Create thread to send and receive TCP packets
         run_sync_tcp_packets = true;
         SDL_Thread* sync_tcp_packets_thread =
-            SDL_CreateThread(sync_tcp_packets, "SendTCPPackets", NULL);
+            SDL_CreateThread(multithreaded_sync_tcp_packets, "SyncTCPPackets", NULL);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
@@ -920,8 +578,8 @@ int main(int argc, char* argv[]) {
 
         run_sync_tcp_packets = false;
         SDL_WaitThread(sync_tcp_packets_thread, NULL);
-        run_receive_packets = false;
-        SDL_WaitThread(receive_packets_thread, NULL);
+        run_sync_udp_packets = false;
+        SDL_WaitThread(sync_udp_packets_thread, NULL);
         destroy_audio();
         close_connections();
         connected = false;

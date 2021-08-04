@@ -38,18 +38,17 @@ extern volatile char binary_aes_private_key[16];
 extern int udp_port;
 extern int tcp_port;
 extern int client_id;
-extern SocketContext packet_send_context;
-extern SocketContext packet_receive_context;
+extern SocketContext packet_send_udp_context;
+extern SocketContext packet_receive_udp_context;
 extern SocketContext packet_tcp_context;
 extern char *server_ip;
 extern int uid;
-extern bool connected;
-extern volatile double latency;
 
-clock last_ping_timer;
+extern volatile double latency;
+extern clock last_ping_timer;
 extern volatile int last_ping_id;
 extern volatile int ping_failures;
-int last_pong_id;
+extern volatile int last_pong_id;
 const double ping_lambda = 0.8;
 
 #define TCP_CONNECTION_WAIT 300  // ms
@@ -181,42 +180,6 @@ void send_ping(int ping_id) {
     start_timer(&last_ping_timer);
 }
 
-void update_ping() {
-    /*
-        Check if we should send more pings, disconnect, etc. If no valid pong has been received for
-       600ms, we mark that as a ping failure. If we successfully received a pong and it has been
-       500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
-       pong and it has been 210 ms, resend the ping.
-    */
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(last_ping_timer) > 1.0) {
-        LOG_WARNING("No ping sent or pong received in over a second");
-    }
-
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
-    // noted as failed
-    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", last_ping_id);
-        // Keep track of failures, and exit if too many failures
-        last_pong_id = last_ping_id;
-        ping_failures++;
-        if (ping_failures == 3) {
-            LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
-            connected = false;
-        }
-    }
-
-    // if we've received the last ping, send another
-    if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
-        send_ping(last_ping_id + 1);
-    }
-
-    // if we haven't received the last ping, send the same ping
-    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
-        send_ping(last_ping_id);
-    }
-}
-
 void receive_pong(int pong_id) {
     /*
         Mark the ping with ID pong_id as received, and warn if pong_id is outdated.
@@ -258,7 +221,7 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (create_udp_context(&packet_send_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
+    if (create_udp_context(&packet_send_udp_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
                            using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
@@ -269,7 +232,7 @@ int connect_to_server(bool using_stun) {
     // this is set to stop the kernel from buffering too much, thereby
     // getting the data to us faster for lower latency
     int a = 65535;
-    if (setsockopt(packet_send_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
+    if (setsockopt(packet_send_udp_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
                    sizeof(int)) == -1) {
         LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
         return -1;
@@ -278,11 +241,11 @@ int connect_to_server(bool using_stun) {
     if (create_tcp_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
                            using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
-        closesocket(packet_send_context.socket);
+        closesocket(packet_send_udp_context.socket);
         return -1;
     }
 
-    packet_receive_context = packet_send_context;
+    packet_receive_udp_context = packet_send_udp_context;
 
     return 0;
 }
@@ -295,8 +258,8 @@ int close_connections(void) {
             (int): 0 on success
     */
 
-    closesocket(packet_send_context.socket);
-    closesocket(packet_receive_context.socket);
+    closesocket(packet_send_udp_context.socket);
+    closesocket(packet_receive_udp_context.socket);
     closesocket(packet_tcp_context.socket);
     return 0;
 }
@@ -359,7 +322,7 @@ int send_fmsg(FractalClientMessage *fmsg) {
         }
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return send_udp_packet(&packet_send_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
+        return send_udp_packet(&packet_send_udp_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
                                sent_packet_id, -1, NULL, NULL);
     }
 }
