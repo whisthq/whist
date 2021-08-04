@@ -511,18 +511,6 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@typeform/embed-react@^1.0.7":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@typeform/embed-react/-/embed-react-1.0.7.tgz#3a40a2ba3962a69f3bd48dccda207daea433a61a"
-  integrity sha512-dMxWITJ38KtJ/eInIlD/oC6gsAYEpczribjzR1cifob0PezPw5aDoD7HZpuJupqMPr5BcxpADA4SuDG6G/LgIA==
-  dependencies:
-    "@typeform/embed" "^1.10.0"
-
-"@typeform/embed@^1.10.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.15.0.tgz#4b3787d8dfe71dd6a1a34913affde6192560fe13"
-  integrity sha512-EHmMjy51RydEM2EPK6fwcM6PjfRb6p++ry406ZNSeP8uy9WWpbQxjKvJ8pWm+F5FGhdI7EF277euPIDjQcQpcg==
-
 "@types/classnames@^2.3.1":
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-2.3.1.tgz#3c2467aa0f1a93f1f021e3b9bcf938bd5dfdc0dd"
@@ -5260,9 +5248,9 @@ tailwindcss@^2.2.4:
     tmp "^0.2.1"
 
 tar@^6.0.2, tar@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-6.1.0.tgz#d1724e9bcc04b977b18d5c573b333a2207229a83"
-  integrity sha512-DUCttfhsnLCjwoDoFcI+B2iJgYa93vBnDUATYEeRx6sntCTdN01VnqsIuTlALXla/LWooNg0yEGeB+Y8WdFxGA==
+  version "6.1.5"
+  resolved "https://registry.yarnpkg.com/tar/-/tar-6.1.5.tgz#6e25bee1cfda94317aedc3f5d49290ae68361d73"
+  integrity sha512-FiK6MQyyaqd5vHuUjbg/NpO8BuEGeSXcmlH7Pt/JkugWS8s0w8nKybWjHDJiwzCAIKZ66uof4ghm4tBADjcqRA==
   dependencies:
     chownr "^2.0.0"
     fs-minipass "^2.0.0"
