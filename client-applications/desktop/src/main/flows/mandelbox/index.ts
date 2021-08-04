@@ -9,7 +9,6 @@ export default flow(
   "mandelboxFlow",
   (
     trigger: Observable<{
-      subClaim: string
       accessToken: string
       configToken: string
       region?: AWSRegion
@@ -18,7 +17,6 @@ export default flow(
     const create = mandelboxCreateFlow(
       trigger.pipe(
         map((t) => ({
-          subClaim: t.subClaim,
           accessToken: t.accessToken,
           region: t.region,
         }))
@@ -29,7 +27,6 @@ export default flow(
       zip([trigger, create.success]).pipe(
         map(([t, c]) => ({
           ip: c.ip,
-          user_id: t.subClaim,
           config_encryption_token: t.configToken,
           jwt_access_token: t.accessToken,
           mandelbox_id: c.mandelboxID,
