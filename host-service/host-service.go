@@ -469,7 +469,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			// TODO: Add session id of the user as one more string in the mount for log folder.
 			// this can be parsed by the filebeat and sent as a field in the log. But for that,
 			// we also need to make changes to client app for passing in the session id.
-			utils.Sprintf("/fractal/temp/logs/%s:/var/log/fractal", fc.GetMandelboxID()),
+			utils.Sprintf("/fractal/temp/logs/%s/%d:/var/log/fractal", fc.GetMandelboxID(), req.SessionID),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetMandelboxID()),
 		},
