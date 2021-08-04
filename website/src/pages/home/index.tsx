@@ -11,6 +11,7 @@ import Benefits from "@app/pages/home/benefits"
 import Features from "@app/pages/home/features"
 import Users from "@app/pages/home/users"
 import Pricing from "@app/pages/home/pricing"
+import Testimonial from "@app/pages/home/testimonial"
 
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
 
@@ -26,6 +27,7 @@ export const Home = () => {
         <Header />
         <Hero />
         <Features />
+        <Testimonial />
       </div>
       <div className={classNames(padded, "bg-blue-darker")}>
         <Users />
