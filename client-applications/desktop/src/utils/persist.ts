@@ -52,8 +52,10 @@ export const persist = (
   store.set(`${cache ?? "auth"}.${key}`, value)
 }
 
-export const persistClear = (cache?: CacheName) => {
-  store.delete(cache ?? "auth")
+export const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {
+  keys.forEach((key) => {
+    store.delete(`${cache as string}.${key as string}`)
+  })
 }
 
 export const persistGet = (key: keyof Cache, cache?: CacheName) =>
