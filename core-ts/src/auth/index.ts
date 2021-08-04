@@ -44,7 +44,6 @@ export const authInfoRefreshRequest = async ({
   Returns:
     {email, sub, accessToken, refreshToken}
   */
-
   return await post({
     endpoint: "/oauth/token",
     headers: { "content-type": "application/json" },
@@ -74,7 +73,7 @@ export const authPortalURL = () =>
 
 export const authInfoParse = (res: {
   json?: {
-    id_token?: string,
+    id_token?: string
     access_token?: string
   }
 }) => {
@@ -87,32 +86,41 @@ export const authInfoParse = (res: {
     {email, sub, accessToken, refreshToken}
   */
 
-  const decoded = jwtDecode(res?.json?.id_token ?? "") as any
-  const jwtIdentity = decoded?.sub
-  const userEmail = decoded?.email
-  const accessToken = res?.json?.access_token
-  if (typeof jwtIdentity !== "string")
+  try {
+    const decoded = jwtDecode(res?.json?.id_token ?? "") as any
+    const jwtIdentity = decoded?.sub
+    const userEmail = decoded?.email
+    const accessToken = res?.json?.access_token
+    if (typeof jwtIdentity !== "string")
+      return {
+        error: {
+          message: "Decoded JWT does not have property .sub",
+          data: res,
+        },
+      }
+    if (typeof userEmail !== "string")
+      return {
+        error: {
+          message: "Decoded JWT does not have property .email",
+          data: res,
+        },
+      }
+    if (typeof accessToken !== "string")
+      return {
+        error: {
+          message: "Response does not have .json.access_token",
+          data: res,
+        },
+      }
+    return { jwtIdentity, userEmail, accessToken }
+  } catch (err) {
     return {
       error: {
-        message: "Decoded JWT does not have property .sub",
+        message: `Error while decoding JWT: ${err as string}`,
         data: res,
       },
     }
-  if (typeof userEmail !== "string")
-    return {
-      error: {
-        message: "Decoded JWT does not have property .email",
-        data: res,
-      },
-    }
-  if (typeof accessToken !== "string")
-    return {
-      error: {
-        message: "Response does not have .json.access_token",
-        data: res,
-      },
-    }
-  return { jwtIdentity, userEmail, accessToken }
+  }
 }
 
 export const generateRandomConfigToken = () => {
@@ -127,13 +135,18 @@ export const generateRandomConfigToken = () => {
   return buffer.toString("base64")
 }
 
-export const isTokenExpired = ({ accessToken }: accessToken) : boolean => {
+export const isTokenExpired = ({ accessToken }: accessToken): boolean => {
   // Extract the expiry in seconds since epoch
-  const profile: { exp: number } = jwtDecode(accessToken)
-  // Get current time in seconds since epoch
-  const currentTime = Date.now() / 1000
-  // Allow for ten seconds so we don't compare the access token to the current time right
-  // before the expiry
-  const secondsBuffer = 10
-  return currentTime + secondsBuffer > profile.exp
+  try {
+    const profile: { exp: number } = jwtDecode(accessToken)
+    // Get current time in seconds since epoch
+    const currentTime = Date.now() / 1000
+    // Allow for ten seconds so we don't compare the access token to the current time right
+    // before the expiry
+    const secondsBuffer = 10
+    return currentTime + secondsBuffer > profile.exp
+  } catch(err) {
+    console.error(`Failed to decode access token: ${err}`)
+    return true
+  }
 }

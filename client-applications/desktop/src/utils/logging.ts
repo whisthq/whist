@@ -60,8 +60,8 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   )}`
 
   const debugLog = truncate(template, {
-    length: 1000,
-    omission: "...**logBase only prints 1000 characters per log**",
+    length: 5000,
+    omission: "...**logBase only prints 5000 characters per log**",
   })
 
   return `${util.format(debugLog)} \n`

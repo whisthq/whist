@@ -8,6 +8,7 @@ import {
   authInfoParse,
   isTokenExpired,
   refreshToken,
+  accessToken,
 } from "@fractal/core-ts"
 import { store } from "@app/utils/persist"
 
@@ -42,8 +43,12 @@ export default flow<{
   refreshToken: string
   configToken?: string
 }>("authFlow", (trigger) => {
-  const expired = trigger.pipe(filter((tokens) => isTokenExpired(tokens)))
-  const notExpired = trigger.pipe(filter((tokens) => !isTokenExpired(tokens)))
+  const expired = trigger.pipe(
+    filter((tokens: accessToken) => isTokenExpired(tokens))
+  )
+  const notExpired = trigger.pipe(
+    filter((tokens: accessToken) => !isTokenExpired(tokens))
+  )
 
   const refreshedAuthInfo = authRefreshFlow(expired)
 
@@ -52,13 +57,20 @@ export default flow<{
     refreshedAuthInfo.success,
     refreshedAuthInfo.failure
   ).pipe(
-    map((tokens) => ({
-      ...tokens,
-      configToken:
-        tokens.configToken ??
-        store.get("configToken") ??
-        generateRandomConfigToken(),
-    }))
+    map(
+      (tokens: {
+        userEmail: string
+        accessToken: string
+        refreshToken: string
+        configToken?: string
+      }) => ({
+        ...tokens,
+        configToken:
+          tokens.configToken ??
+          store.get("configToken") ??
+          generateRandomConfigToken(),
+      })
+    )
   )
 
   return {
