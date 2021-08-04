@@ -145,8 +145,10 @@ echo "================================================"
 echo "Installing NVIDIA Persistence Daemon Unit..."
 echo "================================================"
 
-# Some research online indicates that this might be beneficial towards ensuring that our mandelboxes 
+# Some research online indicates that this might be beneficial towards ensuring that our mandelboxes
 # start up more quickly. This is likely not a complete solution, but it might provide some nice benefits.
+# For more information, see the following link:
+# https://download.nvidia.com/XFree86/Linux-x86_64/396.51/README/nvidia-persistenced.html
 
 cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
 [Unit]
