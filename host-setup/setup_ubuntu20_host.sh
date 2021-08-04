@@ -7,6 +7,11 @@
 
 set -Eeuo pipefail
 
+# Retrieve source directory of this script
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
 # If we run this script as root, then the "ubuntu"/default user will not be
 # added to the "docker" group, only root will.
 if [ "$EUID" -eq 0 ]; then
@@ -22,7 +27,7 @@ echo "================================================"
 echo "Replacing potentially outdated Docker runtime..."
 echo "================================================"
 
-# Attempt to remove potentially oudated Docker runtime
+# Attempt to remove potentially outdated Docker runtime
 # Allow failure with ||:, in case they're not installed yet
 sudo apt-get remove -y docker docker-engine docker.io containerd runc ||:
 sudo apt-get clean -y
@@ -55,6 +60,9 @@ sudo apt install -y awscli
 echo "================================================"
 echo "Installing NVIDIA drivers..."
 echo "================================================"
+
+# Stop any running nvidia-persistenced service
+sudo systemctl stop nvidia-persistenced.service ||:
 
 # Install Linux headers
 sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
@@ -132,6 +140,33 @@ echo "================================================"
 # so we don't want this resource to be a limiting factor.
 sudo sh -c "echo 'fs.inotify.max_user_instances=2048' >> /etc/sysctl.conf" # default=128
 sudo sysctl -p
+
+echo "================================================"
+echo "Installing NVIDIA Persistence Daemon Unit..."
+echo "================================================"
+
+# Some research online indicates that this might be beneficial towards ensuring that our mandelboxes 
+# start up more quickly. This is likely not a complete solution, but it might provide some nice benefits.
+
+cat << EOF | sudo tee /etc/systemd/system/nvidia-persistenced.service > /dev/null
+[Unit]
+Description=NVIDIA Persistence Daemon
+Wants=syslog.target
+
+[Service]
+Restart=yes
+User=root
+Type=forking
+ExecStart=/usr/bin/nvidia-persistenced -V
+ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo /bin/systemctl daemon-reload
+sudo systemctl enable --now nvidia-persistenced.service
+echo "Enabled NVIDIA Persistence Daemon"
 
 echo "================================================"
 echo "Cleaning up the image a bit..."
