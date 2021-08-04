@@ -46,6 +46,7 @@ processors:
   - add_fields:
       fields:
         environment: local-dev
+        component: mandelbox
   - rename:
       fields:
         - from: "agent"
@@ -57,7 +58,7 @@ processors:
       # Logs are mounted from mandelboxes onto host through bind mounts decalared in `ecs-host-service/ecs-host-service.go`
       # A filepath looks like below.
       # /fractal/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
-      tokenizer: "/fractal/temp/logs/%{container_id}/%{session_id}/%{component}-%{log_level}.log"
+      tokenizer: "/fractal/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"
       field: "log.file.path"
       target_prefix: ""
       # setting ignore_failure to false will stop execection of subsequent processors if dissect errors out for some reason.
