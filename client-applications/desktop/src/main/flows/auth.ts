@@ -1,28 +1,40 @@
-import { from, merge } from "rxjs"
+import { from, merge, zip } from "rxjs"
 import { has } from "lodash"
 import { switchMap, map, filter } from "rxjs/operators"
-import { flow } from "@app/utils/flows"
+import { fork, flow } from "@app/utils/flows"
 import {
   generateRandomConfigToken,
   authInfoRefreshRequest,
   authInfoParse,
   isTokenExpired,
+  refreshToken,
 } from "@fractal/core-ts"
 import { store } from "@app/utils/persist"
 
-export const authRefreshFlow = flow<{
-  refreshToken: string
-}>("authRefreshFlow", (trigger) => {
-  const refreshed = trigger.pipe(
-    switchMap((tokens) => from(authInfoRefreshRequest(tokens))),
-    map(authInfoParse)
-  )
+export const authRefreshFlow = flow<refreshToken>(
+  "authRefreshFlow",
+  (trigger) => {
+    const refreshed = fork(
+      trigger.pipe(
+        switchMap((tokens: refreshToken) =>
+          from(authInfoRefreshRequest(tokens))
+        ),
+        map(authInfoParse)
+      ),
+      {
+        success: (res) => !has(res, "error"),
+        failure: (res) => has(res, "error"),
+      }
+    )
 
-  return {
-    success: refreshed.pipe(filter((res) => !has(res, "error"))),
-    failure: refreshed.pipe(filter((res) => has(res, "error"))),
+    return {
+      success: zip(refreshed.success, trigger).pipe(
+        map(([r, t]) => ({ ...r, refreshToken: t.refreshToken }))
+      ),
+      failure: refreshed.failure,
+    }
   }
-})
+)
 
 export default flow<{
   userEmail: string
