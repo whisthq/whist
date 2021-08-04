@@ -6,6 +6,7 @@
 
 import { configGet, configPost } from "@fractal/core-ts"
 import config from "@app/config/environment"
+import { sessionID } from "@app/utils/constants"
 import https from "https"
 
 /*
@@ -28,6 +29,13 @@ const httpConfig = {
   server: config.url.WEBSERVER_URL,
   // handleAuth: (_: any) => goTo("/auth"),
   endpointRefreshToken: "/token/refresh",
+}
+
+export const addSessionId = (body: object) => {
+  return {
+    ...body,
+    session_id: sessionID
+  }
 }
 
 export const get = configGet(httpConfig)
@@ -82,7 +90,7 @@ export const apiPut = async (
         })
       }
     )
-    request.write(JSON.stringify(body))
+    request.write(JSON.stringify(addSessionId(body)))
     request.on("error", (e) => {
       reject(e)
     })

@@ -4,7 +4,7 @@
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
 import { isEmpty } from "lodash"
-import { get, post } from "@app/utils/api"
+import { get, post, addSessionId } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
@@ -71,10 +71,10 @@ const mandelboxRequest = async (accessToken: string, region: string) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
-    body: {
+    body: addSessionId({
       region,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
-    },
+    }),
   })
 
 const regionRequest = async (accessToken: string) =>
