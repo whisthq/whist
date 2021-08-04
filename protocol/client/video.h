@@ -36,6 +36,8 @@ Public Functions
  */
 void init_video();
 
+void trigger_loading_animation();
+
 /**
  * @brief                          Receive video packet
  *

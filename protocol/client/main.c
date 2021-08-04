@@ -419,6 +419,8 @@ int main(int argc, char* argv[]) {
 
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
+            // TODO: start up the loading screen again
+            trigger_loading_animation();
             SDL_Delay(1000);
         }
 

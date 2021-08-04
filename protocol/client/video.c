@@ -765,6 +765,12 @@ void init_video() {
 
 int last_rendered_index = 0;
 
+void trigger_loading_animation() {
+    if (video_data.loading_index < 0) {
+        video_data.loading_index = 0;
+    }
+}
+
 void update_video() {
     /*
         Calculate statistics about bitrate, I-Frame, etc. and request video
