@@ -53,6 +53,15 @@ func Close() {
 	stopAndDrainLogzio()
 }
 
+// Info logs some some info, but does not send it to Sentry.
+func Info(format string, v ...interface{}) {
+	str := fmt.Sprintf(format, v...)
+	log.Print(str)
+	if logzioTransport != nil {
+		logzioTransport.send(str, logzioTypeInfo)
+	}
+}
+
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %s", err)
@@ -62,6 +71,16 @@ func Error(err error) {
 	}
 	if sentryTransport != nil {
 		sentryTransport.send(err)
+	}
+}
+
+// Warning logs an error in red text, like Error, but doesn't send it to
+// Sentry.
+func Warning(err error) {
+	str := fmt.Sprintf("WARNING: %s", err)
+	log.Printf(utils.ColorRed(str))
+	if logzioTransport != nil {
+		logzioTransport.send(str, logzioTypeWarning)
 	}
 }
 
@@ -95,13 +114,10 @@ func Panic(globalCancel context.CancelFunc, err error) {
 	}
 }
 
-// Info logs some some info, but does not send it to Sentry.
-func Info(format string, v ...interface{}) {
-	str := fmt.Sprintf(format, v...)
-	log.Print(str)
-	if logzioTransport != nil {
-		logzioTransport.send(str, logzioTypeInfo)
-	}
+// Infof is identical to Info, since Info already respects printf syntax. We
+// only include Infof for consistency with Errorf, Warningf, and Panicf.
+func Infof(format string, v ...interface{}) {
+	Info(format, v...)
 }
 
 // Errorf is like Error, but it respects printf syntax, i.e. takes in a format
@@ -110,16 +126,16 @@ func Errorf(format string, v ...interface{}) {
 	Error(utils.MakeError(format, v...))
 }
 
+// Warningf is like Warning, but it respects printf syntax, i.e. takes in a format
+// string and arguments, for convenience.
+func Warningf(format string, v ...interface{}) {
+	Warning(utils.MakeError(format, v...))
+}
+
 // Panicf is like Panic, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
 func Panicf(globalCancel context.CancelFunc, format string, v ...interface{}) {
 	Panic(globalCancel, utils.MakeError(format, v...))
-}
-
-// Infof is identical to Info, since Info already respects printf syntax. We
-// only include Infof for consistency with Errorf and Panicf.
-func Infof(format string, v ...interface{}) {
-	Info(format, v...)
 }
 
 // PrintStackTrace prints the stack trace, for debugging purposes.
