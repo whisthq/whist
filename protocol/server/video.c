@@ -360,6 +360,11 @@ int32_t multithreaded_send_video(void* opaque) {
         int accumulated_frames = 0;
         if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
             accumulated_frames = capture_screen(device);
+#if LOG_VIDEO
+            if (accumulated_frames > 1) {
+                LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
+            }
+#endif
             // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
         }
 
