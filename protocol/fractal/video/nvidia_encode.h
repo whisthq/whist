@@ -5,7 +5,6 @@
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
 #include "cudacontext.h"
-#include "linuxcapture.h"
 
 #define RESOURCE_CACHE_SIZE 4
 

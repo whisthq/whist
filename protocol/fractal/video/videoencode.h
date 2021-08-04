@@ -23,9 +23,7 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
-#ifdef __linux
 #include "nvidia_encode.h"
-#endif
 #include "ffmpeg_encode.h"
 
 /*
