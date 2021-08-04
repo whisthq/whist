@@ -11,7 +11,8 @@ const Pricing = () => {
               <span className="text-gray-100">$9 a month</span>
             </h1>
             <p className="mt-4 text-xl text-gray-300">
-              Discounted for a limited time only. Pay now and lock in this price forever.
+              Discounted for a limited time only. Pay now and lock in this price
+              forever.
             </p>
           </div>
           <a
