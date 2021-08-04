@@ -25,7 +25,6 @@ export const authRefreshFlow = flow<{
 
 export default flow<{
   userEmail: string
-  subClaim: string
   accessToken: string
   refreshToken: string
   configToken?: string

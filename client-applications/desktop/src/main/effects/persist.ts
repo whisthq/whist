@@ -12,7 +12,6 @@ merge(
 ).subscribe(
   (args: {
     userEmail: string
-    subClaim: string
     accessToken: string
     refreshToken: string
     configToken: string
