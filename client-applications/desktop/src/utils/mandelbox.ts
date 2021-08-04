@@ -71,10 +71,10 @@ const mandelboxRequest = async (accessToken: string, region: string) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
-    body: addSessionId({
+    body: {
       region,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
-    }),
+    },
   })
 
 const regionRequest = async (accessToken: string) =>
