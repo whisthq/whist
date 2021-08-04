@@ -34,7 +34,7 @@ const httpConfig = {
 export const addSessionId = (body: object) => {
   return {
     ...body,
-    session_id: sessionID
+    session_id: sessionID,
   }
 }
 
