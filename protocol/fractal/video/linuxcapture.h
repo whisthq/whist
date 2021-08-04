@@ -32,12 +32,6 @@ Custom Types
 */
 
 /**
- * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
- * discover a third option for capturing, update this enum and the CaptureDevice struct below.
- */
-typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
-
-/**
  * @brief           Struct holding the global data needed for capturing: the type of capture device
  * we are using, information necessary for resizing, and pointers to the specific capture devices.
  * The implementations of the screencapture.h API internally decide what capture device to use.

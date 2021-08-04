@@ -189,6 +189,12 @@ typedef enum CodecType {
 } CodecType;
 
 /**
+ * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
+ * discover a third option for capturing, update this enum and the CaptureDevice struct below.
+ */
+typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
+
+/**
  * @brief   Keycodes.
  * @details Different accepted keycodes from client input.
  */
