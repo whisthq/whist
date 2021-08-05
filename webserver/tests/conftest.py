@@ -66,6 +66,7 @@ def app():
 
 @pytest.fixture
 def _db(app):
+    # Necessary for pytest-flask-sqlalchemy to work
     return db
 
 

@@ -6,7 +6,7 @@ from tests.patches import function
 from app.helpers.command_helpers import ami_upgrade
 from app.helpers.command_helpers.ami_upgrade import (
     launch_new_ami_buffer,
-    perform_upgrade,
+    create_ami_buffer,
     swapover_amis,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
@@ -139,7 +139,7 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, bulk_instance, db_s
         new_ami_list.append(newer_ami)
         region_to_new_ami_map[region] = newer_ami
 
-    new_amis = perform_upgrade(generate_name("new-client-hash", True), region_to_new_ami_map)
+    new_amis = create_ami_buffer(generate_name("new-client-hash", True), region_to_new_ami_map)
     swapover_amis(new_amis)
 
     region_wise_new_amis_added_to_db_session = {

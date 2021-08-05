@@ -180,11 +180,11 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
     )
 
 
-def perform_upgrade(
+def create_ami_buffer(
     client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]
 ) -> List[str]:
     """
-    Performs upgrade of the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
+    Creates new instances for the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
     This happens in the following steps:
         - Get current active AMIs in the database, these will be marked as inactive once
         we have sufficient buffer capacity from the new AMIs
@@ -193,11 +193,7 @@ def perform_upgrade(
         - Launch new instances in regions with the new AMIs and wait until they are up and mark themselves as
         active in the instances table. Since this launching the instances is going to take time, we will be using
         a thread per each region to parallelize the process.
-        - Once the instances with the new AMIs are up and running, we will mark the instances that are running with
-        an older AMI version (i.e the current active AMI versions) as DRAINING to stop associating users with mandelboxes
-        on the instances.
-        - Once all the instances across all the regions are up, mark the current active AMIs as inactive and the
-        new AMIs as active.
+
 
         Edge cases:
             - What if the argument region_to_ami_id_mapping has more regions than we currently support. This should be fine

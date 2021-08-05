@@ -11,7 +11,7 @@ import click
 from flask import Blueprint
 
 
-from app.helpers.command_helpers.ami_upgrade import perform_upgrade, swapover_amis
+from app.helpers.command_helpers.ami_upgrade import create_ami_buffer, swapover_amis
 from tests.helpers.data.test_data_generator import populate_test_data
 
 # Blueprint for registering the functions under 'command'
@@ -44,7 +44,7 @@ def ami_create_buffers(
     """
     region_to_ami_id_mapping: Dict[str, str] = loads(region_to_ami_id_mapping_str)
 
-    new_amis = perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
+    new_amis = create_ami_buffer(client_commit_hash, region_to_ami_id_mapping)
     print(f"::set-output name=new_amis::{dumps(new_amis)}")
 
 
