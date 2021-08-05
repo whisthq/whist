@@ -5,42 +5,58 @@ from http import HTTPStatus
 
 import pytest
 import stripe
+from flask import current_app
 
 from tests.patches import function, Object
 
-"""Here are the tests for the /stripe/customer_portal endpoint.
-"""
 
+@pytest.mark.parametrize("subscription_status", (None, "canceled", "incomplete_expired", "unpaid"))
+def test_payment_portal_no_subscription(client, make_user, monkeypatch, subscription_status):
+    """Ensure that /payment_portal_url creates a checkout session for non-subscribers."""
 
-@pytest.mark.usefixtures("authorized")
-def test_create_billing_portal_authorized(client, monkeypatch):
-    """Test the /stripe/customer_portal endpoint"""
+    checkout_session = Object()
+    url = f"http://localhost/{os.urandom(8).hex()}"
+    user = make_user()
 
-    session = Object()
-    session_url = f"http://localhost/{os.urandom(8).hex()}"
-    monkeypatch.setattr(session, "url", session_url)
-    monkeypatch.setattr(stripe.billing_portal.Session, "create", function(returns=session))
-    monkeypatch.setattr("payments.get_stripe_customer_id", function(returns="cus_test"))
-
-    response = client.post(
-        "/stripe/customer_portal",
-        json=dict(),
+    monkeypatch.setattr(checkout_session, "url", url)
+    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
+    monkeypatch.setattr(stripe.billing_portal.Session, "create", function(raises=Exception))
+    monkeypatch.setattr(stripe.checkout.Session, "create", function(returns=checkout_session))
+    client.login(
+        user,
+        **{
+            current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: subscription_status,
+        },
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    response = client.post(
-        "/stripe/customer_portal",
-        json=dict(return_url="https://fractal.co"),
-    )
-    print(response.json)
+    response = client.get("/payment_portal_url")
+
     assert response.status_code == HTTPStatus.OK
-    assert response.json["url"] == session_url
+    assert response.json == {"url": url}
 
 
-def test_create_billing_portal_unauthorized(client):
-    """Test the /stripe/customer_portal endpoint"""
-    response = client.post(
-        "/stripe/customer_portal",
-        json=dict(return_url="https://fractal.co"),
+@pytest.mark.parametrize("subscription_status", ("active", "past_due", "incomplete", "trialing"))
+def test_create_billing_portal_unauthorized(client, make_user, monkeypatch, subscription_status):
+    """Ensure that /payment_portal_url creates a customer portal session for subscribers."""
+
+    portal_session = Object()
+    url = f"http://localhost/{os.urandom(8).hex()}"
+    user = make_user()
+
+    monkeypatch.setattr(portal_session, "url", url)
+    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
+    monkeypatch.setattr(stripe.billing_portal.Session, "create", function(returns=portal_session))
+    monkeypatch.setattr(stripe.checkout.Session, "create", function(raises=Exception))
+    client.login(
+        user,
+        **{
+            current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: subscription_status,
+        },
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+    response = client.get("/payment_portal_url")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json == {"url": url}
