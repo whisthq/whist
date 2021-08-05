@@ -9,6 +9,11 @@ rules:
     stage: login_success
     enabled: true
     order: 1
+  - name: add-subscription-status-claim
+    script: ./rules/add-subscription-status-claim.js
+    stage: login_success
+    enabled: true
+    order: 3
 rulesConfigs: []
 hooks: []
 pages:
