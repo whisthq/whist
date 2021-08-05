@@ -107,7 +107,7 @@ jobs:
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
 
 
-          data["logz_shipping_token"] = "${{ secrets.DEV_LOGZ_SHIPPING_TOKEN }}"
+          data["logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
           # defined as a string of comma-separated values (no spaces) as required by Packer.
