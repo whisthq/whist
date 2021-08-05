@@ -10,7 +10,7 @@ import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 import { config } from "@app/shared/constants/config"
 
-const Hero = () => {
+const Hero = (props: { allowDownloads: boolean }) => {
   /*
         Colorful box component with Get Started prompt
 
@@ -35,30 +35,46 @@ const Hero = () => {
           .
         </div>
         {width > ScreenSize.SMALL ? (
-          <div className="flex justify-center">
-            <a href={config.client_download_urls.macOS} download>
-              <FractalButton
-                className="mt-12 mx-2"
-                contents={
-                  <div className="flex">
-                    <FaApple className="relative mr-3 top-0.5" />
-                    macOS
-                  </div>
-                }
-                state={FractalButtonState.DEFAULT}
-              />
-            </a>
-            <FractalButton
-              className="mt-12 mx-2"
-              contents={
-                <div className="flex">
-                  <FaWindows className="relative mr-3 top-0.5" />
-                  Coming Soon
-                </div>
-              }
-              state={FractalButtonState.DISABLED}
-            />
-          </div>
+          <>
+            {props.allowDownloads ? (
+              <div className="flex justify-center">
+                <a href={config.client_download_urls.macOS} download>
+                  <FractalButton
+                    className="mt-12 mx-2"
+                    contents={
+                      <div className="flex">
+                        <FaApple className="relative mr-3 top-0.5" />
+                        macOS
+                      </div>
+                    }
+                    state={FractalButtonState.DEFAULT}
+                  />
+                </a>
+                <FractalButton
+                  className="mt-12 mx-2"
+                  contents={
+                    <div className="flex">
+                      <FaWindows className="relative mr-3 top-0.5" />
+                      Coming Soon
+                    </div>
+                  }
+                  state={FractalButtonState.DISABLED}
+                />
+              </div>
+            ) : (
+              <a
+                href="https://tryfractal.typeform.com/to/RsOsBSSu"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <FractalButton
+                  className="mt-12 mx-2"
+                  contents={<div className="flex">Join Waitlist</div>}
+                  state={FractalButtonState.DEFAULT}
+                />
+              </a>
+            )}
+          </>
         ) : (
           <div className="flex justify-center">
             {" "}
