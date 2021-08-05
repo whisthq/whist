@@ -327,6 +327,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Set up auth
 	claims := new(auth.FractalClaims)
 	parser := &jwt.Parser{SkipClaimsValidation: true}
+	var userID types.UserID
 
 	// Only verify auth in non-local environments
 	if !metadata.IsLocalEnv() {
@@ -337,10 +338,13 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
 			return
 		}
+		userID = types.UserID(claims.Subject)
+	} else {
+		userID = "localdev_host_service_user"
 	}
 
 	// Then, verify that we are expecting this user to request a mandelbox.
-	err := dbdriver.VerifyAllocatedMandelbox(types.UserID(claims.Subject), req.MandelboxID)
+	err := dbdriver.VerifyAllocatedMandelbox(userID, req.MandelboxID)
 
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
@@ -555,7 +559,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AesKey:              aesKey,
 	}
 
-	fc.AssignToUser(types.UserID(claims.Subject))
+	fc.AssignToUser(userID)
 
 	err = fc.PopulateUserConfigs()
 	if err != nil {
