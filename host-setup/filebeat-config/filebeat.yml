@@ -23,7 +23,7 @@ filebeat.inputs:
       #  - Get help from the Support team (email help@logz.io)
       # type: LOG-TYPE
 
-    # fields_under_root must be set to `true`. Do not change this option.
+    # For logz, fields_under_root must be set to `true`. Do not change this option.
     fields_under_root: true
     encoding: utf-8
     ignore_older: 3h
