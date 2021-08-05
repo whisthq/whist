@@ -206,6 +206,7 @@ if __name__ == "__main__":
             copy_locally_built_protocol(init_mandelbox)
             args.image = f"{args.image}-updated-protocol"
             init_mandelbox.commit(args.image)
+            init_mandelbox.remove()
 
     host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
 
