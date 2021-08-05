@@ -10,8 +10,7 @@ import Alert from "@app/pages/download/alert"
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
 
 const allowDownloads =
-  import.meta.env.ALLOW_DOWNLOADS !== undefined &&
-  import.meta.env.ALLOW_DOWNLOADS.toString() === "true"
+  (import.meta.env?.ALLOW_DOWNLOADS?.toString() ?? "true") === "true"
 
 const Download = () => {
   /*
