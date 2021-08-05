@@ -99,15 +99,11 @@ def payment_required(view_func):
 
     @functools.wraps(view_func)
     def wrapper(*args, **kwargs):
-        start_time = time() * 1000
         verify_jwt_in_request()
 
-        if not has_scope("admin") and current_app.config["ENVIRONMENT"] != "development":
+        if not has_scope("admin"):
             check_payment()
 
-        # Note that this uses print since we don't want to import fractal_logger
-        # Since the payments and webserver codebases are intentionally separate
-        print(f"It took {time()*1000 - start_time} ms to check payment for this user")
         return view_func(*args, **kwargs)
 
     return wrapper
