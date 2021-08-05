@@ -6,6 +6,7 @@ export {
   authInfoParse,
   authInfoRefreshRequest,
   authInfoCallbackRequest,
+  isTokenExpired,
 } from "./auth"
 export {
   accessToken,

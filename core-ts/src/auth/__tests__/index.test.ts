@@ -20,28 +20,20 @@ describe("authInfoParse", () => {
   const testJSONGood = {
     id_token: testIDTokenGood,
     access_token: "abcdefg",
-    refresh_token: "hijklmnop",
   }
 
   const testJSONBadAccess = { ...testJSONGood, access_token: undefined }
-  const testJSONBadRefresh = { ...testJSONGood, refresh_token: undefined }
   const testJSONBadEmail = { ...testJSONGood, id_token: testIdTokenBadEmail }
 
-  test("returns jwtIdentity, userEmail, accessToken, refreshToken", () => {
+  test("returns jwtIdentity, userEmail, accessToken", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
       jwtIdentity: "jrocket@example.com",
       userEmail: "test@fractal.co",
       accessToken: "abcdefg",
-      refreshToken: "hijklmnop",
     })
   })
   test("returns error if no access_token", () => {
     const result = auth.authInfoParse({ json: testJSONBadAccess })
-    expect(result).toHaveProperty("error")
-    expect(result.error).toHaveProperty("message")
-  })
-  test("returns error if no refresh_token", () => {
-    const result = auth.authInfoParse({ json: testJSONBadRefresh })
     expect(result).toHaveProperty("error")
     expect(result.error).toHaveProperty("message")
   })
