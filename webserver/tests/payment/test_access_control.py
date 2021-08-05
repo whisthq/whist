@@ -9,7 +9,13 @@ from flask import current_app, Flask
 from flask_jwt_extended import create_access_token, JWTManager, verify_jwt_in_request
 
 from app.helpers.utils.general.limiter import limiter
-from payments import check_payment, get_stripe_customer_id, payment_required, PaymentRequired
+from payments import (
+    check_payment,
+    get_stripe_customer_id,
+    get_subscription_status,
+    payment_required,
+    PaymentRequired,
+)
 from tests.client import FractalAPITestClient
 from tests.patches import function
 
@@ -26,6 +32,7 @@ def app():
     _app.test_client_class = FractalAPITestClient
     _app.config["JWT_SECRET_KEY"] = "secret"
     _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.fractal.co/stripe_customer_id"
+    _app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"] = "https://api.fractal.co/subscription_status"
     _app.config["ENVIRONMENT"] = "TESTING"
 
     @_app.errorhandler(PaymentRequired)
@@ -49,6 +56,16 @@ def test_get_missing_stripe_customer_id():
         assert get_stripe_customer_id() is None
 
 
+def test_get_missing_subscription_status():
+    """Return None from get_subscription_status() if the subscription status claim is omitted."""
+
+    token = create_access_token("test")
+
+    with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+        verify_jwt_in_request()
+        assert get_subscription_status() is None
+
+
 def test_get_stripe_customer_id():
     """Ensure that get_stripe_customer_id() returns the correct customer ID when the jwt token
     given is associated with a stripe customer"
@@ -63,28 +80,36 @@ def test_get_stripe_customer_id():
         assert get_stripe_customer_id() == customer_id
 
 
-@pytest.mark.parametrize("stripe_customer_id", (None, ""))
-def test_check_payment_falsy(monkeypatch, stripe_customer_id):
-    """Ensure that check_payment() raises PaymentRequired when the customer ID is falsy."""
+@pytest.mark.parametrize(
+    "subscription_status",
+    ("active", "past_due", "unpaid", "canceled", "incomplete", "incomplete_expired", "trialing"),
+)
+def test_get_subscription_status(subscription_status):
+    """Ensure that get_subscription_status() extracts the subscription status correctly."""
 
-    monkeypatch.setattr("payments.get_stripe_customer_id", function(returns=stripe_customer_id))
+    token = create_access_token(
+        "test",
+        additional_claims={
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: subscription_status
+        },
+    )
 
-    with current_app.test_request_context():
-        with pytest.raises(PaymentRequired):
-            check_payment()
+    with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+        verify_jwt_in_request()
+        assert get_subscription_status() == subscription_status
 
 
-def test_check_payment_invalid(monkeypatch):
+@pytest.mark.parametrize(
+    "subscription_status", ("past_due", "unpaid", "canceled", "incomplete", "incomplete_expired")
+)
+def test_check_payment_invalid(monkeypatch, subscription_status):
     """Ensure that check_payment() raises PaymentRequired when there is no valid subscription.
 
     Subscriptions are considered valid if and only if they are in the "active" or "trialing"
     states.
     """
 
-    monkeypatch.setattr("payments.get_stripe_customer_id", function(returns="cus_test"))
-    monkeypatch.setattr(
-        stripe.Customer, "retrieve", function(returns={"subscriptions": [{"status": "garbage"}]})
-    )
+    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
 
     with current_app.test_request_context():
         with pytest.raises(PaymentRequired):
@@ -95,12 +120,7 @@ def test_check_payment_invalid(monkeypatch):
 def test_check_payment_valid(monkeypatch, subscription_status):
     """Ensure that check_payment() returns when there is a valid subscription."""
 
-    monkeypatch.setattr("payments.get_stripe_customer_id", function(returns="cus_test"))
-    monkeypatch.setattr(
-        stripe.Customer,
-        "retrieve",
-        function(returns={"subscriptions": [{"status": subscription_status}]}),
-    )
+    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
 
     with current_app.test_request_context():
         check_payment()

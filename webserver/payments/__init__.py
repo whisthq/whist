@@ -59,17 +59,9 @@ def check_payment() -> None:
         PaymentRequired: The customer has no active subscriptions.
     """
 
-    stripe_customer_id = get_stripe_customer_id()
+    subscription_status = get_subscription_status()
 
-    if not stripe_customer_id:
-        raise PaymentRequired
-
-    customer = stripe.Customer.retrieve(stripe_customer_id, expand=("subscriptions",))
-
-    if not any(
-        subscription["status"] in ("active", "trialing")
-        for subscription in customer["subscriptions"]
-    ):
+    if subscription_status not in ("active", "trialing"):
         raise PaymentRequired
 
 
@@ -83,6 +75,21 @@ def get_stripe_customer_id() -> Optional[str]:
 
     return get_jwt().get(  # type: ignore[no-any-return]
         current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]
+    )
+
+
+def get_subscription_status() -> Optional[str]:
+    """Read the authenticated user's Stripe subscription status from their access token.
+
+    Returns:
+        A string containing the value of the status attribute of the Stripe subscription record
+        representing the user's most recently created subscription or None if the user has no
+        non-cancelled subscriptions or the subscription status claim is missing. See
+        https://stripe.com/docs/api/subscriptions/object#subscription_object-status.
+    """
+
+    return get_jwt().get(  # type: ignore[no-any-return]
+        current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]
     )
 
 
