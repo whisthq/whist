@@ -639,7 +639,7 @@ jobs:
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":bezos: Webserver successfully upgraded AMIs :bezos:"
-          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to create buffers for AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -653,7 +653,7 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to upgrade AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to create buffers for AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -662,7 +662,7 @@ jobs:
     name: "Update Fractal Services using Webserver"
     runs-on: ubuntu-20.04
     needs: [client-applications-publish-build-s3, webserver-spin-up-new-buffer]
-    concurrency: webserver-spin-up-new-buffer-${{ github.ref }}
+    concurrency: webserver-swap-active-amis-${{ github.ref }}
     if: always() && (needs.client-applications-publish-build-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
     env:
       TOKEN_FILE: .access_token
@@ -749,7 +749,7 @@ jobs:
         id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         shell: bash
-        run: flask command ami_create_buffers "${{ needs.webserver-spin-up-new-buffer.outputs.new_amis }}"
+        run: flask command ami_swapover_buffers "${{ needs.webserver-spin-up-new-buffer.outputs.new_amis }}"
 
       - name: Notify Slack that AMI upgrade has completed succesfully
         if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'success')
@@ -762,7 +762,7 @@ jobs:
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":bezos: Webserver successfully upgraded AMIs :bezos:"
-          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to swapover active AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -776,7 +776,7 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to upgrade AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to swapover active AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
