@@ -2,9 +2,9 @@ import React from "react"
 
 const Testimonial = () => {
   return (
-    <section className="bg-blue mt-20 mb-12 rounded">
-      <div className="max-w-7xl mx-auto md:grid md:grid-cols-2 md:px-6 lg:px-8">
-        <div className="py-12 px-8 sm:px-6 md:flex md:flex-col md:py-16 md:pl-0 md:pr-10 md:border-r md:border-indigo-900 lg:pr-16">
+    <section className="mt-20 mb-12">
+      <div className="max-w-7xl w-full mx-auto grid md:grid-cols-2 gap-y-6 lg:gap-y-0">
+        <div className="bg-blue py-12 px-16 md:flex md:flex-col md:py-16 md:mr-3 rounded">
           <blockquote className="mt-6 md:flex-grow md:flex md:flex-col">
             <div className="relative text-lg font-medium text-gray-300 md:flex-grow">
               <svg
@@ -35,7 +35,7 @@ const Testimonial = () => {
             </footer>
           </blockquote>
         </div>
-        <div className="py-12 px-8 border-t-2 border-indigo-900 sm:px-6 md:py-16 md:pr-0 md:pl-10 md:border-t-0 md:border-l lg:pl-16">
+        <div className="bg-blue py-12 px-16 md:flex md:flex-col md:py-16 md:ml-3 rounded">
           <blockquote className="mt-6 md:flex-grow md:flex md:flex-col">
             <div className="relative text-lg font-medium text-gray-300 md:flex-grow">
               <svg

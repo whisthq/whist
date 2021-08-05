@@ -42,11 +42,11 @@ export const Features = () => {
           <span className="text-blue dark:text-mint">cloud-powered</span> Chrome
         </div>
       </div>
-      <p className="mt-3 text-xl text-gray-500 sm:mt-4">
+      <p className="mt-3 text-xl text-gray-500 sm:mt-4 mb-12">
         Fractal is the Google Chrome you love, running at breathtaking speeds in
         the cloud.
       </p>
-      <div className="grid grid-cols-1 gap-y-20 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8 mt-12 text-left">
+      <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8 m-auto text-left max-w-7xl">
         {supportLinks.map((link) => (
           <div key={link.name} className="flex flex-col rounded bg-gray-900">
             <div className="flex-1 relative pt-16 px-6 pb-8 md:px-8">
