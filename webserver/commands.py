@@ -48,9 +48,9 @@ def ami_create_buffers(
     print(f"::set-output name=new_amis::{dumps(new_amis)}")
 
 
-@command_bp.cli.command("ami_swapover_buffers")
+@command_bp.cli.command("ami_swap_over_buffers")
 @click.argument("new_amis")
-def ami_swapover_buffers(
+def ami_swap_over_buffers(
     new_amis: str,
 ):
     """
