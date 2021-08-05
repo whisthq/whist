@@ -5,8 +5,13 @@ import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"
 import Hero from "@app/pages/download/hero"
 import Requirements from "@app/pages/download/requirements"
+import Alert from "@app/pages/download/alert"
 
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
+
+const allowDownloads =
+  import.meta.env.ALLOW_DOWNLOADS !== undefined &&
+  import.meta.env.ALLOW_DOWNLOADS.toString() === "true"
 
 const Download = () => {
   /*
@@ -19,7 +24,8 @@ const Download = () => {
     <>
       <div className={classNames(padded, "bg-blue-darkest")} id="top">
         <Header />
-        <Hero />
+        {!allowDownloads && <Alert />}
+        <Hero allowDownloads={allowDownloads} />
       </div>
       <div className={classNames(padded, "bg-blue-darker")}>
         <Requirements />
