@@ -36,8 +36,12 @@ const getFractalEnv = () => {
   // Return environment variables to bake into our application as a dictionary;
   // these can be imported via `import.meta.env`.
   return {
-    ALLOW_DOWNLOADS: process.env.ALLOW_DOWNLOADS ? process.env.ALLOW_DOWNLOADS : "true",
-    FRACTAL_ENVIRONMENT: process.env.FRACTAL_ENVIRONMENT ? process.env.FRACTAL_ENVIRONMENT : "development",
+    ALLOW_DOWNLOADS: process.env.ALLOW_DOWNLOADS
+      ? process.env.ALLOW_DOWNLOADS
+      : "true",
+    FRACTAL_ENVIRONMENT: process.env.FRACTAL_ENVIRONMENT
+      ? process.env.FRACTAL_ENVIRONMENT
+      : "development",
     FRACTAL_VERSION: buildEnv.COMMIT_REF ? buildEnv.COMMIT_REF : "local",
   }
 }

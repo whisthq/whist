@@ -12,8 +12,6 @@ const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
 const allowDownloads =
   (import.meta.env?.ALLOW_DOWNLOADS?.toString() ?? "true") === "true"
 
-console.log("meta env is", import.meta.env)
-
 const Download = () => {
   /*
         Colorful box component with Get Started prompt
