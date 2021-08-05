@@ -340,7 +340,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 		userID = types.UserID(claims.Subject)
 	} else {
-		userID = "localdev_host_service_user"
+		instanceName, err := aws.GetInstanceName()
+		if err != nil {
+			logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
+			return
+		}
+		userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
 	}
 
 	// Then, verify that we are expecting this user to request a mandelbox.
