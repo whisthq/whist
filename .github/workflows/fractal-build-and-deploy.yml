@@ -528,7 +528,7 @@ jobs:
   ##########################################################################################
 
   # Uses webserver's cli command to update AMIs if new AMIs have been built
-  webserver-update-fractal-services:
+  webserver-spin-up-new-buffer:
     name: "Update Fractal Services using Webserver"
     runs-on: ubuntu-20.04
     needs:
@@ -536,9 +536,10 @@ jobs:
         fractal-publish-build-config,
         webserver-deploy-heroku,
         mandelboxes-and-amis-publish-ghcr-and-aws,
-        client-applications-publish-build-s3,
       ]
-    concurrency: webserver-update-fractal-services-${{ github.ref }}
+    concurrency: webserver-spin-up-new-buffer-${{ github.ref }}
+    outputs:
+      new_amis_str: ${{ steps.run-webserver-cli-ami-upgrade.outputs.new_amis}}
     if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success') && (needs.client-applications-publish-build-s3.result == 'success')
     env:
       TOKEN_FILE: .access_token
@@ -625,7 +626,130 @@ jobs:
         id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         shell: bash
-        run: flask command ami_upgrade ${{ github.sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+        run: flask command ami_create_buffers ${{ github.sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+
+      - name: Notify Slack that AMI upgrade has completed succesfully
+        if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'success')
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+          BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+          TITLE = ":bezos: Webserver successfully upgraded AMIs :bezos:"
+          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to upgrade AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+      - name: Notify Slack that AMI upgrade has failed
+        if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'failure')
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+          BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to upgrade AMIs, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  # Uses webserver's cli command to update AMIs if new AMIs have been built
+  webserver-swap-active-amis:
+    name: "Update Fractal Services using Webserver"
+    runs-on: ubuntu-20.04
+    needs: [client-applications-publish-build-s3, webserver-spin-up-new-buffer]
+    concurrency: webserver-spin-up-new-buffer-${{ github.ref }}
+    if: always() && (needs.client-applications-publish-build-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
+    env:
+      TOKEN_FILE: .access_token
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Format the current date
+        id: date
+        run: echo "::set-output name=date::$(date -u "+%Y%m%d%p")"
+
+      - name: Restore cached Webserver access token file
+        uses: actions/cache@v2
+        with:
+          key: access-token-${{ needs.fractal-publish-build-config.outputs.branch }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+          path: ${{ env.TOKEN_FILE }}
+
+      # We need to put quotes around this step's run command because it
+      # contains the special YAML characters [, ], and &. We check for the
+      # existence of $TOKEN_FILE before reading it to ensure that the
+      # command line returns 1 on failure. If the command was just
+      #
+      #     echo "::set-output name=access-token::$(cat $TOKEN_FILE)
+      #
+      # the step would succeed even if $TOKEN_FILE didn't exist because
+      # cat "$TOKEN_FILE" runs in a subshell and its exit status has no
+      # effect on the parent shell, in which the -e (errexit) option is
+      # set.
+      - name: Read cached Webserver access token
+        id: get-token
+        run: '[ -f "$TOKEN_FILE" ] && echo "::set-output name=access-token::$(cat "$TOKEN_FILE")"'
+
+      - name: Authenticate Heroku
+        run: |
+          cat > ~/.netrc << EOF
+          machine api.heroku.com
+          login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+          password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          machine git.heroku.com
+          login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+          password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          EOF
+
+      - name: Set heroku app name and DB URLs
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        run: |
+          if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
+              HEROKU_APP_NAME=fractal-dev-server
+          elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
+              HEROKU_APP_NAME=fractal-staging-server
+          elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
+              HEROKU_APP_NAME=fractal-prod-server
+          else
+              echo 'Error: Invalid branch' && false
+          fi
+          echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+          DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
+          CONFIG_DB_URL=$(heroku config:get CONFIG_DB_URL --app=$HEROKU_APP_NAME)
+          echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
+          echo "CONFIG_DB_URL=$CONFIG_DB_URL" >> $GITHUB_ENV
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Install webserver dependencies for running the flask cli
+        working-directory: webserver
+        run: pip install -r requirements.txt
+
+      - name: Run flask cli to upgrade the AMIs
+        env:
+          AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
+          AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
+          AUTH0_WEBSERVER_CLIENT_SECRET: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
+          CONFIG_DB_URL: ${{ env.CONFIG_DB_URL }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
+          RUNNING_LOCALLY: true
+          APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
+          APP_GIT_COMMIT: ${{ github.sha }}
+        id: run-webserver-cli-ami-upgrade
+        working-directory: webserver
+        shell: bash
+        run: flask command ami_create_buffers "${{ needs.webserver-spin-up-new-buffer.outputs.new_amis }}"
 
       - name: Notify Slack that AMI upgrade has completed succesfully
         if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'success')
@@ -786,6 +910,7 @@ jobs:
         webserver-deploy-heroku,
         microservices-deploy-auth0-rules,
         mandelboxes-and-amis-publish-ghcr-and-aws,
+        webserver-spin-up-new-buffer,
       ]
     concurrency: client-applications-publish-build-s3-${{ matrix.config.os }}-${{ github.ref }}
 
@@ -794,6 +919,7 @@ jobs:
       always() &&
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
       (needs.webserver-deploy-heroku.result == 'success') &&
+      (needs.spin-up-new-buffer.result == 'success') &&
       (needs.microservices-deploy-auth0-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
 
@@ -1171,7 +1297,7 @@ jobs:
         webserver-deploy-heroku,
         microservices-deploy-auth0-rules,
         mandelboxes-and-amis-publish-ghcr-and-aws,
-        webserver-update-fractal-services,
+        webserver-spin-up-new-buffer,
         client-applications-publish-build-s3,
       ]
     if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)

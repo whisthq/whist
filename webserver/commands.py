@@ -4,8 +4,8 @@ This file contains the functions that can be invoked through
 flask CLI - https://flask.palletsprojects.com/en/2.0.x/cli/
 
 """
-from json import loads
-from typing import Dict
+from json import loads, dumps
+from typing import Dict, List
 
 import click
 from flask import Blueprint
@@ -26,13 +26,13 @@ command_bp = Blueprint("command", __name__)
 
 # This function upgrades the AMIs for given client hash and the region.
 # Can be invoked through `flask command ami_upgrade <client_commit_hash> <region_to_ami_id_mapping_str>`
-@command_bp.cli.command("ami_upgrade")
+@command_bp.cli.command("ami_create_buffers")
 @click.argument("client_commit_hash")
 @click.argument("region_to_ami_id_mapping_str")
-def ami_upgrade(
+def ami_create_buffers(
     client_commit_hash: str,
     region_to_ami_id_mapping_str: str,
-):
+) -> None:
     """
     Args:
         client_commit_hash: The commit hash of the client that will be compatible with the
@@ -45,7 +45,22 @@ def ami_upgrade(
     region_to_ami_id_mapping: Dict[str, str] = loads(region_to_ami_id_mapping_str)
 
     new_amis = perform_upgrade(client_commit_hash, region_to_ami_id_mapping)
-    swapover_amis(new_amis)
+    print(f"::set-output name=new_amis::{dumps(new_amis)}")
+
+
+@command_bp.cli.command("ami_swapover_buffers")
+@click.argument("new_amis")
+def ami_swapover_buffers(
+    new_amis: str,
+):
+    """
+    Args:
+        new_amis: Stringified list of new AMIs
+    Returns:
+        None
+    """
+    new_amis_list: List[str] = loads(new_amis)
+    swapover_amis(new_amis_list)
 
 
 # This function generates data required for running the test cases and populates it in the database.
