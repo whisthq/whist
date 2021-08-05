@@ -197,6 +197,7 @@ class DeploymentConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_CUSTOMER_ID_CLAIM = "https://api.fractal.co/stripe_customer_id"
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+    STRIPE_SUBSCRIPTION_STATUS_CLAIM = "https://api.fractal.co/subscription_status"
     STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     AWS_INSTANCE_TYPE_TO_LAUNCH = property(
