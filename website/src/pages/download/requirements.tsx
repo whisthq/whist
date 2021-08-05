@@ -33,9 +33,9 @@ const features = [
     icon: WifiIcon,
   },
   {
-    name: "Post-2016 Mac",
+    name: "macOS 10.15+",
     description:
-      "Fractal uses your Mac's hardware decoding chip, which exists on all Macs produced during or after 2016.",
+      "For compatibility reasons, Fractal requires macOS 10.15 or higher.",
     icon: DesktopComputerIcon,
   },
 ]
