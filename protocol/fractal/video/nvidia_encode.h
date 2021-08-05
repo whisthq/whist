@@ -6,19 +6,34 @@
 #include <fractal/core/fractal.h>
 #include "cudacontext.h"
 
+#define RESOURCE_CACHE_SIZE 4
+
+typedef struct {
+    NV_ENC_REGISTERED_PTR handle;
+    CaptureDeviceType device_type;
+    int width;
+    int height;
+    int pitch;
+    void* texture_pointer;
+} RegisteredResource;
+
 typedef struct {
     NV_ENCODE_API_FUNCTION_LIST p_enc_fn;
     void* internal_nvidia_encoder;
     NV_ENC_INITIALIZE_PARAMS encoder_params;
 
-    NV_ENC_REGISTERED_PTR registered_resource;
+    RegisteredResource resource_cache[RESOURCE_CACHE_SIZE];
+    RegisteredResource registered_resource;
 
     NV_ENC_OUTPUT_PTR output_buffer;
     NV_ENC_BUFFER_FORMAT buffer_fmt;
+    CUcontext cuda_context;
     CodecType codec_type;
+    int bitrate;
     uint32_t frame_idx;
     int width;
     int height;
+    int pitch;
     bool wants_iframe;
     // Output
     void* frame;
@@ -33,10 +48,12 @@ typedef struct {
  * @param codec                    Which codec type (h264 or h265) to use
  * @param out_width                Width of the output frame
  * @param out_height               Height of the output frame
+ * @param cuda_context             The CUDA context to use for the encoding session
  *
  * @returns                        The newly created nvidia encoder
  */
-NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height);
+NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
+                                     CUcontext cuda_context);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder
@@ -56,16 +73,15 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_h
  * @brief                          Put the input data into the nvidia encoder
  *
  * @param encoder                  The encoder to encode with
- * @param width                    The width of the inputted frame
- * @param height                   The height of the inputted frame
+ * @param resource_to_register     The resource to register - contains data about capture device,
+ *                                 width, height, and texture
  *
  * @returns                        0 on success, else -1
  *                                 This function will return -1 if width/height do not match
  *                                 out_width/out_height, as the nvidia encoder does not support
  *                                 serverside scaling yet.
  */
-int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, int width, int height);
-
+int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resource_to_register);
 /**
  * @brief                          Set the next frame to be an IDR-frame,
  *                                 with SPS/PPS headers included as well.

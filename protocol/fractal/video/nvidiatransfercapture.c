@@ -12,6 +12,7 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
         Returns:
             (int): 0 on success, -1 on failure
         */
+    /*
     if (device->p_gpu_texture == NULL) {
         LOG_ERROR("Nothing to register! Device GPU texture was NULL");
         return -1;
@@ -34,6 +35,7 @@ int nvidia_start_transfer_context(NvidiaCaptureDevice* device, NvidiaEncoder* en
         return -1;
     }
     encoder->registered_resource = register_params.registeredResource;
+    */
     return 0;
 }
 
@@ -49,18 +51,15 @@ int nvidia_close_transfer_context(NvidiaEncoder* encoder) {
         Returns:
             (int): 0 on success, -1 on failure
         */
-    if (!encoder->registered_resource) {
-        LOG_INFO("Trying to unregister NULL resource - nothing to do!");
-        return 0;
+    for (int i = 0; i < RESOURCE_CACHE_SIZE; i++) {
+        if (encoder->resource_cache[i].handle) {
+            // unregister all resources in encoder->registered_resources
+            int status = encoder->p_enc_fn.nvEncUnregisterResource(
+                encoder->internal_nvidia_encoder, encoder->resource_cache[i].handle);
+            if (status != NV_ENC_SUCCESS) {
+                LOG_ERROR("Failed to unregister resource, status = %d", status);
+            }
+        }
     }
-
-    // unregister all resources in encoder->registered_resources
-    int status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
-                                                           encoder->registered_resource);
-    if (status != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to unregister resource, status = %d", status);
-        return -1;
-    }
-    encoder->registered_resource = NULL;
     return 0;
 }

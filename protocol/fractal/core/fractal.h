@@ -41,6 +41,7 @@ Includes
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
@@ -103,7 +104,8 @@ Defines
 // not possible yet on linux
 #define USING_SERVERSIDE_SCALE false
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
-#define USING_NVIDIA_CAPTURE_AND_ENCODE false
+#define USING_NVIDIA_CAPTURE false
+#define USING_NVIDIA_ENCODE true
 #define USING_SHM true
 
 #endif
@@ -185,6 +187,12 @@ typedef enum CodecType {
     CODEC_TYPE_H265 = 265,
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
+
+/**
+ * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
+ * discover a third option for capturing, update this enum and the CaptureDevice struct below.
+ */
+typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
 
 /**
  * @brief   Keycodes.

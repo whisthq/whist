@@ -34,13 +34,22 @@ typedef CUresult (*CUINITPROC)(unsigned int flags);
 typedef CUresult (*CUDEVICEGETPROC)(CUdevice* device, int ordinal);
 typedef CUresult (*CUCTXCREATEV2PROC)(CUcontext* pctx, unsigned int flags, CUdevice dev);
 typedef CUresult (*CUMEMCPYDTOHV2PROC)(void* dst_host, CUdeviceptr src_device, size_t byte_count);
+typedef CUresult (*CUCTXDESTROYV2PROC)(CUcontext ctx);
 
 static CUINITPROC cu_init_ptr = NULL;
 static CUDEVICEGETPROC cu_device_get_ptr = NULL;
 static CUCTXCREATEV2PROC cu_ctx_create_v2_ptr = NULL;
 static CUMEMCPYDTOHV2PROC cu_memcpy_dtoh_v2_ptr = NULL;
+static CUCTXDESTROYV2PROC cu_ctx_destroy_v2_ptr = NULL;
+static bool cuda_initialized = false;
 
-CUcontext active_cuda_context = NULL;
+CUcontext video_thread_cuda_context = NULL;
+CUcontext nvidia_thread_cuda_context = NULL;
+CUCTXSETCURRENTPROC cu_ctx_set_current_ptr = NULL;
+CUCTXGETCURRENTPROC cu_ctx_get_current_ptr = NULL;
+CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr = NULL;
+CUCTXPOPCURRENTPROC cu_ctx_pop_current_ptr = NULL;
+CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr = NULL;
 
 /*
 ============================
@@ -83,12 +92,44 @@ static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
         return NVFBC_FALSE;
     }
 
+    cu_ctx_destroy_v2_ptr = (CUCTXDESTROYV2PROC)dlsym(lib_cuda, "cuCtxDestroy_v2");
+    if (cu_ctx_destroy_v2_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxDestroy_v2'\n");
+        return NVFBC_FALSE;
+    }
+
     cu_memcpy_dtoh_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(lib_cuda, "cuMemcpyDtoH_v2");
     if (cu_memcpy_dtoh_v2_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
         return NVFBC_FALSE;
     }
 
+    cu_ctx_set_current_ptr = (CUCTXSETCURRENTPROC)dlsym(lib_cuda, "cuCtxSetCurrent");
+    if (cu_ctx_set_current_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxSetCurrent'\n");
+        return NVFBC_FALSE;
+    }
+
+    cu_ctx_get_current_ptr = (CUCTXGETCURRENTPROC)dlsym(lib_cuda, "cuCtxGetCurrent");
+    if (cu_ctx_get_current_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxGetCurrent'\n");
+        return NVFBC_FALSE;
+    }
+    cu_ctx_pop_current_ptr = (CUCTXPOPCURRENTPROC)dlsym(lib_cuda, "cuCtxPopCurrent");
+    if (cu_ctx_pop_current_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxPopCurrent'\n");
+        return NVFBC_FALSE;
+    }
+    cu_ctx_push_current_ptr = (CUCTXPUSHCURRENTPROC)dlsym(lib_cuda, "cuCtxPushCurrent");
+    if (cu_ctx_push_current_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxPushCurrent'\n");
+        return NVFBC_FALSE;
+    }
+    cu_ctx_synchronize_ptr = (CUCTXSYNCHRONIZEPROC)dlsym(lib_cuda, "cuCtxSynchronize");
+    if (cu_ctx_synchronize_ptr == NULL) {
+        LOG_ERROR("Unable to resolve symbol 'cuCtxSychronizeCurrent'\n");
+        return NVFBC_FALSE;
+    }
     return NVFBC_TRUE;
 }
 
@@ -98,30 +139,41 @@ Public Function Implementations
 ============================
 */
 
+NVFBC_BOOL cuda_destroy(CUcontext cuda_context) {
+    CUresult cu_res = cu_ctx_destroy_v2_ptr(cuda_context);
+    if (cu_res != CUDA_SUCCESS) {
+        LOG_ERROR("Unable to destroy CUDA context (result: %d)\n", cu_res);
+        return NVFBC_FALSE;
+    }
+    return NVFBC_TRUE;
+}
+
 /**
  * Initializes CUDA and creates a CUDA context.
  *
  * \return
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
-NVFBC_BOOL cuda_init() {
-    if (active_cuda_context) {
-        LOG_INFO("Already have a cuda context! Nothing will be done.");
+NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
+    void* lib_cuda = NULL;
+    if (*cuda_context) {
+        LOG_DEBUG("Cuda context already exists! Doing nothing.");
         return NVFBC_TRUE;
     }
-    void* lib_cuda = NULL;
-    if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
-        LOG_ERROR("Failed to load CUDA library!");
-        return NVFBC_FALSE;
-    }
-
     CUresult cu_res;
     CUdevice cu_dev;
+    if (!cuda_initialized) {
+        if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
+            LOG_ERROR("Failed to load CUDA library!");
+            return NVFBC_FALSE;
+        }
 
-    cu_res = cu_init_ptr(0);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
-        return NVFBC_FALSE;
+        cu_res = cu_init_ptr(0);
+        if (cu_res != CUDA_SUCCESS) {
+            LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
+            return NVFBC_FALSE;
+        }
+        cuda_initialized = true;
     }
 
     cu_res = cu_device_get_ptr(&cu_dev, 0);
@@ -130,7 +182,7 @@ NVFBC_BOOL cuda_init() {
         return NVFBC_FALSE;
     }
 
-    cu_res = cu_ctx_create_v2_ptr(&active_cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
+    cu_res = cu_ctx_create_v2_ptr(cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
     if (cu_res != CUDA_SUCCESS) {
         LOG_ERROR("Unable to create CUDA context (result: %d)\n", cu_res);
         return NVFBC_FALSE;
@@ -139,13 +191,23 @@ NVFBC_BOOL cuda_init() {
     return NVFBC_TRUE;
 }
 
-CUcontext* get_active_cuda_context_ptr() {
+CUcontext* get_video_thread_cuda_context_ptr() {
     /*
-        Return a pointer to the active CUDA context.
+        Return a pointer to the CUDA context that will be used next by the video thread.
 
         Returns:
-            (CUcontext*): pointer to the active CUDA context
+            (CUcontext*): pointer to the video thread CUDA context
     */
 
-    return &active_cuda_context;
+    return &video_thread_cuda_context;
+}
+
+CUcontext* get_nvidia_thread_cuda_context_ptr() {
+    /*
+        Return a pointer to the CUDA context that will be used next by the nvidia thread.
+
+        Returns:
+            (CUcontext*): pointer to the nvidia thread CUDA context
+    */
+    return &nvidia_thread_cuda_context;
 }

@@ -32,18 +32,18 @@ Custom Types
 */
 
 /**
- * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
- * discover a third option for capturing, update this enum and the CaptureDevice struct below.
- */
-typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
-
-/**
  * @brief           Struct holding the global data needed for capturing: the type of capture device
  * we are using, information necessary for resizing, and pointers to the specific capture devices.
  * The implementations of the screencapture.h API internally decide what capture device to use.
  */
 typedef struct CaptureDevice {
-    CaptureDeviceType active_capture_device;
+    CaptureDeviceType active_capture_device;  // the device currently used for capturing
+    CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
+                                            // the right encoder
+    bool pending_destruction;
+    FractalThread nvidia_manager;
+    FractalSemaphore nvidia_device_semaphore;
+    bool nvidia_context_is_stale;
     // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
