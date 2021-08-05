@@ -59,17 +59,9 @@ def check_payment() -> None:
         PaymentRequired: The customer has no active subscriptions.
     """
 
-    stripe_customer_id = get_stripe_customer_id()
+    subscription_status = get_subscription_status()
 
-    if not stripe_customer_id:
-        raise PaymentRequired
-
-    customer = stripe.Customer.retrieve(stripe_customer_id, expand=("subscriptions",))
-
-    if not any(
-        subscription["status"] in ("active", "trialing")
-        for subscription in customer["subscriptions"]
-    ):
+    if subscription_status not in ("active", "trialing"):
         raise PaymentRequired
 
 
@@ -86,6 +78,21 @@ def get_stripe_customer_id() -> Optional[str]:
     )
 
 
+def get_subscription_status() -> Optional[str]:
+    """Read the authenticated user's Stripe subscription status from their access token.
+
+    Returns:
+        A string containing the value of the status attribute of the Stripe subscription record
+        representing the user's most recently created subscription or None if the user has no
+        non-cancelled subscriptions or the subscription status claim is missing. See
+        https://stripe.com/docs/api/subscriptions/object#subscription_object-status.
+    """
+
+    return get_jwt().get(  # type: ignore[no-any-return]
+        current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]
+    )
+
+
 def payment_required(view_func):
     """A view decorator that prevents non-paying users from accessing Flask endpoints.
 
@@ -99,15 +106,11 @@ def payment_required(view_func):
 
     @functools.wraps(view_func)
     def wrapper(*args, **kwargs):
-        start_time = time() * 1000
         verify_jwt_in_request()
 
-        if not has_scope("admin") and current_app.config["ENVIRONMENT"] != "development":
+        if not has_scope("admin"):
             check_payment()
 
-        # Note that this uses print since we don't want to import fractal_logger
-        # Since the payments and webserver codebases are intentionally separate
-        print(f"It took {time()*1000 - start_time} ms to check payment for this user")
         return view_func(*args, **kwargs)
 
     return wrapper
