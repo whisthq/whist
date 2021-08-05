@@ -1,27 +1,41 @@
-import { from, merge } from "rxjs"
+import { from, merge, zip } from "rxjs"
+import { has } from "lodash"
 import { switchMap, map, filter } from "rxjs/operators"
-
-import { flow, fork } from "@app/utils/flows"
+import { fork, flow } from "@app/utils/flows"
 import {
-  generateRefreshedAuthInfo,
   generateRandomConfigToken,
-  authInfoValid,
-  isExpired,
-} from "@app/utils/auth"
+  authInfoRefreshRequest,
+  authInfoParse,
+  isTokenExpired,
+  refreshToken,
+  accessToken,
+} from "@fractal/core-ts"
 import { store } from "@app/utils/persist"
 
-export const authRefreshFlow = flow<{
-  refreshToken: string
-}>("authRefreshFlow", (trigger) => {
-  const refreshed = trigger.pipe(
-    switchMap((tokens) => from(generateRefreshedAuthInfo(tokens.refreshToken)))
-  )
+export const authRefreshFlow = flow<refreshToken>(
+  "authRefreshFlow",
+  (trigger) => {
+    const refreshed = fork(
+      trigger.pipe(
+        switchMap((tokens: refreshToken) =>
+          from(authInfoRefreshRequest(tokens))
+        ),
+        map(authInfoParse)
+      ),
+      {
+        success: (res) => !has(res, "error"),
+        failure: (res) => has(res, "error"),
+      }
+    )
 
-  return fork(refreshed, {
-    success: (result: any) => authInfoValid(result),
-    failure: (result: any) => !authInfoValid(result),
-  })
-})
+    return {
+      success: zip(refreshed.success, trigger).pipe(
+        map(([r, t]) => ({ ...r, refreshToken: t.refreshToken }))
+      ),
+      failure: refreshed.failure,
+    }
+  }
+)
 
 export default flow<{
   userEmail: string
@@ -30,10 +44,10 @@ export default flow<{
   configToken?: string
 }>("authFlow", (trigger) => {
   const expired = trigger.pipe(
-    filter((tokens) => isExpired(tokens.accessToken))
+    filter((tokens: accessToken & refreshToken) => isTokenExpired(tokens))
   )
   const notExpired = trigger.pipe(
-    filter((tokens) => !isExpired(tokens.accessToken))
+    filter((tokens: accessToken) => !isTokenExpired(tokens))
   )
 
   const refreshedAuthInfo = authRefreshFlow(expired)
@@ -43,17 +57,24 @@ export default flow<{
     refreshedAuthInfo.success,
     refreshedAuthInfo.failure
   ).pipe(
-    map((tokens) => ({
-      ...tokens,
-      configToken:
-        tokens.configToken ??
-        store.get("configToken") ??
-        generateRandomConfigToken(),
-    }))
+    map(
+      (tokens: {
+        userEmail: string
+        accessToken: string
+        refreshToken: string
+        configToken?: string
+      }) => ({
+        ...tokens,
+        configToken:
+          tokens.configToken ??
+          store.get("configToken") ??
+          generateRandomConfigToken(),
+      })
+    )
   )
 
-  return fork(authInfoWithConfig, {
-    success: (result: any) => authInfoValid(result),
-    failure: (result: any) => !authInfoValid(result),
-  })
+  return {
+    success: authInfoWithConfig.pipe(filter((res) => !has(res, "error"))),
+    failure: authInfoWithConfig.pipe(filter((res) => has(res, "error"))),
+  }
 })

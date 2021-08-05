@@ -4,7 +4,7 @@
  * @brief This file contains constant values that are passed around to other parts of the application.
  */
 
-export const allowPayments = false
+export const allowPayments = true
 
 export const HostServicePort = 4678
 
