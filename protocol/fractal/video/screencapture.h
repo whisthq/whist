@@ -58,6 +58,8 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
                                 uint32_t dpi);
 
+int update_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
+
 /**
  * @brief                          Capture a bitmap snapshot of the screen
  *                                 The width/height of the image is guaranteed to be

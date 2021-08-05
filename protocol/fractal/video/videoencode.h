@@ -33,6 +33,7 @@ Custom Types
 */
 
 #define MAX_ENCODER_PACKETS 20
+#define NUM_ENCODERS 2
 
 typedef enum VideoEncoderType { NVIDIA_ENCODER, FFMPEG_ENCODER } VideoEncoderType;
 
@@ -42,6 +43,7 @@ typedef enum VideoEncoderType { NVIDIA_ENCODER, FFMPEG_ENCODER } VideoEncoderTyp
  * using the Nvidia encoder, and fall back to the FFmpeg encoder if that fails.
  */
 typedef struct VideoEncoder {
+    int active_encoder_idx;
     VideoEncoderType active_encoder;
     // packet metadata + data
     int num_packets;
@@ -53,7 +55,7 @@ typedef struct VideoEncoder {
     bool is_iframe;
     int encoded_frame_size;  /// <size of encoded frame in bytes
     CodecType codec_type;
-    NvidiaEncoder* nvidia_encoder;
+    NvidiaEncoder* nvidia_encoders[NUM_ENCODERS];
     FFmpegEncoder* ffmpeg_encoder;
 } VideoEncoder;
 

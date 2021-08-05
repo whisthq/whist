@@ -137,7 +137,7 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
         return false;
     }
     device->frame_data = device->image->data;
-    device->pitch = device->width * 4;
+    device->pitch = device->image->bytes_per_line;
 #endif
     return true;
 }
@@ -192,6 +192,8 @@ int x11_capture_screen(X11CaptureDevice* device) {
             if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
                 update = -1;
+            } else {
+                device->pitch = device->image->bytes_per_line;
             }
 #else
             if (device->image) {
@@ -204,7 +206,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
                 update = -1;
             } else {
                 device->frame_data = device->image->data;
-                device->pitch = device->width * 4;
+                device->pitch = device->image->bytes_per_line;
             }
 #endif
             XSetErrorHandler(prev_handler);

@@ -21,6 +21,7 @@ Includes
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
+#include "cudacontext.h"
 
 /*
 ============================
@@ -78,5 +79,8 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device);
  * @param device                   The Capture device to destroy
  */
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device);
+
+int nvidia_bind_context(NvidiaCaptureDevice* device);
+int nvidia_release_context(NvidiaCaptureDevice* device);
 
 #endif  // CAPTURE_X11NVIDIACAPTURE_H

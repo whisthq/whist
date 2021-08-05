@@ -200,23 +200,23 @@ int32_t multithreaded_send_video(void* opaque) {
                     close_transfer_context(device, encoder);
                     transfer_context_active = false;
                 }
-                // if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
-                //    // Reconfigured the capture device!
-                //    // No need to recreate it, the device has now been updated
-                //    LOG_INFO("Successfully reconfigured the capture device");
-                //    // We should also update the encoder since the device has been reconfigured
-                //    update_encoder = true;
-                // } else {
-                //    // Destroying the old capture device so that a new one can be recreated below
-                //    LOG_ERROR(
-                //        "Failed to reconfigure the capture device! "
-                //        "Destroying and recreating the capture device instead!");
 
-                // For the time being, we have disabled the reconfigure functionality because
-                // of some weirdness happening in vkCreateDevice()
-                destroy_capture_device(device);
-                device = NULL;
-                // }
+                if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+                    // Reconfigured the capture device!
+                    // No need to recreate it, the device has now been updated
+                    LOG_INFO("Successfully reconfigured the capture device");
+                    // We should also update the encoder since the device has been reconfigured
+                    update_encoder = true;
+                } else {
+                    // Destroying the old capture device so that a new one can be recreated below
+                    LOG_FATAL(
+                        "Failed to reconfigure the capture device! We probably have a memory "
+                        "leak!");
+                    // "Destroying and recreating the capture device instead!");
+
+                    // For the time being, we have disabled the reconfigure functionality because
+                    // of some weirdness happening in vkCreateDevice()
+                }
             } else {
                 LOG_INFO("No capture device exists yet, creating a new one.");
             }
@@ -322,6 +322,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // the old encoder, since we'll no longer be able to pass captured frames into
                     // it
                     // For now, we'll just always destroy the encoder right here
+                    /*
                     if (encoder != NULL) {
                         if (transfer_context_active) {
                             close_transfer_context(device, encoder);
@@ -330,7 +331,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         destroy_video_encoder(encoder);
                         encoder = NULL;
                     }
-
+                    */
                     if (encoder == NULL) {
                         // Run on this thread bc we have to wait for it anyway since encoder == NULL
                         multithreaded_encoder_factory(NULL);
@@ -346,11 +347,6 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
-        if (!transfer_context_active) {
-            start_transfer_context(device, encoder);
-            transfer_context_active = true;
-        }
-
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
         // call to capture_screen, If we are using Nvidia, the captured frame is also
@@ -364,6 +360,11 @@ int32_t multithreaded_send_video(void* opaque) {
         int accumulated_frames = 0;
         if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
             accumulated_frames = capture_screen(device);
+#if LOG_VIDEO
+            if (accumulated_frames > 1) {
+                LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
+            }
+#endif
             // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
         }
 
@@ -378,6 +379,11 @@ int32_t multithreaded_send_video(void* opaque) {
 
             fractal_sleep(100);
             continue;
+        }
+
+        if (!transfer_context_active) {
+            start_transfer_context(device, encoder);
+            transfer_context_active = true;
         }
 
         clock server_frame_timer;
