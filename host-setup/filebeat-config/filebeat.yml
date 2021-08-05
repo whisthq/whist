@@ -44,6 +44,8 @@ filebeat.registry.path: /var/lib/filebeat
 # https://www.elastic.co/guide/en/beats/filebeat/current/filtering-and-enhancing-data.html
 processors:
   - add_fields:
+      # https://www.elastic.co/guide/en/beats/filebeat/current/add-fields.html
+      target: '' # having an empty string as target lets us put the fields at the root.
       fields:
         environment: local-dev
         component: mandelbox
