@@ -160,9 +160,11 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		}
 		c.cleanUserConfigDir()
 
-		// Remove mandelbox from the database altogether
-		if err := dbdriver.RemoveMandelbox(c.mandelboxID); err != nil {
-			logger.Error(err)
+		// Remove mandelbox from the database altogether, once again excluding warmups
+		if fid != "host-service-warmup" {
+			if err := dbdriver.RemoveMandelbox(c.mandelboxID); err != nil {
+				logger.Error(err)
+			}
 		}
 
 		logger.Infof("Cleaned up after Mandelbox %s", c.mandelboxID)
