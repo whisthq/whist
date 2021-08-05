@@ -137,7 +137,7 @@ echo "Installing monitoring services.."
 echo "================================================"
 # Filebeat by default doesn't startup on system boot/install by default.
 # So, filebeat will be currently disabled. This being done intentionally to not ship logs from local-dev by default.
-# Our intention here is to let you take a call on sending the logs to logz (if that workflow is going to be easier for you). 
+# Our intention here is to let you take a call on sending the logs to logz (if that workflow is going to be easier for you).
 # If you want to enable it, look at `setup_ubuntu20_ami_host.sh` for further instructions.
 
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
