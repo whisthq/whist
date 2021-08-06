@@ -754,7 +754,7 @@ jobs:
         id: run-webserver-cli-ami-swap-over
         working-directory: webserver
         shell: bash
-        run: flask ami swap_over_buffers "${{ needs.webserver-spin-up-new-buffer.outputs.new_amis }}"
+        run: flask ami swap_over_buffers "${{ needs.webserver-spin-up-new-buffer.outputs.new_amis_str }}"
 
       - name: Notify Slack that AMI upgrade has completed succesfully
         if: always() && (steps.run-webserver-cli-ami-swap-over.outcome == 'success')
@@ -1304,6 +1304,7 @@ jobs:
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-spin-up-new-buffer,
         client-applications-publish-build-s3,
+        webserver-swap-active-amis,
       ]
     if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
     steps:
