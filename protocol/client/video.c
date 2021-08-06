@@ -114,6 +114,7 @@ struct VideoData {
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+    clock throughput_timer;
 
     // Loading animation data
     int loading_index;
@@ -820,6 +821,12 @@ void update_video() {
         update from the server
     */
 
+    double throughput_time = get_timer(video_data.throughput_timer);
+    if (throughput_time > 100.0 / 1000.0) {
+        double bitrate = video_ring_buffer.bytes_received / time;
+        LOG_INFO("bitrate for last %f ms: %f mbps", time * 1000, bitrate / (1024 * 1024));
+    }
+
     if (get_timer(video_data.frame_timer) > 3) {
         calculate_statistics();
     }
@@ -1013,6 +1020,8 @@ int init_video_renderer() {
     video_data.most_recent_iframe = -1;
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
+
+    start_timer(&video_data.throughput_timer);
 
     // Resize event handling
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);

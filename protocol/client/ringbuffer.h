@@ -36,6 +36,7 @@ typedef struct FrameData {
     int num_packets;
     int id;
     int packets_received;
+    int bytes_received;
     int frame_size;
     bool* received_indices;
     bool* nacked_indices;

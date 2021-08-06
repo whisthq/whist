@@ -272,6 +272,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     }
     memcpy(frame_data->frame_buffer + place, packet->data, packet->payload_size);
     frame_data->frame_size += packet->payload_size;
+    ring_buffer->bytes_received += packet->payload_size;
 
     if (frame_data->packets_received == frame_data->num_packets) {
         ring_buffer->frames_received++;
