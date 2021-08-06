@@ -1,13 +1,13 @@
 import random, requests
 
-from app.models import RegionToAmi, db
+from app.models import RegionToAmi
 from tests.patches import function
 
 from app.helpers.command_helpers import ami_upgrade
 from app.helpers.command_helpers.ami_upgrade import (
     launch_new_ami_buffer,
-    perform_upgrade,
-    fetch_current_running_instances,
+    create_ami_buffer,
+    swapover_amis,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 
@@ -71,7 +71,7 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
 
-def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_instance):
+def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, bulk_instance, db_session):
     """
     In this test case, we are testing the whole AMI upgrade flow. This involves the
     following checks
@@ -85,7 +85,6 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
     - Mark the instances that are running(in ACTIVE or PRE_CONNECTION) state for draining
     by calling the `drain_and_shutdown` endpoint on the host_service.
     """
-    db_call_list = hijack_db
 
     launch_new_ami_buffer_calls = []
 
@@ -140,12 +139,13 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, hijack_db, bulk_ins
         new_ami_list.append(newer_ami)
         region_to_new_ami_map[region] = newer_ami
 
-    perform_upgrade(generate_name("new-client-hash", True), region_to_new_ami_map)
+    new_amis = create_ami_buffer(generate_name("new-client-hash", True), region_to_new_ami_map)
+    swapover_amis(new_amis)
 
     region_wise_new_amis_added_to_db_session = {
-        item["args"].region_name: item["args"]
-        for item in db_call_list
-        if isinstance(item["args"], RegionToAmi)
+        item.region_name: item
+        for item in (RegionToAmi.query.filter_by(ami_id=ami_id).first() for ami_id in new_amis)
+        if isinstance(item, RegionToAmi)
     }
 
     for upgraded_region in regions_to_upgrade:

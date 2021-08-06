@@ -65,6 +65,12 @@ def app():
 
 
 @pytest.fixture
+def _db(app):
+    # Necessary for pytest-flask-sqlalchemy to work
+    return db
+
+
+@pytest.fixture
 def authorized(client, user, monkeypatch):
     """Bypass authorization decorators.
 
