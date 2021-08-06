@@ -529,7 +529,7 @@ jobs:
 
   # Uses webserver's cli command to update AMIs if new AMIs have been built
   webserver-spin-up-new-buffer:
-    name: "Update Fractal Services using Webserver"
+    name: "Create buffers for new AMIs using Webserver"
     runs-on: ubuntu-20.04
     needs:
       [
@@ -659,7 +659,7 @@ jobs:
 
   # Uses webserver's cli command to update AMIs if new AMIs have been built
   webserver-swap-active-amis:
-    name: "Update Fractal Services using Webserver"
+    name: "Swap over active AMIs using webserver"
     runs-on: ubuntu-20.04
     needs:
       [
