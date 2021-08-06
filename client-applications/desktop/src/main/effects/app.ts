@@ -22,7 +22,7 @@ import { createTray, createMenu } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { emitAuthCache, persistClear, store } from "@app/utils/persist"
-import { hideAppDock } from "@app/utils/dock"
+import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -61,6 +61,7 @@ fromTrigger("appReady").subscribe(() => {
 // don't have all three, we clear them all and force the user to log in again.
 fromTrigger("notPersisted").subscribe(() => {
   createTray(createMenu(false))
+  showAppDock()
   createAuthWindow()
 })
 
