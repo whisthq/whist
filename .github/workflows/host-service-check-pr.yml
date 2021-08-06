@@ -10,6 +10,7 @@ on:
     paths:
       - "host-service/**"
       - "!host-service/README.md"
+        # The host service now relies on this file for its build process.
       - "webserver/db_migration/schema.sql"
       - ".github/workflows/host-service-check-pr.yml"
   workflow_dispatch:
