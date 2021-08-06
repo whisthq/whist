@@ -233,7 +233,9 @@ def create_ami_buffer(
     ]  # Fetching the AMI strings for instances running with new AMIs.
     # This will be used to select only the instances with current/older AMIs
 
-    for region_name, ami_id in region_to_ami_id_mapping.items():
+    for ami in new_amis:
+        region_name = ami.region_name
+        ami_id = ami.ami_id
         # grab a lock here
         region_row = (
             RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
