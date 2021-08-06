@@ -128,7 +128,7 @@ Defines
 #define MAX_SCREEN_HEIGHT 4096
 
 #define AUDIO_BITRATE 128000
-#define FPS 60
+#define FPS 90
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
