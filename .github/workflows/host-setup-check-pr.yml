@@ -105,7 +105,7 @@ jobs:
           data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
           data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
-          data["logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
+          data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
           # defined as a string of comma-separated values (no spaces) as required by Packer.

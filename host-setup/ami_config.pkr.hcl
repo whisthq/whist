@@ -63,7 +63,7 @@ variable "source_ami" {
   default = ""
 }
 
-variable "logz_shipping_token" {
+variable "mandelbox_logz_shipping_token" {
   type    = string
   default = ""
 }
@@ -155,7 +155,7 @@ build {
   }
 
   provisioner "shell" {
-    inline       = ["cd /home/ubuntu/host-setup", "./setup_ubuntu20_ami_host.sh ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash} ${var.logz_shipping_token}", "cd ..", "rm -rf host-setup"]
+    inline       = ["cd /home/ubuntu/host-setup", "./setup_ubuntu20_ami_host.sh ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
     pause_before = "10s"
   }
 
