@@ -17,7 +17,7 @@ from app.helpers.utils.general.name_generation import generate_name
 from app.constants.instance_state_values import InstanceState
 
 
-def test_prior_ami(db_session):
+def test_prior_ami():
     all_amis = RegionToAmi.query.all()
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
@@ -35,11 +35,15 @@ def test_prior_ami(db_session):
     db.session.commit()
     region_to_ami_map = {"us-east-1": "new-ami-us-east-1", "us-east-2": "new-ami-us-east-2"}
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_map)
+    print(new_amis)
     assert new_amis[0].ami_id == "new-ami-us-east-2", "failed to insert new AMI"
     assert new_amis[1].ami_id == "prior-ami-us-east-1", "failed to preserve prior AMI"
     assert (
         RegionToAmi.query.filter_by(ami_id="new-ami-us-east-1").limit(1).one_or_none() is None
     ), "still inserted new AMI despite prior ami existing"
+    for ami in new_amis:
+        db.session.remove(ami)
+        db.session.commit()
 
 
 def test_fail_disabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
