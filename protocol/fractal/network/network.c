@@ -395,7 +395,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     set_timeout(socket, 0);
     if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
         bool worked = get_last_network_error() == FRACTAL_EINPROGRESS;
-        LOG_INFO("Connect with EINPROGRESS!");
 
         if (!worked) {
             LOG_WARNING(
@@ -406,7 +405,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
             return false;
         }
     }
-    LOG_INFO("Connected!");
 
     // Select connection
     fd_set set;
@@ -428,18 +426,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
         return false;
     }
 
-    LOG_INFO("Socket: %d", socket);
-
-    int error;
-    int len = sizeof(error);
-    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (const char*)&error, &len) < 0) {
-        LOG_WARNING("Could not getsockopt SO_ERROR");
-        return -1;
-    }
-    LOG_INFO("Error: %d", error);
-
     set_timeout(socket, timeout_ms);
-    LOG_INFO("After timeout");
     return true;
 }
 
@@ -1396,8 +1383,6 @@ void set_timeout(SOCKET socket, int timeout_ms) {
         if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
                        sizeof(read_timeout)) < 0) {
             int err = get_last_network_error();
-            LOG_INFO("Args: %d / %d / %d", (int)socket, (int)read_timeout.tv_sec,
-                     (int)read_timeout.tv_usec);
             LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
 
             return;
