@@ -205,7 +205,7 @@ func unregisterInstance() error {
 	if err != nil {
 		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("UnregisterInstnace(): row went missing before we could delete it!")
+		return utils.MakeError("UnregisterInstance(): row went missing before we could delete it!")
 	}
 	logger.Infof("UnregisterInstance(): delete command successful")
 
