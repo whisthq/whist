@@ -36,7 +36,6 @@ typedef struct FrameData {
     int num_packets;
     int id;
     int packets_received;
-    int bytes_received;
     int frame_size;
     bool* received_indices;
     bool* nacked_indices;
@@ -68,6 +67,7 @@ typedef struct RingBuffer {
     int last_received_nonnack_id;
     int num_nacked;
     int frames_received;
+    int bytes_received;
     int max_id;
     clock missing_frame_nack_timer;
 
