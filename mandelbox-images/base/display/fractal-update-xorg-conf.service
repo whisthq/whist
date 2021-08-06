@@ -12,6 +12,8 @@ RemainAfterExit=true
 StandardOutput=journal+console
 StandardError=journal+console
 SyslogIdentifier=update-xorg-conf
+StandardOutput=file:/var/log/fractal/update_xorg_conf-out.log
+StandardError=file:/var/log/fractal/update_xorg_conf-err.log
 
 [Install]
 WantedBy=multi-user.target
