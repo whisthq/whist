@@ -15,10 +15,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Building
-  # Check that the Host Service builds.
+  # Check that the Host Service builds, and run some basic checks on it.
   host-service-check-pr-building:
-    name: Building
+    name: Building and Running "make check"
     runs-on: ubuntu-20.04
 
     steps:
@@ -57,3 +56,19 @@ jobs:
 
           # This will return an error if there is a non-empty diff
           git diff-index --quiet HEAD --
+
+  # Run gosec on the host-service codebase
+  # Runs (https://github.com/securego/gosec) to check for potential security issues
+  host-service-check-security:
+    name: Running gosec on the host service codebase
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        working-directory: host-service
+        with:
+          args: ./...
