@@ -31,7 +31,7 @@ const httpConfig = {
   endpointRefreshToken: "/token/refresh",
 }
 
-export const addSessionId = (body: object) => {
+export const withSessionID = (body: object) => {
   return {
     ...body,
     session_id: sessionID,
@@ -90,7 +90,7 @@ export const apiPut = async (
         })
       }
     )
-    request.write(JSON.stringify(addSessionId(body)))
+    request.write(JSON.stringify(withSessionID(body)))
     request.on("error", (e) => {
       reject(e)
     })
