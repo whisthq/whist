@@ -270,7 +270,7 @@ void request_iframe_to_catch_up() {
         int next_render_id = video_data.last_rendered_id + 1;
         FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
         if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES ||
-            (get_timer(ctx->frame_creation_timer) > 200.0 / 1000.0 &&
+            (ctx->id == next_render_id && get_timer(ctx->frame_creation_timer) > 200.0 / 1000.0 &&
              !video_data.is_waiting_for_iframe)) {
             // old condition, which only checked if we hadn't received any packets in a while:
             // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
