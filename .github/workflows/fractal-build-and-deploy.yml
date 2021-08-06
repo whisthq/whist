@@ -772,7 +772,7 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack that AMI upgrade has failed
-        if: always() && (steps.run-webserver-cli-ami-upgrade.outcome == 'failure')
+        if: always() && (steps.run-webserver-cli-ami-swap-over.outcome == 'failure')
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
