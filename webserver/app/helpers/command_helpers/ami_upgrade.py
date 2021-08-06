@@ -47,7 +47,6 @@ def insert_new_amis(
         potential_old_ami = RegionToAmi.query.filter_by(
             region_name=region_name, client_commit_hash=client_commit_hash
         ).one_or_none()
-        print(potential_old_ami)
         if potential_old_ami is not None:
             prior_amis.append(potential_old_ami)
         else:
