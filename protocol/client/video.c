@@ -825,6 +825,7 @@ void update_video() {
     if (throughput_time > 100.0 / 1000.0) {
         double bitrate = video_ring_buffer.bytes_received / time;
         LOG_INFO("bitrate for last %f ms: %f mbps", time * 1000, bitrate / (1024 * 1024));
+        start_timer(&video_data.throughput_timer);
     }
 
     if (get_timer(video_data.frame_timer) > 3) {
