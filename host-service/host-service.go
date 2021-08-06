@@ -209,6 +209,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
 				utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
+				utils.Sprintf("/fractal/temp/logs/%s/host-service-warmup-%d:/var/log/fractal", fc.GetMandelboxID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
 				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
 			},
