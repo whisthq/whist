@@ -924,7 +924,7 @@ jobs:
       always() &&
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
       (needs.webserver-deploy-heroku.result == 'success') &&
-      (needs.spin-up-new-buffer.result == 'success') &&
+      (needs.webserver-spin-up-new-buffer.result == 'success') &&
       (needs.microservices-deploy-auth0-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
 
