@@ -271,7 +271,7 @@ static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, boo
     if (!is_controlling) return 0;
     LOG_INFO("MSG RECEIVED FOR MBPS: %f", fmsg->mbps);
     max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-    // update_encoder = true;
+    update_encoder = true;
     return 0;
 }
 
