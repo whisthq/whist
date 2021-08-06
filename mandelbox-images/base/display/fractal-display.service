@@ -10,6 +10,8 @@ Type=notify
 NotifyAccess=all
 EnvironmentFile=/usr/share/fractal/fractal-display-config.env
 ExecStart=/usr/bin/xinit -- /usr/bin/Xorg :${fractal_display_number} -noreset +extension GLX +extension RANDR +extension RENDER -logfile ${fractal_xorg_log_file} -config ${fractal_xorg_conf_file} vt${fractal_tty_number}
+StandardOutput=file:/var/log/fractal/display-out.log
+StandardError=file:/var/log/fractal/display-err.log
 
 [Install]
 WantedBy=multi-user.target

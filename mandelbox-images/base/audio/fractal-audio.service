@@ -10,6 +10,8 @@ Type=exec
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/fractal/.Xauthority
 ExecStart=/usr/bin/pulseaudio --system --daemonize=no --exit-idle-time=-1 --disallow-exit
+StandardOutput=file:/var/log/fractal/audio-out.log
+StandardError=file:/var/log/fractal/audio-err.log
 
 [Install]
 WantedBy=multi-user.target
