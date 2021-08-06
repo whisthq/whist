@@ -661,7 +661,12 @@ jobs:
   webserver-swap-active-amis:
     name: "Update Fractal Services using Webserver"
     runs-on: ubuntu-20.04
-    needs: [client-applications-publish-build-s3, webserver-spin-up-new-buffer]
+    needs:
+      [
+        client-applications-publish-build-s3,
+        webserver-spin-up-new-buffer,
+        fractal-publish-build-config,
+      ]
     concurrency: webserver-swap-active-amis-${{ github.ref }}
     if: always() && (needs.client-applications-publish-build-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
     env:
