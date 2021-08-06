@@ -836,6 +836,7 @@ void update_video() {
         // calculate_statistics();
         max_bitrate = client_bitrate * 1.1;
         update_mbps = true;
+        start_timer(&video_data.frame_timer);
     }
 
     skip_to_next_iframe();
