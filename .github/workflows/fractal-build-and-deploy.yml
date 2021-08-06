@@ -540,7 +540,7 @@ jobs:
     concurrency: webserver-spin-up-new-buffer-${{ github.ref }}
     outputs:
       new_amis_str: ${{ steps.run-webserver-cli-ami-upgrade.outputs.new_amis}}
-    if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success') && (needs.client-applications-publish-build-s3.result == 'success')
+    if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success')
     env:
       TOKEN_FILE: .access_token
     steps:
