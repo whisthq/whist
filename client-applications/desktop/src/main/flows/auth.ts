@@ -67,7 +67,7 @@ export default flow<{
         ...tokens,
         configToken:
           tokens.configToken ??
-          store.get("configToken") ??
+          store.get("auth.configToken") ??
           generateRandomConfigToken(),
       })
     )
