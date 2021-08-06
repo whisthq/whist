@@ -6,7 +6,7 @@ import { destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
-import { showAppDock, hideAppDock } from "@app/utils/dock"
+import { hideAppDock } from "@app/utils/dock"
 
 const quit = () => {
   hideAppDock()
@@ -42,9 +42,6 @@ fromTrigger("windowInfo")
       },
       boolean
     ]) => {
-      // If the protocol closed, show the dock icon
-      if (args.hash === WindowHashProtocol && args.event === "close")
-        showAppDock()
       // If there are still windows open, ignore
       if (args.numberWindowsRemaining !== 0) return
       // If all windows are closed and the protocol wasn't the last open window, quit

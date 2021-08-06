@@ -7,11 +7,11 @@
 import { app } from "electron"
 
 export const showAppDock = () => {
-  // In case it's hidden, show the app dock
-  app?.dock?.show().catch((err) => console.error(err))
+  // Regular activation policy has an app dock
+  app?.setActivationPolicy?.("regular")
 }
 
 export const hideAppDock = () => {
-  // Hide the app dock just in case
-  app?.dock?.hide()
+  // Accessory activation policy does not have an app dock
+  app?.setActivationPolicy?.("accessory")
 }
