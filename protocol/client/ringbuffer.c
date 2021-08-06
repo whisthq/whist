@@ -197,8 +197,10 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         Returns:
             (int): 1 if we overwrote a valid frame, 0 on success, -1 on failure
             */
+    static int packet_size = sizeof(FractalPacket);
     FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
     bool overwrote_frame = false;
+    ring_buffer->bytes_received += packet_size;
     // This packet is old, because the current resident already contains packets with a newer ID in
     // it
     if (packet->id < frame_data->id) {
@@ -272,7 +274,6 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     }
     memcpy(frame_data->frame_buffer + place, packet->data, packet->payload_size);
     frame_data->frame_size += packet->payload_size;
-    ring_buffer->bytes_received += packet->payload_size;
 
     if (frame_data->packets_received == frame_data->num_packets) {
         ring_buffer->frames_received++;
