@@ -14,16 +14,11 @@ import {
   createUpdateWindow,
   createSignoutWindow,
   createProtocolWindow,
-  closeAllWindows,
   relaunch,
   createPaymentWindow,
   createTypeformWindow,
 } from "@app/utils/windows"
-import {
-  createTray,
-  toggleSignedInTray,
-  toggleSignedOutTray,
-} from "@app/utils/tray"
+import { createTray, createMenu } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { emitAuthCache, persistClear, store } from "@app/utils/persist"
@@ -58,7 +53,6 @@ fromTrigger("appReady")
 // Check Electron store for persisted data and create the tray
 fromTrigger("appReady").subscribe(() => {
   emitAuthCache()
-  createTray()
 })
 
 // appReady only fires once, at the launch of the application.
@@ -66,6 +60,7 @@ fromTrigger("appReady").subscribe(() => {
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
 fromTrigger("notPersisted").subscribe(() => {
+  createTray(createMenu(false))
   createAuthWindow()
 })
 
@@ -80,11 +75,7 @@ fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
   // On MacOS, hide the app dock when the protocol is open
   hideAppDock()
   // Present the tray (top right corner of screen)
-  toggleSignedInTray(x.userEmail)
-})
-
-fromTrigger("trayQuitAction").subscribe(() => {
-  closeAllWindows()
+  createTray(createMenu(true, x.userEmail))
 })
 
 // If the update is downloaded, quit the app and install the update
@@ -124,11 +115,6 @@ fromTrigger("clearCacheAction").subscribe(
   }
 )
 
-// On signout or relaunch, update the tray to the signed out version
-fromTrigger("clearCacheAction").subscribe(() => {
-  toggleSignedOutTray()
-})
-
 // If an admin selects a region, relaunch the app with the selected region passed
 // into argv so it can be read by flows/index.ts
 fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
@@ -149,6 +135,6 @@ fromTrigger("trayFeedbackAction").subscribe(() => {
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 fromTrigger("showPaymentWindow").subscribe(async () => {
-  const accessToken = (store.get("accessToken") ?? "") as string
+  const accessToken = (store.get("auth.accessToken") ?? "") as string
   await createPaymentWindow({ accessToken })
 })

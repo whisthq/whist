@@ -36,7 +36,6 @@ export default {
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",
-  trayQuitAction: "trayQuitAction",
   trayRegionAction: "trayRegionAction",
   trayFeedbackAction: "trayFeedbackAction",
   showPaymentWindow: "showPaymentWindow",
