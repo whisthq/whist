@@ -1008,14 +1008,29 @@ void log_frame_statistics(VideoFrame* frame) {
                  render_context.frame_size);
     }
 
+#define FPS_LOG_FREQUENCY_IN_SEC 10
+
     static clock time_since_last_frame;
+    static clock fps_clock;
+    static unsigned number_of_frames = 0;
     static bool initialized_fps_logging = false;
     if (!initialized_fps_logging) {
         initialized_fps_logging = true;
         start_timer(&time_since_last_frame);
+        start_timer(&fps_clock);
     }
-    log_double_statistic("FPS", 1.0 / get_timer(time_since_last_frame));
+    log_double_statistic("Time between frames (ms)",
+                         get_timer(time_since_last_frame) * MS_IN_SECOND);
     start_timer(&time_since_last_frame);
+
+    number_of_frames++;
+    if (get_timer(fps_clock) > FPS_LOG_FREQUENCY_IN_SEC) {
+        double fps_log_time = get_timer(fps_clock);
+        unsigned fps = (unsigned)(number_of_frames / fps_log_time);
+        LOG_INFO("Average FPS over the last %.1f seconds was %u", fps_log_time, fps);
+        number_of_frames = 0;
+        start_timer(&fps_clock);
+    }
 }
 
 int render_video() {
