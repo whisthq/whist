@@ -1,11 +1,12 @@
 import random, requests
 
-from app.models import RegionToAmi
+from app.models import RegionToAmi, db
 from tests.patches import function
 
 from app.helpers.command_helpers import ami_upgrade
 from app.helpers.command_helpers.ami_upgrade import (
     launch_new_ami_buffer,
+    insert_new_amis,
     create_ami_buffer,
     swapover_amis,
 )
@@ -14,6 +15,31 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_n
 from app.helpers.utils.general.name_generation import generate_name
 
 from app.constants.instance_state_values import InstanceState
+
+
+def test_prior_ami(db_session):
+    all_amis = RegionToAmi.query.all()
+    if len(all_amis) > 0:
+        randomized_ami = random.choice(all_amis)
+        region_name = randomized_ami.region_name
+    else:
+        region_name = "us-east-1"
+    client_commit_hash = "test-client-commit-hash"
+    prior_ami = RegionToAmi(
+        region_name=region_name,
+        client_commit_hash=client_commit_hash,
+        ami_id="prior-ami-us-east-1",
+        ami_active=False,
+    )
+    db.session.add(prior_ami)
+    db.session.commit()
+    region_to_ami_map = {"us-east-1": "new-ami-us-east-1", "us-east-2": "new-ami-us-east-2"}
+    new_amis = insert_new_amis(client_commit_hash, region_to_ami_map)
+    assert new_amis[0].ami_id == "new-ami-us-east-2", "failed to insert new AMI"
+    assert new_amis[1].ami_id == "prior-ami-us-east-1", "failed to preserve prior AMI"
+    assert (
+        RegionToAmi.query.filter_by(ami_id="new-ami-us-east-1").limit(1).one_or_none() is None
+    ), "still inserted new AMI despite prior ami existing"
 
 
 def test_fail_disabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
