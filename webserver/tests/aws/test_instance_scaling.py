@@ -543,7 +543,7 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
         call_list.append({"args": args, "kwargs": kwargs})
 
     monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
-    region_ami_pairs_length = 4
+    region_ami_pairs_length = 2
     randomly_picked_ami_objs = get_random_regions(region_ami_pairs_length)
     region_ami_pairs = [
         (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
