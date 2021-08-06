@@ -337,7 +337,8 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
         for (int i = max(0, frame_data->last_nacked_index + 1); i <= index; i++) {
             frame_data->last_nacked_index = max(frame_data->last_nacked_index, i);
-            if (!frame_data->received_indices[i] && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
+            if (!frame_data->received_indices[i] &&
+                frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
                 frame_data->nacked_indices[i]++;
                 nack_packet(ring_buffer, frame_data->id, i);
                 start_timer(&frame_data->last_nacked_timer);
