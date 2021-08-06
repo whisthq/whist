@@ -17,6 +17,7 @@ fixes:
 
 ignore:
   - "webserver/app/sentry.py"
+  - "webserver/app/cli.py"
 
 parsers:
   gcov:
