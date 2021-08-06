@@ -44,8 +44,11 @@ def insert_new_amis(
     prior_amis = []
     new_amis = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
-        if (old_ami := RegionToAmi.query.get((region_name, client_commit_hash))) is not None:
-            prior_amis.append(old_ami)
+        potential_old_ami = RegionToAmi.query.filter_by(
+            region_name=region_name, client_commit_hash=client_commit_hash
+        ).one_or_none()
+        if potential_old_ami is not None:
+            prior_amis.append(potential_old_ami)
         else:
             new_ami = RegionToAmi(
                 region_name=region_name,
@@ -56,7 +59,8 @@ def insert_new_amis(
             new_amis.append(new_ami)
     db.session.add_all(new_amis)
     db.session.commit()
-    return new_amis + prior_amis
+    new_amis.extend(prior_amis)
+    return new_amis
 
 
 def launch_new_ami_buffer(
@@ -229,7 +233,9 @@ def create_ami_buffer(
     ]  # Fetching the AMI strings for instances running with new AMIs.
     # This will be used to select only the instances with current/older AMIs
 
-    for region_name, ami_id in region_to_ami_id_mapping.items():
+    for ami in new_amis:
+        region_name = ami.region_name
+        ami_id = ami.ami_id
         # grab a lock here
         region_row = (
             RegionToAmi.query.filter_by(region_name=region_name, ami_id=ami_id)
