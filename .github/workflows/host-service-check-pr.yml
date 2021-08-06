@@ -68,6 +68,9 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      - name: Switch working directory to host-service
+        run: cd host-service
+
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
         with:
