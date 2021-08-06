@@ -27,8 +27,8 @@ command_bp = Blueprint("command", __name__, cli_group="ami")
 # Can be invoked through
 # `flask ami create_buffers <client_commit_hash> <region_to_ami_id_mapping_str>`
 @command_bp.cli.command("create_buffers")
-@click.argument("client_commit_hash", help="The commit hash these AMIs correspond to.")
-@click.argument("region_to_ami_id_mapping_str", help="A stringified dict mapping regions to AMIs")
+@click.argument("client_commit_hash")
+@click.argument("region_to_ami_id_mapping_str")
 def create_buffers(
     client_commit_hash: str,
     region_to_ami_id_mapping_str: str,
@@ -52,7 +52,7 @@ def create_buffers(
 # Can be invoked through
 # `flask ami swap_over_buffers <new_amis>`
 @command_bp.cli.command("swap_over_buffers")
-@click.argument("new_amis", help="A stringified list of the new AMIs" " we want to make active")
+@click.argument("new_amis")
 def swap_over_buffers(
     new_amis: str,
 ):
