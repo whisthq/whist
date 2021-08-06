@@ -17,23 +17,24 @@ from tests.helpers.data.test_data_generator import populate_test_data
 # Blueprint for registering the functions under 'command'
 # Reference: https://flask.palletsprojects.com/en/2.0.x/cli/#registering-commands-with-blueprints
 # All the functions in this file will be nested under `flask command <sub_command>`
-# The <sub_command> can be registered by using the `@command_bp.cli.command(<sub_command>)` decorator
-command_bp = Blueprint("command", __name__)
+# The <sub_command> can be registered by using `@command_bp.cli.command(<sub_command>)`
+command_bp = Blueprint("command", __name__, cli_group="ami")
 
 
 # Registering custom command https://flask.palletsprojects.com/en/2.0.x/cli/#custom-commands
 
 
-# This function upgrades the AMIs for given client hash and the region.
-# Can be invoked through `flask command ami_upgrade <client_commit_hash> <region_to_ami_id_mapping_str>`
-@command_bp.cli.command("ami_create_buffers")
-@click.argument("client_commit_hash")
-@click.argument("region_to_ami_id_mapping_str")
-def ami_create_buffers(
+# Can be invoked through
+# `flask ami create_buffers <client_commit_hash> <region_to_ami_id_mapping_str>`
+@command_bp.cli.command("create_buffers")
+@click.argument("client_commit_hash", help="The commit hash these AMIs correspond to.")
+@click.argument("region_to_ami_id_mapping_str", help="A stringified dict mapping regions to AMIs")
+def create_buffers(
     client_commit_hash: str,
     region_to_ami_id_mapping_str: str,
 ) -> None:
     """
+    This function creates buffers of instances for a given set of AMIs.
     Args:
         client_commit_hash: The commit hash of the client that will be compatible with the
                             AMIs passed in as the second argument
@@ -48,12 +49,16 @@ def ami_create_buffers(
     print(f"::set-output name=new_amis::{dumps(new_amis)}")
 
 
-@command_bp.cli.command("ami_swap_over_buffers")
-@click.argument("new_amis")
-def ami_swap_over_buffers(
+# Can be invoked through
+# `flask ami swap_over_buffers <new_amis>`
+@command_bp.cli.command("swap_over_buffers")
+@click.argument("new_amis", help="A stringified list of the new AMIs" " we want to make active")
+def swap_over_buffers(
     new_amis: str,
 ):
     """
+    This function sets the new AMIs to active, the old AMIs to inactive,
+    and drains all previously active instances.
     Args:
         new_amis: Stringified list of new AMIs
     Returns:
