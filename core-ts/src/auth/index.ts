@@ -83,14 +83,24 @@ export const authInfoParse = (res: {
   Arguments:
     Response (Record): Auth0 response object
   Returns:
-    {email, sub, accessToken, refreshToken}
+    {email, sub, accessToken, refreshToken, subscriptionStatus}
   */
 
   try {
-    const decoded = jwtDecode(res?.json?.id_token ?? "") as any
-    const jwtIdentity = decoded?.sub
-    const userEmail = decoded?.email
     const accessToken = res?.json?.access_token
+    const decodedAccessToken = jwtDecode(accessToken ?? "") as any
+    const decodedIdToken = jwtDecode(res?.json?.id_token ?? "") as any
+    const jwtIdentity = decodedAccessToken?.sub
+    const userEmail = decodedIdToken?.email
+    const subscriptionStatus = decodedAccessToken["https://api.fractal.co/subscription_status"]
+
+    if (typeof accessToken !== "string")
+      return {
+        error: {
+          message: "Response does not have .json.access_token",
+          data: res,
+        },
+      }
     if (typeof jwtIdentity !== "string")
       return {
         error: {
@@ -105,14 +115,7 @@ export const authInfoParse = (res: {
           data: res,
         },
       }
-    if (typeof accessToken !== "string")
-      return {
-        error: {
-          message: "Response does not have .json.access_token",
-          data: res,
-        },
-      }
-    return { jwtIdentity, userEmail, accessToken }
+    return { jwtIdentity, userEmail, accessToken, subscriptionStatus }
   } catch (err) {
     return {
       error: {

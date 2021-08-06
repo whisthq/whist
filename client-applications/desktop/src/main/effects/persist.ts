@@ -15,6 +15,7 @@ merge(
     accessToken: string
     refreshToken: string
     configToken: string
+    subscriptionStatus: string
   }) => {
     toPairs(args).forEach(([key, value]) => {
       persist(key, value)

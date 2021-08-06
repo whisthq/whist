@@ -1,5 +1,5 @@
 export { configGet, configPost } from "./http"
-export { paymentPortalRequest, paymentPortalParse } from "./payment"
+export { paymentPortalRequest, paymentPortalParse, hasValidSubscription } from "./payment"
 export {
   generateRandomConfigToken,
   authPortalURL,
@@ -21,4 +21,5 @@ export {
   userEmail,
   userPassword,
   paymentPortalURL,
+  subscriptionStatus,
 } from "./types/data"

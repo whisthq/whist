@@ -1,6 +1,6 @@
 import { config } from "../config"
 import { configGet } from "../"
-import { accessToken } from "../types/data"
+import { accessToken, subscriptionStatus } from "../types/data"
 
 const get = configGet({ server: config.WEBSERVER_URL })
 
@@ -32,4 +32,8 @@ export const paymentPortalParse = (res: any) => {
       data: res,
     },
   }
+}
+
+export const hasValidSubscription = ({subscriptionStatus} : subscriptionStatus): boolean => {
+  return ["active", "trialing"].includes(subscriptionStatus)
 }

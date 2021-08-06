@@ -2,6 +2,7 @@ import { merge, Observable } from "rxjs"
 import { map, take } from "rxjs/operators"
 
 import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
+import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
@@ -27,8 +28,10 @@ const auth = authFlow(
   )
 )
 
+const checkPayment = checkPaymentFlow(fromTrigger(TRIGGER.authFlowSuccess))
+
 // Observable that fires when Fractal is ready to be launched
-const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
+const launchTrigger = fromTrigger(TRIGGER.checkPaymentFlowSuccess).pipe(
   map((x: object) => ({
     ...x, // { accessToken, configToken }
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
@@ -45,7 +48,12 @@ const mandelbox = mandelboxFlow(launchTrigger)
 
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
-const refresh = authRefreshFlow(fromSignal(launchTrigger, mandelbox.success))
+const refresh = authRefreshFlow(
+  merge(
+    fromTrigger(TRIGGER.stripeAuthRefresh),
+    fromSignal(launchTrigger, mandelbox.success)
+  )
+)
 refresh.failure.subscribe()
 
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
@@ -54,6 +62,9 @@ createTrigger(TRIGGER.downloadProgress, update.progress)
 createTrigger(TRIGGER.authFlowSuccess, auth.success)
 createTrigger(TRIGGER.authFlowFailure, auth.failure)
 createTrigger(TRIGGER.authRefreshSuccess, refresh.success)
+
+createTrigger(TRIGGER.checkPaymentFlowSuccess, checkPayment.success)
+createTrigger(TRIGGER.checkPaymentFlowFailure, checkPayment.failure)
 
 createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)

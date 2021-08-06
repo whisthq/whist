@@ -8,6 +8,7 @@ export interface StateIPC {
   password: string // Currently deprecated
   refreshToken: string // Auth0 refresh token
   accessToken: string // JWT
+  subscriptionStatus: string // user's current Stripe subscription status
   userConfigToken: string // Config token for app config security
   updateInfo: string // Autoupdate object with update stats like download speed, sent to render thread
   trigger: Trigger // Renderer triggers like button clicks

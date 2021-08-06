@@ -70,7 +70,7 @@ fromTrigger("notPersisted").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
+fromTrigger("checkPaymentFlowSuccess").subscribe((x: { userEmail: string }) => {
   // Launch the protocol
   createProtocolWindow().catch((err) => console.error(err))
   // On MacOS, hide the app dock when the protocol is open
@@ -100,7 +100,13 @@ fromTrigger("clearCacheAction").subscribe(
   (payload: { clearConfig: boolean }) => {
     persistClear(
       [
-        ...["accessToken", "refreshToken", "subClaim", "userEmail"],
+        ...[
+          "accessToken",
+          "refreshToken",
+          "subClaim",
+          "userEmail",
+          "subscriptionStatus",
+        ],
         ...(payload.clearConfig ? ["configToken"] : []),
       ],
       "auth"
@@ -126,6 +132,10 @@ fromTrigger("relaunchAction").subscribe(() => {
   relaunch()
 })
 
+fromTrigger("stripeRelaunch").subscribe(() => {
+  relaunch()
+})
+
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
 })
@@ -141,5 +151,21 @@ fromTrigger("trayBugAction").subscribe(() => {
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 fromTrigger("showPaymentWindow").subscribe(async () => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
-  await createPaymentWindow({ accessToken })
+  const refreshToken = (store.get("auth.refreshToken") ?? "") as string
+  await createPaymentWindow({
+    accessToken,
+    refreshToken,
+    fromPaymentCheckFailure: false,
+  })
+})
+
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+fromTrigger("checkPaymentFlowFailure").subscribe(async () => {
+  const accessToken = (store.get("auth.accessToken") ?? "") as string
+  const refreshToken = (store.get("auth.refreshToken") ?? "") as string
+  await createPaymentWindow({
+    accessToken,
+    refreshToken,
+    fromPaymentCheckFailure: true,
+  })
 })

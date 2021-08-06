@@ -40,3 +40,7 @@ fromTrigger("authFlowFailure").subscribe(() => {
 fromTrigger("windowInfo").subscribe((args: { crashed: boolean }) => {
   if (args.crashed) createErrorWindow(PROTOCOL_ERROR)
 })
+
+fromTrigger("stripePaymentError").subscribe(() => {
+  createErrorWindow(NO_PAYMENT_ERROR)
+})

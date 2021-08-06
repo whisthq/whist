@@ -42,6 +42,7 @@ import {
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()
+export const stripeEvent = new events.EventEmitter()
 
 const { buildRoot } = config
 
@@ -218,8 +219,12 @@ export const createAuthWindow = () => {
 
 export const createPaymentWindow = async ({
   accessToken,
+  refreshToken,
+  fromPaymentCheckFailure,
 }: {
   accessToken: string
+  refreshToken: string
+  fromPaymentCheckFailure: boolean
 }) => {
   const response = await paymentPortalRequest({ accessToken })
   const { paymentPortalURL } = paymentPortalParse(response)
@@ -229,7 +234,6 @@ export const createPaymentWindow = async ({
       ...base,
       ...width.lg,
       ...height.md,
-      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
     customURL: paymentPortalURL,
@@ -244,6 +248,23 @@ export const createPaymentWindow = async ({
   }
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   webRequest.onBeforeRequest(filter, async ({ url }) => {
+    if (
+      url === "http://localhost/callback/payment" ||
+      url === "http://localhost/callback/payment?success=true"
+    ) {
+      // if it’s from the customer portal or a successful checkout
+      stripeEvent.emit("stripe-auth-refresh", {
+        accessToken,
+        refreshToken,
+      })
+      if (fromPaymentCheckFailure) {
+        stripeEvent.emit("stripe-relaunch")
+      }
+    } else if (url === "http://localhost/callback/payment?success=false") {
+      if (fromPaymentCheckFailure) {
+        stripeEvent.emit("stripe-payment-error")
+      }
+    }
     win.close()
   })
   return win
