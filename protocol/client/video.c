@@ -821,16 +821,21 @@ void update_video() {
         update from the server
     */
 
+    static int client_bitrate = STARTING_BITRATE;
+    static const double alpha = 0.8;
     double throughput_time = get_timer(video_data.throughput_timer);
     if (throughput_time > 100.0 / 1000.0) {
-        double bitrate = video_ring_buffer->bytes_received / throughput_time;
-        LOG_INFO("bitrate for last %f ms: %f mbps", throughput_time * 1000, (bitrate * 8) / (1024 * 1024));
+        double bitrate = 8 * video_ring_buffer->bytes_received / throughput_time;
+        LOG_INFO("bitrate for last %f ms: %f mbps", throughput_time * 1000, bitrate / (1024 * 1024));
+        client_bitrate = alpha * client_bitrate + (1 - alpha) * (int)bitrate;
         video_ring_buffer->bytes_received = 0;
         start_timer(&video_data.throughput_timer);
     }
 
     if (get_timer(video_data.frame_timer) > 3) {
-        calculate_statistics();
+        // calculate_statistics();
+        max_bitrate = client_bitrate * 1.1;
+        update_mbps = true;
     }
 
     skip_to_next_iframe();
