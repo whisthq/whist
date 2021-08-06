@@ -265,17 +265,23 @@ void request_iframe_to_catch_up() {
     */
     if (!rendering) {
         // If we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
-
-        if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
+        // we should also request if the next to render frame has been sitting for 200ms and we
+        // still haven't rendered.
+        int next_render_id = video_data.last_rendered_id + 1;
+        FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
+        if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES ||
+            (get_timer(ctx->frame_creation_timer) > 200.0 / 1000.0 &&
+             !video_data.is_waiting_for_iframe)) {
             // old condition, which only checked if we hadn't received any packets in a while:
             // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
             // cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
             if (request_iframe()) {
                 LOG_INFO(
                     "The most recent ID is %d frames ahead of the most recent rendered frame, "
-                    "and there is no available frame to render. I-Frame is now being requested "
-                    "to catch-up.",
-                    MAX_UNSYNCED_FRAMES);
+                    "and the next frame to render has been alive for %f MS. I-Frame is now being "
+                    "requested to catch-up.",
+                    video_ring_buffer->max_id - video_data.last_rendered_id,
+                    get_timer(ctx->frame_creation_timer) * 1000);
             }
         } else {
 #if REQUEST_IFRAME_ON_MISSING_PACKETS
@@ -865,14 +871,15 @@ void update_video() {
                     int num_nacked = 0;
                     for (int i = ctx->last_nacked_index + 1;
                          i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
-                        if (!ctx->received_indices[i]) {
+                        if (!ctx->received_indices[i] &&
+                            ctx->nacked_indices[i] < MAX_PACKET_NACKS) {
                             num_nacked++;
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
                                 ctx->id, i, ctx->num_packets,
                                 get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
-                            ctx->nacked_indices[i] = true;
+                            ctx->nacked_indices[i]++;
                             nack_packet(video_ring_buffer, ctx->id, i);
                         }
                         ctx->last_nacked_index = i;

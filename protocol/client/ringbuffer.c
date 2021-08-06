@@ -66,8 +66,9 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
         frame_data->frame_buffer = NULL;
         int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
+        int nacked_array_size = ring_buffer->largest_num_packets * sizeof(int);
         frame_data->received_indices = safe_malloc(indices_array_size);
-        frame_data->nacked_indices = safe_malloc(indices_array_size);
+        frame_data->nacked_indices = safe_malloc(nacked_array_size);
     }
 
     // determine largest frame size
@@ -133,13 +134,14 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
             */
     FrameData* frame_data = get_frame_at_id(ring_buffer, id);
     int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
+    int nacked_array_size = ring_buffer->largest_num_packets * sizeof(int);
     // initialize new framedata
     frame_data->id = id;
     allocate_frame_buffer(ring_buffer, frame_data);
     frame_data->packets_received = 0;
     frame_data->num_packets = num_indices;
     memset(frame_data->received_indices, 0, indices_array_size);
-    memset(frame_data->nacked_indices, 0, indices_array_size);
+    memset(frame_data->nacked_indices, 0, nacked_array_size);
     frame_data->last_nacked_index = -1;
     frame_data->num_times_nacked = 0;
     // frame_data->rendered = false;
@@ -238,7 +240,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
             LOG_INFO("NACK for ID %d, Index %d received, but didn't need it.", packet->id,
                      packet->index);
         }
-    } else if (frame_data->nacked_indices[packet->index]) {
+    } else if (frame_data->nacked_indices[packet->index] > 0) {
         LOG_INFO("Received original ID %d, Index %d, but we had NACK'ed for it.", packet->id,
                  packet->index);
     }
@@ -259,7 +261,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         nack_missing_frames(ring_buffer, ring_buffer->last_received_nonnack_id + 1, frame_data->id);
     }
     // -5 because UDP packets can arrive out of order
-    nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index - 5);
+    nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index - 10);
     if (!packet->is_a_nack) {
         ring_buffer->last_received_nonnack_id = frame_data->id;
     }
@@ -335,8 +337,8 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
         for (int i = max(0, frame_data->last_nacked_index + 1); i <= index; i++) {
             frame_data->last_nacked_index = max(frame_data->last_nacked_index, i);
-            if (!frame_data->received_indices[i]) {
-                frame_data->nacked_indices[i] = true;
+            if (!frame_data->received_indices[i] && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
+                frame_data->nacked_indices[i]++;
                 nack_packet(ring_buffer, frame_data->id, i);
                 start_timer(&frame_data->last_nacked_timer);
                 break;
