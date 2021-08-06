@@ -70,6 +70,5 @@ jobs:
 
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
-        working-directory: host-service
         with:
-          args: ./...
+          args: host-service/...
