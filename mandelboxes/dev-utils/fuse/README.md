@@ -16,7 +16,7 @@ to build the image.
 
 ### Running
 
-The best way to run this image is from the `container-images` project in https://github.com/fractal/fractal. Simply run
+The best way to run this image is from the `mandelbox-images` project in https://github.com/fractal/fractal. Simply run:
 ```bash
 ./run_local_container_image mandelbox-utils/fuse
 ```
