@@ -28,7 +28,7 @@ const Privacy = () => {
       >
         <div style={{ fontSize: 40 }}>PRIVACY POLICY</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated October 8th, 2020
+          Last updated August 7th, 2021
         </div>
 
         <p>
@@ -41,7 +41,7 @@ const Privacy = () => {
           your right to privacy. This privacy policy explains what happens to
           the personal information we collect through our website (such as{" "}
           <a href="https://www.fractal.co">www.fractal.co</a>
-          ), and/or any related services, sales, marketing or events (we refer
+          ), social media pages, job applications, support requests via email or other forum-based platforms, and/or any related services, sales, marketing or events (we refer
           to them collectively in this privacy policy as the "Services"). This
           policy will also identify your rights regarding your personal
           information. If you have any questions or concerns about our policy,
@@ -97,7 +97,7 @@ const Privacy = () => {
           register your interest in our services and products, when you register
           your interest in information and promotional offers regarding our
           services, when you register to participate in activities related to
-          the service, or when you contact us.
+          the service or when you apply for a position, or when you contact us.
         </p>
         <p>
           The personal information that we collect depends on the type of
@@ -112,17 +112,17 @@ const Privacy = () => {
             Publicly Available Personal Information
           </p>
           <p>
-            We collect first name, maiden name, last name, and pseudonyms email
+            We may collect first name, maiden name, last name, and pseudonyms email
             addresses; business email; business phone number; phone numbers;
             social media; state of residence; country of residence and other
-            similar data.
+            similar data, as available on the Internet such as from Google or other of our service providers.
           </p>
           <p style={{ fontWeight: "bold" }}>
             Personal Information Provided By You
           </p>
           <p>
-            We collect application usage data; application usage location; data
-            collected from surveys; and other similar data.
+            We collect usage data; application usage location; data
+            collected from surveys; and other similar data regarding your usage of the Fractal Services.
           </p>
           <p style={{ fontWeight: "bold" }}>Credentials</p>
           <p>
@@ -163,6 +163,13 @@ const Privacy = () => {
           our Services but it is not tied to your name.
         </p>
         <p>
+
+
+        We also store, 
+            if you choose for us to do so, settings and session data related to your Fractal account, 
+            to maintain your experience across sessions and devices. This data is always stored encrypted and cannot be accessed by anyone
+            internally at Fractal
+
           Each time you interact with the Services, we automatically collect
           some information to maintain the security and operation of our
           Services, generate internal analytics and comply with reporting
