@@ -28,7 +28,7 @@ const Cookies = () => {
       >
         <div style={{ fontSize: 40 }}>COOKIE POLICY</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated August 7th, 2021
+          Last updated October 8th, 2020
         </div>
         <p>
           Fractal Computers, Inc. (“we” or “us” or “our”) may use cookies and
@@ -52,9 +52,6 @@ const Cookies = () => {
           will be subject to, and will be deemed to have accepted the changes in
           any revised Cookie Policy by your continued use of the Site after the
           date such revised Cookie Policy is posted.
-        </p>
-        <p>
-          You can manage/delete cookies as you wish - for details, see <a href="www.aboutcookies.org">aboutcookies.org</a>.
         </p>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>What Are Cookies</p>
         <p>
@@ -109,7 +106,7 @@ const Cookies = () => {
           <p>
             We use cookies to remember your login state when you are logged in.
             This prevents you from having to log in every single time you visit
-            a new page or launch our application. These cookies are typically removed or cleared when you
+            a new page. These cookies are typically removed or cleared when you
             log out to ensure that you can only access restricted features and
             areas when logged in.
           </p>
