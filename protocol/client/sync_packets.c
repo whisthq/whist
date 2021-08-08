@@ -114,7 +114,10 @@ void update_ping() {
         last_pong_id = last_ping_id;
         ping_failures++;
         if (ping_failures == 3) {
-            LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
+            // only LOG_ERROR on `staging` and `prod`, as this error shows up frequently when developing
+            if (!strcmp(error_monitor_environment, "dev")) {
+                LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
+            }
             connected = false;
         }
     }

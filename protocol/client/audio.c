@@ -141,7 +141,10 @@ void reinit_audio_device() {
         LOG_INFO("Using Audio Freqency: %d", audio_spec.freq);
     }
     if (audio_context.dev == 0) {
-        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
+        // only LOG_ERROR on `staging` and `prod`, as this error shows up frequently when developing
+        if (!strcmp(error_monitor_environment, "dev")) {
+            LOG_ERROR("Failed to open audio: %s", SDL_GetError());
+        }
     } else {
         SDL_PauseAudioDevice(audio_context.dev, 0);
     }
@@ -399,7 +402,10 @@ void render_audio() {
                                  audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
             if (res < 0) {
-                LOG_ERROR("Could not play audio!");
+                // only LOG_ERROR on `staging` and `prod`, as this error shows up frequently when developing
+                if (!strcmp(error_monitor_environment, "dev")) {
+                    LOG_ERROR("Could not play audio!");
+                }
             }
         }
         // No longer rendering audio

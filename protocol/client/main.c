@@ -591,7 +591,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (try_amount >= 3) {
-        LOG_ERROR("Failed to connect after three attempts!");
+        // only LOG_ERROR on `staging` and `prod`, as this error shows up frequently when developing
+        if (!strcmp(error_monitor_environment, "dev")) {
+            LOG_ERROR("Failed to connect after three attempts!");
+        }
     }
 
     // Destroy any resources being used by the client

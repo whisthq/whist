@@ -254,8 +254,11 @@ bool handshake_private_key(SocketContext* context) {
         return false;
     }
     if (sendp(context, &their_priv_key_data, sizeof(their_priv_key_data)) < 0) {
-        LOG_ERROR("sendp(3) failed! Could not send signed private key data! %d",
-                  get_last_network_error());
+        // only LOG_ERROR on `staging` and `prod`, as this error shows up frequently when developing
+        if (!strcmp(error_monitor_environment, "dev")) {
+            LOG_ERROR("sendp(3) failed! Could not send signed private key data! %d",
+                      get_last_network_error());
+        }
         return false;
     }
     fractal_sleep(50);
