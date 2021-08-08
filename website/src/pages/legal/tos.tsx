@@ -29,7 +29,7 @@ const TermsOfService = () => {
       >
         <div style={{ fontSize: 40 }}>TERMS OF SERVICE</div>
         <div style={{ color: "#555555", marginBottom: 40 }}>
-          Last updated October 13th, 2020
+          Last updated August 7th, 2021
         </div>
         <div>
           <p>
@@ -71,7 +71,7 @@ const TermsOfService = () => {
           <p>
             By registering for and/or using the Services in any manner,
             including but not limited to visiting or browsing the Site and/or
-            downloading the Applications, you agree to these Terms of Service
+            downloading and/or using the Applications, you agree to these Terms of Service
             and all other operating rules, policies and procedures that may be
             published from time to time on the Site by us, each of which is
             incorporated by reference and each of which may be updated from time
@@ -126,14 +126,18 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Product</p>
           <p>
-            Fractal is a provider of cloud-based applications ("Cloud
-            Applications"). Cloud Applications are similar to a regular
-            applications in that once your Fractal subscription is active, they
-            can be interacted with as you normally would with a local version of
-            the application, except that they are installed on remote machines
-            and delivered to your local device via the Fractal streaming
-            service. Unless indicated otherwise, your Fractal Cloud Applications
-            run on Linux Ubuntu 20.04. These applications are developed by
+            Fractal is a provider of cloud-based browsers ("Cloud
+            Browsers"). A Cloud Browser is similar to a regular browser in that once your 
+            Fractal subscription is active, it can be interacted with as you normally would with a local 
+            browser running natively on your device, except that the Cloud Browser is installed on a remote 
+            machine and delivered to your local device via the Fractal streaming service. Unless indicated otherwise, your Fractal Cloud Browser is hosted on a machine
+            running Linux Ubuntu 20.04. 
+            
+            
+
+            HERE
+            
+            These applications are developed by
             third-parties and are serviced via Fractal in agreements with the
             applications Terms of Services. By using any application through
             Fractal, you consent to the Terms of Service and Privacy Policy of

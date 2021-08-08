@@ -32,7 +32,7 @@ const Cookies = () => {
         </div>
         <p>
           Fractal Computers, Inc. (“we” or “us” or “our”) may use cookies and
-          other tracking technologies when you visit our website,{" "}
+          other tracking technologies when you visit our website, {" "}
           <a href="/privacy#top">www.fractal.co</a>, including any other media
           form, media channel, mobile website, or mobile application related or
           connected thereto (collectively, the “Site”) to help customize the
@@ -109,7 +109,7 @@ const Cookies = () => {
           <p>
             We use cookies to remember your login state when you are logged in.
             This prevents you from having to log in every single time you visit
-            a new page or launch our application. These cookies are typically removed or cleared when you
+            a new page or launch our applicatio(s)). These cookies are typically removed or cleared when you
             log out to ensure that you can only access restricted features and
             areas when logged in.
           </p>
@@ -122,7 +122,7 @@ const Cookies = () => {
           </p>
           <p style={{ fontWeight: "bold" }}>Subscription Processing Cookies</p>
           <p>
-            This Site offers subscription and digital payment facilities, and
+            This Site, and our application(s), offer subscription and digital payment facilities, and
             some cookies are essential to ensure that your order is remembered
             between pages so that we can process it properly.
           </p>

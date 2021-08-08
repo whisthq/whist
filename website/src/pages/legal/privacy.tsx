@@ -30,7 +30,6 @@ const Privacy = () => {
         <div style={{ color: "#555555", marginBottom: 40 }}>
           Last updated August 7th, 2021
         </div>
-
         <p>
           Thank you for choosing to be part of our community at Fractal
           Computers, Inc., doing business as Fractal (“Fractal”, “we”, “us”, or
@@ -41,8 +40,8 @@ const Privacy = () => {
           your right to privacy. This privacy policy explains what happens to
           the personal information we collect through our website (such as{" "}
           <a href="https://www.fractal.co">www.fractal.co</a>
-          ), social media pages, job applications, support requests via email or other forum-based platforms, and/or any related services, sales, marketing or events (we refer
-          to them collectively in this privacy policy as the "Services"). This
+          ), and/or any related services, sales, marketing or events (we refer
+          to them collectively in this privacy policy as the "Services"), and through our social media pages, job application system, and/or support requests via email or other forum-based platforms. This
           policy will also identify your rights regarding your personal
           information. If you have any questions or concerns about our policy,
           or our practices with regards to your personal information, please
@@ -52,7 +51,6 @@ const Privacy = () => {
           any terms in this privacy policy that you disagree with, please
           discontinue the use of our Sites and our Services.
         </p>
-
         <p style={{ fontWeight: "bold", fontSize: 20 }}>Table Of Contents</p>
         <ol>
           <li>What Information Do We Collect?</li>
@@ -73,7 +71,6 @@ const Privacy = () => {
             How Can You Review, Update, Or Delete The Data We Collect From You?
           </li>
         </ol>
-
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
           1. What Information Do We Collect?
         </p>
@@ -160,16 +157,12 @@ const Privacy = () => {
         <p>
           <u>Summary:</u> Some information — such as IP address and/or browser
           and device characteristics — is collected automatically when you visit
-          our Services but it is not tied to your name.
+          our Services but it is not tied to your name. Some information - such as 
+          session data - is collected automatically when you use our Services to 
+          ensure session persistence across your sessions and devices, and is 
+          stored encrypted and tied to your user account.
         </p>
         <p>
-
-
-        We also store, 
-            if you choose for us to do so, settings and session data related to your Fractal account, 
-            to maintain your experience across sessions and devices. This data is always stored encrypted and cannot be accessed by anyone
-            internally at Fractal
-
           Each time you interact with the Services, we automatically collect
           some information to maintain the security and operation of our
           Services, generate internal analytics and comply with reporting
@@ -181,6 +174,14 @@ const Privacy = () => {
           technical information. However, this information is not connected to
           your name or other personal identifiers (like your contact details).
         </p>
+        <p>
+
+          When you use the Applicatiob(s), 
+
+        HERE
+
+
+        </p>
         <div style={{ paddingLeft: 20 }}>
           <p style={{ fontWeight: "bold" }}>Online Identifiers</p>
           <p>
@@ -191,9 +192,22 @@ const Privacy = () => {
             other similar data.
           </p>
         </div>
+        <div style={{ paddingLeft: 20 }}>
+          <p style={{ fontWeight: "bold" }}>Session Data</p>
+          <p>
+            We collect data associated with your usage sessions of our Services 
+            so that your experience of our Services is persistent across multiple 
+            sessions and devices. This data is encrypted and cannot be read by us, and is tied to your user account. For 
+            more details on how we store and manage your session data, continue to the section
+            called "HOW WE HANDLE YOUR SESSION DATA" below.
+          </p>
+        </div>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
           2. How Do We Use Your Information?
         </p>
+
+
+
         <p>
           <u>Summary:</u> We process your information with your consent to
           advance our legitimate business interests in compliance with our legal
@@ -389,6 +403,11 @@ const Privacy = () => {
           <u>Summary:</u> If you choose to register or log in to our Services
           using a social media account, we may have access to certain
           information about you.
+
+
+
+          add sth about Auth0 here and link the privacy policy
+
         </p>
         <p>
           Our Services offer you the ability to register and login using your
