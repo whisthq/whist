@@ -24,13 +24,6 @@ checkCI:
 ifeq ($(CI),true)
 	# We're building on GitHub Actions, so we need to require non-trivial secrets
 	$(info CI is true)
-ifeq ($(origin LOGZIO_SHIPPING_TOKEN),file)
-	# This means that a replacement secret was not passed in on the command-line or as an environment variable
-	$(error "LOGZIO_SHIPPING_TOKEN is not set, but CI is true")
-endif
-ifeq ($(LOGZIO_SHIPPING_TOKEN),)
-	$(error "LOGZIO_SHIPPING_TOKEN is empty, but CI is true")
-endif
 ifeq ($(origin HEROKU_USER),file)
 	$(error "HEROKU_USER is not set, but CI is true")
 endif
@@ -55,7 +48,6 @@ build: checkCI
 	$(GOCMD) generate ./...
 	$(GOCMD) build -ldflags "\
 		-X 'github.com/fractal/fractal/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
-		-X 'github.com/fractal/fractal/host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
