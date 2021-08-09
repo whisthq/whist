@@ -333,8 +333,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Only verify auth in non-local environments
 	if !metadata.IsLocalEnv() {
 		// Decode the access token without validating any of its claims or
-		// verifying its signature because we've already done that. All we want to
-		// know is the value of the sub (subject) claim.
+		// verifying its signature because we've already done that in
+		// `authenticateAndParseRequest`. All we want to know is the value of the
+		// sub (subject) claim.
 		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
 			logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
 			return
