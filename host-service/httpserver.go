@@ -243,9 +243,13 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		// a valid JWT signed by Auth0 and that it has the "backend" scope.
 		claims, err := auth.Verify(requestAuthSecret)
 
-		if err != nil || !claims.VerifyScope("backend") {
+		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s", r.Host, r.URL)
+			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
+		if !claims.VerifyScope("backend") {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Expected \"backend\" scope, but got: %s", r.Host, r.URL, claims.Scopes)
 		}
 	}
 
