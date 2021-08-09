@@ -518,6 +518,7 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     }
     // modify iframes and bitrate
     p_preset_config->presetCfg.gopLength = NVENC_INFINITE_GOPLENGTH;
+    // LOWDELAY seems to have longer encode times, but smaller frames, than CBR
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR_LOWDELAY_HQ;
     p_preset_config->presetCfg.rcParams.maxBitRate = 4 * bitrate;
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
