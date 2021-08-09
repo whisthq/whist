@@ -131,7 +131,11 @@ fromTrigger("showSignoutWindow").subscribe(() => {
 })
 
 fromTrigger("trayFeedbackAction").subscribe(() => {
-  createTypeformWindow()
+  createTypeformWindow("https://form.typeform.com/to/Yfs4GkeN")
+})
+
+fromTrigger("trayBugAction").subscribe(() => {
+  createTypeformWindow("https://tryfractal.typeform.com/to/VMWBFgGc")
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
