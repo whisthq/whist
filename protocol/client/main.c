@@ -85,7 +85,7 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 char user_email[FRACTAL_ARGS_MAXLEN + 1];
 char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
-bool using_stun = true;
+bool using_stun = false;
 
 // given by server protocol during port discovery. tells client the ports to use
 // for UDP and TCP communications.
