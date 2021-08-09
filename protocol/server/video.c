@@ -358,8 +358,12 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
+        static clock capture_screen_timer;
         if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
+            start_timer(&capture_screen_timer);
             accumulated_frames = capture_screen(device);
+            log_double_statistic("Capture screen time (ms)",
+                                 get_timer(capture_screen_timer) * 1000);
 #if LOG_VIDEO
             if (accumulated_frames > 1) {
                 LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
@@ -413,12 +417,16 @@ int32_t multithreaded_send_video(void* opaque) {
                 // the encoder,
                 // This function will try to CUDA/OpenGL optimize the transfer by
                 // only passing a GPU reference rather than copy to/from the CPU
+                static clock transfer_capture_timer;
+                start_timer(&transfer_capture_timer);
                 if (transfer_capture(device, encoder) != 0) {
                     // if there was a failure
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     exiting = true;
                     break;
                 }
+                log_double_statistic("Transfer capture time (ms)",
+                                     get_timer(transfer_capture_timer) * 1000);
 
                 if (wants_iframe) {
                     video_encoder_set_iframe(encoder);
