@@ -305,7 +305,7 @@ void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line)
             line (const char*): The (unsanitized) log message itself
     */
 
-    if (logger_queue_size >= LOGGER_QUEUE_SIZE - 1) {
+    if (logger_queue_size >= LOGGER_QUEUE_SIZE - 1 || tag == NULL || line == NULL || line_fmt == NULL) {
         // If the queue is full, we just drop the log
         return;
     }
