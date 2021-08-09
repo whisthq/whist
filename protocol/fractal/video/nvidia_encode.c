@@ -264,7 +264,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             memcpy((char*)lock_params.bufferDataPtr + i * lock_params.pitch,
                    (char*)encoder->registered_resource.texture_pointer +
                        i * encoder->registered_resource.pitch,
-                   min(encoder->registered_resource.pitch, lock_params.pitch));
+                   min(encoder->registered_resource.pitch, (int)lock_params.pitch));
         }
         status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
                                                           lock_params.inputBuffer);
