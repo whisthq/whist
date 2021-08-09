@@ -38,6 +38,7 @@ export default {
   showSignoutWindow: "showSignoutWindow",
   trayRegionAction: "trayRegionAction",
   trayFeedbackAction: "trayFeedbackAction",
+  trayBugAction: "trayBugAction",
   showPaymentWindow: "showPaymentWindow",
 
   // Flow triggers

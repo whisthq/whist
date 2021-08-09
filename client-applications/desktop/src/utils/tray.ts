@@ -25,10 +25,21 @@ const createNativeImage = () => {
 }
 
 const feedbackMenu = new MenuItem({
-  label: "Leave feedback",
-  click: () => {
-    trayEvent.emit("feedback")
-  },
+  label: "Support",
+  submenu: [
+    {
+      label: "Feedback",
+      click: () => {
+        trayEvent.emit("feedback")
+      },
+    },
+    {
+      label: "Bug Report",
+      click: () => {
+        trayEvent.emit("bug")
+      },
+    },
+  ],
 })
 
 const regionMenu = new MenuItem({
