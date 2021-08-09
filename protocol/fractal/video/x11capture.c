@@ -169,7 +169,8 @@ int x11_capture_screen(X11CaptureDevice* device) {
         XEvent ev;
         XNextEvent(device->display, &ev);
         if (ev.type == device->event + XDamageNotify) {
-            update = 1;
+            // update will eventually be the number of damage events (accumulated frames)
+            update++;
         }
     }
 
