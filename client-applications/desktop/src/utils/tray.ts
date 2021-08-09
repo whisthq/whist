@@ -56,12 +56,16 @@ const regionMenu = new MenuItem({
 const accountMenu = new MenuItem({
   label: "Account",
   submenu: [
-    {
-      label: "Billing Information",
-      click: () => {
-        trayEvent.emit("payment")
-      },
-    },
+    ...(allowPayments
+      ? [
+          {
+            label: "Billing Information",
+            click: () => {
+              trayEvent.emit("payment")
+            },
+          },
+        ]
+      : []),
     {
       label: "Sign Out",
       click: () => {
@@ -98,7 +102,7 @@ export const createTray = (menu: Menu) => {
 
 export const createMenu = (signedIn: boolean, userEmail?: string) =>
   Menu.buildFromTemplate([
-    ...(signedIn && allowPayments ? [accountMenu] : []),
+    ...(signedIn ? [accountMenu] : []),
     ...[settingsMenu, feedbackMenu],
     ...(signedIn && endsWith(userEmail ?? "", "@fractal.co")
       ? [regionMenu]
