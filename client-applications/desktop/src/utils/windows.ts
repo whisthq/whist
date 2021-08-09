@@ -281,7 +281,7 @@ export const createSignoutWindow = () => {
   })
 }
 
-export const createTypeformWindow = () =>
+export const createTypeformWindow = (url: string) =>
   createWindow({
     show: WindowHashTypeform,
     options: {
@@ -293,7 +293,7 @@ export const createTypeformWindow = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashTypeform,
     closeOtherWindows: false,
-    customURL: "https://form.typeform.com/to/Yfs4GkeN",
+    customURL: url,
   })
 
 export const createProtocolWindow = async () => {
