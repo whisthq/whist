@@ -446,7 +446,9 @@ void destroy_capture_device(CaptureDevice* device) {
 }
 
 int transfer_screen(CaptureDevice* device) {
-    device->frame_data = device->x11_capture_device->frame_data;
-    device->pitch = device->x11_capture_device->pitch;
+    if (device->last_capture_device == X11_DEVICE) {
+        device->frame_data = device->x11_capture_device->frame_data;
+        device->pitch = device->x11_capture_device->pitch;
+    }
     return 0;
 }
