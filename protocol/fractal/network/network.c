@@ -392,7 +392,10 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
 
     // Connect to TCP server
     int ret;
+    // Set to nonblocking
     set_timeout(socket, 0);
+    // Following instructions here: https://man7.org/linux/man-pages/man2/connect.2.html
+    // Observe the paragraph under EINPROGRESS for how to nonblocking connect over TCP
     if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
         bool worked = get_last_network_error() == FRACTAL_EINPROGRESS;
 
@@ -422,6 +425,19 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "%d\n",
                 ret, get_last_network_error());
         }
+        closesocket(socket);
+        return false;
+    }
+
+    int error;
+    socklen_t len = sizeof(error);
+    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
+        LOG_WARNING("Could not getsockopt SO_ERROR");
+        closesocket(socket);
+        return false;
+    }
+    if (error != 0) {
+        LOG_WARNING("getsockopt has captured the following error: %d", error);
         closesocket(socket);
         return false;
     }
