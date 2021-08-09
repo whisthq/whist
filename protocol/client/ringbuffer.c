@@ -260,7 +260,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         // for the frames that are in the middle
         nack_missing_frames(ring_buffer, ring_buffer->last_received_nonnack_id + 1, frame_data->id);
     }
-    // -5 because UDP packets can arrive out of order
+    // -10 because UDP packets can arrive out of order
     nack_missing_packets_up_to_index(ring_buffer, frame_data, packet->index - 10);
     if (!packet->is_a_nack) {
         ring_buffer->last_received_nonnack_id = frame_data->id;

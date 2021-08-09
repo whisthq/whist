@@ -17,7 +17,8 @@ packet, call nack_packet.
 #include "network.h"
 #include <fractal/core/fractal_frame.h>
 
-// The max number of times we can nack a packet: limited to 2 times right now.
+// The max number of times we can nack a packet: limited to 2 times right now so that we don't get
+// stuck on a packet that never arrives
 #define MAX_PACKET_NACKS 2
 
 /**
