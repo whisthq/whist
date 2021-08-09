@@ -119,7 +119,7 @@ Defines
 #define ACK_REFRESH_MS 50
 
 #define STARTING_BITRATE 15400000
-#define STARTING_BURST_BITRATE 999000999
+#define STARTING_BURST_BITRATE 100000000
 
 // 16:10 aspect ratio for minimum screen, which is the Mac aspect ratio
 #define MIN_SCREEN_WIDTH 480
