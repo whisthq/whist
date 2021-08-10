@@ -17,6 +17,7 @@ docker build --tag fractal/db-migration .github/actions/db-migration
 docker run \
     --rm \
     --env "HEROKU_API_TOKEN=*********" \
+    --env "HEROKU_APP_NAME=*********" |
     --volume $(pwd):/github/workspace \
     --workdir /github/workspace \
     fractal/db-migration
@@ -29,6 +30,7 @@ docker run \
     -it \
     --rm \
     --env "HEROKU_API_TOKEN=*********" \
+    --env "HEROKU_APP_NAME=*********" |
     --volume $(pwd):/github/workspace \
     --entrypoint /bin/bash \
     fractal/db-migration
