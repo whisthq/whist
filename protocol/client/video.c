@@ -698,14 +698,15 @@ void calculate_statistics() {
     }
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
+        // Note: Uncomment to oscillate between bitrates every 5 seconds
         if (max_bitrate > STARTING_BITRATE) {
             max_bitrate = STARTING_BITRATE;
             max_burst_bitrate = STARTING_BURST_BITRATE;
         } else {
-            max_bitrate += 1000000;
-            max_burst_bitrate += 1000000;
+            // max_bitrate += 1000000;
+            // max_burst_bitrate += 1000000;
         }
-        update_bitrate = true;
+        // update_bitrate = true;
         start_timer(&t);
     }
 }
