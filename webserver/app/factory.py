@@ -1,5 +1,4 @@
 import os
-import threading
 
 from http import HTTPStatus
 from urllib.parse import urlunsplit
@@ -17,10 +16,6 @@ from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
-from app.helpers.blueprint_helpers.aws.aws_instance_post import (
-    repeated_scale_down_harness,
-    repeated_lingering_harness,
-)
 
 from auth0 import ScopeError
 from payments import PaymentRequired
@@ -96,19 +91,6 @@ def create_app(testing=False):
     register_commands(app)
     register_blueprints(app)
 
-    if not app.testing and not app.config["RUNNING_LOCALLY"]:
-        # If we're running in production start the scaling
-        # and lingering threads in the background
-        # Run every 10 minutes (600 seconds), chosen to be often but not overpoweringly so
-        scale_down_bg_thread = threading.Thread(
-            target=repeated_scale_down_harness, args=(600,), kwargs={"flask_app": app}
-        )
-        scale_down_bg_thread.start()
-        lingering_bg_thread = threading.Thread(
-            target=repeated_lingering_harness, args=(600,), kwargs={"flask_app": app}
-        )
-        lingering_bg_thread.start()
-
     return app
 
 
@@ -142,9 +124,10 @@ def register_commands(app):
         - app: Flask object
     """
 
-    from commands import command_bp
+    from app.cli import command_bp, compute_bp
 
     app.register_blueprint(command_bp)
+    app.register_blueprint(compute_bp)
 
 
 def register_blueprints(app):
