@@ -150,8 +150,10 @@ void update_bitrate() {
         update_mbps = false;
         FractalClientMessage fmsg = {0};
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
-        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
+        fmsg.bitrate_data.bitrate = max_bitrate;
+        fmsg.bitrate_data.burst_bitrate = 6 * max_bitrate;
+        LOG_INFO("Asking for server MBPS to be %f/%f", fmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
         send_fmsg(&fmsg);
     }
 }

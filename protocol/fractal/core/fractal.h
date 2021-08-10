@@ -571,13 +571,16 @@ typedef struct FractalClientMessage {
         InteractionMode interaction_mode;
 
         // MESSAGE_MBPS
-        double mbps;
+        struct {
+            int bitrate;
+            int burst_bitrate;
+        } bitrate_data;
 
         // MESSAGE_PING
         int ping_id;
 
         // MESSAGE_DIMENSIONS
-        struct dimensions {
+        struct {
             int width;
             int height;
             int dpi;
@@ -585,7 +588,7 @@ typedef struct FractalClientMessage {
         } dimensions;
 
         // MESSAGE_VIDEO_NACK or MESSAGE_AUDIO_NACK
-        struct nack_data {
+        struct {
             int id;
             int index;
         } nack_data;
