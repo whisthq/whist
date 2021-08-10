@@ -54,6 +54,7 @@ Includes
 
 extern volatile int max_burst_bitrate;
 extern volatile bool exiting;
+extern volatile int burst_bitrate;
 
 #define AUDIO_BUFFER_SIZE 100
 #define MAX_NUM_AUDIO_INDICES 3
