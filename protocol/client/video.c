@@ -47,7 +47,8 @@ extern int client_id;
 
 // Keeping track of max mbps
 extern volatile int max_bitrate;
-extern volatile bool update_mbps;
+extern volatile int max_burst_bitrate;
+extern volatile bool update_bitrate;
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -689,76 +690,24 @@ void calculate_statistics() {
         Calculate statistics about bitrate nacking, etc. to request server bandwidth.
     */
 
-    // Get statistics from the last 3 seconds of data
-    double time = get_timer(video_data.frame_timer);
-
-    // Calculate statistics
-    /*
-    int expected_frames = VideoData.max_id - VideoData.last_statistics_id;
-    // double fps = 1.0 * expected_frames / time; // TODO: finish birate
-    // throttling alg double mbps = VideoData.bytes_transferred * 8.0 /
-    // 1024.0 / 1024.0 / time; // TODO bitrate throttle
-    double receive_rate =
-        expected_frames == 0
-            ? 1.0
-            : 1.0 * VideoData.frames_received / expected_frames;
-    double dropped_rate = 1.0 - receive_rate;
-    */
-
-    double nack_per_second = video_ring_buffer->num_nacked / time;
-    video_data.nack_by_bitrate[video_data.bucket] += video_ring_buffer->num_nacked;
-    video_data.seconds_by_bitrate[video_data.bucket] += time;
-
-    LOG_INFO("====\nBucket: %d\nSeconds: %f\nNacks/Second: %f\n====",
-             video_data.bucket * BITRATE_BUCKET_SIZE, time, nack_per_second);
-
-    // Print statistics
-
-    // LOG_INFO("FPS: %f\nmbps: %f\ndropped: %f%%\n", fps, mbps, 100.0 *
-    // dropped_rate);
-
-    LOG_INFO("MBPS: %f %f", video_data.target_mbps, nack_per_second);
-
-    // Adjust mbps based on dropped packets
-    if (nack_per_second > 50) {
-        video_data.target_mbps = video_data.target_mbps * 0.75;
-        working_mbps = video_data.target_mbps;
-        update_mbps = true;
-    } else if (nack_per_second > 25) {
-        video_data.target_mbps = video_data.target_mbps * 0.83;
-        working_mbps = video_data.target_mbps;
-        update_mbps = true;
-    } else if (nack_per_second > 15) {
-        video_data.target_mbps = video_data.target_mbps * 0.9;
-        working_mbps = video_data.target_mbps;
-        update_mbps = true;
-    } else if (nack_per_second > 10) {
-        video_data.target_mbps = video_data.target_mbps * 0.95;
-        working_mbps = video_data.target_mbps;
-        update_mbps = true;
-    } else if (nack_per_second > 6) {
-        video_data.target_mbps = video_data.target_mbps * 0.98;
-        working_mbps = video_data.target_mbps;
-        update_mbps = true;
-    } else {
-        working_mbps = max(video_data.target_mbps * 1.05, working_mbps);
-        video_data.target_mbps = (video_data.target_mbps + working_mbps) / 2.0;
-        video_data.target_mbps = min(video_data.target_mbps, MAXIMUM_BITRATE);
-        update_mbps = true;
+    static clock t;
+    static bool init_t = false;
+    if (!init_t) {
+        start_timer(&t);
+        init_t = true;
     }
-
-    LOG_INFO("MBPS2: %f", video_data.target_mbps);
-
-    video_data.bucket = (int)video_data.target_mbps / BITRATE_BUCKET_SIZE;
-    max_bitrate = (int)video_data.bucket * BITRATE_BUCKET_SIZE + BITRATE_BUCKET_SIZE / 2;
-
-    LOG_INFO("MBPS3: %d", max_bitrate);
-    video_ring_buffer->num_nacked = 0;
-
-    video_data.bytes_transferred = 0;
-    video_data.frames_received = 0;
-    video_data.last_statistics_id = video_ring_buffer->max_id;
-    start_timer(&video_data.frame_timer);
+    // Update mbps every 5 seconds
+    if (get_timer(t) > 5.0) {
+        if (max_bitrate > STARTING_BITRATE) {
+            max_bitrate = STARTING_BITRATE;
+            max_burst_bitrate = STARTING_BURST_BITRATE;
+        } else {
+            max_bitrate += 1000000;
+            max_burst_bitrate += 1000000;
+        }
+        update_bitrate = true;
+        start_timer(&t);
+    }
 }
 
 void skip_to_next_iframe() {

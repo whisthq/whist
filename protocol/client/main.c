@@ -62,7 +62,8 @@ volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
 
 // maximum mbps
 volatile int max_bitrate = STARTING_BITRATE;
-volatile bool update_mbps = false;
+volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
+volatile bool update_bitrate = false;
 
 // Global state variables
 volatile char binary_aes_private_key[16];
