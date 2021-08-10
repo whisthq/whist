@@ -275,14 +275,13 @@ int32_t multithreaded_send_video(void* opaque) {
             // First, try to simply reconfigure the encoder to
             // handle the update_encoder event
             if (encoder != NULL) {
-                if (reconfigure_encoder(encoder, device->width, device->height,
-                                        max_bitrate,
+                if (reconfigure_encoder(encoder, device->width, device->height, max_bitrate,
                                         (CodecType)client_codec_type)) {
                     // If we could update the encoder in-place, then we're done updating the encoder
                     LOG_INFO(
                         "Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
-                        device->width, device->height, current_bitrate, max_bitrate / 1024.0 / 1024.0,
-                        client_codec_type);
+                        device->width, device->height, current_bitrate,
+                        max_bitrate / 1024.0 / 1024.0, client_codec_type);
                     current_bitrate = max_bitrate;
                     update_encoder = false;
                 } else {
@@ -317,8 +316,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     LOG_INFO(
                         "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
                         "Codec %d",
-                        device->width, device->height, current_bitrate, max_bitrate / 1024.0 / 1024.0,
-                        (int)client_codec_type);
+                        device->width, device->height, current_bitrate,
+                        max_bitrate / 1024.0 / 1024.0, (int)client_codec_type);
                     current_bitrate = max_bitrate;
                     encoder_finished = false;
                     encoder_factory_server_w = device->width;
@@ -474,13 +473,13 @@ int32_t multithreaded_send_video(void* opaque) {
                         // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
                         // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
                         // / max_mbps = IdealTime
-                        double transmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
-                                               max_bitrate;
+                        double transmit_time =
+                            ((double)previous_frame_size) * BITS_IN_BYTE / max_bitrate;
 
                         // double average_frame_size = 1.0 * bytes_tested_frames
                         // / bitrate_tested_frames;
-                        double current_trasmit_time = ((double)previous_frame_size) * BITS_IN_BYTE /
-                                                      max_bitrate;
+                        double current_trasmit_time =
+                            ((double)previous_frame_size) * BITS_IN_BYTE / max_bitrate;
                         double current_fps = 1.0 / current_trasmit_time;
 
                         delay = transmit_time - frame_time;
@@ -607,8 +606,7 @@ int32_t multithreaded_send_video(void* opaque) {
                 // is_empty_frame is true, so it will just be ignored by the client.
 
                 if (broadcast_udp_packet(PACKET_VIDEO, (uint8_t*)frame, sizeof(VideoFrame), id,
-                                         max_burst_bitrate,
-                                         video_buffer[id % VIDEO_BUFFER_SIZE],
+                                         max_burst_bitrate, video_buffer[id % VIDEO_BUFFER_SIZE],
                                          video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
                     LOG_WARNING("Could not broadcast video frame ID %d", id);
                 } else {

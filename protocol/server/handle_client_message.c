@@ -270,7 +270,8 @@ static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, boo
 
     UNUSED(client_id);
     if (!is_controlling) return 0;
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fmsg->bitrate_data.bitrate / 1024.0 / 1024.0, fmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+             fmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
     // Get the new bitrate data
     max_bitrate = max(fmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
     max_burst_bitrate = fmsg->bitrate_data.burst_bitrate;
