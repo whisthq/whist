@@ -350,8 +350,8 @@ int main(int argc, char* argv[]) {
     clock startup_time;
     start_timer(&startup_time);
 
-    max_bitrate = STARTING_BITRATE;
-    max_burst_bitrate = STARTING_BURST_BITRATE;
+    max_bitrate = GOOD_STARTING_BITRATE;
+    max_burst_bitrate = GOOD_STARTING_BURST_BITRATE;
     stop_streaming = false;
     wants_iframe = false;
     update_encoder = false;
