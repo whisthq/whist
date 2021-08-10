@@ -7,9 +7,9 @@ import {
 
 const features = [
   {
-    name: "North America or Europe",
+    name: "North America",
     description:
-      "Our servers are located in various parts of the United States, southern Canada, and Europe. If you are not in these areas, you will experience high network latency.",
+      "Our servers are located in various parts of the United States and southern Canada. If you are not in these areas, you will experience high network latency.",
     icon: GlobeIcon,
   },
   {
