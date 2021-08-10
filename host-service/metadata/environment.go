@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// An AppEnvironment represents either localdev or localdevwithdb (i.e. a dev
+// An AppEnvironment represents either localdev or localdevwithdb (i.e. a personal
 // instance), dev (i.e. talking to the dev webserver), staging, or prod
 type AppEnvironment string
 
