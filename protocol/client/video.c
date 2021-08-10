@@ -941,7 +941,7 @@ int init_video_renderer() {
     }
 
     // mbps that currently works
-    working_mbps = STARTING_BITRATE;
+    working_mbps = GOOD_STARTING_BITRATE;
     video_data.is_waiting_for_iframe = false;
 
     // True if RenderScreen is currently rendering a frame
