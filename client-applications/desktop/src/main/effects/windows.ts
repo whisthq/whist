@@ -80,7 +80,7 @@ fromTrigger("windowInfo")
   )
 
 fromTrigger("networkUnstable")
-  .pipe(throttle(() => interval(500)))
+  .pipe(throttle(() => interval(500))) // Throttle to 0.5s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
     let warningWindowOpen = false
     getElectronWindows().forEach((win: BrowserWindow) => {

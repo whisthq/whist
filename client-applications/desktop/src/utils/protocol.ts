@@ -13,6 +13,9 @@ import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath } from "@app/utils/logging"
 
+const NACK_LOOKBACK_PERIOD = 3 // Number of seconds to look back when measuring # of nacks
+const MAX_NACKS_ALLOWED = 5 // Maximum # of nacks allowed before we decide the network is unstable
+
 export let childProcess: ChildProcess | undefined
 // Current time in UNIX (seconds)
 let lastNackTime = Date.now() / 1000
@@ -130,7 +133,7 @@ export const isNetworkUnstable = (message?: string) => {
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (message?.toString().includes("NACKING")) {
     // Check when the last nack happened
-    if (currentTime - lastNackTime < 3) {
+    if (currentTime - lastNackTime < NACK_LOOKBACK_PERIOD) {
       // If the last nack happened less than three seconds ago, increase # of nacks
       numberOfRecentNacks += 1
     } else {
@@ -139,8 +142,8 @@ export const isNetworkUnstable = (message?: string) => {
       lastNackTime = currentTime
     }
 
-    return numberOfRecentNacks > 6
+    return numberOfRecentNacks > MAX_NACKS_ALLOWED
   }
 
-  return currentTime - lastNackTime < 3
+  return currentTime - lastNackTime < NACK_LOOKBACK_PERIOD
 }

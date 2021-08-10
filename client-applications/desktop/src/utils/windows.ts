@@ -8,7 +8,12 @@
 
 import path from "path"
 import events from "events"
-import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
+import {
+  app,
+  BrowserWindow,
+  BrowserWindowConstructorOptions,
+  screen,
+} from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { FractalCallbackUrls } from "@app/config/urls"
@@ -78,7 +83,7 @@ export const width = {
 }
 
 export const height = {
-  xxs: { height: 16 * 3 },
+  xxs: { height: 16 * 2.5 },
   xs: { height: 16 * 20 },
   sm: { height: 16 * 32 },
   md: { height: 16 * 44 },
@@ -338,12 +343,16 @@ export const relaunch = (options?: { args: string[] }) => {
 }
 
 export const createNetworkWarningWindow = () => {
+  const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize
+
   createWindow({
     show: WindowHashNetworkWarning,
     options: {
       ...base,
-      ...width.sm,
+      ...width.xs,
       ...height.xxs,
+      x: 0,
+      y: screenHeight,
       alwaysOnTop: true,
       frame: false,
       transparent: true,
