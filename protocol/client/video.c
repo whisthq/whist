@@ -112,7 +112,7 @@ struct VideoData {
 
     double target_mbps;
     clock missing_frame_nack_timer;
-    int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    int bucket;  // = GOOD_STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
 
@@ -960,8 +960,8 @@ int init_video_renderer() {
     video_context.sws = NULL;
     video_ring_buffer = init_ring_buffer(FRAME_VIDEO, RECV_FRAMES_BUFFER_SIZE);
 
-    max_bitrate = STARTING_BITRATE;
-    video_data.target_mbps = STARTING_BITRATE;
+    max_bitrate = GOOD_STARTING_BITRATE;
+    video_data.target_mbps = GOOD_STARTING_BITRATE;
     video_data.pending_ctx = NULL;
     video_data.frames_received = 0;
     video_data.bytes_transferred = 0;
@@ -969,7 +969,7 @@ int init_video_renderer() {
     video_data.last_statistics_id = 1;
     video_data.last_rendered_id = 0;
     video_data.most_recent_iframe = -1;
-    video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    video_data.bucket = GOOD_STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
 
     // Resize event handling
