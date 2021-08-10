@@ -16,14 +16,8 @@ func init() {
 	// The first thing we want to do is to initialize logzio and Sentry so that
 	// we can catch any errors that might occur, or logs if we print them.
 
-	// We declare error separately to avoid shadowing logzioTransport.
+	// We declare error separately to avoid shadowing sentryTransport.
 	var err error
-	logzioTransport, err = initializeLogzIO()
-	if err != nil {
-		// Error, don't Panic, since a logzio outage should not bring down our
-		// entire service.
-		Errorf("Failed to initialize LogzIO! Error: %s", err)
-	}
 
 	// Note that according to the Sentry Go documentation, if we run
 	// sentry.CaptureMessage or sentry.CaptureError on separate goroutines, they
@@ -41,6 +35,13 @@ func init() {
 		// Error, don't Panic, since a Sentry outage should not bring down our
 		// entire service.
 		Errorf("Failed to initialize Sentry! Error: %s", err)
+	}
+
+	logzioTransport, err = initializeLogzIO()
+	if err != nil {
+		// Error, don't Panic, since a logzio outage should not bring down our
+		// entire service.
+		Errorf("Failed to initialize LogzIO! Error: %s", err)
 	}
 }
 
