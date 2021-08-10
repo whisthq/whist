@@ -15,6 +15,11 @@ func init() {
 
 	// The first thing we want to do is to initialize logzio and Sentry so that
 	// we can catch any errors that might occur, or logs if we print them.
+	// The credentials for Sentry are hardcoded into the host-service,
+	// and the credentials for logzio are written to the environment file used
+	// by host-service systemd service.
+	// It is more likely that logzio initialization would fail, So we initialize
+	// Sentry first.
 
 	// We declare error separately to avoid shadowing sentryTransport.
 	var err error
