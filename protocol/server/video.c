@@ -488,7 +488,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
                         // LOG_INFO("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
                         // %f, Transmit Time: %f, Delay: %f",
-                        // previous_frame_size, mbps, max_mbps, frame_time,
+                        // previous_frame_size, mbps, max_bitrate, frame_time,
                         // transmit_time, delay);
 
                         if ((current_fps < worst_fps || ideal_bitrate > current_bitrate) &&
