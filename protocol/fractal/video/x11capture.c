@@ -162,19 +162,19 @@ int x11_capture_screen(X11CaptureDevice* device) {
     device->first = true;
     XLockDisplay(device->display);
 
-    int update = 0;
+    int accumulated_frames = 0;
     while (XPending(device->display)) {
         // XDamageNotifyEvent* dev; unused, remove or is this needed and should
         // be used?
         XEvent ev;
         XNextEvent(device->display, &ev);
         if (ev.type == device->event + XDamageNotify) {
-            // update will eventually be the number of damage events (accumulated frames)
-            update++;
+            // accumulated_frames will eventually be the number of damage events (accumulated frames)
+            accumulated_frames++;
         }
     }
 
-    if (update || device->first) {
+    if (accumulated_frames || device->first) {
         device->first = false;
 
         XDamageSubtract(device->display, device->damage, None, None);
@@ -182,17 +182,17 @@ int x11_capture_screen(X11CaptureDevice* device) {
         XWindowAttributes window_attributes;
         if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
             LOG_ERROR("Couldn't get window width and height!");
-            update = -1;
+            accumulated_frames = -1;
         } else if (device->width != window_attributes.width ||
                    device->height != window_attributes.height) {
             LOG_ERROR("Wrong width/height!");
-            update = -1;
+            accumulated_frames = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
 #if USING_SHM
             if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
-                update = -1;
+                accumulated_frames = -1;
             } else {
                 device->pitch = device->image->bytes_per_line;
             }
@@ -204,7 +204,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
                                       device->height, AllPlanes, ZPixmap);
             if (!device->image) {
                 LOG_ERROR("Error while capturing the screen");
-                update = -1;
+                accumulated_frames = -1;
             } else {
                 device->frame_data = device->image->data;
                 device->pitch = device->image->bytes_per_line;
@@ -214,7 +214,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
         }
     }
     XUnlockDisplay(device->display);
-    return update;
+    return accumulated_frames;
 }
 
 void destroy_x11_capture_device(X11CaptureDevice* device) {
