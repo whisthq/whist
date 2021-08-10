@@ -26,11 +26,13 @@ import {
   WindowHashPayment,
   WindowHashTypeform,
   WindowHashProtocol,
+  WindowHashNetworkWarning,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
   childProcess,
   protocolStreamKill,
+  isNetworkUnstable,
 } from "@app/utils/protocol"
 
 // Custom Event Emitter for Auth0 events
@@ -63,7 +65,6 @@ export const base = {
   },
   resizable: false,
   titleBarStyle: "default",
-  backgroundColor: "#ffffff",
 }
 
 export const width = {
@@ -77,6 +78,7 @@ export const width = {
 }
 
 export const height = {
+  xxs: { height: 16 * 3 },
   xs: { height: 16 * 20 },
   sm: { height: 16 * 32 },
   md: { height: 16 * 44 },
@@ -320,6 +322,11 @@ export const createProtocolWindow = async () => {
     })
   })
 
+  protocol.stdout.on("data", (message) => {
+    const unstable = isNetworkUnstable(message)
+    windowMonitor.emit("network-is-unstable", unstable)
+  })
+
   // When the protocol is running, we want all other Electron windows to be closed
   closeElectronWindows(currentElectronWindows)
 }
@@ -328,4 +335,19 @@ export const relaunch = (options?: { args: string[] }) => {
   protocolStreamKill()
   options === undefined ? app.relaunch() : app.relaunch(options)
   app.exit()
+}
+
+export const createNetworkWarningWindow = () => {
+  createWindow({
+    show: WindowHashNetworkWarning,
+    options: {
+      ...base,
+      ...width.sm,
+      ...height.xxs,
+      alwaysOnTop: true,
+      frame: false,
+      transparent: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashNetworkWarning,
+  })
 }

@@ -9,6 +9,7 @@ export default {
   appReady: "appReady",
   windowInfo: "windowInfo",
   windowsAllClosed: "windowsAllClosed",
+  networkUnstable: "networkUnstable",
 
   // Auth triggers
   authInfo: "authInfo",
