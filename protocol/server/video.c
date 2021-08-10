@@ -162,6 +162,8 @@ int32_t multithreaded_send_video(void* opaque) {
     clock world_timer;
     start_timer(&world_timer);
 
+    clock statistics_timer;
+
     int id = 1;
     update_device = true;
 
@@ -173,6 +175,8 @@ int32_t multithreaded_send_video(void* opaque) {
     bool transfer_context_active = false;
 
     while (!exiting) {
+        static clock send_video_loop_timer;
+        start_timer(&send_video_loop_timer);
         if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
             fractal_sleep(5);
             continue;
@@ -190,6 +194,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // If we got an update device request, we should update the device
         if (update_device) {
             update_device = false;
+            start_timer(&statistics_timer);
 
             LOG_INFO("Received an update capture device request to dimensions %dx%d with DPI %d",
                      true_width, true_height, client_dpi);
@@ -220,10 +225,13 @@ int32_t multithreaded_send_video(void* opaque) {
             } else {
                 LOG_INFO("No capture device exists yet, creating a new one.");
             }
+            log_double_statistic("Update capture device time (ms)",
+                                 get_timer(statistics_timer) * MS_IN_SECOND);
         }
 
         // If no device is set, we need to create one
         if (device == NULL) {
+            start_timer(&statistics_timer);
             device = &rdevice;
             if (create_capture_device(device, true_width, true_height, client_dpi) < 0) {
                 LOG_WARNING("Failed to create capture device");
@@ -250,10 +258,14 @@ int32_t multithreaded_send_video(void* opaque) {
 
             // Next, we should update our ffmpeg encoder
             update_encoder = true;
+
+            log_double_statistic("Create capture device time (ms)",
+                                 get_timer(statistics_timer) * MS_IN_SECOND);
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
+            start_timer(&statistics_timer);
             // If this is a new update encoder request, log it
             if (!pending_encoder) {
                 LOG_INFO("Update encoder request received, will update the encoder now!");
@@ -345,6 +357,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     }
                 }
             }
+            log_double_statistic("Update encoder time (ms)",
+                                 get_timer(statistics_timer) * MS_IN_SECOND);
         }
 
         // SENDING LOGIC:
@@ -359,7 +373,10 @@ int32_t multithreaded_send_video(void* opaque) {
         // last call to CaptureScreen
         int accumulated_frames = 0;
         if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
+            start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
+            log_double_statistic("Capture screen time (ms)",
+                                 get_timer(statistics_timer) * MS_IN_SECOND);
 #if LOG_VIDEO
             if (accumulated_frames > 1) {
                 LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
@@ -413,20 +430,22 @@ int32_t multithreaded_send_video(void* opaque) {
                 // the encoder,
                 // This function will try to CUDA/OpenGL optimize the transfer by
                 // only passing a GPU reference rather than copy to/from the CPU
+                start_timer(&statistics_timer);
                 if (transfer_capture(device, encoder) != 0) {
                     // if there was a failure
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     exiting = true;
                     break;
                 }
+                log_double_statistic("Transfer capture time (ms)",
+                                     get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (wants_iframe) {
                     video_encoder_set_iframe(encoder);
                     wants_iframe = false;
                 }
 
-                clock t;
-                start_timer(&t);
+                start_timer(&statistics_timer);
 
                 int res = video_encoder_encode(encoder);
                 if (res < 0) {
@@ -438,7 +457,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     // filter graph is empty
                     break;
                 }
-                log_double_statistic("Video encode time (ms)", get_timer(t) * 1000);
+                log_double_statistic("Video encode time (ms)",
+                                     get_timer(statistics_timer) * MS_IN_SECOND);
                 bitrate_tested_frames++;
                 bytes_tested_frames += encoder->encoded_frame_size;
 
@@ -511,7 +531,10 @@ int32_t multithreaded_send_video(void* opaque) {
                         FractalCursorImage* last_cursor = &cursor_cache[last_cursor_id];
                         FractalCursorImage* current_cursor = &cursor_cache[current_cursor_id];
 
+                        start_timer(&statistics_timer);
                         get_current_cursor(current_cursor);
+                        log_double_statistic("get_current_cursor time (ms)",
+                                             get_timer(statistics_timer) * MS_IN_SECOND);
 
                         // If the current cursor is the same as the last cursor,
                         // just don't send any cursor
@@ -548,7 +571,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         }
                         frame->num_peer_update_msgs = (int)num_msgs;
 
-                        start_timer(&t);
+                        start_timer(&statistics_timer);
 
                         // Send video packet to client
                         if (broadcast_udp_packet(
@@ -563,7 +586,8 @@ int32_t multithreaded_send_video(void* opaque) {
                         fractal_unlock_mutex(state_lock);
                         read_unlock(&is_active_rwlock);
 
-                        log_double_statistic("Video frame send time (ms)", get_timer(t) * 1000);
+                        log_double_statistic("Video frame send time (ms)",
+                                             get_timer(statistics_timer) * MS_IN_SECOND);
                         log_double_statistic("Video frame size", encoder->encoded_frame_size);
 
                         previous_frame_size = encoder->encoded_frame_size;
@@ -592,6 +616,17 @@ int32_t multithreaded_send_video(void* opaque) {
                     id++;
                 }
             }
+            log_double_statistic("Whole send video loop time (ms)",
+                                 get_timer(send_video_loop_timer) * MS_IN_SECOND);
+            static clock time_between_frames;
+            static bool initialized_interframe_timing = false;
+            if (initialized_interframe_timing) {
+                log_double_statistic("Time between frames (ms)",
+                                     get_timer(time_between_frames) * MS_IN_SECOND);
+            } else {
+                initialized_interframe_timing = true;
+            }
+            start_timer(&time_between_frames);
         }
     }
 

@@ -22,6 +22,7 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/utils/clock.h>
 #include <fractal/logging/logging.h>
+#include <fractal/logging/log_statistic.h>
 #include <fractal/logging/error_monitor.h>
 #include "client.h"
 #include "handle_client_message.h"
@@ -107,6 +108,7 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
+    static clock temp_clock;
 
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
@@ -114,7 +116,11 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
         case MESSAGE_MOUSE_WHEEL:
         case MESSAGE_MOUSE_MOTION:
         case MESSAGE_MULTIGESTURE:
-            return handle_user_input_message(fmsg, client_id, is_controlling);
+            start_timer(&temp_clock);
+            int r = handle_user_input_message(fmsg, client_id, is_controlling);
+            log_double_statistic("handle_user_input_message time (ms)",
+                                 get_timer(temp_clock) * MS_IN_SECOND);
+            return r;
         case MESSAGE_KEYBOARD_STATE:
             return handle_keyboard_state_message(fmsg, client_id, is_controlling);
         case MESSAGE_START_STREAMING:
