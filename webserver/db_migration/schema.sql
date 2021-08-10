@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.3 (Ubuntu 13.3-1.pgdg20.04+1)
+-- Dumped from database version 12.7 (Ubuntu 12.7-1.pgdg16.04+1)
 -- Dumped by pg_dump version 13.3
 
 SET statement_timeout = 0;
@@ -35,6 +35,20 @@ CREATE SCHEMA logging;
 --
 
 CREATE SCHEMA sales;
+
+
+--
+-- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_stat_statements IS 'track execution statistics of all SQL statements executed';
 
 
 --
@@ -112,6 +126,10 @@ row_to_json(OLD));
 $$;
 
 
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
 --
 -- Name: t_region_history; Type: TABLE; Schema: logging; Owner: -
 --
@@ -136,7 +154,8 @@ CREATE VIEW hardware.ami_status_changes AS
  SELECT t_region_history.tstamp,
     (t_region_history.new_val ->> 'ami_id'::text) AS ami_changed,
     COALESCE((t_region_history.new_val ->> 'ami_active'::text), 'deleted'::text) AS new_status,
-    COALESCE((t_region_history.old_val ->> 'ami_active'::text), 'newly added'::text) AS old_status
+    COALESCE((t_region_history.old_val ->> 'ami_active'::text), 'newly 
+added'::text) AS old_status
    FROM logging.t_region_history
   WHERE ((t_region_history.old_val IS NULL) OR (t_region_history.new_val IS NULL) OR ((t_region_history.old_val ->> 'ami_active'::text) <> (t_region_history.new_val ->> 'ami_active'::text)));
 
@@ -146,21 +165,52 @@ CREATE VIEW hardware.ami_status_changes AS
 --
 
 CREATE TABLE hardware.instance_info (
-    instance_name character varying NOT NULL,
+    ip character varying NOT NULL,
+    location character varying NOT NULL,
+    aws_ami_id character varying NOT NULL,
+    aws_instance_type character varying NOT NULL,
     cloud_provider_id character varying NOT NULL,
+    commit_hash character varying NOT NULL,
     creation_time_utc_unix_ms bigint NOT NULL,
+    gpu_vram_remaining_kb bigint DEFAULT 1024 NOT NULL,
+    instance_name character varying NOT NULL,
+    last_updated_utc_unix_ms bigint DEFAULT '-1'::integer NOT NULL,
+    mandelbox_capacity bigint DEFAULT 0 NOT NULL,
     memory_remaining_kb bigint DEFAULT 2000 NOT NULL,
     nanocpus_remaining bigint DEFAULT 1024 NOT NULL,
-    gpu_vram_remaining_kb bigint DEFAULT 1024 NOT NULL,
-    mandelbox_capacity bigint DEFAULT 0 NOT NULL,
-    last_updated_utc_unix_ms bigint DEFAULT '-1'::integer NOT NULL,
-    ip character varying NOT NULL,
-    aws_ami_id character varying NOT NULL,
-    location character varying NOT NULL,
-    status character varying NOT NULL,
-    commit_hash character varying NOT NULL,
-    aws_instance_type character varying NOT NULL
+    status character varying NOT NULL
 );
+
+
+--
+-- Name: t_instance_history; Type: TABLE; Schema: logging; Owner: -
+--
+
+CREATE TABLE logging.t_instance_history (
+    id integer NOT NULL,
+    tstamp timestamp without time zone DEFAULT now(),
+    schemaname text,
+    tabname text,
+    operation text,
+    who text DEFAULT CURRENT_USER,
+    new_val json,
+    old_val json
+);
+
+
+--
+-- Name: instance_status_changes; Type: VIEW; Schema: hardware; Owner: -
+--
+
+CREATE VIEW hardware.instance_status_changes AS
+ SELECT t_instance_history.tstamp AS "timestamp",
+    COALESCE((t_instance_history.new_val ->> 'instance_name'::text), (t_instance_history.old_val ->> 'instance_name'::text)) AS instance_name,
+    COALESCE((t_instance_history.new_val ->> 'status'::text), 'deleted'::text) AS new_status,
+    COALESCE((t_instance_history.old_val ->> 'status'::text), 'newly 
+added'::text) AS old_status
+   FROM logging.t_instance_history
+  WHERE ((t_instance_history.new_val IS NULL) OR (t_instance_history.old_val IS NULL) OR ((t_instance_history.new_val ->> 'status'::text) <> (t_instance_history.old_val ->> 'status'::text)))
+  ORDER BY t_instance_history.tstamp;
 
 
 --
@@ -212,36 +262,6 @@ CREATE VIEW hardware.instances_with_room_for_mandelboxes AS
 
 
 --
--- Name: t_instance_history; Type: TABLE; Schema: logging; Owner: -
---
-
-CREATE TABLE logging.t_instance_history (
-    id integer NOT NULL,
-    tstamp timestamp without time zone DEFAULT now(),
-    schemaname text,
-    tabname text,
-    operation text,
-    who text DEFAULT CURRENT_USER,
-    new_val json,
-    old_val json
-);
-
-
---
--- Name: instance_status_changes; Type: VIEW; Schema: hardware; Owner: -
---
-
-CREATE VIEW hardware.instance_status_changes AS
- SELECT t_instance_history.tstamp AS "timestamp",
-    COALESCE((t_instance_history.new_val ->> 'instance_name'::text), (t_instance_history.old_val ->> 'instance_name'::text)) AS instance_name,
-    COALESCE((t_instance_history.new_val ->> 'status'::text), 'deleted'::text) AS new_status,
-    COALESCE((t_instance_history.old_val ->> 'status'::text), 'newly added'::text) AS old_status
-   FROM logging.t_instance_history
-  WHERE ((t_instance_history.new_val IS NULL) OR (t_instance_history.old_val IS NULL) OR ((t_instance_history.new_val ->> 'status'::text) <> (t_instance_history.old_val ->> 'status'::text)))
-  ORDER BY t_instance_history.tstamp;
-
-
---
 -- Name: lingering_instances; Type: VIEW; Schema: hardware; Owner: -
 --
 
@@ -260,8 +280,8 @@ CREATE VIEW hardware.lingering_instances AS
 CREATE TABLE hardware.region_to_ami (
     region_name character varying NOT NULL,
     ami_id character varying NOT NULL,
-    client_commit_hash character varying NOT NULL,
     ami_active boolean DEFAULT false NOT NULL,
+    client_commit_hash character varying NOT NULL,
     protected_from_scale_down boolean DEFAULT false NOT NULL
 );
 
@@ -387,3 +407,4 @@ ALTER TABLE ONLY hardware.mandelbox_info
 --
 -- PostgreSQL database dump complete
 --
+
