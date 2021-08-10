@@ -52,6 +52,7 @@ Includes
 #endif
 // Linux shouldn't have this
 
+extern volatile int max_burst_bitrate;
 extern volatile bool exiting;
 
 #define AUDIO_BUFFER_SIZE 100
@@ -139,7 +140,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                         if (broadcast_udp_packet(
                                 PACKET_AUDIO, (uint8_t*)frame,
                                 audio_encoder->encoded_frame_size + sizeof(int), id,
-                                STARTING_BURST_BITRATE, audio_buffer[id % AUDIO_BUFFER_SIZE],
+                                max_burst_bitrate, audio_buffer[id % AUDIO_BUFFER_SIZE],
                                 audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                             LOG_WARNING("Could not send audio frame");
                         }
@@ -151,7 +152,7 @@ int32_t multithreaded_send_audio(void* opaque) {
 #else
                 read_lock(&is_active_rwlock);
                 if (broadcast_udp_packet(PACKET_AUDIO, audio_device->buffer,
-                                         audio_device->buffer_size, id, STARTING_BURST_BITRATE,
+                                         audio_device->buffer_size, id, max_burst_bitrate,
                                          audio_buffer[id % AUDIO_BUFFER_SIZE],
                                          audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
                     LOG_WARNING("Could not send audio frame\n");
