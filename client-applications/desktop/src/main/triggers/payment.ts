@@ -8,7 +8,6 @@ createTrigger(
   TRIGGER.stripeAuthRefresh,
   fromEvent(stripeEvent, "stripe-auth-refresh")
 )
-createTrigger(TRIGGER.stripeRelaunch, fromEvent(stripeEvent, "stripe-relaunch"))
 createTrigger(
   TRIGGER.stripePaymentError,
   fromEvent(stripeEvent, "stripe-payment-error")

@@ -59,8 +59,11 @@ export const flow = <T>(
   return (trigger: Observable<T>) => {
     // Store the timestamp of when the flow starts, i.e. when the trigger fires
     let startTime = 0
-    trigger.pipe(take(1)).subscribe(() => {
+    let triggerPayload: object | undefined = {}
+
+    trigger.pipe(take(1)).subscribe((x?: any) => {
       startTime = Date.now()
+      triggerPayload = x
     })
 
     return mapValues(withMocking(name, trigger, flowFn), (obs, key) => {

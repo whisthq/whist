@@ -55,6 +55,8 @@ export const writeStream = (
 
 // Spawn the child process with the initial arguments passed in
 export const protocolLaunch = async () => {
+  if (childProcess !== undefined) return childProcess
+
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
 
   // Create a pipe to the protocol logs file

@@ -7,6 +7,7 @@
 import { session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take, takeUntil } from "rxjs/operators"
+import { merge } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -70,7 +71,10 @@ fromTrigger("notPersisted").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-fromTrigger("checkPaymentFlowSuccess").subscribe((x: { userEmail: string }) => {
+merge(
+  fromTrigger("checkPaymentFlowSuccess"),
+  fromTrigger("stripeAuthRefresh")
+).subscribe((x: { userEmail: string }) => {
   // Launch the protocol
   createProtocolWindow().catch((err) => console.error(err))
   // On MacOS, hide the app dock when the protocol is open
@@ -132,10 +136,6 @@ fromTrigger("relaunchAction").subscribe(() => {
   relaunch()
 })
 
-fromTrigger("stripeRelaunch").subscribe(() => {
-  relaunch()
-})
-
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
 })
@@ -149,23 +149,21 @@ fromTrigger("trayBugAction").subscribe(() => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-fromTrigger("showPaymentWindow").subscribe(async () => {
+fromTrigger("showPaymentWindow").subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
   const refreshToken = (store.get("auth.refreshToken") ?? "") as string
-  await createPaymentWindow({
+  createPaymentWindow({
     accessToken,
     refreshToken,
-    fromPaymentCheckFailure: false,
-  })
+  }).catch((err) => console.error(err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-fromTrigger("checkPaymentFlowFailure").subscribe(async () => {
+fromTrigger("checkPaymentFlowFailure").subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
   const refreshToken = (store.get("auth.refreshToken") ?? "") as string
-  await createPaymentWindow({
+  createPaymentWindow({
     accessToken,
     refreshToken,
-    fromPaymentCheckFailure: true,
-  })
+  }).catch((err) => console.error(err))
 })

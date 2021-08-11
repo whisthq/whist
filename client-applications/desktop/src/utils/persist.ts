@@ -12,7 +12,7 @@
 import { app } from "electron"
 import Store from "electron-store"
 import events from "events"
-import { isEmpty, pickBy } from "lodash"
+import { isEmpty, pickBy, omit } from "lodash"
 
 import { loggingBaseFilePath } from "@app/config/environment"
 
@@ -35,10 +35,12 @@ export const emitAuthCache = () => {
     configToken: persistedAuth?.configToken ?? "",
     refreshToken: persistedAuth?.refreshToken ?? "",
     userEmail: persistedAuth?.userEmail ?? "",
-    subscriptionStatus: persistedAuth?.subscriptionStatus ?? ""
+    subscriptionStatus: persistedAuth?.subscriptionStatus ?? "",
   } as Cache
 
-  if (isEmpty(pickBy(authCache, (x) => x === ""))) {
+  if (
+    isEmpty(pickBy(omit(authCache, ["subscriptionStatus"]), (x) => x === ""))
+  ) {
     persisted.emit("data-persisted", authCache)
   } else {
     persisted.emit("data-not-persisted")

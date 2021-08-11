@@ -220,16 +220,12 @@ export const createAuthWindow = () => {
 export const createPaymentWindow = async ({
   accessToken,
   refreshToken,
-  fromPaymentCheckFailure,
 }: {
   accessToken: string
   refreshToken: string
-  fromPaymentCheckFailure: boolean
 }) => {
   const response = await paymentPortalRequest({ accessToken })
-  console.log(response)
   const { paymentPortalURL } = paymentPortalParse(response)
-  console.log(paymentPortalURL)
   const win = createWindow({
     show: WindowHashPayment,
     options: {
@@ -259,17 +255,10 @@ export const createPaymentWindow = async ({
         accessToken,
         refreshToken,
       })
-      if (fromPaymentCheckFailure) {
-        stripeEvent.emit("stripe-relaunch")
-      }
     } else if (url === "http://localhost/callback/payment?success=false") {
-      if (fromPaymentCheckFailure) {
-        stripeEvent.emit("stripe-payment-error")
-      }
+      stripeEvent.emit("stripe-payment-error")
     }
-    win.close()
   })
-  return win
 }
 
 export const createUpdateWindow = () =>

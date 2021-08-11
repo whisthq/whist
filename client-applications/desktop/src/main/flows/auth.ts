@@ -3,14 +3,12 @@ import { has } from "lodash"
 import { switchMap, map, filter } from "rxjs/operators"
 import { fork, flow } from "@app/utils/flows"
 import {
-  generateRandomConfigToken,
   authInfoRefreshRequest,
   authInfoParse,
   isTokenExpired,
   refreshToken,
   accessToken,
 } from "@fractal/core-ts"
-import { store } from "@app/utils/persist"
 
 export const authRefreshFlow = flow<refreshToken>(
   "authRefreshFlow",
@@ -53,30 +51,14 @@ export default flow<{
 
   const refreshedAuthInfo = authRefreshFlow(expired)
 
-  const authInfoWithConfig = merge(
+  const authInfo = merge(
     notExpired,
     refreshedAuthInfo.success,
     refreshedAuthInfo.failure
-  ).pipe(
-    map(
-      (tokens: {
-        userEmail: string
-        accessToken: string
-        refreshToken: string
-        configToken?: string
-        subscriptionStatus: string
-      }) => ({
-        ...tokens,
-        configToken:
-          tokens.configToken ??
-          store.get("auth.configToken") ??
-          generateRandomConfigToken(),
-      })
-    )
   )
 
   return {
-    success: authInfoWithConfig.pipe(filter((res) => !has(res, "error"))),
-    failure: authInfoWithConfig.pipe(filter((res) => has(res, "error"))),
+    success: authInfo.pipe(filter((res) => !has(res, "error"))),
+    failure: authInfo.pipe(filter((res) => has(res, "error"))),
   }
 })

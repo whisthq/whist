@@ -16,7 +16,6 @@ export default {
 
   // Payment triggers
   stripeAuthRefresh: "stripeAuthRefresh",
-  stripeRelaunch: "stripeRelaunch",
   stripePaymentError: "stripePaymentError",
 
   // Update triggers
