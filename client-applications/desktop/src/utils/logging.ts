@@ -131,7 +131,7 @@ const amplitudeLog = async (
 export const logBase = (
   title: string,
   data: object,
-  level: LogLevel,
+  level?: LogLevel,
   msElapsed?: number
 ) => {
   /*
@@ -143,7 +143,7 @@ export const logBase = (
       level (LogLevel): Log level, see enum LogLevel above
   */
   const userEmail = persistGet("userEmail") ?? ""
-  localLog(title, data, level, userEmail as string, msElapsed)
+  localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 
   if (app.isPackaged)
     amplitudeLog(title, data, userEmail as string, msElapsed).catch((err) =>
