@@ -24,7 +24,7 @@ Includes
 
 extern bool has_video_rendered_yet;
 
-#define LOG_AUDIO false
+#define LOG_AUDIO true
 
 // system audio queue + our buffer limits, in decompressed bytes
 #define AUDIO_QUEUE_LOWER_LIMIT 18000
@@ -220,14 +220,14 @@ bool buffer_audio(int audio_device_queue) {
 
     // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
     if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
-        LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_no_more_audio);
+        LOG_INFO("Audio Queue too low: %d. max_id %d, last_played_id %d. Needs to catch up!", bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
         buffering_audio = true;
     }
 
     // don't play anything until we have enough audio in the queue
     if (buffering_audio) {
         if (bytes_until_no_more_audio >= TARGET_AUDIO_QUEUE_LIMIT) {
-            LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_no_more_audio);
+            LOG_INFO("Done catching up! Audio Queue: %d, max_id %d, last_played_id %d", bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
             buffering_audio = false;
         }
     }
@@ -477,6 +477,9 @@ int32_t receive_audio(FractalPacket* packet) {
         return 0;
     }
     int res = receive_packet(audio_ring_buffer, packet);
+#if LOG_AUDIO
+    LOG_DEBUG("Received packet with ID %d", packet->id);
+#endif
     if (res < 0) {
         return res;
     } else if (res > 0) {
