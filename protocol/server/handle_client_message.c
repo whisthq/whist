@@ -44,7 +44,8 @@ extern int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 extern FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 extern int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
-extern volatile double max_mbps;
+extern volatile int max_bitrate;
+extern volatile int max_burst_bitrate;
 extern volatile int client_width;
 extern volatile int client_height;
 extern volatile int client_dpi;
@@ -269,9 +270,13 @@ static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, boo
 
     UNUSED(client_id);
     if (!is_controlling) return 0;
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f", fmsg->mbps);
-    max_mbps = max(fmsg->mbps, MINIMUM_BITRATE / 1024.0 / 1024.0);
-    // update_encoder = true;
+    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+             fmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+    // Get the new bitrate data
+    max_bitrate = max(fmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
+    max_burst_bitrate = fmsg->bitrate_data.burst_bitrate;
+    // Update the encoder using the new bitrate
+    update_encoder = true;
     return 0;
 }
 
@@ -470,6 +475,7 @@ static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_
     if (fmsg->reinitialize_encoder) {
         // Wants to completely reinitialize the encoder
         update_encoder = true;
+        wants_iframe = true;
     } else {
         // Wants only an iframe
         wants_iframe = true;

@@ -43,8 +43,9 @@ volatile int ping_failures;
 clock latency_timer;
 extern volatile double latency;
 // MBPS variables
-extern volatile bool update_mbps;
 extern volatile int max_bitrate;
+extern volatile int max_burst_bitrate;
+extern volatile bool update_bitrate;
 // dimension variables
 extern volatile int server_width;
 extern volatile int server_height;
@@ -60,7 +61,7 @@ Private Functions
 */
 void init_updater();
 void destroy_updater();
-void update_bitrate();
+void try_update_bitrate();
 void update_ping();
 void update_initial_dimensions();
 
@@ -142,16 +143,18 @@ void update_initial_dimensions() {
     }
 }
 
-void update_bitrate() {
+void try_update_bitrate() {
     /*
         Tell the server to update the bitrate of its video if needed.
     */
-    if (update_mbps) {
-        update_mbps = false;
+    if (update_bitrate) {
+        update_bitrate = false;
         FractalClientMessage fmsg = {0};
         fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
-        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
+        fmsg.bitrate_data.bitrate = max_bitrate;
+        fmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
+        LOG_INFO("Asking for server MBPS to be %f/%f", fmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
         send_fmsg(&fmsg);
     }
 }
@@ -216,7 +219,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
             LOG_ERROR("Tried to update, but updater not initialized!");
         }
         update_initial_dimensions();
-        update_bitrate();
+        try_update_bitrate();
         update_ping();
         // Video and Audio should be updated at least every 5ms
         // We will do it here, after receiving each packet or if the last recvp

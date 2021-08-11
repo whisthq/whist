@@ -72,7 +72,8 @@ volatile bool exiting;
 
 int sample_rate = -1;
 
-volatile double max_mbps;
+volatile int max_bitrate = STARTING_BITRATE;
+volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
 InputDevice* input_device = NULL;
 
 static FractalMutex packet_mutex;
@@ -122,7 +123,7 @@ void graceful_exit() {
     fmsg_response.type = SMESSAGE_QUIT;
     read_lock(&is_active_rwlock);
     if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response, sizeof(FractalServerMessage),
-                             1, STARTING_BURST_BITRATE, NULL, NULL) != 0) {
+                             1, max_burst_bitrate, NULL, NULL) != 0) {
         LOG_WARNING("Could not send Quit Message");
     }
     read_unlock(&is_active_rwlock);
@@ -349,7 +350,8 @@ int main(int argc, char* argv[]) {
     clock startup_time;
     start_timer(&startup_time);
 
-    max_mbps = STARTING_BITRATE / (1024.0 * 1024.0);
+    max_bitrate = STARTING_BITRATE;
+    max_burst_bitrate = STARTING_BURST_BITRATE;
     stop_streaming = false;
     wants_iframe = false;
     update_encoder = false;
