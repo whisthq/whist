@@ -128,7 +128,8 @@ Defines
 #define MAX_SCREEN_HEIGHT 4096
 
 #define AUDIO_BITRATE 128000
-#define FPS 90
+// We would like to set this higher, but mac displays have a max refresh rate of 60 Hz.
+#define FPS 60 
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720

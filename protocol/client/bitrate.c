@@ -37,8 +37,7 @@ Private Function Implementations
 void fallback_bitrate(int num_nacks_per_second) {
     /*
         Switches between two sets of bitrate/burst bitrate: the default of 16mbps/100mbps and a
-       fallback of 10mbps/30mbps. We fall back if we've nacked a lot in the last second. Otherwise,
-       we add 1mbps to the bitrate, up to 16mbps, at which point we switch back to 16/100.
+       fallback of 10mbps/30mbps. We fall back if we've nacked a lot in the last second.
 
         Arguments:
             num_nacks_per_second (int): the average number of nacks per second since the last time
@@ -47,14 +46,6 @@ void fallback_bitrate(int num_nacks_per_second) {
     if (num_nacks_per_second > 6 && max_bitrate != BAD_BITRATE) {
         max_bitrate = BAD_BITRATE;
         max_burst_bitrate = BAD_BURST_BITRATE;
-    } else {
-        if (max_bitrate < STARTING_BITRATE) {
-            // add 1 mb (approximately)
-            max_bitrate = min(max_bitrate + 1000000, STARTING_BITRATE);
-            if (max_bitrate == STARTING_BITRATE) {
-                max_burst_bitrate = STARTING_BURST_BITRATE;
-            }
-        }
     }
 }
 
