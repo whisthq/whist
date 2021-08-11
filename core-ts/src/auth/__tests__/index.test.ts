@@ -31,10 +31,10 @@ describe("authInfoParse", () => {
 
   test("returns jwtIdentity, userEmail, accessToken, subscriptionStatus", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
-      jwtIdentity: "jrocket@example.com",
+      jwtIdentity: "my_username",
       userEmail: "test@fractal.co",
       accessToken: testAccessTokenGood,
-      subscriptionStatus: "canceled",
+      subscriptionStatus: null,
     })
   })
   test("returns error if no access_token", () => {
