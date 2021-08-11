@@ -145,7 +145,7 @@ int32_t multithreaded_send_video(void* opaque) {
     init_cursors();
 
     // Init FFMPEG Encoder
-    int current_bitrate = GOOD_STARTING_BITRATE;
+    int current_bitrate = STARTING_BITRATE;
     VideoEncoder* encoder = NULL;
 
     double worst_fps = 40.0;

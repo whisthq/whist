@@ -1,6 +1,8 @@
 #include "bitrate.h"
-volatile int max_bitrate = GOOD_STARTING_BITRATE;
-volatile int max_burst_bitrate = GOOD_STARTING_BURST_BITRATE;
+volatile int max_bitrate = STARTING_BITRATE;
+volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
+#define BAD_BITRATE 10400000
+#define BAD_BURST_BITRATE 31800000
 
 void fallback_bitrate(int num_nacks_per_second) {
     // our first dumb algorithm:
@@ -11,11 +13,11 @@ void fallback_bitrate(int num_nacks_per_second) {
         max_bitrate = BAD_BITRATE;
         max_burst_bitrate = BAD_BURST_BITRATE;
     } else {
-        if (max_bitrate < GOOD_STARTING_BITRATE) {
+        if (max_bitrate < STARTING_BITRATE) {
             // add 1 mb (approximately)
-            max_bitrate = min(max_bitrate + 1000000, GOOD_STARTING_BITRATE);
-            if (max_bitrate == GOOD_STARTING_BITRATE) {
-                max_burst_bitrate = GOOD_STARTING_BURST_BITRATE;
+            max_bitrate = min(max_bitrate + 1000000, STARTING_BITRATE);
+            if (max_bitrate == STARTING_BITRATE) {
+                max_burst_bitrate = STARTING_BURST_BITRATE;
             }
         }
     }
