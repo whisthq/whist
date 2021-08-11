@@ -16,6 +16,11 @@ import TRIGGER from "@app/utils/triggers"
 createTrigger(TRIGGER.appReady, fromEvent(app as EventEmitter, "ready"))
 // Fires whenever the number of windows changes, including the protocol window
 createTrigger(TRIGGER.windowInfo, fromEvent(windowMonitor, "window-info"))
+// Fires whenever the network is unstable
+createTrigger(
+  TRIGGER.networkUnstable,
+  fromEvent(windowMonitor, "network-is-unstable")
+)
 // Fires when all Electron windows have been closed
 createTrigger(
   TRIGGER.windowsAllClosed,

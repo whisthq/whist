@@ -4,7 +4,6 @@ module.exports = {
   // This "purge" list should reference any files that call our .css files by
   // name. This includes html, and any js files that 'import' css.
   // This will allow tailwind to analyze and "purge" unused css.
-  mode: "jit",
   purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   darkMode: "class",
   // The theme section is where we define anything related to visual design.
