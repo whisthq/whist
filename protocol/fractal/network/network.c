@@ -255,7 +255,7 @@ bool handshake_private_key(SocketContext* context) {
     }
     if (sendp(context, &their_priv_key_data, sizeof(their_priv_key_data)) < 0) {
         LOG_ERROR("sendp(3) failed! Could not send signed private key data! %d",
-                    get_last_network_error());
+                  get_last_network_error());
         return false;
     }
     fractal_sleep(50);
