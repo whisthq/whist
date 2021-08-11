@@ -101,16 +101,20 @@ def launch_new_ami_buffer(
 
 def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     """
-    Marks the instance for draining by calling the drain_and_shutdown endpoint of the host service
-    and marks the instance as draining. If the endpoint errors out with an unexpected status code,
-    we are going to mark the instance as unresponsive. We are not going to kill the instance as at
-    this point in time, we won't be sure if all the users have left the instance. Once the instance
-    is marked as draining, we won't launch associate a "mandelbox" running on this instance to an user.
+    Marks the instance for draining by calling the drain_and_shutdown endpoint
+    of the host service and marks the instance as draining. If the endpoint
+    errors out with an unexpected status code, we are going to mark the
+    instance as unresponsive. We are not going to kill the instance as at this
+    point in time, we won't be sure if all the users have left the instance.
+    However, note that we will terminate instances who don't have a valid IP
+    (since the host service has not yet started up/connected). Once the
+    instance is marked as draining, we won't launch associate a "mandelbox"
+    running on this instance to an user.
 
-    Note that we shouldn't call this function on a single instance multiple times. In particular,
-    the http server in a host service is shut down soon after the endpoint is called, which means
-    that future requests are always going to fail, unfairly marking the host service as
-    unresponsive.
+    Note that we shouldn't call this function on a single instance multiple
+    times. In particular, the http server in a host service is shut down soon
+    after the endpoint is called, which means that future requests are always
+    going to fail, unfairly marking the host service as unresponsive.
 
     Args:
         active_instance: InstanceInfo object for the instance that need to be marked as draining.
@@ -123,7 +127,11 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         f"mark_instance_for_draining called for instance {active_instance.instance_name}"
     )
     # If the IP is empty, the instance has yet to connect
-    if str(active_instance.ip) == "":
+    if (
+        active_instance.status == InstanceState.PRE_CONNECTION
+        or active_instance.ip is None
+        or str(active_instance.ip) == ""
+    ):
         try:
             terminate_instance(active_instance)
             job_status = True

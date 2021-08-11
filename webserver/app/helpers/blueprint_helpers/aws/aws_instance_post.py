@@ -284,7 +284,7 @@ def drain_instance(instance: InstanceInfo) -> None:
     old_status = instance.status
     instance.status = InstanceState.DRAINING
     db.session.commit()
-    if old_status == InstanceState.PRE_CONNECTION:
+    if old_status == InstanceState.PRE_CONNECTION or instance.ip is None or str(instance.ip) == "":
         terminate_instance(instance)
     else:
         try:
