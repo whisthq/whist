@@ -129,7 +129,7 @@ Defines
 
 #define AUDIO_BITRATE 128000
 // We would like to set this higher, but mac displays have a max refresh rate of 60 Hz.
-#define FPS 60 
+#define FPS 60
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
