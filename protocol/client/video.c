@@ -32,6 +32,7 @@ Includes
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
+#include "bitrate.h"
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -702,17 +703,11 @@ void calculate_statistics() {
         start_timer(&t);
         init_t = true;
     }
+    // do some calculation
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
-        // Note: Uncomment to oscillate between bitrates every 5 seconds
-        if (max_bitrate > GOOD_STARTING_BITRATE) {
-            max_bitrate = GOOD_STARTING_BITRATE;
-            max_burst_bitrate = GOOD_STARTING_BURST_BITRATE;
-        } else {
-            // max_bitrate += 1000000;
-            // max_burst_bitrate += 1000000;
-        }
-        // update_bitrate = true;
+        update_bitrate = update_bitrate(ring_buffer->num_nacked / 5.0);
+        ring_buffer->num_nacked = 0;
         start_timer(&t);
     }
 }
