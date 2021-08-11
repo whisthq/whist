@@ -12,4 +12,5 @@ exec google-chrome \
     --enable-gpu-rasterization \
     --enable-zero-copy \
     --enable-features=VaapiVideoDecoder,Vulkan \
-    --flag-switches-end
+    --flag-switches-end \
+    --restore-last-session
