@@ -109,7 +109,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     However, note that we will terminate instances who don't have a valid IP
     (since the host service has not yet started up/connected). Once the
     instance is marked as draining, we won't launch associate a "mandelbox"
-    running on this instance to an user. 
+    running on this instance to an user.
 
     Note that we shouldn't call this function on a single instance multiple
     times. In particular, the http server in a host service is shut down soon
@@ -127,7 +127,11 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         f"mark_instance_for_draining called for instance {active_instance.instance_name}"
     )
     # If the IP is empty, the instance has yet to connect
-    if active_status.status == InstanceState.PRE_CONNECTION or active_instance.ip is None or str(active_instance.ip) == "":
+    if (
+        active_status.status == InstanceState.PRE_CONNECTION
+        or active_instance.ip is None
+        or str(active_instance.ip) == ""
+    ):
         try:
             terminate_instance(active_instance)
             job_status = True
