@@ -378,7 +378,6 @@ jobs:
         env:
           HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          LOGZIO_SHIPPING_TOKEN: ${{ secrets.HOST_SERVICE_LOGZIO_SHIPPING_TOKEN }}
         working-directory: host-service
         run: make build
 
@@ -412,10 +411,13 @@ jobs:
 
           if [ "$BRANCH_NAME" == "prod" ]; then
             echo 'APP_ENV=PROD' > app_env.env
+            echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}' >> app_env.env
           elif [ "$BRANCH_NAME" == "staging" ]; then
             echo 'APP_ENV=STAGING' > app_env.env
+            echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}' >> app_env.env
           else
             echo 'APP_ENV=DEV' > app_env.env
+            echo 'LOGZIO_SHIPPING_TOKEN=${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}' >> app_env.env
           fi
           echo 'USE_PROD_LOGGING=true' >> app_env.env
           cat app_env.env
