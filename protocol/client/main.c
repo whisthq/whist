@@ -61,8 +61,8 @@ volatile int server_height = -1;
 volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
 
 // maximum mbps
-extern volatile int max_bitrate;;
-extern volatile int max_burst_bitrate; 
+extern volatile int max_bitrate;
+extern volatile int max_burst_bitrate;
 volatile bool update_bitrate = false;
 
 // Global state variables
