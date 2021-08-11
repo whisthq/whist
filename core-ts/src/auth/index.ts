@@ -92,7 +92,8 @@ export const authInfoParse = (res: {
     const decodedIdToken = jwtDecode(res?.json?.id_token ?? "") as any
     const jwtIdentity = decodedAccessToken?.sub
     const userEmail = decodedIdToken?.email
-    const subscriptionStatus = decodedAccessToken["https://api.fractal.co/subscription_status"]
+    const subscriptionStatus =
+      decodedAccessToken["https://api.fractal.co/subscription_status"]
 
     if (typeof accessToken !== "string")
       return {
@@ -148,8 +149,15 @@ export const isTokenExpired = ({ accessToken }: accessToken): boolean => {
     // before the expiry
     const secondsBuffer = 10
     return currentTime + secondsBuffer > profile.exp
-  } catch(err) {
+  } catch (err) {
     console.error(`Failed to decode access token: ${err}`)
     return true
   }
+}
+
+export const subscriptionStatusParse = ({ accessToken }: accessToken) => {
+  const decodedAccessToken = jwtDecode(accessToken ?? "") as any
+  const subscriptionStatus =
+    decodedAccessToken["https://api.fractal.co/subscription_status"]
+  return { subscriptionStatus }
 }

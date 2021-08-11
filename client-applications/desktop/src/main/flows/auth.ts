@@ -40,7 +40,6 @@ export default flow<{
   accessToken: string
   refreshToken: string
   configToken?: string
-  subscriptionStatus: string
 }>("authFlow", (trigger) => {
   const expired = trigger.pipe(
     filter((tokens: accessToken & refreshToken) => isTokenExpired(tokens))

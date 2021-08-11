@@ -62,15 +62,15 @@ export const flow = <T>(
     let triggerPayload: object | undefined = {}
 
     trigger.pipe(take(1)).subscribe((x?: any) => {
-      startTime = Date.now()
-      triggerPayload = x
+      startTime = Date.now() // Get the timestamp of when the flow started running
+      triggerPayload = x // Save the trigger payload for logging down below
     })
 
     return mapValues(withMocking(name, trigger, flowFn), (obs, key) => {
       obs.subscribe((value: object) => {
         logBase(
-          `${name}.${key}`,
-          value,
+          `${name}.${key}`, // e.g. authFlow.success
+          { input: triggerPayload, output: value }, // Log both the flow input (trigger) and output
           LogLevel.DEBUG,
           Date.now() - startTime // This is how long the flow took run
         ).catch((err) => console.log(err))

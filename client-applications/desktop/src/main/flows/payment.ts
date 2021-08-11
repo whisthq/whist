@@ -1,20 +1,26 @@
-import { filter } from "rxjs/operators"
-import { subscriptionStatus, hasValidSubscription } from "@fractal/core-ts"
+import { filter, map } from "rxjs/operators"
+import {
+  accessToken,
+  subscriptionStatus,
+  subscriptionStatusParse,
+  hasValidSubscription,
+} from "@fractal/core-ts"
 
 import { flow } from "@app/utils/flows"
 
-export default flow<{
-  userEmail: string
-  accessToken: string
-  refreshToken: string
-  configToken?: string
-  subscriptionStatus: string
-}>("checkPaymentFlow", (trigger) => {
+export default flow<accessToken>("checkPaymentFlow", (trigger) => {
+  const parsed = trigger.pipe(
+    map((x) => ({
+      ...x,
+      ...subscriptionStatusParse(x),
+    }))
+  )
+
   return {
-    success: trigger.pipe(
+    success: parsed.pipe(
       filter((tokens: subscriptionStatus) => hasValidSubscription(tokens))
     ),
-    failure: trigger.pipe(
+    failure: parsed.pipe(
       filter((tokens: subscriptionStatus) => !hasValidSubscription(tokens))
     ),
   }

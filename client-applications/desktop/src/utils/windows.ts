@@ -339,7 +339,7 @@ export const createProtocolWindow = async () => {
     })
   })
 
-  protocol.stdout.on("data", (message) => {
+  protocol?.stdout?.on("data", (message) => {
     const unstable = isNetworkUnstable(message)
     windowMonitor.emit("network-is-unstable", unstable)
   })
