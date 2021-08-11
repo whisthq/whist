@@ -13,7 +13,14 @@ import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath } from "@app/utils/logging"
 
+const NACK_LOOKBACK_PERIOD = 3 // Number of seconds to look back when measuring # of nacks
+const MAX_NACKS_ALLOWED = 5 // Maximum # of nacks allowed before we decide the network is unstable
+
 export let childProcess: ChildProcess | undefined
+// Current time in UNIX (seconds)
+let lastNackTime = Date.now() / 1000
+// Track how many nacks there were
+let numberOfRecentNacks = 0
 
 const { protocolName, protocolFolder } = config
 
@@ -83,11 +90,11 @@ export const protocolLaunch = async () => {
       }),
   })
 
+  // Pipe to protocol.log
   protocol.stdout.pipe(protocolLogFile)
-  if (process.env.SHOW_PROTOCOL_LOGS === "true") {
-    // If this is true, also pipe to stdout
+  // If true, also show in terminal (for local debugging)
+  if (process.env.SHOW_PROTOCOL_LOGS === "true")
     protocol.stdout.pipe(process.stdout)
-  }
 
   // When the protocol closes, reset the childProcess to undefined and show the app dock on MacOS
   protocol.on("close", () => {
@@ -118,4 +125,25 @@ export const protocolStreamKill = () => {
   // We send SIGINT just in case
   childProcess?.kill?.("SIGINT")
   writeStream(childProcess, "kill?0")
+}
+
+export const isNetworkUnstable = (message?: string) => {
+  const currentTime = Date.now() / 1000
+
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (message?.toString().includes("NACKING")) {
+    // Check when the last nack happened
+    if (currentTime - lastNackTime < NACK_LOOKBACK_PERIOD) {
+      // If the last nack happened less than three seconds ago, increase # of nacks
+      numberOfRecentNacks += 1
+    } else {
+      // If the last nack was more than three seconds ago, reset timer
+      numberOfRecentNacks = 1
+      lastNackTime = currentTime
+    }
+
+    return numberOfRecentNacks > MAX_NACKS_ALLOWED
+  }
+
+  return currentTime - lastNackTime < NACK_LOOKBACK_PERIOD
 }

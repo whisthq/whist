@@ -1,12 +1,25 @@
-import { app, IpcMainEvent } from "electron"
-import { takeUntil, withLatestFrom, startWith, mapTo } from "rxjs/operators"
-import { merge } from "rxjs"
+import { app, IpcMainEvent, BrowserWindow } from "electron"
+import {
+  takeUntil,
+  withLatestFrom,
+  startWith,
+  mapTo,
+  throttle,
+} from "rxjs/operators"
+import { merge, interval } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
 import { uploadToS3, logBase } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
-import { WindowHashProtocol } from "@app/utils/constants"
+import {
+  WindowHashProtocol,
+  WindowHashNetworkWarning,
+} from "@app/utils/constants"
 import { hideAppDock } from "@app/utils/dock"
+import {
+  createNetworkWarningWindow,
+  getElectronWindows,
+} from "@app/utils/windows"
 
 const quit = () => {
   hideAppDock()
@@ -65,3 +78,19 @@ fromTrigger("windowInfo")
         .catch((err) => console.log(err))
     }
   )
+
+fromTrigger("networkUnstable")
+  .pipe(throttle(() => interval(500))) // Throttle to 0.5s so we don't flood the main thread
+  .subscribe((unstable: boolean) => {
+    let warningWindowOpen = false
+    getElectronWindows().forEach((win: BrowserWindow) => {
+      if (win.webContents.getURL().includes(WindowHashNetworkWarning)) {
+        warningWindowOpen = true
+        if (!unstable) {
+          win.close()
+        }
+      }
+    })
+
+    if (!warningWindowOpen && unstable) createNetworkWarningWindow()
+  })
