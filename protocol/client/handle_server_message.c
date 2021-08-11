@@ -203,7 +203,7 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
 
     LOG_INFO("Received window title message from server!");
     if (should_update_window_title) {
-        LOG_ERROR(
+        LOG_WARNING(
             "Failed to update window title, as the previous window title update is still pending");
         return -1;
     }

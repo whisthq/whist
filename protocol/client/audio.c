@@ -399,7 +399,7 @@ void render_audio() {
                                  audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
             if (res < 0) {
-                LOG_ERROR("Could not play audio!");
+                LOG_WARNING("Could not play audio!");
             }
         }
         // No longer rendering audio
