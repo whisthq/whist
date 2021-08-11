@@ -240,6 +240,9 @@ void flush_next_audio_frame() {
      */
     last_played_id++;
     reset_frame(get_frame_at_id(audio_ring_buffer, last_played_id));
+#if LOG_AUDIO
+    LOG_INFO("Flushed audio frame at %d", last_played_id);
+#endif
 }
 
 bool flush_audio(int audio_device_queue) {
