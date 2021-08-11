@@ -4,7 +4,6 @@ import os
 from http import HTTPStatus
 
 import pytest
-import stripe
 from flask import current_app, Flask
 from flask_jwt_extended import create_access_token, JWTManager, verify_jwt_in_request
 

@@ -63,7 +63,7 @@ export const base = {
   },
   resizable: false,
   titleBarStyle: "default",
-  backgroundColor: "#111111",
+  backgroundColor: "#ffffff",
 }
 
 export const width = {

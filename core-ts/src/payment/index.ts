@@ -1,8 +1,8 @@
 import { config } from "../config"
-import { configPost } from "../"
+import { configGet } from "../"
 import { accessToken } from "../types/data"
 
-const post = configPost({ server: config.WEBSERVER_URL })
+const get = configGet({ server: config.WEBSERVER_URL })
 
 export const paymentPortalRequest = async ({ accessToken }: accessToken) => {
   /*
@@ -17,12 +17,9 @@ export const paymentPortalRequest = async ({ accessToken }: accessToken) => {
     Returns:
       the stripe customer portal url
   */
-  return await post({
-    endpoint: "/stripe/customer_portal",
+  return await get({
+    endpoint: "/payment_portal_url",
     accessToken,
-    body: {
-      return_url: "http://localhost/callback?payment",
-    },
   })
 }
 
