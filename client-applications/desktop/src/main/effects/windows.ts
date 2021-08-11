@@ -3,7 +3,7 @@ import { takeUntil, withLatestFrom, startWith, mapTo } from "rxjs/operators"
 import { merge } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
-import { uploadToS3 } from "@app/utils/logging"
+import { uploadToS3, logBase } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
 import { hideAppDock } from "@app/utils/dock"
@@ -33,7 +33,7 @@ fromTrigger("windowInfo")
     )
   )
   .subscribe(
-    ([args, mandelboxFailed]: [
+    ([args]: [
       {
         numberWindowsRemaining: number
         crashed: boolean
@@ -45,19 +45,23 @@ fromTrigger("windowInfo")
       // If there are still windows open, ignore
       if (args.numberWindowsRemaining !== 0) return
       // If all windows are closed and the protocol wasn't the last open window, quit
-      if (args.hash !== WindowHashProtocol) {
-        quit()
-        return
-      }
-      // If the protocol was the last window to be closed, upload logs and quit the app
-      destroyTray()
-      uploadToS3()
+      logBase("Application exited", {})
         .then(() => {
-          if (!args.crashed) quit()
+          if (args.hash !== WindowHashProtocol) {
+            quit()
+          } else {
+            // If the protocol was the last window to be closed, upload logs and quit the app
+            destroyTray()
+            uploadToS3()
+              .then(() => {
+                if (!args.crashed) quit()
+              })
+              .catch((err) => {
+                console.error(err)
+                if (!args.crashed) quit()
+              })
+          }
         })
-        .catch((err) => {
-          console.error(err)
-          if (!args.crashed) quit()
-        })
+        .catch((err) => console.log(err))
     }
   )
