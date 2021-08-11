@@ -176,7 +176,8 @@ void catchup_audio() {
         (last_played_id != -1 &&
          audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES)) {
 #if LOG_AUDIO
-        LOG_DEBUG("Catching up audio from ID %d to ID %d", last_played_id, audio_ring_buffer->max_id - 1);
+        LOG_DEBUG("Catching up audio from ID %d to ID %d", last_played_id,
+                  audio_ring_buffer->max_id - 1);
 #endif
         last_played_id = audio_ring_buffer->max_id - 1;
     }
@@ -201,7 +202,8 @@ bool is_next_audio_frame_valid() {
 
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
 #if LOG_AUDIO
-    LOG_DEBUG("next_to_play_id: %d, frame data: %d, packets %d/%d", next_to_play_id, frame_data->id, frame_data->packets_received, frame_data->num_packets);
+    LOG_DEBUG("next_to_play_id: %d, frame data: %d, packets %d/%d", next_to_play_id, frame_data->id,
+              frame_data->packets_received, frame_data->num_packets);
 #endif
     return frame_data->id == next_to_play_id &&
            frame_data->num_packets == frame_data->packets_received;
@@ -226,14 +228,16 @@ bool buffer_audio(int audio_device_queue) {
 
     // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
     if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
-        LOG_INFO("Audio Queue too low: %d. max_id %d, last_played_id %d. Needs to catch up!", bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
+        LOG_INFO("Audio Queue too low: %d. max_id %d, last_played_id %d. Needs to catch up!",
+                 bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
         buffering_audio = true;
     }
 
     // don't play anything until we have enough audio in the queue
     if (buffering_audio) {
         if (bytes_until_no_more_audio >= TARGET_AUDIO_QUEUE_LIMIT) {
-            LOG_INFO("Done catching up! Audio Queue: %d, max_id %d, last_played_id %d", bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
+            LOG_INFO("Done catching up! Audio Queue: %d, max_id %d, last_played_id %d",
+                     bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
             buffering_audio = false;
         }
     }
