@@ -227,7 +227,9 @@ export const createPaymentWindow = async ({
   fromPaymentCheckFailure: boolean
 }) => {
   const response = await paymentPortalRequest({ accessToken })
+  console.log(response)
   const { paymentPortalURL } = paymentPortalParse(response)
+  console.log(paymentPortalURL)
   const win = createWindow({
     show: WindowHashPayment,
     options: {
