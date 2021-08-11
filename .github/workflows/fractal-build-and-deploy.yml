@@ -620,7 +620,7 @@ jobs:
         working-directory: webserver
         run: pip install -r requirements.txt
 
-      - name: Run flask cli to upgrade the AMIs
+      - name: Run flask cli to create new instance buffers
         env:
           AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
           AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
@@ -748,7 +748,7 @@ jobs:
         working-directory: webserver
         run: pip install -r requirements.txt
 
-      - name: Run flask cli to upgrade the AMIs
+      - name: Run flask cli to swap over to the new instance buffers
         env:
           AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
           AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
