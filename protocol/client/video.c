@@ -707,7 +707,7 @@ void calculate_statistics() {
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
         update_bitrate = calculate_new_bitrate(video_ring_buffer->num_nacked / 5.0);
-        ring_buffer->num_nacked = 0;
+        video_ring_buffer->num_nacked = 0;
         start_timer(&t);
     }
 }
