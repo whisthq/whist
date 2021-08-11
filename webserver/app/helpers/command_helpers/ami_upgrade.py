@@ -128,7 +128,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     )
     # If the IP is empty, the instance has yet to connect
     if (
-        active_status.status == InstanceState.PRE_CONNECTION
+        active_instance.status == InstanceState.PRE_CONNECTION
         or active_instance.ip is None
         or str(active_instance.ip) == ""
     ):
