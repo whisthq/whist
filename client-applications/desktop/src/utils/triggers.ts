@@ -54,4 +54,5 @@ export default {
   authRefreshSuccess: "authRefreshSuccess",
   checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
+  configFlowSuccess: "configFlowSuccess",
 }

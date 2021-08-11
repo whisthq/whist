@@ -8,13 +8,14 @@ import { persist } from "@app/utils/persist"
 // so the user is remembered
 merge(
   fromTrigger("authFlowSuccess"),
-  fromTrigger("authRefreshSuccess")
+  fromTrigger("authRefreshSuccess"),
+  fromTrigger("configFlowSuccess")
 ).subscribe(
   (args: {
-    userEmail: string
-    accessToken: string
-    refreshToken: string
-    configToken: string
+    userEmail?: string
+    accessToken?: string
+    refreshToken?: string
+    configToken?: string
   }) => {
     toPairs(args).forEach(([key, value]) => {
       if (value !== undefined) persist(key, value)

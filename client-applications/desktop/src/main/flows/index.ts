@@ -5,13 +5,12 @@ import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
+import configFlow from "@app/main/flows/config"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
 import { AWSRegion } from "@app/@types/aws"
 import TRIGGER from "@app/utils/triggers"
-import { generateRandomConfigToken } from "@fractal/core-ts"
-import { store } from "@app/utils/persist"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger("updateAvailable"))
@@ -32,15 +31,18 @@ const auth = authFlow(
 
 const checkPayment = checkPaymentFlow(fromTrigger(TRIGGER.authFlowSuccess))
 
+const config = configFlow(
+  merge(
+    fromTrigger(TRIGGER.checkPaymentFlowSuccess),
+    fromTrigger(TRIGGER.stripeAuthRefresh)
+  )
+)
+
 // Observable that fires when Fractal is ready to be launched
-const launchTrigger = merge(
-  fromTrigger(TRIGGER.checkPaymentFlowSuccess),
-  fromTrigger(TRIGGER.stripeAuthRefresh)
-).pipe(
+const launchTrigger = fromTrigger(TRIGGER.configFlowSuccess).pipe(
   map((x: object) => ({
     ...x, // { accessToken, configToken }
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
-    configToken: store.get("auth.configToken") ?? generateRandomConfigToken(),
   })),
   take(1)
 ) as Observable<{
@@ -69,3 +71,5 @@ createTrigger(TRIGGER.checkPaymentFlowFailure, checkPayment.failure)
 
 createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
+
+createTrigger(TRIGGER.configFlowSuccess, config.success)
