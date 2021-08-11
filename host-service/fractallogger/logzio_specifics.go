@@ -3,6 +3,7 @@ package fractallogger // import "github.com/fractal/fractal/host-service/fractal
 import (
 	"encoding/json"
 	"log"
+	"os"
 	"time"
 
 	"github.com/fractal/fractal/host-service/metadata"
@@ -11,9 +12,6 @@ import (
 
 	"github.com/logzio/logzio-go"
 )
-
-// Variable containing our logz.io shipping token --- filled in by linker if built on CI
-var logzioShippingToken string
 
 // We use a pointer of this type so we can check if it is nil in our logging
 // functions, and therefore always call them safely.
@@ -41,12 +39,16 @@ func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 		Environment   metadata.AppEnvironment `json:"environment"`
 		Message       string                  `json:"message"`
 		Type          string                  `json:"type"`
+		Component     string                  `json:"component"`
+		SubComponent  string                  `json:"sub_component"`
 	}{
 		AWSInstanceID: instanceID,
 		AWSAmiID:      amiID,
 		Environment:   metadata.GetAppEnvironment(),
 		Message:       payload,
 		Type:          string(msgType),
+		Component:     "backend",
+		SubComponent:  "host-service",
 	})
 
 	if err != nil {
@@ -68,6 +70,8 @@ func initializeLogzIO() (*logzioSender, error) {
 		Info("Not setting up logz.io integration.")
 		return nil, nil
 	}
+
+	logzioShippingToken := os.Getenv("LOGZIO_SHIPPING_TOKEN")
 
 	if logzioShippingToken == "" {
 		return nil, utils.MakeError("Error initializing logz.io integration: logzioShippingToken is uninitialized")
