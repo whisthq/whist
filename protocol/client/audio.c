@@ -24,7 +24,7 @@ Includes
 
 extern bool has_video_rendered_yet;
 
-#define LOG_AUDIO true
+#define LOG_AUDIO false
 
 // system audio queue + our buffer limits, in decompressed bytes
 #define AUDIO_QUEUE_LOWER_LIMIT 18000
@@ -200,7 +200,9 @@ bool is_next_audio_frame_valid() {
     int next_to_play_id = last_played_id + 1;
 
     FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
+#if LOG_AUDIO
     LOG_DEBUG("next_to_play_id: %d, frame data: %d, packets %d/%d", next_to_play_id, frame_data->id, frame_data->packets_received, frame_data->num_packets);
+#endif
     return frame_data->id == next_to_play_id &&
            frame_data->num_packets == frame_data->packets_received;
 }
