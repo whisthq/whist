@@ -15,7 +15,7 @@ void fallback_bitrate(int num_nacks_per_second) {
             // add 1 mb (approximately)
             max_bitrate = min(max_bitrate + 1000000, GOOD_STARTING_BITRATE);
             if (max_bitrate == GOOD_STARTING_BITRATE) {
-                max_burst_bitrate = GOOD_STARTING_BURST_BITRATE);
+                max_burst_bitrate = GOOD_STARTING_BURST_BITRATE;
             }
         }
     }
