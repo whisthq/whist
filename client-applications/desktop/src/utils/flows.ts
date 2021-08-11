@@ -5,7 +5,7 @@
  */
 
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map, tap, take } from "rxjs/operators"
+import { filter, share, map, take } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
@@ -63,19 +63,18 @@ export const flow = <T>(
       startTime = Date.now()
     })
 
-    return mapValues(withMocking(name, trigger, flowFn), (obs, key) =>
-      obs.pipe(
-        tap((value: object) =>
-          logBase(
-            `${name}.${key}`,
-            value,
-            LogLevel.DEBUG,
-            Date.now() - startTime // This is how long the flow took run
-          )
-        ),
-        share()
-      )
-    )
+    return mapValues(withMocking(name, trigger, flowFn), (obs, key) => {
+      obs.subscribe((value: object) => {
+        logBase(
+          `${name}.${key}`,
+          value,
+          LogLevel.DEBUG,
+          Date.now() - startTime // This is how long the flow took run
+        ).catch((err) => console.log(err))
+      })
+
+      return obs.pipe(share())
+    })
   }
 }
 
