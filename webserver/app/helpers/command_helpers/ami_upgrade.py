@@ -123,7 +123,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         f"mark_instance_for_draining called for instance {active_instance.instance_name}"
     )
     # If the IP is empty, the instance has yet to connect
-    if str(active_instance.ip) == "":
+    if active_instance.ip is None or str(active_instance.ip) == "":
         try:
             terminate_instance(active_instance)
             job_status = True
