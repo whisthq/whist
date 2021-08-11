@@ -175,6 +175,9 @@ void catchup_audio() {
     if ((last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) ||
         (last_played_id != -1 &&
          audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES)) {
+#if LOG_AUDIO
+        LOG_DEBUG("Catching up audio from ID %d to ID %d", last_played_id, audio_ring_buffer->max_id - 1);
+#endif
         last_played_id = audio_ring_buffer->max_id - 1;
     }
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
