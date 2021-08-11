@@ -3,5 +3,5 @@
 
 #include <fractal/core/fractal.h>
 
-bool update_bitrate(int num_nacks);
+bool calculate_new_bitrate(int num_nacks);
 #endif

@@ -21,7 +21,7 @@ void fallback_bitrate(int num_nacks_per_second) {
     }
 }
 
-bool update_bitrate(int num_nacks_per_second) {
+bool calculate_new_bitrate(int num_nacks_per_second) {
     int old_bitrate = max_bitrate;
     fallback_bitrate(num_nacks_per_second);
     return old_bitrate != max_bitrate;
