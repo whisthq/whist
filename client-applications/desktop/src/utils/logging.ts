@@ -128,7 +128,7 @@ const amplitudeLog = async (
   }
 }
 
-export const logBase = (
+export const logBase = async (
   title: string,
   data: object,
   level?: LogLevel,
@@ -146,8 +146,8 @@ export const logBase = (
   localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 
   if (app.isPackaged)
-    amplitudeLog(title, data, userEmail as string, msElapsed).catch((err) =>
-      console.log(err)
+    await amplitudeLog(title, data, userEmail as string, msElapsed).catch(
+      (err) => console.log(err)
     )
 }
 
