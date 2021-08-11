@@ -33,7 +33,7 @@ describe("authInfoParse", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
       jwtIdentity: "jrocket@example.com",
       userEmail: "test@fractal.co",
-      accessToken: "abcdefg",
+      accessToken: testAccessTokenGood,
       subscriptionStatus: "canceled",
     })
   })
