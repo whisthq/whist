@@ -153,11 +153,11 @@ fromTrigger("showPaymentWindow").subscribe(() => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-fromTrigger("checkPaymentFlowFailure").subscribe(() => {
-  const accessToken = (store.get("auth.accessToken") ?? "") as string
-  const refreshToken = (store.get("auth.refreshToken") ?? "") as string
-  createPaymentWindow({
-    accessToken,
-    refreshToken,
-  }).catch((err) => console.error(err))
-})
+fromTrigger("checkPaymentFlowFailure").subscribe(
+  ({ accessToken, refreshToken }) => {
+    createPaymentWindow({
+      accessToken,
+      refreshToken,
+    }).catch((err) => console.error(err))
+  }
+)
