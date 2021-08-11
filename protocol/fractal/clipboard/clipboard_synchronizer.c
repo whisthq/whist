@@ -245,10 +245,7 @@ ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
     */
 
     if (!is_initialized) {
-        // only LOG_ERROR on `staging` and `prod`, as this error shows up frequently when developing
-        if (!strcmp(error_monitor_environment, "dev")) {
-            LOG_ERROR("Tried to get_new_clipboard, but the clipboard is not initialized");
-        }
+        LOG_WARNING("Tried to get_new_clipboard, but the clipboard is not initialized");
         return NULL;
     }
 
