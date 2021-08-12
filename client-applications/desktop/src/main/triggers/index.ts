@@ -5,6 +5,7 @@ import "@app/main/triggers/ipc"
 import "@app/main/triggers/persist"
 import "@app/main/triggers/renderer"
 import "@app/main/triggers/tray"
+import "@app/main/triggers/payment"
 
 // Events tend to be event listeners on processes that are
 // outside the main thread's control, like Electron application events. These
