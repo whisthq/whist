@@ -30,15 +30,15 @@ volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
 Private Functions
 ============================
 */
-void fallback_bitrate(BitrateStatistics stats);
-void ewma_bitrate(BitrateStatistics stats);
+Bitrates fallback_bitrate(BitrateStatistics stats);
+Bitrates ewma_bitrate(BitrateStatistics stats);
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
-void fallback_bitrate(BitrateStatistics stats) {
+Bitrates fallback_bitrate(BitrateStatistics stats) {
     /*
         Switches between two sets of bitrate/burst bitrate: the default of 16mbps/100mbps and a
        fallback of 10mbps/30mbps. We fall back if we've nacked a lot in the last second.
@@ -47,13 +47,18 @@ void fallback_bitrate(BitrateStatistics stats) {
             stats (BitrateStatistics): struct containing the average number of nacks per second
        since the last time this function was called
     */
+    static Bitrates bitrates;
     if (stats.num_nacks_per_second > 6 && max_bitrate != BAD_BITRATE) {
-        max_bitrate = BAD_BITRATE;
-        max_burst_bitrate = BAD_BURST_BITRATE;
+        bitrates.bitrate = BAD_BITRATE;
+        bitrates.burst_bitrate = BAD_BURST_BITRATE;
+    } else {
+        bitrates.bitrate = max_bitrate;
+        bitrates.burst_bitrate = max_burst_bitrate;
     }
+    return bitrates;
 }
 
-void ewma_bitrate(BitrateStatistics stats) {
+Bitrates ewma_bitrate(BitrateStatistics stats) {
     /*
         Keeps an exponentially weighted moving average of the throughput per second the client is
        getting, and uses that to predict a good bitrate to ask the server for.
@@ -66,11 +71,14 @@ void ewma_bitrate(BitrateStatistics stats) {
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
     static int throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
+    static Bitrates bitrates;
     // sanity check to make sure we're not sending it negative bitrate
     if (stats.throughput_per_second >= 0) {
         throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
-        max_bitrate = bitrate_throughput_ratio * throughput;
+        bitrates.bitrate = bitrate_throughput_ratio * throughput;
     }
+    bitrates.burst_bitrate = max_burst_bitrate;
+    return bitrates;
 }
 
 /*

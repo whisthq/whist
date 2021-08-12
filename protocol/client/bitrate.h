@@ -31,7 +31,12 @@ typedef struct BitrateStatistics {
     int throughput_per_second;
 } BitrateStatistics;
 
-typedef void (*BitrateCalculator)(BitrateStatistics);
+typedef struct Bitrates {
+    int bitrate;
+    int burst_bitrate;
+} Bitrates;
+
+typedef Bitrates (*BitrateCalculator)(BitrateStatistics);
 
 /*
 ============================
