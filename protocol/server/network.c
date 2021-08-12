@@ -135,7 +135,7 @@ int do_discovery_handshake(SocketContext *context, int *client_id) {
     reply_msg->audio_sample_rate = sample_rate;
 
     LOG_INFO("Sending discovery packet");
-    LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
+    LOG_INFO("Fmsg size is %d", (int)fsmsg_size);
     if (send_tcp_packet(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size) < 0) {
         LOG_ERROR("Failed to send send discovery reply message.");
         closesocket(context->socket);
@@ -383,6 +383,10 @@ int multithreaded_manage_clients(void *opaque) {
     start_timer(&first_client_timer);
 
     while (!exiting) {
+        if (sample_rate == -1) {
+            // If audio hasn't initialized yet, let's wait a bit.
+            fractal_sleep(25);
+        }
         read_lock(&is_active_rwlock);
 
         int saved_num_active_clients = num_active_clients;
