@@ -9,9 +9,9 @@ sudo apt-get install --no-install-recommends -y \
   libvo-amrwbenc0 \
   libopencore-amrnb0 \
   libopencore-amrwb0 \
-  libx264-155 \
-  libx265-179 \
-  libfdk-aac1 \
+  libx264-160 \
+  libx265-192 \
+  libfdk-aac2 \
   libva-drm2 \
   libvdpau1
 

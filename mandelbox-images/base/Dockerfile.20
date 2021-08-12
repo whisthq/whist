@@ -6,7 +6,7 @@
 # - Configure and build patched libinput
 # EXPOSES patched .deb build of libinput for later stages
 #########################################################
-FROM ubuntu:20.04 as libinput-build
+FROM ubuntu:21.04 as libinput-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -89,7 +89,7 @@ RUN dpkg-deb --build libinput-fractal
 # - Configure and build patched xf86-input-libinput
 # EXPOSES patched build of xf86-input-libinput
 ####################################################################
-FROM ubuntu:20.04 as xf86-input-libinput-build
+FROM ubuntu:21.04 as xf86-input-libinput-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -161,7 +161,7 @@ RUN dpkg-deb --build xf86-input-libinput-fractal
 # - Install its contents into an output directory
 # EXPOSES the grid driver
 #############################################################
-FROM ubuntu:20.04 as nvidia-grid-driver
+FROM ubuntu:21.04 as nvidia-grid-driver
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -271,7 +271,7 @@ RUN cd /fractal-teleport-fuse/src \
 #   our base mandelbox image
 # EXPOSES all of fractal-base as the final image
 #######################################################
-FROM ubuntu:20.04 as fractal-base
+FROM ubuntu:21.04 as fractal-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]

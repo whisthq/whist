@@ -5,8 +5,8 @@ set -Eeuo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
-# Pull any changes to the Ubuntu 20.04 image
-docker pull ubuntu:20.04
+# Pull any changes to the Ubuntu 21.04 image
+docker pull ubuntu:21.04
 
 # Run with mounted fractal binary, rather than copying the binary into the mandelbox
 ./build_mandelbox_image.sh mount "$@"

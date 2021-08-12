@@ -1,7 +1,7 @@
-FROM ubuntu:20.04
+FROM ubuntu:21.04
 ARG uid
 
-# This Dockerfile is used to build the Fractal protocol server for Linux Ubuntu 20.04.
+# This Dockerfile is used to build the Fractal protocol server for Linux Ubuntu 21.04.
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -32,24 +32,14 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
-RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-
-RUN apt-get update \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
-
 # Install build tools
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     make \
     gcc \
     g++ \
     cppcheck \
-    cmake=3.18.4-0kitware1ubuntu20.04.1 \
-    cmake-data=3.18.4-0kitware1ubuntu20.04.1 \
+    cmake \
+    cmake-data \
     sudo \
     clang-format \
     awscli \
