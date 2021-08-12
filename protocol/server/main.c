@@ -364,7 +364,6 @@ int main(int argc, char* argv[]) {
 
     FractalThread manage_clients_thread =
         fractal_create_thread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
-    fractal_sleep(500);
 
     FractalThread sync_tcp_packets_thread = fractal_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
