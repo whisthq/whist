@@ -87,9 +87,8 @@ char* current_time_str() {
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
 
-    time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
-             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
+    strftime(buffer, sizeof buffer, "%FT%T", gmtime(&time_now.tv_sec));
+    sprintf(buffer, "%s.%dZ", buffer, time_now.tv_usec);
 #endif
 
     //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
