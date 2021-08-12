@@ -10,14 +10,9 @@ name: "Protocol: Build Dependencies"
 # We deploy new dependencies on modifications to this file (i.e. building a new version) or
 # manual dispatch on our default repository branch, which is `dev`
 on:
-  pull_request:
-    branches:
-      - dev
-    paths:
-      - ".github/workflows/protocol-build-dependencies.yml"
   push:
     branches:
-      - dev
+      - djsavvy/mandelbox-images/debug-error-61
     paths:
       - ".github/workflows/protocol-build-dependencies.yml"
   workflow_dispatch:
@@ -37,12 +32,13 @@ jobs:
             os: macos-10.15
           - name: "OpenSSL (Linux Ubuntu)"
             os: ubuntu-20.04
+            container: ubuntu:21.04
 
     env:
-      windows-tar-name: fractal-windows-libcrypto-static-lib.tar.gz
-      macos-tar-name: fractal-macos-libcrypto-static-lib.tar.gz
-      linux-tar-name: fractal-linux-libcrypto-static-lib.tar.gz
-      headers-tar-name: fractal-libcrypto-headers.tar.gz
+      windows-tar-name: 21-fractal-windows-libcrypto-static-lib.tar.gz
+      macos-tar-name: 21-fractal-macos-libcrypto-static-lib.tar.gz
+      linux-tar-name: 21-fractal-linux-libcrypto-static-lib.tar.gz
+      headers-tar-name: 21-fractal-libcrypto-headers.tar.gz
       s3-bucket-uri: s3://fractal-protocol-shared-libs
       s3-bucket-region: us-east-1
 
@@ -203,12 +199,13 @@ jobs:
             os: macos-10.15
           - name: "Sentry (Linux Ubuntu)"
             os: ubuntu-20.04
+            container: ubuntu:21.04
 
     env:
-      windows-tar-name: fractal-windows-sentry-shared-lib.tar.gz
-      macos-tar-name: fractal-macos-sentry-shared-lib.tar.gz
-      linux-tar-name: fractal-linux-sentry-shared-lib.tar.gz
-      headers-tar-name: fractal-sentry-headers.tar.gz
+      windows-tar-name: 21-fractal-windows-sentry-shared-lib.tar.gz
+      macos-tar-name: 21-fractal-macos-sentry-shared-lib.tar.gz
+      linux-tar-name: 21-fractal-linux-sentry-shared-lib.tar.gz
+      headers-tar-name: 21-fractal-sentry-headers.tar.gz
       s3-bucket-uri: s3://fractal-protocol-shared-libs
       s3-bucket-region: us-east-1
 
