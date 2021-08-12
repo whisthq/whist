@@ -357,14 +357,14 @@ int main(int argc, char* argv[]) {
     update_encoder = false;
     exiting = false;
 
-    FractalThread manage_clients_thread =
-        fractal_create_thread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
-    fractal_sleep(500);
-
     FractalThread send_video_thread =
         fractal_create_thread(multithreaded_send_video, "multithreaded_send_video", NULL);
     FractalThread send_audio_thread =
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
+
+    FractalThread manage_clients_thread =
+        fractal_create_thread(multithreaded_manage_clients, "multithreaded_manage_clients", NULL);
+
     FractalThread sync_tcp_packets_thread = fractal_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
     LOG_INFO("Sending video and audio...");

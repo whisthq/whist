@@ -383,6 +383,11 @@ int multithreaded_manage_clients(void *opaque) {
     start_timer(&first_client_timer);
 
     while (!exiting) {
+        if (sample_rate == -1) {
+            // If audio hasn't initialized yet, let's wait a bit.
+            fractal_sleep(25);
+            continue;
+        }
         read_lock(&is_active_rwlock);
 
         int saved_num_active_clients = num_active_clients;
