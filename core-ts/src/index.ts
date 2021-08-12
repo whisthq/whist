@@ -13,7 +13,6 @@ export {
   accessToken,
   refreshToken,
   configToken,
-  jwtIdentity,
   authCallbackURL,
   mandelboxIP,
   mandelboxPorts,

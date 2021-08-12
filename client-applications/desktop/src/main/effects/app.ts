@@ -104,7 +104,7 @@ fromTrigger("clearCacheAction").subscribe(
   (payload: { clearConfig: boolean }) => {
     persistClear(
       [
-        ...["accessToken", "refreshToken", "subClaim", "userEmail"],
+        ...["accessToken", "refreshToken", "userEmail"],
         ...(payload.clearConfig ? ["configToken"] : []),
       ],
       "auth"

@@ -2,7 +2,6 @@
 export type accessToken = { accessToken: string }
 export type refreshToken = { refreshToken: string }
 export type configToken = { configToken: string }
-export type jwtIdentity = { jwtIdentity: string }
 export type subscriptionStatus = { subscriptionStatus: string }
 
 export type authCallbackURL = { authCallbackURL: string }
