@@ -18,6 +18,7 @@ jobs:
   protocol-check-pr-building-linting:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    container: ${{ matrix.config.container }}
 
     # Platforms to build on/for
     strategy:
