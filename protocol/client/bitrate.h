@@ -22,18 +22,27 @@ Includes
 
 /*
 ============================
+Custom Types
+============================
+*/
+
+typedef struct BitrateStatistics {
+    int num_nacks_per_second;
+    int throughput_per_second;
+} BitrateStatistics;
+
+typedef void (*BitrateCalculator)(BitrateStatistics);
+
+/*
+============================
 Public Functions
 ============================
 */
 
 /**
- * @brief       Update max_bitrate and max_burst_bitrate with the latest client data. Return whether
- * or not those bitrates have actually changed. This function does not trigger an update bitrate
- * message to the server.
+ * @brief       Update max_bitrate and max_burst_bitrate with the latest client data. This function does not trigger any client bitrate updates.
  *
- * @param num_nacks         The number of nacks that occurred in the last secod
- *
- * @return      Whether or not we changed max_bitrate and max_burst_bitrate
+ * @param stats         A struct containing any information we might need to update bitrate.
  */
-bool calculate_new_bitrate(int num_nacks);
+BitrateCalculator calculate_new_bitrate;
 #endif

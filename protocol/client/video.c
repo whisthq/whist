@@ -699,6 +699,8 @@ void calculate_statistics() {
 
     static clock t;
     static bool init_t = false;
+    static int old_bitrate;
+    static BitrateStatistics stats;
     if (!init_t) {
         start_timer(&t);
         init_t = true;
@@ -706,7 +708,11 @@ void calculate_statistics() {
     // do some calculation
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
-        update_bitrate = calculate_new_bitrate(video_ring_buffer->num_nacked / 5);
+        stats.num_nacks_per_second = video_ring_buffer->num_nacked / 5;
+        stats.throughput_per_second = -1;
+        old_bitrate = max_bitrate;
+        calculate_new_bitrate(stats);
+        update_bitrate = (old_bitrate != max_bitrate);
         video_ring_buffer->num_nacked = 0;
         start_timer(&t);
     }
