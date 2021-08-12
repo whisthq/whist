@@ -42,6 +42,7 @@ import {
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()
+export const stripeEvent = new events.EventEmitter()
 
 const { buildRoot } = config
 
@@ -218,18 +219,22 @@ export const createAuthWindow = () => {
 
 export const createPaymentWindow = async ({
   accessToken,
+  refreshToken,
 }: {
   accessToken: string
+  refreshToken: string
 }) => {
   const response = await paymentPortalRequest({ accessToken })
   const { paymentPortalURL } = paymentPortalParse(response)
+
+  console.log(response, paymentPortalURL)
+
   const win = createWindow({
     show: WindowHashPayment,
     options: {
       ...base,
       ...width.lg,
       ...height.md,
-      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
     customURL: paymentPortalURL,
@@ -244,9 +249,19 @@ export const createPaymentWindow = async ({
   }
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   webRequest.onBeforeRequest(filter, async ({ url }) => {
-    win.close()
+    if (
+      url === "http://localhost/callback/payment" ||
+      url === "http://localhost/callback/payment?success=true"
+    ) {
+      // if it’s from the customer portal or a successful checkout
+      stripeEvent.emit("stripe-auth-refresh", {
+        accessToken,
+        refreshToken,
+      })
+    } else if (url === "http://localhost/callback/payment?success=false") {
+      stripeEvent.emit("stripe-payment-error")
+    }
   })
-  return win
 }
 
 export const createUpdateWindow = () =>
@@ -327,7 +342,7 @@ export const createProtocolWindow = async () => {
     })
   })
 
-  protocol.stdout.on("data", (message) => {
+  protocol?.stdout?.on("data", (message) => {
     const unstable = isNetworkUnstable(message)
     windowMonitor.emit("network-is-unstable", unstable)
   })

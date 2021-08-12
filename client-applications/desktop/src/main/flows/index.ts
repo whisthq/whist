@@ -2,8 +2,10 @@ import { merge, Observable } from "rxjs"
 import { map, take } from "rxjs/operators"
 
 import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
+import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
+import configFlow from "@app/main/flows/config"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
@@ -27,8 +29,17 @@ const auth = authFlow(
   )
 )
 
+const checkPayment = checkPaymentFlow(fromTrigger(TRIGGER.authFlowSuccess))
+
+const config = configFlow(
+  merge(
+    fromTrigger(TRIGGER.checkPaymentFlowSuccess),
+    fromTrigger(TRIGGER.stripeAuthRefresh)
+  )
+)
+
 // Observable that fires when Fractal is ready to be launched
-const launchTrigger = fromTrigger(TRIGGER.authFlowSuccess).pipe(
+const launchTrigger = fromTrigger(TRIGGER.configFlowSuccess).pipe(
   map((x: object) => ({
     ...x, // { accessToken, configToken }
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
@@ -55,5 +66,10 @@ createTrigger(TRIGGER.authFlowSuccess, auth.success)
 createTrigger(TRIGGER.authFlowFailure, auth.failure)
 createTrigger(TRIGGER.authRefreshSuccess, refresh.success)
 
+createTrigger(TRIGGER.checkPaymentFlowSuccess, checkPayment.success)
+createTrigger(TRIGGER.checkPaymentFlowFailure, checkPayment.failure)
+
 createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
+
+createTrigger(TRIGGER.configFlowSuccess, config.success)

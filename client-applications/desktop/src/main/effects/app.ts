@@ -7,6 +7,7 @@
 import { session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take, takeUntil } from "rxjs/operators"
+import { merge } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -70,7 +71,10 @@ fromTrigger("notPersisted").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-fromTrigger("authFlowSuccess").subscribe((x: { userEmail: string }) => {
+merge(
+  fromTrigger("checkPaymentFlowSuccess"),
+  fromTrigger("stripeAuthRefresh")
+).subscribe((x: { userEmail: string }) => {
   // Launch the protocol
   createProtocolWindow().catch((err) => console.error(err))
   // On MacOS, hide the app dock when the protocol is open
@@ -139,7 +143,21 @@ fromTrigger("trayBugAction").subscribe(() => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-fromTrigger("showPaymentWindow").subscribe(async () => {
+fromTrigger("showPaymentWindow").subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
-  await createPaymentWindow({ accessToken })
+  const refreshToken = (store.get("auth.refreshToken") ?? "") as string
+  createPaymentWindow({
+    accessToken,
+    refreshToken,
+  }).catch((err) => console.error(err))
 })
+
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+fromTrigger("checkPaymentFlowFailure").subscribe(
+  ({ accessToken, refreshToken }) => {
+    createPaymentWindow({
+      accessToken,
+      refreshToken,
+    }).catch((err) => console.error(err))
+  }
+)

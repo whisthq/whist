@@ -14,6 +14,10 @@ export default {
   // Auth triggers
   authInfo: "authInfo",
 
+  // Payment triggers
+  stripeAuthRefresh: "stripeAuthRefresh",
+  stripePaymentError: "stripePaymentError",
+
   // Update triggers
   updateAvailable: "updateAvailable",
   updateNotAvailable: "updateNotAvailable",
@@ -48,4 +52,7 @@ export default {
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
   authRefreshSuccess: "authRefreshSuccess",
+  checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
+  checkPaymentFlowFailure: "checkPaymentFlowFailure",
+  configFlowSuccess: "configFlowSuccess",
 }
