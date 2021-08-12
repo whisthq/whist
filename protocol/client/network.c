@@ -154,7 +154,8 @@ int discover_ports(bool *using_stun) {
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->UDP_port;
     tcp_port = reply_msg->TCP_port;
-    LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, udp_port, tcp_port);
+    LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d. Audio frequency: %d.", client_id,
+             udp_port, tcp_port, reply_msg->audio_sample_rate);
 
     error_monitor_set_connection_id(reply_msg->connection_id);
 

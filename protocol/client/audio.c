@@ -385,7 +385,10 @@ void destroy_audio() {
 
 void enable_audio_refresh() { audio_refresh = true; }
 
-void set_audio_frequency(int new_audio_frequency) { audio_frequency = new_audio_frequency; }
+void set_audio_frequency(int new_audio_frequency) {
+    LOG_INFO("Setting audio frequency to %d", new_audio_frequency);
+    audio_frequency = new_audio_frequency;
+}
 
 void render_audio() {
     /*
