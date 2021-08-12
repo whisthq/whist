@@ -66,7 +66,6 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"user", required_argument, NULL, 'u'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"icon", required_argument, NULL, 'i'},
-                                     {"connection-method", required_argument, NULL, 'z'},
                                      {"ports", required_argument, NULL, 'p'},
                                      {"name", required_argument, NULL, 'n'},
                                      {"read-pipe", no_argument, NULL, 'r'},
@@ -224,18 +223,6 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             }
             break;
         }
-        case 'z': {  // first connection method to try
-            if (!strcmp(eval_optarg, "STUN")) {
-                using_stun = true;
-            } else if (!strcmp(optarg, "DIRECT")) {
-                using_stun = false;
-            } else {
-                LOG_ERROR("Invalid connection type: '%s'\n", eval_optarg);
-                LOG_ERROR("%s", usage);
-                return -1;
-            }
-            break;
-        }
         case 'n': {  // window title
             program_name = calloc(sizeof(char), strlen(eval_optarg));
             strcpy((char *)program_name, eval_optarg);
@@ -309,8 +296,6 @@ int client_parse_args(int argc, char *argv[]) {
         "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
         "                                  Default: identity mapping\n"
-        "  -z, --connection_method=CM    Which connection method to try first,\n"
-        "                                  either STUN or DIRECT\n"
         "  -n, --name=NAME               Set the window title. Default: Fractal\n"
         "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
         "                                  in IP if using this argument and passing with arg `ip`\n"
