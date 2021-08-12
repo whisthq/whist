@@ -78,13 +78,17 @@ int discover_ports(bool *using_stun) {
     LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
     if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
                            (char *)binary_aes_private_key) < 0) {
-        *using_stun = !*using_stun;
-        LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
-        if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                               *using_stun, (char *)binary_aes_private_key) < 0) {
-            LOG_WARNING("Failed to connect to server's discovery port.");
-            return -1;
-        }
+        /*
+                *using_stun = !*using_stun;
+                LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
+                if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                                       *using_stun, (char *)binary_aes_private_key) < 0) {
+        */
+        LOG_WARNING("Failed to connect to server's discovery port.");
+        return -1;
+        /*
+                }
+        */
     }
 
     // Create and send discovery request packet
