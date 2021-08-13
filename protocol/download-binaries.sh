@@ -167,7 +167,7 @@ fi
 
 # If the include/ffmpeg directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="fractal-ffmpeg-headers.tar.gz"
+LIB="21-fractal-ffmpeg-headers.tar.gz"
 FFMPEG_DIR="$DEST_DIR/include/ffmpeg"
 if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
   rm -rf "$FFMPEG_DIR"
@@ -185,11 +185,11 @@ fi
 # Select FFmpeg lib dir and targz name
 FFMPEG_LIB_DIR="$DEST_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
-  FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
+  FFMPEG_LIB="21-fractal-windows-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-  FFMPEG_LIB="fractal-macos-ffmpeg-shared-lib.tar.gz"
+  FFMPEG_LIB="21-fractal-macos-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Linux" ]]; then
-  FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
+  FFMPEG_LIB="21-fractal-linux-ffmpeg-shared-lib.tar.gz"
 fi
 
 # Check if FFMPEG_LIB has updated, and if so, create the dir and copy the libs into the source dir
