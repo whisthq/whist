@@ -11,11 +11,11 @@ export const authInfoCallbackRequest = async ({
 }: authCallbackURL) => {
   /*
   Description:
-    Given a callback URL, generates an {email, sub, accessToken, refreshToken} response
+    Given a callback URL, generates an {email, accessToken, refreshToken} response
   Arguments:
     callbackURL (string): Callback URL
   Returns:
-    {email, sub, accessToken, refreshToken}
+    {email, accessToken, refreshToken}
   */
 
   const url = new URL(authCallbackURL)
@@ -38,11 +38,11 @@ export const authInfoRefreshRequest = async ({
 }: refreshToken) => {
   /*
   Description:
-    Given a valid Auth0 refresh token, generates a new {email, sub, accessToken, refreshToken} object
+    Given a valid Auth0 refresh token, generates a new {email, accessToken, refreshToken} object
   Arguments:
     refreshToken (string): Refresh token
   Returns:
-    {email, sub, accessToken, refreshToken}
+    {email, accessToken, refreshToken}
   */
   return await post({
     endpoint: "/oauth/token",
@@ -90,7 +90,6 @@ export const authInfoParse = (res: {
     const accessToken = res?.json?.access_token
     const decodedAccessToken = jwtDecode(accessToken ?? "") as any
     const decodedIdToken = jwtDecode(res?.json?.id_token ?? "") as any
-    const jwtIdentity = decodedAccessToken?.sub
     const userEmail = decodedIdToken?.email
     const subscriptionStatus =
       decodedAccessToken["https://api.fractal.co/subscription_status"]
@@ -102,13 +101,6 @@ export const authInfoParse = (res: {
           data: res,
         },
       }
-    if (typeof jwtIdentity !== "string")
-      return {
-        error: {
-          message: "Decoded JWT does not have property .sub",
-          data: res,
-        },
-      }
     if (typeof userEmail !== "string")
       return {
         error: {
@@ -116,7 +108,7 @@ export const authInfoParse = (res: {
           data: res,
         },
       }
-    return { jwtIdentity, userEmail, accessToken, subscriptionStatus }
+    return { userEmail, accessToken, subscriptionStatus }
   } catch (err) {
     return {
       error: {
