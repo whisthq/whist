@@ -37,7 +37,9 @@ $RUN_AS_FRACTAL "xsettingsd" &
 echo "xsettingsd background PID: $!"
 
 # Indicate that the display is ready and consider the service started
-systemd-notify --ready --status="X11 Display and AwesomeWM started"
+systemd-notify --ready --pid=$xinitrc_pid --status="X11 Display and AwesomeWM started"
+
+echo "systemd-notify PID: $?"
 
 echo "Notified that fractal-display service is ready"
 
