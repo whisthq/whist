@@ -10,6 +10,9 @@ FRACTAL_DPI=${1:-96}
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+true
+exit 0
+
 # https://unix.stackexchange.com/a/640599
 echo "Xft.dpi: $FRACTAL_DPI" | xrdb -merge
 cat << EOF > /home/fractal/.xsettingsd
