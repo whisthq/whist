@@ -10,6 +10,7 @@ cd "$DIR"
 
 # `usage` is the help function we provide.
 usage() {
+<<<<<<< HEAD
   cat << EOF
 USAGE:
   build_protocol_targets.sh [--cmakebuildtype=BUILDTYPE ] [ --nodownloadbinaries ] [ --cmakesetCI ] TARGETS...
@@ -31,10 +32,37 @@ EOF
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but getopt only uses short arguments
 TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI -n 'build_protocol_targets.sh' -- "$@"`
+=======
+    cat << EOF
+USAGE:
+  build_protocol_targets.sh [--cmakebuildtype=BUILDTYPE ] [ --nodownloadbinaries ] TARGETS...
+
+This script builds the specified protocol target(s) inside the protocol-builder
+Docker container.
+
+The optional argument \`--cmakebuildtype\` can be specified
+to be either \`Debug\` or \`Release\`. It controls the \`CMAKE_BUILD_TYPE\`
+build parameter. It defaults to \`Debug\`.
+
+The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
+not to download the libraries used to build the fractal protocol from S3.
+
+EOF
+
+    # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
+    exit 2
+}
+
+# Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
+# I'd prefer not to have the short arguments at all, but it looks like getopt
+# chokes without them.
+TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries -n 'build_protocol_targets.sh' -- "$@"`
+>>>>>>> 1993dfab6 (Create protocol script to build specific targets)
 eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug
 CMAKE_DOWNLOAD_BINARIES=ON
+<<<<<<< HEAD
 CMAKE_SET_CI=False
 while true; do
   case "$1" in
@@ -45,10 +73,21 @@ while true; do
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
   esac
+=======
+while true; do
+    case "$1" in
+        -h | --help | --usage ) usage ;;
+        --cmakebuildtype ) CMAKE_BUILD_TYPE="$2"; shift 2 ;;
+        --nodownloadbinaries ) CMAKE_DOWNLOAD_BINARIES=OFF; shift ;;
+        -- ) shift; break ;;
+        * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
+    esac
+>>>>>>> 1993dfab6 (Create protocol script to build specific targets)
 done
 TARGETS="$@"
 
 if [[ -z "$TARGETS" ]]; then
+<<<<<<< HEAD
   usage
 fi
 
@@ -60,17 +99,32 @@ docker build . \
   --build-arg uid=$(id -u ${USER}) \
   -f Dockerfile \
   -t fractal/protocol-builder
+=======
+    usage
+fi
+
+# Build protocol-builder docker image
+docker build . \
+    --build-arg uid=$(id -u ${USER}) \
+    -f Dockerfile \
+    -t fractal/protocol-builder
+>>>>>>> 1993dfab6 (Create protocol script to build specific targets)
 
 DOCKER_USER="fractal-builder"
 
 # We mount .aws directory so that awscli in download-binaries.sh works
 MOUNT_AWS=""
 if [[ -d "$HOME/.aws" ]]; then
+<<<<<<< HEAD
   MOUNT_AWS="--mount type=bind,source=$HOME/.aws,destination=/home/$DOCKER_USER/.aws,readonly"
+=======
+    MOUNT_AWS="--mount type=bind,source=$HOME/.aws,destination=/home/$DOCKER_USER/.aws,readonly"
+>>>>>>> 1993dfab6 (Create protocol script to build specific targets)
 fi
 
 # We also mount entire ./fractal directory so that git works for git revision
 docker run \
+<<<<<<< HEAD
   --rm \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
@@ -79,6 +133,16 @@ docker run \
   --user "$DOCKER_USER" \
   fractal/protocol-builder \
   sh -c "\
+=======
+    --rm \
+    --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT \
+    --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
+    $MOUNT_AWS \
+    --name fractal-protocol-builder-$(date +"%s") \
+    --user "$DOCKER_USER" \
+    fractal/protocol-builder \
+    sh -c "\
+>>>>>>> 1993dfab6 (Create protocol script to build specific targets)
     cd protocol &&                                      \
     mkdir -p build-docker &&                            \
     cd build-docker &&                                  \
@@ -86,7 +150,13 @@ docker run \
         -S ..                                           \
         -B .                                            \
         -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
+<<<<<<< HEAD
         -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
         -DCI=${CMAKE_SET_CI} &&                         \
     make -j ${TARGETS}                                  \
   "
+=======
+        -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&      \
+    make -j ${TARGETS}                                  \
+    "
+>>>>>>> 1993dfab6 (Create protocol script to build specific targets)
