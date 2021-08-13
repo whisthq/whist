@@ -21,8 +21,6 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
         reset_frame(ring_buffer, frame_data);
     }
-    // reset metadata
-    ring_buffer->currently_rendering_id = -1;
     ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
     ring_buffer->num_nacked = 0;
