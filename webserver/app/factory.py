@@ -7,7 +7,7 @@ import stripe
 
 from flask import current_app, Flask, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import jwt_required, JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from jwt import PyJWKClient
 
@@ -18,7 +18,7 @@ from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_mon
 from app.constants import env_names
 
 from auth0 import ScopeError
-from payments import PaymentRequired
+from payments import payment_portal_factory, get_customer_id, PaymentRequired
 
 jwtManager = JWTManager()
 
@@ -139,7 +139,10 @@ def register_blueprints(app):
     """
 
     from .blueprints.aws.aws_mandelbox_blueprint import aws_mandelbox_bp
-    from payments.stripe_blueprint import stripe_bp
 
     app.register_blueprint(aws_mandelbox_bp)
-    app.register_blueprint(stripe_bp)
+
+    app.add_url_rule(
+        "/payment_portal_url",
+        view_func=jwt_required()(payment_portal_factory(get_customer_id)),
+    )

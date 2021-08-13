@@ -10,7 +10,7 @@ from flask_jwt_extended import create_access_token, JWTManager, verify_jwt_in_re
 from app.helpers.utils.general.limiter import limiter
 from payments import (
     check_payment,
-    get_stripe_customer_id,
+    get_customer_id,
     get_subscription_status,
     payment_required,
     PaymentRequired,
@@ -44,15 +44,14 @@ def app():
     return _app
 
 
-def test_get_missing_stripe_customer_id():
-    """Ensure that get_stripe_customer_id() doesn't return a customer ID when the jwt token
-    given isn't associated with a stripe customer"
-    """
+def test_get_missing_customer_id():
+    """Ensure that get_customer_id() returns None when the access token contains no customer ID."""
+
     token = create_access_token("test")
 
     with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
         verify_jwt_in_request()
-        assert get_stripe_customer_id() is None
+        assert get_customer_id() is None
 
 
 def test_get_missing_subscription_status():
@@ -65,10 +64,9 @@ def test_get_missing_subscription_status():
         assert get_subscription_status() is None
 
 
-def test_get_stripe_customer_id():
-    """Ensure that get_stripe_customer_id() returns the correct customer ID when the jwt token
-    given is associated with a stripe customer"
-    """
+def test_get_customer_id():
+    """Ensure that get_customer_id() returns the customer ID claimed in the access token."""
+
     customer_id = f"cus_{os.urandom(8).hex()}"
     token = create_access_token(
         "test", additional_claims={current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: customer_id}
@@ -76,7 +74,7 @@ def test_get_stripe_customer_id():
 
     with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
         verify_jwt_in_request()
-        assert get_stripe_customer_id() == customer_id
+        assert get_customer_id() == customer_id
 
 
 @pytest.mark.parametrize(
