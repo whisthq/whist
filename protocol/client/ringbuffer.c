@@ -149,7 +149,8 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
     start_timer(&frame_data->last_nacked_timer);
 }
 
-void reset_frame(FrameData* frame_data) {
+void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
+    destroy_frame_buffer(ring_buffer, frame_data);
     frame_data->id = -1;
     frame_data->packets_received = 0;
     frame_data->num_packets = 0;
