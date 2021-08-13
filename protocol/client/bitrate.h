@@ -50,5 +50,5 @@ Public Functions
  *
  * @param stats         A struct containing any information we might need to update bitrate.
  */
-BitrateCalculator calculate_new_bitrate;
+extern BitrateCalculator calculate_new_bitrate;
 #endif

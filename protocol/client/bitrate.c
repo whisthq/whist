@@ -86,4 +86,5 @@ Bitrates ewma_bitrate(BitrateStatistics stats) {
 Public Function Implementations
 ============================
 */
+
 BitrateCalculator calculate_new_bitrate = fallback_bitrate;
