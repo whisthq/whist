@@ -45,7 +45,8 @@ Public Functions
 */
 
 /**
- * @brief       Update max_bitrate and max_burst_bitrate with the latest client data. This function does not trigger any client bitrate updates.
+ * @brief       Update max_bitrate and max_burst_bitrate with the latest client data. This function
+ * does not trigger any client bitrate updates.
  *
  * @param stats         A struct containing any information we might need to update bitrate.
  */

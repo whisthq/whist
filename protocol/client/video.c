@@ -712,7 +712,8 @@ void calculate_statistics() {
         stats.num_nacks_per_second = video_ring_buffer->num_nacked / 5;
         stats.throughput_per_second = -1;
         new_bitrates = calculate_new_bitrate(stats);
-        if (new_bitrates.bitrate != max_bitrate || new_bitrate.burst_bitrate != max_burst_bitrate) {
+        if (new_bitrates.bitrate != max_bitrate ||
+            new_bitrates.burst_bitrate != max_burst_bitrate) {
             max_bitrate = new_bitrates.bitrate;
             max_burst_bitrate = new_bitrates.burst_bitrate;
             update_bitrate = true;
