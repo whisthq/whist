@@ -26,7 +26,6 @@ jobs:
   protocol-build-documentation:
     name: Build & Publish Protocol Documentation to fractal/docs
     runs-on: ubuntu-20.04
-    container: ubuntu:21.04
 
     steps:
       ################################# CONFIG STEPS START ###############################

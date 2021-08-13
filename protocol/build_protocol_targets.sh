@@ -103,6 +103,9 @@ docker build . \
     usage
 fi
 
+# Set user if not already set
+USER=$(whoami)
+
 # Build protocol-builder docker image
 docker build . \
     --build-arg uid=$(id -u ${USER}) \
