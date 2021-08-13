@@ -284,6 +284,7 @@ export const createErrorWindow = (hash: string) => {
       ...base,
       ...width.md,
       ...height.xs,
+      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     hash: hash,
     closeOtherWindows: true,
