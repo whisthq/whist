@@ -18,8 +18,10 @@ import {
 import { hideAppDock } from "@app/utils/dock"
 import {
   createNetworkWarningWindow,
+  createTypeformWindow,
   getElectronWindows,
 } from "@app/utils/windows"
+import { store, persist } from "@app/utils/persist"
 
 const quit = () => {
   hideAppDock()
@@ -60,7 +62,10 @@ fromTrigger("windowInfo")
       // If all windows are closed and the protocol wasn't the last open window, quit
       logBase("Application exited", {})
         .then(() => {
-          if (args.hash !== WindowHashProtocol) {
+          if (store.get("data.exitSurveySubmitted") === undefined) {
+            createTypeformWindow("https://form.typeform.com/to/Yfs4GkeN")
+            persist("exitSurveySubmitted", true, "data")
+          } else if (args.hash !== WindowHashProtocol) {
             quit()
           } else {
             // If the protocol was the last window to be closed, upload logs and quit the app
