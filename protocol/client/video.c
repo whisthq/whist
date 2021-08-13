@@ -738,7 +738,7 @@ void skip_to_next_iframe() {
                         }
                     }
                     reset_frame(video_ring_buffer, frame_data);
-                } else {
+                } else if (frame_data->id != -1) {
                     LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
                 }
             }
