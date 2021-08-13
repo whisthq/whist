@@ -29,7 +29,6 @@ jobs:
             cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
           - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
             os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
-            container: ubuntu:21.04
           - name: "Build and Check Protocol on macOS (clang)"
             os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
 
