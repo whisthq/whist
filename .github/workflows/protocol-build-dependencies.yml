@@ -26,6 +26,7 @@ jobs:
   build-and-publish-openssl:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    container: ${{ matrix.config.container }}
 
     # Platforms to build on/for
     strategy:
@@ -193,6 +194,7 @@ jobs:
   build-and-publish-sentry:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    container: ${{ matrix.config.container }}
 
     # Platforms to build on/for
     strategy:
