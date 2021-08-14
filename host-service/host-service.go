@@ -656,8 +656,8 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalPrivateDir, err)
 	}
 
-	// Create fractal temp directory
-	err = os.MkdirAll(utils.TempDir, 0777)
+	// Create fractal temp directory (only let root and its group read and write)
+	err = os.MkdirAll(utils.TempDir, 0660)
 	if err != nil {
 		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", utils.TempDir, err)
 	}
