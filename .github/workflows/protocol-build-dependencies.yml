@@ -105,7 +105,7 @@ jobs:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
           apt-get update
-          apt-get install -y perl build-essential zlib1g zlib1g-dev
+          apt-get install -y perl build-essential
 
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -308,7 +308,7 @@ jobs:
         run: |
           # install needed dependencies
           apt-get update
-          apt-get install -y libcurl4-openssl-dev cmake make build-essential
+          apt-get install -y libcurl4-openssl-dev cmake make build-essential zlib1g
 
           # configure and build Sentry Native
           cmake -S . \
