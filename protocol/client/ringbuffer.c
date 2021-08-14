@@ -19,11 +19,8 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     // wipe all frames
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        reset_frame(frame_data);
-        destroy_frame_buffer(ring_buffer, frame_data);
+        reset_frame(ring_buffer, frame_data);
     }
-    // reset metadata
-    ring_buffer->currently_rendering_id = -1;
     ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
     ring_buffer->num_nacked = 0;
@@ -139,7 +136,17 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
     start_timer(&frame_data->last_nacked_timer);
 }
 
-void reset_frame(FrameData* frame_data) {
+void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
+    /*
+        Reset the frame's frame buffer and its metadata. Useful for when we're skipping frames and
+       don't want to leave stale frames in the buffer.
+
+        Arguments:
+            ring_buffer (RingBuffer*): ring buffer containing the frame
+            frame_data (FrameData*): frame to reset
+    */
+
+    destroy_frame_buffer(ring_buffer, frame_data);
     frame_data->id = -1;
     frame_data->packets_received = 0;
     frame_data->num_packets = 0;
@@ -170,7 +177,7 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
     ring_buffer->currently_rendering_frame = *current_frame;
     // clear the current frame's data
     current_frame->frame_buffer = NULL;
-    reset_frame(current_frame);
+    reset_frame(ring_buffer, current_frame);
 }
 
 int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {

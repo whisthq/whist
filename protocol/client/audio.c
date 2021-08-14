@@ -184,7 +184,7 @@ void catchup_audio() {
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
         FrameData* frame_data = &audio_ring_buffer->receiving_frames[i];
         if (frame_data->id <= last_played_id) {
-            reset_frame(frame_data);
+            reset_frame(audio_ring_buffer, frame_data);
         }
     }
 }
@@ -249,7 +249,7 @@ void flush_next_audio_frame() {
       Skip the next audio frame in the ring buffer.
      */
     last_played_id++;
-    reset_frame(get_frame_at_id(audio_ring_buffer, last_played_id));
+    reset_frame(audio_ring_buffer, get_frame_at_id(audio_ring_buffer, last_played_id));
 #if LOG_AUDIO
     LOG_INFO("Flushed audio frame at %d", last_played_id);
 #endif
@@ -502,7 +502,7 @@ int32_t receive_audio(FractalPacket* packet) {
         // we overwrote the last frame
         if (last_played_id < packet->id && last_played_id > 0) {
             last_played_id = packet->id - 1;
-            reset_frame(get_frame_at_id(audio_ring_buffer, last_played_id));
+            reset_frame(audio_ring_buffer, get_frame_at_id(audio_ring_buffer, last_played_id));
             LOG_INFO("Last played ID now %d", last_played_id);
         }
     }
