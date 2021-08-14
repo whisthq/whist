@@ -60,6 +60,9 @@ sudo mknod -m 620 /dev/tty10 c 4 $ASSIGNED_TTY
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
+# Set `/var/log/fractal` to be root-accessible only
+sudo chmod 0600 -R /var/log/fractal/
+
 # This installs fractal service
 echo "Start Pam Systemd Process for User fractal"
 export FRACTAL_UID=`id -u fractal`

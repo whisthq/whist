@@ -208,8 +208,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			Binds: []string{
 				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
-				utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
-				utils.Sprintf("/fractal/temp/logs/%s/host-service-warmup-%d:/var/log/fractal", fc.GetMandelboxID(), iter),
+				utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, fc.GetMandelboxID()),
+				utils.Sprintf("%slogs/%s/host-service-warmup-%d:/var/log/fractal", utils.TempDir, fc.GetMandelboxID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
 				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
 			},
@@ -467,8 +467,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", fc.GetMandelboxID()),
-			utils.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetMandelboxID()),
-			utils.Sprintf("/fractal/temp/logs/%s/%d:/var/log/fractal", fc.GetMandelboxID(), req.SessionID),
+			utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, fc.GetMandelboxID()),
+			utils.Sprintf("%slogs/%s/%d:/var/log/fractal", utils.TempDir, fc.GetMandelboxID(), req.SessionID),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetMandelboxID()),
 		},
@@ -639,16 +639,13 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 
 	// Create the fractal directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
-	// configs). We do this in a deferred function so that any subdirectories
-	// created later in this function are also covered.
+	// configs).
 	err := os.MkdirAll(utils.FractalDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalDir, err)
 	}
-	defer func() {
-		cmd := exec.Command("chown", "-R", "ubuntu", utils.FractalDir)
-		cmd.Run()
-	}()
+	cmd := exec.Command("chown", "-R", "ubuntu", utils.FractalDir)
+	cmd.Run()
 
 	// Create fractal-private directory
 	err = os.MkdirAll(utils.FractalPrivateDir, 0777)
@@ -656,8 +653,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalPrivateDir, err)
 	}
 
-	// Create fractal temp directory
-	err = os.MkdirAll(utils.TempDir, 0777)
+	// Create fractal temp directory (only let root read and write this, since it
+	// contains logs and uinput sockets).
+	err = os.MkdirAll(utils.TempDir, 0600)
 	if err != nil {
 		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", utils.TempDir, err)
 	}
