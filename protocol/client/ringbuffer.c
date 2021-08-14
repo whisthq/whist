@@ -147,6 +147,15 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
 }
 
 void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
+    /*
+        Reset the frame's frame buffer and its metadata. Useful for when we're skipping frames and
+       don't want to leave stale frames in the buffer.
+
+        Arguments:
+            ring_buffer (RingBuffer*): ring buffer containing the frame
+            frame_data (FrameData*): frame to reset
+    */
+
     destroy_frame_buffer(ring_buffer, frame_data);
     frame_data->id = -1;
     frame_data->packets_received = 0;
