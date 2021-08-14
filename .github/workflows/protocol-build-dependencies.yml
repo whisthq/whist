@@ -12,7 +12,7 @@ name: "Protocol: Build Dependencies"
 on:
   push:
     branches:
-      - djsavvy/mandelbox-images/debug-error-61
+      - dev
     paths:
       - ".github/workflows/protocol-build-dependencies.yml"
   workflow_dispatch:
