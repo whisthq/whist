@@ -140,7 +140,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 /**
  * @brief Reset the frame, both metadata and frame buffer.
  *
- * @param ring_bufffer Ring buffer containing the frame.
+ * @param ring_buffer Ring buffer containing the frame.
  * @param frame_data Frame to "clear" from the ring buffer.
  */
 void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
