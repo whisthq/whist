@@ -74,15 +74,9 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
     ring_buffer->largest_frame_size =
         ring_buffer->type == FRAME_VIDEO ? LARGEST_VIDEOFRAME_SIZE : LARGEST_AUDIOFRAME_SIZE;
 
-    // determine how we will allocate frames
-    if (ring_buffer->type == FRAME_VIDEO) {
-        ring_buffer->frame_buffer_allocator =
-            create_block_allocator(ring_buffer->largest_frame_size);
-    } else {
-        ring_buffer->frame_buffer_allocator = NULL;
-    }
-
+    ring_buffer->frame_buffer_allocator = create_block_allocator(ring_buffer->largest_frame_size);
     ring_buffer->currently_rendering_id = -1;
+
     // set all additional metadata for frames and ring buffer
     reset_ring_buffer(ring_buffer);
     return ring_buffer;
@@ -105,19 +99,15 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
 
 void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
     /*
-        Helper function to allocate the frame buffer which will hold UDP packets. Because video will
-        have large frames, we use a block allocator, while audio can just malloc.
+        Helper function to allocate the frame buffer which will hold UDP packets. We use a block
+       allocator because we're going to be constantly freeing frames.
 
         Arguments:
             ring_buffer (RingBuffer*): Ring buffer holding frame
             frame_data (FrameData*): Frame whose frame buffer we want to allocate
         */
     if (frame_data->frame_buffer == NULL) {
-        if (ring_buffer->type == FRAME_AUDIO) {
-            frame_data->frame_buffer = safe_malloc(ring_buffer->largest_frame_size);
-        } else {
-            frame_data->frame_buffer = allocate_block(ring_buffer->frame_buffer_allocator);
-        }
+        frame_data->frame_buffer = allocate_block(ring_buffer->frame_buffer_allocator);
     }
 }
 
@@ -347,8 +337,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
     /*
-        Destroy the frame buffer of frame_data. If the ring buffer is for video, we must use the
-        frame buffer allocator.
+        Destroy the frame buffer of frame_data via the block allocator.
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer containing the frame we want to destroy
@@ -356,11 +345,7 @@ void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
 
             */
     if (frame_data->frame_buffer != NULL) {
-        if (ring_buffer->type == FRAME_AUDIO) {
-            free(frame_data->frame_buffer);
-        } else {
-            free_block(ring_buffer->frame_buffer_allocator, frame_data->frame_buffer);
-        }
+        free_block(ring_buffer->frame_buffer_allocator, frame_data->frame_buffer);
         frame_data->frame_buffer = NULL;
     }
 }
