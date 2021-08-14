@@ -99,7 +99,8 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
 
 void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
     /*
-        Helper function to allocate the frame buffer which will hold UDP packets. We use a block allocator because we're going to be constantly freeing frames.
+        Helper function to allocate the frame buffer which will hold UDP packets. We use a block
+       allocator because we're going to be constantly freeing frames.
 
         Arguments:
             ring_buffer (RingBuffer*): Ring buffer holding frame
