@@ -639,16 +639,13 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 
 	// Create the fractal directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
-	// configs). We do this in a deferred function so that any subdirectories
-	// created later in this function are also covered.
+	// configs).
 	err := os.MkdirAll(utils.FractalDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalDir, err)
 	}
-	defer func() {
-		cmd := exec.Command("chown", "-R", "ubuntu", utils.FractalDir)
-		cmd.Run()
-	}()
+	cmd := exec.Command("chown", "-R", "ubuntu", utils.FractalDir)
+	cmd.Run()
 
 	// Create fractal-private directory
 	err = os.MkdirAll(utils.FractalPrivateDir, 0777)
@@ -656,8 +653,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalPrivateDir, err)
 	}
 
-	// Create fractal temp directory (only let root and its group read and write)
-	err = os.MkdirAll(utils.TempDir, 0660)
+	// Create fractal temp directory (only let root read and write this, since it
+	// contains logs and uinput sockets).
+	err = os.MkdirAll(utils.TempDir, 0600)
 	if err != nil {
 		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", utils.TempDir, err)
 	}
