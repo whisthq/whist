@@ -10,6 +10,11 @@ name: "Protocol: Build Dependencies"
 # We deploy new dependencies on modifications to this file (i.e. building a new version) or
 # manual dispatch on our default repository branch, which is `dev`
 on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/protocol-build-dependencies.yml"
   push:
     branches:
       - dev
