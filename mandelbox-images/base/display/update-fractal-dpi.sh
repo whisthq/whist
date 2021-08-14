@@ -4,6 +4,8 @@
 # writes the DPI to the XResources DB file and to the XSettingsd file. Then, it sends
 # SIGHUP to both `xsettingsd` and `awesomewm` in order to refresh both services.
 
+exit 0
+
 # Takes the DPI as an input, or 96 as the default.
 FRACTAL_DPI=${1:-96}
 
