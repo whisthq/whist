@@ -737,7 +737,8 @@ void skip_to_next_iframe() {
                             LOG_WARNING("Did not receive ID %d, Index %d", i, j);
                         }
                     }
-                } else {
+                    reset_frame(video_ring_buffer, frame_data);
+                } else if (frame_data->id != -1) {
                     LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
                 }
             }

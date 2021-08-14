@@ -138,11 +138,12 @@ void nack_packet(RingBuffer* ring_buffer, int id, int index);
 void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index);
 
 /**
- * @brief Reset the frame's metadata.
+ * @brief Reset the frame, both metadata and frame buffer.
  *
+ * @param ring_buffer Ring buffer containing the frame.
  * @param frame_data Frame to "clear" from the ring buffer.
  */
-void reset_frame(FrameData* frame_data);
+void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
 
 /**
  * @brief       Indicate that the frame with ID id is currently rendering, and free the frame buffer
