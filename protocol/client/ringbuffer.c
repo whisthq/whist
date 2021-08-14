@@ -74,15 +74,9 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
     ring_buffer->largest_frame_size =
         ring_buffer->type == FRAME_VIDEO ? LARGEST_VIDEOFRAME_SIZE : LARGEST_AUDIOFRAME_SIZE;
 
-    // determine how we will allocate frames
-    if (ring_buffer->type == FRAME_VIDEO) {
-        ring_buffer->frame_buffer_allocator =
-            create_block_allocator(ring_buffer->largest_frame_size);
-    } else {
-        ring_buffer->frame_buffer_allocator = NULL;
-    }
-
+    ring_buffer->frame_buffer_allocator = create_block_allocator(ring_buffer->largest_frame_size);
     ring_buffer->currently_rendering_id = -1;
+
     // set all additional metadata for frames and ring buffer
     reset_ring_buffer(ring_buffer);
     return ring_buffer;
@@ -113,11 +107,7 @@ void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
             frame_data (FrameData*): Frame whose frame buffer we want to allocate
         */
     if (frame_data->frame_buffer == NULL) {
-        if (ring_buffer->type == FRAME_AUDIO) {
-            frame_data->frame_buffer = safe_malloc(ring_buffer->largest_frame_size);
-        } else {
-            frame_data->frame_buffer = allocate_block(ring_buffer->frame_buffer_allocator);
-        }
+        frame_data->frame_buffer = allocate_block(ring_buffer->frame_buffer_allocator);
     }
 }
 
@@ -356,11 +346,7 @@ void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
 
             */
     if (frame_data->frame_buffer != NULL) {
-        if (ring_buffer->type == FRAME_AUDIO) {
-            free(frame_data->frame_buffer);
-        } else {
-            free_block(ring_buffer->frame_buffer_allocator, frame_data->frame_buffer);
-        }
+        free_block(ring_buffer->frame_buffer_allocator, frame_data->frame_buffer);
         frame_data->frame_buffer = NULL;
     }
 }
