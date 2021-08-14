@@ -22,36 +22,36 @@ OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-    export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
-    OPTIONS="$OPTIONS --private-key=$FRACTAL_AES_KEY"
+  export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
+  OPTIONS="$OPTIONS --private-key=$FRACTAL_AES_KEY"
 fi
 
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
-    export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
-    OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
+  export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
+  OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
 # Send in timeout, if set
 if [ -f "$TIMEOUT_FILENAME" ]; then
-    export TIMEOUT=$(cat $TIMEOUT_FILENAME)
-    OPTIONS="$OPTIONS --timeout=$TIMEOUT"
+  export TIMEOUT=$(cat $TIMEOUT_FILENAME)
+  OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either FractalServer or the Fractal
 # application died), or there was an error somewhere else in the script.
 function cleanup {
-    echo "cleanup() called! Shutting down the mandelbox..."
+  echo "cleanup() called! Shutting down the mandelbox..."
 
-    # Make sure we shutdown the mandelbox when this script exits
-    sudo shutdown now
+  # Make sure we shutdown the mandelbox when this script exits
+  sudo shutdown now
 }
 
 export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
 if [ "$ENV_NAME" != "LOCALDEV" ]; then
-    # Make sure `cleanup` gets called on script exit in all environments except localdev.
-    trap cleanup EXIT ERR
+  # Make sure `cleanup` gets called on script exit in all environments except localdev.
+  trap cleanup EXIT ERR
 fi
 
 # Start the application that this mandelbox runs.
@@ -61,7 +61,7 @@ fractal_application_runuser_pid=$!
 # Wait for run-fractal-application.sh to write PID to file
 until [ -f "$FRACTAL_APPLICATION_PID_FILE" ]
 do
-    sleep 0.1
+  sleep 0.1
 done
 fractal_application_pid=$(cat $FRACTAL_APPLICATION_PID_FILE)
 rm $FRACTAL_APPLICATION_PID_FILE
@@ -72,7 +72,7 @@ echo "Now sleeping until there are X clients..."
 #    This prevents a black no input window from appearing when a user connects.
 until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
-    sleep 0.1
+  sleep 0.1
 done
 
 echo "Done sleeping until there are X clients..."

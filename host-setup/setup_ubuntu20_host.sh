@@ -15,8 +15,8 @@ cd "$DIR"
 # If we run this script as root, then the "ubuntu"/default user will not be
 # added to the "docker" group, only root will.
 if [ "$EUID" -eq 0 ]; then
-    echo "This script cannot be run as root!"
-    exit
+  echo "This script cannot be run as root!"
+  exit
 fi
 
 # Set dkpg frontend as non-interactive to avoid irrelevant warnings
@@ -39,9 +39,9 @@ sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agen
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo apt-key fingerprint 0EBFCD88
 sudo add-apt-repository \
-    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+  "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
-    stable"
+  stable"
 sudo apt-get update -y
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 

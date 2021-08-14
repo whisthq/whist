@@ -12,7 +12,7 @@ echo $$ > $FRACTAL_APPLICATION_PID_FILE
 # Wait for the PID file to have been removed
 while [ -f "$FRACTAL_APPLICATION_PID_FILE" ]
 do
-    sleep 0.1
+  sleep 0.1
 done
 
 # Start the application that this mandelbox runs
