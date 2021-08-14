@@ -613,7 +613,7 @@ RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 
 # Set up script to launch `fractal-application` as the `fractal` user
 COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
-RUN chmod +x /usr/bin/run-fractal-application.sh
+RUN chmod 0555 /usr/bin/run-fractal-application.sh
 
 # Set up the Fractal server protocol
 
