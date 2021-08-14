@@ -104,6 +104,9 @@ jobs:
         env:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
+          apt-get update
+          apt-get install -y perl build-essential
+
           # configure and build OpenSSL with -O3 flag
           ./config --release
           make -j
@@ -218,6 +221,9 @@ jobs:
 
     steps:
       ################################# CONFIG STEPS START ###############################
+      - name: Install git to be able to check out sentry-native with submodules
+        if: runner.os == 'Linux'
+        run: apt update && apt install -y git
 
       - name: Checkout Sentry Native Git Repository
         uses: actions/checkout@v2
@@ -301,8 +307,8 @@ jobs:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
           # install needed dependencies
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev
+          apt-get update
+          apt-get install -y libcurl4-openssl-dev cmake make build-essential
 
           # configure and build Sentry Native
           cmake -S . \
