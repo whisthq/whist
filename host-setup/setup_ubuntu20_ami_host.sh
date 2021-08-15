@@ -21,8 +21,8 @@ LOGZ_TOKEN=${5}
 # Prevent user from running script as root, to guarantee that all steps are
 # associated with the fractal user.
 if [ "$EUID" -eq 0 ]; then
-    echo "This script cannot be run as root!"
-    exit
+  echo "This script cannot be run as root!"
+  exit
 fi
 
 # Install jq to build JSON

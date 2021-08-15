@@ -19,11 +19,11 @@ cd "$DIR"
 outfile="$DIR/.env"
 
 function fetch {
-    heroku config:get AUTH0_DOMAIN CONFIG_DB_URL --shell \
-        --app=fractal-dev-server \
-        | tr -d \'
-    heroku config:get DATABASE_URL --app=fractal-dev-server \
-        | python3 "$DIR"/pgparse.py
+  heroku config:get AUTH0_DOMAIN CONFIG_DB_URL --shell \
+    --app=fractal-dev-server \
+    | tr -d \'
+  heroku config:get DATABASE_URL --app=fractal-dev-server \
+    | python3 "$DIR"/pgparse.py
 }
 
 fetch | tee "$outfile" && echo "Wrote $outfile" >&2

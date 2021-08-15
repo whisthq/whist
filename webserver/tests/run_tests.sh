@@ -12,30 +12,30 @@ cd "$DIR"
 # if in CI, run setup tests and set env vars
 IN_CI=${CI:=false} # default: false
 if [ $IN_CI == true ]; then
-    # these are needed to migrate schema/data
-    export POSTGRES_SOURCE_URI=$DATABASE_URL # set in config vars on Heroku
-    export POSTGRES_DEST_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
-    export DB_EXISTS=true # Heroku has created the db
-    # this sets up the local db to look like the remote db
-    bash setup/setup_tests.sh
-    # override DATABASE_URL to the ephemeral db
-    export DATABASE_URL=$POSTGRES_DEST_URI
+  # these are needed to migrate schema/data
+  export POSTGRES_SOURCE_URI=$DATABASE_URL # set in config vars on Heroku
+  export POSTGRES_DEST_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
+  export DB_EXISTS=true # Heroku has created the db
+  # this sets up the local db to look like the remote db
+  bash setup/setup_tests.sh
+  # override DATABASE_URL to the ephemeral db
+  export DATABASE_URL=$POSTGRES_DEST_URI
 else
-    echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
+  echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
-    # add env vars to current env. these tell us the host, db, role, pwd
-    export $(cat ../docker/.env | xargs)
+  # add env vars to current env. these tell us the host, db, role, pwd
+  export $(cat ../docker/.env | xargs)
 
-    # override POSTGRES_HOST and POSTGRES_PORT to be local
-    export POSTGRES_HOST="localhost"
-    export POSTGRES_PORT="9999"
+  # override POSTGRES_HOST and POSTGRES_PORT to be local
+  export POSTGRES_HOST="localhost"
+  export POSTGRES_PORT="9999"
 
-    export APP_GIT_BRANCH="$(git branch --show-current)"
-    export APP_GIT_COMMIT="$(git rev-parse --short HEAD)"
+  export APP_GIT_BRANCH="$(git branch --show-current)"
+  export APP_GIT_COMMIT="$(git rev-parse --short HEAD)"
 
-    # we use the remote user and remote db to make ephemeral db look as close to dev as possible
-    # but of course, host and port are local
-    export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+  # we use the remote user and remote db to make ephemeral db look as close to dev as possible
+  # but of course, host and port are local
+  export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 
 fi
 

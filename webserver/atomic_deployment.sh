@@ -36,40 +36,40 @@ git checkout workflows-private/webserver
 # we are now in the webserver folder as a standalone git repo
 
 if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
-    # a diff exists, now apply it atomically by first pausing the webserver
+  # a diff exists, now apply it atomically by first pausing the webserver
 
-    echo "Migra SQL diff:"
-    echo "${SQL_DIFF_STRING}"
+  echo "Migra SQL diff:"
+  echo "${SQL_DIFF_STRING}"
 
-    # stop webserver. TODO: parse how many dynos exist currently and
-    # restore that many as opposed to just restoring to 1 dyno
-    heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
+  # stop webserver. TODO: parse how many dynos exist currently and
+  # restore that many as opposed to just restoring to 1 dyno
+  heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
 
-    # Apply diff safely, knowing nothing is happening on webserver.  Note that
-    # we don't put quotes around SQL_DIFF_STRING to prevent. `$function$` from
-    # turning into `$`.
-    echo "${SQL_DIFF_STRING}" | psql -v ON_ERROR_STOP=1 --single-transaction "${DB_URL}"
+  # Apply diff safely, knowing nothing is happening on webserver.  Note that
+  # we don't put quotes around SQL_DIFF_STRING to prevent. `$function$` from
+  # turning into `$`.
+  echo "${SQL_DIFF_STRING}" | psql -v ON_ERROR_STOP=1 --single-transaction "${DB_URL}"
 
-    echo "Redeploying webserver..."
-    # this should redeploy the webserver with code that corresponds to the new schema
-    git push -f heroku-fractal-server workflows-private/webserver:master
+  echo "Redeploying webserver..."
+  # this should redeploy the webserver with code that corresponds to the new schema
+  git push -f heroku-fractal-server workflows-private/webserver:master
 
-    # bring webserver back online
-    heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
+  # bring webserver back online
+  heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
 
-    echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
+  echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
 
 elif [ $MIGRA_EXIT_CODE == "0" ]; then
-    echo "No diff. Continuing redeploy."
+  echo "No diff. Continuing redeploy."
 
-    echo "Redeploying webserver..."
-    # this should redeploy the webserver with code that corresponds to the new schema
-    git push -f heroku-fractal-server workflows-private/webserver:master
+  echo "Redeploying webserver..."
+  # this should redeploy the webserver with code that corresponds to the new schema
+  git push -f heroku-fractal-server workflows-private/webserver:master
 
 else
-    echo "Diff script exited poorly. We are not redeploying the webserver because"
-    echo "the ORM might be inconsistent with the live webserver db. This is an"
-    echo "extremely serious error and should be investigated immediately."
-    exit 1
+  echo "Diff script exited poorly. We are not redeploying the webserver because"
+  echo "the ORM might be inconsistent with the live webserver db. This is an"
+  echo "extremely serious error and should be investigated immediately."
+  exit 1
 fi
 
