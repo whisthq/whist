@@ -17,8 +17,8 @@ echo "Using GPU Index ${GPU_INDEX}"
 # Retrieve the Fractal NVIDIA display config
 XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-display.conf"
 if [ ! -f ${XCONFIG} ]; then
-    echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
-    exit 1
+  echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
+  exit 1
 fi
 
 ####################
@@ -32,10 +32,10 @@ NEWBUSID=`nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}' | tail +
 
 # Update the current NVIDIA BusID to the new NVIDIA BusID
 if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then
-    echo "Nvidia BusID not changed - nothing to do"
+  echo "Nvidia BusID not changed - nothing to do"
 else
-    echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
-    sed -i -e 's|BusID.*|BusID          '\"${NEWBUSID}\"'|' ${XCONFIG}
+  echo "Nvidia BusID changed from \"${OLDBUSID}\" to \"${NEWBUSID}\": Updating ${XCONFIG}"
+  sed -i -e 's|BusID.*|BusID          '\"${NEWBUSID}\"'|' ${XCONFIG}
 fi
 
 ############################
@@ -44,17 +44,17 @@ fi
 
 # Loop through files /dev/input/eventN to determine which correspond to which device
 for filename in /dev/input/event*; do
-    name=$(udevadm info -a $filename | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
-    if [[ $name == 'Fractal Virtual Absolute Input' ]]; then
-        echo "Found device file $filename=$name"
-        sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" ${XCONFIG}
-    fi
-    if [[ $name == 'Fractal Virtual Relative Input' ]]; then
-        echo "Found device file $filename=$name"
-        sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" ${XCONFIG}
-    fi
-    if [[ $name == 'Fractal Virtual Keyboard' ]]; then
-        echo "Found device file $filename=$name"
-        sed -i "s~KEYBOARD_DEVICE~$filename~g" ${XCONFIG}
-    fi
+  name=$(udevadm info -a $filename | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
+  if [[ $name == 'Fractal Virtual Absolute Input' ]]; then
+    echo "Found device file $filename=$name"
+    sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" ${XCONFIG}
+  fi
+  if [[ $name == 'Fractal Virtual Relative Input' ]]; then
+    echo "Found device file $filename=$name"
+    sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" ${XCONFIG}
+  fi
+  if [[ $name == 'Fractal Virtual Keyboard' ]]; then
+    echo "Found device file $filename=$name"
+    sed -i "s~KEYBOARD_DEVICE~$filename~g" ${XCONFIG}
+  fi
 done

@@ -31,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Beautysh to Check Scripts Formatting
-        run: beautysh **/*.sh --indent-size 4 --check
+        run: beautysh **/*.sh --indent-size 2 --check
 
       - name: Check that All Bash Scripts Start with "#!/bin/bash"
         run: .github/workflows/helpers/shell-scripts/check-shebang.sh

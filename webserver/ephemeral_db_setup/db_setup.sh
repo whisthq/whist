@@ -21,14 +21,14 @@ cd "$DIR"
 # if so, POSTGRES_URI should be provided
 DB_EXISTS=${DB_EXISTS:=false} # default: false
 if [ $DB_EXISTS == true ]; then
-    # copy schema
-    psql -d $POSTGRES_URI -f ../db_migration/schema.sql
+  # copy schema
+  psql -d $POSTGRES_URI -f ../db_migration/schema.sql
 
-    # copy specifically chosen data
-    echo "===             Putting data into db             ==="
-    psql -d "$POSTGRES_URI" -f db_data.sql
+  # copy specifically chosen data
+  echo "===             Putting data into db             ==="
+  psql -d "$POSTGRES_URI" -f db_data.sql
 
-    exit 0
+  exit 0
 fi
 
 # here, we just have a fresh postgres instance with a user called postgres
