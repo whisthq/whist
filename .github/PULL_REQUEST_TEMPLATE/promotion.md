@@ -15,6 +15,7 @@ In order for this PR to be merged, all of the following items need to be tested 
 
 - [ ] Fractal successfully auto-updates
 - [ ] Fractal successfully launches
+- [ ] Fractal successfully plays audio
 - [ ] Typing "where am I" in Google shows that I'm connected to the closest datacenter
 - [ ] Copy text from Fractal to local clipboard
 - [ ] Copy text from local clipboard to Fractal
