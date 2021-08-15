@@ -32,6 +32,7 @@ import {
   WindowHashTypeform,
   WindowHashProtocol,
   WindowHashNetworkWarning,
+  WindowHashRelaunchWarning,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -56,6 +57,7 @@ const emitWindowInfo = (args: {
   event: string
   hash: string
 }) => {
+  console.log("emitting!")
   windowMonitor.emit("window-info", {
     numberWindowsRemaining: getNumberWindows(),
     crashed: args.crashed,
@@ -126,7 +128,6 @@ export const getWindowTitle = () => {
 // the application, instead we'll use it to contain the common functionality
 // that we want to share between all windows.
 export const createWindow = (args: {
-  show: string
   options: Partial<BrowserWindowConstructorOptions>
   hash: string
   customURL?: string
@@ -148,7 +149,7 @@ export const createWindow = (args: {
   // which React component to render into the window. We're forced to do this
   // using query parameters in the URL that we pass. The alternative would
   // be to use separate index.html files for each window, which we want to avoid.
-  const params = `?show=${args.show}`
+  const params = `?show=${args.hash}`
 
   if (app.isPackaged && args.customURL === undefined) {
     win
@@ -184,7 +185,6 @@ export const createWindow = (args: {
 
 export const createAuthWindow = () => {
   const win = createWindow({
-    show: WindowHashAuth,
     options: {
       ...base,
       ...width.xs,
@@ -230,7 +230,6 @@ export const createPaymentWindow = async ({
   console.log(response, paymentPortalURL)
 
   const win = createWindow({
-    show: WindowHashPayment,
     options: {
       ...base,
       ...width.lg,
@@ -266,7 +265,6 @@ export const createPaymentWindow = async ({
 
 export const createUpdateWindow = () =>
   createWindow({
-    show: WindowHashUpdate,
     options: {
       ...base,
       ...width.sm,
@@ -279,7 +277,6 @@ export const createUpdateWindow = () =>
 
 export const createErrorWindow = (hash: string) => {
   createWindow({
-    show: hash,
     options: {
       ...base,
       ...width.md,
@@ -293,7 +290,6 @@ export const createErrorWindow = (hash: string) => {
 
 export const createSignoutWindow = () => {
   createWindow({
-    show: WindowHashSignout,
     options: {
       ...base,
       ...width.md,
@@ -306,7 +302,6 @@ export const createSignoutWindow = () => {
 
 export const createTypeformWindow = (url: string) =>
   createWindow({
-    show: WindowHashTypeform,
     options: {
       ...base,
       ...width.lg,
@@ -324,6 +319,8 @@ export const createProtocolWindow = async () => {
 
   const protocol = await protocolLaunch()
 
+  setTimeout(protocolStreamKill, 20000)
+
   protocol.on("spawn", () => {
     emitWindowInfo({
       crashed: false,
@@ -333,11 +330,14 @@ export const createProtocolWindow = async () => {
   })
 
   protocol.on("close", (code: number) => {
+    console.log("protocol closed!", code)
+    const windowsOpen = getElectronWindows()  
+    closeElectronWindows(windowsOpen)  
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
     emitWindowInfo({
-      crashed: (code ?? 0) === 1,
+      crashed: (code ?? 0) !== 1,
       event: "close",
       hash: WindowHashProtocol,
     })
@@ -362,7 +362,6 @@ export const createNetworkWarningWindow = () => {
   const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize
 
   createWindow({
-    show: WindowHashNetworkWarning,
     options: {
       ...base,
       ...width.xs,
@@ -372,7 +371,33 @@ export const createNetworkWarningWindow = () => {
       alwaysOnTop: true,
       frame: false,
       transparent: true,
+      titleBarStyle: "customButtonsOnHover",
+      resizable: false,
+      fullscreenable: false,
+      minimizable: false,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashNetworkWarning,
+  })
+}
+
+export const createRelaunchWarningWindow = () => {
+  const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize
+
+  return createWindow({
+    options: {
+      ...base,
+      ...width.sm,
+      ...height.xxs,
+      x: 0,
+      y: screenHeight,
+      alwaysOnTop: true,
+      frame: false,
+      transparent: true,
+      titleBarStyle: "customButtonsOnHover",
+      resizable: false,
+      fullscreenable: false,
+      minimizable: false
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashRelaunchWarning,
   })
 }

@@ -17,11 +17,19 @@ import {
 } from "@app/utils/constants"
 import { hideAppDock } from "@app/utils/dock"
 import {
+  createErrorWindow,
   createNetworkWarningWindow,
+  createRelaunchWarningWindow,
+  createProtocolWindow,
   createTypeformWindow,
   getElectronWindows,
 } from "@app/utils/windows"
 import { store, persist } from "@app/utils/persist"
+import { protocolStreamInfo } from "@app/utils/protocol"
+import { PROTOCOL_ERROR } from "@app/utils/error"
+
+let protocolLaunchRetries = 0
+const MAX_RETRIES = 3
 
 const quit = () => {
   hideAppDock()
@@ -38,49 +46,77 @@ fromTrigger("windowsAllClosed")
     evt?.preventDefault()
   })
 
+// fromTrigger("windowInfo")
+//   .pipe(
+//     takeUntil(
+//       merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
+//     )
+//   )
+//   .subscribe(
+//     (args: {
+//       numberWindowsRemaining: number
+//       crashed: boolean
+//       event: string
+//       hash: string
+//     }) => {
+//       console.log("window info 1")
+//       // If there are still windows open, ignore
+//       if (args.numberWindowsRemaining !== 0) return
+//       // If all windows are closed and the protocol wasn't the last open window, quit
+//       if (
+//         args.hash !== WindowHashProtocol ||
+//         (args.hash === WindowHashProtocol && !args.crashed)
+//       ) {
+//         logBase("Application exited", {}).then(() => {
+//           quit()
+//         })
+//       }
+//     }
+//   )
+
 fromTrigger("windowInfo")
   .pipe(
     takeUntil(
       merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
     ),
-    withLatestFrom(
-      fromTrigger("mandelboxFlowFailure").pipe(mapTo(true), startWith(false))
-    )
+    withLatestFrom(fromTrigger("mandelboxFlowSuccess"))
   )
   .subscribe(
-    ([args]: [
+    ([args, info]: [
       {
         numberWindowsRemaining: number
         crashed: boolean
         event: string
         hash: string
       },
-      boolean
+      {
+        mandelboxIP: string
+        mandelboxSecret: string
+        mandelboxPorts: {
+          port_32262: number
+          port_32263: number
+          port_32273: number
+        }
+      }
     ]) => {
-      // If there are still windows open, ignore
-      if (args.numberWindowsRemaining !== 0) return
-      // If all windows are closed and the protocol wasn't the last open window, quit
-      logBase("Application exited", {})
-        .then(() => {
-          if (store.get("data.exitSurveySubmitted") === undefined) {
-            createTypeformWindow("https://form.typeform.com/to/Yfs4GkeN")
-            persist("exitSurveySubmitted", true, "data")
-          } else if (args.hash !== WindowHashProtocol) {
-            quit()
-          } else {
-            // If the protocol was the last window to be closed, upload logs and quit the app
-            destroyTray()
-            uploadToS3()
-              .then(() => {
-                if (!args.crashed) quit()
-              })
-              .catch((err) => {
-                console.error(err)
-                if (!args.crashed) quit()
-              })
-          }
-        })
-        .catch((err) => console.log(err))
+      console.log("window info 2")
+      console.log(args)
+      if (
+        args.hash === WindowHashProtocol &&
+        args.crashed &&
+        args.event === "close"
+      ) {
+        if (protocolLaunchRetries < MAX_RETRIES) {
+          protocolLaunchRetries = protocolLaunchRetries + 1
+          createProtocolWindow().then(() => {
+            protocolStreamInfo(info)
+            const win = createRelaunchWarningWindow()
+            setTimeout(win.close, 3000)
+          })
+        } else {
+          createErrorWindow(PROTOCOL_ERROR)
+        }
+      }
     }
   )
 

@@ -4,12 +4,14 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
+import { withLatestFrom } from "rxjs/operators"
+
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
   mandelboxCreateErrorMaintenance,
 } from "@app/utils/mandelbox"
-import { createErrorWindow } from "@app/utils/windows"
+import { createErrorWindow, createProtocolWindow } from "@app/utils/windows"
 import {
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
@@ -35,10 +37,6 @@ fromTrigger("mandelboxFlowFailure").subscribe((x: any) => {
 
 fromTrigger("authFlowFailure").subscribe(() => {
   createErrorWindow(AUTH_ERROR)
-})
-
-fromTrigger("windowInfo").subscribe((args: { crashed: boolean }) => {
-  if (args.crashed) createErrorWindow(PROTOCOL_ERROR)
 })
 
 fromTrigger("stripePaymentError").subscribe(() => {
