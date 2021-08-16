@@ -15,7 +15,7 @@ if not os.environ.get("SENDGRID_SECRET"):
 
 # These values are only for the prod stage.
 # Dev and staging require different values.
-AUTH0_DOMAIN = "fractal-prod.us.auth0.com"
+AUTH0_DOMAIN = "login.fractal.co"
 AUTH0_ID = "dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX"
 AUTH0_SECRET = os.environ["AUTH0_SECRET"]
 SENDGRID_SECRET = os.environ["SENDGRID_SECRET"]
