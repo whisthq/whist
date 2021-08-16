@@ -35,8 +35,8 @@ jobs:
       # Start from top-level folder to use .hadolint.yaml config
       - name: Check if Mandelbox Dockerfiles Follow Hadolint Standards
         run: |
-          hadolint ./mandelbox-images/*/Dockerfile.20
-          hadolint ./mandelbox-images/*/*/Dockerfile.20
+          hadolint ./mandelbox-images/*/Dockerfile.21
+          hadolint ./mandelbox-images/*/*/Dockerfile.21
 
   # Linting/formatting Python code in mandelbox-images
   mandelbox-images-python-scripts-linting:

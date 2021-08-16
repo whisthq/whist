@@ -11,7 +11,7 @@ A tree structure is provided below:
 ```
 ./mandelbox-images
 ├── base
-│   ├── Dockerfile.20 <- Base mandelbox image on which all of our application images depend
+│   ├── Dockerfile.21 <- Base mandelbox image on which all of our application images depend
 │   ├── config
 │   │   ├── 01-fractal-nvidia.conf <- Configuration file for a Nvidia GPU-powered virtual display
 │   │   ├── 02-fractal-dummy.conf <- Configuration file for a software-powered virtual display
@@ -37,11 +37,11 @@ A tree structure is provided below:
 │       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Fractal configuration
 ├── browsers
 │   ├── chrome
-│   │   ├── Dockerfile.20 <- Mandelbox image for Google Chrome
+│   │   ├── Dockerfile.21 <- Mandelbox image for Google Chrome
 │   │   ├── install-extensions.sh <- Helper script to install Chromium extensions onto Chrome
 │   │   └── start-chrome.sh <- Helper script to start Chrome with specific flags
 │   ├── firefox
-│   │   └── Dockerfile.20 <- Mandelbox image for Mozilla Firefox
+│   │   └── Dockerfile.21 <- Mandelbox image for Mozilla Firefox
 ├── build_mandelbox_image.sh <- Helper script to build a specific mandelbox image
 ├── helper_scripts
 │   ├── build_mandelbox_image.py <- Helper script to build a/many mandelbox image(s)
@@ -90,7 +90,7 @@ To build a specific application's mandelbox image, run:
 ./build_mandelbox_image.sh APP
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.21`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
 

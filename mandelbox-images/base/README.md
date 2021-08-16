@@ -12,7 +12,7 @@ Any Linux services needed for the mandelboxes to function properly should be dev
 
 ### Architecture
 
-The base mandelbox, specified by Dockerfile.20, is oriented around **systemd**, which is the entrypoint to the mandelbox. To specify what code actually runs in the mandelbox after startup, we copy over a set of systemd services at buildtime that, when systemd runs, will do some runtime configuration and start all the processes that we need.
+The base mandelbox, specified by Dockerfile.21, is oriented around **systemd**, which is the entrypoint to the mandelbox. To specify what code actually runs in the mandelbox after startup, we copy over a set of systemd services at buildtime that, when systemd runs, will do some runtime configuration and start all the processes that we need.
 
 ### Services
 

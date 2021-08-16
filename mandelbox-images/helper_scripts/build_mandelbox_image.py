@@ -49,7 +49,7 @@ if build_all:
 # Get dependency path from given image path
 def get_dependency_from_image(img_path):  # returns dep_path
     # Open Dockerfile for the image path
-    with open(img_path + "/Dockerfile.20") as file:
+    with open(img_path + "/Dockerfile.21") as file:
         # Regex match the Dockerfile dependency, with a capture group on the dependency name
         regex = re.compile("^[ ]*FROM[ ]+fractal/([^:]*):current-build")
         for line in file:
@@ -92,7 +92,7 @@ def build_image_path(img_path):
     command = (
         "docker build -f "
         + img_path
-        + "/Dockerfile.20 "
+        + "/Dockerfile.21 "
         + img_path
         + " -t fractal/"
         + img_path
