@@ -316,8 +316,6 @@ export const createProtocolWindow = async () => {
 
   const protocol = await protocolLaunch()
 
-  // setTimeout(protocolStreamKill, 20000)
-
   protocol.on("spawn", () => {
     emitWindowInfo({
       crashed: false,
