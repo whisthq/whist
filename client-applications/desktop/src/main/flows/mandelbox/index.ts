@@ -35,8 +35,8 @@ export default flow(
     )
 
     return {
-      success: host.success,
-      failure: merge(create.failure, host.failure),
+      success: host.failure,
+      failure: host.success,
     }
   }
 )
