@@ -26,7 +26,6 @@ jobs:
   build-and-publish-openssl:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
-    container: ${{ matrix.config.container }}
 
     # Platforms to build on/for
     strategy:
@@ -38,13 +37,12 @@ jobs:
             os: macos-10.15
           - name: "OpenSSL (Linux Ubuntu)"
             os: ubuntu-20.04
-            container: ubuntu:21.04
 
     env:
-      windows-tar-name: 21-fractal-windows-libcrypto-static-lib.tar.gz
-      macos-tar-name: 21-fractal-macos-libcrypto-static-lib.tar.gz
-      linux-tar-name: 21-fractal-linux-libcrypto-static-lib.tar.gz
-      headers-tar-name: 21-fractal-libcrypto-headers.tar.gz
+      windows-tar-name: fractal-windows-libcrypto-static-lib.tar.gz
+      macos-tar-name: fractal-macos-libcrypto-static-lib.tar.gz
+      linux-tar-name: fractal-linux-libcrypto-static-lib.tar.gz
+      headers-tar-name: fractal-libcrypto-headers.tar.gz
       s3-bucket-uri: s3://fractal-protocol-shared-libs
       s3-bucket-region: us-east-1
 
@@ -104,8 +102,10 @@ jobs:
         env:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
+          # Install needed dependencies
           apt-get update
           apt-get install -y perl build-essential
+
           # Install python3 and awscli for notifications
           apt-get install -y python3 awscli
 
@@ -199,7 +199,6 @@ jobs:
   build-and-publish-sentry:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
-    container: ${{ matrix.config.container }}
 
     # Platforms to build on/for
     strategy:
@@ -211,21 +210,21 @@ jobs:
             os: macos-10.15
           - name: "Sentry (Linux Ubuntu)"
             os: ubuntu-20.04
-            container: ubuntu:21.04
 
     env:
-      windows-tar-name: 21-fractal-windows-sentry-shared-lib.tar.gz
-      macos-tar-name: 21-fractal-macos-sentry-shared-lib.tar.gz
-      linux-tar-name: 21-fractal-linux-sentry-shared-lib.tar.gz
-      headers-tar-name: 21-fractal-sentry-headers.tar.gz
+      windows-tar-name: fractal-windows-sentry-shared-lib.tar.gz
+      macos-tar-name: fractal-macos-sentry-shared-lib.tar.gz
+      linux-tar-name: fractal-linux-sentry-shared-lib.tar.gz
+      headers-tar-name: fractal-sentry-headers.tar.gz
       s3-bucket-uri: s3://fractal-protocol-shared-libs
       s3-bucket-region: us-east-1
 
     steps:
       ################################# CONFIG STEPS START ###############################
-      - name: Install git to be able to check out sentry-native with submodules
+
+      - name: Install git to Checkout sentry-native with Submodules
         if: runner.os == 'Linux'
-        run: apt update && apt install -y git
+        run: apt-get update && apt-get install -y git
 
       - name: Checkout Sentry Native Git Repository
         uses: actions/checkout@v2
@@ -308,9 +307,10 @@ jobs:
         env:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
-          # install needed dependencies
+          # Install needed dependencies
           apt-get update
           apt-get install -y libcurl4-openssl-dev cmake make build-essential zlib1g zlib1g-dev
+
           # Install python3 and awscli for notifications
           apt-get install -y python3 awscli
 

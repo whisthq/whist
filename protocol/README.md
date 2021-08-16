@@ -290,7 +290,6 @@ ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 ln -s "$(brew --prefix llvm)/bin/clang-apply-replacements" "/usr/local/bin/clang-apply-replacements"
 
 # Linux Ubuntu:
-# clang-tidy and clang-apply-replacements-10 should come installed with clang
 sudo apt install clang-tidy -y
 
 # Windows:
