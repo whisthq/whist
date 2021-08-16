@@ -70,7 +70,7 @@ const RootComponent = () => {
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashNetworkWarning)
-    return <Warning text={"Your Internet connection is unstable"} />
+    return <Warning text={"Your Internet connection may be unstable"} />
   if (show === WindowHashRelaunchWarning)
     return (
       <Warning text={"Fractal unexpectedly lost connection and is rebooting"} />

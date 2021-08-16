@@ -48,13 +48,6 @@ const resources = [
     description: "We're looking to recruit brilliant, motivated engineers.",
     href: "/contact#careers",
   },
-  {
-    name: "Release Log",
-    description:
-      "See what features are coming next and what we've released so far.",
-    href: "https://www.notion.so/tryfractal/Fractal-Release-Log-c7ea1639eb734d90bd48c34924d72f0a",
-    target: "_blank",
-  },
 ]
 
 function classNames(...classes: any[]) {
@@ -175,8 +168,6 @@ const Header = () => {
                                 key={item.name}
                                 href={item.href}
                                 className="-m-3 p-3 block rounded-md hover:bg-gray-50"
-                                target={item?.target ?? "_self"}
-                                rel="noreferrer"
                               >
                                 <p className="text-base font-medium text-gray-900">
                                   {item.name}
