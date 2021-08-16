@@ -316,6 +316,8 @@ export const createProtocolWindow = async () => {
 
   const protocol = await protocolLaunch()
 
+  // setTimeout(protocolStreamKill, 20000)
+
   protocol.on("spawn", () => {
     emitWindowInfo({
       crashed: false,
@@ -325,8 +327,8 @@ export const createProtocolWindow = async () => {
   })
 
   protocol.on("close", (code: number) => {
-    const windowsOpen = getElectronWindows()  
-    closeElectronWindows(windowsOpen)  
+    const windowsOpen = getElectronWindows()
+    closeElectronWindows(windowsOpen)
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
@@ -388,7 +390,7 @@ export const createRelaunchWarningWindow = () => {
       titleBarStyle: "customButtonsOnHover",
       resizable: false,
       fullscreenable: false,
-      minimizable: false
+      minimizable: false,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashRelaunchWarning,
   })

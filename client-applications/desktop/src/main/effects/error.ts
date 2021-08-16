@@ -3,22 +3,18 @@
  * @file app.ts
  * @brief This file contains subscriptions to error Observables.
  */
-
-import { withLatestFrom } from "rxjs/operators"
-
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
   mandelboxCreateErrorMaintenance,
 } from "@app/utils/mandelbox"
-import { createErrorWindow, createProtocolWindow } from "@app/utils/windows"
+import { createErrorWindow } from "@app/utils/windows"
 import {
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
   MANDELBOX_INTERNAL_ERROR,
   AUTH_ERROR,
   MAINTENANCE_ERROR,
-  PROTOCOL_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
 

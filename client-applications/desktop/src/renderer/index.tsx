@@ -72,7 +72,9 @@ const RootComponent = () => {
   if (show === WindowHashNetworkWarning)
     return <Warning text={"Your Internet connection is unstable"} />
   if (show === WindowHashRelaunchWarning)
-    return <Warning text={"Fractal unexpectedly lost connection and is rebooting"} />
+    return (
+      <Warning text={"Fractal unexpectedly lost connection and is rebooting"} />
+    )
   if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <TwoButtonError

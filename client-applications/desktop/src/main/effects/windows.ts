@@ -5,11 +5,12 @@ import {
   startWith,
   mapTo,
   throttle,
+  filter,
 } from "rxjs/operators"
 import { merge, interval } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
-import { uploadToS3, logBase } from "@app/utils/logging"
+import { logBase, uploadToS3 } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
 import {
   WindowHashProtocol,
@@ -32,9 +33,29 @@ let protocolLaunchRetries = 0
 const MAX_RETRIES = 3
 
 const quit = () => {
-  hideAppDock()
-  app.quit()
+  logBase("Application exited", {})
+    .then(uploadToS3)
+    .then(() => {
+      destroyTray()
+      hideAppDock()
+      app.quit()
+    })
+    .catch((err) => console.error(err))
 }
+
+const allWindowsClosed = fromTrigger("windowInfo").pipe(
+  takeUntil(
+    merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
+  ),
+  filter(
+    (args: {
+      crashed: boolean
+      numberWindowsRemaining: number
+      hash: string
+      event: string
+    }) => args.numberWindowsRemaining === 0
+  )
+)
 
 fromTrigger("windowsAllClosed")
   .pipe(
@@ -46,81 +67,67 @@ fromTrigger("windowsAllClosed")
     evt?.preventDefault()
   })
 
-fromTrigger("windowInfo")
+allWindowsClosed
   .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
+    withLatestFrom(fromTrigger("mandelboxFlowSuccess")),
+    withLatestFrom(
+      fromTrigger("mandelboxFlowFailure").pipe(mapTo(true), startWith(false))
     )
   )
   .subscribe(
-    (args: {
-      numberWindowsRemaining: number
-      crashed: boolean
-      event: string
-      hash: string
-    }) => {
-      // If there are still windows open, ignore
-      if (args.numberWindowsRemaining !== 0) return
-      // If all windows are closed and the protocol wasn't the last open window, quit
+    ([[args, info], mandelboxFailure]: [
+      [
+        {
+          crashed: boolean
+          numberWindowsRemaining: number
+          hash: string
+          event: string
+        },
+        any
+      ],
+      boolean
+    ]) => {
+      // If they didn't crash out and didn't fill out the exit survey, show it to them
       if (
+        store.get("data.exitSurveySubmitted") === undefined &&
+        !mandelboxFailure &&
+        !args.crashed
+      ) {
+        createTypeformWindow("https://form.typeform.com/to/Yfs4GkeN")
+        persist("exitSurveySubmitted", true, "data")
+        // If all windows were successfully closed, quit
+      } else if (
         args.hash !== WindowHashProtocol ||
         (args.hash === WindowHashProtocol && !args.crashed)
       ) {
-        logBase("Application exited", {}).then(() => {
-          quit()
-        })
-      }
-    }
-  )
-
-fromTrigger("windowInfo")
-  .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-    ),
-    withLatestFrom(fromTrigger("mandelboxFlowSuccess"))
-  )
-  .subscribe(
-    ([args, info]: [
-      {
-        numberWindowsRemaining: number
-        crashed: boolean
-        event: string
-        hash: string
-      },
-      {
-        mandelboxIP: string
-        mandelboxSecret: string
-        mandelboxPorts: {
-          port_32262: number
-          port_32263: number
-          port_32273: number
-        }
-      }
-    ]) => {
-      if (
+        quit()
+        // If the protocol crashed out, try to reconnect
+      } else if (
         args.hash === WindowHashProtocol &&
         args.crashed &&
         args.event === "close"
       ) {
         if (protocolLaunchRetries < MAX_RETRIES) {
           protocolLaunchRetries = protocolLaunchRetries + 1
-          createProtocolWindow().then(() => {
-            protocolStreamInfo(info)
-            const win = createRelaunchWarningWindow()
-            setTimeout(() => {
-              win?.close()
-            }, 6000)
-          })
-        } else {
-          createErrorWindow(PROTOCOL_ERROR)
+          createProtocolWindow()
+            .then(() => {
+              protocolStreamInfo(info)
+              const win = createRelaunchWarningWindow()
+              setTimeout(() => {
+                win?.close()
+              }, 6000)
+            })
+            .catch((err) => console.error(err))
         }
+        // If we've already tried several times to reconnect, just show the protocol error window
+      } else {
+        createErrorWindow(PROTOCOL_ERROR)
       }
     }
   )
 
 fromTrigger("networkUnstable")
-  .pipe(throttle(() => interval(500))) // Throttle to 0.5s so we don't flood the main thread
+  .pipe(throttle(() => interval(1000))) // Throttle to 0.5s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
     let warningWindowOpen = false
     getElectronWindows().forEach((win: BrowserWindow) => {

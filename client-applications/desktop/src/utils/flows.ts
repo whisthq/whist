@@ -5,7 +5,7 @@
  */
 
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map, take, tap } from "rxjs/operators"
+import { filter, share, map, take } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
