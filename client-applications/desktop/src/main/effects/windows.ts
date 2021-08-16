@@ -34,13 +34,20 @@ const MAX_RETRIES = 3
 
 const quit = () => {
   logBase("Application exited", {})
-    .then(uploadToS3)
+    .then(async () => await uploadToS3())
     .then(() => {
       destroyTray()
       hideAppDock()
       app.quit()
     })
-    .catch((err) => console.error(err))
+    .catch((err) => {
+      logBase("Error while quitting", { error: err }).catch((err) =>
+        console.error(err)
+      )
+      destroyTray()
+      hideAppDock()
+      app.quit()
+    })
 }
 
 const allWindowsClosed = fromTrigger("windowInfo").pipe(
