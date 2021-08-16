@@ -94,7 +94,7 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
         Original observable
     */
 
-  obs.subscribe((x: any) => {
+  obs.pipe(share()).subscribe((x: any) => {
     TriggerChannel.next({
       name: `${name}`,
       payload: x,
