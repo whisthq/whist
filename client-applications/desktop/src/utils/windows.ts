@@ -316,6 +316,8 @@ export const createProtocolWindow = async () => {
 
   const protocol = await protocolLaunch()
 
+  setTimeout(protocolStreamKill, 20000)
+
   protocol.on("spawn", () => {
     emitWindowInfo({
       crashed: false,
@@ -328,8 +330,9 @@ export const createProtocolWindow = async () => {
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
+    console.log("crashed", code)
     emitWindowInfo({
-      crashed: (code ?? 0) === 1,
+      crashed: true,
       event: "close",
       hash: WindowHashProtocol,
     })

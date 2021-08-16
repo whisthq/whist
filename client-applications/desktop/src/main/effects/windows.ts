@@ -76,7 +76,7 @@ fromTrigger("windowsAllClosed")
 
 allWindowsClosed
   .pipe(
-    withLatestFrom(fromTrigger("mandelboxFlowSuccess")),
+    withLatestFrom(fromTrigger("mandelboxFlowSuccess").pipe(startWith({}))),
     withLatestFrom(
       fromTrigger("mandelboxFlowFailure").pipe(mapTo(true), startWith(false))
     )
@@ -112,20 +112,19 @@ allWindowsClosed
       } else if (
         args.hash === WindowHashProtocol &&
         args.crashed &&
-        args.event === "close"
+        args.event === "close" &&
+        protocolLaunchRetries < MAX_RETRIES
       ) {
-        if (protocolLaunchRetries < MAX_RETRIES) {
-          protocolLaunchRetries = protocolLaunchRetries + 1
-          createProtocolWindow()
-            .then(() => {
-              protocolStreamInfo(info)
-              const win = createRelaunchWarningWindow()
-              setTimeout(() => {
-                win?.close()
-              }, 6000)
-            })
-            .catch((err) => console.error(err))
-        }
+        protocolLaunchRetries = protocolLaunchRetries + 1
+        createProtocolWindow()
+          .then(() => {
+            protocolStreamInfo(info)
+            const win = createRelaunchWarningWindow()
+            setTimeout(() => {
+              win?.close()
+            }, 6000)
+          })
+          .catch((err) => console.error(err))
         // If we've already tried several times to reconnect, just show the protocol error window
       } else {
         createErrorWindow(PROTOCOL_ERROR)
