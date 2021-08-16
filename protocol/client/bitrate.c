@@ -70,12 +70,15 @@ Bitrates ewma_bitrate(BitrateStatistics stats) {
     // because the max bitrate of the encoder is usually larger than the actual amount of data we
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
-    static int throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
+    static int throughput = -1;
     static Bitrates bitrates;
+    if (throughput == -1) {
+        throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
+    }
     // sanity check to make sure we're not sending it negative bitrate
     if (stats.throughput_per_second >= 0) {
         throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
-        bitrates.bitrate = bitrate_throughput_ratio * throughput;
+        bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
     }
     bitrates.burst_bitrate = max_burst_bitrate;
     return bitrates;
