@@ -472,6 +472,10 @@ int read_piped_arguments(bool *keep_waiting) {
                 arg_value = c + 1;
             }
 
+            if (!arg_name) {
+                goto completed_line_eval;
+            }
+
             if (arg_value) {
                 arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
                 arg_value[strcspn(arg_value, "\r")] =
@@ -483,6 +487,7 @@ int read_piped_arguments(bool *keep_waiting) {
             
             LOG_DEBUG("arg_name: %s, arg_value: %s", arg_name, arg_value);
 
+            // check again to see if arg_name is NULL.
             if (!arg_name) {
                 goto completed_line_eval;
             }
