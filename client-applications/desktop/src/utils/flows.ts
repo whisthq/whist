@@ -123,7 +123,6 @@ export const fromTrigger = (name: string): Observable<any> => {
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name === name),
-    tap((x) => console.log("from trigger", x)),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
     map((x: Trigger) => x.payload)
   )

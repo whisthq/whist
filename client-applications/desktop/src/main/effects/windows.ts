@@ -46,33 +46,32 @@ fromTrigger("windowsAllClosed")
     evt?.preventDefault()
   })
 
-// fromTrigger("windowInfo")
-//   .pipe(
-//     takeUntil(
-//       merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-//     )
-//   )
-//   .subscribe(
-//     (args: {
-//       numberWindowsRemaining: number
-//       crashed: boolean
-//       event: string
-//       hash: string
-//     }) => {
-//       console.log("window info 1")
-//       // If there are still windows open, ignore
-//       if (args.numberWindowsRemaining !== 0) return
-//       // If all windows are closed and the protocol wasn't the last open window, quit
-//       if (
-//         args.hash !== WindowHashProtocol ||
-//         (args.hash === WindowHashProtocol && !args.crashed)
-//       ) {
-//         logBase("Application exited", {}).then(() => {
-//           quit()
-//         })
-//       }
-//     }
-//   )
+fromTrigger("windowInfo")
+  .pipe(
+    takeUntil(
+      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
+    )
+  )
+  .subscribe(
+    (args: {
+      numberWindowsRemaining: number
+      crashed: boolean
+      event: string
+      hash: string
+    }) => {
+      // If there are still windows open, ignore
+      if (args.numberWindowsRemaining !== 0) return
+      // If all windows are closed and the protocol wasn't the last open window, quit
+      if (
+        args.hash !== WindowHashProtocol ||
+        (args.hash === WindowHashProtocol && !args.crashed)
+      ) {
+        logBase("Application exited", {}).then(() => {
+          quit()
+        })
+      }
+    }
+  )
 
 fromTrigger("windowInfo")
   .pipe(
@@ -99,8 +98,6 @@ fromTrigger("windowInfo")
         }
       }
     ]) => {
-      console.log("window info 2")
-      console.log(args)
       if (
         args.hash === WindowHashProtocol &&
         args.crashed &&
@@ -111,7 +108,9 @@ fromTrigger("windowInfo")
           createProtocolWindow().then(() => {
             protocolStreamInfo(info)
             const win = createRelaunchWarningWindow()
-            setTimeout(win.close, 3000)
+            setTimeout(() => {
+              win?.close()
+            }, 6000)
           })
         } else {
           createErrorWindow(PROTOCOL_ERROR)

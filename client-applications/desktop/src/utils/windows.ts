@@ -57,7 +57,6 @@ const emitWindowInfo = (args: {
   event: string
   hash: string
 }) => {
-  console.log("emitting!")
   windowMonitor.emit("window-info", {
     numberWindowsRemaining: getNumberWindows(),
     crashed: args.crashed,
@@ -227,8 +226,6 @@ export const createPaymentWindow = async ({
   const response = await paymentPortalRequest({ accessToken })
   const { paymentPortalURL } = paymentPortalParse(response)
 
-  console.log(response, paymentPortalURL)
-
   const win = createWindow({
     options: {
       ...base,
@@ -319,8 +316,6 @@ export const createProtocolWindow = async () => {
 
   const protocol = await protocolLaunch()
 
-  setTimeout(protocolStreamKill, 20000)
-
   protocol.on("spawn", () => {
     emitWindowInfo({
       crashed: false,
@@ -330,14 +325,13 @@ export const createProtocolWindow = async () => {
   })
 
   protocol.on("close", (code: number) => {
-    console.log("protocol closed!", code)
     const windowsOpen = getElectronWindows()  
     closeElectronWindows(windowsOpen)  
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
     emitWindowInfo({
-      crashed: (code ?? 0) !== 1,
+      crashed: (code ?? 0) === 1,
       event: "close",
       hash: WindowHashProtocol,
     })
@@ -364,13 +358,12 @@ export const createNetworkWarningWindow = () => {
   createWindow({
     options: {
       ...base,
-      ...width.xs,
+      ...width.sm,
       ...height.xxs,
       x: 0,
       y: screenHeight,
       alwaysOnTop: true,
       frame: false,
-      transparent: true,
       titleBarStyle: "customButtonsOnHover",
       resizable: false,
       fullscreenable: false,
@@ -392,7 +385,6 @@ export const createRelaunchWarningWindow = () => {
       y: screenHeight,
       alwaysOnTop: true,
       frame: false,
-      transparent: true,
       titleBarStyle: "customButtonsOnHover",
       resizable: false,
       fullscreenable: false,
