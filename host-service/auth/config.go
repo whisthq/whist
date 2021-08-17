@@ -27,7 +27,7 @@ var authConfigStaging = authConfig{
 
 var authConfigProd = authConfig{
 	Aud: "https://api.fractal.co",
-	Iss: "https://fractal-prod.us.auth0.com/",
+	Iss: "https://auth.fractal.co/",
 }
 
 func getAuthConfig() authConfig {
