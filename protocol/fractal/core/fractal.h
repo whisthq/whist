@@ -118,8 +118,8 @@ Defines
 #define MINIMUM_BITRATE 2000000
 #define ACK_REFRESH_MS 50
 
-#define STARTING_BITRATE 10400000
-#define STARTING_BURST_BITRATE 31800000
+#define STARTING_BITRATE 15400000
+#define STARTING_BURST_BITRATE 100000000
 
 // 16:10 aspect ratio for minimum screen, which is the Mac aspect ratio
 #define MIN_SCREEN_WIDTH 480
@@ -128,7 +128,8 @@ Defines
 #define MAX_SCREEN_HEIGHT 4096
 
 #define AUDIO_BITRATE 128000
-#define FPS 45
+// We would like to set this higher, but mac displays have a max refresh rate of 60 Hz.
+#define FPS 60
 #define MIN_FPS 10
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
