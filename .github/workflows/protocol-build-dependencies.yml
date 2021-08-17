@@ -26,6 +26,7 @@ jobs:
   build-and-publish-openssl:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    container: ${{ matrix.config.container }}
 
     # Platforms to build on/for
     strategy:
@@ -35,8 +36,9 @@ jobs:
             os: windows-2019
           - name: "OpenSSL (macOS)"
             os: macos-10.15
-          - name: "OpenSSL (Linux Ubuntu)"
+          - name: "OpenSSL (Linux Ubuntu 21.04)"
             os: ubuntu-20.04
+            container: ubuntu:21.04
 
     env:
       windows-tar-name: fractal-windows-libcrypto-static-lib.tar.gz
@@ -104,10 +106,10 @@ jobs:
         run: |
           # Install needed dependencies
           apt-get update
-          sudo apt-get install -y perl build-essential
+          apt-get install -y perl build-essential
 
           # Install python3 and awscli for notifications
-          sudo apt-get install -y python3 awscli
+          apt-get install -y python3 awscli
 
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -308,11 +310,11 @@ jobs:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
           # Install needed dependencies
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev cmake make build-essential zlib1g zlib1g-dev
+          apt-get update
+          apt-get install -y libcurl4-openssl-dev cmake make build-essential zlib1g zlib1g-dev
 
           # Install python3 and awscli for notifications
-          sudo apt-get install -y python3 awscli
+          apt-get install -y python3 awscli
 
           # configure and build Sentry Native
           cmake -S . \
