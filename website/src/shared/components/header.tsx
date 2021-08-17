@@ -52,7 +52,7 @@ const resources = [
     name: "Release Log",
     description:
       "See what features are coming next and what we've released so far.",
-    href: "https://www.notion.so/tryfractal/Fractal-Release-Log-c7ea1639eb734d90bd48c34924d72f0a",
+    href: "https://tryfractal.notion.site/Fractal-Release-Log-c7ea1639eb734d90bd48c34924d72f0a",
     target: "_blank",
   },
 ]
