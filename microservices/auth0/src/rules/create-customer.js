@@ -20,25 +20,16 @@ function createCustomer(user, context, callback) {
         phone: user.phone_number,
       })
       .then((customer) => {
-        // Enroll the new user in a free trial
-        stripe.subscriptions
-          .create({
-            customer: customer.id,
-            trial_period_days: 7,
-            items: [{ price: configuration.STRIPE_PRICE_ID }],
+        // Save the new Stripe customer's customer ID.
+        auth0.users
+          .updateAppMetadata(user.user_id, {
+            stripe_customer_id: customer.id,
           })
-          .then((_subscription) => {
-            // Save the new Stripe customer's customer ID.
-            auth0.users
-              .updateAppMetadata(user.user_id, {
-                stripe_customer_id: customer.id,
-              })
-              .then(
-                // Success! Pass the updated user object to the next rule.
-                (updated_user) => callback(null, updated_user, context),
-                callback
-              )
-          }, callback)
+          .then(
+            // Success! Pass the updated user object to the next rule.
+            (updated_user) => callback(null, updated_user, context),
+            callback
+          )
       }, callback)
   }
   // Nothing to do; there is already a Stripe customer associated with this
