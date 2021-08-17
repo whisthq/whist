@@ -182,8 +182,8 @@ int32_t multithreaded_send_video(void* opaque) {
             // if we've just started, capture at max width, height, and DPI
             // when a client connects, they'll request a dimension change to the correct dimensions
             // + DPI
-            client_width = MAX_SCREEN_WIDTH;
-            client_height = MAX_SCREEN_HEIGHT;
+            client_width = 300;
+            client_height = 500;
             client_dpi = 96;
             client_codec_type = CODEC_TYPE_H264;
         }
