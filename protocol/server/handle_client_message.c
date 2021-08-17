@@ -307,7 +307,7 @@ static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool i
     fmsg_response.ping_id = fmsg->ping_id;
     int ret = 0;
     if (send_udp_packet(&(clients[client_id].UDP_context), PACKET_MESSAGE,
-                        (uint8_t *)&fmsg_response, sizeof(fmsg_response), 1, STARTING_BURST_BITRATE,
+                        (uint8_t *)&fmsg_response, sizeof(fmsg_response), 1, max_burst_bitrate,
                         NULL, NULL) < 0) {
         LOG_WARNING("Could not send Ping to Client ID: %d", client_id);
         ret = -1;

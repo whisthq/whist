@@ -32,6 +32,7 @@ Includes
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
+#include "bitrate.h"
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -698,21 +699,25 @@ void calculate_statistics() {
 
     static clock t;
     static bool init_t = false;
+    static BitrateStatistics stats;
+    static Bitrates new_bitrates;
     if (!init_t) {
         start_timer(&t);
         init_t = true;
     }
+    // do some calculation
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
-        // Note: Uncomment to oscillate between bitrates every 5 seconds
-        if (max_bitrate > STARTING_BITRATE) {
-            max_bitrate = STARTING_BITRATE;
-            max_burst_bitrate = STARTING_BURST_BITRATE;
-        } else {
-            // max_bitrate += 1000000;
-            // max_burst_bitrate += 1000000;
+        stats.num_nacks_per_second = video_ring_buffer->num_nacked / 5;
+        stats.throughput_per_second = -1;
+        new_bitrates = calculate_new_bitrate(stats);
+        if (new_bitrates.bitrate != max_bitrate ||
+            new_bitrates.burst_bitrate != max_burst_bitrate) {
+            max_bitrate = new_bitrates.bitrate;
+            max_burst_bitrate = new_bitrates.burst_bitrate;
+            update_bitrate = true;
         }
-        // update_bitrate = true;
+        video_ring_buffer->num_nacked = 0;
         start_timer(&t);
     }
 }

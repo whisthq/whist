@@ -15,6 +15,7 @@ add_executable(FractalClient
         peercursor.c
         ringbuffer.c
         sync_packets.c
+        bitrate.c
         )
 
 # On Windows during client app packaging, FractalClient should have icon set
