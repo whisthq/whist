@@ -179,11 +179,11 @@ int32_t multithreaded_send_video(void* opaque) {
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
         if (client_width < 0 || client_height < 0 || client_dpi < 0) {
-            // if we've just started, capture at max width, height, and DPI
+            // if we've just started, capture at a common width, height, and DPI
             // when a client connects, they'll request a dimension change to the correct dimensions
             // + DPI
-            client_width = MIN_SCREEN_WIDTH;
-            client_height = MIN_SCREEN_HEIGHT;
+            client_width = 1920;
+            client_height = 1080;
             client_dpi = 96;
             client_codec_type = CODEC_TYPE_H264;
         }
