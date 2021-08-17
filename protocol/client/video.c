@@ -699,7 +699,6 @@ void calculate_statistics() {
 
     static clock t;
     static bool init_t = false;
-    static int old_bitrate;
     static BitrateStatistics stats;
     static Bitrates new_bitrates;
     if (!init_t) {
