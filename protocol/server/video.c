@@ -178,9 +178,13 @@ int32_t multithreaded_send_video(void* opaque) {
     while (!exiting) {
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
-        if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
-            fractal_sleep(5);
-            continue;
+        if (client_width < 0 || client_height < 0 || client_dpi < 0) {
+            // if we've just started, capture at max width, height, and DPI
+            // when a client connects, they'll request a dimension change to the correct dimensions
+            // + DPI
+            client_width = MAX_SCREEN_WIDTH;
+            client_height = MAX_SCREEN_HEIGHT;
+            client_dpi = 96;
         }
 
         // Update device with new parameters
