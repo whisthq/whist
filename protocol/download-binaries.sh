@@ -89,7 +89,7 @@ fi
 
 # If the include/sentry directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="21-fractal-sentry-headers.tar.gz"
+LIB="fractal-sentry-headers.tar.gz"
 SENTRY_DIR="$DEST_DIR/include/sentry"
 if has_updated "$LIB" || [[ ! -d "$SENTRY_DIR" ]]; then
   rm -rf "$SENTRY_DIR"
@@ -108,11 +108,11 @@ fi
 # Select sentry lib dir and sentry lib targz name based on OS
 SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
-  SENTRY_LIB="21-fractal-windows-sentry-shared-lib.tar.gz"
+  SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-  SENTRY_LIB="21-fractal-macos-sentry-shared-lib.tar.gz"
+  SENTRY_LIB="fractal-macos-sentry-shared-lib.tar.gz"
 elif [[ "$OS" == "Linux" ]]; then
-  SENTRY_LIB="21-fractal-linux-sentry-shared-lib.tar.gz"
+  SENTRY_LIB="fractal-linux-sentry-shared-lib.tar.gz"
 fi
 
 # Check if SENTRY_LIB has updated, and if so, create the dir and copy the libs into the source dir
@@ -128,7 +128,7 @@ fi
 
 # If the include/openssl directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="21-fractal-libcrypto-headers.tar.gz"
+LIB="fractal-libcrypto-headers.tar.gz"
 OPENSSL_DIR="$DEST_DIR/include/openssl"
 if has_updated "$LIB" || [[ ! -d "$OPENSSL_DIR" ]]; then
   rm -rf "$OPENSSL_DIR"
@@ -147,11 +147,11 @@ fi
 # Select OpenSSL lib dir and OpenSSL lib targz name based on OS
 OPENSSL_LIB_DIR="$DEST_DIR/lib/64/openssl/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
-  OPENSSL_LIB="21-fractal-windows-libcrypto-static-lib.tar.gz"
+  OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-  OPENSSL_LIB="21-fractal-macos-libcrypto-static-lib.tar.gz"
+  OPENSSL_LIB="fractal-macos-libcrypto-static-lib.tar.gz"
 elif [[ "$OS" == "Linux" ]]; then
-  OPENSSL_LIB="21-fractal-linux-libcrypto-static-lib.tar.gz"
+  OPENSSL_LIB="fractal-linux-libcrypto-static-lib.tar.gz"
 fi
 
 # Check if OPENSSL_LIB has updated, and if so, create the dir and copy the libs into the source dir
@@ -167,7 +167,7 @@ fi
 
 # If the include/ffmpeg directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-LIB="21-fractal-ffmpeg-headers.tar.gz"
+LIB="fractal-ffmpeg-headers.tar.gz"
 FFMPEG_DIR="$DEST_DIR/include/ffmpeg"
 if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
   rm -rf "$FFMPEG_DIR"
@@ -185,11 +185,11 @@ fi
 # Select FFmpeg lib dir and targz name
 FFMPEG_LIB_DIR="$DEST_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
-  FFMPEG_LIB="21-fractal-windows-ffmpeg-shared-lib.tar.gz"
+  FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-  FFMPEG_LIB="21-fractal-macos-ffmpeg-shared-lib.tar.gz"
+  FFMPEG_LIB="fractal-macos-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Linux" ]]; then
-  FFMPEG_LIB="21-fractal-linux-ffmpeg-shared-lib.tar.gz"
+  FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
 fi
 
 # Check if FFMPEG_LIB has updated, and if so, create the dir and copy the libs into the source dir

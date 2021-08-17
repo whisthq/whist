@@ -27,10 +27,15 @@ jobs:
           - name: "Build and Check Protocol on Windows (cl)"
             os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
             cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
-          - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
-            os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
           - name: "Build and Check Protocol on macOS (clang)"
             os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
+          - name: "Build and Check Client Protocol on Linux Ubuntu 20.04 (gcc)"
+            os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
+            building-linux-client: true
+          - name: "Build and Check Server Protocol on Linux Ubuntu 21.04 (gcc)"
+            os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
+            container: ubuntu:21.04
+            building-linux-server: true
 
     steps:
       - name: Checkout Git Repository

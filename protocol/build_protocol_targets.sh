@@ -22,6 +22,7 @@ The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
 not to download the libraries used to build the Fractal protocol from S3.
 The optional argument \`--cmakesetCI\`, if provided, is used to set
 \`-DCI=True\` in the cmake configuration.
+
 EOF
 
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
