@@ -113,7 +113,7 @@ const configs = {
       FRONTEND_URL: "https://fractal.co",
     },
     auth0: {
-      auth0Domain: "login.fractal.co",
+      auth0Domain: "auth.fractal.co",
       clientId: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
     },
