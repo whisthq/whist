@@ -185,6 +185,7 @@ int32_t multithreaded_send_video(void* opaque) {
             client_width = MAX_SCREEN_WIDTH;
             client_height = MAX_SCREEN_HEIGHT;
             client_dpi = 96;
+            client_codec_type = CODEC_TYPE_H264;
         }
 
         // Update device with new parameters
