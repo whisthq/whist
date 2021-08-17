@@ -68,6 +68,10 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             device->width, device->height, encoder->in_width, encoder->in_height);
         return -1;
     }
+    if (transfer_screen(device)) {
+        LOG_ERROR("Unable to transfer screen to CPU buffer.");
+        return -1;
+    }
 
 #ifdef __linux__
     // Handle transfer capture for nvidia capture device
@@ -125,10 +129,6 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     clock cpu_transfer_timer;
     start_timer(&cpu_transfer_timer);
 
-    if (transfer_screen(device)) {
-        LOG_ERROR("Unable to transfer screen to CPU buffer.");
-        return -1;
-    }
 #ifdef _WIN32
     if (ffmpeg_encoder_frame_intake(encoder->ffmpeg_encoder, device->frame_data, device->pitch)) {
 #else  // __linux

@@ -252,8 +252,11 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         }
         encoder->pitch = lock_params.pitch;
 #if LOG_VIDEO
-        LOG_DEBUG("width: %d, pitch: %d (lock pitch %d)", encoder->registered_resource.width,
-                  encoder->pitch, lock_params.pitch);
+        LOG_DEBUG("width: %d, height: %d, pitch: %d (lock pitch %d)",
+                  encoder->registered_resource.width, encoder->registered_resource.height,
+                  encoder->registered_resource.pitch, lock_params.pitch);
+        LOG_DEBUG("Buffer data ptr: %x, texture pointer: %x", lock_params.bufferDataPtr,
+                  encoder->registered_resource.texture_pointer);
 #endif
         // memcpy input data
         // the encoder buffer might have a different pitch, so we have to copy row by row
@@ -261,7 +264,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             memcpy((char*)lock_params.bufferDataPtr + i * lock_params.pitch,
                    (char*)encoder->registered_resource.texture_pointer +
                        i * encoder->registered_resource.pitch,
-                   encoder->registered_resource.pitch);
+                   min(encoder->registered_resource.pitch, (int)lock_params.pitch));
         }
         status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
                                                           lock_params.inputBuffer);
