@@ -1,3 +1,30 @@
+[project]
+name = "fractal"
+version = "1.0.0"
+description = "Fractal monorepository pyproject.toml"
+authors = [
+    "Fractal Developers <developers@fractal.co>"
+]
+license = "UNLICENSED"
+readme = "README.md"
+python = "^3.9"
+homepage = "https://fractal.co"
+repository = "https://github.com/fractal/fractal"
+documentation = "https://docs.fractal.co"
+
+keywords = ["packaging", "dependency", "infer", "pyproject.toml"]
+
+classifiers = [
+    "Topic :: Software Development"
+]
+
+# Requirements
+[dependencies]
+pylint = "^2.9.3"
+
+[dev-dependencies]
+black = { version = "21.6b0", python = "^3.9" }
+
 # Configuration for Black.
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
@@ -7,4 +34,4 @@
 
 [tool.black]
 line-length = 100
-target-version = ["py39"]
+target_version = ["py39"]
