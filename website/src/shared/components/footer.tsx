@@ -22,7 +22,15 @@ const navigation = {
     { name: "FAQ", href: "/faq" },
   ],
   resources: [
-    { name: "Support", href: "/contact" },
+    { name: "Join our Discord", 
+      href: "https://discord.com/invite/HjPpDGvEeA"
+    },
+    { name: "Blog",
+      href: "https://fractal.medium.com"
+    },
+    { name: "Support", 
+      href: "/contact"
+    },
     {
       name: "Careers",
       href: "/contact#careers",
