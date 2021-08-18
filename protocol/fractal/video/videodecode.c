@@ -23,6 +23,8 @@ Includes
 */
 #include "videodecode.h"
 #include <fractal/logging/log_statistic.h>
+#include <VideoToolbox/VideoToolbox.h>
+#include "test_vtb.m"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -584,10 +586,20 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
             destroy_video_decoder(decoder);
             return -1;
         }
-        start_timer(&latency_clock);
-        av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
-        log_double_statistic("av_hwframe_transfer_data time in ms",
-                             get_timer(latency_clock) * 1000);
+        // CVPixelBufferRef frame = (CVPixelBufferRef) decoder->hw_frame->data[3];
+        /*
+        LOG_DEBUG("Height: %d, Width: %d, DataSize: %d, Base Address: %x", CVPixelBufferGetHeight(frame),
+            CVPixelBufferGetWidth(frame),
+            CVPixelBufferGetDataSize(frame),
+            CVPixelBufferGetBaseAddress(frame));
+        LOG_DEBUG("Type: %x, Plane Count: %d", CVPixelBufferGetPixelFormatType(frame), CVPixelBufferGetPlaneCount(frame));
+        */
+        /*
+         * start_timer(&latency_clock);
+         * av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+         * log_double_statistic("av_hwframe_transfer_data time in ms",
+         *                      get_timer(latency_clock) * 1000);
+         */
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
             LOG_ERROR("Decoder cascaded from hardware to software");

@@ -32,6 +32,8 @@ Includes
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
+// SERINA TESTING
+#include <VideoToolbox/VideoToolbox.h>
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -629,7 +631,7 @@ void replace_texture() {
     }
     // Create a new texture
     SDL_Texture* texture =
-        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING,
+        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
                           MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
     if (!texture) {
         LOG_FATAL("SDL: could not create texture - exiting");
@@ -911,6 +913,7 @@ int init_video_renderer() {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
 // SDL guidelines say that renderer functions should be done on the main thread,
 //      but our implementation requires that the renderer is made in this thread
@@ -1151,10 +1154,10 @@ int render_video() {
                 pending_resize_render = false;
 
                 // appropriately convert the frame and move it into video_context.data
-                finalize_video_context_data();
+                // finalize_video_context_data();
 
                 // then, update the window titlebar color
-                update_window_titlebar_color();
+                // update_window_titlebar_color();
 
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
@@ -1164,18 +1167,19 @@ int render_video() {
                 SDL_Rect texture_rect =
                     new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
                 // TODO: wrap this in Fractal update texture
-                int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
-                                               video_context.data[0], video_context.linesize[0],
-                                               video_context.data[1], video_context.linesize[1],
-                                               video_context.data[2], video_context.linesize[2]);
+                int ret = SDL_UpdateNVTexture(video_context.texture, &texture_rect,
+                                               video_context.decoder->hw_frame->data[3], video_context.decoder->width,
+                                               NULL, (video_context.decoder->width + 1) / 2);
                 if (ret == -1) {
-                    LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
+                    LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
                 }
 
+                /*
                 if (!video_context.sws) {
                     // Clear out bits that aren't used from av_alloc_frame
                     memset(video_context.data, 0, sizeof(video_context.data));
                 }
+                */
                 log_double_statistic("Write to SDL texture time in ms",
                                      get_timer(latency_clock) * 1000);
 
