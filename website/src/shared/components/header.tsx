@@ -198,7 +198,10 @@ const Header = () => {
                   Download
                 </span>
               </a>
-              <a href="https://discord.com/invite/HjPpDGvEeA" className="hover:no-underline">
+              <a
+                href="https://discord.com/invite/HjPpDGvEeA"
+                className="hover:no-underline"
+              >
                 <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
                   Join our Discord
                 </span>
