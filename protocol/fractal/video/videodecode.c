@@ -23,8 +23,6 @@ Includes
 */
 #include "videodecode.h"
 #include <fractal/logging/log_statistic.h>
-#include <VideoToolbox/VideoToolbox.h>
-#include "test_vtb.m"
 
 #include <stdio.h>
 #include <stdlib.h>
