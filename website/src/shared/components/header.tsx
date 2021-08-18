@@ -193,17 +193,17 @@ const Header = () => {
                   </>
                 )}
               </Popover>
-              <a href="/download#top" className="hover:no-underline">
-                <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
-                  Download
-                </span>
-              </a>
               <a
                 href="https://discord.com/invite/HjPpDGvEeA"
                 className="hover:no-underline"
               >
                 <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
                   Join our Discord
+                </span>
+              </a>
+              <a href="/download#top" className="hover:no-underline">
+                <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
+                  Download
                 </span>
               </a>
             </Popover.Group>
