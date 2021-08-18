@@ -392,3 +392,37 @@ def check_and_handle_lingering_instances() -> None:
         instance_info = InstanceInfo.query.with_for_update().get(instance_name)
         fractal_logger.info(f"Instance {instance_name} was lingering and is being drained")
         drain_instance(instance_info)
+
+
+def repeated_scale_down_harness(time_delay: int, flask_app: Any = current_app) -> None:
+    """
+    checks scaling every time_delay seconds.
+    NOTE:  this function keeps looping and will
+    not stop manually.
+    Only run in background threads.
+
+    Args:
+        time_delay (int):  how often to run the scaling, in seconds
+        flask_app (Flask.application):  app context, needed for DB operations
+    """
+    with flask_app.app_context():
+        while True:
+            try_scale_down_if_necessary_all_regions()
+            time.sleep(time_delay)
+
+
+def repeated_lingering_harness(time_delay: int, flask_app: Any = current_app) -> None:
+    """
+    checks lingering instances every time_delay seconds.
+    NOTE:  this function keeps looping and will
+    not stop manually.
+    Only run in background threads.
+
+    Args:
+        time_delay (int):  how often to run the scaling, in seconds
+        flask_app (Flask.application):  app context, needed for DB operations
+    """
+    with flask_app.app_context():
+        while True:
+            check_and_handle_lingering_instances()
+            time.sleep(time_delay)
