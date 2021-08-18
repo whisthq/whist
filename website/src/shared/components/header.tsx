@@ -198,6 +198,11 @@ const Header = () => {
                   Download
                 </span>
               </a>
+              <a href="https://discord.com/invite/HjPpDGvEeA" className="hover:no-underline">
+                <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
+                  Join our Discord
+                </span>
+              </a>
             </Popover.Group>
             <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0"></div>
           </div>
