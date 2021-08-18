@@ -34,4 +34,4 @@ black = { version = "21.6b0", python = "^3.9" }
 
 [tool.black]
 line-length = 100
-target-version = ["py39"]
+target_version = ["py39"]
