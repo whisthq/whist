@@ -74,6 +74,17 @@ const Privacy = () => {
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
           1. What Information Do We Collect?
         </p>
+
+
+
+
+        information contained in messages when you post on our social media pages;
+information contained in communications you send to us. For example when you report a problem or submit queries, concerns or comments regarding the Platform or our Services;
+data from rating and feedback systems and surveys that we may, from time to time, run for research purposes, if you choose to respond to, or participate in, them; and
+
+
+
+
         <p>
           Much of the information we collect is personal information you
           disclose to us. For example, this includes all publicly available
@@ -336,6 +347,27 @@ const Privacy = () => {
             and illegal activities, or as evidence in litigation in which we are
             involved.
           </p>
+
+          other third parties that we engage to help us run our business, such as payment processors and IT services suppliers (this includes other companies within our group who assist us to provide our Services to you);
+analytics and search engine service providers that assist us in the improvement and optimisation of the Platform;
+our professional advisors, including lawyers, accountants, tax advisors and auditors;
+brokers or providers of insurance services, and providers of any recognised credit reference or credit assessment service;
+law enforcement bodies, agencies, courts of law or as otherwise required or authorised by law or regulation;
+any person to whom information is required to be disclosed in connection with any litigation, arbitration, administrative or other investigation or proceedings; and
+regulatory or government bodies for the purposes of resolving complaints or disputes, both internal and external, or to comply with any investigation by one of those bodies.
+
+
+We may also disclose personal data to third parties:
+
+in the event that we sell any business or assets, in which case we may disclose your personal data to the prospective buyer of such business or assets and their advisors;
+if we or substantially all of our assets are acquired by a third party, in which case personal data held by us about our customers will be one of the transferred assets;
+if we restructure our business, or if we integrate our business with another group of companies, in which case personal data held by us will be disclosed to the new owner to be used in the same ways set out in this policy;
+if we seek investment, in which case personal data held by us may be disclosed to investors and potential investors and their advisors;
+if we are under a duty to disclose or share personal data relating to you in order to comply with any legal or regulatory obligation, or in order to enforce or apply our Terms & Conditions on which we supply services to you; or to protect the rights, property, or safety of us, our customers, or others. This includes exchanging information with other companies and organisations for the purposes of fraud protection and credit risk reduction; and
+for any other purposes that you would reasonably expect.
+Before Beacon discloses any personal data to a third party, we take steps to ensure that the third party will protect personal data in accordance with applicable privacy laws and in a manner consistent with this policy. Third parties are required to restrict their use of this information to the purpose for which the information was provided.
+
+
           <p>
             <u>Legitimate Interests:</u> We may process your data when it is
             reasonably necessary to achieve our legitimate business interests.
@@ -456,6 +488,16 @@ const Privacy = () => {
         <p>
           <u>Summary:</u> We aim to protect your personal information through a
           system of organizational and technical security measures.
+
+
+
+          Unfortunately, the transmission of information via the Internet is not completely secure. Although we will do our best to protect personal data relating to you, we cannot guarantee the security of such data and any transmission is at your own risk. Once we have received personal data relating to you, we use strict procedures and security features to try to prevent unauthorised access.
+
+All information you provide to Beacon is stored on secure servers. Any payment transactions carried out by us or our chosen third-party provider of payment processing services will be encrypted using industry-standard encryption technologies when transferring or receiving personal data, such as SSL technology. The safety and security of your information and any personal data relating to you also depends on you. Where we have given you (or where you have chosen) a password that enables you to access certain parts of the Platform and/or the Services, you are responsible for keeping this password confidential. We ask you not to share your password with anyone.
+
+Beacon takes steps to destroy or de-identify personal data information that is no longer required for any purpose for which it may be used or disclosed by us and that we are no longer required by law to retain.
+
+
         </p>
         <p>
           Although we do our best to protect your personal information,
@@ -533,8 +575,27 @@ const Privacy = () => {
             here
           </a>
           . If you have questions or comments about your privacy rights, you may
-          email us at <a href="mailto:support@fractal.co">support@fractal.co</a>
-          .
+          email us at <a href="mailto:support@fractal.co">support@fractal.co</a>.
+
+
+
+          You have the right to access personal data held relating to you. To protect your privacy, we may take steps to verify your identity before taking any action in response to any request. You will not have to pay a fee to access personal information relating to you (or to exercise any of the other rights). However, we may charge a reasonable fee if your request for access is excessive. Alternatively, we may refuse to comply with the request in such circumstances.
+
+We also want to make sure that personal data relating to you that we hold is accurate and up to date. You may ask us to correct or remove any information you think is inaccurate.
+
+You also have the right, in certain circumstances, to:
+
+the erasure of personal data relating to you that we hold;
+the restriction of processing of personal data relating to you that we hold; and
+object to our processing of personal data relating to you that we hold; and
+the portability of personal data relating to you that we hold.
+Requests in this section should be sent by email or by writing to us using the contact details set out at the end of this policy.
+
+We will only send you marketing material if you consent. When you have consented to marketing material, you have the right at any time to ask us not to process personal data relating to you for marketing purposes. You can exercise your right to prevent such processing by checking certain boxes on the marketing emails we send you. You can also exercise the right at any time by sending an email or by writing to us using the contact details set out at the end of this policy.
+
+If you have a concern about the way we are collecting or using your personal information, we request that you raise your concern with us in the first instance. Alternatively, you can contact the Information Commissioner’s Office at https://ico.org.uk/concerns.
+
+
         </p>
         <div style={{ paddingLeft: 20 }}>
           <p style={{ fontWeight: "bold" }}>Account Information</p>
