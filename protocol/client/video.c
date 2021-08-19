@@ -32,8 +32,6 @@ Includes
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
-// SERINA TESTING
-#include <VideoToolbox/VideoToolbox.h>
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -407,8 +405,9 @@ void update_window_titlebar_color() {
     /*
       Update window titlebar color using the colors of the new frame
      */
-  FractalYUVColor new_yuv_color = get_frame_color(video_context.data[0], video_context.data[1], video_context.data[2],
-      video_context.decoder->context->hw_frames_ctx != NULL);
+    FractalYUVColor new_yuv_color =
+        get_frame_color(video_context.data[0], video_context.data[1], video_context.data[2],
+                        video_context.decoder->context->hw_frames_ctx != NULL);
 
     FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
@@ -605,14 +604,14 @@ void finalize_video_context_data() {
     */
     // if we need to change pixel formats, use sws_scale to do so
 #ifdef __APPLE__
-  if (video_context.decoder->context->hw_frames_ctx) {
-    // if hardware, just pass the pointer along
-    video_context.data[0] = video_context.data[1] = video_context.decoder->hw_frame->data[3];
-    video_context.linesize[0] = video_context.decoder->width;
-    video_context.linesize[1] = (video_context.decoder->width + 1) / 2;
-    return;
-  }
-#endif // __APPLE__
+    if (video_context.decoder->context->hw_frames_ctx) {
+        // if hardware, just pass the pointer along
+        video_context.data[0] = video_context.data[1] = video_context.decoder->hw_frame->data[3];
+        video_context.linesize[0] = video_context.decoder->width;
+        video_context.linesize[1] = (video_context.decoder->width + 1) / 2;
+        return;
+    }
+#endif  // __APPLE__
     update_sws_pixel_format();
     if (video_context.sws) {
         sws_scale(video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
@@ -1177,8 +1176,8 @@ int render_video() {
                     new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
                 // TODO: wrap this in Fractal update texture
                 int ret = SDL_UpdateNVTexture(video_context.texture, &texture_rect,
-                                               video_context.data[0], video_context.linesize[0],
-                                               video_context.data[1], video_context.linesize[1]);
+                                              video_context.data[0], video_context.linesize[0],
+                                              video_context.data[1], video_context.linesize[1]);
                 if (ret == -1) {
                     LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
                 }

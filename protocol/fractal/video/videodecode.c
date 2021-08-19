@@ -590,8 +590,7 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
         log_double_statistic("av_hwframe_transfer_data time in ms",
                              get_timer(latency_clock) * 1000);
-        }
-#endif // #ifndef __APPLE__
+#endif  // #ifndef __APPLE__
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
             LOG_ERROR("Decoder cascaded from hardware to software");
