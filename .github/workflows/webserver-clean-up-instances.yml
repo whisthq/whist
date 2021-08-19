@@ -51,10 +51,13 @@ jobs:
       - name: Create instance cleanup matrix
         id: matrix
         shell: python3 {0}
+        env:
+          APPS: ${{ join(fromJSON(steps.pipeline.outputs.info).apps.*.name, ',') }}
         run: |
           import json
+          import os
 
-          apps = json.loads("${{ toJSON(fromJSON(steps.pipeline.outputs.info).apps.*.name) }}")
+          apps = os.environ["APPS"].split(",")
           commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances"]
           lookup = {"fractal-prod-server": "prod", "fractal-staging-server": "staging"}
           include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
