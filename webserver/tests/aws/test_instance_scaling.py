@@ -48,12 +48,15 @@ def test_scale_up_multiple(
 
 
 def test_scale_down_single_available(
-    monkeypatch, hijack_ec2_calls, mock_get_num_new_instances, bulk_instance, region_name
+    app, monkeypatch, hijack_ec2_calls, mock_get_num_new_instances, bulk_instance, region_name
 ):
     """
     Tests that we scale down an instance when desired
     tests the correct requests, db, and ec2 calls are made.
     """
+
+    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+
     post_list = []
 
     def _helper(*args, **kwargs):
@@ -68,7 +71,7 @@ def test_scale_down_single_available(
     assert instance.status != InstanceState.DRAINING.value
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    assert post_list[0]["args"][0] == f"https://{current_app.config['AUTH0_DOMAIN']}/oauth/token"
+    assert post_list[0]["args"][0] == "https://123.456.789:4678/drain_and_shutdown"
     db.session.refresh(instance)
     assert instance.status == InstanceState.HOST_SERVICE_UNRESPONSIVE.value
 
@@ -160,11 +163,14 @@ def test_scale_down_single_wrong_ami(
 
 
 def test_scale_down_multiple_available(
-    hijack_ec2_calls, mock_get_num_new_instances, bulk_instance, region_name
+    app, bulk_instance, hijack_ec2_calls, mock_get_num_new_instances, monkeypatch, region_name
 ):
     """
     Tests that we scale down multiple instances when desired
     """
+
+    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+
     desired_num = randint(1, 10)
     instance_list = []
     for instance in range(desired_num):
@@ -180,11 +186,14 @@ def test_scale_down_multiple_available(
 
 
 def test_scale_down_multiple_partial_available(
-    hijack_ec2_calls, mock_get_num_new_instances, bulk_instance, region_name
+    app, bulk_instance, hijack_ec2_calls, mock_get_num_new_instances, monkeypatch, region_name
 ):
     """
     Tests that we only scale down inactive instances
     """
+
+    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+
     desired_num = randint(2, 10)
     num_inactive = randint(1, desired_num - 1)
     num_active = desired_num - num_inactive

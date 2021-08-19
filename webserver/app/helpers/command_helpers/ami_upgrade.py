@@ -6,7 +6,6 @@ from flask import current_app
 from sqlalchemy import or_, and_
 
 from app.models import db, RegionToAmi, InstanceInfo
-from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import (
     do_scale_up_if_necessary,
@@ -138,18 +137,10 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         except:
             job_status = False
     try:
-        auth0_client = Auth0Client(
-            current_app.config["AUTH0_DOMAIN"],
-            current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
-            current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
-        )
-        auth_token = auth0_client.token().access_token
         base_url = f"https://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
         resp = requests.post(
             f"{base_url}/drain_and_shutdown",
-            json={
-                "auth_secret": auth_token,
-            },
+            json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
             verify=False,  # SSL verification turned off due to self signed certs on host service.
         )
         resp.raise_for_status()

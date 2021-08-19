@@ -13,7 +13,6 @@ from app.models.hardware import (
     InstancesWithRoomForMandelboxes,
     LingeringInstances,
 )
-from app.helpers.utils.auth0 import Auth0Client
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
@@ -288,18 +287,10 @@ def drain_instance(instance: InstanceInfo) -> None:
         terminate_instance(instance)
     else:
         try:
-            auth0_client = Auth0Client(
-                current_app.config["AUTH0_DOMAIN"],
-                current_app.config["AUTH0_WEBSERVER_CLIENT_ID"],
-                current_app.config["AUTH0_WEBSERVER_CLIENT_SECRET"],
-            )
-            auth_token = auth0_client.token().access_token
             base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
             resp = requests.post(
                 f"{base_url}/drain_and_shutdown",
-                json={
-                    "auth_secret": auth_token,
-                },
+                json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
                 verify=False,
             )
             resp.raise_for_status()
