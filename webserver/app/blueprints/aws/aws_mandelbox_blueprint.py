@@ -17,8 +17,7 @@ from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.metrics.flask_app import app_record_metrics
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
-from app.models import RegionToAmi, db
-from app.models.hardware import MandelboxInfo, InstanceInfo
+from app.models import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from payments import payment_required
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)

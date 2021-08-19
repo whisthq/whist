@@ -1,9 +1,21 @@
-from sqlalchemy import UniqueConstraint, ForeignKey
-from sqlalchemy.sql.expression import true, false
-from ._meta import db
+"""SQLAlchemy models
+
+In this module, we define Python models that represent tables in our PostgreSQL database. Each
+ model's attributes are automatically loaded from database column names when we call
+``DeferredReflection.prepare()`` in ``app/factory.py``.
+
+Note that SQLAlchemy is unable to reflect primary key constraints from views automatically. For
+models representing SQL views (e.g. :class:`LingeringInstances`), the attribute representing the
+primary key column must be defined explicitly.
+"""
+
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.declarative import DeferredReflection
+
+db = SQLAlchemy(engine_options={"pool_pre_ping": True})
 
 
-class InstanceInfo(db.Model):
+class InstanceInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
     General information about our EC2 instances
 
@@ -24,24 +36,10 @@ class InstanceInfo(db.Model):
         commit_hash (str): what commit hash of our infrastructure is this machine running?"""
 
     __tablename__ = "instance_info"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
-    cloud_provider_id = db.Column(db.String(250), nullable=False)
-    location = db.Column(db.String(250), nullable=False)
-    creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
-    aws_instance_type = db.Column(db.String(250), nullable=False)
-    ip = db.Column(db.String(250), nullable=False)
-    nanocpus_remaining = db.Column(db.Integer, nullable=False, server_default="1024")
-    gpu_vram_remaining_kb = db.Column(db.Integer, nullable=False, server_default="1024")
-    memory_remaining_kb = db.Column(db.Integer, nullable=False, server_default="2000")
-    mandelbox_capacity = db.Column(db.Integer, nullable=False, default=0)
-    last_updated_utc_unix_ms = db.Column(db.Integer, nullable=False, server_default="-1")
-    aws_ami_id = db.Column(db.String(250), nullable=False)
-    status = db.Column(db.String(250), nullable=False)
-    commit_hash = db.Column(db.String(250), nullable=False)
+    __table_args__ = {"schema": "hardware"}
 
 
-class InstancesWithRoomForMandelboxes(db.Model):
+class InstancesWithRoomForMandelboxes(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
     A map linking instance information to general mandelbox information
     i.e. 'how many mandelboxes are running on this instance',
@@ -57,17 +55,12 @@ class InstancesWithRoomForMandelboxes(db.Model):
     """
 
     __tablename__ = "instances_with_room_for_mandelboxes"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
-    location = db.Column(db.String(250), nullable=False)
-    commit_hash = db.Column(db.String(40), nullable=False)
-    aws_ami_id = db.Column(db.String(250), nullable=False)
-    status = db.Column(db.String(250), nullable=False)
-    mandelbox_capacity = db.Column(db.Integer)
-    num_running_mandelboxes = db.Column(db.Integer)
+    __table_args__ = {"schema": "hardware"}
+
+    instance_name = db.Column(db.String(), primary_key=True)
 
 
-class LingeringInstances(db.Model):
+class LingeringInstances(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
     A view detailing which instances haven't updated recently so we can manually
     drain them.
@@ -83,13 +76,12 @@ class LingeringInstances(db.Model):
     """
 
     __tablename__ = "lingering_instances"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    instance_name = db.Column(db.String(250), primary_key=True, unique=True)
-    cloud_provider_id = db.Column(db.String(250), nullable=False)
-    status = db.Column(db.String(250), nullable=False)
+    __table_args__ = {"schema": "hardware"}
+
+    instance_name = db.Column(db.String(), primary_key=True)
 
 
-class MandelboxInfo(db.Model):
+class MandelboxInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
     Information about individual mandelboxes, namely
     who's running them and where they're running.
@@ -102,17 +94,10 @@ class MandelboxInfo(db.Model):
     """
 
     __tablename__ = "mandelbox_info"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    creation_time_utc_unix_ms = db.Column(db.Integer, nullable=False)
-    mandelbox_id = db.Column(db.String(250), primary_key=True)
-    instance_name = db.Column(
-        db.String(250), ForeignKey(InstanceInfo.instance_name), nullable=False
-    )
-    user_id = db.Column(db.String(250), nullable=False)
-    status = db.Column(db.String(250), nullable=False)
+    __table_args__ = {"schema": "hardware"}
 
 
-class RegionToAmi(db.Model):
+class RegionToAmi(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
     This class represents the region_to_ami table in hardware
     it maps region names to the AMIs which should be used
@@ -136,12 +121,4 @@ class RegionToAmi(db.Model):
     """
 
     __tablename__ = "region_to_ami"
-    __table_args__ = (
-        UniqueConstraint("region_name", "ami_id", name="_region_name_ami_id_unique_constraint"),
-        {"extend_existing": True, "schema": "hardware"},
-    )
-    region_name = db.Column(db.String(250), nullable=False, primary_key=True)
-    ami_id = db.Column(db.String(250), nullable=False)
-    client_commit_hash = db.Column(db.String(40), nullable=False, primary_key=True)
-    ami_active = db.Column(db.Boolean, nullable=False, server_default=true())
-    protected_from_scale_down = db.Column(db.Boolean, nullable=False, server_default=false())
+    __table_args__ = {"schema": "hardware"}

@@ -6,7 +6,7 @@ from sys import maxsize
 from typing import Any, DefaultDict, List, Optional
 import requests
 from flask import current_app
-from app.models.hardware import (
+from app.models import (
     db,
     RegionToAmi,
     InstanceInfo,
