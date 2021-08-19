@@ -248,7 +248,7 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         decoder->context->opaque = decoder;
 
         decoder->sw_frame = (AVFrame*)av_frame_alloc();
-        decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
+        decoder->sw_frame->format = AV_PIX_FMT_NV12;
         decoder->sw_frame->width = width;
         decoder->sw_frame->height = height;
         decoder->sw_frame->pts = 0;

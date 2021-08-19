@@ -562,6 +562,11 @@ void update_sws_context() {
     sws_input_fmt = decoder->sw_frame->format;
 
     LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
+    if (sws_input_fmt == AV_PIX_FMT_NV12) {
+        video_context.sws = NULL;
+        LOG_INFO("Decoder and desired format are the same, doing nothing");
+        return;
+    }
 
     if (video_context.sws) {
         av_freep(&video_context.data[0]);
