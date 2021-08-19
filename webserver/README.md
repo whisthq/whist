@@ -258,12 +258,8 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── base_ec2_client.py -->  Utility libraries for monitoring and orchestrating EC2 instances.
 │   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
 │   │       ├── general
-│   │       │   ├── auth.py  --> decorators for authenticating users/devs
-│   │       │   ├── crypto.py --> code for password encryption/hashing
 │   │       │   ├── limiter.py --> our rate limiter config
 │   │       │   ├── logs.py --> our webserver logging config
-│   │       │   ├── sql_commands.py --> helpers for SQL commit, update, and deletion
-│   │       │   └── tokens.py --> utils for generating JWTs
 │   ├── models --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
