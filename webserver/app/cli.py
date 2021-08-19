@@ -27,10 +27,11 @@ custom commands will appear in the ``flask help`` output and can be called as su
 """
 
 import json
+import os
 from typing import Dict, List
 
 import click
-from flask import Blueprint
+from flask import Blueprint, current_app
 
 from app.helpers.blueprint_helpers.aws.aws_instance_post import (
     try_scale_down_if_necessary_all_regions,
@@ -108,6 +109,7 @@ def scale_down() -> None:
     compute capacity than we need at any given time.
     """
 
+    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
     try_scale_down_if_necessary_all_regions()
 
 
@@ -119,4 +121,5 @@ def prune() -> None:
     compute capacity than we need at any given time.
     """
 
+    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
     check_and_handle_lingering_instances()
