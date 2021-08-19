@@ -48,3 +48,14 @@ int get_native_window_dpi(SDL_Window *window) {
     SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
     return (int)dpi;
 }
+
+FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data, bool using_hardware) {
+  UNUSED(using_hardware);
+  FractalYUVColor yuv_color = {0};
+		if (y_data && u_data && v_data) {
+			yuv_color.y = y_data[0];
+			yuv_color.u = u_data[0];
+			yuv_color.v = v_data[0];
+		}
+    return yuv_color;
+}

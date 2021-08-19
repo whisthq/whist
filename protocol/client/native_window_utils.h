@@ -59,4 +59,6 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color);
  */
 int get_native_window_dpi(SDL_Window *window);
 
+FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data, bool using_hardware);
+
 #endif  // NATIVE_WINDOW_UTILS_H

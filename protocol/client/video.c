@@ -407,8 +407,8 @@ void update_window_titlebar_color() {
     /*
       Update window titlebar color using the colors of the new frame
      */
-    FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
-                                     video_context.data[2][0]};
+  FractalYUVColor new_yuv_color = get_frame_color(video_context.data[0], video_context.data[1], video_context.data[2],
+      video_context.decoder->context->hw_frames_ctx != NULL);
 
     FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
@@ -576,12 +576,12 @@ void update_sws_context() {
     // Rather than scaling the video frame data to the size of the window, we keep its original
     // dimensions so we can truncate it later.
     av_image_alloc(video_context.data, video_context.linesize, decoder->width, decoder->height,
-                   AV_PIX_FMT_YUV420P, 32);
+                   AV_PIX_FMT_NV12, 32);
     LOG_INFO("Will be converting pixel format from %s to %s", av_get_pix_fmt_name(sws_input_fmt),
-             av_get_pix_fmt_name(AV_PIX_FMT_YUV420P));
+             av_get_pix_fmt_name(AV_PIX_FMT_NV12));
     video_context.sws =
         sws_getContext(decoder->width, decoder->height, sws_input_fmt, decoder->width,
-                       decoder->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+                       decoder->height, AV_PIX_FMT_NV12, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 }
 
 void update_sws_pixel_format() {
@@ -604,6 +604,15 @@ void finalize_video_context_data() {
        ready-to-render frame is in videocontext.data.
     */
     // if we need to change pixel formats, use sws_scale to do so
+#ifdef __APPLE__
+  if (video_context.decoder->context->hw_frames_ctx) {
+    // if hardware, just pass the pointer along
+    video_context.data[0] = video_context.data[1] = video_context.decoder->hw_frame->data[3];
+    video_context.linesize[0] = video_context.decoder->width;
+    video_context.linesize[1] = (video_context.decoder->width + 1) / 2;
+    return;
+  }
+#endif // __APPLE__
     update_sws_pixel_format();
     if (video_context.sws) {
         sws_scale(video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
@@ -1154,10 +1163,10 @@ int render_video() {
                 pending_resize_render = false;
 
                 // appropriately convert the frame and move it into video_context.data
-                // finalize_video_context_data();
+                finalize_video_context_data();
 
                 // then, update the window titlebar color
-                // update_window_titlebar_color();
+                update_window_titlebar_color();
 
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the
@@ -1168,8 +1177,8 @@ int render_video() {
                     new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
                 // TODO: wrap this in Fractal update texture
                 int ret = SDL_UpdateNVTexture(video_context.texture, &texture_rect,
-                                               video_context.decoder->hw_frame->data[3], video_context.decoder->width,
-                                               NULL, (video_context.decoder->width + 1) / 2);
+                                               video_context.data[0], video_context.linesize[0],
+                                               video_context.data[1], video_context.linesize[1]);
                 if (ret == -1) {
                     LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
                 }
