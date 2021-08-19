@@ -42,24 +42,19 @@ jobs:
         # marks converts newlines into spaces.
         run: echo ::set-output name=info::$(heroku pipelines:info fractal-server --json)
 
-        # The names of all of the Heroku apps in the fractal-server pipeline
-        # are passed as command line arguments. The dictionary called lookup
-        # maps the names of Heroku apps to the names of deployment
-        # environments. The deployment environment of any Heroku app whose name
-        # is not found in the lookup dictionary is set to dev. A deployment
-        # environment must be set for each job configuration in the matrix
-        # because cached Fractal access tokens are associated with specific
-        # deployment environments.
+        # The dictionary called lookup maps the names of Heroku apps to the
+        # names of deployment environments (e.g. prod, staging). The deployment
+        # environment of any Heroku app whose name is not found in the lookup
+        # dictionary is set to dev. A deployment environment must be set for
+        # each job configuration in the matrix because cached Fractal access
+        # tokens are associated with specific deployment environments.
       - name: Create instance cleanup matrix
         id: matrix
-        shell: python3 {0} $APPS
-        env:
-          APPS: ${{ join(fromJSON(steps.pipeline.outputs.info).apps.*.name, ' ') }}
+        shell: python3 {0}
         run: |
           import json
-          import sys
 
-          apps = sys.argv[1:]
+          apps = json.loads("${{ toJSON(fromJSON(steps.pipeline.outputs.info).apps.*.name) }}")
           commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances"]
           lookup = {"fractal-prod-server": "prod", "fractal-staging-server": "staging"}
           include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
