@@ -106,25 +106,28 @@ int get_native_window_dpi(SDL_Window *window) {
     return (int)(96 * scale_factor);
 }
 
-FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data, bool using_hardware) {
-	FractalYUVColor yuv_color = {0};
-	if (using_hardware) {
-		if (y_data) {
-  CVPixelBufferRef frame_data = (CVPixelBufferRef) y_data;
-  CVPixelBufferLockBaseAddress(frame_data, kCVPixelBufferLock_ReadOnly);
-  uint8_t* luma_base_address = (uint8_t*) CVPixelBufferGetBaseAddressOfPlane(frame_data, 0);
-  uint8_t* chroma_base_address = (uint8_t*)CVPixelBufferGetBaseAddressOfPlane(frame_data, 1);
-	yuv_color.y = luma_base_address[0];
-	yuv_color.u = chroma_base_address[0];
-	yuv_color.v = chroma_base_address[1];
-    CVPixelBufferUnlockBaseAddress(frame_data, kCVPixelBufferLock_ReadOnly);
-		}
-	} else {
-		if (y_data && u_data && v_data) {
-			yuv_color.y = y_data[0];
-			yuv_color.u = u_data[0];
-			yuv_color.v = v_data[0];
-		}
-	}
-	return yuv_color;
+FractalYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_data,
+                                bool using_hardware) {
+    FractalYUVColor yuv_color = {0};
+    if (using_hardware) {
+        if (y_data) {
+            CVPixelBufferRef frame_data = (CVPixelBufferRef)y_data;
+            CVPixelBufferLockBaseAddress(frame_data, kCVPixelBufferLock_ReadOnly);
+            uint8_t *luma_base_address =
+                (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(frame_data, 0);
+            uint8_t *chroma_base_address =
+                (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(frame_data, 1);
+            yuv_color.y = luma_base_address[0];
+            yuv_color.u = chroma_base_address[0];
+            yuv_color.v = chroma_base_address[1];
+            CVPixelBufferUnlockBaseAddress(frame_data, kCVPixelBufferLock_ReadOnly);
+        }
+    } else {
+        if (y_data && u_data && v_data) {
+            yuv_color.y = y_data[0];
+            yuv_color.u = u_data[0];
+            yuv_color.v = v_data[0];
+        }
+    }
+    return yuv_color;
 }
