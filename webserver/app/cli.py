@@ -66,9 +66,11 @@ def create_buffers(
     Returns:
         None
     """
-    region_to_ami_id_mapping: Dict[str, str] = json.loads(region_to_ami_id_mapping_str)
 
+    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    region_to_ami_id_mapping: Dict[str, str] = json.loads(region_to_ami_id_mapping_str)
     new_amis = create_ami_buffer(client_commit_hash, region_to_ami_id_mapping)
+
     print(f"::set-output name=new_amis::{json.dumps(new_amis)}")
 
 
@@ -85,6 +87,8 @@ def swap_over_buffers(
     Returns:
         None
     """
+
+    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
     new_amis_list: List[str] = json.loads(new_amis)
     swapover_amis(new_amis_list)
 
