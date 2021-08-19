@@ -559,7 +559,7 @@ jobs:
 
       - name: Format the current date
         id: date
-        run: echo "::set-output name=date::$(date -u "+%Y%m%d%p")"
+        run: echo ::set-output name=date::$(date -u +%Y%m%d%p)
 
       - name: Restore cached Webserver access token file
         uses: actions/cache@v2
@@ -572,7 +572,7 @@ jobs:
       # existence of $TOKEN_FILE before reading it to ensure that the
       # command line returns 1 on failure. If the command was just
       #
-      #     echo "::set-output name=access-token::$(cat $TOKEN_FILE)
+      #     echo ::set-output name=access-token::$(cat "$TOKEN_FILE")
       #
       # the step would succeed even if $TOKEN_FILE didn't exist because
       # cat "$TOKEN_FILE" runs in a subshell and its exit status has no
@@ -580,18 +580,7 @@ jobs:
       # set.
       - name: Read cached Webserver access token
         id: get-token
-        run: '[ -f "$TOKEN_FILE" ] && echo "::set-output name=access-token::$(cat "$TOKEN_FILE")"'
-
-      - name: Authenticate Heroku
-        run: |
-          cat > ~/.netrc << EOF
-          machine api.heroku.com
-          login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-          password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          machine git.heroku.com
-          login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-          password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          EOF
+        run: '[ -f "$TOKEN_FILE" ] && echo ::set-output name=access-token::$(cat "$TOKEN_FILE")'
 
       - name: Set heroku app name and DB URLs
         env:
@@ -630,9 +619,9 @@ jobs:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
-          RUNNING_LOCALLY: true
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
+          FRACTAL_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
         id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         shell: bash
@@ -687,7 +676,7 @@ jobs:
 
       - name: Format the current date
         id: date
-        run: echo "::set-output name=date::$(date -u "+%Y%m%d%p")"
+        run: echo ::set-output name=date::$(date -u +%Y%m%d%p)
 
       - name: Restore cached Webserver access token file
         uses: actions/cache@v2
@@ -700,7 +689,7 @@ jobs:
       # existence of $TOKEN_FILE before reading it to ensure that the
       # command line returns 1 on failure. If the command was just
       #
-      #     echo "::set-output name=access-token::$(cat $TOKEN_FILE)
+      #     echo ::set-output name=access-token::$(cat "$TOKEN_FILE")
       #
       # the step would succeed even if $TOKEN_FILE didn't exist because
       # cat "$TOKEN_FILE" runs in a subshell and its exit status has no
@@ -708,18 +697,7 @@ jobs:
       # set.
       - name: Read cached Webserver access token
         id: get-token
-        run: '[ -f "$TOKEN_FILE" ] && echo "::set-output name=access-token::$(cat "$TOKEN_FILE")"'
-
-      - name: Authenticate Heroku
-        run: |
-          cat > ~/.netrc << EOF
-          machine api.heroku.com
-          login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-          password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          machine git.heroku.com
-          login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-          password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-          EOF
+        run: '[ -f "$TOKEN_FILE" ] && echo ::set-output name=access-token::$(cat "$TOKEN_FILE")'
 
       - name: Set heroku app name and DB URLs
         env:
@@ -758,9 +736,9 @@ jobs:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
-          RUNNING_LOCALLY: true
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
+          FRACTAL_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
         id: run-webserver-cli-ami-swap-over
         working-directory: webserver
         shell: bash

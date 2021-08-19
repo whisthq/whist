@@ -97,7 +97,7 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
 
-def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, bulk_instance, db_session):
+def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance, db_session):
     """
     In this test case, we are testing the whole AMI upgrade flow. This involves the
     following checks
@@ -111,6 +111,8 @@ def test_perform_ami_upgrade(monkeypatch, region_to_ami_map, bulk_instance, db_s
     - Mark the instances that are running(in ACTIVE or PRE_CONNECTION) state for draining
     by calling the `drain_and_shutdown` endpoint on the host_service.
     """
+
+    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
 
     launch_new_ami_buffer_calls = []
 

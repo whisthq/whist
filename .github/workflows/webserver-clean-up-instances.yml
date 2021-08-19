@@ -1,0 +1,106 @@
+# workflows/webserver-clean-up-instances.yml
+#
+# Webserver: Clean up Compute Instances
+# Peridically scale down surplus compute instances and terminate instances that
+# are left over from previous deployments.
+
+name: "Webserver: Clean up Compute Instances"
+
+on:
+  schedule:
+    # Schedule this Workflow to run every ten minutes. The highest frequency
+    # with which we can run our scale-down and and clean-up operatinons is once
+    # every five minutes.
+    # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#schedule
+    - cron: "4/10 * * * *"
+  workflow_dispatch:
+
+env:
+  TOKEN_FILE: .access_token
+
+jobs:
+  # Create a job strategy matrix for the webserver-clean-up-instances job that
+  # will cause the following commands to run against each Heroku app in the
+  # fractal-server pipeline in a one-off dyno:
+  #  * flask compute scale-down-instances
+  #  * flask compute prune-lingering-instances
+  webserver-clean-up-instances-matrix:
+    name: Create Job Matrix
+    runs-on: ubuntu-20.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Get Heroku pipeline info
+        id: pipeline
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        # We don't put quotes around $(...) so the output of the echo command
+        # appears on a single line. Omitting the quotation marks causes
+        # newlines in the command's output to be treated as delimiters between
+        # arguments to the echo command. The echo command prints a space
+        # between each of its arguments. Effectively, omitting the quotation
+        # marks converts newlines into spaces.
+        run: echo ::set-output name=info::$(heroku pipelines:info fractal-server --json)
+
+        # The names of all of the Heroku apps in the fractal-server pipeline
+        # are passed as command line arguments. The dictionary called lookup
+        # maps the names of Heroku apps to the names of deployment
+        # environments. The deployment environment of any Heroku app whose name
+        # is not found in the lookup dictionary is set to dev. A deployment
+        # environment must be set for each job configuration in the matrix
+        # because cached Fractal access tokens are associated with specific
+        # deployment environments.
+      - name: Create instance cleanup matrix
+        id: matrix
+        shell: python3 {0} $APPS
+        env:
+          APPS: ${{ join(fromJSON(steps.pipeline.outputs.info).apps.*.name, ' ') }}
+        run: |
+          import json
+          import sys
+
+          apps = sys.argv[1:]
+          commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances"]
+          lookup = {"fractal-prod-server": "prod", "fractal-staging-server": "staging"}
+          include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
+          matrix = {"include": include}
+
+          print(f"::set-output name=matrix::{json.dumps(matrix)}")
+
+  # Run the following commands against each Heroku app in the fractal-server
+  # pipeline in a one-off dyno:
+  #  * flask compute scale-down-instances
+  #  * flask compute prune-lingering-instances
+  webserver-clean-up-instances:
+    name: Clean up Compute Instances
+    needs: webserver-clean-up-instances-matrix
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.webserver-clean-up-instances-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout git repository
+        uses: actions/checkout@v2
+
+      - name: Format the current date
+        id: date
+        run: echo ::set-output name=date::$(date -u +%Y%m%d%p)
+
+      - name: Restore cached Fractal access token
+        uses: actions/cache@v2
+        with:
+          key: access-token-${{ matrix.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+          path: ${{ env.TOKEN_FILE }}
+
+      - name: Clean up compute instances
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          HEROKU_NOTIFICATIONS: 0
+        # $(...) has no effect on the exit status of the entire command list.
+        # The first command in the list checks for the existence of the the
+        # file containing the access token so we can be sure that the exit
+        # status is nonzero if the file does not exist.
+        run: >-
+          [ -f "$TOKEN_FILE" ] &&
+              heroku run --exit-code --env=FRACTAL_ACCESS_TOKEN="$(cat "$TOKEN_FILE")" --app=${{ matrix.app }} -- ${{ matrix.command }}
