@@ -16,8 +16,9 @@ fixes:
   - "::webserver/"
 
 ignore:
-  - "webserver/app/sentry.py"
   - "webserver/app/cli.py"
+  - "webserver/app/config.py"
+  - "webserver/app/sentry.py"
 
 parsers:
   gcov:
