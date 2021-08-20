@@ -612,8 +612,7 @@ void finalize_video_context_data() {
     if (video_context.decoder->context->hw_frames_ctx) {
         // if hardware, just pass the pointer along
         video_context.data[0] = video_context.data[1] = video_context.decoder->hw_frame->data[3];
-        video_context.linesize[0] = video_context.decoder->width;
-        video_context.linesize[1] = (video_context.decoder->width + 1) / 2;
+        video_context.linesize[0] = video_context.linesize[1] = video_context.decoder->width;
         return;
     }
 #endif  // __APPLE__
