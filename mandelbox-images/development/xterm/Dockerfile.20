@@ -1,0 +1,7 @@
+FROM fractal/base:current-build
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# Set up the default Fractal application symlink
+RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
