@@ -412,18 +412,25 @@ void update_window_titlebar_color(FractalRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
      */
-    if (native_window_color->red != color.red || native_window_color->green != color.green || native_window_color->blue != color.blue) {
-    // delete the old color we were using
-    if ((FractalRGBColor*)native_window_color != NULL) {
-        FractalRGBColor* old_native_window_color = (FractalRGBColor*)native_window_color;
-        free(old_native_window_color);
-    }
+    FractalRGBColor* current_color = (FractalRGBColor*)native_window_color;
+    if (current_color != NULL) {
+        if (current_color->red != color.red || current_color->green != color.green ||
+            current_color->blue != color.blue) {
+            // delete the old color we were using
+            free(current_color);
 
-    // make the new color and signal that we're ready to update
-    FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
-    *new_native_window_color = color;
-    native_window_color = new_native_window_color;
-    native_window_color_update = true;
+            // make the new color and signal that we're ready to update
+            FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+            *new_native_window_color = color;
+            native_window_color = new_native_window_color;
+            native_window_color_update = true;
+        }
+    } else {
+        // make the new color and signal that we're ready to update
+        FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+        *new_native_window_color = color;
+        native_window_color = new_native_window_color;
+        native_window_color_update = true;
     }
 }
 
