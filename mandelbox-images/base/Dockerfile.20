@@ -628,9 +628,9 @@ CMD ["/usr/share/fractal/entrypoint.sh"]
 # Main
 #########################
 
-# Set up the default Fractal application (xterm)
+# Set up the default (harmelsss/uselss) Fractal application (mousepad)
 
-# Install xterm and dependencies
+# Install mousepad and dependencies
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libc6 \
     libfontconfig1 \
@@ -648,13 +648,13 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libxt6 \
     xbitmaps \
     x11-utils \
-    xterm \
+    mousepad \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
 # Set up the default Fractal application symlink
-RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
+RUN ln -sf "$(which mousepad)" /usr/bin/fractal-application
 
 # Set up script to launch `fractal-application` as the `fractal` user
 COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
