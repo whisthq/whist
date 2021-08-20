@@ -41,3 +41,6 @@ yarn-error.log*
 # tags
 **/TAGS
 **/tags
+
+# GitHub Codespaces
+/.venv
