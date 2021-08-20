@@ -24,6 +24,7 @@ Includes
 #include <stdlib.h>
 #include <string.h>
 #include <sys/shm.h>
+#include <X11/Xutil.h>
 
 /*
 ============================
@@ -209,15 +210,17 @@ int x11_capture_screen(X11CaptureDevice* device) {
             } else {
                 device->frame_data = device->image->data;
                 device->pitch = device->image->bytes_per_line;
+            }
+#endif
+            if (accumulated_frames != -1) {
                 // get the color
-                Xcolor c;
-                c->pixel = XGetPixel(device->image, 0, 0);
-                XQueryColor(device->display, DefaultColormap(device->display, device->screen), c);
+                XColor c;
+                c.pixel = XGetPixel(device->image, 0, 0);
+                XQueryColor(device->display, DefaultColormap(device->display, XDefaultScreen(device->display)), &c);
                 device->corner_color.red = c.red / 256;
                 device->corner_color.green = c.green / 256;
                 device->corner_color.blue = c.blue / 256;
             }
-#endif
             XSetErrorHandler(prev_handler);
         }
     }
