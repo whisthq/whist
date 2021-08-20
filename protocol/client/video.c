@@ -182,7 +182,7 @@ void skip_to_next_iframe();
 void sync_decoder_parameters(VideoFrame* frame);
 void request_iframe_to_catch_up();
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-void update_window_titlebar_color();
+void update_window_titlebar_color(FractalRGBColor color);
 #endif
 /*
 ============================
@@ -408,16 +408,11 @@ SDL_Rect new_sdl_rect(int x, int y, int w, int h) {
     return new_rect;
 }
 
-void update_window_titlebar_color() {
+void update_window_titlebar_color(FractalRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
      */
-    FractalYUVColor new_yuv_color =
-        get_frame_color(video_context.data[0], video_context.data[1], video_context.data[2],
-                        video_context.decoder->context->hw_frames_ctx != NULL);
-
-    FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
-
+    if (native_window_color->red != color.red || native_window_color->green != color.green || native_window_color->blue != color.blue) {
     // delete the old color we were using
     if ((FractalRGBColor*)native_window_color != NULL) {
         FractalRGBColor* old_native_window_color = (FractalRGBColor*)native_window_color;
@@ -426,9 +421,10 @@ void update_window_titlebar_color() {
 
     // make the new color and signal that we're ready to update
     FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
-    *new_native_window_color = new_rgb_color;
+    *new_native_window_color = color;
     native_window_color = new_native_window_color;
     native_window_color_update = true;
+    }
 }
 
 int32_t multithreaded_destroy_decoder(void* opaque) {
@@ -1181,7 +1177,7 @@ int render_video() {
                 finalize_video_context_data();
 
                 // then, update the window titlebar color
-                update_window_titlebar_color();
+                update_window_titlebar_color(frame->color);
 
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the

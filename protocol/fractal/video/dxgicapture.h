@@ -23,6 +23,7 @@ Includes
 #include <dxgi1_2.h>
 
 #include <fractal/core/fractal.h>
+#include <fractal/utils/color.h>
 
 /*
 ============================
@@ -65,6 +66,7 @@ typedef struct CaptureDevice {
     char* bitmap;
     bool using_nvidia;
     bool dxgi_cuda_available;
+    FractalRGBColor corner_color;
 } CaptureDevice;
 
 #endif  // DXGI_CAPTURE_H

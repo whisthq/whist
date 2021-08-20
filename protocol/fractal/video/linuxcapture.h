@@ -22,6 +22,7 @@ Includes
 */
 #include <X11/Xlib.h>
 #include <fractal/core/fractal.h>
+#include <fractal/utils/color.h>
 #include "nvidiacapture.h"
 #include "x11capture.h"
 
@@ -44,13 +45,13 @@ typedef struct CaptureDevice {
     FractalThread nvidia_manager;
     FractalSemaphore nvidia_device_semaphore;
     bool nvidia_context_is_stale;
-    // TODO: put the next four elements in some kind of resize context
     int width;
     int height;
 
     // To hold software captured frames
     void* frame_data;
     int pitch;
+    FractalRGBColor corner_color;
 
     // Shared X11 state
     Display* display;
