@@ -48,7 +48,7 @@ void hide_native_window_taskbar();
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int set_native_window_color(SDL_Window *window, FractalRGBColor color);
+int set_native_window_color(SDL_Window* window, FractalRGBColor color);
 
 /**
  * @brief                          Get the DPI for the display of the provided window.
@@ -57,6 +57,9 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color);
  *
  * @returns                        The DPI as an int, with 96 as a base.
  */
-int get_native_window_dpi(SDL_Window *window);
+int get_native_window_dpi(SDL_Window* window);
+
+FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data,
+                                bool using_hardware);
 
 #endif  // NATIVE_WINDOW_UTILS_H

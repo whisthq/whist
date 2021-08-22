@@ -412,8 +412,9 @@ void update_window_titlebar_color() {
     /*
       Update window titlebar color using the colors of the new frame
      */
-    FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
-                                     video_context.data[2][0]};
+    FractalYUVColor new_yuv_color =
+        get_frame_color(video_context.data[0], video_context.data[1], video_context.data[2],
+                        video_context.decoder->context->hw_frames_ctx != NULL);
 
     FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
@@ -568,6 +569,11 @@ void update_sws_context() {
     sws_input_fmt = decoder->sw_frame->format;
 
     LOG_INFO("Decoder Format: %s", av_get_pix_fmt_name(sws_input_fmt));
+    if (sws_input_fmt == AV_PIX_FMT_NV12) {
+        video_context.sws = NULL;
+        LOG_INFO("Decoder and desired format are the same, doing nothing");
+        return;
+    }
 
     if (video_context.sws) {
         av_freep(&video_context.data[0]);
@@ -581,12 +587,12 @@ void update_sws_context() {
     // Rather than scaling the video frame data to the size of the window, we keep its original
     // dimensions so we can truncate it later.
     av_image_alloc(video_context.data, video_context.linesize, decoder->width, decoder->height,
-                   AV_PIX_FMT_YUV420P, 32);
+                   AV_PIX_FMT_NV12, 32);
     LOG_INFO("Will be converting pixel format from %s to %s", av_get_pix_fmt_name(sws_input_fmt),
-             av_get_pix_fmt_name(AV_PIX_FMT_YUV420P));
+             av_get_pix_fmt_name(AV_PIX_FMT_NV12));
     video_context.sws =
         sws_getContext(decoder->width, decoder->height, sws_input_fmt, decoder->width,
-                       decoder->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+                       decoder->height, AV_PIX_FMT_NV12, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 }
 
 void update_sws_pixel_format() {
@@ -609,6 +615,14 @@ void finalize_video_context_data() {
        ready-to-render frame is in videocontext.data.
     */
     // if we need to change pixel formats, use sws_scale to do so
+#ifdef __APPLE__
+    if (video_context.decoder->context->hw_frames_ctx) {
+        // if hardware, just pass the pointer along
+        video_context.data[0] = video_context.data[1] = video_context.decoder->hw_frame->data[3];
+        video_context.linesize[0] = video_context.linesize[1] = video_context.decoder->width;
+        return;
+    }
+#endif  // __APPLE__
     update_sws_pixel_format();
     if (video_context.sws) {
         sws_scale(video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
@@ -636,7 +650,7 @@ void replace_texture() {
     }
     // Create a new texture
     SDL_Texture* texture =
-        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING,
+        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
                           MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
     if (!texture) {
         LOG_FATAL("SDL: could not create texture - exiting");
@@ -923,6 +937,7 @@ int init_video_renderer() {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
 // SDL guidelines say that renderer functions should be done on the main thread,
 //      but our implementation requires that the renderer is made in this thread
@@ -1176,18 +1191,19 @@ int render_video() {
                 SDL_Rect texture_rect =
                     new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
                 // TODO: wrap this in Fractal update texture
-                int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
-                                               video_context.data[0], video_context.linesize[0],
-                                               video_context.data[1], video_context.linesize[1],
-                                               video_context.data[2], video_context.linesize[2]);
+                int ret = SDL_UpdateNVTexture(video_context.texture, &texture_rect,
+                                              video_context.data[0], video_context.linesize[0],
+                                              video_context.data[1], video_context.linesize[1]);
                 if (ret == -1) {
-                    LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
+                    LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
                 }
 
+                /*
                 if (!video_context.sws) {
                     // Clear out bits that aren't used from av_alloc_frame
                     memset(video_context.data, 0, sizeof(video_context.data));
                 }
+                */
                 log_double_statistic("Write to SDL texture time in ms",
                                      get_timer(latency_clock) * 1000);
 

@@ -248,7 +248,7 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         decoder->context->opaque = decoder;
 
         decoder->sw_frame = (AVFrame*)av_frame_alloc();
-        decoder->sw_frame->format = AV_PIX_FMT_YUV420P;
+        decoder->sw_frame->format = AV_PIX_FMT_NV12;
         decoder->sw_frame->width = width;
         decoder->sw_frame->height = height;
         decoder->sw_frame->pts = 0;
@@ -584,10 +584,13 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
             destroy_video_decoder(decoder);
             return -1;
         }
+#ifndef __APPLE__
+        // On mac, we will use the hardware frame directly
         start_timer(&latency_clock);
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
         log_double_statistic("av_hwframe_transfer_data time in ms",
                              get_timer(latency_clock) * 1000);
+#endif  // #ifndef __APPLE__
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
             LOG_ERROR("Decoder cascaded from hardware to software");
