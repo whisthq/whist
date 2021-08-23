@@ -38,7 +38,7 @@ func (q *DBQuerier) RegisterInstance(ctx context.Context, params RegisterInstanc
 }
 
 // RegisterInstanceBatch implements Querier.RegisterInstanceBatch.
-func (q *DBQuerier) RegisterInstanceBatch(batch *pgx.Batch, params RegisterInstanceParams) {
+func (q *DBQuerier) RegisterInstanceBatch(batch genericBatch, params RegisterInstanceParams) {
 	batch.Queue(registerInstanceSQL, params.CloudProviderID, params.MemoryRemainingKB, params.NanoCPUsRemainingKB, params.GpuVramRemainingKb, params.MandelboxCapacity, params.LastUpdatedUtcUnixMs, params.Ip, params.Status, params.InstanceName)
 }
 

@@ -22,7 +22,7 @@ func (q *DBQuerier) RemoveMandelbox(ctx context.Context, mandelboxID string) (pg
 }
 
 // RemoveMandelboxBatch implements Querier.RemoveMandelboxBatch.
-func (q *DBQuerier) RemoveMandelboxBatch(batch *pgx.Batch, mandelboxID string) {
+func (q *DBQuerier) RemoveMandelboxBatch(batch genericBatch, mandelboxID string) {
 	batch.Queue(removeMandelboxSQL, mandelboxID)
 }
 

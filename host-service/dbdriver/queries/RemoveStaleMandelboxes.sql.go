@@ -40,7 +40,7 @@ func (q *DBQuerier) RemoveStaleMandelboxes(ctx context.Context, params RemoveSta
 }
 
 // RemoveStaleMandelboxesBatch implements Querier.RemoveStaleMandelboxesBatch.
-func (q *DBQuerier) RemoveStaleMandelboxesBatch(batch *pgx.Batch, params RemoveStaleMandelboxesParams) {
+func (q *DBQuerier) RemoveStaleMandelboxesBatch(batch genericBatch, params RemoveStaleMandelboxesParams) {
 	batch.Queue(removeStaleMandelboxesSQL, params.InstanceName, params.AllocatedStatus, params.AllocatedCreationTimeThreshold, params.ConnectingStatus, params.ConnectingCreationTimeThreshold)
 }
 

@@ -43,7 +43,7 @@ func (q *DBQuerier) FindMandelboxByID(ctx context.Context, mandelboxID string) (
 }
 
 // FindMandelboxByIDBatch implements Querier.FindMandelboxByIDBatch.
-func (q *DBQuerier) FindMandelboxByIDBatch(batch *pgx.Batch, mandelboxID string) {
+func (q *DBQuerier) FindMandelboxByIDBatch(batch genericBatch, mandelboxID string) {
 	batch.Queue(findMandelboxByIDSQL, mandelboxID)
 }
 

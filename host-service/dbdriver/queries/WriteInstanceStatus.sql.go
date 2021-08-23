@@ -25,7 +25,7 @@ func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status pgtype.Varch
 }
 
 // WriteInstanceStatusBatch implements Querier.WriteInstanceStatusBatch.
-func (q *DBQuerier) WriteInstanceStatusBatch(batch *pgx.Batch, status pgtype.Varchar, instanceName string) {
+func (q *DBQuerier) WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceName string) {
 	batch.Queue(writeInstanceStatusSQL, status, instanceName)
 }
 
