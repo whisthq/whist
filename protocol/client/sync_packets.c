@@ -328,6 +328,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         if (result < 0) {
             if (get_timer(last_tcp_check_timer) > 1000.0 / MS_IN_SECOND) {
                 LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+                start_timer(&last_tcp_check_timer);
             }
             continue;
         }
