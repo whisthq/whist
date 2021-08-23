@@ -15,7 +15,7 @@ import TRIGGER from "@app/utils/triggers"
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger("updateAvailable"))
 
-// Auth flow
+// If there's no update, get the auth credentials (access/refresh token)
 const auth = authFlow(
   fromSignal(
     merge(
@@ -29,12 +29,20 @@ const auth = authFlow(
   )
 )
 
+// Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(fromTrigger(TRIGGER.authFlowSuccess))
 
+// If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
+// get new auth credentials
+const refreshAfterPaying = authRefreshFlow(
+  fromTrigger(TRIGGER.stripeAuthRefresh)
+)
+
+// If the payment is valid, get or generate the config token
 const config = configFlow(
   merge(
     fromTrigger(TRIGGER.checkPaymentFlowSuccess),
-    fromTrigger(TRIGGER.stripeAuthRefresh)
+    refreshAfterPaying.success
   )
 )
 
@@ -56,15 +64,16 @@ const mandelbox = mandelboxFlow(launchTrigger)
 
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
-const refresh = authRefreshFlow(fromSignal(launchTrigger, mandelbox.success))
-refresh.failure.subscribe()
+const refreshAtEnd = authRefreshFlow(
+  fromSignal(launchTrigger, mandelbox.success)
+)
 
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
 createTrigger(TRIGGER.downloadProgress, update.progress)
 
 createTrigger(TRIGGER.authFlowSuccess, auth.success)
 createTrigger(TRIGGER.authFlowFailure, auth.failure)
-createTrigger(TRIGGER.authRefreshSuccess, refresh.success)
+createTrigger(TRIGGER.authRefreshSuccess, refreshAtEnd.success)
 
 createTrigger(TRIGGER.checkPaymentFlowSuccess, checkPayment.success)
 createTrigger(TRIGGER.checkPaymentFlowFailure, checkPayment.failure)
