@@ -5,6 +5,9 @@ import { app } from "electron"
 import { fromTrigger } from "@app/utils/flows"
 import config from "@app/config/environment"
 import { persist, persistGet } from "@app/utils/persist"
+import { protocolStreamKill } from "@app/utils/protocol"
+import { createErrorWindow, relaunch } from "@app/utils/windows"
+import { WindowHashSleep } from "@app/utils/constants"
 
 const fractalAutoLaunch = new AutoLaunch({
   name: config.title,
@@ -29,4 +32,13 @@ fromTrigger("trayAutolaunchAction").subscribe(() => {
   persist("autoLaunch", (!autolaunch).toString(), "data")
 
   autolaunch ? fractalAutoLaunch.disable() : fractalAutoLaunch.enable()
+})
+
+fromTrigger("powerSuspend").subscribe(() => {
+  createErrorWindow(WindowHashSleep)
+  protocolStreamKill()
+})
+
+fromTrigger("powerResume").subscribe(() => {
+  relaunch()
 })

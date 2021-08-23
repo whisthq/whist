@@ -56,4 +56,8 @@ export default {
   checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   configFlowSuccess: "configFlowSuccess",
+
+  // Powermonitor triggers
+  powerResume: "powerResume",
+  powerSuspend: "powerSuspend",
 }
