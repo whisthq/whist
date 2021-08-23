@@ -14,6 +14,7 @@ export const AUTH_ERROR = "AUTH_ERROR"
 export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
 export const INTERNET_ERROR = "INTERNET_ERROR"
+export const SLEEP_ERROR = "SLEEP_ERROR"
 
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
@@ -49,6 +50,10 @@ export const fractalError = {
   [INTERNET_ERROR]: {
     title: "Please check your Internet connection.",
     text: "We were unable to ping our servers, which is likely a result of weak Internet.",
+  },
+  [SLEEP_ERROR]: {
+    title: "Your computer went to sleep.",
+    text: "Fractal automatically disconnected and should reconnect when your computer wakes up.",
   },
 } as {
   [key: string]: {
