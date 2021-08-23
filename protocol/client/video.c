@@ -1184,7 +1184,7 @@ int render_video() {
                 finalize_video_context_data();
 
                 // then, update the window titlebar color
-                update_window_titlebar_color(frame->color);
+                update_window_titlebar_color(frame->corner_color);
 
                 // The texture object we allocate is larger than the frame (unless
                 // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the

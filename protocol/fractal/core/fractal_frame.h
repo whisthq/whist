@@ -25,7 +25,7 @@ typedef struct VideoFrame {
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
                              // the server is wrong, it can correct it
     int videodata_length;
-    FractalRGBColor color;
+    FractalRGBColor corner_color;
 
     unsigned char data[];
 } VideoFrame;
