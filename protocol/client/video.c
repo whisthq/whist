@@ -460,8 +460,8 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
     if (video_context.decoder) {
-        SDL_Thread* destroy_decoder_thread = SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
-                         video_context.decoder);
+        SDL_Thread* destroy_decoder_thread = SDL_CreateThread(
+            multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
         SDL_DetachThread(destroy_decoder_thread);
     }
 
