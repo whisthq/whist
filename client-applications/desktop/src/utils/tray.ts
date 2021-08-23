@@ -13,6 +13,7 @@ import { trayIconPath } from "@app/config/files"
 import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
 import { allowPayments } from "@app/utils/constants"
 import { MenuItem } from "electron/main"
+import { persistGet } from "./persist"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -78,6 +79,14 @@ const accountMenu = new MenuItem({
 const settingsMenu = new MenuItem({
   label: "Settings",
   submenu: [
+    {
+      label: "Automatically launch on computer start",
+      type: "checkbox",
+      checked: (persistGet("autoLaunch", "data") ?? "true") === "true",
+      click: () => {
+        trayEvent.emit("autoLaunch")
+      },
+    },
     {
       label: "(Coming Soon) Make Fractal my default browser",
       click: () => {

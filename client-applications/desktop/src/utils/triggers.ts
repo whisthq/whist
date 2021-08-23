@@ -44,6 +44,7 @@ export default {
   trayRegionAction: "trayRegionAction",
   trayFeedbackAction: "trayFeedbackAction",
   trayBugAction: "trayBugAction",
+  trayAutolaunchAction: "trayAutolaunchAction",
   showPaymentWindow: "showPaymentWindow",
 
   // Flow triggers
@@ -55,4 +56,8 @@ export default {
   checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   configFlowSuccess: "configFlowSuccess",
+
+  // Powermonitor triggers
+  powerResume: "powerResume",
+  powerSuspend: "powerSuspend",
 }
