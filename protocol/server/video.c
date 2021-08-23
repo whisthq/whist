@@ -308,8 +308,9 @@ int32_t multithreaded_send_video(void* opaque) {
                                 close_transfer_context(device, encoder);
                                 transfer_context_active = false;
                             }
-                            fractal_create_thread(multithreaded_destroy_encoder,
+                            FractalThread encoder_destroy_thread = fractal_create_thread(multithreaded_destroy_encoder,
                                                   "multithreaded_destroy_encoder", encoder);
+                            fractal_detach_thread(encoder_destroy_thread);
                         }
                         encoder = encoder_factory_result;
                         pending_encoder = false;
@@ -356,8 +357,9 @@ int32_t multithreaded_send_video(void* opaque) {
                         pending_encoder = false;
                         update_encoder = false;
                     } else {
-                        fractal_create_thread(multithreaded_encoder_factory,
+                        FractalThread encoder_creator_thread = fractal_create_thread(multithreaded_encoder_factory,
                                               "multithreaded_encoder_factory", NULL);
+                        fractal_detach_thread(encoder_creator_thread);
                         pending_encoder = true;
                     }
                 }
