@@ -326,7 +326,9 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // Check if TCP connection is active
         int result = ack(&packet_tcp_context);
         if (result < 0) {
-            LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+            if (get_timer(last_tcp_check_timer) > 1000.0 / MS_IN_SECOND) {
+                LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+            }
             continue;
         }
 
