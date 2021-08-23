@@ -131,6 +131,7 @@ export const createWindow = (args: {
   hash: string
   customURL?: string
   closeOtherWindows?: boolean
+  focus?: boolean
 }) => {
   const { title } = config
   const currentElectronWindows = getElectronWindows()
@@ -169,7 +170,7 @@ export const createWindow = (args: {
   // Electron recommends showing the window on the ready-to-show event:
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
-    win.show()
+    args.focus ?? true ? win.show() : win.showInactive()
     emitWindowInfo({ crashed: false, event: "open", hash: args.hash })
   })
 
@@ -366,8 +367,10 @@ export const createNetworkWarningWindow = () => {
       resizable: false,
       fullscreenable: false,
       minimizable: false,
+      roundedCorners: false,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashNetworkWarning,
+    focus: false,
   })
 }
 
@@ -387,7 +390,9 @@ export const createRelaunchWarningWindow = () => {
       resizable: false,
       fullscreenable: false,
       minimizable: false,
+      roundedCorners: false,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashRelaunchWarning,
+    focus: false,
   })
 }
