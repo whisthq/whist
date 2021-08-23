@@ -324,13 +324,21 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     while (run_sync_tcp_packets) {
         // RECEIVE TCP PACKET HANDLER
         // Check if TCP connection is active
+        // last_tcp_check_timer indicates the last successful TCP check, or, if we've not had a
+        // successful TCP check for at least a second, the time since the last LOG_ERROR indicating
+        // lost TCP connection
         int result = ack(&packet_tcp_context);
         if (result < 0) {
-            LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+            // If the TCP checks are unsuccessful for 1 second, we should LOG_ERROR and restart the
+            // check timer
+            if (get_timer(last_tcp_check_timer) > 1000.0 / MS_IN_SECOND) {
+                LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+                start_timer(&last_tcp_check_timer);
+            }
             continue;
         }
 
-        // Update the last TCP check timer
+        // Update the time since the last successful TCP check
         start_timer(&last_tcp_check_timer);
 
         // Receive tcp buffer, if a full packet has been received
