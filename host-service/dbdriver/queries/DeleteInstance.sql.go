@@ -19,63 +19,63 @@ type Querier interface {
 	DeleteInstance(ctx context.Context, instanceName string) (pgconn.CommandTag, error)
 	// DeleteInstanceBatch enqueues a DeleteInstance query into batch to be executed
 	// later by the batch.
-	DeleteInstanceBatch(batch *pgx.Batch, instanceName string)
+	DeleteInstanceBatch(batch genericBatch, instanceName string)
 	// DeleteInstanceScan scans the result of an executed DeleteInstanceBatch query.
 	DeleteInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error)
 	// FindInstanceByNameBatch enqueues a FindInstanceByName query into batch to be executed
 	// later by the batch.
-	FindInstanceByNameBatch(batch *pgx.Batch, instanceName string)
+	FindInstanceByNameBatch(batch genericBatch, instanceName string)
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 
 	FindMandelboxByID(ctx context.Context, mandelboxID string) ([]FindMandelboxByIDRow, error)
 	// FindMandelboxByIDBatch enqueues a FindMandelboxByID query into batch to be executed
 	// later by the batch.
-	FindMandelboxByIDBatch(batch *pgx.Batch, mandelboxID string)
+	FindMandelboxByIDBatch(batch genericBatch, mandelboxID string)
 	// FindMandelboxByIDScan scans the result of an executed FindMandelboxByIDBatch query.
 	FindMandelboxByIDScan(results pgx.BatchResults) ([]FindMandelboxByIDRow, error)
 
 	RegisterInstance(ctx context.Context, params RegisterInstanceParams) (pgconn.CommandTag, error)
 	// RegisterInstanceBatch enqueues a RegisterInstance query into batch to be executed
 	// later by the batch.
-	RegisterInstanceBatch(batch *pgx.Batch, params RegisterInstanceParams)
+	RegisterInstanceBatch(batch genericBatch, params RegisterInstanceParams)
 	// RegisterInstanceScan scans the result of an executed RegisterInstanceBatch query.
 	RegisterInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	RemoveMandelbox(ctx context.Context, mandelboxID string) (pgconn.CommandTag, error)
 	// RemoveMandelboxBatch enqueues a RemoveMandelbox query into batch to be executed
 	// later by the batch.
-	RemoveMandelboxBatch(batch *pgx.Batch, mandelboxID string)
+	RemoveMandelboxBatch(batch genericBatch, mandelboxID string)
 	// RemoveMandelboxScan scans the result of an executed RemoveMandelboxBatch query.
 	RemoveMandelboxScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	RemoveStaleMandelboxes(ctx context.Context, params RemoveStaleMandelboxesParams) (pgconn.CommandTag, error)
 	// RemoveStaleMandelboxesBatch enqueues a RemoveStaleMandelboxes query into batch to be executed
 	// later by the batch.
-	RemoveStaleMandelboxesBatch(batch *pgx.Batch, params RemoveStaleMandelboxesParams)
+	RemoveStaleMandelboxesBatch(batch genericBatch, params RemoveStaleMandelboxesParams)
 	// RemoveStaleMandelboxesScan scans the result of an executed RemoveStaleMandelboxesBatch query.
 	RemoveStaleMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
 	// later by the batch.
-	WriteHeartbeatBatch(batch *pgx.Batch, params WriteHeartbeatParams)
+	WriteHeartbeatBatch(batch genericBatch, params WriteHeartbeatParams)
 	// WriteHeartbeatScan scans the result of an executed WriteHeartbeatBatch query.
 	WriteHeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceName string) (pgconn.CommandTag, error)
 	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
 	// later by the batch.
-	WriteInstanceStatusBatch(batch *pgx.Batch, status pgtype.Varchar, instanceName string)
+	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceName string)
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
 	WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error)
 	// WriteMandelboxStatusBatch enqueues a WriteMandelboxStatus query into batch to be executed
 	// later by the batch.
-	WriteMandelboxStatusBatch(batch *pgx.Batch, status pgtype.Varchar, mandelboxID string)
+	WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string)
 	// WriteMandelboxStatusScan scans the result of an executed WriteMandelboxStatusBatch query.
 	WriteMandelboxStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
@@ -104,6 +104,14 @@ type genericConn interface {
 	// string. arguments should be referenced positionally from the sql string
 	// as $1, $2, etc.
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+}
+
+// genericBatch batches queries to send in a single network request to a
+// Postgres server. This is usually backed by *pgx.Batch.
+type genericBatch interface {
+	// Queue queues a query to batch b. query can be an SQL query or the name of a
+	// prepared statement. See Queue on *pgx.Batch.
+	Queue(query string, arguments ...interface{})
 }
 
 // NewQuerier creates a DBQuerier that implements Querier. conn is typically
@@ -225,7 +233,7 @@ func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceName string) (pg
 }
 
 // DeleteInstanceBatch implements Querier.DeleteInstanceBatch.
-func (q *DBQuerier) DeleteInstanceBatch(batch *pgx.Batch, instanceName string) {
+func (q *DBQuerier) DeleteInstanceBatch(batch genericBatch, instanceName string) {
 	batch.Queue(deleteInstanceSQL, instanceName)
 }
 
