@@ -46,15 +46,15 @@ cd ~/fractal/protocol/
 ./build_server_protocol.sh
 
 # build the Fractal base container image
-cd ~/fractal/container-images
-./build_container_image.sh base
+cd ~/fractal/mandelbox-images
+./build_mandelbox_image.sh base
 
 # build the Fractal Host Service
 cd ~/fractal/host-service
 make run # keep this open in a separate terminal
 
 # run the Fractal base container image
-cd ~/fractal/container-images
+cd ~/fractal/mandelbox-images
 ./run_local_container_image.sh base
 ```
 
