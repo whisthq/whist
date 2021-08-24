@@ -628,7 +628,7 @@ CMD ["/usr/share/fractal/entrypoint.sh"]
 # Main
 #########################
 
-# Set up the default (harmelsss/useless) Fractal application (eyes)
+# Set up the default (harmless/useless) Fractal application (eyes)
 
 # Install xeyes and dependencies
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
@@ -648,7 +648,7 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libxt6 \
     xbitmaps \
     x11-utils \
-    xeyes \
+    x11-apps \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
