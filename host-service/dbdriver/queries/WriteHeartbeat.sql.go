@@ -33,7 +33,7 @@ func (q *DBQuerier) WriteHeartbeat(ctx context.Context, params WriteHeartbeatPar
 }
 
 // WriteHeartbeatBatch implements Querier.WriteHeartbeatBatch.
-func (q *DBQuerier) WriteHeartbeatBatch(batch *pgx.Batch, params WriteHeartbeatParams) {
+func (q *DBQuerier) WriteHeartbeatBatch(batch genericBatch, params WriteHeartbeatParams) {
 	batch.Queue(writeHeartbeatSQL, params.MemoryRemainingKB, params.NanoCPUsRemainingKB, params.GpuVramRemainingKb, params.LastUpdatedUtcUnixMs, params.InstanceName)
 }
 

@@ -51,7 +51,7 @@ func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string)
 }
 
 // FindInstanceByNameBatch implements Querier.FindInstanceByNameBatch.
-func (q *DBQuerier) FindInstanceByNameBatch(batch *pgx.Batch, instanceName string) {
+func (q *DBQuerier) FindInstanceByNameBatch(batch genericBatch, instanceName string) {
 	batch.Queue(findInstanceByNameSQL, instanceName)
 }
 

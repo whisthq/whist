@@ -25,7 +25,7 @@ func (q *DBQuerier) WriteMandelboxStatus(ctx context.Context, status pgtype.Varc
 }
 
 // WriteMandelboxStatusBatch implements Querier.WriteMandelboxStatusBatch.
-func (q *DBQuerier) WriteMandelboxStatusBatch(batch *pgx.Batch, status pgtype.Varchar, mandelboxID string) {
+func (q *DBQuerier) WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string) {
 	batch.Queue(writeMandelboxStatusSQL, status, mandelboxID)
 }
 
