@@ -235,6 +235,7 @@ export const createPaymentWindow = async ({
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
     customURL: paymentPortalURL,
+    closeOtherWindows: true,
   })
 
   const {

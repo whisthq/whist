@@ -71,17 +71,16 @@ fromTrigger("notPersisted").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(
-  fromTrigger("checkPaymentFlowSuccess"),
-  fromTrigger("stripeAuthRefresh")
-).subscribe((x: { userEmail: string }) => {
-  // Launch the protocol
-  createProtocolWindow().catch((err) => console.error(err))
-  // On MacOS, hide the app dock when the protocol is open
-  hideAppDock()
-  // Present the tray (top right corner of screen)
-  createTray(createMenu(true, x.userEmail))
-})
+merge(fromTrigger("configFlowSuccess")).subscribe(
+  (x: { userEmail: string }) => {
+    // Launch the protocol
+    createProtocolWindow().catch((err) => console.error(err))
+    // On MacOS, hide the app dock when the protocol is open
+    hideAppDock()
+    // Present the tray (top right corner of screen)
+    createTray(createMenu(true, x.userEmail))
+  }
+)
 
 // If the update is downloaded, quit the app and install the update
 fromTrigger("updateDownloaded")

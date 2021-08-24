@@ -10,7 +10,7 @@ import { flow } from "@app/utils/flows"
 
 export default flow<accessToken>("checkPaymentFlow", (trigger) => {
   const parsed = trigger.pipe(
-    map((x) => ({
+    map((x: accessToken) => ({
       ...x,
       ...subscriptionStatusParse(x),
     }))
