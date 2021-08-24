@@ -55,7 +55,7 @@ make run # keep this open in a separate terminal
 
 # run the Fractal base container image
 cd ~/fractal/mandelbox-images
-./run_local_container_image.sh base
+./run_local_mandelbox_image.sh base
 ```
 
 - Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
