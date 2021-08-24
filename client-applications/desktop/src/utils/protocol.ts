@@ -95,7 +95,7 @@ export const protocolLaunch = async () => {
   // Pipe to protocol.log
   protocol.stdout.pipe(protocolLogFile)
   // If true, also show in terminal (for local debugging)
-  if (process.env.SHOW_PROTOCOL_LOGS === "true")
+  // if (process.env.SHOW_PROTOCOL_LOGS === "true")
     protocol.stdout.pipe(process.stdout)
 
   // When the protocol closes, reset the childProcess to undefined and show the app dock on MacOS
