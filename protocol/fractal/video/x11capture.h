@@ -26,6 +26,7 @@ Includes
 #include <stdbool.h>
 
 #include <fractal/core/fractal.h>
+#include <fractal/utils/color.h>
 
 /*
 ============================
@@ -50,6 +51,7 @@ typedef struct X11CaptureDevice {
     Damage damage;
     int event;
     bool first;
+    FractalRGBColor corner_color;
 } X11CaptureDevice;
 
 /*
