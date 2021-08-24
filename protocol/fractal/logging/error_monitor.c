@@ -106,6 +106,7 @@ void error_monitor_set_username(char *username) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
+#if USING_SENTRY
     // Set the user to username, or remove the user as a default.
     // Also remove the user if the username is "None".
     if (username && strcmp(username, "None")) {
@@ -116,6 +117,7 @@ void error_monitor_set_username(char *username) {
     } else {
         sentry_remove_user();
     }
+#endif
 }
 
 void error_monitor_set_connection_id(int id) {
@@ -145,7 +147,9 @@ void error_monitor_set_connection_id(int id) {
         safe_strncpy(connection_id, "waiting", sizeof(connection_id));
     }
 
+#if USING_SENTRY
     sentry_set_tag("connection_id", connection_id);
+#endif
 }
 
 void error_monitor_initialize(bool is_client) {
@@ -172,6 +176,7 @@ void error_monitor_initialize(bool is_client) {
         return;
     }
 
+#if USING_SENTRY
     sentry_options_t *options = sentry_options_new();
 
     // By default, sentry will use the SENTRY_DSN environment variable. We could use this instead
@@ -211,6 +216,7 @@ void error_monitor_initialize(bool is_client) {
 
     // Tag all logs with a user of "None", to be updated once an actual username arrives.
     error_monitor_set_username(NULL);
+#endif
 
     LOG_INFO("Error monitor initialized!");
 }
@@ -232,7 +238,9 @@ void error_monitor_shutdown() {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
+#if USING_SENTRY
     sentry_shutdown();
+#endif
     error_monitor_initialized = false;
 }
 
@@ -257,6 +265,7 @@ void error_monitor_log_breadcrumb(const char *tag, const char *message) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
+#if USING_SENTRY
         // In the current sentry-native beta version, breadcrumbs can only be logged
         // from macOS and Linux.
 #ifndef _WIN32
@@ -266,6 +275,7 @@ void error_monitor_log_breadcrumb(const char *tag, const char *message) {
 
     // Sentry doesn't document it, but this will free crumb.
     sentry_add_breadcrumb(crumb);
+#endif
 #endif
 }
 
@@ -288,8 +298,10 @@ void error_monitor_log_error(const char *message) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
+#if USING_SENTRY
     sentry_value_t event =
         sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
     // Sentry doesn't document it, but this will free user.
     sentry_capture_event(event);
+#endif
 }
