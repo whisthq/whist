@@ -5,7 +5,7 @@
  */
 
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map, take } from "rxjs/operators"
+import { filter, share, map, take, tap } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
@@ -123,6 +123,7 @@ export const fromTrigger = (name: string): Observable<any> => {
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name === name),
+    tap((x) => console.log(x)),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
     map((x: Trigger) => x.payload)
   )
