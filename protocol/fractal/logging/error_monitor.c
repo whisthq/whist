@@ -52,10 +52,40 @@ Public Function Implementations
 */
 
 #define SENTRY_DSN "https://8e1447e8ea2f4ac6ac64e0150fa3e5d0@o400459.ingest.sentry.io/5373388"
+#define MAX_EVENTS_IN_PERIOD 2
+#define MAX_EVENTS_PERIOD_MS 1000.0
 
 static char error_monitor_environment[FRACTAL_ARGS_MAXLEN + 1];
 static char error_monitor_environment_set = false;
 static bool error_monitor_initialized = false;
+
+clock last_error_event_timer;
+
+bool check_error_monitor_backoff() {
+    /*
+        Check whether we have sent more than `MAX_EVENTS_IN_PERIOD` errors
+        in `MAX_EVENTS_PERIOD_MS` milliseconds.
+
+        Returns:
+            (bool): `false` if too many events in most recent period,
+                `true` otherwise
+    */
+
+    static int errors_sent = 0;
+
+    if (get_timer(last_error_event_timer) > MAX_EVENTS_PERIOD_MS / MS_IN_SECOND) {
+        errors_sent = 0;
+        start_timer(&last_error_event_timer);
+    }
+
+    errors_sent++;
+    if (errors_sent >= MAX_EVENTS_IN_PERIOD) {
+        // LOG_INFO("EXCEEDED LIMIT");
+        return false;
+    }
+
+    return true;
+}
 
 void error_monitor_set_environment(char *environment) {
     /*
@@ -209,6 +239,9 @@ void error_monitor_initialize(bool is_client) {
         sentry_set_tag("protocol-side", "server");
     }
 
+    // Start error event backoff timer
+    start_timer(&last_error_event_timer);
+
     error_monitor_initialized = true;
 
     // Tag all logs with a connection id of "waiting", to be updated once an actual id arrives.
@@ -273,7 +306,6 @@ void error_monitor_log_breadcrumb(const char *tag, const char *message) {
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
 
-    // Sentry doesn't document it, but this will free crumb.
     sentry_add_breadcrumb(crumb);
 #endif
 #endif
@@ -299,9 +331,11 @@ void error_monitor_log_error(const char *message) {
     if (!error_monitor_initialized) return;
 
 #if USING_SENTRY
+    // If too many errors have been sent in a period, then don't send this error.
+    if (!check_error_monitor_backoff()) return;
     sentry_value_t event =
         sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
-    // Sentry doesn't document it, but this will free user.
+    // Sentry doesn't document it, but this will free error.
     sentry_capture_event(event);
 #endif
 }
