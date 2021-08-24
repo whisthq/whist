@@ -369,6 +369,11 @@ int capture_screen(CaptureDevice* device) {
 #if LOG_VIDEO
             if (ret > 0) LOG_INFO("Captured with X11!");
 #endif
+            if (ret >= 0) {
+                device->frame_data = device->x11_capture_device->frame_data;
+                device->pitch = device->x11_capture_device->pitch;
+                device->corner_color = device->x11_capture_device->corner_color;
+            }
             return ret;
         default:
             LOG_FATAL("Unknown capture device type: %d", device->active_capture_device);

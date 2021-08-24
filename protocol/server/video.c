@@ -527,6 +527,7 @@ int32_t multithreaded_send_video(void* opaque) {
                         frame->codec_type = encoder->codec_type;
                         frame->is_empty_frame = false;
                         frame->is_window_visible = true;
+                        frame->corner_color = device->corner_color;
 
                         static FractalCursorImage cursor_cache[2];
                         static int last_cursor_id = 0;
