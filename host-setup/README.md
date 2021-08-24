@@ -23,7 +23,7 @@ To set up your Fractal development instance:
 
 - Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
 
-- SSH/SSM into your instance and install the latest stable version of `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)).
+- SSH/SSM into your instance and install the latest stable version of `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)). Because we've upgraded to Go 1.16, you'll have to change the download command to `wget -c https://dl.google.com/go/go1.16.2.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local`
 
 - If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
