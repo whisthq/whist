@@ -80,7 +80,6 @@ bool check_error_monitor_backoff() {
 
     errors_sent++;
     if (errors_sent >= MAX_EVENTS_IN_PERIOD) {
-        // LOG_INFO("EXCEEDED LIMIT");
         return false;
     }
 
