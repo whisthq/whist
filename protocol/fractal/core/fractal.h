@@ -77,6 +77,8 @@ Defines
 
 #define UNUSED(var) (void)(var)
 
+#define USING_SENTRY false
+
 #define NUM_KEYCODES 265
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
