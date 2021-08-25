@@ -17,8 +17,6 @@ export const WindowHashSignout = "SIGNOUT"
 export const WindowHashPayment = "PAYMENT"
 export const WindowHashProtocol = "PROTOCOL"
 export const WindowHashTypeform = "TYPEFORM"
-export const WindowHashNetworkWarning = "NETWORK_WARNING"
-export const WindowHashRelaunchWarning = "RELAUNCH_WARNING"
 export const WindowHashSleep = "SLEEP"
 
 export const StateChannel = "MAIN_STATE_CHANNEL"

@@ -1,4 +1,4 @@
-import { app, IpcMainEvent, BrowserWindow } from "electron"
+import { app, IpcMainEvent, Notification } from "electron"
 import {
   takeUntil,
   withLatestFrom,
@@ -12,25 +12,29 @@ import { merge, interval } from "rxjs"
 import { destroyTray } from "@app/utils/tray"
 import { logBase, uploadToS3 } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
-import {
-  WindowHashProtocol,
-  WindowHashNetworkWarning,
-} from "@app/utils/constants"
+import { WindowHashProtocol } from "@app/utils/constants"
 import { hideAppDock } from "@app/utils/dock"
 import {
   createErrorWindow,
-  createNetworkWarningWindow,
-  createRelaunchWarningWindow,
   createProtocolWindow,
   createTypeformWindow,
-  getElectronWindows,
 } from "@app/utils/windows"
 import { store, persist } from "@app/utils/persist"
 import { protocolStreamInfo } from "@app/utils/protocol"
 import { PROTOCOL_ERROR } from "@app/utils/error"
+import { internetWarning, rebootWarning } from "@app/utils/notification"
 
-let protocolLaunchRetries = 0
 const MAX_RETRIES = 3
+let protocolLaunchRetries = 0
+let internetNotification: Notification | undefined
+let rebootNotification: Notification | undefined
+let warningWindowOpen = false
+let lastShown = 0
+
+fromTrigger("appReady").subscribe(() => {
+  internetNotification = internetWarning()
+  rebootNotification = rebootWarning()
+})
 
 const quit = () => {
   logBase("Application exited", {})
@@ -119,9 +123,9 @@ allWindowsClosed
         createProtocolWindow()
           .then(() => {
             protocolStreamInfo(info)
-            const win = createRelaunchWarningWindow()
+            rebootNotification?.show()
             setTimeout(() => {
-              win?.close()
+              rebootNotification?.close()
             }, 6000)
           })
           .catch((err) => console.error(err))
@@ -133,17 +137,16 @@ allWindowsClosed
   )
 
 fromTrigger("networkUnstable")
-  .pipe(throttle(() => interval(1000))) // Throttle to 0.5s so we don't flood the main thread
+  .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
-    let warningWindowOpen = false
-    getElectronWindows().forEach((win: BrowserWindow) => {
-      if (win.webContents.getURL().includes(WindowHashNetworkWarning)) {
-        warningWindowOpen = true
-        if (!unstable) {
-          win.close()
-        }
-      }
-    })
-
-    if (!warningWindowOpen && unstable) createNetworkWarningWindow()
+    // Don't show the warning more than once within ten seconds
+    if (!warningWindowOpen && unstable && Date.now() / 1000 - lastShown > 10) {
+      warningWindowOpen = true
+      internetNotification?.show()
+      lastShown = Date.now() / 1000
+    }
+    if (!unstable && warningWindowOpen) {
+      internetNotification?.close()
+      warningWindowOpen = false
+    }
   })
