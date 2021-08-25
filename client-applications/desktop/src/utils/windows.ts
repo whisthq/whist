@@ -8,12 +8,7 @@
 
 import path from "path"
 import events from "events"
-import {
-  app,
-  BrowserWindow,
-  BrowserWindowConstructorOptions,
-  screen,
-} from "electron"
+import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { FractalCallbackUrls } from "@app/config/urls"
@@ -31,8 +26,6 @@ import {
   WindowHashPayment,
   WindowHashTypeform,
   WindowHashProtocol,
-  WindowHashNetworkWarning,
-  WindowHashRelaunchWarning,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -350,52 +343,4 @@ export const relaunch = (options?: { args: string[] }) => {
   protocolStreamKill()
   options === undefined ? app.relaunch() : app.relaunch(options)
   app.exit()
-}
-
-export const createNetworkWarningWindow = () => {
-  const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize
-
-  createWindow({
-    options: {
-      ...base,
-      ...width.sm,
-      ...height.xxs,
-      x: 0,
-      y: screenHeight,
-      alwaysOnTop: true,
-      frame: false,
-      titleBarStyle: "customButtonsOnHover",
-      resizable: false,
-      fullscreenable: false,
-      minimizable: false,
-      roundedCorners: false,
-      transparent: true,
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashNetworkWarning,
-    focus: false,
-  })
-}
-
-export const createRelaunchWarningWindow = () => {
-  const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize
-
-  return createWindow({
-    options: {
-      ...base,
-      ...width.sm,
-      ...height.xxs,
-      x: 0,
-      y: screenHeight,
-      alwaysOnTop: true,
-      frame: false,
-      titleBarStyle: "customButtonsOnHover",
-      resizable: false,
-      fullscreenable: false,
-      minimizable: false,
-      roundedCorners: false,
-      transparent: true,
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashRelaunchWarning,
-    focus: false,
-  })
 }

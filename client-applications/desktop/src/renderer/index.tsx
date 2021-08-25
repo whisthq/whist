@@ -11,14 +11,11 @@ import ReactDOM from "react-dom"
 import Update from "@app/renderer/pages/update"
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
-import Warning from "@app/renderer/pages/warning"
 
 import {
   WindowHashUpdate,
   WindowHashSignout,
   allowPayments,
-  WindowHashNetworkWarning,
-  WindowHashRelaunchWarning,
 } from "@app/utils/constants"
 import {
   fractalError,
@@ -69,12 +66,6 @@ const RootComponent = () => {
 
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
-  if (show === WindowHashNetworkWarning)
-    return <Warning text={"Your Internet connection may be unstable"} />
-  if (show === WindowHashRelaunchWarning)
-    return (
-      <Warning text={"Fractal unexpectedly lost connection and is rebooting"} />
-    )
   if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <TwoButtonError
