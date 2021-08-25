@@ -32,9 +32,10 @@ def test_prior_ami(db_session):
         ami_id="prior-ami-us-east-1",
         ami_active=False,
     )
+    second_region = "us-east-2" if region_name != "us-east-2" else "us-east-1"
     db.session.add(prior_ami)
     db.session.commit()
-    region_to_ami_map = {region_name: f"new-ami-{region_name}", "us-east-2": "new-ami-us-east-2"}
+    region_to_ami_map = {region_name: f"new-ami-{region_name}", second_region: "new-ami-us-east-2"}
     mixed_ami_ids = [ami.ami_id for ami in insert_new_amis(client_commit_hash, region_to_ami_map)]
     print(mixed_ami_ids)
     assert "new-ami-us-east-2" in mixed_ami_ids, "failed to insert new AMI"
