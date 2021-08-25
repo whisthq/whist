@@ -69,6 +69,9 @@ bool check_error_monitor_backoff() {
         Returns:
             (bool): `false` if too many events in most recent period,
                 `true` otherwise
+
+        NOTE: because of the `errors_sent` counter, this function should
+            only be called before sending an error event
     */
 
     static int errors_sent = 0;
@@ -78,10 +81,12 @@ bool check_error_monitor_backoff() {
         start_timer(&last_error_event_timer);
     }
 
-    errors_sent++;
     if (errors_sent >= MAX_EVENTS_IN_PERIOD) {
         return false;
     }
+
+    // Increment `errors_sent` if error can be sent (not past threshold).
+    errors_sent++;
 
     return true;
 }
