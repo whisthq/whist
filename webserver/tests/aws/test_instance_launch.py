@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random, requests
 
 from app.models import RegionToAmi, db
@@ -34,9 +35,9 @@ def test_prior_ami(db_session):
     db.session.add(prior_ami)
     db.session.commit()
     region_to_ami_map = {region_name: f"new-ami-{region_name}", "us-east-2": "new-ami-us-east-2"}
-    mixed_amis = insert_new_amis(client_commit_hash, region_to_ami_map)
-    assert mixed_amis[0].ami_id == "new-ami-us-east-2", "failed to insert new AMI"
-    assert mixed_amis[1].ami_id == "prior-ami-us-east-1", "failed to preserve prior AMI"
+    mixed_ami_ids = [ami.ami_id for ami in insert_new_amis(client_commit_hash, region_to_ami_map)]
+    assert "new-ami-us-east-2" in mixed_ami_ids, "failed to insert new AMI"
+    assert "prior-ami-us-east-1" in mixed_ami_ids, "failed to preserve prior AMI"
     assert (
         RegionToAmi.query.filter_by(ami_id=f"new-ami-{region_name}").limit(1).one_or_none() is None
     ), "still inserted new AMI despite prior ami existing"
