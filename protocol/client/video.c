@@ -727,7 +727,7 @@ void calculate_statistics() {
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
         stats.num_nacks_per_second = video_ring_buffer->num_nacked / 5;
-        stats.throughput_per_second = -1;
+        stats.throughput_per_second = video_ring_buffer->num_packets_received / 5;
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != max_bitrate ||
             new_bitrates.burst_bitrate != max_burst_bitrate) {
@@ -736,6 +736,7 @@ void calculate_statistics() {
             update_bitrate = true;
         }
         video_ring_buffer->num_nacked = 0;
+        video_ring_buffer->num_bytes_received = 0;
         start_timer(&t);
     }
 }

@@ -90,4 +90,4 @@ Public Function Implementations
 ============================
 */
 
-BitrateCalculator calculate_new_bitrate = fallback_bitrate;
+BitrateCalculator calculate_new_bitrate = ewma_bitrate;
