@@ -25,7 +25,8 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
     ring_buffer->num_nacked = 0; // ?
-    ring_buffer->num_bytes_received = 0; // ?
+    ring_buffer->num_received = 0; // ?
+    ring_buffer->num_skipped = 0; // ?
     ring_buffer->frames_received = 0;
     start_timer(&ring_buffer->missing_frame_nack_timer);
 }
@@ -200,7 +201,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
             */
     FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
 
-    ring_buffer->num_bytes_received += frame_data->frame_size;
+    ring_buffer->num_received++;
 
     bool overwrote_frame = false;
     // This packet is old, because the current resident already contains packets with a newer ID in
