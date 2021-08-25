@@ -30,7 +30,7 @@ const Careers = () => (
               with us!
             </p>
             <a
-              href="https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9"
+              href="https://tryfractal.notion.site/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9"
               target="_blank"
               rel="noreferrer"
             >
