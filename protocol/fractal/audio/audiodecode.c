@@ -18,6 +18,8 @@ audio_decoder_packet_readout.
 
 #include "audiodecode.h"
 
+#define OUTPUT_FMT AV_SAMPLE_FMT_FLT
+
 /*
 ============================
 Public Function Implementations
@@ -41,7 +43,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
-    decoder->codec = avcodec_find_decoder_by_name("aac");
+    decoder->codec = avcodec_find_decoder_by_name("libfdk_aac");
     if (!decoder->codec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_decoder(decoder);
@@ -81,8 +83,9 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     // setup the SwrContext for resampling. We use AV_SAMPLE_FMT_FLT since we are sending float
     // 32-bit audio to SDL.
 
+    LOG_DEBUG("Decoder sample format: %s", av_get_sample_fmt_name(decoder->context->sample_fmt));
     decoder->swr_context = swr_alloc_set_opts(
-        NULL, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLT, sample_rate, decoder->context->channel_layout,
+        NULL, AV_CH_LAYOUT_STEREO, OUTPUT_FMT, sample_rate, decoder->context->channel_layout,
         decoder->context->sample_fmt, decoder->context->sample_rate, 0,
         NULL);  //       might not work if not same sample size throughout
 
@@ -154,7 +157,7 @@ void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
 
 int audio_decoder_get_frame_data_size(AudioDecoder *decoder) {
     /*
-        Retrieve the size of an audio frame
+        Retrieve the size of an audio frame after it has passed through the SWR context
 
         Arguments:
             decoder (AudioDecoder*): The audio decoder associated with the audio frame
@@ -163,7 +166,7 @@ int audio_decoder_get_frame_data_size(AudioDecoder *decoder) {
             (int): The size of the audio frame, in bytes
     */
 
-    return av_get_bytes_per_sample(decoder->context->sample_fmt) * decoder->frame->nb_samples *
+    return av_get_bytes_per_sample(OUTPUT_FMT) * decoder->frame->nb_samples *
            av_get_channel_layout_nb_channels(decoder->frame->channel_layout);
 }
 
