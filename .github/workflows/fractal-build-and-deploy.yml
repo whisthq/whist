@@ -625,7 +625,10 @@ jobs:
           # Tell the webserver (factory.py) to consider this dev/staging/prod rather
           # than a local webserver instance. This allows us to easily use the right
           # config database table to retrieve things like instance type for deployment.
-          GHA_FLASK_CLI: 1
+          # I (@rpadaki) have currently set this to 0, not 1, because our webserver
+          # deployment config breaks horribly when not in a heroku dyno. As soon as
+          # we sort that out, we can re-enable this.
+          GHA_FLASK_CLI: 0
         id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         shell: bash
