@@ -3,5 +3,28 @@ FROM fractal/base:current-build
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-# Set up the default Fractal application symlink
+# Install xterm and dependencies
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    libc6 \
+    libfontconfig1 \
+    libfreetype6 \
+    libice6 \
+    libtinfo6 \
+    libutempter0 \
+    libx11-6 \
+    libxaw7 \
+    libxext6 \
+    libxft2 \
+    libxinerama1 \
+    libxmu6 \
+    libxpm4 \
+    libxt6 \
+    xbitmaps \
+    x11-utils \
+    xterm \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Set up the xterm Fractal application symlink
 RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
