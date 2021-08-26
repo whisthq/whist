@@ -528,7 +528,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	logger.Infof("Value returned from ContainerCreate: %#v", dockerBody)
+	logger.Infof("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody)
 	dockerID := types.DockerID(dockerBody.ID)
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID)
@@ -572,6 +572,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	fc.AssignToUser(userID)
+	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
 
 	err = fc.PopulateUserConfigs()
 	if err != nil {
@@ -580,21 +581,23 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// mandelbox dies.
 		logger.Warning(err)
 	}
+	logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", req.MandelboxID)
 
 	err = fc.MarkReady()
 	if err != nil {
 		logAndReturnError("Error marking mandelbox %s as ready: %s", req.MandelboxID, err)
 		return
 	}
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", req.MandelboxID)
 
 	// Don't wait for fractal application to start up in local environment
 	if !metadata.IsLocalEnv() {
-		logger.Infof("Waiting for fractal application to start up...")
+		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s fractal application to start up...", req.MandelboxID)
 		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", req.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
 			logAndReturnError("Error warming up fractal application: %s", err)
 			return
 		}
-		logger.Infof("Finished waiting for fractal application to start up.")
+		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s fractal application to start up", req.MandelboxID)
 	}
 
 	err = dbdriver.WriteMandelboxStatus(req.MandelboxID, dbdriver.MandelboxStatusRunning)
@@ -602,6 +605,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
 	}
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as running", req.MandelboxID)
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
