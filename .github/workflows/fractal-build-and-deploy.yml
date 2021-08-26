@@ -1298,7 +1298,7 @@ jobs:
         client-applications-publish-build-s3,
         webserver-swap-active-amis,
       ]
-    if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
+    if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -1314,7 +1314,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
-          body: \"Fractal Promotion to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` on ${{ env.date }}.\"
+          body: Fractal Production Release on ${{ env.date }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
