@@ -79,7 +79,6 @@ Defines
 
 #define USING_SENTRY true
 
-#define NUM_KEYCODES 265
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
 #define MAX_NUM_CLIENTS 10
@@ -324,6 +323,8 @@ typedef enum FractalKeycode {
     FK_AUDIOMUTE = 262,    ///< 262
     FK_MEDIASELECT = 263,  ///< 263
 } FractalKeycode;
+// An (exclusive) upper bound on any keycode
+#define KEYCODE_UPPERBOUND 265
 
 /**
  * @brief   Modifier keys applied to keyboard input.
@@ -601,7 +602,7 @@ typedef struct FractalClientMessage {
             short num_keycodes;
             bool caps_lock;
             bool num_lock;
-            char keyboard_state[NUM_KEYCODES];
+            char keyboard_state[KEYCODE_UPPERBOUND];
             bool active_pinch;
         } keyboard_state;
 

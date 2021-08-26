@@ -145,9 +145,9 @@ int sync_keyboard_state(void) {
     int num_keys;
     const Uint8* state = SDL_GetKeyboardState(&num_keys);
 #if defined(_WIN32)
-    fmsg.keyboard_state.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
+    fmsg.keyboard_state.num_keycodes = (short)min(KEYCODE_UPPERBOUND, num_keys);
 #else
-    fmsg.keyboard_state.num_keycodes = fmin(NUM_KEYCODES, num_keys);
+    fmsg.keyboard_state.num_keycodes = fmin(KEYCODE_UPPERBOUND, num_keys);
 #endif
 
     // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
