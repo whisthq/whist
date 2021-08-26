@@ -726,10 +726,11 @@ void calculate_statistics() {
     // do some calculation
     // Update mbps every 5 seconds
     if (get_timer(t) > 5.0) {
-        stats.num_nacks_per_second = video_ring_buffer->num_nacked / 5;
-        stats.throughput_per_second = video_ring_buffer->num_received / 5;
-        // stats.skipped_per_second = video_ring_buffer->num_skipped / 5;
-        LOG_INFO("MBPS PACKETS IN 5 SECONDS: %d", video_ring_buffer->num_received);
+        stats.num_nacks_per_second = video_ring_buffer->num_packets_nacked / 5;
+        stats.num_received_packets_per_second = video_ring_buffer->num_packets_received / 5;
+        stats.num_skipped_frames_per_second = video_ring_buffer->num_frames_skipped / 5;
+        stats.num_rendered_frames_per_second = video_ring_buffer->num_frames_rendered / 5;
+        LOG_INFO("MBPS PACKETS IN 5 SECONDS: %d", video_ring_buffer->num_packets_received);
 
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != max_bitrate ||
@@ -738,9 +739,10 @@ void calculate_statistics() {
             max_burst_bitrate = new_bitrates.burst_bitrate;
             update_bitrate = true;
         }
-        video_ring_buffer->num_nacked = 0;
-        video_ring_buffer->num_received = 0;
-        video_ring_buffer->num_skipped = 0;
+        video_ring_buffer->num_packets_nacked = 0;
+        video_ring_buffer->num_packets_received = 0;
+        video_ring_buffer->num_frames_skipped = 0;
+        video_ring_buffer->num_frames_rendered = 0;
         start_timer(&t);
     }
 }
@@ -836,9 +838,10 @@ void update_video() {
                     next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
                     LOG_INFO("Skip this render");
-                    video_ring_buffer->num_skipped++;
+                    video_ring_buffer->num_frames_skipped++;
                 } else {
                     skip_render = false;
+                    video_ring_buffer->num_frames_rendered++;
                 }
                 rendering = true;
             } else {

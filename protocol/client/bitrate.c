@@ -61,7 +61,7 @@ Bitrates fallback_bitrate(BitrateStatistics stats) {
 Bitrates ewma_bitrate(BitrateStatistics stats) {
     /*
         Keeps an exponentially weighted moving average of the throughput per second the client is
-       getting, and uses that to predict a good bitrate to ask the server for.
+        getting, and uses that to predict a good bitrate to ask the server for.
 
         Arguments:
             stats (BitrateStatistics): struct containing the throughput per second of the client
@@ -71,43 +71,90 @@ Bitrates ewma_bitrate(BitrateStatistics stats) {
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
     static int throughput = -1;
-    static int same_throughput_count = 0;
-    static int prev_throughput = -1;
     static Bitrates bitrates;
     if (throughput == -1) {
         throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
     }
+    // sanity check to make sure we're not sending it negative bitrate
+    if (stats.throughput_per_second >= 0) {
+        throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
+        bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
+    }
+    bitrates.burst_bitrate = max_burst_bitrate;
+    return bitrates;
+}
+
+Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
+    /*
+        Keeps an exponentially weighted moving average of the throughput per second the client is
+        getting, and uses that to predict a good bitrate to ask the server for. The throughput
+        per second that the client is getting is estimated by the ratio of successful packets to
+        total packets (successful + NACKed) multiplied by the active throughput.
+
+        Arguments:
+            stats (BitrateStatistics): struct containing the throughput per second of the client
+    */
+    static const double alpha = 0.8;
+    // because the max bitrate of the encoder is usually larger than the actual amount of data we
+    // get from the server
+    static const double bitrate_throughput_ratio = 1.25;
+    static const int same_count_min = 60;
+
+    static int throughput = -1;
+    static int same_throughput_count = 0;
+    static int prev_throughput = -1;
+    static int same_burst_count = 0;
+    static int prev_burst_bitrate = -1;
+    static Bitrates bitrates;
+    if (throughput == -1) {
+        throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
+        bitrates.burst_bitrate = max_burst_bitrate;
+    }
 
     // Make sure throughput is not negative and also that the client has received frames at all
     //     i.e., we don't want to recalculate bitrate if the video is static and server is sending
-    //      zero frames
-    if (stats.throughput_per_second >= 0 && stats.throughput_per_second + stats.num_nacks_per_second > 0) {
+    //      zero packets
+    if (stats.num_received_packets_per_second + stats.num_nacks_per_second > 0) {
         throughput = (int)(alpha * throughput +
-            (1 - alpha) * throughput * (1.0 * stats.throughput_per_second) /
-                (1.0 * (stats.num_nacks_per_second + stats.throughput_per_second)));
+            (1 - alpha) * throughput * (1.0 * stats.num_received_packets_per_second) /
+                (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
         LOG_INFO("MBPS NEW THROUGHPUT: %d", throughput);
-        LOG_INFO("MBPS NUM NACKED: %d RATIO: %f", stats.num_nacks_per_second, (1.0 * stats.throughput_per_second) /
-                (1.0 * (stats.num_nacks_per_second + stats.throughput_per_second)));
+        LOG_INFO("MBPS NUM NACKED: %d RATIO: %f", stats.num_nacks_per_second, (1.0 * stats.num_received_packets_per_second) /
+                (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
 
-        // If no NACKS after 5 iterations, gradually increase bitrate with each iteration
+        // If no NACKS after `same_count_min` iterations, gradually increase bitrate with each iteration
         if (throughput == prev_throughput) {
             same_throughput_count++;
         } else {
             same_throughput_count = 1;
         }
-
-        if (same_throughput_count > 5) {
+        if (same_throughput_count > same_count_min) {
             throughput *= 1.05;
         }
 
         bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
 
         prev_throughput = throughput;
-        // TODO: increase bitrate if nothing has been nacked in some time
     }
-    // TODO: update burst_bitrate based on skipped renders
-    // if (stats.throughput_per_second >= 0 && stats.throughput_per_second + stats.)
-    bitrates.burst_bitrate = max_burst_bitrate;
+
+    // Make sure that frames have been recieved before trying to update the burst bitrate
+    if (stats.num_rendered_frames_per_second + stats.num_skipped_frames_per_second > 0) {
+        bitrates.burst_bitrate = (int)(alpha * bitrates.burst_bitrate +
+            (1 - alpha) * bitrates.burst_bitrate * (1.0 * stats.num_rendered_frames_per_second) /
+                (1.0 * (stats.num_skipped_frames_per_second + stats.num_rendered_frames_per_second)));
+        LOG_INFO("MBPS NEW BURST BITRATE: %d", bitrates.burst_bitrate);
+        LOG_INFO("MBPS NUM Skipped: %d", stats.num_skipped_frames_per_second);
+
+        // If no skipped frames after `same_count_min` iterations, gradually increase bitrate with each iteration
+        if (bitrates.burst_bitrate == prev_burst_bitrate) {
+            same_burst_count++;
+        } else {
+            same_burst_count = 1;
+        }
+        if (same_burst_count > same_count_min) {
+            bitrates.burst_bitrate *= 1.05;
+        }
+    }
     return bitrates;
 }
 
@@ -117,4 +164,4 @@ Public Function Implementations
 ============================
 */
 
-BitrateCalculator calculate_new_bitrate = ewma_bitrate;
+BitrateCalculator calculate_new_bitrate = ewma_ratio_bitrate;
