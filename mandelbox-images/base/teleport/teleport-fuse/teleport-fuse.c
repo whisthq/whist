@@ -429,9 +429,11 @@ void inotify_handle_new_id(const char *id) {
         
         // Check for the first file child of /downloads/[ID] and handle it
         struct dirent *dp;
-        while ((dp = readdir(dirp)) && !(dp->d_type == DT_DIR)) {
-            inotify_handle_file_create(transfer_status[current_idx].create_wd, dp->d_name);
-            break;
+        while (dp = readdir(dirp)) {
+            if (dp->d_type != DT_DIR) {
+                inotify_handle_file_create(transfer_status[current_idx].create_wd, dp->d_name);
+                break;
+            }
         }
         closedir(dirp);
     } else {
@@ -479,8 +481,14 @@ void* multithreaded_download_watcher(void *opaque) {
 
     // Check for any directory children of /downloads and handle them
     struct dirent *dp;
-    while ((dp = readdir(dirp)) && (dp->d_type == DT_DIR)) {
-        inotify_handle_new_id(dp->d_name);
+    while (dp = readdir(dirp)) {
+        if (dp->d_type == DT_DIR &&
+            // ignore the . and .. folders
+            strcmp(dp->d_name, ".") &&
+            strcmp(dp->d_name, "..")
+        ) {
+            inotify_handle_new_id(dp->d_name);
+        }
     }
     closedir(dirp);
 
@@ -489,8 +497,10 @@ void* multithreaded_download_watcher(void *opaque) {
     dirp = opendir(FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/ready");
 
     // Check for any file children of /ready and handle them
-    while ((dp = readdir(dirp)) && !(dp->d_type == DT_DIR)) {
-        inotify_handle_file_close(dp->d_name);
+    while (dp = readdir(dirp)) {
+        if (dp->d_type != DT_DIR) {
+            inotify_handle_file_close(dp->d_name);
+        }
     }
     closedir(dirp);
 
