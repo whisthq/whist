@@ -622,6 +622,10 @@ jobs:
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
           FRACTAL_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
+          # Tell the webserver (factory.py) to consider this dev/staging/prod rather
+          # than a local webserver instance. This allows us to easily use the right
+          # config database table to retrieve things like instance type for deployment.
+          GHA_FLASK_CLI: 1
         id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         shell: bash
