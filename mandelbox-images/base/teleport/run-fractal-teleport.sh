@@ -7,4 +7,4 @@
 set -Eeuo pipefail
 
 mkdir -p /home/fractal/.teleport/drag-drop/fuse
-exec /usr/bin/fractal-teleport-fuse /home/fractal/.teleport/drag-drop/fuse -f > >(tee /home/fractal/teleport.log)
+exec /usr/bin/fractal-teleport-fuse /home/fractal/.teleport/drag-drop/fuse -f > >(tee /home/fractal/.teleport/teleport.log)
