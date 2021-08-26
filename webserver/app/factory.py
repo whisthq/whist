@@ -62,7 +62,9 @@ def create_app(testing=False):
 
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
-    location = "deployment" if "DYNO" in os.environ else "local"
+    location = (
+        "deployment" if ("DYNO" in os.environ or os.environ["GHA_FLASK_CLI"] == "1") else "local"
+    )
     config_factory = getattr(getattr(CONFIG_MATRIX, location), action)
     config = config_factory()
     fractal_logger.info("config_table = {}".format(config.config_table))
