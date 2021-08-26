@@ -98,7 +98,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // because the max bitrate of the encoder is usually larger than the actual amount of data we
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
-    static const int same_count_min = 60;
+    static const int same_count_min = 20;
 
     static int throughput = -1;
     static int same_throughput_count = 0;
@@ -134,6 +134,14 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
 
         bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
 
+        if (bitrates.bitrate > MAXIMUM_BITRATE) {
+            bitrates.bitrate = MAXIMUM_BITRATE;
+            throughput = (int)(MAXIMUM_BITRATE / bitrate_throughput_ratio);
+        } else if (bitrates.bitrate < MINIMUM_BITRATE) {
+            bitrates.bitrate = MINIMUM_BITRATE;
+            throughput = (int)(MINIMUM_BITRATE / bitrate_throughput_ratio);
+        }
+
         prev_throughput = throughput;
     }
 
@@ -154,6 +162,14 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
         if (same_burst_count > same_count_min) {
             bitrates.burst_bitrate *= 1.05;
         }
+
+        if (bitrates.burst_bitrate > STARTING_BURST_BITRATE) {
+            bitrates.burst_bitrate = STARTING_BURST_BITRATE;
+        } else if (bitrates.burst_bitrate < MINIMUM_BITRATE) {
+            bitrates.burst_bitrate = MINIMUM_BITRATE;
+        }
+
+        prev_burst_bitrate == bitrates.burst_bitrate;
     }
     return bitrates;
 }
