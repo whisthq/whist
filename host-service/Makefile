@@ -78,7 +78,7 @@ check: clean build vet format lint test
 	echo "All checks (clean, build, vet, format, lint, and test) succeeded!"
 
 clean:
-	$(GOCMD) clean
+	$(GOCMD) clean -modcache
 	rm -rf $(BUILD_FOLDER)
 
 run: build
