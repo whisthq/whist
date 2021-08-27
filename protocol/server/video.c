@@ -88,6 +88,9 @@ static int encoder_factory_client_h;
 static int encoder_factory_current_bitrate;
 static CodecType encoder_factory_codec_type;
 
+static int current_bitrate;
+static bool transfer_context_active;
+
 /*
 ============================
 Private Functions
@@ -121,6 +124,99 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
     return 0;
 }
 
+VideoEncoder* do_update_encoder(VideoEncoder *encoder, CaptureDevice *device) {
+    // If this is a new update encoder request, log it
+    if (!pending_encoder) {
+        LOG_INFO("Update encoder request received, will update the encoder now!");
+    }
+
+    // First, try to simply reconfigure the encoder to
+    // handle the update_encoder event
+    if (encoder != NULL) {
+        if (reconfigure_encoder(encoder, device->width, device->height, max_bitrate,
+                                (CodecType)client_codec_type)) {
+            // If we could update the encoder in-place, then we're done updating the encoder
+            LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
+                     device->width, device->height, current_bitrate, max_bitrate / 1024.0 / 1024.0,
+                     client_codec_type);
+            current_bitrate = max_bitrate;
+            update_encoder = false;
+        } else {
+            // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
+            LOG_INFO("Reconfiguration failed! Creating a new encoder!");
+        }
+    }
+
+    // If reconfiguration didn't happen, we still need to update the encoder
+    if (update_encoder) {
+        // Otherwise, this capture device must use an external encoder,
+        // so we should start making it in our encoder factory
+        if (pending_encoder) {
+            if (encoder_finished) {
+                // Once encoder_finished, we'll destroy the old one that we've been using,
+                // and replace it with the result of multithreaded_encoder_factory
+                if (encoder) {
+                    if (transfer_context_active) {
+                        close_transfer_context(device, encoder);
+                        transfer_context_active = false;
+                    }
+                    FractalThread encoder_destroy_thread = fractal_create_thread(
+                        multithreaded_destroy_encoder, "multithreaded_destroy_encoder", encoder);
+                    fractal_detach_thread(encoder_destroy_thread);
+                }
+                encoder = encoder_factory_result;
+                pending_encoder = false;
+                update_encoder = false;
+            }
+        } else {
+            // Starting making new encoder. This will set pending_encoder=true, but won't
+            // actually update it yet, we'll still use the old one for a bit
+            LOG_INFO(
+                "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
+                "Codec %d",
+                device->width, device->height, current_bitrate, max_bitrate / 1024.0 / 1024.0,
+                (int)client_codec_type);
+            current_bitrate = max_bitrate;
+            encoder_finished = false;
+            encoder_factory_server_w = device->width;
+            encoder_factory_server_h = device->height;
+            encoder_factory_client_w = (int)client_width;
+            encoder_factory_client_h = (int)client_height;
+            encoder_factory_codec_type = (CodecType)client_codec_type;
+            encoder_factory_current_bitrate = current_bitrate;
+
+            // If using nvidia, then we must destroy the existing encoder first
+            // We can't have two nvidia encoders active or the 2nd attempt to
+            // create one will fail
+            // If using ffmpeg, if the dimensions don't match, then we also need to destroy
+            // the old encoder, since we'll no longer be able to pass captured frames into
+            // it
+            // For now, we'll just always destroy the encoder right here
+            /*
+            if (encoder != NULL) {bool ext(device, encoder);
+                    transfer_context_active = false;
+                }
+                destroy_video_encoder(encoder);
+                encoder = NULL;
+            }
+            */
+            if (encoder == NULL) {
+                // Run on this thread bc we have to wait for it anyway since encoder == NULL
+                multithreaded_encoder_factory(NULL);
+                encoder = encoder_factory_result;
+                pending_encoder = false;
+                update_encoder = false;
+            } else {
+                FractalThread encoder_creator_thread = fractal_create_thread(
+                    multithreaded_encoder_factory, "multithreaded_encoder_factory", NULL);
+                fractal_detach_thread(encoder_creator_thread);
+                pending_encoder = true;
+            }
+        }
+    }
+    return encoder;
+}
+
 /*
 ============================
 Public Function Implementations
@@ -144,7 +240,7 @@ int32_t multithreaded_send_video(void* opaque) {
     init_cursors();
 
     // Init FFMPEG Encoder
-    int current_bitrate = STARTING_BITRATE;
+    current_bitrate = STARTING_BITRATE;
     VideoEncoder* encoder = NULL;
 
     double worst_fps = 40.0;
@@ -173,7 +269,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
     pending_encoder = false;
     encoder_finished = false;
-    bool transfer_context_active = false;
+    transfer_context_active = false;
 
     while (!exiting) {
         static clock send_video_loop_timer;
@@ -272,99 +368,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // Update encoder with new parameters
         if (update_encoder) {
             start_timer(&statistics_timer);
-            // If this is a new update encoder request, log it
-            if (!pending_encoder) {
-                LOG_INFO("Update encoder request received, will update the encoder now!");
-            }
-
-            // First, try to simply reconfigure the encoder to
-            // handle the update_encoder event
-            if (encoder != NULL) {
-                if (reconfigure_encoder(encoder, device->width, device->height, max_bitrate,
-                                        (CodecType)client_codec_type)) {
-                    // If we could update the encoder in-place, then we're done updating the encoder
-                    LOG_INFO(
-                        "Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
-                        device->width, device->height, current_bitrate,
-                        max_bitrate / 1024.0 / 1024.0, client_codec_type);
-                    current_bitrate = max_bitrate;
-                    update_encoder = false;
-                } else {
-                    // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
-                    LOG_INFO("Reconfiguration failed! Creating a new encoder!");
-                }
-            }
-
-            // If reconfiguration didn't happen, we still need to update the encoder
-            if (update_encoder) {
-                // Otherwise, this capture device must use an external encoder,
-                // so we should start making it in our encoder factory
-                if (pending_encoder) {
-                    if (encoder_finished) {
-                        // Once encoder_finished, we'll destroy the old one that we've been using,
-                        // and replace it with the result of multithreaded_encoder_factory
-                        if (encoder) {
-                            if (transfer_context_active) {
-                                close_transfer_context(device, encoder);
-                                transfer_context_active = false;
-                            }
-                            FractalThread encoder_destroy_thread =
-                                fractal_create_thread(multithreaded_destroy_encoder,
-                                                      "multithreaded_destroy_encoder", encoder);
-                            fractal_detach_thread(encoder_destroy_thread);
-                        }
-                        encoder = encoder_factory_result;
-                        pending_encoder = false;
-                        update_encoder = false;
-                    }
-                } else {
-                    // Starting making new encoder. This will set pending_encoder=true, but won't
-                    // actually update it yet, we'll still use the old one for a bit
-                    LOG_INFO(
-                        "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
-                        "Codec %d",
-                        device->width, device->height, current_bitrate,
-                        max_bitrate / 1024.0 / 1024.0, (int)client_codec_type);
-                    current_bitrate = max_bitrate;
-                    encoder_finished = false;
-                    encoder_factory_server_w = device->width;
-                    encoder_factory_server_h = device->height;
-                    encoder_factory_client_w = (int)client_width;
-                    encoder_factory_client_h = (int)client_height;
-                    encoder_factory_codec_type = (CodecType)client_codec_type;
-                    encoder_factory_current_bitrate = current_bitrate;
-
-                    // If using nvidia, then we must destroy the existing encoder first
-                    // We can't have two nvidia encoders active or the 2nd attempt to
-                    // create one will fail
-                    // If using ffmpeg, if the dimensions don't match, then we also need to destroy
-                    // the old encoder, since we'll no longer be able to pass captured frames into
-                    // it
-                    // For now, we'll just always destroy the encoder right here
-                    /*
-                    if (encoder != NULL) {
-                        if (transfer_context_active) {
-                            close_transfer_context(device, encoder);
-                            transfer_context_active = false;
-                        }
-                        destroy_video_encoder(encoder);
-                        encoder = NULL;
-                    }
-                    */
-                    if (encoder == NULL) {
-                        // Run on this thread bc we have to wait for it anyway since encoder == NULL
-                        multithreaded_encoder_factory(NULL);
-                        encoder = encoder_factory_result;
-                        pending_encoder = false;
-                        update_encoder = false;
-                    } else {
-                        FractalThread encoder_creator_thread = fractal_create_thread(
-                            multithreaded_encoder_factory, "multithreaded_encoder_factory", NULL);
-                        fractal_detach_thread(encoder_creator_thread);
-                        pending_encoder = true;
-                    }
-                }
-            }
+            encoder = do_update_encoder(encoder, device);
             log_double_statistic("Update encoder time (ms)",
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }
