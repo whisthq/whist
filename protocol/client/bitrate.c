@@ -132,7 +132,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             same_throughput_count = 1;
         }
         if (same_throughput_count > same_count_min) {
-            throughput *= 1.05;
+            throughput = (int)(throughput * 1.05);
         }
 
         bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
@@ -166,7 +166,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             same_burst_count = 1;
         }
         if (same_burst_count > same_count_min) {
-            bitrates.burst_bitrate *= 1.05;
+            bitrates.burst_bitrate = (int)(bitrates.burst_bitrate * 1.05);
         }
 
         if (bitrates.burst_bitrate > STARTING_BURST_BITRATE) {
@@ -175,7 +175,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             bitrates.burst_bitrate = MINIMUM_BITRATE;
         }
 
-        prev_burst_bitrate == bitrates.burst_bitrate;
+        prev_burst_bitrate = bitrates.burst_bitrate;
     }
     return bitrates;
 }
