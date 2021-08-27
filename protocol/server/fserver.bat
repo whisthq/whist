@@ -29,3 +29,4 @@ REM PNGs properly.
 cd server\build64
 echo "Running server protocol silently. Logs are in server.log..."
 FractalServer %RESTVAR% > %~dp0\server.log
+cd ..\..

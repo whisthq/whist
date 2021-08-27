@@ -30,3 +30,4 @@ REM PNGs properly.
 cd client\build64
 echo "Running client protocol silently. Logs are in client.log..."
 FractalClient %RESTVAR% > "%~dp0"\client.log
+cd ..\..
