@@ -124,6 +124,16 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
     return 0;
 }
 
+/**
+ * @brief           Updates the encoder upon request. Note that this function
+ *                  _returns_ the encoded encoder, due to the encoder factory.
+ *
+ * @param encoder   VideoEncoder pointer
+ *
+ * @param device    CaptureDevice pointer
+ *
+ * @returns         The new encoder
+ */
 VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
     // If this is a new update encoder request, log it
     if (!pending_encoder) {
