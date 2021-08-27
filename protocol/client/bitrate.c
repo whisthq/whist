@@ -122,8 +122,8 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     //      zero packets
     if (stats.num_received_packets_per_second + stats.num_nacks_per_second > 0) {
         int current_throughput_heuristic =
-            throughput * (1.0 * stats.num_received_packets_per_second) /
-            (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second));
+            (int)(throughput * (1.0 * stats.num_received_packets_per_second) /
+                  (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
 
         if (current_throughput_heuristic == throughput) {
             // If this throughput is the same as the throughput from the last period, then
@@ -178,8 +178,9 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // Make sure that frames have been recieved before trying to update the burst bitrate
     if (stats.num_rendered_frames_per_second + stats.num_skipped_frames_per_second > 0) {
         int current_burst_heuristic =
-            bitrates.burst_bitrate * (1.0 * stats.num_rendered_frames_per_second) /
-            (1.0 * (stats.num_skipped_frames_per_second + stats.num_rendered_frames_per_second));
+            (int)(bitrates.burst_bitrate * (1.0 * stats.num_rendered_frames_per_second) /
+                  (1.0 *
+                   (stats.num_skipped_frames_per_second + stats.num_rendered_frames_per_second)));
 
         if (current_burst_heuristic == bitrates.burst_bitrate) {
             // If this burst bitrate is the same as the burst bitrate from the last period, then
