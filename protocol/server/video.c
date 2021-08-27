@@ -124,7 +124,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
     return 0;
 }
 
-VideoEncoder* do_update_encoder(VideoEncoder *encoder, CaptureDevice *device) {
+VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
     // If this is a new update encoder request, log it
     if (!pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");
