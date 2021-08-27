@@ -115,14 +115,17 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     //     i.e., we don't want to recalculate bitrate if the video is static and server is sending
     //      zero packets
     if (stats.num_received_packets_per_second + stats.num_nacks_per_second > 0) {
-        throughput = (int)(alpha * throughput +
-            (1 - alpha) * throughput * (1.0 * stats.num_received_packets_per_second) /
-                (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
+        throughput =
+            (int)(alpha * throughput +
+                  (1 - alpha) * throughput * (1.0 * stats.num_received_packets_per_second) /
+                      (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
         LOG_INFO("MBPS NEW THROUGHPUT: %d", throughput);
-        LOG_INFO("MBPS NUM NACKED: %d RATIO: %f", stats.num_nacks_per_second, (1.0 * stats.num_received_packets_per_second) /
-                (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
+        LOG_INFO("MBPS NUM NACKED: %d RATIO: %f", stats.num_nacks_per_second,
+                 (1.0 * stats.num_received_packets_per_second) /
+                     (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
 
-        // If no NACKS after `same_count_min` iterations, gradually increase bitrate with each iteration
+        // If no NACKS after `same_count_min` iterations, gradually increase bitrate with each
+        // iteration
         if (throughput == prev_throughput) {
             same_throughput_count++;
         } else {
@@ -148,12 +151,15 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // Make sure that frames have been recieved before trying to update the burst bitrate
     if (stats.num_rendered_frames_per_second + stats.num_skipped_frames_per_second > 0) {
         bitrates.burst_bitrate = (int)(alpha * bitrates.burst_bitrate +
-            (1 - alpha) * bitrates.burst_bitrate * (1.0 * stats.num_rendered_frames_per_second) /
-                (1.0 * (stats.num_skipped_frames_per_second + stats.num_rendered_frames_per_second)));
+                                       (1 - alpha) * bitrates.burst_bitrate *
+                                           (1.0 * stats.num_rendered_frames_per_second) /
+                                           (1.0 * (stats.num_skipped_frames_per_second +
+                                                   stats.num_rendered_frames_per_second)));
         LOG_INFO("MBPS NEW BURST BITRATE: %d", bitrates.burst_bitrate);
         LOG_INFO("MBPS NUM Skipped: %d", stats.num_skipped_frames_per_second);
 
-        // If no skipped frames after `same_count_min` iterations, gradually increase bitrate with each iteration
+        // If no skipped frames after `same_count_min` iterations, gradually increase bitrate with
+        // each iteration
         if (bitrates.burst_bitrate == prev_burst_bitrate) {
             same_burst_count++;
         } else {

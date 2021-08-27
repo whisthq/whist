@@ -24,10 +24,10 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     }
     ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
-    ring_buffer->num_packets_nacked = 0; // ?
-    ring_buffer->num_packets_received = 0; // ?
-    ring_buffer->num_frames_skipped = 0; // ?
-    ring_buffer->num_frames_rendered = 0; // ?
+    ring_buffer->num_packets_nacked = 0;    // ?
+    ring_buffer->num_packets_received = 0;  // ?
+    ring_buffer->num_frames_skipped = 0;    // ?
+    ring_buffer->num_frames_rendered = 0;   // ?
     ring_buffer->frames_received = 0;
     start_timer(&ring_buffer->missing_frame_nack_timer);
 }
