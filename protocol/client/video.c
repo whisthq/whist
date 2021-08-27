@@ -730,7 +730,6 @@ void calculate_statistics() {
         stats.num_received_packets_per_second = video_ring_buffer->num_packets_received / 5;
         stats.num_skipped_frames_per_second = video_ring_buffer->num_frames_skipped / 5;
         stats.num_rendered_frames_per_second = video_ring_buffer->num_frames_rendered / 5;
-        LOG_INFO("MBPS PACKETS IN 5 SECONDS: %d", video_ring_buffer->num_packets_received);
 
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != max_bitrate ||

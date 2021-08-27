@@ -14,7 +14,8 @@ void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
 
 void reset_ring_buffer(RingBuffer* ring_buffer) {
     /*
-        Reset the members of ring_buffer except type and size.
+        Reset the members of ring_buffer except type and size and the elements
+        used for bitrate calculation.
     */
     // LOG_DEBUG("Currently rendering ID: %d", ring_buffer->currently_rendering_id);
     // wipe all frames
@@ -24,12 +25,23 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     }
     ring_buffer->last_received_nonnack_id = -1;
     ring_buffer->max_id = -1;
-    ring_buffer->num_packets_nacked = 0;    // ?
-    ring_buffer->num_packets_received = 0;  // ?
-    ring_buffer->num_frames_skipped = 0;    // ?
-    ring_buffer->num_frames_rendered = 0;   // ?
     ring_buffer->frames_received = 0;
     start_timer(&ring_buffer->missing_frame_nack_timer);
+}
+
+void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
+    /*
+        Reset all accumulators used for calculating bitrate stats to 0.
+
+        NOTE: This is separate from `reset_ring_buffer` because the
+        `calculate_statistics` function takes care of resting these
+        members when necessary.
+    */
+
+    ring_buffer->num_packets_nacked = 0;
+    ring_buffer->num_packets_received = 0;
+    ring_buffer->num_frames_skipped = 0;
+    ring_buffer->num_frames_rendered = 0;
 }
 
 RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
@@ -81,6 +93,8 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
 
     // set all additional metadata for frames and ring buffer
     reset_ring_buffer(ring_buffer);
+    reset_bitrate_stat_members(ring_buffer);
+
     return ring_buffer;
 }
 
