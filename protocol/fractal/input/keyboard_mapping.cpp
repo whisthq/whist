@@ -10,6 +10,8 @@ extern "C" {
 #include <fractal/core/fractal.h>
 #include "keyboard_mapping.h"
 #include "input_driver.h"
+#include "input.h"
+}
 
 typedef struct {
 } InternalKeyboardMapping;
@@ -29,7 +31,17 @@ set<FractalKeycode> modifiers = {
     FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI
 };
 
-hmap<vector<FractalKeycode>, vector<FractalKeycode>> keyboard_mappings = {
+struct VectorHasher {
+    int operator()(const vector<FractalKeycode> &V) const {
+        int hash = V.size();
+        for(auto &i : V) {
+            hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        }
+        return hash;
+    }
+};
+
+hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
     {
         {FK_LCTRL, FK_Y},
@@ -49,7 +61,7 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>> keyboard_mappings = {
     },
 };
 
-int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_mapping, FractalKeycode key_code, int pressed) {
+extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_mapping, FractalKeycode key_code, int pressed) {
     // Filter through the modmap first, if necessary 
     if (modmap.count(key_code)) {
         key_code = modmap[key_code];
@@ -58,7 +70,7 @@ int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_m
     // If a key is being released, just release it
     if (pressed == 0) {
         emit_key_event(input_device, key_code, 0);
-        return;
+        return 0;
     }
 
     // If a key is being pressed, we check against mapped key combinations
@@ -84,7 +96,7 @@ int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_m
 
     // Check if this is a keyboard mapping
     if (keyboard_mappings.count(currently_pressed)) {
-        const vector<FractalKeycode> new_key_combination = keyboard_mappings[currently_pressed];
+        vector<FractalKeycode> new_key_combination = keyboard_mappings[currently_pressed];
 
         // Release the original keys, modifiers last
         for(FractalKeycode key : currently_pressed) {
@@ -118,5 +130,4 @@ int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_m
 
     // We'll say that it always succeeds
     return 0;
-}
 }

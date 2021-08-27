@@ -1,4 +1,5 @@
 #include <fractal/core/fractal.h>
+#include "input_driver.h"
 
 typedef char KeyboardMapping;
 
