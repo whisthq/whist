@@ -98,13 +98,19 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // because the max bitrate of the encoder is usually larger than the actual amount of data we
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
-    static const int same_count_min = 20;
+    static const int same_count_min = 5; // 25 seconds
+    static const int same_count_multiplier = 2;
+    static const int same_count_max = 1024; // ~ 85 minutes (5 * 1024 seconds)
 
     static int throughput = -1;
     static int same_throughput_count = 0;
-    static int prev_throughput = -1;
+    static int max_successful_throughput = -1;
+    static int same_throughput_count_threshold = same_count_min;
+
     static int same_burst_count = 0;
-    static int prev_burst_bitrate = -1;
+    static int max_successful_burst = -1;
+    static int same_burst_count_threshold = same_count_min;
+
     static Bitrates bitrates;
     if (throughput == -1) {
         throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
@@ -115,25 +121,55 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     //     i.e., we don't want to recalculate bitrate if the video is static and server is sending
     //      zero packets
     if (stats.num_received_packets_per_second + stats.num_nacks_per_second > 0) {
-        throughput =
-            (int)(alpha * throughput +
-                  (1 - alpha) * throughput * (1.0 * stats.num_received_packets_per_second) /
-                      (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
-        LOG_INFO("MBPS NEW THROUGHPUT: %d", throughput);
+        int current_throughput_heuristic = throughput * (1.0 * stats.num_received_packets_per_second) /
+                      (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second));
+
+        if (current_throughput_heuristic == throughput) {
+            // If this throughput is the same as the throughput from the last period, then
+            //     increment the same throughput count
+            same_throughput_count++;
+
+            // If we have had the same throughput for the current threshold number of iterations,
+            //     then set the max successful throughput to the active throughput and boost the
+            //     throughput to test a higher bitrate. Reset the threshold for boosting the
+            //     throughput after continuous success since we may have entered an area
+            //     with higher bandwidth.
+            if (same_throughput_count > same_throughput_count_threshold) {
+                max_successful_throughput = throughput;
+                same_throughput_count_threshold = same_count_min;
+                LOG_INFO("MBPS NEW MAX SUCCESS: %d", max_successful_throughput);
+                same_throughput_count = 1;
+                throughput = (int)(throughput * 1.05);
+            }
+        } else {
+            if (throughput > max_successful_throughput && max_successful_throughput != -1) {
+                // If the throughput that yielded lost packets was higher than the last
+                //     continuously successful throughput, then set the throughput to the
+                //     last continuously successful throughput to try it again for longer.
+                //     Increase the threshold for boosting the throughput after continuous
+                //     success because it is more likely that we have found our successful
+                //     throughput for now.
+                throughput = max_successful_throughput;
+                same_throughput_count_threshold = min(
+                    same_throughput_count_threshold * same_count_multiplier,
+                    same_count_max);
+                LOG_INFO("MBPS LAST THROUGHPUT TOO HIGH");
+            } else {
+                // If the throughput that yielded lost packets was lower than the last
+                //     continuously successful throughput, then set the throughput to an
+                //     EWMA-calculated new value and reset the threshold for boosting
+                //     the throughput after continuous success.
+                throughput = (int)(alpha * throughput + (1 - alpha) * current_throughput_heuristic);
+                same_throughput_count_threshold = same_count_min;
+            }
+
+            same_throughput_count = 1;
+        }
+
+        LOG_INFO("MBPS CURRENT THROUGHPUT: %d", throughput);
         LOG_INFO("MBPS NUM NACKED: %d RATIO: %f", stats.num_nacks_per_second,
                  (1.0 * stats.num_received_packets_per_second) /
                      (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
-
-        // If no NACKS after `same_count_min` iterations, gradually increase bitrate with each
-        // iteration
-        if (throughput == prev_throughput) {
-            same_throughput_count++;
-        } else {
-            same_throughput_count = 1;
-        }
-        if (same_throughput_count > same_count_min) {
-            throughput = (int)(throughput * 1.05);
-        }
 
         bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
 
@@ -144,29 +180,55 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             bitrates.bitrate = MINIMUM_BITRATE;
             throughput = (int)(MINIMUM_BITRATE / bitrate_throughput_ratio);
         }
-
-        prev_throughput = throughput;
     }
 
     // Make sure that frames have been recieved before trying to update the burst bitrate
     if (stats.num_rendered_frames_per_second + stats.num_skipped_frames_per_second > 0) {
-        bitrates.burst_bitrate = (int)(alpha * bitrates.burst_bitrate +
-                                       (1 - alpha) * bitrates.burst_bitrate *
+        int current_burst_heuristic = bitrates.burst_bitrate *
                                            (1.0 * stats.num_rendered_frames_per_second) /
                                            (1.0 * (stats.num_skipped_frames_per_second +
-                                                   stats.num_rendered_frames_per_second)));
-        LOG_INFO("MBPS NEW BURST BITRATE: %d", bitrates.burst_bitrate);
-        LOG_INFO("MBPS NUM Skipped: %d", stats.num_skipped_frames_per_second);
+                                                   stats.num_rendered_frames_per_second));
 
-        // If no skipped frames after `same_count_min` iterations, gradually increase bitrate with
-        // each iteration
-        if (bitrates.burst_bitrate == prev_burst_bitrate) {
+        if (current_burst_heuristic == bitrates.burst_bitrate) {
+            // If this burst bitrate is the same as the burst bitrate from the last period, then
+            //     increment the same burst bitrate count
             same_burst_count++;
+
+            // If we have had the same burst bitrate for the current threshold number of iterations,
+            //     then set the max successful burst bitrate to the active burst bitrate and boost the
+            //     burst bitrate to test a higher burst bitrate. Reset the threshold for boosting the
+            //     burst bitrate after continuous success since we may have entered an area
+            //     with higher bandwidth.
+            if (same_burst_count > same_burst_count_threshold) {
+                max_successful_burst = bitrates.burst_bitrate;
+                same_burst_count_threshold = same_count_min;
+                LOG_INFO("MBPS NEW MAX BURST SUCCESS: %d", max_successful_burst);
+                same_burst_count = 1;
+                bitrates.burst_bitrate = (int)(bitrates.burst_bitrate * 1.05);
+            }
         } else {
+            if (bitrates.burst_bitrate > max_successful_burst && max_successful_burst != -1) {
+                // If the burst bitrate that yielded lost packets was higher than the last
+                //     continuously successful burst bitrate, then set the burst bitrate to
+                //     the last continuously successful burst bitrate to try it again for longer.
+                //     Increase the threshold for boosting the burst bitrate after continuous
+                //     success because it is more likely that we have found our successful
+                //     burst bitrate for now.
+                bitrates.burst_bitrate = max_successful_burst;
+                same_burst_count_threshold = min(
+                    same_burst_count_threshold * same_count_multiplier,
+                    same_count_max);
+                LOG_INFO("MBPS LAST BURST TOO HIGH");
+            } else {
+                // If the burst bitrate that yielded lost packets was lower than the last
+                //     continuously successful burst bitrate, then set the burst bitrate to an
+                //     EWMA-calculated new value and reset the threshold for boosting
+                //     the burst bitrate after continuous success.
+                bitrates.burst_bitrate = (int)(alpha * bitrates.burst_bitrate + (1 - alpha) * current_burst_heuristic);
+                same_burst_count_threshold = same_count_min;
+            }
+
             same_burst_count = 1;
-        }
-        if (same_burst_count > same_count_min) {
-            bitrates.burst_bitrate = (int)(bitrates.burst_bitrate * 1.05);
         }
 
         if (bitrates.burst_bitrate > STARTING_BURST_BITRATE) {
@@ -175,7 +237,8 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             bitrates.burst_bitrate = MINIMUM_BITRATE;
         }
 
-        prev_burst_bitrate = bitrates.burst_bitrate;
+        LOG_INFO("MBPS NEW BURST BITRATE: %d", bitrates.burst_bitrate);
+        LOG_INFO("MBPS NUM Skipped: %d", stats.num_skipped_frames_per_second);
     }
     return bitrates;
 }
