@@ -49,6 +49,7 @@ static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_open_uri_message(FractalServerMessage *fmsg, size_t fmsg_size);
 
 /*
 ============================
@@ -82,6 +83,8 @@ int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
             return handle_clipboard_message(fmsg, fmsg_size);
         case SMESSAGE_WINDOW_TITLE:
             return handle_window_title_message(fmsg, fmsg_size);
+        case SMESSAGE_OPEN_URI:
+            return handle_open_uri_message(fmsg, fmsg_size);
         default:
             LOG_WARNING("Unknown FractalServerMessage Received");
             return -1;
@@ -215,5 +218,38 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
     window_title = new_window_title;
 
     should_update_window_title = true;
+    return 0;
+}
+
+static int handle_open_uri_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle server open URI message by launching the relevant URI locally
+
+        Arguments:
+            fmsg (FractalerverMessage*): server open uri message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+    LOG_INFO("Received Open URI message from the server!");
+
+#if defined(_WIN32)
+#define OPEN_URI_CMD "cmd /c start \"\""
+#elif __APPLE__
+#define OPEN_URI_CMD "open"
+#else
+#define OPEN_URI_CMD "xdg-open"
+#endif  // _WIN32
+// just to be safe from off-by-1 errors
+#define OPEN_URI_CMD_MAXLEN 30
+
+    const char *uri = (const char *)&fmsg->requested_uri;
+    const int cmd_len = (int)strlen(uri) + OPEN_URI_CMD_MAXLEN + 1;
+    char *cmd = safe_malloc(cmd_len);
+    memset(cmd, 0, cmd_len);
+    snprintf(cmd, cmd_len, OPEN_URI_CMD " \"%s\"", uri);
+    runcmd(cmd, NULL);
+    free(cmd);
     return 0;
 }

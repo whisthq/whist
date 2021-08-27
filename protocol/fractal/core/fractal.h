@@ -628,6 +628,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_CLIPBOARD = 3,
     SMESSAGE_WINDOW_TITLE = 4,
     MESSAGE_DISCOVERY_REPLY = 5,
+    SMESSAGE_OPEN_URI = 6,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
@@ -646,6 +647,7 @@ typedef struct FractalServerMessage {
         char window_title[0];
         char discovery_reply[0];
         char init_msg[0];
+        char requested_uri[0];
     };
 } FractalServerMessage;
 
