@@ -49,6 +49,30 @@ def get_base_free_mandelboxes(instance_type: str) -> int:
     return type_to_number_map[instance_type]
 
 
+def get_instance_id(instance: InstanceInfo) -> str:
+    """
+    Get the ID for an instance in the DB, using the AWS client
+    Args:
+        which instance whose ID to get
+    Returns:
+        the EC2 ID of that instance
+    """
+    return str(instance.cloud_provider_id.strip("aws-"))
+
+
+def check_instance_exists(instance_id: str, location: str) -> bool:
+    """
+    Checks whether a specified instance actually exists, using the AWS client
+    Args:
+        instance_id: the id of the instance to query
+        location: the region to check in
+    Returns:
+        True if the instance is up, else False
+    """
+    ec2_client = EC2Client(region_name=location)
+    return ec2_client.check_if_instances_up([instance_id])
+
+
 def terminate_instance(instance: InstanceInfo) -> None:
     """
     Terminates a given instance using the AWS client
@@ -58,9 +82,9 @@ def terminate_instance(instance: InstanceInfo) -> None:
     Returns: None
 
     """
-    instance_id = instance.cloud_provider_id.strip("aws-")
-    ec2_client = EC2Client(region_name=instance.location)
-    if ec2_client.check_if_instances_up([instance_id]):
+    instance_id = get_instance_id(instance)
+    if check_instance_exists(instance_id, instance.location):
+        ec2_client = EC2Client(region_name=instance.location)
         ec2_client.stop_instances([instance_id])
     db.session.delete(instance)
     db.session.commit()
@@ -269,7 +293,9 @@ def do_scale_up_if_necessary(
 def drain_instance(instance: InstanceInfo) -> None:
     """
     Attempts to drain an instance, logging an error and marking unresponsive
-    if it cannot be drained.
+    if it cannot be drained, and removing from the database if the instance
+    in question does not actually exist
+
     Args:
         instance: The instance to drain
 
@@ -286,23 +312,29 @@ def drain_instance(instance: InstanceInfo) -> None:
     if old_status == InstanceState.PRE_CONNECTION or instance.ip is None or str(instance.ip) == "":
         terminate_instance(instance)
     else:
-        try:
-            base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-            resp = requests.post(
-                f"{base_url}/drain_and_shutdown",
-                json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
-                verify=False,
-            )
-            resp.raise_for_status()
-        except requests.exceptions.RequestException as error:
-            fractal_logger.error(
-                (
-                    f"Unable to send drain_and_shutdown request to host service"
-                    f" on instance {instance.instance_name}: {error}"
+        instance_id = get_instance_id(instance)
+        if check_instance_exists(instance_id, instance.location):
+            # If the instance exists, tell it to drain
+            try:
+                base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                resp = requests.post(
+                    f"{base_url}/drain_and_shutdown",
+                    json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
+                    verify=False,
                 )
-            )
-            instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
-            db.session.commit()
+                resp.raise_for_status()
+            except requests.exceptions.RequestException as error:
+                fractal_logger.error(
+                    (
+                        f"Unable to send drain_and_shutdown request to host service"
+                        f" on instance {instance.instance_name}: {error}"
+                    )
+                )
+                instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+                db.session.commit()
+        else:
+            # If the instance doesn't exist, purge it from our database
+            terminate_instance(instance)
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:
