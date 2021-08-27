@@ -16,21 +16,13 @@ extern "C" {
 typedef struct {
 } InternalKeyboardMapping;
 
-hmap<FractalKeycode, FractalKeycode> modmap = {
-    // Swap gui and ctrl
-    {FK_LGUI, FK_LCTRL},
-    {FK_LCTRL, FK_LGUI},
-    // Map right-modifier to left-modifier, to make things easier
-    {FK_RGUI, FK_LCTRL}, // (still swapped)
-    {FK_RCTRL, FK_LGUI},
-    {FK_RALT, FK_LALT}
-};
-
+// Set of modifiers, for detecting if a key is a modifier
 set<FractalKeycode> modifiers = {
     FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
     FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI
 };
 
+// Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
     int operator()(const vector<FractalKeycode> &V) const {
         int hash = V.size();
@@ -41,6 +33,18 @@ struct VectorHasher {
     }
 };
 
+// The modmap that occurs before the full keyboard mapping
+hmap<FractalKeycode, FractalKeycode> modmap = {
+    // Swap gui and ctrl
+    {FK_LGUI, FK_LCTRL},
+    {FK_LCTRL, FK_LGUI},
+    // Map right-modifier to left-modifier, to make things easier
+    {FK_RGUI, FK_LCTRL}, // (still swapped)
+    {FK_RCTRL, FK_LGUI},
+    {FK_RALT, FK_LALT}
+};
+
+// The full keyboard mapping
 hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
     {
@@ -61,8 +65,33 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
     },
 };
 
+auto key_sorter = [](const FractalKeycode& a, const FractalKeycode& b) -> bool {
+    // In ascending order, with a massive weight on being a modifier
+    return (int)a + KEYCODE_UPPERBOUND*modifiers.count(a) < (int)b + KEYCODE_UPPERBOUND*modifiers.count(b);
+};
+
+void init_keyboard_mapping() {
+    // Sort the keyboard mappings in a way that can be compared to later,
+    // Particularly, with modifiers at the end of the array
+    hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> new_keyboard_map;
+    for(const auto& kv : keyboard_mappings) {
+        vector<FractalKeycode> key = kv.first;
+        sort(key.begin(), key.end(), key_sorter);
+        new_keyboard_map[key] = kv.second;
+    }
+    keyboard_mappings = new_keyboard_map;
+}
+
+bool initialized = false;
+
 extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_mapping, FractalKeycode key_code, int pressed) {
-    // Filter through the modmap first, if necessary 
+    // Initialize keyboard mapping if it hasn't been already
+    if (!initialized) {
+        init_keyboard_mapping();
+        initialized = true;
+    }
+
+    // Filter through the modmap first, if necessary
     if (modmap.count(key_code)) {
         key_code = modmap[key_code];
     }
@@ -76,8 +105,8 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
     // If a key is being pressed, we check against mapped key combinations
 
     // Get the current keyboard combination being pressed
-    vector<FractalKeycode> currently_pressed;
-    currently_pressed.reserve(KEYCODE_UPPERBOUND);
+    static vector<FractalKeycode> currently_pressed; // Static to not unnecessarily malloc
+    currently_pressed.clear(); // Start with an empty array
     for(int i = 0; i < KEYCODE_UPPERBOUND; i++) {
         FractalKeycode i_key = (FractalKeycode)i;
         if (i_key != key_code && get_keyboard_key_state(input_device, i_key) == 1) {
@@ -87,14 +116,9 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
     currently_pressed.push_back(key_code);
 
     // Put the modifiers at the end of the array
-    sort(currently_pressed.begin(), currently_pressed.end(), 
-    [](const FractalKeycode& a, const FractalKeycode& b) -> bool
-    { 
-        // In ascending order, with a massive weight on being a modifier
-        return (int)a + KEYCODE_UPPERBOUND*modifiers.count(a) < (int)b + KEYCODE_UPPERBOUND*modifiers.count(b); 
-    });
+    sort(currently_pressed.begin(), currently_pressed.end(), key_sorter);
 
-    // Check if this is a keyboard mapping
+    // Check if this is a known keyboard mapping
     if (keyboard_mappings.count(currently_pressed)) {
         vector<FractalKeycode> new_key_combination = keyboard_mappings[currently_pressed];
 

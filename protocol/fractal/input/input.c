@@ -62,6 +62,8 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg
                 keyboard event, to update the keyboard state
     */
 
+    return;
+
     if (fmsg->id <= last_input_fmsg_id) {
         // Ignore Old FractalClientMessage
         return;
