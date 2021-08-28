@@ -610,7 +610,7 @@ RUN systemctl enable fractal-audio
 # Startup
 #########################
 
-# Set up user config map for mandelbox startup 
+# Set up user config map for mandelbox startup
 COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
 
 # Set up first systemd service
@@ -674,6 +674,23 @@ COPY --from=fractal-teleport-fuse /fractal-teleport-fuse/build/fractal-teleport-
 # Set up script to launch teleport functionality
 COPY teleport/run-fractal-teleport.sh /usr/bin/run-fractal-teleport.sh
 RUN chmod +x /usr/bin/run-fractal-teleport.sh
+
+# Set up the teleport URI handler
+
+# Install XDG dependencies
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    xdg-utils \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install fractal-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
+# See fractal-teleport-uri-handler.desktop for a list of currently-supported protocols.
+RUN mkdir -p /opt/teleport
+COPY teleport/uri-handler/fractal-teleport-uri-handler.desktop /opt/teleport/uri-handler.desktop
+COPY teleport/uri-handler/fractal-teleport-uri-handler.sh /opt/teleport/uri-handler
+RUN chmod +x /opt/teleport/uri-handler
+RUN su - fractal -c 'xdg-desktop-menu install /opt/teleport/uri-handler.desktop'
 
 # Set up the Fractal server protocol
 
