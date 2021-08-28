@@ -49,6 +49,12 @@ RUN su - fractal -c \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
     && xdg-mime default google-chrome.desktop x-scheme-handler/about"
 
+# Whitelist streamed URI protocols (zoommtg,slack.spotify,discord)
+RUN mkdir -p /etc/opt/chrome/policies/managed \
+    && echo {} \
+    | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
+    > /etc/opt/chrome/policies/managed/whitelist.json
+
 # Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh
