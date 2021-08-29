@@ -353,11 +353,17 @@ void update_cursor(VideoFrame* frame) {
                 // Use BLENDMODE_NONE to allow for proper cursor blit-resize
                 SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
 
-                int dpi = get_native_window_dpi((SDL_Window*)window);
+#ifdef _WIN32
+                // on Windows, the cursor DPI is unchanged
+                const int cursor_dpi = 96;
+#else
+                // on other platforms, use the window DPI
+                const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
+#endif  // _WIN32
 
                 // Create the scaled cursor surface which takes DPI into account
                 SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
-                    0, cursor->bmp_width * 96 / dpi, cursor->bmp_height * 96 / dpi,
+                    0, cursor->bmp_width * 96 / cursor_dpi, cursor->bmp_height * 96 / cursor_dpi,
                     cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
                     cursor_surface->format->Gmask, cursor_surface->format->Bmask,
                     cursor_surface->format->Amask);
@@ -367,9 +373,9 @@ void update_cursor(VideoFrame* frame) {
 
                 // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
                 // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
-                sdl_cursor =
-                    SDL_CreateColorCursor(scaled_cursor_surface, cursor->bmp_hot_x * 96 / dpi,
-                                          cursor->bmp_hot_y * 96 / dpi);
+                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
+                                                   cursor->bmp_hot_x * 96 / cursor_dpi,
+                                                   cursor->bmp_hot_y * 96 / cursor_dpi);
                 SDL_FreeSurface(cursor_surface);
                 SDL_FreeSurface(scaled_cursor_surface);
             } else {
