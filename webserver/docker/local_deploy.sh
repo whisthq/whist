@@ -50,8 +50,6 @@ if [ $USE_DEV_DB == true ]; then
   APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up --build -d web # don't spin up postgres_db
 
 else
-  bash ../ephemeral_db_setup/fetch_db.sh
-
   # eph db configurations
   export POSTGRES_HOST="localhost"
   export POSTGRES_PORT="9999"
