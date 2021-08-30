@@ -47,7 +47,7 @@ jobs:
 
       - name: Set Git Branch Name for Push Event
         if: ${{ github.event_name == 'push' }}
-        run: echo "git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        run: echo "git_branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Set Git Branch Name for Pull Request Event
         if: ${{ github.event_name == 'pull_request' }}
