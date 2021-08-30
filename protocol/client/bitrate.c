@@ -105,11 +105,11 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     static int throughput = -1;
     static int same_throughput_count = 0;
     static int max_successful_throughput = -1;
-    static int same_throughput_count_threshold = same_count_min;
+    static int same_throughput_count_threshold = (int)same_count_min;
 
     static int same_burst_count = 0;
     static int max_successful_burst = -1;
-    static int same_burst_count_threshold = same_count_min;
+    static int same_burst_count_threshold = (int)same_count_min;
 
     static Bitrates bitrates;
     if (throughput == -1) {
