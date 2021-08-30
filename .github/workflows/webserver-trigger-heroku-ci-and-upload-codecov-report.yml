@@ -16,6 +16,7 @@ on:
     # updated test coverage report for the `dev` branch.
     branches:
       - dev
+      - owenniles/webserver/trigger-heroku-ci-manually
     paths:
       - "webserver/**.py"
       - ".github/workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml"
@@ -49,9 +50,11 @@ jobs:
           if [ ${{ github.event_name == 'pull_request' }} ]; then
             # running on pull_request event, get branch name from event
             echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+            echo "Git Branch is: $git_branch"
           else
             # running on push event, get branch name from ref
             echo "git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
+            echo "Git Branch is: $git_branch"
           fi
 
         # The S3 object into which we need to upload our source tarball was
