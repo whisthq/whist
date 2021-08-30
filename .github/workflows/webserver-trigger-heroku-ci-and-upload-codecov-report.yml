@@ -52,9 +52,9 @@ jobs:
             echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
             echo "Git Branch is: $git_branch"
           else
-            # running on push event, get branch name from ref
-            echo "git_branch=$GITHUB_REF" >> $GITHUB_ENV
-            echo $GITHUB_REF
+            # running on push or workflow_dispatch event, get branch name from ref
+            echo "git_branch=${{ github.ref }}" >> $GITHUB_ENV
+            echo "Hello this is: ${{ github.ref }}"
             echo "Git Branch is: $git_branch"
           fi
 
