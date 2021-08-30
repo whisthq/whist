@@ -60,7 +60,7 @@ jobs:
                    -H "Content-Type:" --data-binary @-
           heroku api POST /test-runs <<EOF
           {
-            "commit_branch": "$(git branch --show-current)",
+            "commit_branch": "${{ github.ref }}",
             "commit_message": "$(git show -s --format=%s)",
             "commit_sha": "$GITHUB_SHA",
             "pipeline": "3f9f0f87-eda4-43ed-81ee-61fcdcdf5739",
