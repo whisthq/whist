@@ -44,15 +44,13 @@ jobs:
           heroku plugins:install api
           echo ::set-output name=source::$(heroku api POST /sources)
 
-      - name: Set Git Branch Name
-        run: |
-          if [ ${{ github.event_name == 'pull_request' }} ]; then
-            # running on pull_request event, get branch name from event
-            echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
-          else
-            # running on push event, get branch name from ref
-            echo "git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          fi
+      - name: Set Git Branch Name for Push Event
+        if: ${{ github.event_name == 'push' }}
+        run: echo "git_branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Set Git Branch Name for Pull Request Event
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
 
         # The S3 object into which we need to upload our source tarball was
         # created in the previous step. The first thing we need to do in this
