@@ -46,6 +46,11 @@ jobs:
         working-directory: webserver
         run: mypy
 
+  # Heroku Testing
+  # Checks unit tests on the Heroku pipeline.
+  # This step now gets run by `webserver-trigger-heroku-ci-and-upload-codecov-report.yml` to also run on
+  # pushes to `dev`, to upload the Codecov report for the `dev` branch
+
   # Database Migration
   # Compare the schema of the live database with webserver/db-migration/schema.sql, and
   # notify the PR if schema changes are detected
