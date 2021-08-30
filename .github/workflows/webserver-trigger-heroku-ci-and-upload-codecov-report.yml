@@ -46,11 +46,11 @@ jobs:
           echo ::set-output name=source::$(heroku api POST /sources)
 
       - name: Set Git Branch Name for Push Event
-        if: ${{ github.event.name == 'push' }}
+        if: ${{ github.event_name == 'push' }}
         run: echo "git_branch=${{ github.ref }}" >> $GITHUB_ENV
 
       - name: Set Git Branch Name for Pull Request Event
-        if: ${{ github.event.name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' }}
         run: echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
 
         # The S3 object into which we need to upload our source tarball was
