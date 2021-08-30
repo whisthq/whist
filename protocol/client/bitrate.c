@@ -102,10 +102,10 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // hacky way of allowing constant assignment to static variable (cannot assign `const` to
     //     `static)
     enum {
-        same_count_min = 5,
-        same_count_multiplier = 2,
-        same_count_max = 1024
-    };  // NOLINT(readability-identifier-naming)
+        same_count_min = 5,         // NOLINT(readability-identifier-naming)
+        same_count_multiplier = 2,  // NOLINT(readability-identifier-naming)
+        same_count_max = 1024       // NOLINT(readability-identifier-naming)
+    };
 
     static int throughput = -1;
     static int same_throughput_count = 0;
