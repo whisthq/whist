@@ -45,7 +45,14 @@ jobs:
           echo ::set-output name=source::$(heroku api POST /sources)
 
       - name: Set Git Branch Name
-        run: git branch --show-current
+        run: |
+          if [ ${{ github.event_name == pull_request }} ]; then
+            # running on pull_request event, get branch name from event
+            echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          else
+            # running on push event, get branch name from ref
+            echo "git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          fi
 
         # The S3 object into which we need to upload our source tarball was
         # created in the previous step. The first thing we need to do in this
@@ -63,7 +70,7 @@ jobs:
                    -H "Content-Type:" --data-binary @-
           heroku api POST /test-runs <<EOF
           {
-            "commit_branch": "$(git branch --show-current)",
+            "commit_branch": "$git_branch",
             "commit_message": "$(git show -s --format=%s)",
             "commit_sha": "$GITHUB_SHA",
             "pipeline": "3f9f0f87-eda4-43ed-81ee-61fcdcdf5739",
