@@ -46,7 +46,7 @@ jobs:
 
       - name: Set Git Branch Name
         run: |
-          if [ ${{ github.event_name == pull_request }} ]; then
+          if [ ${{ github.event_name == 'pull_request' }} ]; then
             # running on pull_request event, get branch name from event
             echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
           else
