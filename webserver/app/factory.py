@@ -10,12 +10,14 @@ from flask_cors import CORS
 from flask_jwt_extended import jwt_required, JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from jwt import PyJWKClient
+from sqlalchemy.ext.declarative import DeferredReflection
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
+from app.models import db
 
 from auth0 import ScopeError
 from payments import payment_portal_factory, get_customer_id, PaymentRequired
@@ -77,7 +79,6 @@ def create_app(testing=False):
     # Set the Stripe API key.
     stripe.api_key = app.config["STRIPE_SECRET"]
 
-    from .models import db
     from .helpers.utils.general.limiter import limiter
 
     limiter.init_app(app)
@@ -86,6 +87,9 @@ def create_app(testing=False):
     register_flask_view_metrics_monitor(app)
 
     CORS(app)
+
+    with app.app_context():
+        DeferredReflection.prepare(db.engine)
 
     register_handlers(app)
     register_commands(app)
