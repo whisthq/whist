@@ -21,10 +21,6 @@ fi
 # in this case, we simply need to apply the schema and data to the ephemeral db.
 DB_EXISTS=${DB_EXISTS:=false} # default: false
 if [ $DB_EXISTS == true ]; then
-  # use source db (dev, staging, prod) db to fetch data
-  export POSTGRES_URI=$POSTGRES_SOURCE_URI
-  bash ../../ephemeral_db_setup/fetch_db.sh
-
   # setup ephemeral db
   export POSTGRES_URI=$POSTGRES_DEST_URI
   # db itself was already created by Heroku; we just need to apply schema and insert data
@@ -49,7 +45,6 @@ fi
 # load env vars, namely (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
 export $(cat ../../docker/.env | xargs)
 
-bash ../../ephemeral_db_setup/fetch_db.sh
 BRANCH=$(git branch --show-current)
 COMMIT=$(git rev-parse --short HEAD)
 
