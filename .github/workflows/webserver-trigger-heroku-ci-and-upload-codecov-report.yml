@@ -16,7 +16,6 @@ on:
     # updated test coverage report for the `dev` branch.
     branches:
       - dev
-      - phil/hotfix
     paths:
       - "webserver/**.py"
       - ".github/workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml"
