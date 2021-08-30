@@ -1,0 +1,79 @@
+# workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml
+#
+# Webserver: Trigger Heroku CI & Upload Codecov Report
+# Manually trigger Heroku CI via the Heroku Platform API rather than using
+# heroku ci:run. When we use heroku ci:run to trigger a test run on Heroku, we
+# have to wait for the test run to finish before our job is complete. By
+# triggering the test run manually via the Platform API, we can return from our
+# workflow immediately after creating the test run.
+
+name: "Webserver: Trigger Heroku CI & Upload Codecov Report"
+
+on:
+  push:
+    # Trigger Heroku CI to run when commits that modify Webserver source files
+    # are pushed to `dev`, since we need to run Heroku CI in order to generate an
+    # updated test coverage report for the `dev` branch.
+    branches:
+      - dev
+    paths:
+      - "webserver/**.py"
+      - ".github/workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml"
+  pull_request:
+    paths:
+      - "webserver/**.py"
+      - ".github/workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml"
+  workflow_dispatch:
+
+jobs:
+  webserver-trigger-heroku-ci:
+    name: Trigger Test Run
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+        # A Heroku source is an S3 object into which we can upload a gzipped
+        # tarball containing an application's source code.
+        # https://devcenter.heroku.com/articles/build-and-release-using-the-api#create-a-source
+      - name: Create Heroku Source
+        id: source
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        run: |
+          heroku plugins:install api
+          echo ::set-output name=source::$(heroku api POST /sources)
+
+      - name: Set Git Branch Name
+        run: |
+          if [ ${{ github.event_name == 'pull_request' }} ]; then
+            # running on pull_request event, get branch name from event
+            echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          else
+            # running on push event, get branch name from ref
+            echo "git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          fi
+
+        # The S3 object into which we need to upload our source tarball was
+        # created in the previous step. The first thing we need to do in this
+        # step is upload some data.
+        # https://devcenter.heroku.com/articles/build-and-release-using-the-api#use-the-source_blob-put_url-to-upload-data
+        # Then, we can create a test run. ID 3f9f0f87-eda4-43ed-81ee-61fcdcdf5739 is
+        # the pipeline ID of the fractal-server Heroku pipeline.
+      - name: Upload Source Archive and Trigger Test Run
+        working-directory: webserver
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        run: |
+          git archive --format tar.gz HEAD |
+              curl -X PUT "${{ fromJSON(steps.source.outputs.source).source_blob.put_url }}" \
+                   -H "Content-Type:" --data-binary @-
+          heroku api POST /test-runs <<EOF
+          {
+            "commit_branch": "$git_branch",
+            "commit_message": "$(git show -s --format=%s)",
+            "commit_sha": "$GITHUB_SHA",
+            "pipeline": "3f9f0f87-eda4-43ed-81ee-61fcdcdf5739",
+            "source_blob_url": "${{ fromJSON(steps.source.outputs.source).source_blob.get_url }}"
+          }
+          EOF
