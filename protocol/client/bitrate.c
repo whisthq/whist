@@ -98,18 +98,23 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // because the max bitrate of the encoder is usually larger than the actual amount of data we
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
-    static const int same_count_min = 5;  // 25 seconds
-    static const int same_count_multiplier = 2;
-    static const int same_count_max = 1024;  // ~ 85 minutes (5 * 1024 seconds)
+
+    // hacky way of allowing constant assignment to static variable (cannot assign `const` to
+    //     `static)
+    enum {
+        same_count_min = 5,
+        same_count_multiplier = 2,
+        same_count_max = 1024
+    };  // NOLINT(readability-identifier-naming)
 
     static int throughput = -1;
     static int same_throughput_count = 0;
     static int max_successful_throughput = -1;
-    static int same_throughput_count_threshold = (int)(1.0 * same_count_min);
+    static int same_throughput_count_threshold = same_count_min;
 
     static int same_burst_count = 0;
     static int max_successful_burst = -1;
-    static int same_burst_count_threshold = (int)(1.0 * same_count_min);
+    static int same_burst_count_threshold = same_count_min;
 
     static Bitrates bitrates;
     if (throughput == -1) {
