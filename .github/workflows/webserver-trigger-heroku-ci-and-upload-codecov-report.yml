@@ -53,8 +53,8 @@ jobs:
             echo "Git Branch is: $git_branch"
           else
             # running on push event, get branch name from ref
-            echo "git_branch=${GITHUB_REF}" >> $GITHUB_ENV
-            echo ${GITHUB_REF}
+            echo "git_branch=$GITHUB_REF" >> $GITHUB_ENV
+            echo $GITHUB_REF
             echo "Git Branch is: $git_branch"
           fi
 
