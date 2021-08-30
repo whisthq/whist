@@ -27,7 +27,7 @@ on:
 
 jobs:
   webserver-trigger-heroku-ci:
-    name: Trigger Heroku CI & Upload Codecov Report
+    name: Trigger Test Run
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Git Repository
