@@ -33,6 +33,7 @@ Includes
 #else
 #include <signal.h>
 #include <unistd.h>
+#include <fcntl.h>
 #endif
 #include <time.h>
 
@@ -388,6 +389,11 @@ int main(int argc, char* argv[]) {
     clock window_name_timer;
     start_timer(&window_name_timer);
 
+#ifndef _WIN32
+    clock uri_handler_timer;
+    start_timer(&uri_handler_timer);
+#endif  // ! _WIN32
+
     while (!exiting) {
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
@@ -427,6 +433,41 @@ int main(int argc, char* argv[]) {
             }
             start_timer(&window_name_timer);
         }
+
+#ifndef _WIN32
+#define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
+#define HANDLED_URI_MAX_LEN 4096
+        if (get_timer(uri_handler_timer) > 0.1) {
+            if (!access(URI_HANDLER_FILE, R_OK)) {
+                // If the handler file exists, read it and delete the file
+                int fd = open(URI_HANDLER_FILE, O_RDONLY);
+                char handled_uri[HANDLED_URI_MAX_LEN + 1] = {0};
+                ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAX_LEN);
+                if (bytes > 0) {
+                    size_t fsmsg_size = sizeof(FractalServerMessage) + bytes + 1;
+                    FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);
+                    memset(fsmsg, 0, sizeof(*fsmsg));
+                    fsmsg->type = SMESSAGE_OPEN_URI;
+                    memcpy(&fsmsg->requested_uri, handled_uri, sizeof(handled_uri));
+                    read_lock(&is_active_rwlock);
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) <
+                        0) {
+                        LOG_WARNING("Failed to broadcast open URI message.");
+                    } else {
+                        LOG_INFO("Sent open URI message!");
+                    }
+                    read_unlock(&is_active_rwlock);
+                    free(fsmsg);
+                } else {
+                    LOG_WARNING("Unable to read URI handler file: %d", errno);
+                }
+                close(fd);
+                remove(URI_HANDLER_FILE);
+            }
+
+            start_timer(&window_name_timer);
+        }
+#endif  // ! _WIN32
 
         if (get_timer(last_ping_check) > 20.0) {
             for (;;) {
