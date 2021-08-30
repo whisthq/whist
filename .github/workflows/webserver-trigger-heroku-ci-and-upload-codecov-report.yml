@@ -45,7 +45,7 @@ jobs:
           echo ::set-output name=source::$(heroku api POST /sources)
 
       - name: Set Git Branch Name
-        run: git branch --show-current)
+        run: git branch --show-current
 
         # The S3 object into which we need to upload our source tarball was
         # created in the previous step. The first thing we need to do in this
