@@ -22,7 +22,6 @@ The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
 not to download the libraries used to build the Fractal protocol from S3.
 The optional argument \`--cmakesetCI\`, if provided, is used to set
 \`-DCI=True\` in the cmake configuration.
-
 EOF
 
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
@@ -30,8 +29,7 @@ EOF
 }
 
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
-# I'd prefer not to have the short arguments at all, but it looks like getopt
-# chokes without them.
+# I'd prefer not to have the short arguments at all, but getopt only uses short arguments
 TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI -n 'build_protocol_targets.sh' -- "$@"`
 eval set -- "$TEMP"
 
