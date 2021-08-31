@@ -6,7 +6,7 @@ This folder builds a client to receive a server stream via Fractal. It supports 
 
 The option flags are as follows:
 
-```bash
+```
   -w, --width=WIDTH             set the width for the windowed-mode
                                   window, if both width and height
                                   are specified
