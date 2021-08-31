@@ -54,18 +54,16 @@ New Actions should be developed in a new subdirectory under `.github/actions`. N
 We'll use a simplified setup for the `monorepo-config` Action as a demonstration. At minimum, a Docker GitHub Action requires two files, one to set up the Action and one to setup your Docker container. You must use `action.yml` and `Dockerfile` as their names.
 
 ```
-
 ├── .github
 │   ├── actions
 │   │   ├── monorepo-config
 │   │   │   ├── action.yml
 │   │   │   └── Dockerfile
-
 ```
 
 `action.yml` describes the structure, inputs, and outputs of your Action process for GitHub's runner. Since we're using a Docker environment, we only need a minimal amount of information in this file:
 
-```YAML
+```yaml
 name: Monorepo Config
 description: Build /config folder into .json files.
 inputs: # inputs can be passed to an Action from a workflow.
@@ -104,7 +102,6 @@ Let's add the remaining files for our `monorepo-config` Action. It's a Python pr
 │   │   │   ├── helpers
 │   │   │   ├── main.py
 │   │   │   └── requirements.txt
-
 ```
 
 In this example, `main.py` is a basic Python program that does the actual work for our Action. It has a couple dependencies in `requirements.txt` that you need to `pip install` before running. The important thing to recogize here is that `main.py` is an entirely standard Python file. It reads its arguments from the command line, and prints its results to stdout. It has no knowledge of GitHub Action implementation details, it doesn't need any environment variables, and you can run it locally with `python main.py`. These are all characteristics of a general-purpose command line program, and this is what we want to be able to write.
@@ -116,7 +113,7 @@ An important part of this job is managing how arguments get passed to our Python
 
 With a working directory of `fractal`, we might call this:
 
-```
+```bash
 python .github/actions/monorepo-config/main.py config \
        --secrets '{"test": "secret"}' \
 ```
@@ -166,7 +163,7 @@ We're just about at the finish line. We now have a container that's reproducible
 
 Let's see some commands that we might use while developing locally. Remember our working directory is the monorepo root.
 
-```sh
+```bash
 # Run python on your host machine. You must have the dependencies installed.
 python .github/actions/monorepo-config/main.py "config" \
        --secrets '{"test": "secret"}'
@@ -225,8 +222,6 @@ git commit -a -m 'testing the workflow' \
       monorepo-config-test.yml \
       --repo fractal/fractal \
 && gh run view --web
-
-
 ```
 
 That's all! Keep to this practice, and you won't need a special runner like `nektos/act` for developing an Action.

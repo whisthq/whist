@@ -8,19 +8,19 @@ The whole config process is containerized, so you'll need Docker installed. The 
 
 First, build the image with the tag `fractal/config`.
 
-```sh
+```bash
 docker build --tag fractal/config .
 ```
 
 Then, run the configuration builder. You should expect to see the config map printed to stdout as a large JSON object.
 
-```sh
+```bash
 docker run fractal/config
 ```
 
 Any additional arguments will be passed on to the Python CLI for the configuration builder.
 
-```sh
+```bash
 # View CLI documentation and options.
 docker run fractal/config --help
 
@@ -30,7 +30,7 @@ docker run fractal/config --os macos --deploy dev
 
 You can override the `--entrypoint` to inspect the container or to run tests.
 
-```sh
+```bash
 # Enter into a bash shell.
 docker run -it --entrypoint /bin/bash fractal/config
 
@@ -75,13 +75,12 @@ This allows you to pass only the necessary configuration values in your applicat
 
 For GitHub Actions reasons, it's good to get in the habit of running this program (and any Actions program) from the root folder of the monorepo. We'll run from the `fractal` folder like this:
 
-```sh
+```bash
 python .github/actions/monorepo-config/main.py \
         --path config \
         --secrets '{"APPLE_API_KEY_ID": "a-really-secret-value"}' \
         --deploy dev \
         --os macos \
-
 ```
 
 Here, we're passing `--secrets` as JSON, and we can expect those values to be merged into the final config. Note that that secret keys (like `APPLE_API_KEY_ID` above), must _already be present_ in one of the `.yml` schema files for the merge to be successful. The value can be empty, or something like `\*\*\*\*\*\*\*`. We do this because it's important for config schemas to serve as documentation for our secret CI values. By keeping (and commenting) the secret keys in the `.yml` files, they remain visible to the whole team.

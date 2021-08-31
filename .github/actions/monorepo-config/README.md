@@ -6,7 +6,7 @@ This folder contains the code for the GitHub Action for the monorepo configurati
 
 Run all commands with the monorepo root (`fractal/`) as the working directory.
 
-```sh
+```bash
 docker build \
   --tag fractal/monorepo-config \
   .github/actions/monorepo-config
@@ -30,7 +30,7 @@ docker run \
 Or if you have all the dependencies installed from `requirements.txt`, you can
 run directly with:
 
-```sh
+```bash
 python3 .github/actions/monorepo-config/main.py --help
 # you can replace --help with arguments like the ones below to test:
 # --path config --deploy dev --os win32
@@ -82,7 +82,7 @@ It's important to know that in GitHub, the Docker "build-time" commands will be 
 
 To run tests or enter a shell inside the container, override the `--entrypoint` flag to `docker run`. Example:
 
-```sh
+```bash
 # run tests onces
 docker run \
     --rm \

@@ -31,7 +31,7 @@ To set up your Fractal development instance:
 
 - Then, run the following commands (adding the `-o` flag to shell scripts if you want to see output, see the README for each individual repository):
 
-```
+```bash
 # clones `dev` by default
 git clone git@github.com:fractal/fractal.git # via SSH
 git clone https://github.com/fractal/fractal.git # via HTTPS
@@ -74,7 +74,7 @@ To create an AMI:
 
 - SSH/SSM into your instance and run the following commands:
 
-```
+```bash
 # clones `dev` by default
 git clone https://github.com/fractal/fractal.git
 
