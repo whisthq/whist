@@ -24,7 +24,7 @@ require (
 	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgtype v1.8.1
 	github.com/jackc/pgx/v4 v4.13.0
-	github.com/jschaf/pggen v0.0.0-20210823065557-43bb88da5ee9 // indirect
+	github.com/jschaf/pggen v0.0.0-20210831185552-e7492c17d64f // indirect
 	github.com/logzio/logzio-go v1.0.2
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
