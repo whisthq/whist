@@ -126,7 +126,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 
 /**
  * @brief           Updates the encoder upon request. Note that this function
- *                  _returns_ the encoded encoder, due to the encoder factory.
+ *                  _returns_ the updated encoder, due to the encoder factory.
  *
  * @param encoder   VideoEncoder pointer
  *
