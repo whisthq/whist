@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     apt-utils \
     curl \
     git \
+    xz-utils \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -52,6 +53,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     sudo \
     clang-format \
     awscli \
+    jq \
+    build-essential \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -74,6 +77,13 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install clang-tidy 6. We must hardcode this version, else we will install the
+# overaggressive recent version, and we need to symlink it to be able to call
+# it as "clang-tidy".
+RUN mkdir /clang-tidy \
+    && wget -q -O - https://releases.llvm.org/6.0.1/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz | tar -xJ -C /clang-tidy \
+    && ln -sf "/clang-tidy/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-tidy" "/usr/bin/clang-tidy"
 
 # Create fractal Linux user for building the protocol
 RUN groupadd fractal
