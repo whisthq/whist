@@ -66,13 +66,13 @@ To contribute to enhancing all the mandelbox images Fractal uses, you should con
 
 After cloning the repo, set up your EC2 instance with the setup script from the `host-setup` subrepo.:
 
-```shell
+```bash
 ./setup_localdev_dependencies.sh
 ```
 
 This will begin installing all dependencies and configurations required to run our mandelbox images on an AWS EC2 host. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
-```shell
+```bash
 ../protocol/build_server_protocol.sh && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
@@ -80,13 +80,13 @@ This will begin installing all dependencies and configurations required to run o
 
 To build the server protocol for use in a mandelbox image (for example with the `--update-protocol` parameter to `run_mandelbox_image.sh`), run:
 
-```shell
+```bash
 ../protocol/build_server_protocol.sh
 ```
 
 To build a specific application's mandelbox image, run:
 
-```shell
+```bash
 ./build_mandelbox_image.sh APP
 ```
 
@@ -105,7 +105,7 @@ Before you can run mandelbox images (local or remote), make sure you have the ho
 
 Once an image with tag `current-build` has been built locally via `build_mandelbox_images.sh`, it may be run locally by calling:
 
-```
+```bash
 ./run_local_mandelbox_image.sh APP [OPTIONS...]
 ```
 
@@ -119,7 +119,7 @@ Before you can run mandelbox images (local or remote), make sure you have the ho
 
 If an image has been pushed to GHCR and you wish to test it, you first need to authenticate Docker to allow you to pull the relevant image. To do this, run the following:
 
-```
+```bash
 echo <PAT> | docker login --username <GH_USERNAME> --password-stdin ghcr.io
 ```
 
@@ -127,7 +127,7 @@ Replace `<PAT>` with a [GitHub Personal Access Token](https://docs.github.com/en
 
 Then, retrieve the tag you wish to run by grabbing the relevant (full) Git commit hash from this repository, and run:
 
-```
+```bash
 ./run_remote_mandelbox_image.sh APP_WITH_ENVIRONMENT TAG [OPTIONS...]
 ```
 
@@ -147,7 +147,7 @@ We store our production mandelbox images on GitHub mandelbox Registry (GHCR) and
 
 Once an image has been built via `./build_mandelbox_image.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
 
-```
+```bash
 GH_PAT=xxx GH_USERNAME=xxx ./push_mandelbox_image.sh APP ENVIRONMENT
 ```
 

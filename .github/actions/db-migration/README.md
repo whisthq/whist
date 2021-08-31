@@ -8,12 +8,11 @@ To keep consistency with the GitHub Actions environment, you should run all comm
 
 Note that to run locally, you _must_ mount the monorepo to the container as a Docker `--volume`, and your container working directory must be in the same location. It doesn't matter which location you choose, as long as you also set the working directory. In CI, the working directory will be forced to `/github/workspace`, so we use that in the example below.
 
-```sh
+```bash
 # Build the docker image
 docker build --tag fractal/db-migration .github/actions/db-migration
 
 # Run database migration, output schema diff
-
 docker run \
     --rm \
     --env "HEROKU_API_TOKEN=*********" \
@@ -25,7 +24,7 @@ docker run \
 
 You can also add a `--entrypoint` and `-it` flag to start a shell inside the container.
 
-```sh
+```bash
 docker run \
     -it \
     --rm \
@@ -42,9 +41,8 @@ You can have multiple `--volume` flags, and it can be helpful to add `.github/ac
 
 With the `fractal` repo as your working directory and the variable `DB_URL` set to the URL of the running database, run this command to dump the database schema to correct file. Make sure to use a single `>` to overwrite the file.
 
-```sh
+```bash
 pg_dump --no-owner --no-privileges --schema-only $DB_URL > webserver/db_migration/schema.sql
-
 ```
 
 ## High-Level Overview

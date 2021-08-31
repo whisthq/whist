@@ -22,7 +22,7 @@ In many circumstances, you can use the `retrieve_config.sh` script to quickly ge
 
 Here is an example of what the contents of a `.env` file might look like:
 
-```
+```bash
 CONFIG_DB_URL=postgresql://user@pass:host:port/database
 POSTGRES_DB=dev
 POSTGRES_PASSWORD=p@$$w0rd!

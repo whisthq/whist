@@ -10,7 +10,7 @@ Before building the service, make sure you've configured (and logged into) the H
 
 To build the service, install Go via `sudo snap install --classic --channel=1.16/stable go`, and then run `make build`. Note that the host service is only meant to build on Go versions >= 1.16 and is only supported on Linux since the introduction of [go-nvml](https://github.com/NVIDIA/go-nvml) as a dependency. Also, be sure to add `~/go/bin` to your `$PATH` variable as follows:
 
-```shell
+```bash
 PATH=$PATH:~/go/bin
 ```
 
@@ -48,7 +48,7 @@ For testing, you can also use the `upload` target in the makefile, which builds 
 
 ## Tree of host service files
 
-```tree
+```
 .
 ├── host-service.go <- The main file, contains the main logic and the most comments to explain the design decisions of the host service
 ├── mandelbox <- package for the abstraction of a mandelboxes managed by Fractal

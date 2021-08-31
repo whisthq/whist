@@ -59,13 +59,13 @@ You can always run Prettier directly within your IDE by via the following instru
 
 Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
 
-```
+```bash
 ext install esbenp.prettier-vscode
 ```
 
 To ensure that this extension is used over other extensions you may have installed, be sure to set it as the default formatter in your VS Code settings. This setting can be set for all languages or by a specific language.
 
-```
+```json
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[javascript]": {
