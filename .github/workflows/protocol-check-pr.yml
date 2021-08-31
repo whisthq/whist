@@ -145,7 +145,7 @@ jobs:
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: /build_protocol_targets.sh --cmakebuildtype=Debug FractalServer
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug FractalServer
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format

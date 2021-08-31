@@ -56,6 +56,15 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install `docs` target dependencies
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    doxygen \
+    coreutils \
+    perl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # Install Fractal protocol Linux dependencies

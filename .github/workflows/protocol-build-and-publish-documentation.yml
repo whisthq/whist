@@ -54,13 +54,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Install Linux Protocol Dependencies
-        working-directory: fractal/protocol
-        run: |
-          sudo apt-get update
-          ./setup-linux-build-environment.sh
-          sudo apt install coreutils doxygen
-
       - name: Build Protocol Documentation
         working-directory: fractal/protocol
         run: ./build_protocol_targets.sh docs
