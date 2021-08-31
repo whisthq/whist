@@ -47,7 +47,7 @@ For each table you'd like to fetch from dev, add `-t schema_name.table_name` to 
 Luckily, there is an easy way to set all of the necessary environment variables using the script `docker/retrieve_config.sh`. To set all of the required environment variables, first make sure you have [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and configured. Then, run
 
 ```bash
-bash docker/retrieve_config.sh
+./docker/retrieve_config.sh
 ```
 
 When the `docker/retrieve_config.sh` script terminates, it will print the name of the file containing the fetched environment variables that has been written to standard error.
@@ -65,7 +65,7 @@ Whether you're running tests or the `docker-compose` stack locally, the web serv
 Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will create dummy SSL certificates and start the app at `run.py`.
 
 ```bash
-bash docker/local_deploy.sh
+./docker/local_deploy.sh
 ```
 
 If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer or opening the Docker desktop app; if the app opens successfully, then the issue should go away. You can optionally pass the argument `--use-dev-db`. Only do this if you absolutely need the dev db. Generally speaking, you should be able to recreate any resource on dev dbs in your ephemeral db. If you do this, please explain in `#webserver` why the ephemeral db did not meet your needs so we can improve it.

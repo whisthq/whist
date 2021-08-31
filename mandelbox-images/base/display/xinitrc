@@ -1,6 +1,9 @@
 # Note that we can't set "o" or "pipefail" since xinitrc is run as a non-compatible shell script.
 set -Eeu
 
+xinitrc_pid=$$
+echo "xinitrc PID: $xinitrc_pid"
+
 # This script starts the AwesomeWM window manager inside the mandelbox
 # and starts the mandelbox's application (i.e. Google Chrome)
 
@@ -31,6 +34,8 @@ echo "AwesomeWM started as PID $awesome_pid..."
 echo "Starting 'xsettingsd' in the background..."
 $RUN_AS_FRACTAL "xsettingsd" &
 
+echo "xsettingsd background PID: $!"
+
 # Indicate that the display is ready and consider the service started
 systemd-notify --ready --status="X11 Display and AwesomeWM started"
 
@@ -39,4 +44,3 @@ echo "Notified that fractal-display service is ready"
 # Wait for AwesomeWM process
 # Note: this never finishes, but leaves the X server open indefinitely
 wait $awesome_pid
-

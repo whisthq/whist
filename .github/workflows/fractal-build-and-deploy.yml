@@ -339,7 +339,7 @@ jobs:
 
       - name: Build release protocol # No need to run this for debug, just for release
         working-directory: protocol
-        run: ./build_server_protocol.sh Release
+        run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer
 
       - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
         run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV

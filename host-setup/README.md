@@ -43,7 +43,7 @@ sudo reboot
 
 # build the Fractal protocol server
 cd ~/fractal/protocol/
-./build_server_protocol.sh
+./build_protocol_targets.sh FractalServer
 
 # build the Fractal base container image
 cd ~/fractal/mandelbox-images

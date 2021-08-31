@@ -2,7 +2,7 @@
 
 At Fractal, we use the term "mandelbox" to refer to what is essentially an application that we deliver, combined with the Fractal-specific customizations that make everything work (securely). At the moment, our mandelboxes run on Docker.
 
-This repository contains the code for "mandelbox-izing" the various applications that Fractal streams. The base Dockerfile.20 running the Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
+This repository contains the code for "mandelbox-izing" the various applications that Fractal streams. The base Dockerfile running the Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
 ## File Structure
 
@@ -60,7 +60,7 @@ A tree structure is provided below:
 
 ## Development
 
-To contribute to enhancing all the mandelbox images Fractal uses, you should contribute to the base Dockerfile.20 under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile.20 for the application in question. We strive to make mandelbox images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
+To contribute to enhancing all the mandelbox images Fractal uses, you should contribute to the base Dockerfile under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile for the application in question. We strive to make mandelbox images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
 
 ### Getting Started
 
@@ -73,7 +73,7 @@ After cloning the repo, set up your EC2 instance with the setup script from the 
 This will begin installing all dependencies and configurations required to run our mandelbox images on an AWS EC2 host. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
 ```bash
-../protocol/build_server_protocol.sh && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
+../protocol/build_protocol_targets.sh FractalServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
 ### Building Images
@@ -81,7 +81,7 @@ This will begin installing all dependencies and configurations required to run o
 To build the server protocol for use in a mandelbox image (for example with the `--update-protocol` parameter to `run_mandelbox_image.sh`), run:
 
 ```bash
-../protocol/build_server_protocol.sh
+../protocol/build_protocol_targets.sh FractalServer
 ```
 
 To build a specific application's mandelbox image, run:
