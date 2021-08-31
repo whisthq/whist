@@ -145,7 +145,7 @@ Finally, run `./setup-linux-build-environment.sh` to install the system dependen
 
 You can install both Cmake and cppcheck via Homebrew with the following command:
 
-```
+```bash
 brew install cmake cppcheck
 ```
 
@@ -171,7 +171,7 @@ If you want to manually retrieve the binaries yourself (not recommended), downlo
 
 To compile on MacOS/Linux, run:
 
-```
+```bash
 mkdir build
 cd build
 cmake -S .. -B .
@@ -182,7 +182,7 @@ This should be run from the root `/protocol/` directory. This will ensure that a
 
 On Windows,
 
-```
+```powershell
 .\cninja.bat
 ```
 
@@ -194,12 +194,12 @@ If you're having trouble compiling, make sure that you installed all the necessa
 
 From the build directory (usually `/build`), you can simply run:
 
-```
-Windows:
+```bash
+# Windows:
 fclient IP_ADDRESS [OPTION]...
 fserver [OPTION]...
 
-MacOS/Linux:
+# MacOS/Linux:
 ./fclient IP_ADDRESS [OPTION]...
 ./fserver [OPTION]...
 ```
@@ -261,14 +261,14 @@ For every push or PR, the code will be automatically linted via clang-format acc
 
 For `.c` and `.h` files, we are formatting using the clang format `{BasedOnStyle: Google, IndentWidth: 4}`. You can download clang-format via the package manager for your respective OS:
 
-```
-MacOS:
+```bash
+# MacOS:
 brew install clang-format
 
-Linux Ubuntu:
+# Linux Ubuntu:
 apt-get install clang-format
 
-Windows:
+# Windows:
 choco install llvm --force
 ```
 
@@ -282,18 +282,18 @@ We also have a custom build target in the CMake 'clang-format' which will run wi
 
 Make sure your code is following code standards by running the script `./run-clang-tidy.sh`. The dependencies for each OS are listed below:
 
-```
-MacOS:
+```bash
+# MacOS:
 # set up clang-tidy and clang-apply-replacements
 brew install llvm
 ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 ln -s "$(brew --prefix llvm)/bin/clang-apply-replacements" "/usr/local/bin/clang-apply-replacements"
 
-Linux Ubuntu:
-sudo apt install clang-tidy -y
+# Linux Ubuntu:
 # clang-tidy and clang-apply-replacements-10 should come installed with clang
+sudo apt install clang-tidy -y
 
-Windows:
+# Windows:
 # Go to https://releases.llvm.org/download.html and install the pre-built LLVM binary. In the installation wizard, make sure to select "add to path".
 ```
 

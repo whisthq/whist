@@ -27,7 +27,7 @@ The option flags are as follows:
 
 To test if a build of the client runs (by calling the dummy IP address `0.0.0.0`), call:
 
-```
+```bash
 ./fclient 0.0.0.0 --width 800 --height 600
 ```
 

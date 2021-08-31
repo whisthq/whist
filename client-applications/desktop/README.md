@@ -78,7 +78,7 @@ Work begins in the main process when events are triggered. Events might be built
 
 Our main process "reacts" to events using RXJS observable subcriptions. We organize these observables into "flows", which are the main unit of work in the main process. Flows are just a function with the following signature:
 
-```js
+```javascript
 const FlowA = (t: Obervable<T>) => { success: Observable<F>, failure: Observable<F>, warning: Observable<F> }
 ```
 
@@ -92,7 +92,7 @@ This is a functional reactive programming model. We're not change of the timing 
 
 Here's a more concrete example using the `mandelboxCreate` flow in the client app:
 
-```js
+```javascript
 // A "flow" is created with the "flow" function, which accepts
 // a string name as its first argument and the actual definition as the
 // second argument. This allows us to wrap the defintion with other context,
@@ -145,7 +145,6 @@ const mandelboxFlow  = flow(
     } // just like "create" above, the output of the mandelboxFlow will be
   }   // an object of { success, failure }, with values that will emit a result
 )     // once all the processes we've "wired up" in the flow complete.
-
 ```
 
 #### Observables and RxJS

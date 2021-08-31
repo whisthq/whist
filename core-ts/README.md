@@ -45,7 +45,7 @@ A slightly different process is required to install a specific branch of `core-t
 
 The easiest way is just to `npm install fractal/core-ts`, without the `@` prefix. The `@` symbol signifies to `npm` that you're installing a "package", which is pre-built and published in an npm registry. Without `@`, `npm` recognizes the command as `npm install github-username/repo-name`, and you can install from a specfic branch or commit with the `#`separator. This means the full command to install a branch of `core-ts` is:
 
-```
+```bash
 npm install fractal/core-ts#branch-or-commit
 ```
 
@@ -67,7 +67,7 @@ If you're making new functions or exploring API responses, you might like to be 
 
 You might setup up `src/index.ts` with the boilerplate below to get you started. Note the relative path imports, and the IIFE function attached to `const _ =`, which allows you to use `async/await` syntax.
 
-```js
+```javascript
 import { withGet, fetchBase } from "./http"
 import { decorate } from "./utilitles"
 

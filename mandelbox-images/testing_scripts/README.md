@@ -10,7 +10,7 @@ Attempts to send UDP packets from client to host and records the delay, for trou
 
 Usage:
 
-```
+```bash
 # Client side
 python3 connection_tester.py client [SERVER IP]
 
@@ -24,7 +24,7 @@ Creates virtual device nodes using `/dev/uinput` in order to test the uinput dri
 
 Usage:
 
-```
+```bash
 pip3 install python-uinput
 python3 uinput_tester.py
 ```
@@ -35,7 +35,7 @@ More feature-ful version of `uinput_tester.py` that performs all the steps that 
 
 Usage:
 
-```
+```bash
 mkdir /tmp/sockets
 make
 sudo ./uinput_server

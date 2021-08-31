@@ -116,7 +116,7 @@ If you create a pull request for a branch based on an outdated version of `dev`,
 
 **Here's what to do instead:**
 
-```
+```bash
 git checkout dev
 git pull --rebase
 git checkout feature-branch

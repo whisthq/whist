@@ -20,7 +20,7 @@ Our workflow files start with a simple comment header with a description of the 
 
 For example, this is the header and beginning of `fractal-deploy-sentry-releases.yml`:
 
-```
+```yaml
 # workflows/fractal-push-sentry-releases.yml
 #
 # Fractal: Push Sentry Release
@@ -39,22 +39,22 @@ It will be important as we scale for our jobs to be named uniquely so that we ca
 
 In many cases, `jobname` can simply be `main` -- for example, here is the start of the job description in `protocol-linting.yml`:
 
-```
+```yaml
 jobs:
-    protocol-linting-main:
-        name: Lint Protocol
-        runs-on: ubuntu-20.04
+  protocol-linting-main:
+    name: Lint Protocol
+    runs-on: ubuntu-20.04
 ```
 
 Notice that we also include a `Title Case`, plaintext name for the job, in addition to the tag `protocol-linting-main`.
 
 For more complex workflows, we should be specific both in the programmatic identifier and the plaintext job name. For example, here is the start of the job description for pushing the Host Service to an AWS S3 bucket in `fractal-publish-build.yml`:
 
-```
+```yaml
 jobs:
-    host-service-publish-build-s3:
-        name: "Host Service: Build & Publish to AWS S3"
-        runs-on: ubuntu-20.04
+  host-service-publish-build-s3:
+    name: "Host Service: Build & Publish to AWS S3"
+    runs-on: ubuntu-20.04
 ```
 
 Something to keep in mind when writing jobs, is that neither `cmd` nor `powershell` will fail if a command it runs fails. So, you should explicitly check if any commands you want to succeed, does indeed succeed. If you attach a job with `shell: bash` without specifying any arguments, then the job will _also_ not fail if any command it runs fails, unless it's the very last command (`cmd`/`powershell` will still not fail, even if the last command fails).
@@ -69,9 +69,9 @@ These YAML files are formatted with [Prettier](https://github.com/prettier/prett
 
 The easiest way to test a workflow is to enable it to be run manually -- to do this, make sure the repository's default branch version of the workflow contains the trigger
 
-```
+```yaml
 on:
-   workflow_dispatch:
+  workflow_dispatch:
 ```
 
 Below this, you can optionally specify input parameters. Then, navigate to the page for the workflow in the Actions tab, where a button should appear allowing you to run the workflow manually.
