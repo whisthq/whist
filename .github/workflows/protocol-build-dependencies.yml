@@ -99,6 +99,8 @@ jobs:
 
       - name: Build Fractal OpenSSL on Linux Ubuntu
         if: runner.os == 'Linux'
+        env:
+          DEBIAN_FRONTEND: "noninteractive"
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -291,6 +293,8 @@ jobs:
 
       - name: Build Sentry Native on Linux Ubuntu
         if: runner.os == 'Linux'
+        env:
+          DEBIAN_FRONTEND: "noninteractive"
         run: |
           # install needed dependencies
           sudo apt-get update
