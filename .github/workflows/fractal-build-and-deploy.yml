@@ -982,11 +982,6 @@ jobs:
           mkdir -p ~/private_keys
           aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
-      - name: Install Linux Client Protocol Dependencies on Linux Ubuntu GHA Machines
-        if: runner.os == 'Linux'
-        working-directory: protocol
-        run: ./setup-linux-build-environment.sh
-
       #############################################################################################
       #################################### Publish Steps START ####################################
 

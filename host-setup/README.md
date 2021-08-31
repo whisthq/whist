@@ -4,7 +4,7 @@ This subfolder contains the scripts to set up AWS EC2 instances for developing F
 
 An AMI is an operating system image, in our case a snapshot of Linux Ubuntu with specific packages, drivers and settings preinstalled and preconfigured, which can be easily loaded onto an EC2 instance instead of using default Linux Ubuntu. We use Fractal-specific AMIs with our EC2 instances as it results in faster deployment (the images are prebuilt) and ensures that all of our EC2 instances run the exact same operating system, which is specifically optimized for running Fractal containers.
 
-The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host for development (by setting up proper NVIDIA drivers and Docker daemon configs and filters), while running `setup_ubuntu20_host.sh` followed by `setup_ubuntu20_ami_host.sh` sets up an EC2 host that can be manually stored as an AMI for programmatic deployment.
+The `setup_host.sh` script lets you set up an EC2 instance host either for development or deployment. You can pass `--help` or `--usage` into that script to see some more details.
 
 ## Setting Up a Development Instance
 
@@ -15,17 +15,15 @@ To set up your Fractal development instance:
   - Note that the 32 GB of persistent, EBS storage should be in addition to the built-in 125 GB of ephemeral storage! The ephemeral storage will not persist across reboots, so at this moment we do not use it for anything.
   - Note that the EC2 instance type must be **g4** or **g3** for GPU compatibility with our containers and streaming technology. We use g4 instances in because they have better performance and cost for our purposes.
 
-- Name your instance by making a new tag with key `Name` and value the desired name. (We now tag instances because we used to have all sorts of instances burning money for no reason, so we name all instances.) If an instance is unnamed, it is liable to be terminated!
-
 - Add your EC2 instance to the security group **container-tester**, to enable proper networking rules. If you decide to set up your EC2 instance in a different AWS region, you will need to add it to the appropriate security group for that region, which may vary per region.
+
+- Name your instance by making a new tag with key `Name` and value the desired name. (We now tag instances because we used to have all sorts of instances burning money for no reason, so we name all instances.) If an instance is unnamed, it is liable to be terminated! Your instance's name tag should include your name as well, so we can identify whose it is.
 
 - Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
 
 - Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
 
-- SSH/SSM into your instance and install the latest stable version of `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)). Because we've upgraded to Go 1.16, you'll have to change the download command to `wget -c https://dl.google.com/go/go1.16.2.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local`
-
-- If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
+- If you use GitHub with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
 - Set up AWS credentials on your dev machine with `aws configure`. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
@@ -38,8 +36,7 @@ git clone https://github.com/fractal/fractal.git # via HTTPS
 
 # set up the EC2 host for development
 cd ~/fractal/host-setup
-./setup_localdev_dependencies.sh
-sudo reboot
+./setup_host.sh --development
 
 # build the Fractal protocol server
 cd ~/fractal/protocol/
@@ -58,6 +55,8 @@ cd ~/fractal/mandelbox-images
 ./run_local_mandelbox_image.sh base
 ```
 
+- If `./setup_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
+
 - Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
 
 - Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://tryfractal.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
@@ -75,19 +74,14 @@ To create an AMI:
 - SSH/SSM into your instance and run the following commands:
 
 ```bash
-# clones `dev` by default
+# This clones `dev` by default --- checkout a different branch if needed
 git clone https://github.com/fractal/fractal.git
 
-# set up the EC2 host with proper packages and drivers,
-# and sets Fractal Docker daemon configs from docker-demon-config/daemon.json
+# Set up the EC2 host with proper packages, drivers, and configs.
+# To see the necessary values of ARGS, see the comment at the top of
+# `deployment_setup_steps` in `setup_host.sh`.
 cd ~/fractal/host-setup
-./setup_ubuntu20_host.sh
-sudo reboot
-
-# set up networking rules and system configs and services
-# this script also copies over the userdata-bootstrap.sh script
-cd ~/fractal/host-setup
-./setup_ubuntu20_ami_host.sh
+./setup_host.sh --deployment [ARGS...]
 
 # VERY IMPORTANT: remove all Fractal code!
 cd ~
