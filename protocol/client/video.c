@@ -710,6 +710,7 @@ void clear_sdl(SDL_Renderer* renderer) {
     SDL_RenderPresent(renderer);
 }
 
+#define STATISTICS_SECONDS 5
 void calculate_statistics() {
     /*
         Calculate statistics about bitrate nacking, etc. to request server bandwidth.
@@ -724,12 +725,12 @@ void calculate_statistics() {
         init_t = true;
     }
     // do some calculation
-    // Update mbps every 5 seconds
-    if (get_timer(t) > 5.0) {
-        stats.num_nacks_per_second = video_ring_buffer->num_packets_nacked / 5;
-        stats.num_received_packets_per_second = video_ring_buffer->num_packets_received / 5;
-        stats.num_skipped_frames_per_second = video_ring_buffer->num_frames_skipped / 5;
-        stats.num_rendered_frames_per_second = video_ring_buffer->num_frames_rendered / 5;
+    // Update mbps every STATISTICS_SECONDS seconds
+    if (get_timer(t) > STATISTICS_SECONDS) {
+        stats.num_nacks_per_second = video_ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
+        stats.num_received_packets_per_second = video_ring_buffer->num_packets_received / STATISTICS_SECONDS;
+        stats.num_skipped_frames_per_second = video_ring_buffer->num_frames_skipped / STATISTICS_SECONDS;
+        stats.num_rendered_frames_per_second = video_ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
 
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != max_bitrate ||
