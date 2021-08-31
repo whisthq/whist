@@ -591,7 +591,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (try_amount >= 3) {
-        LOG_ERROR("Failed to connect after three attempts!");
+        // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
+        // error happens periodically but we have recovery systems in place
+        // for streaming interruption/connection loss
+        LOG_WARNING("Failed to connect after three attempts!");
     }
 
     // Destroy any resources being used by the client
