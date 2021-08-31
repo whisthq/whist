@@ -116,7 +116,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     static const double boost_multiplier = 1.05;
 
     // Hacky way of allowing constant assignment to static variable (cannot assign `const` to
-    //     `static)
+    //     `static`)
     // In order:
     //     > the minimum setting for threshold for meeting throughput expectations before boosting
     //     > the multiplier for threshold after successfully meeting throughput expectations
