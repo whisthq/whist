@@ -104,33 +104,14 @@ jobs:
 
       ############################# Unix Configuration Steps START #############################
 
-      - name: Install Linux/MacOS Client Protocol Dependencies on Linux/MacOS GHA Machines
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
+        if: runner.os == 'macOS'
         working-directory: protocol
         run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              # update apt before installing packages to avoid package not found errors
-              sudo apt-get update
-
-              # install Linux protocol dependencies
-              ./setup-linux-build-environment.sh
-
-              # install clang-tidy. We must hardcode this version, else
-              # we will install the overaggressive recent version, and
-              # we need to symlink it to be able to call it as
-              # "clang-tidy".
-              # Also install the default clang-format (clang-format-10), so that it matches what gets installed locally
-              sudo apt-get install -y clang-tidy-6.0 clang-format
-              sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
-
-              # install coreutils for realpath, along with other dependencies
-              sudo apt-get install -y coreutils perl cppcheck doxygen
-          else
-              # llvm for clang-tidy, coreutils for realpath
-              brew install llvm coreutils perl doxygen
-              ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
-              ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-          fi
+          # llvm for clang-tidy, coreutils for realpath
+          brew install llvm coreutils perl doxygen
+          ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+          ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
       ############################# Unix Configuration Steps END #############################
 
@@ -145,8 +126,13 @@ jobs:
           ninja FractalClient || EXIT /B 1
           ninja FractalServer || EXIT /B 1
 
-      - name: Build Protocol Client on Linux/MacOS
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - name: Build Protocol Client on Linux Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient
+
+      - name: Build Protocol Client on macOS
+        if: runner.os == 'macOS'
         env:
           FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
         working-directory: protocol
@@ -156,12 +142,10 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
           make FractalClient -j
 
-      - name: Build Protocol Server on Linux
+      - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: |
-          cd build
-          make FractalServer -j
+        run: /build_protocol_targets.sh --cmakebuildtype=Debug FractalServer
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
@@ -174,8 +158,7 @@ jobs:
           # Print clang-format version for local comparison
           clang-format --version
 
-          cd build
-          make clang-format -j
+          ./build_protocol_targets.sh clang-format
 
           # Show diff in GitHub Actions logs
           git diff HEAD --
@@ -183,9 +166,17 @@ jobs:
           # This will return an error if there is a non-empty diff
           git diff-index --quiet HEAD --
 
-      # Verify clang-tidy on all OS's
-      - name: Verify Builds with clang-tidy on Linux/MacOS
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - name: Verify Builds with clang-tidy on Linux Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          ./build_protocol_targets.sh clang-tidy
+
+      - name: Verify Builds with clang-tidy on MacOS
+        if: runner.os == 'macOS'
         working-directory: protocol
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
@@ -209,9 +200,9 @@ jobs:
       - name: Build Protocol Server in Docker Container
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_server_protocol.sh Release
+        run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer
 
-      # This ensures that all the build files from build_server_protocol.sh have actually been generated
+      # This ensures that all the build files from build_protocol_targets.sh have actually been generated
       - name: Ensure that all protocol build files are present
         if: runner.os == 'Linux'
         working-directory: mandelbox-images

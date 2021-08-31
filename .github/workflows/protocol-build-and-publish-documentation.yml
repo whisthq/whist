@@ -63,10 +63,7 @@ jobs:
 
       - name: Build Protocol Documentation
         working-directory: fractal/protocol
-        run: |
-          cmake -S . -B build
-          cd build
-          make -j docs
+        run: ./build_protocol_targets.sh docs
 
       - name: Diff Old and New Documentation
         id: diff
