@@ -12,5 +12,6 @@ exec google-chrome \
   --enable-gpu-rasterization \
   --enable-zero-copy \
   --enable-features=VaapiVideoDecoder,Vulkan \
+  --disable-smooth-scrolling \
   --flag-switches-end \
   --restore-last-session
