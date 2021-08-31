@@ -7,5 +7,5 @@ set -Eeuo pipefail
 # Linux, so the only edge case is if there's a really long
 # URL, in which case it's possible for it to be truncated.
 if [[ ! -f /home/fractal/.teleport/handled-uri ]]; then
-    echo -n "$1" > /home/fractal/.teleport/handled-uri
+  echo -n "$1" > /home/fractal/.teleport/handled-uri
 fi
