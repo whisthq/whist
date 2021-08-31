@@ -144,22 +144,16 @@ def test_scale_down_single_wrong_region(
     assert instance.status == "ACTIVE"
 
 
-def test_check_instance_exists(bulk_instance, region_name):
+def test_check_instance_exists(region_name):
     """
     Tests to ensure that `check_instance_exists` returns `False` for a non-existent instance
     (that is, for an instance whose ID is valid but does not exist on EC2). Note that we explicitly
     do not want to use `hijack_ec2_calls` here, as that would replace the check with a trivial
     `True`.
     """
-    instance = bulk_instance(
-        # A valid but fake EC2 ID
-        # EC2 IDs are of the format `i-[17 digits]`
-        instance_name="i-11235813213455891",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=InstanceState.PRE_CONNECTION,
-    )
-    assert not aws_funcs.check_instance_exists(instance.instance_name, region_name)
+    # A valid but fake EC2 ID
+    instance_name = "i-11235813213455891"
+    assert not aws_funcs.check_instance_exists(instance_name, region_name)
 
 
 def test_scale_down_single_wrong_ami(

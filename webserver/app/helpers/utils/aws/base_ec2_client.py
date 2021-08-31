@@ -105,12 +105,17 @@ class EC2Client(CloudClient):
         Returns: a boolean corresponding to whether every instance is live
 
         """
-        resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
-        instance_info = resp["Reservations"][0]["Instances"]
-        states = [instance["State"]["Name"] for instance in instance_info]
-        if all(state == "running" for state in states):
-            return True
-        return False
+        try:
+            resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
+            instance_info = resp["Reservations"][0]["Instances"]
+            states = [instance["State"]["Name"] for instance in instance_info]
+            if all(state == "running" for state in states):
+                return True
+            return False
+        except Exception:
+            # This means that the instance in question does not exist; ergo, it is
+            # definitely not up
+            return False
 
     def check_if_instances_down(self, instance_ids: List[str]) -> bool:
         """
@@ -118,7 +123,7 @@ class EC2Client(CloudClient):
         Args:
                 instance_ids: the instances to check
 
-        Returns: a boolean corresponding to whether every instance is dead`
+        Returns: a boolean corresponding to whether every instance is dead
 
         """
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
