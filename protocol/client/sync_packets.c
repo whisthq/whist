@@ -114,7 +114,10 @@ void update_ping() {
         last_pong_id = last_ping_id;
         ping_failures++;
         if (ping_failures == 3) {
-            LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
+            // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
+            // error happens periodically but we have recovery systems in place
+            // for streaming interruption/connection loss
+            LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
             connected = false;
         }
     }
@@ -332,7 +335,10 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             // If the TCP checks are unsuccessful for 1 second, we should LOG_ERROR and restart the
             // check timer
             if (get_timer(last_tcp_check_timer) > 1000.0 / MS_IN_SECOND) {
-                LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
+                // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
+                // error happens periodically but we have recovery systems in place
+                // for streaming interruption/connection loss
+                LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
                 start_timer(&last_tcp_check_timer);
             }
             continue;
