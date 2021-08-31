@@ -53,7 +53,13 @@ RUN su - fractal -c \
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
     | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
-    > /etc/opt/chrome/policies/managed/whitelist.json
+    > /etc/opt/chrome/policies/managed/URLProtocolsWhitelist.json
+
+# Disable search suggestions (as a workaround to improve URL bar
+# keyboard input until we can fork the browser and fix it)
+RUN echo {} \
+    | jq '.SearchSuggestEnabled=false' \
+    > /etc/opt/chrome/policies/managed/SearchSuggestions.json
 
 # Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
