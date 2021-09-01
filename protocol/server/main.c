@@ -62,6 +62,7 @@ Includes
 
 extern Client clients[MAX_NUM_CLIENTS];
 
+volatile FractalOSType client_os;
 char binary_aes_private_key[16];
 char hex_aes_private_key[33];
 

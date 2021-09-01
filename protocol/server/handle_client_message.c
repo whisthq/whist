@@ -51,6 +51,7 @@ extern volatile int client_height;
 extern volatile int client_dpi;
 extern volatile CodecType client_codec_type;
 extern volatile bool update_device;
+extern volatile FractalOSType client_os;
 
 extern volatile bool stop_streaming;
 extern volatile bool wants_iframe;
@@ -595,6 +596,7 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 
     // Handle time
     set_time_data(&fmsg.time_data);
+    client_os = fmsg.os;
 
     // Handle init message email
     if (client_id == host_id) {

@@ -473,6 +473,17 @@ typedef enum FractalMultigestureType {
 } FractalMultigestureType;
 
 /**
+ * @brief   OS type
+ * @details An enum of OS types
+ */
+typedef enum FractalOSType {
+    FRACTAL_UNKNOWN_OS = 0,
+    FRACTAL_WINDOWS = 1,
+    FRACTAL_APPLE = 2,
+    FRACTAL_LINUX = 3,
+} FractalOSType;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
@@ -494,6 +505,7 @@ typedef struct FractalDiscoveryRequestMessage {
     int user_id;
     FractalTimeData time_data;
     char user_email[FRACTAL_ARGS_MAXLEN + 1];
+    FractalOSType os;
 } FractalDiscoveryRequestMessage;
 
 /**
@@ -554,6 +566,15 @@ typedef enum FractalExitCode {
     FRACTAL_EXIT_CLI = 2
 } FractalExitCode;
 
+typedef struct {
+    short num_keycodes;
+    bool caps_lock;
+    bool num_lock;
+    char keyboard_state[KEYCODE_UPPERBOUND];
+    bool active_pinch;
+} FractalKeyboardState;
+
+
 /**
  * @brief   Client message.
  * @details Message from a Fractal client to a Fractal server.
@@ -598,13 +619,7 @@ typedef struct FractalClientMessage {
         } nack_data;
 
         // MESSAGE_KEYBOARD_STATE
-        struct {
-            short num_keycodes;
-            bool caps_lock;
-            bool num_lock;
-            char keyboard_state[KEYCODE_UPPERBOUND];
-            bool active_pinch;
-        } keyboard_state;
+        FractalKeyboardState keyboard_state;
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;

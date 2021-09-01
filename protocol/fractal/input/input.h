@@ -34,8 +34,10 @@ Public Functions
 /**
  * @brief                          Initialize the input system. Should be used prior to every new
  *                                 client connection that will send inputs
+ *
+ * @param os_type                  The OS type to use for keyboard mapping
  */
-void reset_input();
+void reset_input(FractalOSType os_type);
 
 /**
  * @brief                          Replayed a received user action on a server,

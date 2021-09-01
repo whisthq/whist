@@ -111,11 +111,17 @@ bool holding_keymap = false;
 vector<FractalKeycode> currently_pressed;
 vector<FractalKeycode> new_key_combination;
 
-extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_mapping, FractalKeycode key_code, int pressed) {
+extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type, FractalKeycode key_code, int pressed) {
     // Initialize keyboard mapping if it hasn't been already
     if (!initialized) {
         init_keyboard_mapping();
         initialized = true;
+    }
+
+    // Don't map stateful keys, and don't map from non-apple OS's
+    if (key_code == FK_CAPSLOCK || key_code == FK_NUMLOCK || os_type != FRACTAL_APPLE) {
+        emit_key_event(input_device, key_code, pressed);
+        return 0;
     }
 
     // Filter through the modmap first, if necessary
@@ -205,3 +211,66 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
     // We'll say that it always succeeds
     return 0;
 }
+
+extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalOSType os_type, FractalKeyboardState keyboard_state) {
+    bool server_caps_lock = get_keyboard_modifier_state(input_device, FK_CAPSLOCK);
+    bool server_num_lock = get_keyboard_modifier_state(input_device, FK_NUMLOCK);
+
+    bool client_caps_lock_holding = keyboard_state.keyboard_state[FK_CAPSLOCK];
+    bool client_num_lock_holding = keyboard_state.keyboard_state[FK_NUMLOCK];
+
+    for (int fractal_keycode = 0; fractal_keycode < keyboard_state.num_keycodes;
+         ++fractal_keycode) {
+        if (ignore_key_state(input_device, (FractalKeycode)fractal_keycode, keyboard_state.active_pinch)) {
+            continue;
+        }
+        int is_pressed = holding_keymap ?
+            std::count(currently_pressed.begin(), currently_pressed.end(), (FractalKeycode)fractal_keycode)
+            : get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
+        if (!keyboard_state.keyboard_state[fractal_keycode] &&
+            is_pressed) {
+            emit_mapped_key_event(input_device, os_type, (FractalKeycode)fractal_keycode, 0);
+        } else if (keyboard_state.keyboard_state[fractal_keycode] &&
+                   !is_pressed) {
+            emit_mapped_key_event(input_device, os_type, (FractalKeycode)fractal_keycode, 1);
+
+            if (fractal_keycode == FK_CAPSLOCK) {
+                server_caps_lock = !server_caps_lock;
+            }
+            if (fractal_keycode == FK_NUMLOCK) {
+                server_num_lock = !server_num_lock;
+            }
+        }
+    }
+
+    if (!!server_caps_lock != !!keyboard_state.caps_lock) {
+        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
+                 server_caps_lock ? "caps" : "no caps",
+                 keyboard_state.caps_lock ? "caps" : "no caps");
+        if (client_caps_lock_holding) {
+            // Release and repress
+            emit_mapped_key_event(input_device, os_type, FK_CAPSLOCK, 0);
+            emit_mapped_key_event(input_device, os_type, FK_CAPSLOCK, 1);
+        } else {
+            // Press and release
+            emit_mapped_key_event(input_device, os_type, FK_CAPSLOCK, 1);
+            emit_mapped_key_event(input_device, os_type, FK_CAPSLOCK, 0);
+        }
+    }
+
+    if (!!server_num_lock != !!keyboard_state.num_lock) {
+        LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
+                 server_num_lock ? "num lock" : "no num lock",
+                 keyboard_state.num_lock ? "num lock" : "no num lock");
+        if (client_num_lock_holding) {
+            // Release and repress
+            emit_mapped_key_event(input_device, os_type, FK_NUMLOCK, 0);
+            emit_mapped_key_event(input_device, os_type, FK_NUMLOCK, 1);
+        } else {
+            // Press and release
+            emit_mapped_key_event(input_device, os_type, FK_NUMLOCK, 1);
+            emit_mapped_key_event(input_device, os_type, FK_NUMLOCK, 0);
+        }
+    }
+}
+
