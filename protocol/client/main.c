@@ -163,14 +163,8 @@ int sync_keyboard_state(void) {
     }
 
     // Also send caps lock and num lock status for syncronization
-#ifdef __APPLE__
-    fmsg.keyboard_state.keyboard_state[FK_LCTRL] = ctrl_pressed;
-    fmsg.keyboard_state.keyboard_state[FK_LGUI] = false;
-    fmsg.keyboard_state.keyboard_state[FK_RGUI] = false;
-#else
     fmsg.keyboard_state.keyboard_state[FK_LGUI] = lgui_pressed;
     fmsg.keyboard_state.keyboard_state[FK_RGUI] = rgui_pressed;
-#endif
 
     fmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
     fmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
