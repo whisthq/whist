@@ -1,3 +1,22 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file input.c
+ * @brief This file defines general input-processing functions and toggles
+ *        between Windows and Linux servers.
+============================
+Usage
+============================
+
+// This will emit a mapped keyboard event, using the mapping of
+// the specified OS
+emit_mapped_key_event(input_device, FRACTAL_APPLE, key_code, pressed);
+
+// This will synchronize the keyboard via the mapping associated
+// with the specified OS
+update_mapped_keyboard_state(input_device, FRACTAL_APPLE, keyboard_state);
+
+*/
+
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
@@ -25,7 +44,7 @@ set<FractalKeycode> modifiers = {
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
     int operator()(const vector<FractalKeycode> &V) const {
-        int hash = V.size();
+        int hash = (int)V.size();
         for(auto &i : V) {
             hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
@@ -248,8 +267,8 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
             continue;
         }
         int is_pressed = holding_keymap ?
-            std::count(currently_pressed.begin(), currently_pressed.end(), (FractalKeycode)fractal_keycode)
-            : get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
+            (int)std::count(currently_pressed.begin(), currently_pressed.end(), (FractalKeycode)fractal_keycode)
+            : (int)get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
         if (!mapped_keys[fractal_keycode] &&
             is_pressed) {
             LOG_INFO("Discrepancy found at %d (%d), unpressing!", fractal_keycode, origin_mapping[fractal_keycode]);

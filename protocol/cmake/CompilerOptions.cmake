@@ -3,7 +3,7 @@ if(MSVC) # Windows MSVC compiler base flags
   # better stack traces.  MT is for release, MTd is for debug, and for RELEASE
   # we should compile against the release version.
   add_compile_options(
-    "$<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:-DWIN32;-DWIN32_LEAN_AND_MEAN;-DUNICODE;/W4;/wd4189;/wd4100;/wd4127;/MP;$<$<BOOL:${CI}>:/WX;>;$<$<CONFIG:DEBUG>:/MTd;/Od>;$<$<CONFIG:RELEASE>:/MT;/O2>>"
+    "$<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:-DWIN32;-DWIN32_LEAN_AND_MEAN;-DUNICODE;/W4;/wd4189;/wd4100;/wd4127;/wd4244;/MP;$<$<BOOL:${CI}>:/WX;>;$<$<CONFIG:DEBUG>:/MTd;/Od>;$<$<CONFIG:RELEASE>:/MT;/O2>>"
   )
 else() # GCC and Clang base flags
   add_compile_options(
