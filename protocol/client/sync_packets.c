@@ -324,12 +324,21 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     LOG_INFO("sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
+    // int cancel_count = 0;
     while (run_sync_tcp_packets) {
         // RECEIVE TCP PACKET HANDLER
         // Check if TCP connection is active
         // last_tcp_check_timer indicates the last successful TCP check, or, if we've not had a
         // successful TCP check for at least a second, the time since the last LOG_ERROR indicating
         // lost TCP connection
+
+        // cancel_count++;
+
+        // if (cancel_count >= 100) {
+        //     closesocket(packet_tcp_context.socket);
+        // } else {
+        //     LOG_INFO("TCP cancel_count: %d", cancel_count);
+        // }
         int result = ack(&packet_tcp_context);
         if (result < 0) {
             // If the TCP checks are unsuccessful for 1 second, we should LOG_ERROR and restart the

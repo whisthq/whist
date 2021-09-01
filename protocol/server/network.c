@@ -177,6 +177,14 @@ int disconnect_client(int id) {
     return 0;
 }
 
+void disconnect_tcp() {
+    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
+        if (clients[id].is_active) {
+            closesocket(clients[id].TCP_context.socket);
+        }
+    }
+}
+
 int disconnect_clients(void) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {

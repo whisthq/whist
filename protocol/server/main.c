@@ -335,7 +335,16 @@ int main(int argc, char* argv[]) {
     start_timer(&uri_handler_timer);
 #endif  // ! _WIN32
 
+    int cancel_count = 0;
     while (!exiting) {
+        cancel_count++;
+
+        if (cancel_count >= 100) {
+            disconnect_tcp();
+        } else {
+            LOG_INFO("TCP cancel_count: %d", cancel_count);
+        }
+
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
                 // Broadcast ack

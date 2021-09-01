@@ -141,6 +141,7 @@ int connect_client(int id, bool using_stun, char *binary_aes_private_key);
  * @returns                        Returns -1 on failure, 0 on success.
  */
 int disconnect_client(int id);
+void disconnect_tcp();
 
 /**
  * @brief                          Closes UDP and TCP sockets for all active
