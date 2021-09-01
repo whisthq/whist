@@ -201,6 +201,7 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
  * @details Different accepted keycodes from client input.
  */
 typedef enum FractalKeycode {
+    FK_UNKNOWN = 0,        ///< 0
     FK_A = 4,              ///< 4
     FK_B = 5,              ///< 5
     FK_C = 6,              ///< 6

@@ -219,20 +219,47 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
     bool client_caps_lock_holding = keyboard_state.keyboard_state[FK_CAPSLOCK];
     bool client_num_lock_holding = keyboard_state.keyboard_state[FK_NUMLOCK];
 
-    for (int fractal_keycode = 0; fractal_keycode < keyboard_state.num_keycodes;
+    // Modmap all keycode values
+    bool mapped_keys[KEYCODE_UPPERBOUND] = {0};
+    FractalKeycode origin_mapping[KEYCODE_UPPERBOUND] = {FK_UNKNOWN};
+    for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND;
          ++fractal_keycode) {
+        FractalKeycode mapped_key = (FractalKeycode)fractal_keycode;
+        if (os_type == FRACTAL_APPLE && modmap.count(mapped_key)) {
+            mapped_key = modmap[mapped_key];
+        }
+        // If any origin key is pressed, then the modmap'ed key is considered pressed
+        mapped_keys[mapped_key] |= fractal_keycode < keyboard_state.num_keycodes
+            && (bool)keyboard_state.keyboard_state[fractal_keycode];
+        if (mapped_keys[mapped_key]) {
+            LOG_INFO("Syncing with %d pressed! From %d origin!", mapped_key, fractal_keycode);
+        }
+        // Remember which origin key that refers to
+        origin_mapping[mapped_key] = (FractalKeycode)fractal_keycode;
+    }
+
+    for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND;
+         ++fractal_keycode) {
+        // If no origin key maps to this keycode, we can skip this entry
+        if (origin_mapping[fractal_keycode] == FK_UNKNOWN) {
+            continue;
+        }
         if (ignore_key_state(input_device, (FractalKeycode)fractal_keycode, keyboard_state.active_pinch)) {
             continue;
         }
         int is_pressed = holding_keymap ?
             std::count(currently_pressed.begin(), currently_pressed.end(), (FractalKeycode)fractal_keycode)
             : get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
-        if (!keyboard_state.keyboard_state[fractal_keycode] &&
+        if (!mapped_keys[fractal_keycode] &&
             is_pressed) {
-            emit_mapped_key_event(input_device, os_type, (FractalKeycode)fractal_keycode, 0);
-        } else if (keyboard_state.keyboard_state[fractal_keycode] &&
+            LOG_INFO("Discrepancy found at %d (%d), unpressing!", fractal_keycode, origin_mapping[fractal_keycode]);
+            // Reverse map the key, since emit_mapped_key_event will remap it
+            emit_mapped_key_event(input_device, os_type, origin_mapping[fractal_keycode], 0);
+        } else if (mapped_keys[fractal_keycode] &&
                    !is_pressed) {
-            emit_mapped_key_event(input_device, os_type, (FractalKeycode)fractal_keycode, 1);
+            LOG_INFO("Discrepancy found at %d (%d), pressing!", fractal_keycode, origin_mapping[fractal_keycode]);
+            // Reverse map the key, since emit_mapped_key_event will remap it
+            emit_mapped_key_event(input_device, os_type, origin_mapping[fractal_keycode], 1);
 
             if (fractal_keycode == FK_CAPSLOCK) {
                 server_caps_lock = !server_caps_lock;
