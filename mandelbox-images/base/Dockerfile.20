@@ -121,6 +121,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     automake \
     autoconf \
     libtool \
+    bzip2 \
     ./libinput-fractal.deb \
     && apt-get autoremove -y \
     && apt-get clean \
