@@ -108,9 +108,6 @@ jobs:
           apt-get update
           apt-get install -y perl build-essential
 
-          # Install python3 and awscli for notifications
-          apt-get install -y python3 awscli
-
           # configure and build OpenSSL with -O3 flag
           ./config --release
           make -j
@@ -312,9 +309,6 @@ jobs:
           # Install needed dependencies
           apt-get update
           apt-get install -y libcurl4-openssl-dev cmake make build-essential zlib1g zlib1g-dev
-
-          # Install python3 and awscli for notifications
-          apt-get install -y python3 awscli
 
           # configure and build Sentry Native
           cmake -S . \
