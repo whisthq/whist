@@ -84,6 +84,11 @@ void init_keyboard_mapping() {
 
 bool initialized = false;
 
+// Global state, when a keymap is being held
+bool keymap_being_held = false;
+vector<FractalKeycode> currently_pressed;
+vector<FractalKeycode> new_key_combination;
+
 extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping* keyboard_mapping, FractalKeycode key_code, int pressed) {
     // Initialize keyboard mapping if it hasn't been already
     if (!initialized) {
@@ -96,7 +101,36 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
         key_code = modmap[key_code];
     }
 
-    // If a key is being released, just release it
+    // If we're currently holding a keymap,
+    if (keymap_being_held) {
+        // and If there's a discrepancy between what was being pressed,
+        // and the new input event,
+        if (std::count(currently_pressed.begin(), currently_pressed.end(), key_code) != pressed) {
+            // then we should disengage from the keymap
+
+            // Release the keys in the new key combination, modifiers last
+            reverse(new_key_combination.begin(), new_key_combination.end());
+            for(FractalKeycode key : new_key_combination) {
+                emit_key_event(input_device, key, 0);
+            }
+
+            // Press the original keys, modifiers first
+            reverse(currently_pressed.begin(), currently_pressed.end());
+            for(FractalKeycode key : currently_pressed) {
+                if (pressed == 0 && key == key_code) {
+                    // But we shouldn't press the key that we just decided to release
+                    continue;
+                }
+                emit_key_event(input_device, key, 1);
+            }
+
+            // Mark keymap as not being held
+            keymap_being_held = false;
+        }
+    }
+
+    // If a key is being released, just release it,
+    // We currently don't support releasing into a keymap
     if (pressed == 0) {
         emit_key_event(input_device, key_code, 0);
         return 0;
@@ -105,7 +139,6 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
     // If a key is being pressed, we check against mapped key combinations
 
     // Get the current keyboard combination being pressed
-    static vector<FractalKeycode> currently_pressed; // Static to not unnecessarily malloc
     currently_pressed.clear(); // Start with an empty array
     for(int i = 0; i < KEYCODE_UPPERBOUND; i++) {
         FractalKeycode i_key = (FractalKeycode)i;
@@ -120,7 +153,7 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
 
     // Check if this is a known keyboard mapping
     if (keyboard_mappings.count(currently_pressed)) {
-        vector<FractalKeycode> new_key_combination = keyboard_mappings[currently_pressed];
+        new_key_combination = keyboard_mappings[currently_pressed];
 
         // Release the original keys, modifiers last
         for(FractalKeycode key : currently_pressed) {
@@ -136,17 +169,8 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
         // Key Combination has been sent!
         //----
 
-        // Release the keys in the new key combination, modifiers last
-        reverse(new_key_combination.begin(), new_key_combination.end());
-        for(FractalKeycode key : new_key_combination) {
-            emit_key_event(input_device, key, 0);
-        }
-
-        // Press the original keys, modifiers first
-        reverse(currently_pressed.begin(), currently_pressed.end());
-        for(FractalKeycode key : currently_pressed) {
-            emit_key_event(input_device, key, 1);
-        }
+        // Mark the keymap as being held, because it is being held
+        keymap_being_held = true;
     } else {
         // If it's not a key mapped combination, just press the key
         emit_key_event(input_device, key_code, 1);
