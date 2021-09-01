@@ -38,7 +38,7 @@
     "classnames": "^2.3.1",
     "electron-store": "^8.0.0",
     "electron-updater": "4.4.0",
-    "history": "^4.1.10",
+    "history": "^5.0.1",
     "json-stringify-safe": "^5.0.1",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
