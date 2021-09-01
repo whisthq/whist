@@ -23,11 +23,7 @@ To set up your Fractal development instance:
 
 - Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
 
-<<<<<<< HEAD
 - If you use GitHub with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
-=======
-- If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
->>>>>>> 667b34473 (Also install latest stable golang in setup_host.sh)
 
 - Set up AWS credentials on your dev machine with `aws configure`. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
