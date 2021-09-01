@@ -119,9 +119,9 @@ EOF
   echo "================================================"
 
   # Source nvidia-docker apt package
-  # Note that we hardcode `distribution` to 20.04, so that we can upgrade to higher eventually,
-  # unofficially supported Ubuntu versions eventully (i.e. 21.04) since the 20.04 install
-  # (which just redirects to the 18.04 install) works for 21.04.
+  # Note that we hardcode `distribution` to 20.04, so that we can upgrade to a higher Ubuntu eventually by
+  # pinning 20.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
+  # of Ubuntu, like 21.04, which don't have an official nvidia-docker package
   distribution="ubuntu20.04"
   curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
   curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
