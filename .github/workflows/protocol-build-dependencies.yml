@@ -221,10 +221,6 @@ jobs:
     steps:
       ################################# CONFIG STEPS START ###############################
 
-      - name: Install git to Checkout sentry-native with Submodules
-        if: runner.os == 'Linux'
-        run: apt-get update && apt-get install -y git
-
       - name: Checkout Sentry Native Git Repository
         uses: actions/checkout@v2
         with:
