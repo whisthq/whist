@@ -41,16 +41,19 @@ hmap<FractalKeycode, FractalKeycode> modmap = {
     // Map right-modifier to left-modifier, to make things easier
     {FK_RGUI, FK_LCTRL}, // (still swapped)
     {FK_RCTRL, FK_LGUI},
-    {FK_RALT, FK_LALT}
+    {FK_RALT, FK_LALT},
+    {FK_RSHIFT, FK_LSHIFT}
 };
 
 // The full keyboard mapping
 hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
+    // Access history
     {
         {FK_LCTRL, FK_Y},
         {FK_LCTRL, FK_H},
     },
+    // Go forward/back on the browser
     {
         {FK_LCTRL, FK_LEFT},
         {FK_LALT, FK_LEFT},
@@ -59,6 +62,25 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
         {FK_LCTRL, FK_RIGHT},
         {FK_LALT, FK_RIGHT},
     },
+    // Move cursor forward/backward a word
+    {
+        {FK_LALT, FK_LEFT},
+        {FK_LCTRL, FK_LEFT},
+    },
+    {
+        {FK_LALT, FK_RIGHT},
+        {FK_LCTRL, FK_RIGHT},
+    },
+    // Select forward/backward a word
+    {
+        {FK_LALT, FK_LSHIFT, FK_LEFT},
+        {FK_LCTRL, FK_LSHIFT, FK_LEFT},
+    },
+    {
+        {FK_LALT, FK_LSHIFT, FK_RIGHT},
+        {FK_LCTRL, FK_LSHIFT, FK_RIGHT},
+    },
+    // Open a new tab with the currently selected text
     {
         {FK_LCTRL, FK_ENTER},
         {FK_LALT, FK_ENTER},
@@ -85,7 +107,7 @@ void init_keyboard_mapping() {
 bool initialized = false;
 
 // Global state, when a keymap is being held
-bool keymap_being_held = false;
+bool holding_keymap = false;
 vector<FractalKeycode> currently_pressed;
 vector<FractalKeycode> new_key_combination;
 
@@ -102,11 +124,11 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
     }
 
     // If we're currently holding a keymap,
-    if (keymap_being_held) {
-        // and If there's a discrepancy between what was being pressed,
+    if (holding_keymap) {
+        // and if there's a discrepancy between what was previously being pressed,
         // and the new input event,
         if (std::count(currently_pressed.begin(), currently_pressed.end(), key_code) != pressed) {
-            // then we should disengage from the keymap
+            // then we should disengage from the keymap as a result of this modifying input event
 
             // Release the keys in the new key combination, modifiers last
             reverse(new_key_combination.begin(), new_key_combination.end());
@@ -124,13 +146,17 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
                 emit_key_event(input_device, key, 1);
             }
 
-            // Mark keymap as not being held
-            keymap_being_held = false;
+            // Mark keymap as not being held anymore
+            holding_keymap = false;
+        } else {
+            // If the key is already in that state, we can just ignore the event
+            return 0;
         }
     }
 
     // If a key is being released, just release it,
-    // We currently don't support releasing into a keymap
+    // We currently don't support releasing into a keymap,
+    // but we can if we want
     if (pressed == 0) {
         emit_key_event(input_device, key_code, 0);
         return 0;
@@ -169,8 +195,8 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, KeyboardMapping*
         // Key Combination has been sent!
         //----
 
-        // Mark the keymap as being held, because it is being held
-        keymap_being_held = true;
+        // Mark the keymap as being held, because it is being held now
+        holding_keymap = true;
     } else {
         // If it's not a key mapped combination, just press the key
         emit_key_event(input_device, key_code, 1);
