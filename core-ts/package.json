@@ -11,7 +11,7 @@
   "repository": "https://github.com/fractal/fractal",
   "devDependencies": {
     "@babel/cli": "^7.13.0",
-    "@babel/core": "^7.14.0",
+    "@babel/core": "^7.15.0",
     "@babel/preset-env": "^7.14.7",
     "@babel/preset-react": "^7.13.13",
     "@tsconfig/recommended": "^1.0.1",
@@ -22,7 +22,7 @@
     "@types/node-fetch": "^2.5.10",
     "@types/nodemon": "^1.19.0",
     "@typescript-eslint/eslint-plugin": "^4.28.1",
-    "@typescript-eslint/parser": "^4.28.1",
+    "@typescript-eslint/parser": "^4.30.0",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^16.0.3",
