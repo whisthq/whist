@@ -575,7 +575,6 @@ typedef struct {
     bool active_pinch;
 } FractalKeyboardState;
 
-
 /**
  * @brief   Client message.
  * @details Message from a Fractal client to a Fractal server.

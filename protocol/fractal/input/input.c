@@ -103,7 +103,8 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
     int ret = 0;
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
-            ret = emit_mapped_key_event(input_device, input_os_type, fmsg->keyboard.code, fmsg->keyboard.pressed);
+            ret = emit_mapped_key_event(input_device, input_os_type, fmsg->keyboard.code,
+                                        fmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             ret = emit_mouse_motion_event(input_device, fmsg->mouseMotion.x, fmsg->mouseMotion.y,

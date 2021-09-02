@@ -43,9 +43,9 @@ set<FractalKeycode> modifiers = {
 
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
-    int operator()(const vector<FractalKeycode> &V) const {
-        int hash = (int)V.size();
-        for(auto &i : V) {
+    int operator()(const vector<FractalKeycode> &v) const {
+        int hash = (int)v.size();
+        for(auto &i : v) {
             hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
         return hash;
