@@ -20,10 +20,10 @@ classifiers = [
 
 # Requirements
 [dependencies]
-pylint = "^2.9.3"
+pylint = "^2.10.2"
 
 [dev-dependencies]
-black = { version = "21.6b0", python = "^3.9" }
+black = { version = "21.8b0", python = "^3.9" }
 
 # Configuration for Black.
 
