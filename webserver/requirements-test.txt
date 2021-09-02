@@ -1,7 +1,7 @@
 flake8==3.9.1
 moto==2.2.0
 mypy==0.910
-pylint==2.9.3
+pylint==2.10.2
 pytest==6.2.4
 pytest-cov==2.12.1
 pytest-dotenv==0.5.2
