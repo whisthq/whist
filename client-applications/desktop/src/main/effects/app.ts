@@ -20,7 +20,7 @@ import {
   createExitTypeform,
   createBugTypeform,
   createOnboardingTypeform,
-  closeAllWindows
+  closeAllWindows,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
@@ -144,9 +144,11 @@ fromTrigger("trayBugAction").subscribe(() => {
   createBugTypeform()
 })
 
-fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe((onboarded: boolean) => {
-  if (!onboarded) createOnboardingTypeform()
-})
+fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe(
+  (onboarded: boolean) => {
+    if (!onboarded) createOnboardingTypeform()
+  }
+)
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 fromTrigger("showPaymentWindow").subscribe(() => {
