@@ -15,3 +15,4 @@ createTrigger(
   TRIGGER.notPersisted,
   fromEvent(persistEvent, "data-not-persisted")
 )
+createTrigger(TRIGGER.onboarded, fromEvent(persistEvent, "onboarded"))

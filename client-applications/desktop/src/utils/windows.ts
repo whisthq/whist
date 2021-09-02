@@ -24,8 +24,10 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
   WindowHashPayment,
-  WindowHashTypeform,
+  WindowHashExitTypeform,
   WindowHashProtocol,
+  WindowHashOnboardingTypeform,
+  WindowHashBugTypeform,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -292,7 +294,7 @@ export const createSignoutWindow = () => {
   })
 }
 
-export const createTypeformWindow = (url: string) =>
+export const createExitTypeform = () =>
   createWindow({
     options: {
       ...base,
@@ -301,9 +303,34 @@ export const createTypeformWindow = (url: string) =>
       skipTaskbar: true,
       alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
-    hash: WindowHashTypeform,
+    hash: WindowHashExitTypeform,
     closeOtherWindows: false,
-    customURL: url,
+  })
+
+export const createOnboardingTypeform = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashOnboardingTypeform,
+    closeOtherWindows: false,
+  })
+
+export const createBugTypeform = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashBugTypeform,
+    closeOtherWindows: false,
   })
 
 export const createProtocolWindow = async () => {

@@ -17,13 +17,17 @@ import {
   createProtocolWindow,
   relaunch,
   createPaymentWindow,
-  createTypeformWindow,
+  createExitTypeform,
+  createBugTypeform,
+  createOnboardingTypeform,
+  closeAllWindows
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
-import { emitAuthCache, persistClear, store } from "@app/utils/persist"
+import { emitCache, persist, persistClear, store } from "@app/utils/persist"
 import { showAppDock, hideAppDock } from "@app/utils/dock"
+import { fromSignal } from "@app/utils/observables"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -51,9 +55,9 @@ fromTrigger("appReady")
     autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
   })
 
-// Check Electron store for persisted data and create the tray
 fromTrigger("appReady").subscribe(() => {
-  emitAuthCache()
+  emitCache()
+  createTray(createMenu(false))
 })
 
 // appReady only fires once, at the launch of the application.
@@ -61,7 +65,6 @@ fromTrigger("appReady").subscribe(() => {
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
 fromTrigger("notPersisted").subscribe(() => {
-  createTray(createMenu(false))
   showAppDock()
   createAuthWindow()
 })
@@ -134,11 +137,15 @@ fromTrigger("showSignoutWindow").subscribe(() => {
 })
 
 fromTrigger("trayFeedbackAction").subscribe(() => {
-  createTypeformWindow("https://form.typeform.com/to/Yfs4GkeN")
+  createExitTypeform()
 })
 
 fromTrigger("trayBugAction").subscribe(() => {
-  createTypeformWindow("https://tryfractal.typeform.com/to/VMWBFgGc")
+  createBugTypeform()
+})
+
+fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe((onboarded: boolean) => {
+  if (!onboarded) createOnboardingTypeform()
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -160,3 +167,12 @@ fromTrigger("checkPaymentFlowFailure").subscribe(
     }).catch((err) => console.error(err))
   }
 )
+
+fromTrigger("exitTypeformSubmitted").subscribe(() => {
+  persist("exitTypeformSubmitted", true, "data")
+  closeAllWindows()
+})
+
+fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
+  persist("onboardingTypeformSubmitted", true, "data")
+})

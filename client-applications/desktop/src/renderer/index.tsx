@@ -11,10 +11,14 @@ import ReactDOM from "react-dom"
 import Update from "@app/renderer/pages/update"
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
+import Typeform from "@app/renderer/pages/typeform"
 
 import {
   WindowHashUpdate,
   WindowHashSignout,
+  WindowHashExitTypeform,
+  WindowHashBugTypeform,
+  WindowHashOnboardingTypeform,
   allowPayments,
 } from "@app/utils/constants"
 import {
@@ -43,7 +47,7 @@ const show = chain(window.location.search.substring(1))
   .value()
 
 const RootComponent = () => {
-  const [, setMainState] = useMainState()
+  const [mainState, setMainState] = useMainState()
   const relaunch = () =>
     setMainState({
       trigger: { name: TRIGGER.relaunchAction, payload: undefined },
@@ -59,6 +63,19 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.clearCacheAction, payload: { clearConfig } },
     })
 
+  const handleExitTypeform = () =>
+    setMainState({
+      trigger: { name: TRIGGER.exitTypeformSubmitted, payload: undefined },
+    })
+
+  const handleOnboardingTypeform = () =>
+    setMainState({
+      trigger: {
+        name: TRIGGER.onboardingTypeformSubmitted,
+        payload: undefined,
+      },
+    })
+
   const showSignoutWindow = () =>
     setMainState({
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
@@ -66,6 +83,26 @@ const RootComponent = () => {
 
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
+  if (show === WindowHashExitTypeform)
+    return (
+      <Typeform
+        onSubmit={handleExitTypeform}
+        id="Yfs4GkeN"
+        email={mainState.userEmail}
+      />
+    )
+  if (show === WindowHashOnboardingTypeform)
+    return (
+      <Typeform
+        onSubmit={handleOnboardingTypeform}
+        id="Oi21wwbg"
+        email={mainState.userEmail}
+      />
+    )
+  if (show === WindowHashBugTypeform)
+    return (
+      <Typeform onSubmit={() => {}} id="VMWBFgGc" email={mainState.userEmail} />
+    )
   if (show === NO_PAYMENT_ERROR && allowPayments)
     return (
       <TwoButtonError
