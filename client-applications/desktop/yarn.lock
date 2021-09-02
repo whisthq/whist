@@ -1073,10 +1073,10 @@ autoprefixer@^10.3.1:
     normalize-range "^0.1.2"
     postcss-value-parser "^4.1.0"
 
-aws-sdk@^2.957.0:
-  version "2.957.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.957.0.tgz#579fbb5310f918ebcba6b968e0c43903180bad35"
-  integrity sha512-TtRv/ebZL7gWgAW8XGlRizs5xhyzlDt2KbrxoPcHcxPTH8KHlbEyOmAXafyB7K/Jf3En5TDdJN1daJ4idSKWSg==
+aws-sdk@^2.981.0:
+  version "2.981.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.981.0.tgz#b2e6205db23d755e1c8fcbd0618e8309e69d3767"
+  integrity sha512-Itrj9O1zmPm/HupwUiWBhoMTuSjLQzsBcEpxHgLQmUPRv2pxud8kq5DbuKdS2tLlBFMuKx4OLcs9x5RbNOfj5A==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
@@ -2182,10 +2182,10 @@ eslint-plugin-node@^11.1.0:
     resolve "^1.10.1"
     semver "^6.1.0"
 
-eslint-plugin-prettier@^3.4.0:
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-3.4.0.tgz#cdbad3bf1dbd2b177e9825737fe63b476a08f0c7"
-  integrity sha512-UDK6rJT6INSfcOo545jiaOwB701uAIt2/dR7WnFQoGCVl1/EMqdANBmwUaqqQ45aXprsTGzSa39LI1PyuRBxxw==
+eslint-plugin-prettier@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-4.0.0.tgz#8b99d1e4b8b24a762472b4567992023619cb98e0"
+  integrity sha512-98MqmCJ7vJodoQK359bqQWaxOE0CS8paAz/GgjaZLyex4TTk3g9HugoO89EqWCrFiOqn9EVvcoo7gZzONCWVwQ==
   dependencies:
     prettier-linter-helpers "^1.0.0"
 
