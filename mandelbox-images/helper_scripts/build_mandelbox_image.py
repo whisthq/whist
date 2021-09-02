@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 # Usage: ./build_mandelbox_image.py [image_paths...] [-o] [--all]
 # If -o is passed in, docker build will output to standard output
@@ -49,7 +50,7 @@ if build_all:
 # Get dependency path from given image path
 def get_dependency_from_image(img_path):  # returns dep_path
     # Open Dockerfile for the image path
-    with open(img_path + "/Dockerfile.20") as file:
+    with open(img_path + "/Dockerfile.20", encoding="utf-8") as file:
         # Regex match the Dockerfile dependency, with a capture group on the dependency name
         regex = re.compile("^[ ]*FROM[ ]+fractal/([^:]*):current-build")
         for line in file:
