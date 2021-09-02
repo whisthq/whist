@@ -14,6 +14,8 @@ on:
       - "!mandelbox-images/helper_scripts/run_mandelbox_image.sh"
       - "!mandelbox-images/run_local_mandelbox_image.sh"
       - "!mandelbox-images/run_remote_mandelbox_image.sh"
+      - pyproject.toml
+      - pylintrc
   workflow_dispatch:
 
 jobs:

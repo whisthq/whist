@@ -14,6 +14,8 @@ on:
       - "webserver/**"
       - "webserver/db_migration/schema.sql"
       - ".github/workflows/webserver-check-pr.yml"
+      - pyproject.toml
+      - pylintrc
   workflow_dispatch:
 
 jobs:
