@@ -95,7 +95,7 @@
     "typescript": "^4.4.2"
   },
   "engines": {
-    "node": ">=15.x",
+    "node": ">=16.x",
     "npm": "use-yarn",
     "yarn": ">=1.19.x"
   }
