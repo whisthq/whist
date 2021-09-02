@@ -144,9 +144,11 @@ fromTrigger("trayBugAction").subscribe(() => {
   createBugTypeform()
 })
 
-fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe((onboarded: boolean) => {
-  if (!onboarded) createOnboardingTypeform()
-})
+fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe(
+  (onboarded: boolean) => {
+    if (!onboarded) createOnboardingTypeform()
+  }
+)
 
 fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe(
   (onboarded: boolean) => {
