@@ -19,7 +19,7 @@ export const WindowHashProtocol = "PROTOCOL"
 export const WindowHashExitTypeform = "EXIT_TYPEFORM"
 export const WindowHashBugTypeform = "BUG_TYPEFORM"
 export const WindowHashOnboardingTypeform = "ONBOARDING_TYPEFORM"
-
+export const WindowHashSpeedtest = "SPEEDTEST"
 export const WindowHashSleep = "SLEEP"
 
 export const StateChannel = "MAIN_STATE_CHANNEL"

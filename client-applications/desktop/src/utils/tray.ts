@@ -14,6 +14,7 @@ import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
 import { allowPayments } from "@app/utils/constants"
 import { MenuItem } from "electron/main"
 import { persistGet } from "./persist"
+import { createSpeedtestWindow } from "@app/utils/windows"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -38,6 +39,12 @@ const feedbackMenu = new MenuItem({
       label: "Bug Report",
       click: () => {
         trayEvent.emit("bug")
+      },
+    },
+    {
+      label: "Test My Internet Speed",
+      click: () => {
+        createSpeedtestWindow()
       },
     },
   ],

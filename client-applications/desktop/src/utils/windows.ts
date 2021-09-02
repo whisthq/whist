@@ -28,6 +28,7 @@ import {
   WindowHashProtocol,
   WindowHashOnboardingTypeform,
   WindowHashBugTypeform,
+  WindowHashSpeedtest,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -331,6 +332,20 @@ export const createBugTypeform = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashBugTypeform,
     closeOtherWindows: false,
+  })
+
+export const createSpeedtestWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashSpeedtest,
+    closeOtherWindows: false,
+    customURL: "https://speed.cloudflare.com/",
   })
 
 export const createProtocolWindow = async () => {
