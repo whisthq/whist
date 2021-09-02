@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import logging
 from time import time
@@ -40,10 +41,10 @@ def parse_request(view_func: _F) -> _F:
             if request.method == "POST" and request.data != b"":
                 body = json.loads(request.data)
             else:
-                body = dict()
+                body = {}
         except:
             fractal_logger.error("Failed to parse request", exc_info=True)
-            body = dict()
+            body = {}
 
         kwargs["body"] = body
         kwargs["received_from"] = received_from

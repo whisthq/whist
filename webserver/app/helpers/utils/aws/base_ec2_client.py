@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file holds the utility library for EC2 (AWS cloud compute) instance orchestration
 # Specifically, it governs instance starting, stopping, and getting
 # the IPs of running instances, as well as some useful state checkers.
@@ -167,7 +168,7 @@ class EC2Client(CloudClient):
             raise InstancesNotRunningException(str(instance_ids))
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
-        resdict = dict()
+        resdict = {}
         for instance in instance_info:
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
