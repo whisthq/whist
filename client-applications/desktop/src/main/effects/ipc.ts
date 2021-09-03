@@ -3,7 +3,7 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { combineLatest, concat, of, Observable } from "rxjs"
+import { combineLatest, concat, of, merge } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter } from "rxjs/operators"
@@ -39,7 +39,7 @@ const subscribed = combineLatest(
       ).pipe(
         filter((args: { userEmail?: string }) => args.userEmail !== undefined),
         map((args: { userEmail?: string }) => args.userEmail as string)
-      ) as Observable<string>,
+      ),
     },
     (obs) => concat(of(undefined), obs)
   )
