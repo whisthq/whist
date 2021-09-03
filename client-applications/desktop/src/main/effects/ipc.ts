@@ -3,7 +3,7 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { combineLatest, concat, of, Observable } from "rxjs"
+import { combineLatest, concat, of, Observable, merge } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter } from "rxjs/operators"
