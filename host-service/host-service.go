@@ -517,7 +517,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"apparmor:mandelbox-apparmor-profile",
 		},
 	}
-	// TODO: investigate whether putting all GPUs in all mandelboxes (i.e. the default here) is beneficial.
 	mandelboxName := utils.Sprintf("%s-%s", req.AppName, req.MandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	mandelboxName = re.ReplaceAllString(mandelboxName, "-")
