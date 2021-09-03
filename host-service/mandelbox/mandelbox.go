@@ -5,6 +5,7 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
 import (
 	"context"
+	"strings"
 	"sync"
 
 	"github.com/fractal/fractal/host-service/dbdriver"
@@ -378,7 +379,11 @@ func (c *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 
 		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, utils.TempDir+string(c.mandelboxID)+"/sockets/uinput.sock")
 		if err != nil {
-			logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", c.mandelboxID, err)
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", c.mandelboxID, err)
+			} else {
+				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", c.mandelboxID, err)
+			}
 		} else {
 			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", c.mandelboxID)
 		}
