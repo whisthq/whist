@@ -145,9 +145,9 @@ int sync_keyboard_state(void) {
     int num_keys;
     const Uint8* state = SDL_GetKeyboardState(&num_keys);
 #if defined(_WIN32)
-    fmsg.keyboard_state.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
+    fmsg.keyboard_state.num_keycodes = (short)min(KEYCODE_UPPERBOUND, num_keys);
 #else
-    fmsg.keyboard_state.num_keycodes = fmin(NUM_KEYCODES, num_keys);
+    fmsg.keyboard_state.num_keycodes = fmin(KEYCODE_UPPERBOUND, num_keys);
 #endif
 
     // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
@@ -163,14 +163,8 @@ int sync_keyboard_state(void) {
     }
 
     // Also send caps lock and num lock status for syncronization
-#ifdef __APPLE__
-    fmsg.keyboard_state.keyboard_state[FK_LCTRL] = ctrl_pressed;
-    fmsg.keyboard_state.keyboard_state[FK_LGUI] = false;
-    fmsg.keyboard_state.keyboard_state[FK_RGUI] = false;
-#else
     fmsg.keyboard_state.keyboard_state[FK_LGUI] = lgui_pressed;
     fmsg.keyboard_state.keyboard_state[FK_RGUI] = rgui_pressed;
-#endif
 
     fmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
     fmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;

@@ -27,7 +27,7 @@ typedef struct InputDevice {
     int fd_absmouse;
     int fd_relmouse;
     int fd_keyboard;
-    int keyboard_state[NUM_KEYCODES];
+    int keyboard_state[KEYCODE_UPPERBOUND];
     bool caps_lock;
     bool num_lock;
     // Internal

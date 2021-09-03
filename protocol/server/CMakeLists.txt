@@ -176,10 +176,10 @@ if (${WIN32})
             odbc32
             odbccp32
             ucrt
+            ucrtd
             vcruntime
             msvcrt
             msvcmrt
-            libcpmt
             msvcprt
             avrt
             d3dcompiler

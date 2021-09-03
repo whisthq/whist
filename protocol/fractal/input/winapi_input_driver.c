@@ -22,7 +22,7 @@ input (keystrokes, mouse clicks, etc.) via CreateInputDevice.
  * @brief Windows keycodes for replaying Fractal user inputs on server
  * @details index is Fractal keycode, value is Windows keycode
  */
-const int windows_keycodes[NUM_KEYCODES] = {
+const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     0,                       // Fractal keycodes start at index 4
     0,                       // Fractal keycodes start at index 4
     0,                       // Fractal keycodes start at index 4

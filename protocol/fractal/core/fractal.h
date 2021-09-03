@@ -79,7 +79,6 @@ Defines
 
 #define USING_SENTRY true
 
-#define NUM_KEYCODES 265
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
 #define MAX_NUM_CLIENTS 10
@@ -202,6 +201,7 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
  * @details Different accepted keycodes from client input.
  */
 typedef enum FractalKeycode {
+    FK_UNKNOWN = 0,        ///< 0
     FK_A = 4,              ///< 4
     FK_B = 5,              ///< 5
     FK_C = 6,              ///< 6
@@ -324,6 +324,8 @@ typedef enum FractalKeycode {
     FK_AUDIOMUTE = 262,    ///< 262
     FK_MEDIASELECT = 263,  ///< 263
 } FractalKeycode;
+// An (exclusive) upper bound on any keycode
+#define KEYCODE_UPPERBOUND 265
 
 /**
  * @brief   Modifier keys applied to keyboard input.
@@ -472,6 +474,17 @@ typedef enum FractalMultigestureType {
 } FractalMultigestureType;
 
 /**
+ * @brief   OS type
+ * @details An enum of OS types
+ */
+typedef enum FractalOSType {
+    FRACTAL_UNKNOWN_OS = 0,
+    FRACTAL_WINDOWS = 1,
+    FRACTAL_APPLE = 2,
+    FRACTAL_LINUX = 3,
+} FractalOSType;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
@@ -493,6 +506,7 @@ typedef struct FractalDiscoveryRequestMessage {
     int user_id;
     FractalTimeData time_data;
     char user_email[FRACTAL_ARGS_MAXLEN + 1];
+    FractalOSType os;
 } FractalDiscoveryRequestMessage;
 
 /**
@@ -553,6 +567,14 @@ typedef enum FractalExitCode {
     FRACTAL_EXIT_CLI = 2
 } FractalExitCode;
 
+typedef struct {
+    short num_keycodes;
+    bool caps_lock;
+    bool num_lock;
+    char keyboard_state[KEYCODE_UPPERBOUND];
+    bool active_pinch;
+} FractalKeyboardState;
+
 /**
  * @brief   Client message.
  * @details Message from a Fractal client to a Fractal server.
@@ -597,13 +619,7 @@ typedef struct FractalClientMessage {
         } nack_data;
 
         // MESSAGE_KEYBOARD_STATE
-        struct {
-            short num_keycodes;
-            bool caps_lock;
-            bool num_lock;
-            char keyboard_state[NUM_KEYCODES];
-            bool active_pinch;
-        } keyboard_state;
+        FractalKeyboardState keyboard_state;
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
