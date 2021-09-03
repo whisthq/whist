@@ -67,10 +67,15 @@ hmap<FractalKeycode, FractalKeycode> modmap = {
 // The full keyboard mapping
 hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
-    // Access history
+    // Access history with ctrl+y
     {
         {FK_LCTRL, FK_Y},
         {FK_LCTRL, FK_H},
+    },
+    // Make ctrl+h not access history
+    {
+        {FK_LCTRL, FK_H},
+        {},
     },
     // Go forward/back on the browser
     {
