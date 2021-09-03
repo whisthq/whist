@@ -32,12 +32,15 @@ export default {
   // Persist triggers
   persisted: "persisted",
   notPersisted: "notPersisted",
+  onboarded: "onboarded",
 
   // Renderer triggers
   loginAction: "loginAction",
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
+  exitTypeformSubmitted: "exitTypeformSubmitted",
+  onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",

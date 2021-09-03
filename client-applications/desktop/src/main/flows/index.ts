@@ -1,5 +1,5 @@
 import { merge, Observable } from "rxjs"
-import { map, take } from "rxjs/operators"
+import { map, take, filter } from "rxjs/operators"
 
 import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"
@@ -29,8 +29,18 @@ const auth = authFlow(
   )
 )
 
+const onboarded = fromSignal(
+  merge(
+    fromTrigger("onboarded").pipe(filter((onboarded: boolean) => onboarded)),
+    fromTrigger("onboardingTypeformSubmitted")
+  ),
+  fromTrigger(TRIGGER.authFlowSuccess)
+)
+
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(fromTrigger(TRIGGER.authFlowSuccess))
+const checkPayment = checkPaymentFlow(
+  fromSignal(fromTrigger(TRIGGER.authFlowSuccess), onboarded)
+)
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials

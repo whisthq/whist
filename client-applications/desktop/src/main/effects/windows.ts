@@ -17,19 +17,24 @@ import { hideAppDock } from "@app/utils/dock"
 import {
   createErrorWindow,
   createProtocolWindow,
-  createTypeformWindow,
+  createExitTypeform,
 } from "@app/utils/windows"
-import { store, persist } from "@app/utils/persist"
+import { persistGet } from "@app/utils/persist"
 import { protocolStreamInfo } from "@app/utils/protocol"
 import { PROTOCOL_ERROR } from "@app/utils/error"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 
+// Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
 let protocolLaunchRetries = 0
+// Notifications
 let internetNotification: Notification | undefined
 let rebootNotification: Notification | undefined
+// Keeps track of how often we show warnings
 let warningWindowOpen = false
-let lastShown = 0
+let warningLastShown = 0
+// Keeps track of if we've already asked them to fill out the exit survey
+let exitSurveyShown = false
 
 fromTrigger("appReady").subscribe(() => {
   internetNotification = internetWarning()
@@ -100,12 +105,13 @@ allWindowsClosed
     ]) => {
       // If they didn't crash out and didn't fill out the exit survey, show it to them
       if (
-        store.get("data.exitSurveySubmitted") === undefined &&
+        persistGet("exitTypeformSubmitted", "data") === undefined &&
         !mandelboxFailure &&
-        !args.crashed
+        !args.crashed &&
+        !exitSurveyShown
       ) {
-        createTypeformWindow("https://form.typeform.com/to/Yfs4GkeN")
-        persist("exitSurveySubmitted", true, "data")
+        createExitTypeform()
+        exitSurveyShown = true
         // If all windows were successfully closed, quit
       } else if (
         args.hash !== WindowHashProtocol ||
@@ -140,10 +146,14 @@ fromTrigger("networkUnstable")
   .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
     // Don't show the warning more than once within ten seconds
-    if (!warningWindowOpen && unstable && Date.now() / 1000 - lastShown > 10) {
+    if (
+      !warningWindowOpen &&
+      unstable &&
+      Date.now() / 1000 - warningLastShown > 10
+    ) {
       warningWindowOpen = true
       internetNotification?.show()
-      lastShown = Date.now() / 1000
+      warningLastShown = Date.now() / 1000
     }
     if (!unstable && warningWindowOpen) {
       internetNotification?.close()
