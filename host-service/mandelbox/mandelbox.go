@@ -379,7 +379,7 @@ func (c *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 
 		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, utils.TempDir+string(c.mandelboxID)+"/sockets/uinput.sock")
 		if err != nil {
-			if strings.Contains(err.Error(), "use of closed network connection") {
+			if c.mandelboxID == "host-service-warmup" && strings.Contains(err.Error(), "use of closed network connection") {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", c.mandelboxID, err)
 			} else {
 				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", c.mandelboxID, err)
