@@ -34,7 +34,7 @@ $RUN_AS_FRACTAL "xsettingsd" &
 echo "xsettingsd background PID: $!"
 
 # Let everyone know that xinit is initialized
-echo "$xinitrc_pid" > /var/log/fractal/xinit-pid
+echo "$xinitrc_pid" > /usr/share/fractal/xinit-pid
 
 # Wait for AwesomeWM process
 # Note: this never finishes, but leaves the X server open indefinitely

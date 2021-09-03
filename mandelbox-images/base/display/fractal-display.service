@@ -11,7 +11,7 @@ EnvironmentFile=/usr/share/fractal/fractal-display-config.env
 ExecStart=/usr/share/fractal/fractal-display.sh
 StandardOutput=file:/var/log/fractal/display-out.log
 StandardError=file:/var/log/fractal/display-err.log
-PIDFile=/var/log/fractal/xinit-pid
+PIDFile=/usr/share/fractal/xinit-pid
 
 [Install]
 WantedBy=multi-user.target
