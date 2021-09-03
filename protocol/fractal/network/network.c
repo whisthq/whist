@@ -264,7 +264,10 @@ bool handshake_private_key(SocketContext* context) {
     recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
-        LOG_ERROR("Could not confirmPrivateKey!");
+        // this is set as a warning so that it does not log to Sentry, as it happens
+        // to be triggered when a connection fails to happen, which we catch elsewhere
+        // and it creates unnecessary/confusing noise in our Sentry issues
+        LOG_WARNING("Could not confirmPrivateKey!");
         return false;
     } else {
         LOG_INFO("Private key confirmed");
@@ -1441,7 +1444,10 @@ bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* privat
         hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
         return true;
     } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+        // this is set as a warning so that it does not log to Sentry, as it happens
+        // to be triggered when a connection fails to happen, which we catch elsewhere
+        // and it creates unnecessary/confusing noise in our Sentry issues
+        LOG_WARNING("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
                   sizeof(PrivateKeyData));
         return false;
     }
@@ -1465,7 +1471,10 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
 
     if (recv_size == sizeof(PrivateKeyData)) {
         if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
-            LOG_ERROR("IV is incorrect!");
+            // this is set as a warning so that it does not log to Sentry, as it happens
+            // to be triggered when a connection fails to happen, which we catch elsewhere
+            // and it creates unnecessary/confusing noise in our Sentry issues
+            LOG_WARNING("IV is incorrect!");
             return false;
         } else {
             SignatureData sig_data;
@@ -1480,7 +1489,10 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
             }
         }
     } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+        // this is set as a warning so that it does not log to Sentry, as it happens
+        // to be triggered when a connection fails to happen, which we catch elsewhere
+        // and it creates unnecessary/confusing noise in our Sentry issues
+        LOG_WARNING("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
                   sizeof(PrivateKeyData));
         return false;
     }
