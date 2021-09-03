@@ -27,13 +27,41 @@ bundled_region = {
     "ca-central-1": ["us-east-1"],
 }
 
-type_to_number_map = {
+# The number of GPUs on each instance type
+instance_type_to_gpu_map = {
     "g4dn.xlarge": 1,
     "g4dn.2xlarge": 1,
     "g4dn.4xlarge": 1,
     "g4dn.8xlarge": 1,
     "g4dn.16xlarge": 1,
     "g4dn.12xlarge": 4,
+}
+
+# The number of vCPUs on each instance type
+instance_type_to_vcpu_map = {
+    "g4dn.xlarge": 4,
+    "g4dn.2xlarge": 8,
+    "g4dn.4xlarge": 16,
+    "g4dn.8xlarge": 32,
+    "g4dn.16xlarge": 64,
+    "g4dn.12xlarge": 48,
+}
+
+# Currently the limiting factors are GPU count and
+# vCPU count. Our two constraints are mandelboxes/GPU
+# (configured to 2 in the host service) and vCPUs/mandelbox
+# (which we set to 4 here). This determines a very simple
+# allocation setup that we can flesh out later.
+
+HOST_SERVICE_MANDELBOXES_PER_GPU = 2
+VCPUS_PER_MANDELBOX = 4
+
+type_to_number_map = {
+    k: min(
+        HOST_SERVICE_MANDELBOXES_PER_GPU * instance_type_to_gpu_map[k],
+        VCPUS_PER_MANDELBOX // instance_type_to_vcpu_map[k],
+    )
+    for k in instance_type_to_gpu_map.keys() & instance_type_to_vcpu_map.keys()
 }
 
 
