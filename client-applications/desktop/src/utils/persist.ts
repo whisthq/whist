@@ -13,7 +13,6 @@ import { app } from "electron"
 import Store from "electron-store"
 import events from "events"
 import { isEmpty, pickBy } from "lodash"
-
 import { loggingBaseFilePath } from "@app/config/environment"
 
 app.setPath("userData", loggingBaseFilePath)
@@ -29,7 +28,21 @@ type CacheName = "auth" | "data"
 
 const persistedAuth = store.get("auth") as Cache
 
-export const emitAuthCache = () => {
+const persist = (key: string, value: string | boolean, cache?: CacheName) => {
+  store.set(`${cache ?? "auth"}.${key}`, value)
+}
+
+const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {
+  keys.forEach((key) => {
+    store.delete(`${cache as string}.${key as string}`)
+  })
+}
+
+const persistGet = (key: keyof Cache, cache?: CacheName) =>
+  (store.get(cache ?? "auth") as Cache)?.[key]
+
+const emitCache = () => {
+  // Check if auth credentials are saved
   const authCache = {
     accessToken: persistedAuth?.accessToken ?? "",
     configToken: persistedAuth?.configToken ?? "",
@@ -42,21 +55,12 @@ export const emitAuthCache = () => {
   } else {
     persisted.emit("data-not-persisted")
   }
+
+  // Check if onboarded
+  persisted.emit(
+    "onboarded",
+    persistGet("onboardingTypeformSubmitted", "data") !== undefined
+  )
 }
 
-export const persist = (
-  key: string,
-  value: string | boolean,
-  cache?: CacheName
-) => {
-  store.set(`${cache ?? "auth"}.${key}`, value)
-}
-
-export const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {
-  keys.forEach((key) => {
-    store.delete(`${cache as string}.${key as string}`)
-  })
-}
-
-export const persistGet = (key: keyof Cache, cache?: CacheName) =>
-  (store.get(cache ?? "auth") as Cache)?.[key]
+export { persist, persistClear, persistGet, emitCache }

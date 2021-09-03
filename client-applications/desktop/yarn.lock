@@ -511,6 +511,18 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
+"@typeform/embed-react@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@typeform/embed-react/-/embed-react-1.1.0.tgz#4d86321c1e2881fc68f6b1fbe23af96ed8415f6f"
+  integrity sha512-HmSOJ3aoURDICEn3i77GeC07BfnI219pGEACYkur1wVeXjIbCE4T7FAn0Jg+X+UTd1ZuZZTccLR0LA76LRAHAA==
+  dependencies:
+    "@typeform/embed" "^1.10.0"
+
+"@typeform/embed@^1.10.0":
+  version "1.18.0"
+  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.18.0.tgz#5319240ceea9df3369b4a45c7dc48bd91b5d3ab2"
+  integrity sha512-c3CyqcdbnGx8bCa5fq+V9vg8j+HLjkciV5ITM0dsU3TLPB1aeLCTALcW07b2FiGajoLO8E9pZQAHLRbquvVOSQ==
+
 "@types/auto-launch@^5.0.2":
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/@types/auto-launch/-/auto-launch-5.0.2.tgz#4970f01e5dd27572489b7fe77590204a19f86bd0"

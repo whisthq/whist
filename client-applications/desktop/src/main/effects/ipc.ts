@@ -3,10 +3,10 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { combineLatest, concat, of } from "rxjs"
+import { combineLatest, concat, of, Observable } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, startWith } from "rxjs/operators"
+import { map, startWith, filter } from "rxjs/operators"
 
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
@@ -32,6 +32,14 @@ const subscribed = combineLatest(
       updateInfo: fromTrigger("downloadProgress").pipe(
         map((obj) => JSON.stringify(obj))
       ),
+      userEmail: merge(
+        fromTrigger("authFlowSuccess"),
+        fromTrigger("authRefreshSuccess"),
+        fromTrigger("configFlowSuccess")
+      ).pipe(
+        filter((args: { userEmail?: string }) => args.userEmail !== undefined),
+        map((args: { userEmail?: string }) => args.userEmail as string)
+      ) as Observable<string>,
     },
     (obs) => concat(of(undefined), obs)
   )
