@@ -150,12 +150,6 @@ fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe(
   }
 )
 
-fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe(
-  (onboarded: boolean) => {
-    if (!onboarded) createOnboardingTypeform()
-  }
-)
-
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 fromTrigger("showPaymentWindow").subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
