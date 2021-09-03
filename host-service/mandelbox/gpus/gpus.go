@@ -28,7 +28,7 @@ type Index int
 // each GPU and still maintain acceptable performance. Note that we are
 // assuming that all GPUs on a mandelbox are uniform (and that we are using
 // only one instance type).
-const MaxMandelboxesPerGPU = 1
+const MaxMandelboxesPerGPU = 2
 
 // usagePerGPU contains the number of mandelboxes currently assigned to a
 // each GPU (indexed by the GPU's Index).
