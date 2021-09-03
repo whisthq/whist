@@ -11,7 +11,6 @@ import { map, startWith, filter } from "rxjs/operators"
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
 import { mapValues } from "lodash"
-import { merge } from "build/_snowpack/pkg/rxjs"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
