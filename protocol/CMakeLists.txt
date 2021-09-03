@@ -23,7 +23,13 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 
-project(FractalProtocol LANGUAGES C)
+# Host is needed since CMAKE_SYSTEM_NAME is set by the project() command
+if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+    # Clang can't handle CXX for some reason
+    project(FractalProtocol LANGUAGES C)
+else ()
+    project(FractalProtocol LANGUAGES C CXX)
+endif ()
 
 if (CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")

@@ -3,6 +3,8 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                 input.c
                 input.h
                 input_driver.h
+                keyboard_mapping.cpp
+                keyboard_mapping.h
               )
 
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

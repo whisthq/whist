@@ -21,7 +21,7 @@
 // @brief Linux keycodes for replaying Fractal user inputs on server
 // @details index is Fractal keycode, value is Linux keycode.
 // To debug specific keycodes, use 'sudo showkey --keycodes'.
-const int linux_keycodes[NUM_KEYCODES] = {
+const int linux_keycodes[KEYCODE_UPPERBOUND] = {
     0,                 // Fractal keycodes start at index 4
     0,                 // Fractal keycodes start at index 4
     0,                 // Fractal keycodes start at index 4
@@ -432,8 +432,11 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
 }
 
 int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
-    return input_device->keyboard_state[fractal_keycode];
-    return -1;
+    if ((int)fractal_keycode >= KEYCODE_UPPERBOUND) {
+        return 0;
+    } else {
+        return input_device->keyboard_state[fractal_keycode];
+    }
 }
 
 int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {

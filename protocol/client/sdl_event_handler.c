@@ -491,18 +491,6 @@ int handle_sdl_event(SDL_Event *event) {
         }
         case SDL_KEYDOWN:
         case SDL_KEYUP: {
-#ifdef __APPLE__
-            // On Mac, map cmd to ctrl
-            if (event->key.keysym.scancode == FK_LGUI) {
-                event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
-                event->key.keysym.sym = SDLK_LCTRL;
-            }
-            if (event->key.keysym.scancode == FK_RGUI) {
-                event->key.keysym.scancode = (SDL_Scancode)FK_RCTRL;
-                event->key.keysym.sym = SDLK_RCTRL;
-            }
-#endif
-
             if (handle_key_up_down(event) != 0) {
                 return -1;
             }

@@ -640,6 +640,15 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
         return -1;
     }
 
+    // Let the server know what OS we are
+#ifdef _WIN32
+    fmsg->os = FRACTAL_WINDOWS;
+#elif defined(__APPLE__)
+    fmsg->os = FRACTAL_APPLE;
+#else
+    fmsg->os = FRACTAL_LINUX;
+#endif
+
     return 0;
 }
 

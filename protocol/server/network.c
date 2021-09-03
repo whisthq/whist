@@ -37,6 +37,7 @@ extern volatile int connection_id;
 extern volatile bool exiting;
 extern int sample_rate;
 extern bool client_joined_after_window_name_broadcast;
+extern volatile FractalOSType client_os;
 int begin_time_to_exit = 60;
 
 int last_input_id = -1;
@@ -459,7 +460,7 @@ int multithreaded_manage_clients(void *opaque) {
 
         if (clients[client_id].is_controlling) {
             // Reset input system when a new input controller arrives
-            reset_input();
+            reset_input(client_os);
         }
 
         start_timer(&(clients[client_id].last_ping));
