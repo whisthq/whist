@@ -119,7 +119,7 @@ First, we need to setup a local Postgres instance. Navigate to `tests/setup` and
 
 ### Testing
 
-Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
+Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up extraneous instances using the AWS console (note: only the helpers_tests tests create instances). Note that since the db is local and ephemeral, any db changes can be safely done.
 
 To generate test coverage statistics, set `COV=1` when running the `run_tests.sh` script. For example:
 
@@ -142,7 +142,6 @@ To test database specific things, you can make a file `db_manual_test.py` in web
 # You can find USER and DB in docker/.env after retrieving the config
 from app.factory import create_app
 from app.models import MandelboxInfo
-# TODO: is this even correct?
 
 app = create_app()
 
@@ -252,30 +251,16 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       ├── cloud_interface -- > our cloud-general library/interface
 │   │       │   ├── base_cloud_interface.py --> our abstract interface for cloud provisioning clients
 │   │       ├── aws -- > utility scripts for interfacing with AWS
-│   │       │   ├── autoscaling.py --> scripts for manipulating ASGs and their associated clusters
-│   │       │   ├── aws_general.py --> a few general utilities for AWS
-│   │       │   ├── aws_resource_integrity.py --> scripts that ensure certain AWS resources exist
-│   │       │   ├── aws_resource_locks.py --> scripts to ensure atomicity on AWS resource use
 │   │       │   ├── base_ec2_client.py -->  Utility libraries for monitoring and orchestrating EC2 instances.
-│   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
+│   │       │   ├── ec2_userdata.{py/sh} -->  scripts run on every ec2 instance on startup
 │   │       ├── general
 │   │       │   ├── limiter.py --> our rate limiter config
 │   │       │   ├── logs.py --> our webserver logging config
-│   ├── models --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
-│   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
-│   │   ├── hardware.py -->  tables in our hardware schema
-│   │   ├── logs.py -->  tables in our logs schema
+│   ├── models.py --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
 ├── app.json -->  structure of our app/heroku config
 ├── db_migration --> code that governs DB migration
-│   ├── config.py  --> config values for the migration
-│   ├── errors.py --> exception handling for the migration
-│   ├── migration_containers.py --> scripts handling docker for migrations
-│   ├── postgres.py --> scripts initializing postgres for migrations
 │   ├── schema.sql --> the current schema of our db
-│   ├── schema_diff.py --> a diff between the current schema on branch and the one we're merging into
-│   ├── schema_dump.py --> a schema autodumper script
-│   └── utilities.py --> assorted utils for the above
-├── db_setup --> scripts to make an ephemeral DB
+├── ephemeral_db_setup --> scripts to make an ephemeral DB
 │   ├── db_setup.sh --> script that preps ephemeral DB
 │   ├── fetch_db.sh --> script that fetches the current dev DB
 │   └── modify_ci_db_schema.py --> scripts that eliminate extraneous info (db users) from the schema
