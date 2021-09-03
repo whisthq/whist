@@ -21,10 +21,8 @@ $RUN_AS_FRACTAL "playerctl daemon" &
 # Start the AwesomeWM window manager
 echo "Starting AwesomeWM in the background..."
 $RUN_AS_FRACTAL "awesome" &
-
 # Gets the PID of the backgrounded AwesomeWM process
 awesome_pid=$!
-
 echo "AwesomeWM started as PID $awesome_pid..."
 
 # Set the DPI to a default value of 96 and initialize the relevant files
@@ -33,13 +31,10 @@ echo "AwesomeWM started as PID $awesome_pid..."
 # Start the XSettings daemon to make DPI changes responsive
 echo "Starting 'xsettingsd' in the background..."
 $RUN_AS_FRACTAL "xsettingsd" &
-
 echo "xsettingsd background PID: $!"
 
-# Indicate that the display is ready and consider the service started
-systemd-notify --ready --status="X11 Display and AwesomeWM started"
-
-echo "Notified that fractal-display service is ready"
+# Let everyone know that xinit is initialized
+echo "$xinitrc_pid" > /usr/share/fractal/xinit-pid
 
 # Wait for AwesomeWM process
 # Note: this never finishes, but leaves the X server open indefinitely

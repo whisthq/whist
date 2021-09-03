@@ -505,6 +505,8 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
 COPY display/fractal-display-config.env /usr/share/fractal
 COPY display/xinitrc /root/.xinitrc
 COPY display/fractal-display.service /etc/systemd/system
+COPY display/fractal-display.sh /usr/share/fractal/fractal-display.sh
+RUN chmod +x /usr/share/fractal/fractal-display.sh
 RUN systemctl enable fractal-display
 
 # Set up script to update display DPI on-the-fly
