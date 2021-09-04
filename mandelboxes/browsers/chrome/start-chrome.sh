@@ -13,5 +13,6 @@ exec google-chrome \
   --enable-zero-copy \
   --enable-features=VaapiVideoDecoder,Vulkan \
   --disable-smooth-scrolling \
+  --disable-font-subpixel-positioning \
   --flag-switches-end \
   --restore-last-session
