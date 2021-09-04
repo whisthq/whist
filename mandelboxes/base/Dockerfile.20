@@ -529,11 +529,21 @@ RUN apt-get install --no-install-recommends -y \
     yaru-theme-gtk \
     gtk-chtheme \
     gtk2-engines-murrine \
+    unzip \
     gtk2-engines-pixbuf \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 # Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
+
+# Install fonts
+RUN wget -qO font-sans.zip https://fonts.google.com/download?family=Inter \
+    && wget -qO font-serif.zip https://fonts.google.com/download?family=Merriweather \
+    && wget -qO font-mono.zip https://github.com/be5invis/Iosevka/releases/download/v10.1.1/super-ttc-iosevka-10.1.1.zip \
+    && unzip -nd /usr/local/share/fonts font-sans.zip \
+    && unzip -nd /usr/local/share/fonts font-serif.zip \
+    && unzip -nd /usr/local/share/fonts font-mono.zip \
+    && rm font-*.zip
 
 # Install fonts for full Unicode support (or as close as we can get)
 RUN apt-get install --no-install-recommends -y \
@@ -552,6 +562,9 @@ RUN apt-get install --no-install-recommends -y \
 
 # Use twemoji font
 RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
+
+# Set up fontconfig to use our nice fots
+COPY --chown=fractal display/theme/fonts.conf /home/fractal/.config/fontconfig/fonts.conf
 
 # Set up window manager running on X server, with GTK/QT theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
