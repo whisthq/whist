@@ -20,7 +20,6 @@ import {
   createExitTypeform,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
-import { protocolStreamInfo } from "@app/utils/protocol"
 import { PROTOCOL_ERROR } from "@app/utils/error"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 
@@ -126,9 +125,8 @@ allWindowsClosed
         protocolLaunchRetries < MAX_RETRIES
       ) {
         protocolLaunchRetries = protocolLaunchRetries + 1
-        createProtocolWindow()
+        createProtocolWindow(info)
           .then(() => {
-            protocolStreamInfo(info)
             rebootNotification?.show()
             setTimeout(() => {
               rebootNotification?.close()

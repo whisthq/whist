@@ -4,8 +4,8 @@
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
 
-import { protocolStreamInfo } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
+import { createProtocolWindow } from "@app/utils/windows"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -24,6 +24,6 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
       port_32273: number
     }
   }) => {
-    protocolStreamInfo(info)
+    createProtocolWindow(info)
   }
 )
