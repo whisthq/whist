@@ -104,6 +104,15 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
         {FK_LALT, FK_LSHIFT, FK_RIGHT},
         {FK_LCTRL, FK_LSHIFT, FK_RIGHT},
     },
+    // Delete a whole word
+    {
+        {FK_LALT, FK_BACKSPACE},
+        {FK_LCTRL, FK_BACKSPACE},
+    },
+    {
+        {FK_LALT, FK_DELETE},
+        {FK_LCTRL, FK_DELETE},
+    },
     // Open a new tab with the currently selected text
     {
         {FK_LCTRL, FK_ENTER},
