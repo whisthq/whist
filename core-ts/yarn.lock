@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@babel/cli@^7.13.0":
-  version "7.14.5"
-  resolved "https://registry.npmjs.org/@babel/cli/-/cli-7.14.5.tgz"
+"@babel/cli@^7.15.4":
+  version "7.15.4"
+  resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.15.4.tgz#00e21e192b738dec7900c8bb36270e377217c0a4"
   dependencies:
     commander "^4.0.1"
     convert-source-map "^1.1.0"
