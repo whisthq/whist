@@ -306,12 +306,12 @@ jobs:
 
   # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
   # This job does:
-  # 1- Build and publish the mandelbox images to a GitHub Container Registry repository
+  # 1- Build and publish the mandelboxes to a GitHub Container Registry repository
   # 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal Host Service and pre-pulled
-  #    Fractal mandelbox images from step 1, to all supported AWS EC2 regions
+  #    Fractal mandelboxes from step 1, to all supported AWS EC2 regions
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   mandelboxes-and-amis-publish-ghcr-and-aws:
-    name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelbox Images and AMIs"
+    name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
     needs: [fractal-publish-build-config]
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
@@ -344,11 +344,11 @@ jobs:
       - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
         run: echo "apps=$(./mandelboxes/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-      - name: Build Mandelbox images
+      - name: Build Mandelboxes
         working-directory: mandelboxes
         run: ./build_mandelbox_image.sh -o --all
 
-      - name: Push mandelbox images
+      - name: Push mandelboxes
         working-directory: mandelboxes
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
         env:
@@ -518,8 +518,8 @@ jobs:
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          TITLE = ":whale: Mandelbox Images & AMIs Deployed :whale:"
-          BODY = "Mandelbox Images & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":whale: Mandelboxes & AMIs Deployed :whale:"
+          BODY = "Mandelboxes & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -531,7 +531,7 @@ jobs:
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelbox images and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelboxes and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 

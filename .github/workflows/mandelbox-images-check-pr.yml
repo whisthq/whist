@@ -1,9 +1,9 @@
 # workflows/mandelboxes-check-pr.yml
 #
-# Mandelbox Images: Check PR
+# Mandelboxes: Check PR
 # Check a mandelboxes/protocol PR for Dockerfile linting and Docker images building success.
 
-name: "Mandelbox Images: Check PR"
+name: "Mandelboxes: Check PR"
 
 on:
   pull_request:
@@ -81,6 +81,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Build Mandelbox Images
+      - name: Build Mandelboxes
         working-directory: mandelboxes
         run: ./build_mandelbox_image.sh --all
