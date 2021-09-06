@@ -85,7 +85,7 @@ jobs:
       - name: Install Node.js 15
         uses: actions/setup-node@v2.4.0
         with:
-          node-version: "15"
+          node-version: "16"
 
       - name: Run yarn install in /desktop
         working-directory: client-applications/desktop
@@ -131,7 +131,7 @@ jobs:
       - name: Install Node.js 15
         uses: actions/setup-node@v2.4.0
         with:
-          node-version: "15"
+          node-version: "16"
 
       # To retrieve Fractal protocol libraries from AWS S3
       - name: Configure AWS S3 CLI
