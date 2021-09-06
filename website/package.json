@@ -58,7 +58,7 @@
     "@types/react-router-dom": "^5.1.7",
     "@types/react-router-hash-link": "^2.4.0",
     "@types/snowpack-env": "^2.3.3",
-    "@typescript-eslint/parser": "^4.30.0",
+    "@typescript-eslint/parser": "^4.31.0",
     "autoprefixer": "^10.3.0",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
