@@ -30,7 +30,7 @@
     "@fractal/core-ts": "file:../../core-ts",
     "@typeform/embed-react": "^1.1.0",
     "@types/auto-launch": "^5.0.2",
-    "@types/node-fetch": "^2.5.10",
+    "@types/node-fetch": "^3.0.3",
     "@types/ping": "^0.2.0",
     "@types/react-router": "^5.1.13",
     "@types/react-router-dom": "^5.1.7",
