@@ -32,7 +32,7 @@ At a high-level, Fractal works the following way:
 - The login and launch processes are REST API requests to the Fractal webserver, which is responsible for picking an EC2 instance with available space (or creating a new one if there aren't any) and passing the request over to the Host Service on the chosen EC2 instance, which is responsible for allocating the user to a container (mandelbox) on that EC2 instance.
   - If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/host-setup` scripts and has the `/host-service` preinstalled, and tell the `/host-service` that this user needs a mandelbox.
 - If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the `/host-service` running on the chosen EC2 instance will allocate the user to a mandelbox. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver/Electron application that it is ready to stream, and the Electron application will launch the Fractal protocol client, which will start the stream.
-  - The mandelbox images are based off of `/mandelbox-images` and are pre-built and stored in GitHub Container Registry, where our Host Servicepulls the images from.
+  - The mandelbox images are based off of `/mandelboxes` and are pre-built and stored in GitHub Container Registry, where our Host Servicepulls the images from.
 
 ### Repository Structure
 
@@ -44,7 +44,7 @@ The Fractal monorepository contains 8 Fractal subrepositories:
 | core-ts             | The Fractal internal TypeScript library of utilities and reusable components.                         |
 | host-service        | The Fractal service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
 | host-setup          | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal mandelboxes. |
-| mandelbox-images    | The Dockerfiles defining the mandelbox images and helper scripts for the applications we stream.      |
+| mandelboxes    | The Dockerfiles defining the mandelbox images and helper scripts for the applications we stream.      |
 | microservices       | Code we deploy to other platforms, like Auth0.                                                        |
 | protocol            | The streaming technology API, both client and server, for streaming applications to users.            |
 | webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.   |

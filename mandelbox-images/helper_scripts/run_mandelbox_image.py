@@ -23,7 +23,7 @@ It is used by the scripts `run_local_mandelbox_image.sh` and
 """
 
 
-# Set current working directory to fractal/mandelbox-images
+# Set current working directory to fractal/mandelboxes
 def reset_working_directory():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     os.chdir("..")

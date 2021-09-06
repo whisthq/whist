@@ -11,6 +11,6 @@ export DISPLAY=$(systemctl --user show-environment | awk -F = '/DISPLAY/{print $
 export XAUTHORITY=$(systemctl --user show-environment | awk -F = '/XAUTHORITY/{print $2}')
 
 # We use named pipe notation so that the foreground process here is FractalServer. In this case, it is equivalent
-# to a pipe, but for consistency with places like mandelbox-images/base/scripts/run-fractal-server.sh, we use this
+# to a pipe, but for consistency with places like mandelboxes/base/scripts/run-fractal-server.sh, we use this
 # syntax.
 cd "$DIR/server/build64" && ./FractalServer ${@:1} > >(tee "$DIR/server.log")

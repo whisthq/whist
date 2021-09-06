@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Working directory is fractal/mandelbox-images/
+# Working directory is fractal/mandelboxes/
 cd "$DIR"
 
 mount=${1:-}

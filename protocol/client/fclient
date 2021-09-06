@@ -7,6 +7,6 @@ set -Eeuo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # We use named pipe notation so that the foreground process here is FractalClient. In this case, it is equivalent
-# to a pipe, but for consistency with places like mandelbox-images/base/scripts/run-fractal-server.sh, we use this
+# to a pipe, but for consistency with places like mandelboxes/base/scripts/run-fractal-server.sh, we use this
 # syntax.
 cd "$DIR/client/build64" && ./FractalClient $@ > >(tee "$DIR/client.log")

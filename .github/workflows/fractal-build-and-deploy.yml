@@ -144,7 +144,7 @@ jobs:
           # Store job dependency files
           declare -A job_dependencies
           # If "" is given, then the whole repo will be a dependency
-          job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelbox-images"
+          job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelboxes"
           job_dependencies[webserver-update-fractal-services]=" "
           job_dependencies[webserver-deploy-heroku]="webserver"
           job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
@@ -342,14 +342,14 @@ jobs:
         run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer
 
       - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-        run: echo "apps=$(./mandelbox-images/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+        run: echo "apps=$(./mandelboxes/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-      - name: Build mandelbox images
-        working-directory: mandelbox-images
+      - name: Build Mandelbox images
+        working-directory: mandelboxes
         run: ./build_mandelbox_image.sh -o --all
 
       - name: Push mandelbox images
-        working-directory: mandelbox-images
+        working-directory: mandelboxes
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
         env:
           GH_USERNAME: ${{ secrets.GHA_USERNAME }}
