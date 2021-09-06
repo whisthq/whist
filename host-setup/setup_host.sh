@@ -235,7 +235,7 @@ local_development_steps () {
   echo "Installing Python dependencies..."
   echo "================================================"
   sudo apt-get install -y python3-pip
-  find ./mandelbox-images -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
+  find ./mandelboxes -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
   cd host-setup
 
   echo "================================================"
@@ -296,7 +296,7 @@ deployment_setup_steps() {
   # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
   # It gets enabled in base_userdata_template.sh
 
-  # Here we pre-pull the desired mandelbox-images onto the AMI to speed up mandelbox startup.
+  # Here we pre-pull the desired mandelboxes onto the AMI to speed up mandelbox startup.
   ghcr_uri=ghcr.io
   echo "$GH_PAT" | sudo docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
   pull_image_base="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"

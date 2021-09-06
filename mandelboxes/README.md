@@ -9,7 +9,7 @@ This repository contains the code for "mandelbox-izing" the various applications
 A tree structure is provided below:
 
 ```
-./mandelbox-images
+./mandelboxes
 ├── base
 │   ├── Dockerfile.20 <- Base mandelbox image on which all of our application images depend
 │   ├── config
