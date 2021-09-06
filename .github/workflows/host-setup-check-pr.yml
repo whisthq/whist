@@ -83,7 +83,7 @@ jobs:
           import datetime
 
           # we hardcode the git_hash and git_branch name of a pre-built Chrome mandelbox image stored in
-          # GHCR to be able to test AMIs without needing to build and deploy new mandelbox images
+          # GHCR to be able to test AMIs without needing to build and deploy new mandelboxes
 
           data = {}
           data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"

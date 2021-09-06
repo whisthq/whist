@@ -27,7 +27,7 @@ jobs:
           python-version: "3.9.5"
 
       - name: Install beautysh
-        working-directory: mandelbox-images/helper_scripts
+        working-directory: mandelboxes/helper_scripts
         run: pip install -r requirements.txt
 
       - name: Run Beautysh to Check Scripts Formatting

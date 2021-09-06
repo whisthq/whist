@@ -1,19 +1,19 @@
-# workflows/mandelbox-images-check-pr.yml
+# workflows/mandelboxes-check-pr.yml
 #
-# Mandelbox Images: Check PR
-# Check a mandelbox-images/protocol PR for Dockerfile linting and Docker images building success.
+# Mandelboxes: Check PR
+# Check a mandelboxes/protocol PR for Dockerfile linting and Docker images building success.
 
-name: "Mandelbox Images: Check PR"
+name: "Mandelboxes: Check PR"
 
 on:
   pull_request:
     paths:
-      - "mandelbox-images/**"
-      - "!mandelbox-images/README.md"
-      - ".github/workflows/mandelbox-images-check-pr.yml"
-      - "!mandelbox-images/helper_scripts/run_mandelbox_image.sh"
-      - "!mandelbox-images/run_local_mandelbox_image.sh"
-      - "!mandelbox-images/run_remote_mandelbox_image.sh"
+      - "mandelboxes/**"
+      - "!mandelboxes/README.md"
+      - ".github/workflows/mandelboxes-check-pr.yml"
+      - "!mandelboxes/helper_scripts/run_mandelbox_image.sh"
+      - "!mandelboxes/run_local_mandelbox_image.sh"
+      - "!mandelboxes/run_remote_mandelbox_image.sh"
       - pyproject.toml
       - pylintrc
   workflow_dispatch:
@@ -21,7 +21,7 @@ on:
 jobs:
   # Linting
   # Checks for formatting and Dockerfile standards using Hadolint.
-  mandelbox-images-lint-dockerfiles:
+  mandelboxes-lint-dockerfiles:
     name: Linting
     runs-on: ubuntu-20.04
     container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
@@ -37,12 +37,12 @@ jobs:
       # Start from top-level folder to use .hadolint.yaml config
       - name: Check if Mandelbox Dockerfiles Follow Hadolint Standards
         run: |
-          hadolint ./mandelbox-images/*/Dockerfile.20
-          hadolint ./mandelbox-images/*/*/Dockerfile.20
+          hadolint ./mandelboxes/*/Dockerfile.20
+          hadolint ./mandelboxes/*/*/Dockerfile.20
 
-  # Linting/formatting Python code in mandelbox-images
-  mandelbox-images-python-scripts-linting:
-    name: Lint Mandelbox-Images Python Scripts
+  # Linting/formatting Python code in mandelboxes
+  mandelboxes-python-scripts-linting:
+    name: Lint mandelboxes Python Scripts
     runs-on: ubuntu-20.04
 
     steps:
@@ -55,18 +55,18 @@ jobs:
           python-version: "3.9.5"
 
       - name: Install requirements
-        working-directory: mandelbox-images
+        working-directory: mandelboxes
         run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
 
       - name: Add pylint-wrapper to the PATH
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
 
       - name: Check if Code Matches Pylint Standards
-        run: pylint-wrapper mandelbox-images/helper_scripts mandelbox-images/testing_scripts
+        run: pylint-wrapper mandelboxes/helper_scripts mandelboxes/testing_scripts
 
   # Docker images building
   # Checks that the Docker images build successfully.
-  mandelbox-images-build-images:
+  mandelboxes-build-images:
     name: Building
     runs-on: ubuntu-20.04
 
@@ -81,6 +81,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Build Mandelbox Images
-        working-directory: mandelbox-images
+      - name: Build Mandelboxes
+        working-directory: mandelboxes
         run: ./build_mandelbox_image.sh --all

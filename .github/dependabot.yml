@@ -87,10 +87,10 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
-  ################## Mandelbox-Images #################
+  ################## mandelboxes #################
 
   - package-ecosystem: "docker"
-    directory: "/mandelbox-images/base" # looks for Dockerfile in this directory
+    directory: "/mandelboxes/base" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -99,7 +99,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/mandelbox-images/browsers/chrome" # looks for Dockerfile in this directory
+    directory: "/mandelboxes/browsers/chrome" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -108,7 +108,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/mandelbox-images/browsers/firefox" # looks for Dockerfile in this directory
+    directory: "/mandelboxes/browsers/firefox" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -117,7 +117,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "pip"
-    directory: "/mandelbox-images/helper_scripts" # looks for requirements.txt in this directory
+    directory: "/mandelboxes/helper_scripts" # looks for requirements.txt in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -126,7 +126,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "pip"
-    directory: "/mandelbox-images/testing_scripts" # looks for requirements.txt in this directory
+    directory: "/mandelboxes/testing_scripts" # looks for requirements.txt in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
