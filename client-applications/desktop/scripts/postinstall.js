@@ -1,6 +1,5 @@
 // Build core-ts and electron-notarize after the normal install procedures.
 const execCommand = require("./execCommand").execCommand
-const fs = require("fs")
 const path = require("path")
 
 const postInstall = (_env, ..._args) => {
