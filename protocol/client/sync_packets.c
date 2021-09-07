@@ -348,6 +348,36 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 // error happens periodically but we have recovery systems in place
                 // for streaming interruption/connection loss
                 LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
+                // TODO handle different lost connection cases:
+                // EPIPE (32): server has closed TCP connection
+                if (errno == EPIPE) {
+                    FractalClientMessage fmsg;
+                    fmsg.type = MESSAGE_TCP_RECOVERY;
+                    fmsg.tcpRecovery.client_id = client_id;
+
+                    SocketContext context;
+                    if (create_tcp_context(&context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
+                           (char *)binary_aes_private_key) < 0) {
+                        /*
+                                *using_stun = !*using_stun;
+                                LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
+                                if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                                                       *using_stun, (char *)binary_aes_private_key) < 0) {
+                        */
+                        LOG_WARNING("Failed to connect to server's discovery port.");
+                        return -1;
+                        /*
+                                }
+                        */
+                    }
+
+                    if (send_tcp_packet(&context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
+                        LOG_ERROR("Failed to send discovery request message.");
+                        closesocket(context.socket);
+                        return -1;
+                    }
+                }
+                // EBADF (9): client has closed TCP connection
                 start_timer(&last_tcp_check_timer);
             }
             continue;

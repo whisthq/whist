@@ -339,9 +339,9 @@ int main(int argc, char* argv[]) {
     while (!exiting) {
         cancel_count++;
 
-        if (cancel_count >= 100) {
+        if (cancel_count == 100) {
             disconnect_tcp();
-        } else {
+        } else if (cancel_count < 100) {
             LOG_INFO("TCP cancel_count: %d", cancel_count);
         }
 

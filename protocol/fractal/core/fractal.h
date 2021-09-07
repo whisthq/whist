@@ -500,7 +500,7 @@ typedef struct FractalMultigestureMessage {
 
 /**
  * @brief   Discovery request message.
- * @details Discover packet to be sent from client to server.
+ * @details Discovery packet to be sent from client to server.
  */
 typedef struct FractalDiscoveryRequestMessage {
     int user_id;
@@ -508,6 +508,14 @@ typedef struct FractalDiscoveryRequestMessage {
     char user_email[FRACTAL_ARGS_MAXLEN + 1];
     FractalOSType os;
 } FractalDiscoveryRequestMessage;
+
+/**
+ * @brief   TCP recovery message.
+ * @details Client message to ask the server to restart the TCP connection.
+ */
+typedef struct FractalTCPRecoveryMessage {
+    int client_id;
+} FractalTCPRecoveryMessage;
 
 /**
  * @brief   Discovery reply message.
@@ -553,6 +561,7 @@ typedef enum FractalClientMessageType {
     MESSAGE_IFRAME_REQUEST = 113,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
+    MESSAGE_TCP_RECOVERY = 117,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -588,6 +597,7 @@ typedef struct FractalClientMessage {
         FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+        FractalTCPRecoveryMessage tcpRecovery;            ///< TCP recovery message.
 
         // MESSAGE_MULTIGESTURE
         FractalMultigestureMessage multigesture;  ///< Multigesture message.
