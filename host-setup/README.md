@@ -36,7 +36,7 @@ git clone https://github.com/fractal/fractal.git # via HTTPS
 
 # set up the EC2 host for development
 cd ~/fractal/host-setup
-./setup_host.sh --development
+./setup_host.sh --localdevelopment
 
 # build the Fractal protocol server
 cd ~/fractal/protocol/
