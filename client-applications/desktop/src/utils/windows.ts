@@ -365,18 +365,10 @@ export const createLoadingWindow = () =>
     closeOtherWindows: true,
   })
 
-export const createProtocolWindow = async (info: {
-  mandelboxIP: string
-  mandelboxSecret: string
-  mandelboxPorts: {
-    port_32262: number
-    port_32263: number
-    port_32273: number
-  }
-}) => {
+export const createProtocolWindow = async () => {
   const currentElectronWindows = getElectronWindows()
 
-  const protocol = await protocolLaunch(info)
+  const protocol = await protocolLaunch()
 
   protocol.on("spawn", () => {
     emitWindowInfo({

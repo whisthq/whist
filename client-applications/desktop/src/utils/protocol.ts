@@ -42,15 +42,7 @@ export const writeStream = (
 }
 
 // Spawn the child process with the initial arguments passed in
-export const protocolLaunch = async (info: {
-  mandelboxIP: string
-  mandelboxSecret: string
-  mandelboxPorts: {
-    port_32262: number
-    port_32263: number
-    port_32273: number
-  }
-}) => {
+export const protocolLaunch = async () => {
   if (childProcess !== undefined) return childProcess
 
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
@@ -59,15 +51,13 @@ export const protocolLaunch = async (info: {
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
     environment: config.sentryEnv,
-    "private-key": info.mandelboxSecret,
-    ports: serializePorts(info.mandelboxPorts),
   }
 
   const protocolArguments = [
-    info.mandelboxIP,
     ...Object.entries(protocolParameters)
       .map(([flag, arg]) => [`--${flag}`, arg])
       .flat(),
+    "--read-pipe",
   ]
 
   // Create a pipe to the protocol logs file
@@ -106,8 +96,8 @@ export const protocolLaunch = async (info: {
   // Pipe to protocol.log
   protocol.stdout.pipe(protocolLogFile)
   // If true, also show in terminal (for local debugging)
-  if (process.env.SHOW_PROTOCOL_LOGS === "true")
-    protocol.stdout.pipe(process.stdout)
+  // if (process.env.SHOW_PROTOCOL_LOGS === "true")
+  protocol.stdout.pipe(process.stdout)
 
   // When the protocol closes, reset the childProcess to undefined and show the app dock on MacOS
   protocol.on("close", () => {

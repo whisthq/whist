@@ -5,7 +5,7 @@
  */
 
 import { fromTrigger } from "@app/utils/flows"
-import { createProtocolWindow } from "@app/utils/windows"
+import { protocolStreamInfo } from "@app/utils/protocol"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -24,6 +24,6 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
       port_32273: number
     }
   }) => {
-    createProtocolWindow(info)
+    protocolStreamInfo(info)
   }
 )

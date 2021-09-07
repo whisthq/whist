@@ -21,6 +21,7 @@ import {
   createBugTypeform,
   createOnboardingTypeform,
   closeAllWindows,
+  createProtocolWindow,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
@@ -80,6 +81,7 @@ merge(fromTrigger("configFlowSuccess")).subscribe(
     hideAppDock()
     // Create the protocol loading window
     createLoadingWindow()
+    createProtocolWindow().catch((err) => console.error(err))
     // Present the tray (top right corner of screen)
     createTray(createMenu(true, x.userEmail))
   }
