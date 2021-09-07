@@ -148,8 +148,6 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
             return handle_quit_message(fmsg, client_id, is_controlling);
         case MESSAGE_DISCOVERY_REQUEST:
             return handle_init_message(fmsg, client_id, is_controlling);
-        case MESSAGE_TCP_RECOVERY:
-            return handle_tcp_recovery(fmsg, client_id, is_controlling);
         case MESSAGE_MOUSE_INACTIVE:
             return handle_mouse_inactive_message(fmsg, client_id, is_controlling);
         default:
@@ -608,29 +606,6 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
     }
 
     return 0;
-}
-
-static int handle_tcp_recovery(FractalClientMessage* cfmsg, int client_id, bool is_controlling) {
-    /*
-        Handle a TCP recovery message
-
-        Arguments:
-            fmsg (FractalClientMessage*): message package from client
-            client_id (int): which client sent the message
-            is_controlling (bool): whether the client is controlling, not spectating
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    FractalTCPRecoveryMessage fmsg = cfmsg->tcpRecovery;
-
-    if (create_tcp_context(&(clients[client_id].TCP_context), NULL, clients[client_id].TCP_port, 1,
-                           TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
-        LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
-        closesocket(clients[id].UDP_context.socket);
-        return -1;
-    }
 }
 
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,

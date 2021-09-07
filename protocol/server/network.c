@@ -49,7 +49,7 @@ Private Functions
 */
 
 int handle_discovery_port_message(SocketContext* context, int *client_id, bool *new_client);
-int do_discovery_handshake(SocketContext *context, int *client_id);
+int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage* fcmsg);
 
 /*
 ============================
@@ -112,7 +112,7 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
             clients[*client_id].user_id = user_id;
             LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
-            do_discovery_handshake(context, client_id)
+            do_discovery_handshake(context, *client_id, fcmsg);
 
             *new_client = true;
             break;
@@ -120,7 +120,12 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
         case MESSAGE_TCP_RECOVERY: {
             *client_id = fcmsg->tcpRecovery.client_id;
 
-            handle_client_message(fcmsg, client_id, true);
+            if (create_tcp_context(&(clients[*client_id].TCP_context), NULL, clients[*client_id].TCP_port, 1,
+                           TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
+                LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
+                closesocket(clients[*client_id].UDP_context.socket);
+                return -1;
+            }
 
             break;
         }
@@ -132,7 +137,7 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
     return 0;
 }
 
-int do_discovery_handshake(SocketContext *context, int client_id) {
+int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage* fcmsg) {
     // FractalPacket *tcp_packet;
     // clock timer;
     // start_timer(&timer);
