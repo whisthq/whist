@@ -38,7 +38,6 @@ export const writeStream = (
   message: string
 ) => {
   process?.stdin?.write?.(message)
-  process?.stdin?.write?.("\n")
 }
 
 // Spawn the child process with the initial arguments passed in
@@ -120,16 +119,18 @@ export const protocolStreamInfo = (info: {
   }
 }) => {
   if (childProcess === undefined) return
-  writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
-  writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
-  writeStream(childProcess, `ip?${info.mandelboxIP}`)
-  writeStream(childProcess, "finished?0")
+  writeStream(
+    childProcess,
+    `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
+      info.mandelboxSecret
+    }\nip?${info.mandelboxIP}\nfinished?0\n`
+  )
 }
 
 export const protocolStreamKill = () => {
   // We send SIGINT just in case
   childProcess?.kill?.("SIGINT")
-  writeStream(childProcess, "kill?0")
+  writeStream(childProcess, "kill?0\n")
 }
 
 export const isNetworkUnstable = (message?: string) => {
