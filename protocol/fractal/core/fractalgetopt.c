@@ -206,7 +206,7 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
                  */
                 if ((opterr) && (*options != ':'))
                     printf("%s: option requires an argument -- %s\n", progname(nargv[0]),
-                              current_argv);
+                           current_argv);
                 return (BADARG);
             }
         } else { /* No matching argument */

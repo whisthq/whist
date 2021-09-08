@@ -325,7 +325,7 @@ int client_parse_args(int argc, char *argv[]) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                      strlen(optarg), FRACTAL_ARGS_MAXLEN);
+                   strlen(optarg), FRACTAL_ARGS_MAXLEN);
             return -1;
         }
 

@@ -300,7 +300,6 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-    
     if (alloc_parsed_args() != 0) {
         return -1;
     }
