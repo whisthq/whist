@@ -50,11 +50,11 @@ char* set_clipboard_directory();
 #define LSET_CLIPBOARD (lset_clipboard_directory())
 #define SET_CLIPBOARD (set_clipboard_directory())
 // If we are on Windows, MAX_PATH is defined; otherwise, we need to use PATH_MAX.
-#define PATH_MAXLEN MAX_PATH-1
+#define PATH_MAXLEN MAX_PATH - 1
 #else
 #define GET_CLIPBOARD "./get_clipboard"
 #define SET_CLIPBOARD "./set_clipboard"
-#define PATH_MAXLEN PATH_MAX-1
+#define PATH_MAXLEN PATH_MAX - 1
 #endif
 
 /*
