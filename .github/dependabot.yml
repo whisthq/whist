@@ -78,7 +78,7 @@ updates:
   ################ Client-Applications ################
 
   - package-ecosystem: "npm"
-    directory: "/client-applications/desktop" # looks for package.json and [package-lock/yarn].lock file in this directory
+    directory: "/client-applications" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
