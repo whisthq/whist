@@ -25,19 +25,6 @@ let numberOfRecentNacks = 0
 
 const { protocolName, protocolFolder } = config
 
-// Protocol arguments
-// We send the environment so that the protocol can init sentry if necessary
-const protocolParameters = {
-  environment: config.sentryEnv,
-}
-
-const protocolArguments = [
-  ...Object.entries(protocolParameters)
-    .map(([flag, arg]) => [`--${flag}`, arg])
-    .flat(),
-  "--read-pipe",
-]
-
 export const protocolPath = path.join(protocolFolder, protocolName)
 
 export const serializePorts = (ps: {
@@ -51,7 +38,6 @@ export const writeStream = (
   message: string
 ) => {
   process?.stdin?.write?.(message)
-  process?.stdin?.write?.("\n")
 }
 
 // Spawn the child process with the initial arguments passed in
@@ -59,6 +45,19 @@ export const protocolLaunch = async () => {
   if (childProcess !== undefined) return childProcess
 
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
+
+  // Protocol arguments
+  // We send the environment so that the protocol can init sentry if necessary
+  const protocolParameters = {
+    environment: config.sentryEnv,
+  }
+
+  const protocolArguments = [
+    ...Object.entries(protocolParameters)
+      .map(([flag, arg]) => [`--${flag}`, arg])
+      .flat(),
+    "--read-pipe",
+  ]
 
   // Create a pipe to the protocol logs file
   if (!fs.existsSync(electronLogPath))
@@ -120,16 +119,18 @@ export const protocolStreamInfo = (info: {
   }
 }) => {
   if (childProcess === undefined) return
-  writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
-  writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
-  writeStream(childProcess, `ip?${info.mandelboxIP}`)
-  writeStream(childProcess, "finished?0")
+  writeStream(
+    childProcess,
+    `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
+      info.mandelboxSecret
+    }\nip?${info.mandelboxIP}\nfinished?0\n`
+  )
 }
 
 export const protocolStreamKill = () => {
   // We send SIGINT just in case
   childProcess?.kill?.("SIGINT")
-  writeStream(childProcess, "kill?0")
+  writeStream(childProcess, "kill?0\n")
 }
 
 export const isNetworkUnstable = (message?: string) => {

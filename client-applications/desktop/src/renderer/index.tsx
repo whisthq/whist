@@ -12,6 +12,7 @@ import Update from "@app/renderer/pages/update"
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
+import Loading from "@app/renderer/pages/loading"
 
 import {
   WindowHashUpdate,
@@ -19,6 +20,7 @@ import {
   WindowHashExitTypeform,
   WindowHashBugTypeform,
   WindowHashOnboardingTypeform,
+  WindowHashLoading,
   allowPayments,
 } from "@app/utils/constants"
 import {
@@ -83,6 +85,7 @@ const RootComponent = () => {
 
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
+  if (show === WindowHashLoading) return <Loading />
   if (show === WindowHashExitTypeform)
     return (
       <Typeform
