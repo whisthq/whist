@@ -42,6 +42,8 @@ int begin_time_to_exit = 60;
 
 int last_input_id = -1;
 
+extern int cancel_count;
+
 /*
 ============================
 Private Functions
