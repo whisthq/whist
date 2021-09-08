@@ -33,6 +33,7 @@ Defines
 */
 
 #define MAX_URLS 9000
+#define PATH_MAXLEN PATH_MAX-1
 
 /*
 ============================

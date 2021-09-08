@@ -22,11 +22,11 @@
 #include "unshare.h"
 
 typedef struct FileTransferContext {
-    char id[NAME_MAX + 1];          // Every file transfer will have a unique ID, which we store here as a string.
-    char id_path[NAME_MAX + 1];     // `/home/fractal/.teleport/drag-drop/downloads/[ID]`. We must keep this allocated for the inotify thread to work.
+    char id[NAME_MAXLEN + 1];          // Every file transfer will have a unique ID, which we store here as a string.
+    char id_path[NAME_MAXLEN + 1];     // `/home/fractal/.teleport/drag-drop/downloads/[ID]`. We must keep this allocated for the inotify thread to work.
     bool data_ready;                // `true` if the protocol has finished dumping the file, else `false`.
     bool active;                    // `true` if the protocol has started dumping the file, else `false`.
-    char filename[NAME_MAX + 1];    // The name of the file that the protocol is dumping.
+    char filename[NAME_MAXLEN + 1];    // The name of the file that the protocol is dumping.
     int create_wd;                  // The inotify watch descriptor keeping track of `id_path` for FS events indicating that the file was created
 } FileTransferContext;
 
@@ -268,9 +268,9 @@ static int teleport_fuse_open(const char *path, struct fuse_file_info *fi)
             if ((fi->flags & O_ACCMODE) != O_RDONLY) {
                 return -EACCES;
             }
-            char download_path[NAME_MAX + 1] = {0};
+            char download_path[NAME_MAXLEN + 1] = {0};
             int idx = dt_res.transfer_context_idx;
-            snprintf(download_path, NAME_MAX + 1, "%s/%s", transfer_status[idx].id_path, transfer_status[idx].filename);
+            snprintf(download_path, NAME_MAXLEN + 1, "%s/%s", transfer_status[idx].id_path, transfer_status[idx].filename);
             wait_for_transfer_context_ready(idx);
             fi->fh = open(download_path, fi->flags);
             break;
@@ -356,7 +356,7 @@ void mkpath(char *dir, mode_t mode) {
 }
 
 // inotify_event includes a variable-length, null-terminated field for filename
-#define INOTIFY_EVENT_SIZE (sizeof(struct inotify_event) + NAME_MAX + 1)
+#define INOTIFY_EVENT_SIZE (sizeof(struct inotify_event) + NAME_MAXLEN + 1)
 // let's assume we don't get more than 50 events at a time; we'll drop anything more
 #define INOTIFY_BUFFER_SIZE (50 * INOTIFY_EVENT_SIZE)
 // the file descriptor which inotify uses to coordinate and perform its operations
@@ -421,7 +421,7 @@ void inotify_handle_new_id(const char *id) {
         transfer_status[current_idx].active = false;
         transfer_status[current_idx].data_ready = false;
         strcpy(transfer_status[current_idx].id, id);
-        snprintf(transfer_status[current_idx].id_path, NAME_MAX + 1, FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/downloads/%s", id);
+        snprintf(transfer_status[current_idx].id_path, NAME_MAXLEN + 1, FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/downloads/%s", id);
         transfer_status[current_idx].create_wd = inotify_add_watch(inotify_fd, transfer_status[current_idx].id_path, IN_CREATE);
 
         // Right after creating a watch, we need to manually check for it to avoid race conditions

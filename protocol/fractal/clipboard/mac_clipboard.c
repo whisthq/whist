@@ -108,12 +108,12 @@ ClipboardData* unsafe_get_clipboard() {
         OSXFilenames* filenames[MAX_URLS];
         for (size_t i = 0; i < MAX_URLS; i++) {
             filenames[i] = (OSXFilenames*)safe_malloc(sizeof(OSXFilenames));
-            filenames[i]->filename = (char*)safe_malloc(PATH_MAX * sizeof(char));
-            filenames[i]->fullPath = (char*)safe_malloc(PATH_MAX * sizeof(char));
+            filenames[i]->filename = (char*)safe_malloc((PATH_MAXLEN + 1) * sizeof(char));
+            filenames[i]->fullPath = (char*)safe_malloc((PATH_MAXLEN + 1) * sizeof(char));
 
             // pad with null terminators
-            memset(filenames[i]->filename, '\0', PATH_MAX * sizeof(char));
-            memset(filenames[i]->fullPath, '\0', PATH_MAX * sizeof(char));
+            memset(filenames[i]->filename, '\0', (PATH_MAXLEN + 1) * sizeof(char));
+            memset(filenames[i]->fullPath, '\0', (PATH_MAXLEN + 1) * sizeof(char));
         }
 
         // populate filenames array with file URLs
@@ -135,7 +135,7 @@ ClipboardData* unsafe_get_clipboard() {
         for (size_t i = 0; i < MAX_URLS; i++) {
             // if there are no more file URLs in clipboard, exit loop
             if (*filenames[i]->fullPath != '\0') {
-                char symlink_name[PATH_MAX] = "";
+                char symlink_name[PATH_MAXLEN + 1] = "";
                 strcat(symlink_name, GET_CLIPBOARD);
                 strcat(symlink_name, "/");
                 strcat(symlink_name, filenames[i]->filename);

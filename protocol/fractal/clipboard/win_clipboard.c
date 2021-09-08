@@ -50,7 +50,7 @@ char* get_clipboard_directory() {
             (char*): the get clipboard directory string
     */
 
-    static char buf[MAX_PATH];
+    static char buf[PATH_MAXLEN + 1];
     wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
     return buf;
 }
@@ -62,7 +62,7 @@ char* set_clipboard_directory() {
             (char*): the set clipboard directory string
     */
 
-    static char buf[MAX_PATH];
+    static char buf[PATH_MAXLEN + 1];
     wcstombs(buf, lset_clipboard_directory(), sizeof(buf));
     return buf;
 }
@@ -89,7 +89,7 @@ WCHAR* lclipboard_directory() {
 
     static WCHAR* directory = NULL;
     if (directory == NULL) {
-        static WCHAR sz_path[MAX_PATH];
+        static WCHAR sz_path[PATH_MAXLEN + 1];
         WCHAR* path;
         if (SUCCEEDED(SHGetKnownFolderPath(&FOLDERID_ProgramData,
                                            CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, &path))) {
@@ -120,7 +120,7 @@ WCHAR* lget_clipboard_directory() {
             (WCHAR*): the get clipboard cache directory
     */
 
-    static WCHAR path[MAX_PATH];
+    static WCHAR path[PATH_MAXLEN + 1];
     WCHAR* cb_dir = lclipboard_directory();
     wcscpy(path, cb_dir);
     PathAppendW(path, L"get_clipboard");
@@ -141,7 +141,7 @@ WCHAR* lset_clipboard_directory() {
             (WCHAR*): the set clipboard cache directory
     */
 
-    static WCHAR path[MAX_PATH];
+    static WCHAR path[PATH_MAXLEN + 1];
     WCHAR* cb_dir = lclipboard_directory();
     wcscpy(path, cb_dir);
     PathAppendW(path, L"set_clipboard");
@@ -184,9 +184,9 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
             (bool): true on success, false on failure
     */
 
-    BYTE buf[sizeof(ReparseMountpointDataBuffer) + MAX_PATH * sizeof(WCHAR)];
+    BYTE buf[sizeof(ReparseMountpointDataBuffer) + (PATH_MAXLEN + 1) * sizeof(WCHAR)];
     ReparseMountpointDataBuffer* reparse_buffer = (ReparseMountpointDataBuffer*)buf;
-    WCHAR sz_target[MAX_PATH] = L"\\??\\";
+    WCHAR sz_target[PATH_MAXLEN + 1] = L"\\??\\";
 
     wcscat(sz_target, sz_path);
     wcscat(sz_target, L"\\");

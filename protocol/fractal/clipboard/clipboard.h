@@ -52,6 +52,7 @@ char* set_clipboard_directory();
 #else
 #define GET_CLIPBOARD "./get_clipboard"
 #define SET_CLIPBOARD "./set_clipboard"
+#define PATH_MAXLEN MAX_PATH-1
 #endif
 
 /*
