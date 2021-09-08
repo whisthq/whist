@@ -61,7 +61,7 @@ export const formatChildProcess = (
 
 const pickMap = <
   T extends Record<string, any>,
-  K extends { [P in keyof T]?: ((v: T[P]) => any) | K }
+  K extends { [P in keyof T]: ((v: T[P]) => any) | K }
 >(
   /*
     Description:
