@@ -1936,6 +1936,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
             } else {
                 LOG_WARNING("Network Error %d", err);
+                sleep(5);
             }
         } else if (len > 0) {
             // LOG_INFO( "READ LEN: %d", len );

@@ -550,6 +550,7 @@ int multithreaded_manage_clients(void *opaque) {
             first_client_connected = true;
         }
         num_active_clients++;
+        cancel_count = 0;
         client_joined_after_window_name_broadcast = true;
         /* Make everyone a controller */
         clients[client_id].is_controlling = true;

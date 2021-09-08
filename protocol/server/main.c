@@ -335,16 +335,7 @@ int main(int argc, char* argv[]) {
     start_timer(&uri_handler_timer);
 #endif  // ! _WIN32
 
-    int cancel_count = 0;
     while (!exiting) {
-        cancel_count++;
-
-        if (cancel_count == 100) {
-            disconnect_tcp();
-        } else if (cancel_count < 100) {
-            LOG_INFO("TCP cancel_count: %d", cancel_count);
-        }
-
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
                 // Broadcast ack
@@ -355,6 +346,14 @@ int main(int argc, char* argv[]) {
                 read_unlock(&is_active_rwlock);
             }
             start_timer(&ack_timer);
+
+            cancel_count++;
+
+            if (cancel_count == 10) {
+                disconnect_tcp();
+            } else if (cancel_count < 15) {
+                LOG_INFO("TCP cancel_count: %d", cancel_count);
+            }
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
