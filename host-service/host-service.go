@@ -85,6 +85,30 @@ func createDockerClient() (*dockerclient.Client, error) {
 	return client, nil
 }
 
+// Given a list of regexes, find a docker image whose name matches the earliest
+// possible regex in the list.
+func dockerImageFromRegexes(globalCtx context.Context, dockerClient *dockerclient.Client, regexes []string) string {
+	imageFilters := dockerfilters.NewArgs(
+		dockerfilters.KeyValuePair{Key: "dangling", Value: "false"},
+	)
+	images, err := dockerClient.ImageList(globalCtx, dockertypes.ImageListOptions{All: false, Filters: imageFilters})
+	if err != nil {
+		return ""
+	}
+
+	for _, regex := range regexes {
+		rgx := regexp.MustCompile(regex)
+		for _, img := range images {
+			for _, tag := range img.RepoTags {
+				if rgx.MatchString(tag) {
+					return tag
+				}
+			}
+		}
+	}
+	return ""
+}
+
 // "Warm up" Docker. This is necessary because for some reason the first
 // ContainerStart call by the host service is taking over a minute. Note that
 // this doesn't seem to be happening on personal instances, only
@@ -100,14 +124,6 @@ func createDockerClient() (*dockerclient.Client, error) {
 // to pollute the code in that function with a flag for warming up, so we have
 // to live with this duplication until we can find and solve the root cause.
 func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, client *dockerclient.Client) error {
-	imageFilters := dockerfilters.NewArgs(
-		dockerfilters.KeyValuePair{Key: "dangling", Value: "false"},
-	)
-	images, err := client.ImageList(globalCtx, dockertypes.ImageListOptions{All: false, Filters: imageFilters})
-	if err != nil {
-		return err
-	}
-
 	// We've gotta find a suitable image to use for warming up the client. We
 	// prefer images that are most alike to those the host service will actually
 	// be launching, so we use a list of regexes. We prefer matches for earlier
@@ -126,26 +142,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		`*fractal*`,
 	}
 
-	findImageByRegex := func(nameRegex string) string {
-		regex := regexp.MustCompile(nameRegex)
-		for _, img := range images {
-			for _, tag := range img.RepoTags {
-				if regex.MatchString(tag) {
-					return tag
-				}
-			}
-		}
-		return ""
-	}
-
-	image := func() string {
-		for _, r := range regexes {
-			if match := findImageByRegex(r); match != "" {
-				return match
-			}
-		}
-		return ""
-	}()
+	image := dockerImageFromRegexes(globalCtx, client, regexes)
 	if image == "" {
 		return utils.MakeError("Couldn't find a suitable image")
 	}
@@ -428,7 +425,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// for mandelboxes, so we construct the image string ourselves.
 	var image string
 	if metadata.IsLocalEnv() {
-		image = string(req.AppName)
+
+		regexes := []string{
+			string(req.AppName) + ":current-build-updated-protocol",
+			string(req.AppName) + ":current-build",
+			string(req.AppName),
+		}
+
+		image = dockerImageFromRegexes(globalCtx, dockerClient, regexes)
 	} else {
 		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), req.AppName)
 	}
