@@ -341,7 +341,7 @@ void mkpath(char *dir, mode_t mode) {
 
     if (tmp[len-1] == '/') {
         tmp[len-1] = 0;
-    }
+    } 
 
     for (p = tmp+1; *p; ++p) {
 
@@ -426,7 +426,7 @@ void inotify_handle_new_id(const char *id) {
 
         // Right after creating a watch, we need to manually check for it to avoid race conditions
         DIR *dirp = opendir(transfer_status[current_idx].id_path);
-
+        
         // Check for the first file child of /downloads/[ID] and handle it
         struct dirent *dp;
         while (dp = readdir(dirp)) {
