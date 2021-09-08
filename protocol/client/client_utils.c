@@ -78,7 +78,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {0, 0, 0, 0}};
 const char *usage;
 
-#define MAX_INCOMING_LENGTH 128
+#define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
 #define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:s"
 
@@ -350,7 +350,7 @@ int client_parse_args(int argc, char *argv[]) {
         if (opt == -1) {
             if (optind < argc && !ip_set) {
                 // there's a valid non-option arg and ip is unset
-                safe_strncpy((char *)server_ip, argv[optind], MAX_IP_LEN);
+                safe_strncpy((char *)server_ip, argv[optind], IP_MAXLEN + 1);
                 ip_set = true;
                 ++optind;
             } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
@@ -386,7 +386,7 @@ int read_piped_arguments(bool *keep_waiting) {
     }
 
     // Arguments will arrive from the client application via pipe to stdin
-    char incoming[MAX_INCOMING_LENGTH];
+    char incoming[INCOMING_MAXLEN + 1];
 
     int total_stored_chars = 0;
     char read_char = 0;
@@ -432,7 +432,7 @@ int read_piped_arguments(bool *keep_waiting) {
 #endif  // _WIN32
 
         // Reset `incoming` so that it is at the very least initialized.
-        memset(incoming, 0, MAX_INCOMING_LENGTH);
+        memset(incoming, 0, INCOMING_MAXLEN + 1);
 
         for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
             // Read a character from stdin
@@ -451,7 +451,7 @@ int read_piped_arguments(bool *keep_waiting) {
             //   it splits into two and processes as two different pieces
             if (!keep_reading ||
                 (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
-                                            total_stored_chars == MAX_INCOMING_LENGTH - 1))) {
+                                            total_stored_chars == INCOMING_MAXLEN))) {
                 finished_line = true;
                 total_stored_chars = 0;
             } else {
@@ -508,7 +508,7 @@ int read_piped_arguments(bool *keep_waiting) {
                 if (!arg_value) {
                     LOG_WARNING("Must pass arg_value with `ip` arg_name");
                 } else {
-                    safe_strncpy((char *)server_ip, arg_value, MAX_IP_LEN);
+                    safe_strncpy((char *)server_ip, arg_value, IP_MAXLEN + 1);
                     LOG_INFO("Connecting to IP %s", server_ip);
                 }
             } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
@@ -533,7 +533,7 @@ int read_piped_arguments(bool *keep_waiting) {
             if (finished_line) {
                 // Reset finished_line after evaluating a line
                 finished_line = false;
-                memset(incoming, 0, MAX_INCOMING_LENGTH);
+                memset(incoming, 0, INCOMING_MAXLEN + 1);
             }
         }
     end_of_eval_loop:
@@ -590,13 +590,13 @@ int alloc_parsed_args(void) {
         Return:
             (int): 0 on success, -1 on failure
     */
-    server_ip = safe_malloc(MAX_IP_LEN);
+    server_ip = safe_malloc(IP_MAXLEN + 1);
 
     if (!server_ip) {
         return -1;
     }
 
-    memset((char *)server_ip, 0, MAX_IP_LEN);
+    memset((char *)server_ip, 0, IP_MAXLEN + 1);
 
     return 0;
 }

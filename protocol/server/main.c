@@ -437,13 +437,13 @@ int main(int argc, char* argv[]) {
 
 #ifndef _WIN32
 #define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
-#define HANDLED_URI_MAX_LEN 4096
+#define HANDLED_URI_MAXLEN 4096
         if (get_timer(uri_handler_timer) > 0.1) {
             if (!access(URI_HANDLER_FILE, R_OK)) {
                 // If the handler file exists, read it and delete the file
                 int fd = open(URI_HANDLER_FILE, O_RDONLY);
-                char handled_uri[HANDLED_URI_MAX_LEN + 1] = {0};
-                ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAX_LEN);
+                char handled_uri[HANDLED_URI_MAXLEN + 1] = {0};
+                ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAXLEN);
                 if (bytes > 0) {
                     size_t fsmsg_size = sizeof(FractalServerMessage) + bytes + 1;
                     FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);

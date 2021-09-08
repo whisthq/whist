@@ -23,7 +23,7 @@ Includes
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (3)
 #define MAX_RECONNECTION_ATTEMPTS (10)
-#define MAX_IP_LEN (32)
+#define IP_MAXLEN (31)
 
 /*
 ============================
