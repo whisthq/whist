@@ -20,9 +20,9 @@ import {
   createExitTypeform,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
-import { protocolStreamInfo } from "@app/utils/protocol"
 import { PROTOCOL_ERROR } from "@app/utils/error"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
+import { protocolStreamInfo } from "@app/utils/protocol"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3

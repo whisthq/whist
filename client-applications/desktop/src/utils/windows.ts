@@ -29,6 +29,7 @@ import {
   WindowHashOnboardingTypeform,
   WindowHashBugTypeform,
   WindowHashSpeedtest,
+  WindowHashLoading,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -81,7 +82,7 @@ export const width = {
 }
 
 export const height = {
-  xxs: { height: 16 * 2.5 },
+  xxs: { height: 16 * 4 },
   xs: { height: 16 * 20 },
   sm: { height: 16 * 32 },
   md: { height: 16 * 44 },
@@ -348,6 +349,22 @@ export const createSpeedtestWindow = () =>
     customURL: "https://speed.cloudflare.com/",
   })
 
+export const createLoadingWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.xs,
+      ...height.xxs,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+      frame: false,
+      transparent: true,
+      titleBarStyle: "customButtonsOnHover",
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashLoading,
+    closeOtherWindows: true,
+  })
+
 export const createProtocolWindow = async () => {
   const currentElectronWindows = getElectronWindows()
 
@@ -377,8 +394,10 @@ export const createProtocolWindow = async () => {
     windowMonitor.emit("network-is-unstable", unstable)
   })
 
-  // When the protocol is running, we want all other Electron windows to be closed
-  closeElectronWindows(currentElectronWindows)
+  protocol?.stdout?.once("data", () => {
+    // When the protocol is running, we want all other Electron windows to be closed
+    closeElectronWindows(currentElectronWindows)
+  })
 }
 
 export const relaunch = (options?: { args: string[] }) => {

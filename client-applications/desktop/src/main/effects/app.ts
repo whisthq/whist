@@ -14,13 +14,14 @@ import {
   createAuthWindow,
   createUpdateWindow,
   createSignoutWindow,
-  createProtocolWindow,
+  createLoadingWindow,
   relaunch,
   createPaymentWindow,
   createExitTypeform,
   createBugTypeform,
   createOnboardingTypeform,
   closeAllWindows,
+  createProtocolWindow,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
@@ -76,10 +77,11 @@ fromTrigger("notPersisted").subscribe(() => {
 // can launch.
 merge(fromTrigger("configFlowSuccess")).subscribe(
   (x: { userEmail: string }) => {
-    // Launch the protocol
-    createProtocolWindow().catch((err) => console.error(err))
     // On MacOS, hide the app dock when the protocol is open
     hideAppDock()
+    // Create the protocol loading window
+    createLoadingWindow()
+    createProtocolWindow().catch((err) => console.error(err))
     // Present the tray (top right corner of screen)
     createTray(createMenu(true, x.userEmail))
   }
