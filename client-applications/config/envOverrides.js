@@ -1,5 +1,5 @@
 /*
-  Config overrides 
+  Config overrides
   This file exports the environment overrides provided by `env_overrides.json`.
 */
 

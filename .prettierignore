@@ -10,7 +10,7 @@ core-ts/dist
 microservices/auth0
 
 # Client-Applications files
-client-applications/public 
+client-applications/public
 client-applications/release
 client-applications/*.css
 
