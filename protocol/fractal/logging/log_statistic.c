@@ -24,7 +24,7 @@ Includes
 #include "log_statistic.h"
 
 #define MAX_DIFFERENT_STATISTICS 64
-#define MAX_KEY_LENGTH 128
+#define KEY_MAXLEN 127
 #define PRINTING_FREQUENCY_IN_SEC 10
 
 #define LOG_STATISTICS true
@@ -40,7 +40,7 @@ Custom Types
 */
 
 typedef struct StatisticData {
-    char key[MAX_KEY_LENGTH];
+    char key[KEY_MAXLEN + 1];
     double sum;
     unsigned count;
     double min;
@@ -109,7 +109,7 @@ void log_double_statistic(const char* key, double val) {
         if (all_statistics[i].count == 0) {
             // This is a new key
             index = i;
-            safe_strncpy(all_statistics[index].key, key, MAX_KEY_LENGTH);
+            safe_strncpy(all_statistics[index].key, key, sizeof(all_statistics[index].key));
             all_statistics[index].min = val;
             all_statistics[index].max = val;
             break;

@@ -125,7 +125,7 @@ volatile bool exiting = false;
 volatile int try_amount;
 
 // Defines
-#define MAX_APP_PATH_LEN 1024
+#define APP_PATH_MAXLEN 1023
 
 int sync_keyboard_state(void) {
     /*
@@ -238,8 +238,8 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 #if defined(_WIN32) || defined(__APPLE__)
     if (argc == 1 || (argc == 2 && !strncmp(argv[1], "-psn_", 5))) {
         // hopefully the app path is not more than 1024 chars long
-        char client_app_path[MAX_APP_PATH_LEN];
-        memset(client_app_path, 0, MAX_APP_PATH_LEN);
+        char client_app_path[APP_PATH_MAXLEN + 1];
+        memset(client_app_path, 0, APP_PATH_MAXLEN + 1);
 
 #ifdef _WIN32
         const char* relative_client_app_path = "/../../Fractal.exe";
@@ -256,15 +256,15 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 #endif
 
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
-        if (relative_client_app_path_len < MAX_APP_PATH_LEN) {
+        if (relative_client_app_path_len < APP_PATH_MAXLEN + 1) {
 #ifdef _WIN32
-            int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+            int max_protocol_path_len = APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1;
             // Get the path of the current executable
             int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
             if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
 #elif __APPLE__
             uint32_t max_protocol_path_len =
-                (uint32_t)(MAX_APP_PATH_LEN - relative_client_app_path_len - 1);
+                (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
             // Get the path of the current executable
             if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
 #endif
