@@ -85,7 +85,7 @@ int get_focused_window_name(char* name_return) {
                     list[0][i] = ' ';
                 }
             }
-            safe_strncpy(name_return, list[0], sizeof(name_return));
+            safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
             XFreeStringList(list);
             return 0;
         } else {
