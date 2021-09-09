@@ -1,4 +1,4 @@
-/* 
+/*
   Clears electron user data cache
 
   To be called via:

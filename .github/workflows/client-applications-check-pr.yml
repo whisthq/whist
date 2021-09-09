@@ -87,8 +87,8 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Run yarn install in /desktop
-        working-directory: client-applications/desktop
+      - name: Run yarn install
+        working-directory: client-applications
         run: |
           # We need to increase the timeout to deal with GHA's weak VMs.
           yarn config set network-timeout 600000
@@ -96,14 +96,14 @@ jobs:
           yarn install
 
       - name: Check if Code Follows ESLint Standards
-        working-directory: client-applications/desktop
+        working-directory: client-applications
         run: yarn run lint:check
 
   # Building
   # Check that the Client Applications build.
   client-applications-check-pr-building:
     name: Building on ${{ matrix.config.name }}
-    needs: [config]
+    needs: config
     runs-on: ${{ matrix.config.os }}
 
     strategy:
@@ -198,7 +198,7 @@ jobs:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-        working-directory: client-applications\desktop
+        working-directory: client-applications
         run: |
           REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
           REM We use "call" before since ancient DOS versions don't support recursively executing batch files
@@ -221,7 +221,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
 
-        working-directory: client-applications/desktop
+        working-directory: client-applications
         run: |
           # Build the Fractal protocol and package the Electron application, using a hardcoded test version
           # We need to increase the timeout to deal with GHA's weak VMs.

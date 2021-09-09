@@ -77,7 +77,7 @@ module.exports = {
   buildAndCopyProtocol: () => {
     console.log("Building the protocol...")
     const cmakeBuildDir = "build-clientapp"
-    fs.mkdirSync(path.join("../../protocol", cmakeBuildDir), {
+    fs.mkdirSync(path.join("../protocol", cmakeBuildDir), {
       recursive: true,
     })
 
@@ -90,16 +90,16 @@ module.exports = {
       )
         pathArray.shift()
       const path = pathArray.join(";")
-      execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, "../../protocol", {
+      execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, "../protocol", {
         Path: path,
       })
     } else {
-      execCommand(`cmake -S . -B ${cmakeBuildDir}`, "../../protocol")
+      execCommand(`cmake -S . -B ${cmakeBuildDir}`, "../protocol")
     }
 
     execCommand(
       `cmake --build ${cmakeBuildDir} -j --target FractalClient`,
-      "../../protocol"
+      "../protocol"
     )
 
     console.log("Copying over the built protocol...")
@@ -107,7 +107,7 @@ module.exports = {
     const protocolBuildDir = path.join("protocol-build", "client")
     rimrafSync("protocol-build")
     fse.copySync(
-      path.join("../../protocol", cmakeBuildDir, "client/build64"),
+      path.join("../protocol", cmakeBuildDir, "client/build64"),
       protocolBuildDir
     )
 

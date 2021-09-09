@@ -25,14 +25,14 @@ export const fork = <T>(
   filters: { [gate: string]: (result: T) => boolean }
 ): { [gate: string]: Observable<T> } => {
   /*
-    Description: 
+    Description:
       Takes in an observable and map of filter functions and outputs a map of filtered observables
-    
-    Arguments: 
+
+    Arguments:
       source (Observable<T>): An observable whos emissions are desired to be filtered
       filters: Map of filter functions
 
-    Returns: 
+    Returns:
       Map of filtered observables
   */
 
@@ -45,15 +45,15 @@ export const flow = <T>(
   flowFn: (t: Observable<T>) => { [key: string]: Observable<any> }
 ): ((t: Observable<T>) => { [key: string]: Observable<any> }) => {
   /*
-    Description: 
+    Description:
       A function that returns a function which, when a trigger is activated, will run
       and return a map of observables
-    
-    Arguments: 
+
+    Arguments:
       name (string): Flow name
       fn: Function that takes in an observable and returns a map of observables
 
-    Returns: 
+    Returns:
       Map of observables
   */
   return (trigger: Observable<T>) => {
@@ -83,14 +83,14 @@ export const flow = <T>(
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   /*
-      Description: 
+      Description:
         Creates a Trigger from an observable
-      
-      Arguments: 
+
+      Arguments:
         name (string): Trigger name
         obs (Observable<A>): Observable to be turned into a Trigger
 
-      Returns: 
+      Returns:
         Original observable
     */
 
@@ -106,13 +106,13 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
 
 export const fromTrigger = (name: string): Observable<any> => {
   /*
-    Description: 
+    Description:
       Returns a Trigger by name
-    
-    Arguments: 
+
+    Arguments:
       name (string): Trigger name
 
-    Returns: 
+    Returns:
       Observable
   */
 

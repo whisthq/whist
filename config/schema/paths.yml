@@ -1,4 +1,4 @@
-# client-applications/desktop/config/build.js
+# client-applications/config/build.js
 ICON_FILE_NAME:
   local: "icon_local"
   dev: "icon_dev"
@@ -11,7 +11,7 @@ EXECUTABLE_NAME:
   staging: "Fractal (staging)"
   prod: "Fractal"
 
-# client-applications/desktop/config/paths.js
+# client-applications/config/paths.js
 CLIENT_LOG_FILE_NAME: "client.log"
 PROTOCOL_LOG_FILE_NAME: "protocol.log"
 

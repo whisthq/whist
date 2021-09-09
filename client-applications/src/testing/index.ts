@@ -70,9 +70,9 @@ export const withMocking = <
 >(
   /*
     Hijacks flow observables with mock observables if running on test mode
-    Arguments: 
-      name (str): name of the flow, ex. authFlow 
-      trigger (obs): observable trigger to mock 
+    Arguments:
+      name (str): name of the flow, ex. authFlow
+      trigger (obs): observable trigger to mock
       channels (obj): map of key-observable pairs to replace with mock schema
   */
   name: string,
