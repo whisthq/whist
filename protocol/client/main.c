@@ -304,6 +304,9 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    // init_networking needs to be called before `client_parse_args` because it modifies `port_mappings`
+    init_networking();
+
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
@@ -319,8 +322,6 @@ int main(int argc, char* argv[]) {
     init_statistic_logger();
 
     handle_single_icon_launch_client_app(argc, argv);
-
-    init_networking();
 
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
