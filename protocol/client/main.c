@@ -304,7 +304,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // init_networking needs to be called before `client_parse_args` because it modifies `port_mappings`
+    // init_networking needs to be called before `client_parse_args` because it modifies
+    //     `port_mappings`
     init_networking();
 
     int ret = client_parse_args(argc, argv);
