@@ -129,7 +129,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         case 'w': {  // width
             ret = strtol(eval_optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                LOG_ERROR("%s", usage);
+                printf("%s", usage);
                 return -1;
             }
             output_width = (int)ret;
@@ -138,7 +138,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         case 'h': {  // height
             ret = strtol(eval_optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                LOG_ERROR("%s", usage);
+                printf("%s", usage);
                 return -1;
             }
             output_height = (int)ret;
@@ -147,7 +147,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         case 'b': {  // bitrate
             ret = strtol(eval_optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                LOG_ERROR("%s", usage);
+                printf("%s", usage);
                 return -1;
             }
             max_bitrate = (int)ret;
@@ -159,8 +159,8 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             } else if (!strcmp(eval_optarg, "h265")) {
                 output_codec_type = CODEC_TYPE_H265;
             } else {
-                LOG_ERROR("Invalid codec type: '%s'\n", eval_optarg);
-                LOG_ERROR("%s", usage);
+                printf("Invalid codec type: '%s'\n", eval_optarg);
+                printf("%s", usage);
                 return -1;
             }
             break;
@@ -168,15 +168,15 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         case 'k': {  // private key
             if (!read_hexadecimal_private_key(eval_optarg, (char *)binary_aes_private_key,
                                               (char *)hex_aes_private_key)) {
-                LOG_ERROR("Invalid hexadecimal string: %s\n", eval_optarg);
-                LOG_ERROR("%s", usage);
+                printf("Invalid hexadecimal string: %s\n", eval_optarg);
+                printf("%s", usage);
                 return -1;
             }
             break;
         }
         case 'u': {  // user email
             if (!safe_strncpy(user_email, eval_optarg, sizeof(user_email))) {
-                LOG_ERROR("User email is too long: %s\n", eval_optarg);
+                printf("User email is too long: %s\n", eval_optarg);
                 return -1;
             }
             break;
@@ -187,7 +187,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         }
         case 'i': {  // protocol window icon
             if (!safe_strncpy(icon_png_filename, eval_optarg, sizeof(icon_png_filename))) {
-                LOG_ERROR("Icon PNG filename is too long: %s\n", eval_optarg);
+                printf("Icon PNG filename is too long: %s\n", eval_optarg);
                 return -1;
             }
             break;
@@ -211,7 +211,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
                     char invalid_s[13];
                     unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
                     safe_strncpy(invalid_s, str, invalid_s_len);
-                    LOG_ERROR("Unable to parse the port mapping \"%s\"", invalid_s);
+                    printf("Unable to parse the port mapping \"%s\"", invalid_s);
                     break;
                 }
                 // if %c was the end of the string, exit
@@ -243,7 +243,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         default: {
             if (eval_opt != -1) {
                 // illegal option
-                LOG_ERROR("%s", usage);
+                printf("%s", usage);
                 return -1;
             }
             break;
@@ -324,8 +324,8 @@ int client_parse_args(int argc, char *argv[]) {
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
-            LOG_ERROR("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                      strlen(optarg), FRACTAL_ARGS_MAXLEN);
+            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
+                   strlen(optarg), FRACTAL_ARGS_MAXLEN);
             return -1;
         }
 
@@ -333,11 +333,11 @@ int client_parse_args(int argc, char *argv[]) {
         //    and argument via `evaluate_arg`
         switch (opt) {
             case FRACTAL_GETOPT_HELP_CHAR: {  // help
-                LOG_ERROR("%s", usage_details);
+                printf("%s", usage_details);
                 return 1;
             }
             case FRACTAL_GETOPT_VERSION_CHAR: {  // version
-                LOG_ERROR("Fractal client revision %s\n", fractal_git_revision());
+                printf("Fractal client revision %s\n", fractal_git_revision());
                 return 1;
             }
             default: {
@@ -355,7 +355,7 @@ int client_parse_args(int argc, char *argv[]) {
                 ++optind;
             } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
                 // incorrect usage
-                LOG_ERROR("%s", usage);
+                printf("%s", usage);
                 return -1;
             } else {
                 // we're done

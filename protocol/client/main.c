@@ -300,20 +300,6 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-    init_logger();
-    init_statistic_logger();
-
-    handle_single_icon_launch_client_app(argc, argv);
-
-    init_networking();
-
-    srand(rand() * (unsigned int)time(NULL) + rand());
-    uid = rand();
-
-    if (init_socket_library() != 0) {
-        LOG_FATAL("Failed to initialize socket library.");
-    }
-
     if (alloc_parsed_args() != 0) {
         return -1;
     }
@@ -327,6 +313,20 @@ int main(int argc, char* argv[]) {
         // --help or --version
         free_parsed_args();
         return 0;
+    }
+
+    init_logger();
+    init_statistic_logger();
+
+    handle_single_icon_launch_client_app(argc, argv);
+
+    init_networking();
+
+    srand(rand() * (unsigned int)time(NULL) + rand());
+    uid = rand();
+
+    if (init_socket_library() != 0) {
+        LOG_FATAL("Failed to initialize socket library.");
     }
 
     LOG_INFO("Client protocol started.");
