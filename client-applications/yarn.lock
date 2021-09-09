@@ -340,7 +340,7 @@
   dependencies:
     prop-types "^15.7.2"
 
-"@fractal/core-ts@file:../../core-ts":
+"@fractal/core-ts@file:../core-ts":
   version "1.0.0"
   dependencies:
     browser-or-node "^1.3.0"
@@ -2390,8 +2390,9 @@ electron-builder@22.11.7:
     yargs "^17.0.1"
 
 "electron-notarize@github:fractal/electron-notarize#main":
-  version "0.0.0-development"
-  resolved "https://codeload.github.com/fractal/electron-notarize/tar.gz/ac178d123be7f71d72db0354fd153315636b28b7"
+  version "1.0.2"
+  uid "15ee97e53b22ba737c2416de9d34f4e02b350296"
+  resolved "https://codeload.github.com/fractal/electron-notarize/tar.gz/15ee97e53b22ba737c2416de9d34f4e02b350296"
   dependencies:
     debug "^4.1.1"
     fs-extra "^9.0.1"
