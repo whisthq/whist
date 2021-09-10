@@ -11,7 +11,7 @@ import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
-import { electronLogPath } from "@app/utils/logging"
+import { electronLogPath, log_protocol_line } from "@app/utils/logging"
 
 const NACK_LOOKBACK_PERIOD = 3 // Number of seconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -103,25 +103,6 @@ export const protocolLaunch = async () => {
   let stdout_buf = {
     'buffer': ''
   }
-  // This function will be called on each log line received from the protocol
-  let send_protocol_log_line = (line: string) => {
-    let match = line.match(/^[\d:\.]*\s*\|\s*(?<level>\w+)\s*\|/);
-    let level = "INFO";
-    if (match) {
-      level = match.groups!.level!;
-    }
-    // TODO: Get logz logger to be somewhere global
-    /*
-    var logger = require('logzio-nodejs').createLogger({
-      token: '__YOUR_ACCOUNT_TOKEN__',
-      type: 'YourLogType'     // OPTIONAL (If none is set, it will be 'nodejs')
-    });
-    */
-    logger.log({
-      level: level,
-      message: line
-    });
-  }
   // This will separate and pipe the protocol's output into send_protocol_log_line
   protocol.stdout.on('data', msg => {
     // Combine the previous line with the current msg
@@ -132,14 +113,14 @@ export const protocolLaunch = async () => {
     stdout_buf.buffer = lines.length == 0 ? "" : lines.pop()!
     // Print the rest of the lines
     for(let line of lines) {
-      send_protocol_log_line(line)
+      log_protocol_line(line)
     }
   });
   // When the datastream ends, send the last line out
   protocol.stdout.on('end', () => {
     // Send the last line, so long as it's not empty
     if (stdout_buf.buffer) {
-      send_protocol_log_line(stdout_buf.buffer)
+      log_protocol_line(stdout_buf.buffer)
       stdout_buf.buffer = ''
     }
   });

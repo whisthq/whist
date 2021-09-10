@@ -20,6 +20,7 @@ import config, {
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
 import { sessionID } from "@app/utils/constants"
+import { createLogger } from "logzio-nodejs";
 
 app.setPath("userData", loggingBaseFilePath)
 
@@ -198,4 +199,21 @@ export const uploadToS3 = async () => {
   const logLocation = path.join(electronLogPath, loggingFiles.protocol)
 
   if (fs.existsSync(logLocation)) await uploadHelper(logLocation)
+}
+
+const logzio_logger = createLogger({
+  token: '__YOUR_ACCOUNT_TOKEN__',
+  type: 'YourLogType'     // OPTIONAL (If none is set, it will be 'nodejs')
+});
+export const log_protocol_line = (line: string) => {
+  // This function will push to logz.io on each log line received from the protocol
+  let match = line.match(/^[\d:\.]*\s*\|\s*(?<level>\w+)\s*\|/);
+  let level = "INFO";
+  if (match) {
+    level = match.groups!.level!;
+  }
+  logzio_logger.log({
+    level: level,
+    message: line
+  });
 }
