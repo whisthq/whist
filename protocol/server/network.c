@@ -129,8 +129,6 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
             if (create_tcp_context(&(clients[*client_id].TCP_context), NULL, clients[*client_id].TCP_port, 1,
                            TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
-                closesocket(clients[*client_id].UDP_context.socket);
-                return -1;
             }
 
             break;

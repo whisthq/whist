@@ -727,7 +727,7 @@ int create_tcp_client_context(SocketContext* context, char* destination, int por
         return -1;
     }
     if (destination == NULL) {
-        LOG_WARNING("destiniation is NULL");
+        LOG_WARNING("destination is NULL");
         return -1;
     }
     context->is_tcp = true;
@@ -956,6 +956,7 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
         return -1;
     }
     port = port_mappings[port];
+    LOG_INFO("TCP PORT %d", port);
 
     context->timeout = recvfrom_timeout_ms;
     context->mutex = fractal_create_mutex();

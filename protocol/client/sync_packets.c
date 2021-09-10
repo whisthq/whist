@@ -35,6 +35,7 @@ extern SocketContext packet_tcp_context;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 bool connected = true;
+extern bool using_stun;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;
@@ -96,7 +97,7 @@ void init_updater() {
 
 void update_ping() {
     /*
-        Check if we should send more pings, disconnect, etc. If no valid pong has been received for
+       Check if we should send more pings, disconnect, etc. If no valid pong has been received for
        600ms, we mark that as a ping failure. If we successfully received a pong and it has been
        500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
        pong and it has been 210 ms, resend the ping.
@@ -350,24 +351,33 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
                 // TODO handle different lost connection cases:
                 // EPIPE (32): server has closed TCP connection
-                // if (errno == EPIPE) {
-                //     FractalClientMessage fmsg;
-                //     fmsg.type = MESSAGE_TCP_RECOVERY;
-                //     fmsg.tcpRecovery.client_id = client_id;
+                if (errno == EPIPE) {
+                    FractalClientMessage fmsg;
+                    fmsg.type = MESSAGE_TCP_RECOVERY;
+                    fmsg.tcpRecovery.client_id = client_id;
 
-                //     SocketContext context;
-                //     if (create_tcp_context(&context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
-                //            (char *)binary_aes_private_key) < 0) {
-                //         LOG_WARNING("Failed to connect to server's discovery port.");
-                //         return -1;
-                //     }
+                    SocketContext discovery_context;
+                    if (create_tcp_context(&discovery_context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
+                           (char *)binary_aes_private_key) < 0) {
+                        LOG_WARNING("Failed to connect to server's discovery port.");
+                        continue;
+                    }
 
-                //     if (send_tcp_packet(&context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
-                //         LOG_ERROR("Failed to send discovery request message.");
-                //         closesocket(context.socket);
-                //         return -1;
-                //     }
-                // }
+                    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
+                        LOG_ERROR("Failed to send discovery request message.");
+                        closesocket(discovery_context.socket);
+                        continue;
+                    }
+                    closesocket(discovery_context.socket);
+
+                    int ret = closesocket(packet_tcp_context.socket);
+                    LOG_INFO("TCP CLOSE SOCKET RET: %d", ret);
+                    if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
+                           (char *)binary_aes_private_key) < 0) {
+                        LOG_WARNING("Failed to connect to server's TCP port.");
+                        continue;
+                    }
+                }
                 // EBADF (9): client has closed TCP connection
                 start_timer(&last_tcp_check_timer);
             }
