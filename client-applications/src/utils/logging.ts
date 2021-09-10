@@ -214,5 +214,6 @@ export const protocolToLogz = (line: string) => {
     level: level,
     message: line,
     session_id: sessionID,
+    component: "clientapp",
   })
 }
