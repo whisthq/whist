@@ -15,6 +15,7 @@
 const helpers = require("./build-package-helpers")
 const { isEmpty } = require("lodash")
 const path = require("path")
+const { readdirSync } = require("fs")
 const start = require("./start")
 
 const testManual = (_env, ...args) => {
@@ -25,8 +26,14 @@ const testManual = (_env, ...args) => {
 
   if (isEmpty(schemaNames)) {
     const file = path.basename(process.argv[1])
-    const message = `Schema names must be passed as arguments to ${file}`
-    throw new Error(message)
+    console.warn(
+      `Schema names must be passed as arguments to ${file}. Available schemas:`
+    )
+    readdirSync("src/testing/schemas")
+      .map((schema) => schema.slice(0, -3))
+      .filter((schema) => schema !== "index")
+      .forEach((schema) => console.warn(`- ${schema}`))
+    process.exit(0)
   }
   start({
     VERSION: helpers.getCurrentClientAppVersion(),
