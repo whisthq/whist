@@ -11,7 +11,7 @@ import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
-import { electronLogPath } from "@app/utils/logging"
+import { electronLogPath, protocolToLogz } from "@app/utils/logging"
 
 const NACK_LOOKBACK_PERIOD = 3 // Number of seconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -93,7 +93,36 @@ export const protocolLaunch = async () => {
   })
 
   // Pipe to protocol.log
-  protocol.stdout.pipe(protocolLogFile)
+  // protocol.stdout.pipe(protocolLogFile)
+
+  // ***
+  // Pipe protocol's stdout to logz.io
+  // ***
+
+  // Some shared buffer to store stdout messages in
+  const stdoutBuffer = {
+    buffer: "",
+  }
+  // This will separate and pipe the protocol's output into send_protocol_log_line
+  protocol.stdout.on("data", (msg: string) => {
+    // Combine the previous line with the current msg
+    const newmsg = `${stdoutBuffer.buffer}${msg}`
+    // Split on newline
+    const lines = newmsg.split(/\r?\n/)
+    // Leave the last line in the buffer to be appended to later
+    stdoutBuffer.buffer = lines.length === 0 ? "" : lines.pop()
+    // Print the rest of the lines
+    lines.forEach((line: string) => protocolToLogz(line))
+  })
+  // When the datastream ends, send the last line out
+  protocol.stdout.on("end", () => {
+    // Send the last line, so long as it's not empty
+    if (stdoutBuffer.buffer !== "") {
+      protocolToLogz(stdoutBuffer.buffer)
+      stdoutBuffer.buffer = ""
+    }
+  })
+
   // If true, also show in terminal (for local debugging)
   if (process.env.SHOW_PROTOCOL_LOGS === "true")
     protocol.stdout.pipe(process.stdout)
