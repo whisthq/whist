@@ -93,7 +93,57 @@ export const protocolLaunch = async () => {
   })
 
   // Pipe to protocol.log
-  protocol.stdout.pipe(protocolLogFile)
+  // protocol.stdout.pipe(protocolLogFile)
+
+  // ***
+  // Pipe protocol's stdout to logz.io
+  // ***
+
+  // Some shared buffer to store stdout messages in
+  let stdout_buf = {
+    'buffer': ''
+  }
+  // This function will be called on each log line received from the protocol
+  let send_protocol_log_line = (line: string) => {
+    let match = line.match(/^[\d:\.]*\s*\|\s*(?<level>\w+)\s*\|/);
+    let level = "INFO";
+    if (match) {
+      level = match.groups!.level!;
+    }
+    // TODO: Get logz logger to be somewhere global
+    /*
+    var logger = require('logzio-nodejs').createLogger({
+      token: '__YOUR_ACCOUNT_TOKEN__',
+      type: 'YourLogType'     // OPTIONAL (If none is set, it will be 'nodejs')
+    });
+    */
+    logger.log({
+      level: level,
+      message: line
+    });
+  }
+  // This will separate and pipe the protocol's output into send_protocol_log_line
+  protocol.stdout.on('data', msg => {
+    // Combine the previous line with the current msg
+    let newmsg = stdout_buf.buffer + msg
+    // Split on newline
+    let lines = newmsg.split(/\r?\n/)
+    // Leave the last line in the buffer to be appended to later
+    stdout_buf.buffer = lines.length == 0 ? "" : lines.pop()!
+    // Print the rest of the lines
+    for(let line of lines) {
+      send_protocol_log_line(line)
+    }
+  });
+  // When the datastream ends, send the last line out
+  protocol.stdout.on('end', () => {
+    // Send the last line, so long as it's not empty
+    if (stdout_buf.buffer) {
+      send_protocol_log_line(stdout_buf.buffer)
+      stdout_buf.buffer = ''
+    }
+  });
+
   // If true, also show in terminal (for local debugging)
   if (process.env.SHOW_PROTOCOL_LOGS === "true")
     protocol.stdout.pipe(process.stdout)
