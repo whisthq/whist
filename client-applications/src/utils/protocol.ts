@@ -9,9 +9,10 @@
 import { app } from "electron"
 import path from "path"
 import fs from "fs"
+import { last } from "lodash"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
-import { electronLogPath, log_protocol_line } from "@app/utils/logging"
+import { electronLogPath, protocolToLogz } from "@app/utils/logging"
 
 const NACK_LOOKBACK_PERIOD = 3 // Number of seconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -100,30 +101,28 @@ export const protocolLaunch = async () => {
   // ***
 
   // Some shared buffer to store stdout messages in
-  let stdout_buf = {
-    'buffer': ''
+  const stdoutBuffer = {
+    buffer: "",
   }
   // This will separate and pipe the protocol's output into send_protocol_log_line
-  protocol.stdout.on('data', msg => {
+  protocol.stdout.on("data", (msg: string) => {
     // Combine the previous line with the current msg
-    let newmsg = stdout_buf.buffer + msg
+    const newmsg = `${stdoutBuffer.buffer}${msg}`
     // Split on newline
-    let lines = newmsg.split(/\r?\n/)
+    const lines = newmsg.split(/\r?\n/)
     // Leave the last line in the buffer to be appended to later
-    stdout_buf.buffer = lines.length == 0 ? "" : lines.pop()!
+    stdoutBuffer.buffer = lines.length === 0 ? "" : (last(lines) as string)
     // Print the rest of the lines
-    for(let line of lines) {
-      log_protocol_line(line)
-    }
-  });
+    lines.forEach((line: string) => protocolToLogz(line))
+  })
   // When the datastream ends, send the last line out
-  protocol.stdout.on('end', () => {
+  protocol.stdout.on("end", () => {
     // Send the last line, so long as it's not empty
-    if (stdout_buf.buffer) {
-      log_protocol_line(stdout_buf.buffer)
-      stdout_buf.buffer = ''
+    if (stdoutBuffer.buffer !== "") {
+      protocolToLogz(stdoutBuffer.buffer)
+      stdoutBuffer.buffer = ""
     }
-  });
+  })
 
   // If true, also show in terminal (for local debugging)
   if (process.env.SHOW_PROTOCOL_LOGS === "true")

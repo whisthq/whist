@@ -30,10 +30,13 @@ const { appEnvironment, iconName } = require("./build")
 const configs = {
   LOCAL: {
     appEnvironment,
-    keys,
     protocolName,
     protocolFolder,
     buildRoot,
+    keys: {
+      ...keys,
+      LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
+    },
     url: {
       WEBSERVER_URL: FractalWebservers.dev,
       FRONTEND_URL: "https://dev.fractal.co",
@@ -54,11 +57,13 @@ const configs = {
   },
   DEVELOPMENT: {
     appEnvironment,
-    keys,
-
     protocolName,
     protocolFolder,
     buildRoot,
+    keys: {
+      ...keys,
+      LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
+    },
     url: {
       WEBSERVER_URL: FractalWebservers.dev,
       FRONTEND_URL: "https://dev.fractal.co",
@@ -79,10 +84,13 @@ const configs = {
   },
   STAGING: {
     appEnvironment,
-    keys,
     protocolName,
     protocolFolder,
     buildRoot,
+    keys: {
+      ...keys,
+      LOGZ_KEY: "WrlrWXFqDYqCNCXVwkmuOpQOvHNeqIiJ",
+    },
     url: {
       WEBSERVER_URL: FractalWebservers.staging,
       FRONTEND_URL: "https://staging.fractal.co",
@@ -104,13 +112,16 @@ const configs = {
   },
   PRODUCTION: {
     appEnvironment,
-    keys,
     protocolName,
     protocolFolder,
     buildRoot,
     url: {
       WEBSERVER_URL: FractalWebservers.production,
       FRONTEND_URL: "https://fractal.co",
+    },
+    keys: {
+      ...keys,
+      LOGZ_KEY: "dhwhpmrnfXZqNrilucOruibXgunbBqQJ",
     },
     auth0: {
       auth0Domain: "auth.fractal.co",
