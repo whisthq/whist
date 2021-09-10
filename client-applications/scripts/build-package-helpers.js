@@ -54,7 +54,7 @@ module.exports = {
     // will be the sha256 hash of the image.
     const imageTag = "fractal/config"
     console.log(`Building ${imageTag} Docker image`)
-    const build = `docker build --tag ${imageTag} ../../config`
+    const build = `docker build --tag ${imageTag} ../config`
     execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
 
     // Using the params argument, we'll build some strings that pass options
