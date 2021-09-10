@@ -209,6 +209,7 @@ export const protocolToLogz = (line: string) => {
   // This function will push to logz.io on each log line received from the protocol
   const match = line.match(/^[\d:.]*\s*\|\s*(?<level>\w+)\s*\|/)
   const level = match?.groups?.level ?? "INFO"
+
   logzio.log({
     level: level,
     message: line,

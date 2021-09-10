@@ -9,7 +9,6 @@
 import { app } from "electron"
 import path from "path"
 import fs from "fs"
-import { last } from "lodash"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz } from "@app/utils/logging"
@@ -111,7 +110,7 @@ export const protocolLaunch = async () => {
     // Split on newline
     const lines = newmsg.split(/\r?\n/)
     // Leave the last line in the buffer to be appended to later
-    stdoutBuffer.buffer = lines.length === 0 ? "" : (last(lines) as string)
+    stdoutBuffer.buffer = lines.length === 0 ? "" : lines.pop()
     // Print the rest of the lines
     lines.forEach((line: string) => protocolToLogz(line))
   })
