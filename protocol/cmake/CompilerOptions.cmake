@@ -25,6 +25,6 @@ else() # GCC and Clang base flags
   add_link_options("-pthread" "-rdynamic")
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  add_compile_options("-working-directory=/")
-endif()
+# if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+#   add_compile_options("-working-directory=/")
+# endif()

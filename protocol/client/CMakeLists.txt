@@ -18,6 +18,22 @@ add_executable(FractalClient
         bitrate.c
         )
 
+set(FRACTAL_CLIENT_SOURCEFILES main.c
+        audio.c
+        client_utils.c
+        network.c
+        sdl_event_handler.c
+        sdl_utils.c
+        handle_server_message.c
+        video.c
+        sdlscreeninfo.c
+        peercursor.c
+        ringbuffer.c
+        sync_packets.c
+        bitrate.c)
+
+add_library(FRACTAL_CLIENT_LIBRARY STATIC ${FRACTAL_CLIENT_SOURCEFILES})
+
 # On Windows during client app packaging, FractalClient should have icon set
 if(USE_CLIENT_APP_ICON AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(FractalClient

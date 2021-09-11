@@ -26,7 +26,7 @@ include(CheckLanguage)
 # Host is needed since CMAKE_SYSTEM_NAME is set by the project() command
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
     # Clang can't handle CXX for some reason
-    project(FractalProtocol LANGUAGES C)
+    project(FractalProtocol LANGUAGES C CXX)
 else ()
     project(FractalProtocol LANGUAGES C CXX)
 endif ()
@@ -78,6 +78,7 @@ set(META_AUTHOR_ORGANIZATION "Fractal")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractal/fractal")
 
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 14)
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
 set(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -264,6 +265,9 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
+# The googletest subdirectory needs to be included before the call to set(CMAKE_C_COMPILER clang) is made.
+add_subdirectory(googletest)
+
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_COMPILER clang)
@@ -282,9 +286,12 @@ include_directories(SYSTEM include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 
-# Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
+#Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
 add_subdirectory(client)
+add_subdirectory(test)
+
+#add_subdirectory(test)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "FractalServer")
     add_subdirectory(server)
