@@ -85,6 +85,7 @@ type SpinUpMandelboxRequest struct {
 	JwtAccessToken        string                      `json:"jwt_access_token"`        // User's JWT access token
 	MandelboxID           types.MandelboxID           `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
 	SessionID             uint64                      `json:"session_id"`              // The sessionID provided by the client-app
+	JSONData              string                      `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
 	resultChan            chan requestResult          // Channel to pass the request result between goroutines
 }
 
