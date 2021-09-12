@@ -58,7 +58,7 @@ VCPUS_PER_MANDELBOX = 4
 
 type_to_number_map = {
     k: min(
-        HOST_SERVICE_MANDELBOXES_PER_GPU * instance_type_to_gpu_map[k],
+        instance_type_to_gpu_map[k] * HOST_SERVICE_MANDELBOXES_PER_GPU,
         instance_type_to_vcpu_map[k] // VCPUS_PER_MANDELBOX,
     )
     for k in instance_type_to_gpu_map.keys() & instance_type_to_vcpu_map.keys()
