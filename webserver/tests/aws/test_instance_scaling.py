@@ -9,7 +9,7 @@ from flask import current_app
 from app.models import db, RegionToAmi, InstanceInfo
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
-from app.constants.instance_state_values import InstanceState
+from app.constants.mandelbox_host_states import MandelboxHostState
 
 from tests.helpers.utils import get_random_regions
 
@@ -68,12 +68,12 @@ def test_scale_down_single_available(
     instance = bulk_instance(
         instance_name="test_instance", aws_ami_id="test-AMI", location=region_name
     )
-    assert instance.status != InstanceState.DRAINING.value
+    assert instance.status != MandelboxHostState.DRAINING.value
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     assert post_list[0]["args"][0] == "https://123.456.789:4678/drain_and_shutdown"
     db.session.refresh(instance)
-    assert instance.status == InstanceState.HOST_SERVICE_UNRESPONSIVE.value
+    assert instance.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
 
 
 def test_terminate_single_available(
@@ -97,9 +97,9 @@ def test_terminate_single_available(
         instance_name="test_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=InstanceState.PRE_CONNECTION,
+        status=MandelboxHostState.PRE_CONNECTION,
     )
-    assert instance.status != InstanceState.DRAINING.value
+    assert instance.status != MandelboxHostState.DRAINING.value
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     assert len(post_list) == 0
@@ -194,7 +194,7 @@ def test_scale_down_multiple_available(
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     for instance in instance_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == InstanceState.HOST_SERVICE_UNRESPONSIVE.value
+        assert instance_info.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
 
 
 def test_scale_down_multiple_partial_available(
@@ -228,10 +228,10 @@ def test_scale_down_multiple_partial_available(
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     for instance in instance_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == InstanceState.HOST_SERVICE_UNRESPONSIVE.value
+        assert instance_info.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
     for instance in active_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == InstanceState.ACTIVE.value
+        assert instance_info.status == MandelboxHostState.ACTIVE.value
 
 
 def test_lingering_instances(monkeypatch, bulk_instance, region_name):
@@ -265,7 +265,7 @@ def test_lingering_instances(monkeypatch, bulk_instance, region_name):
         instance_name=f"inactive_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=InstanceState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION.value,
         last_updated_utc_unix_ms=((time() - 1801) * 1000),
         creation_time_utc_unix_ms=((time() - 1801) * 1000),
     )
@@ -273,14 +273,14 @@ def test_lingering_instances(monkeypatch, bulk_instance, region_name):
         instance_name=f"still starting",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=InstanceState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION.value,
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     bulk_instance(
         instance_name=f"active_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=InstanceState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION.value,
         last_updated_utc_unix_ms=((time() - 121) * 1000),
         creation_time_utc_unix_ms=((time() - 121) * 1000),
     )

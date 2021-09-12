@@ -12,7 +12,7 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import (
     terminate_instance,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
-from app.constants.instance_state_values import InstanceState
+from app.constants.mandelbox_host_states import MandelboxHostState
 
 #  This list allows thread success to be passed back to the main thread.
 #  It is thread-safe because lists in Python are thread-safe.
@@ -127,7 +127,7 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
     )
     # If the IP is empty, the instance has yet to connect
     if (
-        active_instance.status == InstanceState.PRE_CONNECTION
+        active_instance.status == MandelboxHostState.PRE_CONNECTION
         or active_instance.ip is None
         or str(active_instance.ip) == ""
     ):
@@ -146,13 +146,13 @@ def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
         resp.raise_for_status()
         # Host service would be setting the state in the DB once we call the drain endpoint.
         # However, there is no downside to us setting this as well.
-        active_instance.status = InstanceState.DRAINING
+        active_instance.status = MandelboxHostState.DRAINING
         fractal_logger.info(
             f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}"
         )
         job_status = True
     except requests.exceptions.RequestException as error:
-        active_instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+        active_instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
         fractal_logger.error(
             f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}: {error}"
         )
@@ -181,8 +181,8 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
         .filter(
             and_(
                 or_(
-                    InstanceInfo.status.like(InstanceState.ACTIVE),
-                    InstanceInfo.status.like(InstanceState.PRE_CONNECTION),
+                    InstanceInfo.status.like(MandelboxHostState.ACTIVE),
+                    InstanceInfo.status.like(MandelboxHostState.PRE_CONNECTION),
                 ),
                 InstanceInfo.aws_ami_id.not_in(amis_to_exclude),
             )
@@ -311,7 +311,7 @@ def swapover_amis(new_amis_str: List[str]) -> None:
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
         fractal_logger.info(f"Draining instance {active_instance.instance_name} in database only!")
-        active_instance.status = InstanceState.DRAINING
+        active_instance.status = MandelboxHostState.DRAINING
     db.session.commit()
 
     mark_instance_for_draining_failures = []

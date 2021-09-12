@@ -6,7 +6,7 @@ from app.models import (
 )
 
 from app.helpers.utils.general.logs import fractal_logger
-from app.constants.instance_state_values import InstanceState
+from app.constants.mandelbox_host_states import MandelboxHostState
 
 MAX_POLL_TIME = 900  # seconds
 POLL_SLEEP_INTERVAL = 5  # seconds
@@ -28,7 +28,7 @@ def _poll(instance_name: str) -> bool:
     result = False
 
     for i in range(MAX_POLL_ITERATIONS):
-        if instance.status != str(InstanceState.ACTIVE.value):
+        if instance.status != str(MandelboxHostState.ACTIVE.value):
             fractal_logger.warning(
                 f"{instance.instance_name} deployment in progress. {i}/{MAX_POLL_ITERATIONS}"
             )

@@ -15,7 +15,7 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_n
 
 from app.helpers.utils.general.name_generation import generate_name
 
-from app.constants.instance_state_values import InstanceState
+from app.constants.mandelbox_host_states import MandelboxHostState
 
 
 def test_prior_ami(db_session):
@@ -139,7 +139,9 @@ def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance,
         return [
             bulk_instance(
                 instance_name=generate_name("current_running_instance", True),
-                status=random.choice([InstanceState.ACTIVE, InstanceState.PRE_CONNECTION]),
+                status=random.choice(
+                    [MandelboxHostState.ACTIVE, MandelboxHostState.PRE_CONNECTION]
+                ),
             )
             for _ in range(num_running_instances)
         ]
