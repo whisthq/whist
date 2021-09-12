@@ -32,46 +32,13 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
-        # A Heroku source is an S3 object into which we can upload a gzipped
-        # tarball containing an application's source code.
-        # https://devcenter.heroku.com/articles/build-and-release-using-the-api#create-a-source
-      - name: Create Heroku Source
-        id: source
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-        run: |
-          heroku plugins:install api
-          echo ::set-output name=source::$(heroku api POST /sources)
-
-      - name: Set Git Branch Name for Push Event
-        if: ${{ github.event_name == 'push' }}
-        run: echo "git_branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-
-      - name: Set Git Branch Name for Pull Request Event
-        if: ${{ github.event_name == 'pull_request' }}
-        run: echo "git_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
-
-        # The S3 object into which we need to upload our source tarball was
-        # created in the previous step. The first thing we need to do in this
-        # step is upload some data.
-        # https://devcenter.heroku.com/articles/build-and-release-using-the-api#use-the-source_blob-put_url-to-upload-data
-        # Then, we can create a test run. ID 3f9f0f87-eda4-43ed-81ee-61fcdcdf5739 is
-        # the pipeline ID of the fractal-server Heroku pipeline.
-      - name: Upload Source Archive and Trigger Test Run
+      - name: Run and Wait for Heroku CI Test Run
         working-directory: webserver
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
-          git archive --format tar.gz HEAD |
-              curl -X PUT "${{ fromJSON(steps.source.outputs.source).source_blob.put_url }}" \
-                   -H "Content-Type:" --data-binary @-
-          heroku api POST /test-runs <<EOF
-          {
-            "commit_branch": "$git_branch",
-            "commit_message": "$(git show -s --format=%s)",
-            "commit_sha": "$GITHUB_SHA",
-            "pipeline": "3f9f0f87-eda4-43ed-81ee-61fcdcdf5739",
-            "source_blob_url": "${{ fromJSON(steps.source.outputs.source).source_blob.get_url }}"
-          }
-          EOF
+          heroku --version
+          heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
