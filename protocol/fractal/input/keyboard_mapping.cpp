@@ -118,6 +118,16 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
         {FK_LCTRL, FK_ENTER},
         {FK_LALT, FK_ENTER},
     },
+    // Switch tabs with Ctrl+Tab/Ctrl+Shift+Tab
+    // (we use GUI here because we swapped CTRL and GUI above)
+    {
+        {FK_LGUI, FK_TAB},
+        {FK_LCTRL, FK_TAB},
+    },
+    {
+        {FK_LGUI, FK_LSHIFT, FK_TAB},
+        {FK_LCTRL, FK_LSHIFT, FK_TAB},
+    },
 };
 
 auto key_sorter = [](const FractalKeycode& a, const FractalKeycode& b) -> bool {
