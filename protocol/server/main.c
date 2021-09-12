@@ -466,7 +466,7 @@ int main(int argc, char* argv[]) {
                 remove(URI_HANDLER_FILE);
             }
 
-            start_timer(&window_name_timer);
+            start_timer(&uri_handler_timer);
         }
 #endif  // ! _WIN32
 
