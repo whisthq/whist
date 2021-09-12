@@ -18,6 +18,7 @@ from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
 from app.helpers.utils.general.logs import fractal_logger
 from app.constants.instance_state_values import InstanceState
+from app.constants.ec2_instance_states import EC2InstanceState
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -90,15 +91,21 @@ def get_instance_id(instance: InstanceInfo) -> str:
 
 def check_instance_exists(instance_id: str, location: str) -> bool:
     """
-    Checks whether a specified instance actually exists, using the AWS client
+    Checks whether a specified instance actually exists and is not
+    stopped/terminated, using the AWS client
     Args:
         instance_id: the id of the instance to query
         location: the region to check in
     Returns:
-        True if the instance is up, else False
+        True if the instance actually exists and is not stopped/terminated, else False
     """
     ec2_client = EC2Client(region_name=location)
-    return ec2_client.check_if_instances_up([instance_id])
+    status = ec2_client.get_instance_states([instance_id])[0]
+    return status not in (
+        EC2InstanceState.DOES_NOT_EXIST,
+        EC2InstanceState.STOPPED,
+        EC2InstanceState.TERMINATED,
+    )
 
 
 def terminate_instance(instance: InstanceInfo) -> None:

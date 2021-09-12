@@ -30,7 +30,7 @@ def test_single() -> None:
     assert time.time() - up_start < 20, "start should not be blocking"
 
     # Now, poll til it's live
-    ec2_client.spin_til_instances_up(ids)
+    ec2_client.spin_til_instances_running(ids)
 
     # And check that the instance is live
     assert ids[0] in ec2_client.get_ip_of_instances(ids).keys()
@@ -39,7 +39,5 @@ def test_single() -> None:
     down_start = time.time()
     ec2_client.stop_instances(ids)
     assert time.time() - down_start < 20, "stop should not be blocking"
-    ec2_client.spin_til_instances_down(ids)
-    assert ec2_client.check_if_instances_down(ids)
     with pytest.raises(InstancesNotRunningException):
         ec2_client.get_ip_of_instances(ids)

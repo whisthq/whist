@@ -19,12 +19,12 @@ def hijack_ec2_calls(monkeypatch):
         call_list.append({"args": args, "kwargs": kwargs})
         return ["test_id"]
 
-    def _trivial_up(*args, **kwargs):
+    def _trivial_true(*args, **kwargs):
         return True
 
     monkeypatch.setattr(EC2Client, "start_instances", _helper)
     monkeypatch.setattr(EC2Client, "stop_instances", _helper)
-    monkeypatch.setattr(EC2Client, "check_if_instances_up", _trivial_up)
+    monkeypatch.setattr(EC2Client, "all_running", _trivial_true)
     yield call_list
 
 
