@@ -17,7 +17,8 @@ from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
 from app.helpers.utils.general.logs import fractal_logger
-from app.constants.instance_state_values import InstanceState
+from app.constants.mandelbox_host_states import MandelboxHostState
+from app.constants.ec2_instance_states import EC2InstanceState
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -90,15 +91,21 @@ def get_instance_id(instance: InstanceInfo) -> str:
 
 def check_instance_exists(instance_id: str, location: str) -> bool:
     """
-    Checks whether a specified instance actually exists, using the AWS client
+    Checks whether a specified instance actually exists and is not
+    stopped/terminated, using the AWS client
     Args:
         instance_id: the id of the instance to query
         location: the region to check in
     Returns:
-        True if the instance is up, else False
+        True if the instance actually exists and is not stopped/terminated, else False
     """
     ec2_client = EC2Client(region_name=location)
-    return ec2_client.check_if_instances_up([instance_id])
+    status = ec2_client.get_instance_states([instance_id])[0]
+    return status not in (
+        EC2InstanceState.DOES_NOT_EXIST,
+        EC2InstanceState.STOPPED,
+        EC2InstanceState.TERMINATED,
+    )
 
 
 def terminate_instance(instance: InstanceInfo) -> None:
@@ -137,7 +144,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         InstancesWithRoomForMandelboxes.query.filter_by(
             commit_hash=client_commit_hash,
             location=region,
-            status=str(InstanceState.ACTIVE.value),
+            status=MandelboxHostState.ACTIVE,
         )
         .limit(1)
         .one_or_none()
@@ -152,7 +159,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             )
             .filter_by(
                 commit_hash=client_commit_hash,
-                status=str(InstanceState.ACTIVE.value),
+                status=MandelboxHostState.ACTIVE,
             )
             .limit(1)
             .one_or_none()
@@ -171,7 +178,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             .one_or_none()
         )
         # The instance that was available earlier might be lost before we try to grab a lock.
-        if avail_instance is None or avail_instance.status != "ACTIVE":
+        if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
             return None
         else:
             return avail_instance.instance_name  # type: ignore[no-any-return]
@@ -308,7 +315,7 @@ def do_scale_up_if_necessary(
                     mandelbox_capacity=base_number_free_mandelboxes,
                     last_updated_utc_unix_ms=-1,
                     creation_time_utc_unix_ms=int(time.time() * 1000),
-                    status=InstanceState.PRE_CONNECTION,
+                    status=MandelboxHostState.PRE_CONNECTION,
                     commit_hash=ami_obj.client_commit_hash,
                     ip="",  # Will be set by `host_service` once it boots up.
                 )
@@ -335,9 +342,13 @@ def drain_instance(instance: InstanceInfo) -> None:
     # mandelbox to the instance. We need to commit here as we don't want to enter a
     # deadlock with host service where it tries to modify the instance_info row.
     old_status = instance.status
-    instance.status = InstanceState.DRAINING
+    instance.status = MandelboxHostState.DRAINING
     db.session.commit()
-    if old_status == InstanceState.PRE_CONNECTION or instance.ip is None or str(instance.ip) == "":
+    if (
+        old_status == MandelboxHostState.PRE_CONNECTION
+        or instance.ip is None
+        or str(instance.ip) == ""
+    ):
         terminate_instance(instance)
     else:
         instance_id = get_instance_id(instance)
@@ -358,7 +369,7 @@ def drain_instance(instance: InstanceInfo) -> None:
                         f" on instance {instance.instance_name}: {error}"
                     )
                 )
-                instance.status = InstanceState.HOST_SERVICE_UNRESPONSIVE
+                instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
                 db.session.commit()
         else:
             # If the instance doesn't exist, purge it from our database
