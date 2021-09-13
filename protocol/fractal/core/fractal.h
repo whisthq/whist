@@ -651,11 +651,12 @@ typedef struct FractalClientMessage {
 typedef enum FractalServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
-    MESSAGE_AUDIO_FREQUENCY = 2,
-    SMESSAGE_CLIPBOARD = 3,
-    SMESSAGE_WINDOW_TITLE = 4,
-    MESSAGE_DISCOVERY_REPLY = 5,
-    SMESSAGE_OPEN_URI = 6,
+    MESSAGE_TCP_PONG = 2,
+    MESSAGE_AUDIO_FREQUENCY = 3,
+    SMESSAGE_CLIPBOARD = 4,
+    SMESSAGE_WINDOW_TITLE = 5,
+    MESSAGE_DISCOVERY_REPLY = 6,
+    SMESSAGE_OPEN_URI = 7,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
