@@ -99,4 +99,11 @@ void send_tcp_ping(int ping_id);
  */
 void receive_pong(int pong_id);
 
+/**
+ * @brief                           Handle a TCP pong (ping acknowledgement) with ID pong_id
+ *
+ * @param pong_id                   ID of the received TCP pong
+ */
+void receive_tcp_pong(int pong_id);
+
 #endif  // CLIENT_NETWORK_H

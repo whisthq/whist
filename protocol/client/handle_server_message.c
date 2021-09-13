@@ -45,6 +45,7 @@ Private Functions
 */
 
 static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_tcp_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size);
 static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size);
@@ -75,6 +76,8 @@ int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     switch (fmsg->type) {
         case MESSAGE_PONG:
             return handle_pong_message(fmsg, fmsg_size);
+        case MESSAGE_TCP_PONG:
+            return handle_tcp_pong_message(fmsg, fmsg_size);
         case SMESSAGE_QUIT:
             return handle_quit_message(fmsg, fmsg_size);
         case MESSAGE_AUDIO_FREQUENCY:
@@ -86,7 +89,7 @@ int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
         case SMESSAGE_OPEN_URI:
             return handle_open_uri_message(fmsg, fmsg_size);
         default:
-            LOG_WARNING("Unknown FractalServerMessage Received");
+            LOG_WARNING("Unknown FractalServerMessage Received (type: %d)", fmsg->type);
             return -1;
     }
 }
@@ -110,6 +113,28 @@ static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
         return -1;
     }
     receive_pong(fmsg->ping_id);
+    return 0;
+}
+
+static int handle_tcp_pong_message(FractalServerMessage* fmsg, size_t fmsg_size) {
+    /*
+        Handle server TCP pong message
+
+        Arguments:
+            fmsg (FractalServerMessage*): server TCP pong message
+            fmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    if (fmsg_size != sizeof(FractalServerMessage)) {
+        LOG_ERROR(
+            "Incorrect message size for a server message"
+            " (type: TCP pong message)!");
+        return -1;
+    }
+    receive_tcp_pong(fmsg->ping_id);
     return 0;
 }
 

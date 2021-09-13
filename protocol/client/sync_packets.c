@@ -383,13 +383,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // successful TCP check for at least a second, the time since the last LOG_ERROR indicating
         // lost TCP connection
 
-        // cancel_count++;
+        update_tcp_ping();
 
-        // if (cancel_count >= 100) {
-        //     closesocket(packet_tcp_context.socket);
-        // } else {
-        //     LOG_INFO("TCP cancel_count: %d", cancel_count);
-        // }
         int result = ack(&packet_tcp_context);
         if (result < 0) {
             // If the TCP checks are unsuccessful for 1 second, we should LOG_ERROR and restart the

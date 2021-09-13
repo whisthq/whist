@@ -231,6 +231,24 @@ void receive_pong(int pong_id) {
     }
 }
 
+void receive_tcp_pong(int pong_id) {
+    /*
+        Mark the TCP ping with ID pong_id as received, and warn if pong_id is outdated.
+
+        Arguments:
+            pong_id (int): ID of pong to receive
+    */
+    if (pong_id == last_tcp_ping_id) {
+        // the server received the last TCP ping we sent!
+        double ping_time = get_timer(last_tcp_ping_timer);
+        LOG_INFO("Pong %d received: took %f seconds", pong_id, ping_time);
+
+        last_tcp_pong_id = pong_id;
+    } else {
+        LOG_WARNING("Received old TCP pong (ID %d), expected ID %d", pong_id, last_tcp_ping_id);
+    }
+}
+
 int connect_to_server(bool using_stun) {
     /*
         Connect to the server. Must be called after `discover_ports()`.
