@@ -103,7 +103,11 @@ export const getNumberWindows = () => {
 export const closeElectronWindows = (windows?: BrowserWindow[]) => {
   const windowsToClose = windows ?? getElectronWindows()
   windowsToClose.forEach((win: BrowserWindow) => {
-    win.close()
+    try {
+      win.close()
+    } catch (err) {
+      console.error(err)
+    }
   })
 }
 

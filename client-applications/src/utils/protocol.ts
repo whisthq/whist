@@ -13,7 +13,7 @@ import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz } from "@app/utils/logging"
 
-const NACK_LOOKBACK_PERIOD = 3 // Number of seconds to look back when measuring # of nacks
+const NACK_LOOKBACK_PERIOD = 2 // Number of seconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
 let protocolConnected = false
 
