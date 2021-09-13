@@ -144,7 +144,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         InstancesWithRoomForMandelboxes.query.filter_by(
             commit_hash=client_commit_hash,
             location=region,
-            status=str(MandelboxHostState.ACTIVE.value),
+            status=MandelboxHostState.ACTIVE,
         )
         .limit(1)
         .one_or_none()
@@ -159,7 +159,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             )
             .filter_by(
                 commit_hash=client_commit_hash,
-                status=str(MandelboxHostState.ACTIVE.value),
+                status=MandelboxHostState.ACTIVE,
             )
             .limit(1)
             .one_or_none()
@@ -178,7 +178,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             .one_or_none()
         )
         # The instance that was available earlier might be lost before we try to grab a lock.
-        if avail_instance is None or avail_instance.status != "ACTIVE":
+        if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
             return None
         else:
             return avail_instance.instance_name  # type: ignore[no-any-return]
