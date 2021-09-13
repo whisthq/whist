@@ -17,15 +17,9 @@ const update = autoUpdateFlow(fromTrigger("updateAvailable"))
 
 // If there's no update, get the auth credentials (access/refresh token)
 const auth = authFlow(
-  fromSignal(
-    merge(
-      fromSignal(fromTrigger("authInfo"), fromTrigger(TRIGGER.notPersisted)),
-      fromTrigger(TRIGGER.persisted)
-    ),
-    merge(
-      fromTrigger(TRIGGER.updateNotAvailable),
-      fromTrigger(TRIGGER.updateError)
-    )
+  merge(
+    fromSignal(fromTrigger("authInfo"), fromTrigger(TRIGGER.notPersisted)),
+    fromTrigger(TRIGGER.persisted)
   )
 )
 
