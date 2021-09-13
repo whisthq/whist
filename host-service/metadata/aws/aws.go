@@ -1,3 +1,7 @@
+/*
+Package aws abstracts away the collection and caching of important runtime
+metadata about the AWS instance the host service is running on.
+*/
 package aws // import "github.com/fractal/fractal/host-service/metadata/aws"
 
 import (

@@ -1,3 +1,20 @@
+/*
+The Fractal Host Service is responsible for orchestrating mandelboxes (i.e.
+Fractal-enabled containers) on EC2 instances (referred to as "hosts" throughout
+the codebase). The host service is responsible for making Docker calls to start
+and stop mandelboxes, for enabling multiple mandelboxes to run concurrently on
+the same host (by dynamically allocating and assigning resources), and for
+passing startup data to the mandelboxes, both from the rest of the backend and
+from the user's client application.
+
+If you are just interested in seeing what endpoints the host service exposes
+(i.e. for client-app development), check out the file `httpserver.go`.
+
+The main package of the host service contains the main logic and the most
+comments to explain the design decisions of the host service. It also contains
+an HTTPS server that exposes the necessary endpoints and sets up the necessary
+infrastructure for concurrent handlers, etc.
+*/
 package main
 
 import (

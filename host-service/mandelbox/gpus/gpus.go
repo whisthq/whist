@@ -1,3 +1,6 @@
+/*
+Package gpus provides the code to optimally allocate mandelboxes to GPUs.
+*/
 package gpus // import "github.com/fractal/fractal/host-service/mandelbox/gpus"
 
 import (
