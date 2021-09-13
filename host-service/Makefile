@@ -71,7 +71,10 @@ vet: build
 test: build
 	echo "Running go tests..."
 	# We need to run some tests as root since the host service init() checks for root perms.
-	sudo env "PATH=$(PATH)" go test ./...
+	sudo env "PATH=$(PATH)" go test ./...  -race -covermode=atomic -coverprofile=coverage.out
+
+	# Upload coverage report to Codecov
+	bash <(curl -s https://codecov.io/bash)
 
 docs:
 	$(GOCMD) install github.com/johnstarich/go/gopages@master

@@ -6,6 +6,17 @@
 name: "Host Service: Check PR"
 
 on:
+  push:
+    # Trigger Host Service CI to run when commits that modify Host Service source files
+    # are pushed to `dev`, since we need to run Host Service CI in order to generate an
+    # updated test coverage report for the `dev` branch.
+    branches:
+      - dev
+    paths:
+      - "host-service/**"
+      - "!host-service/README.md"
+      - "webserver/db_migration/schema.sql"
+      - ".github/workflows/host-service-check-pr.yml"
   pull_request:
     paths:
       - "host-service/**"
@@ -36,7 +47,7 @@ jobs:
           GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
         run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
 
-      # Check go project (build, vet, format, lint)
+      # Check go project (clean, build, vet, format, lint, test, docs)
       - name: Check Go project
         working-directory: host-service
         env:
