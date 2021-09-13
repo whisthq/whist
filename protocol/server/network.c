@@ -126,6 +126,8 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
         case MESSAGE_TCP_RECOVERY: {
             *client_id = fcmsg->tcpRecovery.client_id;
 
+            // TODO: how to check if this socket is open or closed? undefined to close an already closed fd
+            closesocket(clients[*client_id].TCP_context.socket);
             if (create_tcp_context(&(clients[*client_id].TCP_context), NULL, clients[*client_id].TCP_port, 1,
                            TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
@@ -142,63 +144,7 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
 }
 
 int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage* fcmsg) {
-    // FractalPacket *tcp_packet;
-    // clock timer;
-    // start_timer(&timer);
-    // do {
-    //     tcp_packet = read_tcp_packet(context, true);
-    //     fractal_sleep(5);
-    // } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
-    // // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
-    // if (tcp_packet == NULL) {
-    //     LOG_WARNING("Did not receive discovery request from client.");
-    //     closesocket(context->socket);
-    //     return -1;
-    // }
-
-    // FractalClientMessage *fcmsg = (FractalClientMessage *)tcp_packet->data;
-    // int user_id = fcmsg->discoveryRequest.user_id;
-
-    // read_lock(&is_active_rwlock);
-    // bool found;
-    // int ret;
-    // if ((ret = try_find_client_id_by_user_id(user_id, &found, client_id)) != 0) {
-    //     LOG_ERROR(
-    //         "Failed to try to find client ID by user ID. "
-    //         " (User ID: %s)",
-    //         user_id);
-    // }
-    // if (ret == 0 && found) {
-    //     read_unlock(&is_active_rwlock);
-    //     write_lock(&is_active_rwlock);
-    //     ret = quit_client(*client_id);
-    //     if (ret != 0) {
-    //         LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
-    //     }
-    //     write_unlock(&is_active_rwlock);
-    // } else {
-    //     ret = get_available_client_id(client_id);
-    //     if (ret != 0) {
-    //         LOG_ERROR("Failed to find available client ID.");
-    //         closesocket(context->socket);
-    //     }
-    //     read_unlock(&is_active_rwlock);
-    //     if (ret != 0) {
-    //         free_tcp_packet(tcp_packet);
-    //         return -1;
-    //     }
-    // }
-
-    // clients[*client_id].user_id = user_id;
-    // LOG_INFO("Found ID for client. (ID: %d)", *client_id);
-
-    // TODO: Should check for is_controlling, but that happens after this function call
     handle_client_message(fcmsg, client_id, true);
-    // fcmsg points into tcp_packet, but after this point, we don't use either,
-    // so here we free the tcp packet
-    // free_tcp_packet(tcp_packet);
-    // fcmsg = NULL;
-    // tcp_packet = NULL;
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 

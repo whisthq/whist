@@ -43,6 +43,7 @@ SocketContext packet_receive_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 extern char *server_ip;
 int uid;
+extern bool using_stun;
 
 volatile double latency;
 extern clock last_ping_timer;
@@ -50,6 +51,11 @@ extern volatile int last_ping_id;
 extern volatile int ping_failures;
 extern volatile int last_pong_id;
 const double ping_lambda = 0.8;
+
+extern clock last_tcp_ping_timer;
+extern volatile int last_tcp_ping_id;
+extern volatile int last_tcp_pong_id;
+const double tcp_ping_lambda = 0.8;
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
@@ -185,6 +191,26 @@ void send_ping(int ping_id) {
     start_timer(&last_ping_timer);
 }
 
+void send_tcp_ping(int ping_id) {
+    /*
+        Send a TCP ping to the server with the given ping_id.
+
+        Arguments:
+            ping_id (int): Ping ID to send to the server
+    */
+
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_TCP_PING;
+    fmsg.ping_id = ping_id;
+
+    LOG_INFO("TCP Ping! %d", ping_id);
+    if (send_fmsg(&fmsg) != 0) {
+        LOG_WARNING("Failed to TCP ping server! (ID: %d)", ping_id);
+    }
+    last_ping_id = ping_id;
+    start_timer(&last_tcp_ping_timer);
+}
+
 void receive_pong(int pong_id) {
     /*
         Mark the ping with ID pong_id as received, and warn if pong_id is outdated.
@@ -255,6 +281,45 @@ int connect_to_server(bool using_stun) {
     return 0;
 }
 
+int send_tcp_reconnect_message() {
+    /*
+        Send a TCP socket reset message to the server, regardless of the initiator of the lost
+        connection.
+
+        Returns:
+            0 on success, -1 on failure
+    */
+
+    FractalClientMessage fmsg;
+    fmsg.type = MESSAGE_TCP_RECOVERY;
+    fmsg.tcpRecovery.client_id = client_id;
+
+    SocketContext discovery_context;
+    if (create_tcp_context(&discovery_context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
+           (char *)binary_aes_private_key) < 0) {
+        LOG_WARNING("Failed to connect to server's discovery port.");
+        return -1;
+    }
+
+    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
+        LOG_ERROR("Failed to send discovery request message.");
+        closesocket(discovery_context.socket);
+        return -1;
+    }
+    closesocket(discovery_context.socket);
+
+    // TODO: how to check if this socket is open or closed? undefined to close an already closed fd
+    int ret = closesocket(packet_tcp_context.socket);
+    LOG_INFO("TCP CLOSE SOCKET RET: %d", ret);
+    if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
+           (char *)binary_aes_private_key) < 0) {
+        LOG_WARNING("Failed to connect to server's TCP port.");
+        return -1;
+    }
+
+    return 0;
+}
+
 int close_connections(void) {
     /*
         Close all connections between client and server
@@ -316,12 +381,12 @@ int send_fmsg(FractalClientMessage *fmsg) {
     fmsg->id = fmsg_id;
     fmsg_id++;
 
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST || fmsg->type == MESSAGE_TCP_PING) {
         return send_tcp_packet(&packet_tcp_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg));
     } else {
         if ((size_t)get_fmsg_size(fmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
-                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD and TIME is "
+                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD, TIME, and TCP_PING is "
                 "presumed to be over TCP");
             return -1;
         }

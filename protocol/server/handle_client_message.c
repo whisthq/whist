@@ -74,6 +74,7 @@ static int handle_streaming_toggle_message(FractalClientMessage *fmsg, int clien
                                            bool is_controlling);
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
+static int handle_tcp_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling);
 static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
@@ -132,6 +133,8 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
             return handle_bitrate_message(fmsg, client_id, is_controlling);
         case MESSAGE_PING:
             return handle_ping_message(fmsg, client_id, is_controlling);
+        case MESSAGE_TCP_PING:
+            return handle_tcp_ping_message(fmsg, client_id, is_controlling);
         case MESSAGE_DIMENSIONS:
             return handle_dimensions_message(fmsg, client_id, is_controlling);
         case CMESSAGE_CLIPBOARD:
@@ -283,9 +286,7 @@ static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, boo
 
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
     /*
-        Handle a user bitrate change message and update MBPS.
-
-        NOTE: idk how to handle this
+        Handle a client ping (alive) message.
 
         Arguments:
             fmsg (FractalClientMessage*): message package from client
@@ -311,6 +312,39 @@ static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool i
                         (uint8_t *)&fmsg_response, sizeof(fmsg_response), 1, max_burst_bitrate,
                         NULL, NULL) < 0) {
         LOG_WARNING("Could not send Ping to Client ID: %d", client_id);
+        ret = -1;
+    }
+
+    return ret;
+}
+
+static int handle_tcp_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+    /*
+        Handle a client TCP ping message.
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    UNUSED(is_controlling);
+    LOG_INFO("TCP Ping Received - Client ID: %d, TCP Ping ID %d", client_id, fmsg->ping_id);
+
+    // Update ping timer
+    start_timer(&(clients[client_id].last_ping));
+
+    // Send pong reply
+    FractalServerMessage fmsg_response = {0};
+    fmsg_response.type = MESSAGE_TCP_PONG;
+    fmsg_response.ping_id = fmsg->ping_id;
+    int ret = 0;
+    if (send_tcp_packet(&(clients[client_id].TCP_context), PACKET_MESSAGE,
+                        (uint8_t *)&fmsg_response, sizeof(fmsg_response)) < 0) {
+        LOG_WARNING("Could not send TCP Ping to Client ID: %d", client_id);
         ret = -1;
     }
 

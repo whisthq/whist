@@ -55,6 +55,7 @@ typedef struct Client {
 
     /* PING */
     clock last_ping;  // not lock protected
+    clock last_tcp_ping; // not lock protected
 
 } Client;
 

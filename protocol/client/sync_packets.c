@@ -35,13 +35,22 @@ extern SocketContext packet_tcp_context;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 bool connected = true;
-extern bool using_stun;
+// extern int client_id;
+// extern int tcp_port;
+// extern volatile char *server_ip;
+// extern volatile char binary_aes_private_key[16];
+// extern bool using_stun;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;
 volatile int last_pong_id;
 volatile int ping_failures;
 clock latency_timer;
+// TCP ping variables
+clock last_tcp_ping_timer;
+volatile int last_tcp_ping_id;
+volatile int last_tcp_pong_id;
+clock tcp_latency_timer;
 extern volatile double latency;
 // MBPS variables
 extern volatile int max_bitrate;
@@ -64,6 +73,7 @@ void init_updater();
 void destroy_updater();
 void try_update_bitrate();
 void update_ping();
+void update_tcp_ping();
 void update_initial_dimensions();
 
 /*
@@ -83,12 +93,15 @@ void init_updater() {
 
     start_timer(&last_tcp_check_timer);
     start_timer(&latency_timer);
+    start_timer(&tcp_latency_timer);
 
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its declaration above. We start at 25ms before the first ping.
     latency = 25.0 / 1000.0;
     last_ping_id = 1;
     ping_failures = -2;
+
+    last_tcp_ping_id = 1;
 
     init_clipboard_synchronizer(true);
 
@@ -102,6 +115,7 @@ void update_ping() {
        500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
        pong and it has been 210 ms, resend the ping.
     */
+
     // If it's been 1 second since the last ping, we should warn
     if (get_timer(last_ping_timer) > 1.0) {
         LOG_WARNING("No ping sent or pong received in over a second");
@@ -132,6 +146,42 @@ void update_ping() {
     // if we haven't received the last ping, send the same ping
     if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
         send_ping(last_ping_id);
+    }
+}
+
+void update_tcp_ping() {
+    /*
+       If no valid TCP pong has been received or sending a TCP ping is failing, then
+       send a TCP reconnection request to the server. This is agnostic of whether
+       the lost connection was caused by the client or the server.
+    */
+
+    // If it's been 1 second since the last ping, we should warn
+    if (get_timer(last_tcp_ping_timer) > 1.0) {
+        LOG_WARNING("No TCP ping sent or pong received in over a second");
+    }
+
+    // If we're waiting for a ping, and it's been 600ms, then that ping will be
+    // noted as failed
+    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(tcp_latency_timer) > 0.6) {
+        LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
+
+        // Only if we successfully recover the TCP connection should be continue
+        //     as if the ping was successful.
+        if (send_tcp_reconnect_message() == 0) {
+            last_tcp_pong_id = last_tcp_ping_id;
+        }
+    }
+
+    // if we've received the last ping, send another
+    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 0.5) {
+        send_tcp_ping(last_tcp_ping_id + 1);
+        start_timer(&tcp_latency_timer);
+    }
+
+    // if we haven't received the last ping, send the same ping
+    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 0.21) {
+        send_tcp_ping(last_tcp_ping_id);
     }
 }
 
@@ -351,32 +401,33 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
                 // TODO handle different lost connection cases:
                 // EPIPE (32): server has closed TCP connection
+                // EPIPE AND EBADF SHOULD BE HANDLED THE SAME WAY BECAUSE WE HAVE TO CLOSE AND RESTART CONNECTIONS FROM BOTH ENDS
                 if (errno == EPIPE) {
-                    FractalClientMessage fmsg;
-                    fmsg.type = MESSAGE_TCP_RECOVERY;
-                    fmsg.tcpRecovery.client_id = client_id;
+                    // FractalClientMessage fmsg;
+                    // fmsg.type = MESSAGE_TCP_RECOVERY;
+                    // fmsg.tcpRecovery.client_id = client_id;
 
-                    SocketContext discovery_context;
-                    if (create_tcp_context(&discovery_context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
-                           (char *)binary_aes_private_key) < 0) {
-                        LOG_WARNING("Failed to connect to server's discovery port.");
-                        continue;
-                    }
+                    // SocketContext discovery_context;
+                    // if (create_tcp_context(&discovery_context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
+                    //        (char *)binary_aes_private_key) < 0) {
+                    //     LOG_WARNING("Failed to connect to server's discovery port.");
+                    //     continue;
+                    // }
 
-                    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
-                        LOG_ERROR("Failed to send discovery request message.");
-                        closesocket(discovery_context.socket);
-                        continue;
-                    }
-                    closesocket(discovery_context.socket);
+                    // if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
+                    //     LOG_ERROR("Failed to send discovery request message.");
+                    //     closesocket(discovery_context.socket);
+                    //     continue;
+                    // }
+                    // closesocket(discovery_context.socket);
 
-                    int ret = closesocket(packet_tcp_context.socket);
-                    LOG_INFO("TCP CLOSE SOCKET RET: %d", ret);
-                    if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
-                           (char *)binary_aes_private_key) < 0) {
-                        LOG_WARNING("Failed to connect to server's TCP port.");
-                        continue;
-                    }
+                    // int ret = closesocket(packet_tcp_context.socket);
+                    // LOG_INFO("TCP CLOSE SOCKET RET: %d", ret);
+                    // if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
+                    //        (char *)binary_aes_private_key) < 0) {
+                    //     LOG_WARNING("Failed to connect to server's TCP port.");
+                    //     continue;
+                    // }
                 }
                 // EBADF (9): client has closed TCP connection
                 start_timer(&last_tcp_check_timer);

@@ -553,12 +553,13 @@ typedef enum FractalClientMessageType {
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
     MESSAGE_MBPS = 107,             ///< `mbps` double is valid in FractClientMessage.
     MESSAGE_PING = 108,
-    MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
+    MESSAGE_TCP_PING = 109,
+    MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
-    MESSAGE_VIDEO_NACK = 110,
-    MESSAGE_AUDIO_NACK = 111,
-    CMESSAGE_CLIPBOARD = 112,
-    MESSAGE_IFRAME_REQUEST = 113,
+    MESSAGE_VIDEO_NACK = 111,
+    MESSAGE_AUDIO_NACK = 112,
+    CMESSAGE_CLIPBOARD = 113,
+    MESSAGE_IFRAME_REQUEST = 114,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
     MESSAGE_TCP_RECOVERY = 117,
@@ -611,7 +612,7 @@ typedef struct FractalClientMessage {
             int burst_bitrate;
         } bitrate_data;
 
-        // MESSAGE_PING
+        // MESSAGE_PING or MESSAGE_TCP_PING
         int ping_id;
 
         // MESSAGE_DIMENSIONS

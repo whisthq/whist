@@ -48,6 +48,14 @@ int discover_ports(bool* using_stun);
  */
 int connect_to_server(bool using_stun);
 
+/**
+ * @brief                          Send a TCP socket reset message to the server,
+ *                                 regardless of the initiator of the lost connection.
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
+int send_tcp_reconnect_message();
+
 int close_connections(void);
 
 /**
@@ -76,6 +84,13 @@ int send_fmsg(FractalClientMessage* fmsg);
  * @brief                           Send a ping with ID ping_id to the server
  */
 void send_ping(int ping_id);
+
+/**
+ * @brief                           Send a TCP ping with to the server with the given `ping_id`.
+ *
+ * @param                           Ping ID to send to the server
+ */
+void send_tcp_ping(int ping_id);
 
 /**
  * @brief                           Handle a pong (ping acknowledgement) with ID pong_id
