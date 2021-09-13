@@ -65,6 +65,7 @@ hmap<FractalKeycode, FractalKeycode> modmap = {
 };
 
 // The full keyboard mapping
+// Note that the mapping is applied after modmap -- e.g. GUI and CTRL are already switched!
 hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
     // Access history with ctrl+y
@@ -117,6 +118,15 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
     {
         {FK_LCTRL, FK_ENTER},
         {FK_LALT, FK_ENTER},
+    },
+    // Switch tabs with Ctrl+Tab/Ctrl+Shift+Tab
+    {
+        {FK_LGUI, FK_TAB},
+        {FK_LCTRL, FK_TAB},
+    },
+    {
+        {FK_LGUI, FK_LSHIFT, FK_TAB},
+        {FK_LCTRL, FK_LSHIFT, FK_TAB},
     },
 };
 
