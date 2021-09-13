@@ -1,3 +1,6 @@
+/*
+Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
+*/
 package ttys // import "github.com/fractal/fractal/host-service/mandelbox/ttys"
 
 import (

@@ -1,3 +1,6 @@
+/*
+Package heroku contains code to pull configuration variables from Heroku at runtime.
+*/
 package heroku // import "github.com/fractal/fractal/host-service/metadata/heroku"
 
 import (
@@ -5,8 +8,6 @@ import (
 
 	"github.com/fractal/fractal/host-service/metadata"
 )
-
-// This file contains code to pull configuration variables from Heroku at runtime.
 
 // The following variables are filled in by the linker.
 var email string

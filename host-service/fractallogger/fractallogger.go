@@ -1,3 +1,6 @@
+/*
+Package fractallogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
+*/
 package fractallogger // import "github.com/fractal/fractal/host-service/fractallogger"
 
 import (
