@@ -11,9 +11,8 @@ WEBSERVER_ROOT = os.path.join(CURRENT_DIR, "../..")
 def setup_review_app(app_name: str):
     """
     Setup the review app. Specifically:
-    1. Start the celery worker (disabled by default)
-    2. Fetch the ephemeral db URL from the review app
-    3. Setup the ephemeral db
+    1. Fetch the ephemeral db URL from the review app
+    2. Setup the ephemeral db
 
     Args:
         app_name: given by Heroku when making a review app in the UI

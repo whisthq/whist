@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class InstanceState(str, Enum):
+class MandelboxHostState(str, Enum):
     PRE_CONNECTION = "PRE_CONNECTION"
     ACTIVE = "ACTIVE"
     HOST_SERVICE_UNRESPONSIVE = "HOST_SERVICE_UNRESPONSIVE"

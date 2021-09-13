@@ -6,10 +6,13 @@
 # common usage.
 
 
+import itertools
 import time
 
 from typing import Dict, List, Optional
 import boto3
+
+from app.constants.ec2_instance_states import EC2InstanceState
 
 from app.helpers.utils.aws.ec2_userdata import userdata_template
 from app.helpers.utils.cloud_interface.base_cloud_interface import CloudClient
@@ -97,46 +100,75 @@ class EC2Client(CloudClient):
         """
         self.ec2_client.terminate_instances(InstanceIds=instance_ids)
 
-    def check_if_instances_up(self, instance_ids: List[str]) -> bool:
+    def get_instance_states(self, instance_ids: List[str]) -> List[EC2InstanceState]:
         """
-        Checks whether a given set of instances are running
+        Checks the state of each of the provided instances.
+
         Args:
             instance_ids: the instances to check
 
-        Returns: a boolean corresponding to whether every instance is live
-
+        Returns: a list of EC2InstanceState values, corresponding to the states
+            of the provided instances.
         """
+        if len(instance_ids) == 0:
+            return []
+
         try:
             resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
             instance_info = resp["Reservations"][0]["Instances"]
             states = [instance["State"]["Name"] for instance in instance_info]
-            if all(state == "running" for state in states):
-                return True
-            return False
+            return [EC2InstanceState(s) for s in states]
         except Exception:
-            # This means that the instance in question does not exist; ergo, it is
-            # definitely not up
-            return False
+            # This means that one of the instances provided does not exist. If
+            # only one argument was passed in, we know which one's the culprit.
+            # If not, we need to iterate through all of them individually and
+            # lose the efficiency of making a single call to the AWS API. The
+            # alternative would be letting the exception propagate up the call
+            # stack, crashing our application. We don't like that.
+            if len(instance_ids) == 1:
+                return [EC2InstanceState.DOES_NOT_EXIST]
+            else:
+                individual_results = [self.get_instance_states([i]) for i in instance_ids]
+                # Flatten `individual_results` (see https://stackoverflow.com/a/953097/2378475)
+                return list(itertools.chain.from_iterable(individual_results))
 
-    def check_if_instances_down(self, instance_ids: List[str]) -> bool:
+    def all_running(self, instance_ids: List[str]) -> bool:
         """
-        Checks whether a given set of instances are stopped
+        A helper function that returns true if all instances provided are in
+        the "running" EC2 state.
+
         Args:
-                instance_ids: the instances to check
+            instance_ids: which instances to check
 
-        Returns: a boolean corresponding to whether every instance is dead
-
+        Returns: `true` if all instances are running, `false` otherwise.
         """
-        resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
-        instance_info = resp["Reservations"][0]["Instances"]
-        states = [instance["State"]["Name"] for instance in instance_info]
-        if any(state == "running" for state in states):
-            return False
-        return True
+        if len(instance_ids) == 0:
+            return True
 
-    def spin_til_instances_up(self, instance_ids: List[str], time_wait=10) -> None:
+        states = self.get_instance_states(instance_ids)
+        return states[0] == EC2InstanceState.RUNNING and len(set(states)) == 1
+
+    def all_not_running(self, instance_ids: List[str]) -> bool:
         """
-        Polls AWS every time_wait seconds until all specified instances are up
+        A helper function that returns true if all instances provided are in
+        the "not running" EC2 state.
+
+        Args:
+            instance_ids: which instances to check
+
+        Returns: `true` if all instances are not running, `false` otherwise.
+        """
+        if len(instance_ids) == 0:
+            return True
+
+        states = self.get_instance_states(instance_ids)
+        return EC2InstanceState.RUNNING not in set(states)
+
+    def spin_til_instances_running(self, instance_ids: List[str], time_wait=10) -> None:
+        """
+        Polls AWS every time_wait seconds until all specified instances are
+        marked as running by AWS (NOT necessarily fully initialized and ready
+        to accept connections yet).
         Args:
             instance_ids: which instances to check
             time_wait: how long to wait between polls
@@ -144,12 +176,13 @@ class EC2Client(CloudClient):
         Returns: None
 
         """
-        while not self.check_if_instances_up(instance_ids):
+        while not self.all_running(instance_ids):
             time.sleep(time_wait)
 
-    def spin_til_instances_down(self, instance_ids: List[str], time_wait=10) -> None:
+    def spin_til_instances_not_running(self, instance_ids: List[str], time_wait=10) -> None:
         """
-        Polls AWS every time_wait seconds until all specified instances are up
+        Polls AWS every time_wait seconds until all specified instances are
+        marked as not running by AWS.
         Args:
             instance_ids: which instances to check
             time_wait: how long to wait between polls
@@ -157,7 +190,7 @@ class EC2Client(CloudClient):
         Returns: None
 
         """
-        while not self.check_if_instances_down(instance_ids):
+        while not self.all_not_running(instance_ids):
             time.sleep(time_wait)
 
     def get_ip_of_instances(self, instance_ids: List[str]) -> Dict[str, str]:
@@ -169,7 +202,7 @@ class EC2Client(CloudClient):
         Returns: a dict mapping instance ID to IP address
 
         """
-        if not self.check_if_instances_up(instance_ids):
+        if not self.all_running(instance_ids):
             raise InstancesNotRunningException(str(instance_ids))
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
