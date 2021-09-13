@@ -78,8 +78,12 @@ jobs:
       max-parallel: 2
       matrix: ${{ fromJSON(needs.webserver-clean-up-instances-matrix.outputs.matrix) }}
     steps:
-      - name: Checkout git repository
+      - name: Checkout Git Repository
         uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
       - name: Format the current date
         id: date
@@ -91,7 +95,7 @@ jobs:
           key: access-token-${{ matrix.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
           path: ${{ env.TOKEN_FILE }}
 
-      - name: Clean up compute instances
+      - name: Clean up Compute Instances
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           HEROKU_NOTIFICATIONS: 0
@@ -102,3 +106,15 @@ jobs:
         run: >-
           [ -f "$TOKEN_FILE" ] &&
               heroku run --exit-code --env=FRACTAL_ACCESS_TOKEN="$(cat "$TOKEN_FILE")" --app=${{ matrix.app }} -- ${{ matrix.command }}
+
+      - name: Notify Slack on Failure
+        if: failure()
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          BODY = f"@releases :rotating_light: Failed to scale down user EC2 instances, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
