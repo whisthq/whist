@@ -352,7 +352,7 @@ int main(int argc, char* argv[]) {
 
             cancel_count++;
 
-            if (cancel_count == 10) {
+            if (cancel_count == 4) {
                 disconnect_tcp();
             } else if (cancel_count < 15) {
                 LOG_INFO("TCP cancel_count: %d", cancel_count);
