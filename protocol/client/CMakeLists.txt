@@ -32,7 +32,7 @@ set(FRACTAL_CLIENT_SOURCEFILES main.c
         sync_packets.c
         bitrate.c)
 
-add_library(FRACTAL_CLIENT_LIBRARY STATIC ${FRACTAL_CLIENT_SOURCEFILES})
+#add_library(FRACTAL_CLIENT_LIBRARY STATIC ${FRACTAL_CLIENT_SOURCEFILES})
 
 # On Windows during client app packaging, FractalClient should have icon set
 if(USE_CLIENT_APP_ICON AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows")

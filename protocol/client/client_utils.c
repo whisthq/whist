@@ -259,6 +259,7 @@ Public Function Implementations
 */
 
 int client_parse_args(int argc, char *argv[]) {
+    printf("Entering client_parse_args with argc: %i, argv[0]: %s, argv[1]: %s \n", argc, argv[0], argv[1]);
     /*
         Parse the arguments passed into the client application
 
@@ -334,14 +335,17 @@ int client_parse_args(int argc, char *argv[]) {
         switch (opt) {
             case FRACTAL_GETOPT_HELP_CHAR: {  // help
                 printf("%s", usage_details);
+                printf("client_parse_args is returning 1 (help)!\n");
                 return 1;
             }
             case FRACTAL_GETOPT_VERSION_CHAR: {  // version
                 printf("Fractal client revision %s\n", fractal_git_revision());
+                printf("client_parse_args is returning 1 (version)!\n");
                 return 1;
             }
             default: {
                 if (evaluate_arg(opt, optarg) < 0) {
+                    printf("client_parse_args is returning -1 !\n");
                     return -1;
                 }
             }
@@ -356,6 +360,7 @@ int client_parse_args(int argc, char *argv[]) {
             } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
                 // incorrect usage
                 printf("%s", usage);
+                printf("client_parse_args is returning -1 (incorrect usage)!\n");
                 return -1;
             } else {
                 // we're done
@@ -364,6 +369,7 @@ int client_parse_args(int argc, char *argv[]) {
         }
     }
 
+    printf("client_parse_args is returning 0!\n");
     return 0;
 }
 

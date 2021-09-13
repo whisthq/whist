@@ -4,7 +4,8 @@ set(BINARY FractalClient_test)
 
 #set(SOURCES ${TEST_SOURCES})
 enable_testing()
-add_executable(${BINARY} main.cpp)
+message(STATUS "the source files are ${FRACTAL_CLIENT_SOURCEFILES}")
+add_executable(${BINARY} main.cpp ${FRACTAL_CLIENT_SOURCEFILES})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
