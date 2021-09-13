@@ -1,5 +1,7 @@
 package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
+// This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
+
 import (
 	"os"
 	"os/exec"

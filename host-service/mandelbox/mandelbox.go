@@ -1,7 +1,13 @@
-package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
+/*
+Package mandelbox provides the abstractions of mandelboxes managed by Fractal.
+It defines the types and implements lots of functionality associated with
+mandelboxes. In `tracker.go`, it also keeps a list of all mandelboxes on this
+host at any given point.
 
-// This package, and its children, are meant to be low-level enough that it can
-// be imported by higher-level host service packages.
+This package, and its children, are meant to be low-level enough that it can
+be imported by higher-level host service packages.
+*/
+package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
 import (
 	"context"

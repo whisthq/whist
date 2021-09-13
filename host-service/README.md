@@ -46,32 +46,6 @@ The Fractal host service gets built into our AMIs during deployment.
 
 For testing, you can also use the `upload` target in the makefile, which builds a host service and pushes it to the `fractal-host-service` s3 bucket with value equal to the branch name that `make upload` was run from.
 
-## Tree of host service files
+## Getting to know the codebase
 
-```
-.
-├── host-service.go <- The main file, contains the main logic and the most comments to explain the design decisions of the host service
-├── mandelbox <- package for the abstraction of a mandelboxes managed by Fractal
-│   ├── mandelbox.go <- the main file in the mandelbox package, defines the types and implements the simple functions associated with Fractal-managed mandelboxes
-│   ├── portbindings <- package for the abstraction of port bindings between the mandelboxes and the host
-│   │   ├── port_bindings.go <- provides helper functions for port bindings
-│   │   └── transport_protocol.go <- provides the abstraction of a transport_protocol
-│   ├── tracker.go <- keeps a list of all Fractal-managed mandelboxes at any given point
-│   ├── ttys <- package to abstract away TTYs
-│   │   └── ttys.go <- implementation of the ttys package
-│   ├── uinputdevices <- package to abstract away uinput devices
-│   │   ├── uinput <- package that provides actual uinput functionality that is consumed by the uinputdevices package. This package used to be a separate codebase, but got rolled into this one. See the README in this directory for more details.
-│   │   └── uinput_devices.go <- Our wrapper for the uinput package, and implementation of the uinputdevices package
-│   ├── user_configs.go <- Provides functions that manage user configs, including fetching, uploading, and encrypting
-│   └── write_data_for_protocol.go <- Provides functions that communicate with the mandelboxes itself by writing data (e.g. providing TTY mappings, etc.)
-├── fractallogger <- Logging package
-│   ├── constants.go <- Provides some constants that need to be available in every package, could eventually be rolled into its own package but it's only two lines long at the time of writing this.
-│   ├── fractallogger.go <- Main logging file
-│   ├── heartbeats.go <- Implementation of heartbeats to the webserver
-│   ├── logzio_specifics.go <- Integration with logzio
-│   ├── metadata.go <- Implementation of computing information about the host, like AWS-specific metadata or memory usage
-│   └── sentry-specifics.go <- Integration with Sentry
-├── httpserver <- Package that exposes HTTPS endpoints of the host service
-│   └── server.go <- Infrastructure around those endpoints
-├── Makefile
-```
+The best way to learn about the codebase without worrying about implementation details is to browse the [Host Service Documentation](https://docs.fractal.co/host-service/). Once you've gotten a high-level overview of the codebase, take a look at the Makefile to understand it, and then start reading through the codebase and writing some code yourself! If something seems confusing to you, feel free to reach out to @djsavvy, and once you figure it out, make a PR to comment it in the code!
