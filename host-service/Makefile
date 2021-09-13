@@ -1,3 +1,6 @@
+# Shell for this makefile
+SHELL := /bin/bash
+
 # Go command (configurable for testing different installations, etc.)
 GOCMD        = go
 
