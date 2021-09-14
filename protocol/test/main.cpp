@@ -1,6 +1,10 @@
 #include <iostream>
 #include "gtest/gtest.h"
-#include "client/client_utils.h" 
+
+extern "C" {
+    #include "client/client_utils.h" 
+    //#include "client/prova.h"
+}
 // Include paths should be relative to the protocol folder
 // Examples:
 // To include file.h in protocol folder, use #include "file.h"
@@ -42,7 +46,7 @@ TEST(ClientTest, ArgParsingEmptyArgsTest) {
     EXPECT_EQ(ret_val,-1);
 }
 
-int main(int argc, char **argv) {
+int main2(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

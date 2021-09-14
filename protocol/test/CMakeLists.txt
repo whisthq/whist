@@ -1,27 +1,17 @@
 set(BINARY FractalClient_test)
 
-#file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.h *.cpp)
-
-#set(SOURCES ${TEST_SOURCES})
 enable_testing()
 
-# set(FRACTAL_CLIENT_SOURCEFILES #../client/main.c
-#         ../client/audio.c
-#         ../client/client_utils.c
-#         ../client/network.c
-#         ../client/sdl_event_handler.c
-#         ../client/sdl_utils.c
-#         ../client/handle_server_message.c
-#         ../client/video.c
-#         ../client/sdlscreeninfo.c
-#         ../client/peercursor.c
-#         ../client/ringbuffer.c
-#         ../client/sync_packets.c
-#         ../client/bitrate.c)
+#[[if(MSVC) # Windows MSVC compiler base flags
+  
+else() # GCC and Clang base flags
+  add_compile_options("-Wl,-e,_main2")
+endif()]]
 
-#add_executable(${BINARY} main.cpp ${FRACTAL_CLIENT_SOURCEFILES})
+add_executable(${BINARY} main.cpp)
 
-add_executable(${BINARY} main.cpp ../client/main.c
+set(FRACTAL_CLIENT_SOURCEFILES 
+		../client/main.c
         ../client/audio.c
         ../client/client_utils.c
         ../client/network.c
@@ -35,11 +25,10 @@ add_executable(${BINARY} main.cpp ../client/main.c
         ../client/sync_packets.c
         ../client/bitrate.c)
 
-add_test(NAME ${BINARY} COMMAND ${BINARY})
+add_library(FRACTAL_CLIENT_LIBRARY ${FRACTAL_CLIENT_SOURCEFILES})
 
-#target_link_libraries(${BINARY} PUBLIC FRACTAL_CLIENT_LIBRARY gtest)
+target_link_libraries(${BINARY} gtest FRACTAL_CLIENT_LIBRARY)
 
-target_link_libraries(${BINARY} gtest)
 
 # FFmpeg, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
@@ -47,28 +36,22 @@ foreach(LIB ${FFMPEG_LIBS_PATHS})
     target_link_libraries(${BINARY} ${LIB})
 endforeach(LIB)
 
-# Threading and Dynamic link for linux/macosx only
-# if we add other target platforms we may need to come back to this
+
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-#    set(THREADS_PREFER_PTHREAD_FLAG ON)
-#    find_package(Threads REQUIRED)
-    target_link_libraries(${BINARY}
-#            Threads::Threads
-            ${CMAKE_DL_LIBS}
-            )
+	target_link_libraries(${BINARY} ${CMAKE_DL_LIBS})
 endif()
 
 target_link_libraries(${BINARY}
-        fractalCore
-        fractalAudio
-        fractalVideo
-        fractalClipboard
-        fractalNetwork
-        fractalLogging
-        fractalUtils
-        ${STATIC_SDL2}
-        ${LIB_SENTRY}
-        )
+    fractalCore
+    fractalAudio
+    fractalVideo
+    fractalClipboard
+    fractalNetwork
+    fractalLogging
+    fractalUtils
+    ${STATIC_SDL2}
+    ${LIB_SENTRY}
+)	
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${BINARY} PRIVATE ../client/native_window_utils_mac.m)
@@ -90,6 +73,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ${LIB_OPENSSL}
         )
 endif()
+
+add_test(NAME ${BINARY} COMMAND ${BINARY})
 
 
 include(GoogleTest)
