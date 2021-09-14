@@ -83,7 +83,7 @@ const localLog = (
     `${title} -- ${userEmail} -- ${(msElapsed !== undefined
       ? msElapsed
       : 0
-    ).toString()} ms since flow was triggered`,
+    ).toString()} ms since flow/trigger was started`,
     data,
     level
   )
