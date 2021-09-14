@@ -1,4 +1,5 @@
 import "@app/main/effects/app"
+import "@app/main/effects/autoupdate"
 import "@app/main/effects/power"
 import "@app/main/effects/error"
 import "@app/main/effects/ipc"

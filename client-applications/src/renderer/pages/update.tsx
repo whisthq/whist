@@ -1,50 +1,42 @@
-import React, { useState, useEffect } from "react"
-import { Line } from "rc-progress"
+import React from "react"
 
-import { useMainState } from "@app/utils/ipc"
+import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import classNames from "classnames"
 
-import { Logo } from "@app/components/html/logo"
+const Update = (props: { onClick: () => void }) => {
+  /*
+        Description:
+            Error pop-up
 
-const Update = () => {
-  const [mainState] = useMainState()
+        Arguments:
+            onClick ((clearConfig: boolean) => void): Function to execute when signout button is pressed
+    */
 
-  const [percentageDownloaded, setPercentageDownloaded] = useState(1)
-  const [downloadSpeed, setDownloadSpeed] = useState(0)
-  const [downloadedSize, setDownloadedSize] = useState(0)
-  const [totalDownloadSize, setTotalDownloadSize] = useState(0)
-
-  const sanitizeBytes = (fl: number) => Math.round((fl / 1000000) * 100) / 100
-
-  useEffect(() => {
-    if ((mainState.updateInfo ?? "") === "") return
-
-    const updateInfo = JSON.parse(mainState.updateInfo)
-
-    if (Number(updateInfo.percent) < percentageDownloaded) return
-
-    setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
-    setPercentageDownloaded(Number(updateInfo.percent))
-    setDownloadedSize(sanitizeBytes(updateInfo.transferred))
-    setTotalDownloadSize(sanitizeBytes(updateInfo.total))
-  }, [mainState])
+  const handleUpdate = () => {
+    props.onClick()
+  }
 
   return (
-    <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
-      <div className="w-full max-w-xs m-auto font-body">
-        <Logo />
-        <div className="font-body mt-8 text-xl font-semibold">
-          An update is downloading
-        </div>
-        <div className="text-sm">
-          Downloaded {downloadedSize.toString()} MB /{" "}
-          {totalDownloadSize.toString()} MB at {downloadSpeed.toString()} Mbps
-        </div>
-        <div className="mt-6">
-          <Line
-            percent={percentageDownloaded}
-            strokeWidth={3}
-            trailWidth={3}
-            strokeColor="#00FFA2"
+    <div
+      className={classNames(
+        "flex flex-col h-screen items-center bg-black bg-opacity-80 bg-opacity-90",
+        "justify-center font-body text-center px-12"
+      )}
+    >
+      <div className="font-semibold text-2xl text-gray-100">
+        A new update is available
+      </div>
+      <div className="mt-2 mb-4 text-gray-300 max-w-lg">
+        If you update now, Fractal will restart and restore your browsing
+        session. If you close this window Fractal will update later.
+      </div>
+      <div className="w-full text-center">
+        <div>
+          <FractalButton
+            contents="Update Now"
+            className="mt-6 px-12 py-3 bg-mint text-black cursor-pointer"
+            state={FractalButtonState.DEFAULT}
+            onClick={handleUpdate}
           />
         </div>
       </div>

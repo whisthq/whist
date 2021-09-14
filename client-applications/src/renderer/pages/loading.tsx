@@ -1,11 +1,11 @@
 import React from "react"
 
 const Loading = () => (
-  <div className="bg-white bg-opacity-90 rounded w-screen h-screen">
+  <div className="bg-black bg-opacity-80 rounded w-screen h-screen">
     <div className="font-body text-center flex space-x-6 justify-center pt-5">
       <div>
         <svg
-          className="animate-spin h-5 w-5 text-gray"
+          className="animate-spin h-5 w-5 text-gray-300"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -25,7 +25,7 @@ const Loading = () => (
           ></path>
         </svg>
       </div>
-      <div className="text-gray font-medium">Fractal is launching</div>
+      <div className="text-gray-300 font-medium">Fractal is launching</div>
     </div>
   </div>
 )

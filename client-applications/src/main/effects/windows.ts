@@ -7,10 +7,10 @@ import {
   throttle,
   filter,
 } from "rxjs/operators"
-import { merge, interval } from "rxjs"
+import { interval } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
-import { logBase, uploadToS3 } from "@app/utils/logging"
+import { logBase } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
 import { hideAppDock } from "@app/utils/dock"
@@ -43,7 +43,6 @@ fromTrigger("appReady").subscribe(() => {
 
 const quit = () => {
   logBase("Application exited", {})
-    .then(async () => await uploadToS3())
     .then(() => {
       destroyTray()
       hideAppDock()
@@ -60,9 +59,7 @@ const quit = () => {
 }
 
 const allWindowsClosed = fromTrigger("windowInfo").pipe(
-  takeUntil(
-    merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-  ),
+  takeUntil(fromTrigger("installUpdate")),
   filter(
     (args: {
       crashed: boolean
@@ -74,11 +71,7 @@ const allWindowsClosed = fromTrigger("windowInfo").pipe(
 )
 
 fromTrigger("windowsAllClosed")
-  .pipe(
-    takeUntil(
-      merge(fromTrigger("updateDownloaded"), fromTrigger("updateAvailable"))
-    )
-  )
+  .pipe(takeUntil(fromTrigger("installUpdate")))
   .subscribe((evt: IpcMainEvent) => {
     evt?.preventDefault()
   })
@@ -108,7 +101,8 @@ allWindowsClosed
         persistGet("exitTypeformSubmitted", "data") === undefined &&
         !mandelboxFailure &&
         !args.crashed &&
-        !exitSurveyShown
+        !exitSurveyShown &&
+        args.hash === WindowHashProtocol
       ) {
         createExitTypeform()
         exitSurveyShown = true
