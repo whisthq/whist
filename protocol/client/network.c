@@ -328,10 +328,10 @@ int send_tcp_reconnect_message(bool using_stun) {
     }
     closesocket(discovery_context.socket);
 
-    // We wouldn't have called closesocket on this socket before, so we can safely call close
-    // regardless
-    //     of what caused the socket failure without worrying about undefined behavior.
-    int ret = closesocket(packet_tcp_context.socket);
+    // We wouldn't have called closesocket on this socket before, so we can safely call
+    //     close regardless of what caused the socket failure without worrying about
+    //     undefined behavior.
+    closesocket(packet_tcp_context.socket);
     if (create_tcp_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000, using_stun,
                            (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to connect to server's TCP port.");

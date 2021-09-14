@@ -90,7 +90,7 @@ void send_ping(int ping_id);
 /**
  * @brief                           Send a TCP ping with to the server with the given `ping_id`.
  *
- * @param                           Ping ID to send to the server
+ * @param ping_id                   Ping ID to send to the server
  */
 void send_tcp_ping(int ping_id);
 
