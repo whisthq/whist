@@ -48,8 +48,8 @@ Private Functions
 ============================
 */
 
-int handle_discovery_port_message(SocketContext* context, int *client_id, bool *new_client);
-int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage* fcmsg);
+int handle_discovery_port_message(SocketContext *context, int *client_id, bool *new_client);
+int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage *fcmsg);
 
 /*
 ============================
@@ -57,7 +57,7 @@ Private Function Implementations
 ============================
 */
 
-int handle_discovery_port_message(SocketContext* context, int *client_id, bool *new_client) {
+int handle_discovery_port_message(SocketContext *context, int *client_id, bool *new_client) {
     /*
         Handle a message from the client over received over the discovery port.
 
@@ -136,11 +136,13 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
         case MESSAGE_TCP_RECOVERY: {
             *client_id = fcmsg->tcpRecovery.client_id;
 
-            // We wouldn't have called closesocket on this socket before, so we can safely call close regardless
+            // We wouldn't have called closesocket on this socket before, so we can safely call
+            // close regardless
             //     of what caused the socket failure without worrying about undefined behavior.
             closesocket(clients[*client_id].TCP_context.socket);
-            if (create_tcp_context(&(clients[*client_id].TCP_context), NULL, clients[*client_id].TCP_port, 1,
-                           TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
+            if (create_tcp_context(&(clients[*client_id].TCP_context), NULL,
+                                   clients[*client_id].TCP_port, 1, TCP_CONNECTION_WAIT,
+                                   get_using_stun(), binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
             }
 
@@ -154,7 +156,7 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
     return 0;
 }
 
-int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage* fcmsg) {
+int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage *fcmsg) {
     /*
         Perform a discovery handshake over the discovery port socket context
 

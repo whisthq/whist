@@ -54,8 +54,8 @@ typedef struct Client {
     } mouse;  // protected by state lock
 
     /* PING */
-    clock last_ping;  // not lock protected
-    clock last_tcp_ping; // not lock protected
+    clock last_ping;      // not lock protected
+    clock last_tcp_ping;  // not lock protected
 
 } Client;
 

@@ -314,24 +314,26 @@ int send_tcp_reconnect_message(bool using_stun) {
     fmsg.tcpRecovery.client_id = client_id;
 
     SocketContext discovery_context;
-    if (create_tcp_context(&discovery_context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
-           (char *)binary_aes_private_key) < 0) {
+    if (create_tcp_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
+                           using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to connect to server's discovery port.");
         return -1;
     }
 
-    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
+    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) <
+        0) {
         LOG_ERROR("Failed to send discovery request message.");
         closesocket(discovery_context.socket);
         return -1;
     }
     closesocket(discovery_context.socket);
 
-    // We wouldn't have called closesocket on this socket before, so we can safely call close regardless
+    // We wouldn't have called closesocket on this socket before, so we can safely call close
+    // regardless
     //     of what caused the socket failure without worrying about undefined behavior.
     int ret = closesocket(packet_tcp_context.socket);
-    if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
-           (char *)binary_aes_private_key) < 0) {
+    if (create_tcp_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000, using_stun,
+                           (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to connect to server's TCP port.");
         return -1;
     }
@@ -400,12 +402,14 @@ int send_fmsg(FractalClientMessage *fmsg) {
     fmsg->id = fmsg_id;
     fmsg_id++;
 
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST || fmsg->type == MESSAGE_TCP_PING) {
+    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST ||
+        fmsg->type == MESSAGE_TCP_PING) {
         return send_tcp_packet(&packet_tcp_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg));
     } else {
         if ((size_t)get_fmsg_size(fmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
-                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD, TIME, and TCP_PING is "
+                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD, TIME, and "
+                "TCP_PING is "
                 "presumed to be over TCP");
             return -1;
         }

@@ -116,7 +116,7 @@ static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     return 0;
 }
 
-static int handle_tcp_pong_message(FractalServerMessage* fmsg, size_t fmsg_size) {
+static int handle_tcp_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     /*
         Handle server TCP pong message
 
