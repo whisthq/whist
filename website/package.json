@@ -62,7 +62,7 @@
     "autoprefixer": "^10.3.0",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-react": "^7.25.1",
     "postcss": "^8.3.0",
     "postcss-cli": "^8.3.1",
