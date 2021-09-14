@@ -1,4 +1,4 @@
-// Build the protocol, build tailwind, and run `snowpack dev`
+// Run `snowpack dev` skipping the build steps for the protocol and tailwind.
 
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
@@ -6,15 +6,10 @@ const yargs = require("yargs")
 const start = (env, config) => {
   helpers.removeEnvOverridesFile()
 
-  // If we're passed a --config CLI argument, we'll use that as the JSON
-  // config value. If no --config argument, we'll build the config ourselves.
-  if (!config) {
-    helpers.buildConfigContainer()
-    config = helpers.getConfig({ deploy: "local" })
-  }
+  // // If we're passed a --config CLI argument, we'll use that as the JSON
+  // // config value. If no --config argument, we'll parse the config ourselves.
+  if (!config) config = helpers.getConfig({ deploy: "local" })
 
-  helpers.buildAndCopyProtocol()
-  helpers.buildTailwind()
   helpers.snowpackDev({
     ...env,
     CONFIG: config,

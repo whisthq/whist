@@ -46,17 +46,18 @@ const configOS = () => {
   return "linux"
 }
 
+const configImageTag = "fractal/config"
+
 module.exports = {
-  // Build the protocol and copy it into the expected location
-  buildConfig: (params = {}) => {
+  buildConfigContainer: () => {
     // Build the docker image from fractal/config/Dockerfile
     // When the --quiet flag is used, then the stdout of docker build
     // will be the sha256 hash of the image.
-    const imageTag = "fractal/config"
-    console.log(`Building ${imageTag} Docker image`)
-    const build = `docker build --tag ${imageTag} ../config`
+    console.log(`Building ${configImageTag} Docker image`)
+    const build = `docker build --tag ${configImageTag} ../config`
     execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
-
+  },
+  getConfig: (params = {}) => {
     // Using the params argument, we'll build some strings that pass options
     // to the config CLI. Everything should be coerced to JSON strings first.
     const os = `--os ${JSON.stringify(params.os ?? configOS())}`
@@ -71,9 +72,10 @@ module.exports = {
     // Pass the sha256 hash of the image to docker run, removing the created
     // container afterwards. The output of these will be a JSON string
     // of the config object.
-    const run = `docker run --rm ${imageTag} ${secrets} ${os} ${deploy}`
+    const run = `docker run --rm ${configImageTag} ${secrets} ${os} ${deploy}`
     return execSync(run, { encoding: "utf-8", stdio: "pipe" })
   },
+  // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: () => {
     console.log("Building the protocol...")
     const cmakeBuildDir = "build-clientapp"
