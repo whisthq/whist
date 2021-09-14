@@ -4,6 +4,7 @@ import { take, takeUntil } from "rxjs/operators"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { createUpdateWindow } from "@app/utils/windows"
+import { updateNotification } from "@app/utils/notification"
 
 // Apply autoupdate config
 fromTrigger("appReady")
@@ -40,4 +41,8 @@ fromTrigger("updateDownloaded")
 
 fromTrigger("installUpdate").subscribe(() => {
   autoUpdater.quitAndInstall()
+})
+
+fromTrigger("updateAvailable").subscribe(() => {
+  updateNotification()?.show()
 })
