@@ -38,7 +38,7 @@
     "react-icons": "^4.2.0",
     "react-modal": "^3.13.1",
     "react-router": "^5.2.0",
-    "react-router-dom": "^5.3.0",
+    "react-router-dom": "^5.2.0",
     "react-scroll": "^1.8.2",
     "react-spring": "^9.2.1",
     "reactjs-popup": "^2.0.4"
@@ -51,7 +51,7 @@
     "@snowpack/plugin-typescript": "^1.2.1",
     "@types/classnames": "^2.3.1",
     "@types/lodash": "^4.14.170",
-    "@types/node": "^16.7.10",
+    "@types/node": "^16.4.6",
     "@types/react": "^17.0.13",
     "@types/react-dom": "^17.0.5",
     "@types/react-router": "^5.1.13",
