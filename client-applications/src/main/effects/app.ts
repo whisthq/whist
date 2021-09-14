@@ -12,7 +12,6 @@ import { merge } from "rxjs"
 import { AWSRegion } from "@app/@types/aws"
 import {
   createAuthWindow,
-  createUpdateWindow,
   createSignoutWindow,
   createLoadingWindow,
   relaunch,
@@ -87,18 +86,10 @@ merge(fromTrigger("configFlowSuccess")).subscribe(
   }
 )
 
-// If the update is downloaded, quit the app and install the update
-fromTrigger("updateDownloaded")
-  .pipe(take(1))
-  .subscribe(() => {
-    autoUpdater.quitAndInstall()
-  })
-
 // If an update is available, show the update window and download the update
 fromTrigger("updateAvailable")
   .pipe(take(1))
   .subscribe(() => {
-    createUpdateWindow()
     autoUpdater.downloadUpdate().catch((err) => console.error(err))
   })
 

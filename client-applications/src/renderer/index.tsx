@@ -8,14 +8,12 @@ import React from "react"
 import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
 
-import Update from "@app/renderer/pages/update"
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
 import Loading from "@app/renderer/pages/loading"
 
 import {
-  WindowHashUpdate,
   WindowHashSignout,
   WindowHashExitTypeform,
   WindowHashBugTypeform,
@@ -83,7 +81,6 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
-  if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashLoading) return <Loading />
   if (show === WindowHashExitTypeform)

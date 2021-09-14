@@ -12,7 +12,6 @@ export const HostServicePort = 4678
 // We use this so that renderer threads can decide which view component to
 // render as soon as a window appears.
 export const WindowHashAuth = "AUTH"
-export const WindowHashUpdate = "UPDATE"
 export const WindowHashSignout = "SIGNOUT"
 export const WindowHashPayment = "PAYMENT"
 export const WindowHashProtocol = "PROTOCOL"

@@ -22,7 +22,6 @@ import {
 import {
   WindowHashAuth,
   WindowHashSignout,
-  WindowHashUpdate,
   WindowHashPayment,
   WindowHashExitTypeform,
   WindowHashProtocol,
@@ -262,18 +261,6 @@ export const createPaymentWindow = async ({
     }
   })
 }
-
-export const createUpdateWindow = () =>
-  createWindow({
-    options: {
-      ...base,
-      ...width.sm,
-      ...height.md,
-      skipTaskbar: true,
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashUpdate,
-    closeOtherWindows: true,
-  })
 
 export const createErrorWindow = (hash: string) => {
   createWindow({
