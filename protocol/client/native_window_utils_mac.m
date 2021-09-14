@@ -22,7 +22,9 @@ Includes
 #include "native_window_utils.h"
 #include <SDL2/SDL_syswm.h>
 #include <Cocoa/Cocoa.h>
+#include <IOKit/pwr_mgt/IOPMLib.h>
 #include <VideoToolbox/VideoToolbox.h>
+#include <fractal/core/fractal.h>
 
 /*
 ============================
@@ -130,4 +132,22 @@ FractalYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_dat
         }
     }
     return yuv_color;
+}
+
+void declare_user_activity() {
+    // Static bool because we'll only accept one failure,
+    // in order to not spam LOG_ERROR's
+    static bool failed = false;
+    if (!failed) {
+        // Declare user activity to MacOS
+        IOPMAssertionID assertion_id;
+        IOReturn r = IOPMAssertionDeclareUserActivity(CFSTR("Fractal User Activity"),
+                                                      kIOPMUserActiveLocal, &assertion_id);
+        if (r != kIOReturnSuccess) {
+            LOG_ERROR("Failed to DeclareUserActivity");
+            // If the call failed, we'll just disable the screensaver then
+            SDL_DisableScreenSaver();
+            failed = true;
+        }
+    }
 }

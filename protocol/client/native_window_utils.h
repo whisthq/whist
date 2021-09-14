@@ -62,4 +62,10 @@ int get_native_window_dpi(SDL_Window* window);
 FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data,
                                 bool using_hardware);
 
+/**
+ * @brief                          Declares that UserActivity has occured,
+ *                                 resetting the timer for screensavers/sleepmode
+ */
+void declare_user_activity();
+
 #endif  // NATIVE_WINDOW_UTILS_H
