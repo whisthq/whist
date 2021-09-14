@@ -99,14 +99,6 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
       name: `${name}`,
       payload: x,
     })
-
-    if (name !== "networkUnstable") {
-      logBase(
-        `${name}`, // e.g. authFlow.success
-        { payload: x }, // Log both the flow input (trigger) and output
-        LogLevel.DEBUG
-      ).catch((err) => console.log(err))
-    }
   })
 
   return obs
@@ -131,6 +123,7 @@ export const fromTrigger = (name: string): Observable<any> => {
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name === name),
+    tap((x) => console.log(x)),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
     map((x: Trigger) => x.payload)
   )

@@ -7,7 +7,7 @@ import {
   throttle,
   filter,
 } from "rxjs/operators"
-import { merge, interval } from "rxjs"
+import { interval } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
@@ -59,9 +59,7 @@ const quit = () => {
 }
 
 const allWindowsClosed = fromTrigger("windowInfo").pipe(
-  takeUntil(
-    fromTrigger("installUpdate")
-  ),
+  takeUntil(fromTrigger("installUpdate")),
   filter(
     (args: {
       crashed: boolean
@@ -73,11 +71,7 @@ const allWindowsClosed = fromTrigger("windowInfo").pipe(
 )
 
 fromTrigger("windowsAllClosed")
-  .pipe(
-    takeUntil(
-      fromTrigger("installUpdate")
-    )
-  )
+  .pipe(takeUntil(fromTrigger("installUpdate")))
   .subscribe((evt: IpcMainEvent) => {
     evt?.preventDefault()
   })

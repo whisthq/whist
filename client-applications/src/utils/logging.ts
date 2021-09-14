@@ -9,7 +9,6 @@ import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
-import AWS from "aws-sdk"
 import * as Amplitude from "@amplitude/node"
 
 import { defaultAllowedRegions } from "@app/@types/aws"

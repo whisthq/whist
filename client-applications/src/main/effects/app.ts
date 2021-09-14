@@ -6,7 +6,7 @@
 
 import { session } from "electron"
 import { autoUpdater } from "electron-updater"
-import { take, takeUntil } from "rxjs/operators"
+import { take } from "rxjs/operators"
 import { merge } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
@@ -21,7 +21,6 @@ import {
   createOnboardingTypeform,
   closeAllWindows,
   createProtocolWindow,
-  createUpdateWindow
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
@@ -34,10 +33,6 @@ fromTrigger("appReady").subscribe(() => {
   createTray(createMenu(false))
 })
 
-// appReady only fires once, at the launch of the application.
-// We use takeUntil to make sure that the auth window only fires when
-// we have all of [userEmail, userAccessToken, userConfigToken]. If we
-// don't have all three, we clear them all and force the user to log in again.
 fromTrigger("notPersisted").subscribe(() => {
   showAppDock()
   createAuthWindow()
