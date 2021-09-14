@@ -13,6 +13,7 @@
   "homepage": "https://fractal.co",
   "scripts": {
     "start": "node ./scripts/start.js",
+    "start:lite": "node ./scripts/start-lite.js",
     "package:local": "node ./scripts/package-local.js",
     "package:notarize": "node ./scripts/package-notarize.js",
     "package:publish": "node ./scripts/package-publish.js",

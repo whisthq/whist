@@ -6,8 +6,10 @@ const helpers = require("./build-package-helpers")
 const packageLocal = (env, config) => {
   // If we're passed a --config CLI argument, we'll use that as the JSON
   // config value. If no --config argument, we'll build the config ourselves.
-  if (!config) config = helpers.buildConfig({ deploy: "dev" })
-
+  if (!config) {
+    helpers.buildConfigContainer()
+    config = helpers.getConfig({ deploy: "dev" })
+  }
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
   helpers.configureCodeSigning(false)
