@@ -29,6 +29,18 @@ add_library(FRACTAL_CLIENT_LIBRARY ${FRACTAL_CLIENT_SOURCEFILES})
 
 target_link_libraries(${BINARY} gtest FRACTAL_CLIENT_LIBRARY)
 
+add_custom_command(
+        TARGET ${BINARY} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
+        $<TARGET_FILE_DIR:${BINARY}>)
+
+add_custom_command(
+	TARGET ${BINARY} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+	$<TARGET_FILE_DIR:${BINARY}>)
+
 
 # FFmpeg, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
