@@ -7,7 +7,7 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 1% # Percentage of code coverage difference from the base branch
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
   precision: 2 # Number of decimal places, between 0 and 5
   round: down # up, down, or nearest
   range: "70...90" # First number represents red, and second represents green (default is 70..100)
