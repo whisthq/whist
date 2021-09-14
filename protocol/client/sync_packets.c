@@ -35,11 +35,6 @@ extern SocketContext packet_tcp_context;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 bool connected = true;
-// extern int client_id;
-// extern int tcp_port;
-// extern volatile char *server_ip;
-// extern volatile char binary_aes_private_key[16];
-// extern bool using_stun;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;
@@ -370,7 +365,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     LOG_INFO("sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
     // TODO: compartmentalize each part into its own function
-    // int cancel_count = 0;
     while (run_sync_tcp_packets) {
         // RECEIVE TCP PACKET HANDLER
         // Check if TCP connection is active
@@ -389,37 +383,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 // error happens periodically but we have recovery systems in place
                 // for streaming interruption/connection loss
                 LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
-                // TODO handle different lost connection cases:
-                // EPIPE (32): server has closed TCP connection
-                // EPIPE AND EBADF SHOULD BE HANDLED THE SAME WAY BECAUSE WE HAVE TO CLOSE AND RESTART CONNECTIONS FROM BOTH ENDS
-                if (errno == EPIPE) {
-                    // FractalClientMessage fmsg;
-                    // fmsg.type = MESSAGE_TCP_RECOVERY;
-                    // fmsg.tcpRecovery.client_id = client_id;
-
-                    // SocketContext discovery_context;
-                    // if (create_tcp_context(&discovery_context, (char*)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
-                    //        (char *)binary_aes_private_key) < 0) {
-                    //     LOG_WARNING("Failed to connect to server's discovery port.");
-                    //     continue;
-                    // }
-
-                    // if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) < 0) {
-                    //     LOG_ERROR("Failed to send discovery request message.");
-                    //     closesocket(discovery_context.socket);
-                    //     continue;
-                    // }
-                    // closesocket(discovery_context.socket);
-
-                    // int ret = closesocket(packet_tcp_context.socket);
-                    // LOG_INFO("TCP CLOSE SOCKET RET: %d", ret);
-                    // if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
-                    //        (char *)binary_aes_private_key) < 0) {
-                    //     LOG_WARNING("Failed to connect to server's TCP port.");
-                    //     continue;
-                    // }
-                }
-                // EBADF (9): client has closed TCP connection
                 start_timer(&last_tcp_check_timer);
             }
             continue;

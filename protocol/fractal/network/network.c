@@ -956,7 +956,6 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
         return -1;
     }
     port = port_mappings[port];
-    LOG_INFO("TCP PORT %d", port);
 
     context->timeout = recvfrom_timeout_ms;
     context->mutex = fractal_create_mutex();
@@ -1937,7 +1936,6 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
             } else {
                 LOG_WARNING("Network Error %d", err);
-                sleep(5);
             }
         } else if (len > 0) {
             // LOG_INFO( "READ LEN: %d", len );

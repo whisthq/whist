@@ -26,7 +26,6 @@ Client clients[MAX_NUM_CLIENTS];
 
 int num_controlling_clients = 0;
 int num_active_clients = 0;
-int cancel_count = 0;
 int host_id = -1;
 
 /*

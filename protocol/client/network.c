@@ -55,7 +55,6 @@ const double ping_lambda = 0.8;
 extern clock last_tcp_ping_timer;
 extern volatile int last_tcp_ping_id;
 extern volatile int last_tcp_pong_id;
-const double tcp_ping_lambda = 0.8;
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
@@ -308,8 +307,6 @@ int send_tcp_reconnect_message() {
             0 on success, -1 on failure
     */
 
-    LOG_INFO("RECOVERING TCP CONNECTION");
-
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_TCP_RECOVERY;
     fmsg.tcpRecovery.client_id = client_id;
@@ -330,7 +327,6 @@ int send_tcp_reconnect_message() {
 
     // TODO: how to check if this socket is open or closed? undefined to close an already closed fd
     int ret = closesocket(packet_tcp_context.socket);
-    LOG_INFO("TCP CLOSE SOCKET RET: %d", ret);
     if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
            (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to connect to server's TCP port.");

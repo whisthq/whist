@@ -350,14 +350,6 @@ int main(int argc, char* argv[]) {
                 read_unlock(&is_active_rwlock);
             }
             start_timer(&ack_timer);
-
-            cancel_count++;
-
-            if (cancel_count == 4) {
-                disconnect_tcp();
-            } else if (cancel_count < 15) {
-                LOG_INFO("TCP cancel_count: %d", cancel_count);
-            }
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
@@ -443,25 +435,6 @@ int main(int argc, char* argv[]) {
 
         // Get UDP messages
         get_fractal_client_messages(false, true);
-
-        if (get_timer(last_ping_check) > 20.0) {
-            read_lock(&is_active_rwlock);
-            bool exists, should_reap = false;
-            if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
-                LOG_ERROR("Failed to find if a client has timed out.");
-            } else {
-                should_reap = exists;
-            }
-            read_unlock(&is_active_rwlock);
-            if (should_reap) {
-                write_lock(&is_active_rwlock);
-                if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
-                    LOG_ERROR("Failed to reap timed out clients.");
-                }
-                write_unlock(&is_active_rwlock);
-            }
-            start_timer(&last_ping_check);
-        }
     }
 
     destroy_input_device(input_device);

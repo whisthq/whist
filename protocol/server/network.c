@@ -42,8 +42,6 @@ int begin_time_to_exit = 60;
 
 int last_input_id = -1;
 
-extern int cancel_count;
-
 /*
 ============================
 Private Functions
@@ -60,6 +58,18 @@ Private Function Implementations
 */
 
 int handle_discovery_port_message(SocketContext* context, int *client_id, bool *new_client) {
+    /*
+        Handle a message from the client over received over the discovery port.
+
+        Arguments:
+            context (SocketContext*): the socket context for the discovery port
+            client_id (int*): pointer to the client ID to be populated
+            new_client (bool*): pointer to indicate whether this message created a new client
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
     FractalPacket *tcp_packet;
     clock timer;
     start_timer(&timer);
@@ -144,6 +154,18 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
 }
 
 int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage* fcmsg) {
+    /*
+        Perform a discovery handshake over the discovery port socket context
+
+        Arguments:
+            context (SocketContext*): the socket context for the discovery port
+            client_id (int): the ID of the client to perform a handshake with
+            fcmsg (FractalClientMessage*): discovery message sent from client
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
     handle_client_message(fcmsg, client_id, true);
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
@@ -206,14 +228,6 @@ int disconnect_client(int id) {
     closesocket(clients[id].UDP_context.socket);
     closesocket(clients[id].TCP_context.socket);
     return 0;
-}
-
-void disconnect_tcp() {
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active) {
-            closesocket(clients[id].TCP_context.socket);
-        }
-    }
 }
 
 int disconnect_clients(void) {
@@ -457,7 +471,6 @@ int multithreaded_manage_clients(void *opaque) {
             continue;
         }
 
-        // if (do_discovery_handshake(&discovery_context, &client_id) != 0) {
         if (handle_discovery_port_message(&discovery_context, &client_id, &new_client) != 0) {
             LOG_WARNING("Discovery handshake failed.");
             continue;
@@ -496,7 +509,6 @@ int multithreaded_manage_clients(void *opaque) {
             first_client_connected = true;
         }
         num_active_clients++;
-        cancel_count = 0;
         client_joined_after_window_name_broadcast = true;
         /* Make everyone a controller */
         clients[client_id].is_controlling = true;
