@@ -4,6 +4,7 @@ import { map, take, filter } from "rxjs/operators"
 import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
+import monitoringFlow from "@app/main/flows/monitoring"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import configFlow from "@app/main/flows/config"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
@@ -72,6 +73,9 @@ const refreshAtEnd = authRefreshFlow(
   fromSignal(launchTrigger, mandelbox.success)
 )
 
+// Start monitoring flow after refresh flow is done
+const monitoring = monitoringFlow(fromTrigger(TRIGGER.authRefreshSuccess))
+
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
 
 createTrigger(TRIGGER.authFlowSuccess, auth.success)
@@ -85,3 +89,5 @@ createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
 
 createTrigger(TRIGGER.configFlowSuccess, config.success)
+
+createTrigger(TRIGGER.monitoringFlowSuccess, monitoring.success)
