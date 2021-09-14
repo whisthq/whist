@@ -21,7 +21,6 @@ export default {
   // Update triggers
   updateAvailable: "updateAvailable",
   updateNotAvailable: "updateNotAvailable",
-  downloadProgress: "downloadProgress",
   updateDownloaded: "updateDownloaded",
   updateError: "updateError",
   updateChecking: "updateChecking",
@@ -41,6 +40,7 @@ export default {
   clearCacheAction: "clearCacheAction",
   exitTypeformSubmitted: "exitTypeformSubmitted",
   onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
+  installUpdate: "installUpdate",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",

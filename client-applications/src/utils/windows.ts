@@ -29,6 +29,7 @@ import {
   WindowHashBugTypeform,
   WindowHashSpeedtest,
   WindowHashLoading,
+  WindowHashUpdate,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -189,6 +190,9 @@ export const createAuthWindow = () => {
       ...base,
       ...width.xs,
       height: 16 * 37,
+      border: false,
+      backgroundColor: "#ffffff",
+      title: "",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashAuth,
     customURL: authPortalURL(),
@@ -269,6 +273,9 @@ export const createErrorWindow = (hash: string) => {
       ...width.md,
       ...height.xs,
       alwaysOnTop: true,
+      frame: false,
+      titleBarStyle: "hidden",
+      transparent: true,
     } as BrowserWindowConstructorOptions,
     hash: hash,
     closeOtherWindows: true,
@@ -282,6 +289,9 @@ export const createSignoutWindow = () => {
       ...width.md,
       ...height.xs,
       alwaysOnTop: true,
+      frame: false,
+      titleBarStyle: "hidden",
+      transparent: true,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashSignout,
   })
@@ -295,6 +305,9 @@ export const createExitTypeform = () =>
       ...height.md,
       skipTaskbar: true,
       alwaysOnTop: true,
+      frame: false,
+      minimizable: false,
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashExitTypeform,
     closeOtherWindows: false,
@@ -308,6 +321,9 @@ export const createOnboardingTypeform = () =>
       ...height.md,
       skipTaskbar: true,
       alwaysOnTop: true,
+      minimizable: false,
+      frame: false,
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboardingTypeform,
     closeOtherWindows: false,
@@ -354,6 +370,22 @@ export const createLoadingWindow = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashLoading,
     closeOtherWindows: true,
+  })
+
+export const createUpdateWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+      frame: false,
+      transparent: true,
+      minimizable: false,
+      titleBarStyle: "hidden",
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashUpdate,
   })
 
 export const createProtocolWindow = async () => {

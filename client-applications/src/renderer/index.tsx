@@ -12,6 +12,7 @@ import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
 import Loading from "@app/renderer/pages/loading"
+import Update from "@app/renderer/pages/update"
 
 import {
   WindowHashSignout,
@@ -19,6 +20,7 @@ import {
   WindowHashBugTypeform,
   WindowHashOnboardingTypeform,
   WindowHashLoading,
+  WindowHashUpdate,
   allowPayments,
 } from "@app/utils/constants"
 import {
@@ -76,6 +78,14 @@ const RootComponent = () => {
       },
     })
 
+  const handleUpdate = () =>
+    setMainState({
+      trigger: {
+        name: TRIGGER.installUpdate,
+        payload: undefined,
+      },
+    })
+
   const showSignoutWindow = () =>
     setMainState({
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
@@ -83,6 +93,7 @@ const RootComponent = () => {
 
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashLoading) return <Loading />
+  if (show === WindowHashUpdate) return <Update onClick={handleUpdate} />
   if (show === WindowHashExitTypeform)
     return (
       <Typeform

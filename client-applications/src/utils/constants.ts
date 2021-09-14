@@ -21,6 +21,7 @@ export const WindowHashOnboardingTypeform = "ONBOARDING_TYPEFORM"
 export const WindowHashSpeedtest = "SPEEDTEST"
 export const WindowHashSleep = "SLEEP"
 export const WindowHashLoading = "LOADING"
+export const WindowHashUpdate = "UPDATE"
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 

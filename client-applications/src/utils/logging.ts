@@ -156,55 +156,6 @@ export const logBase = async (
     )
 }
 
-export const uploadToS3 = async () => {
-  /*
-  Description:
-      Uploads a local file to S3
-  Returns:
-      Response from the s3 upload
-  */
-  if (!app.isPackaged) return
-
-  const userEmail = (persistGet("userEmail") as string) ?? ""
-
-  if (userEmail === "") return
-
-  const s3FileName = `CLIENT_${userEmail}_${sessionID}.txt`
-
-  const uploadHelper = async (localFilePath: string) => {
-    const accessKey = config.keys.AWS_ACCESS_KEY
-    const secretKey = config.keys.AWS_SECRET_KEY
-    const bucketName = "fractal-protocol-logs"
-
-    const s3 = new AWS.S3({
-      accessKeyId: accessKey,
-      secretAccessKey: secretKey,
-    })
-    // Read file into buffer
-    const fileContent = fs.readFileSync(localFilePath)
-    // Set up S3 upload parameters
-    const params = {
-      Bucket: bucketName,
-      Key: s3FileName,
-      Body: fileContent,
-    }
-    // Upload files to the bucket
-    return await new Promise((resolve, reject) => {
-      s3.upload(params, (err: Error, data: any) => {
-        if (err !== null) {
-          reject(err)
-        } else {
-          resolve(data)
-        }
-      })
-    })
-  }
-
-  const logLocation = path.join(electronLogPath, loggingFiles.protocol)
-
-  if (fs.existsSync(logLocation)) await uploadHelper(logLocation)
-}
-
 export const protocolToLogz = (line: string) => {
   // This function will push to logz.io on each log line received from the protocol
   const match = line.match(/^[\d:.]*\s*\|\s*(?<level>\w+)\s*\|/)
