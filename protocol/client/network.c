@@ -325,7 +325,8 @@ int send_tcp_reconnect_message() {
     }
     closesocket(discovery_context.socket);
 
-    // TODO: how to check if this socket is open or closed? undefined to close an already closed fd
+    // We wouldn't have called closesocket on this socket before, so we can safely call close regardless
+    //     of what caused the socket failure without worrying about undefined behavior.
     int ret = closesocket(packet_tcp_context.socket);
     if (create_tcp_context(&packet_tcp_context, (char*)server_ip, tcp_port, 1, 1000, using_stun,
            (char *)binary_aes_private_key) < 0) {

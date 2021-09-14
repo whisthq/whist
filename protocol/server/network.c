@@ -136,7 +136,8 @@ int handle_discovery_port_message(SocketContext* context, int *client_id, bool *
         case MESSAGE_TCP_RECOVERY: {
             *client_id = fcmsg->tcpRecovery.client_id;
 
-            // TODO: how to check if this socket is open or closed? undefined to close an already closed fd
+            // We wouldn't have called closesocket on this socket before, so we can safely call close regardless
+            //     of what caused the socket failure without worrying about undefined behavior.
             closesocket(clients[*client_id].TCP_context.socket);
             if (create_tcp_context(&(clients[*client_id].TCP_context), NULL, clients[*client_id].TCP_port, 1,
                            TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
