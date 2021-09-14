@@ -35,6 +35,7 @@ extern SocketContext packet_tcp_context;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 bool connected = true;
+extern bool using_stun;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;
@@ -163,7 +164,7 @@ void update_tcp_ping() {
 
         // Only if we successfully recover the TCP connection should we continue
         //     as if the ping was successful.
-        if (send_tcp_reconnect_message() == 0) {
+        if (send_tcp_reconnect_message(using_stun) == 0) {
             last_tcp_pong_id = last_tcp_ping_id;
         }
     }

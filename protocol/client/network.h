@@ -52,9 +52,11 @@ int connect_to_server(bool using_stun);
  * @brief                          Send a TCP socket reset message to the server,
  *                                 regardless of the initiator of the lost connection.
  *
+ * @param using_stun               Whether we are using the STUN server
+ *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int send_tcp_reconnect_message();
+int send_tcp_reconnect_message(bool using_stun);
 
 int close_connections(void);
 
