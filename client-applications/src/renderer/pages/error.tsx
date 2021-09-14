@@ -13,8 +13,10 @@ const BaseError = (props: { title: string; text: string }) => {
     */
   return (
     <div>
-      <div className="mt-6 font-semibold text-2xl">{props.title}</div>
-      <div className="my-2">{props.text}</div>
+      <div className="mt-6 font-semibold text-2xl text-gray-300">
+        {props.title}
+      </div>
+      <div className="my-2 text-gray-500">{props.text}</div>
     </div>
   )
 }
@@ -42,12 +44,12 @@ export const OneButtonError = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center",
+        "flex flex-col h-screen items-center bg-black bg-opacity-80",
         "justify-center font-body text-center px-8"
       )}
     >
       <BaseError title={props.title} text={props.text} />
-      <div className="mt-4 mb-10 w-full text-center">
+      <div className="mt-4 mb-10 w-full text-center bg-mint text-black">
         <FractalButton
           contents={props.primaryButtonText}
           className="px-12 mx-auto py-3"
@@ -90,7 +92,7 @@ export const TwoButtonError = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center",
+        "flex flex-col h-screen items-center bg-black bg-opacity-80",
         "justify-center font-body text-center px-8"
       )}
     >
@@ -98,7 +100,7 @@ export const TwoButtonError = (props: {
       <div className="mt-3 mb-1 w-full text-center">
         <FractalButton
           contents={props.primaryButtonText}
-          className="px-12 mx-auto py-3"
+          className="px-12 mx-auto py-3 bg-mint text-black"
           state={
             processing
               ? FractalButtonState.PROCESSING
@@ -108,7 +110,7 @@ export const TwoButtonError = (props: {
         />
       </div>
       <button
-        className="mx-auto mb-6 py-2 bg-none border-none text-gray outline-none"
+        className="mx-auto mb-6 py-2 bg-none border-none text-gray-300 underline outline-none"
         onClick={props.onSecondaryClick}
         style={{ outline: "none" }}
       >

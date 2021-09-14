@@ -110,7 +110,7 @@ export const protocolLaunch = async () => {
     // Split on newline
     const lines = newmsg.split(/\r?\n/)
     // Leave the last line in the buffer to be appended to later
-    stdoutBuffer.buffer = lines.length === 0 ? "" : lines.pop()
+    stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
     // Print the rest of the lines
     lines.forEach((line: string) => protocolToLogz(line))
   })

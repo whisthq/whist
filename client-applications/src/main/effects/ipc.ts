@@ -29,9 +29,6 @@ import { mapValues } from "lodash"
 const subscribed = combineLatest(
   mapValues(
     {
-      updateInfo: fromTrigger("downloadProgress").pipe(
-        map((obj) => JSON.stringify(obj))
-      ),
       userEmail: merge(
         fromTrigger("authFlowSuccess"),
         fromTrigger("authRefreshSuccess"),

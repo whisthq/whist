@@ -12,4 +12,10 @@ const rebootWarning = () =>
     silent: true,
   })
 
-export { internetWarning, rebootWarning }
+const updateNotification = () =>
+  new Notification({
+    body: "An update is available! Fractal is downloading it in the background.",
+    silent: true,
+  })
+
+export { internetWarning, rebootWarning, updateNotification }

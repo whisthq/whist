@@ -9,7 +9,6 @@ import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
-import AWS from "aws-sdk"
 import * as Amplitude from "@amplitude/node"
 
 import { defaultAllowedRegions } from "@app/@types/aws"
@@ -154,55 +153,6 @@ export const logBase = async (
     await amplitudeLog(title, data, userEmail as string, msElapsed).catch(
       (err) => console.log(err)
     )
-}
-
-export const uploadToS3 = async () => {
-  /*
-  Description:
-      Uploads a local file to S3
-  Returns:
-      Response from the s3 upload
-  */
-  if (!app.isPackaged) return
-
-  const userEmail = (persistGet("userEmail") as string) ?? ""
-
-  if (userEmail === "") return
-
-  const s3FileName = `CLIENT_${userEmail}_${sessionID}.txt`
-
-  const uploadHelper = async (localFilePath: string) => {
-    const accessKey = config.keys.AWS_ACCESS_KEY
-    const secretKey = config.keys.AWS_SECRET_KEY
-    const bucketName = "fractal-protocol-logs"
-
-    const s3 = new AWS.S3({
-      accessKeyId: accessKey,
-      secretAccessKey: secretKey,
-    })
-    // Read file into buffer
-    const fileContent = fs.readFileSync(localFilePath)
-    // Set up S3 upload parameters
-    const params = {
-      Bucket: bucketName,
-      Key: s3FileName,
-      Body: fileContent,
-    }
-    // Upload files to the bucket
-    return await new Promise((resolve, reject) => {
-      s3.upload(params, (err: Error, data: any) => {
-        if (err !== null) {
-          reject(err)
-        } else {
-          resolve(data)
-        }
-      })
-    })
-  }
-
-  const logLocation = path.join(electronLogPath, loggingFiles.protocol)
-
-  if (fs.existsSync(logLocation)) await uploadHelper(logLocation)
 }
 
 export const protocolToLogz = (line: string) => {

@@ -144,7 +144,6 @@ module.exports = {
     external: [
       "logzio-nodejs",
       "@amplitude/node",
-      "aws-sdk",
       "ping",
       "https",
       "crypto",
