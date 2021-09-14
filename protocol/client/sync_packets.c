@@ -166,7 +166,7 @@ void update_tcp_ping() {
     if (last_tcp_ping_id != last_tcp_pong_id && get_timer(tcp_latency_timer) > 0.6) {
         LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
 
-        // Only if we successfully recover the TCP connection should be continue
+        // Only if we successfully recover the TCP connection should we continue
         //     as if the ping was successful.
         if (send_tcp_reconnect_message() == 0) {
             last_tcp_pong_id = last_tcp_ping_id;
@@ -177,11 +177,6 @@ void update_tcp_ping() {
     if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 0.5) {
         send_tcp_ping(last_tcp_ping_id + 1);
         start_timer(&tcp_latency_timer);
-    }
-
-    // if we haven't received the last ping, send the same ping
-    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 0.21) {
-        send_tcp_ping(last_tcp_ping_id);
     }
 }
 

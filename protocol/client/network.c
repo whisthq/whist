@@ -207,7 +207,7 @@ void send_tcp_ping(int ping_id) {
     if (send_fmsg(&fmsg) != 0) {
         LOG_WARNING("Failed to TCP ping server! (ID: %d)", ping_id);
     }
-    last_ping_id = ping_id;
+    last_tcp_ping_id = ping_id;
     start_timer(&last_tcp_ping_timer);
 }
 
@@ -241,7 +241,7 @@ void receive_tcp_pong(int pong_id) {
     if (pong_id == last_tcp_ping_id) {
         // the server received the last TCP ping we sent!
         double ping_time = get_timer(last_tcp_ping_timer);
-        LOG_INFO("Pong %d received: took %f seconds", pong_id, ping_time);
+        LOG_INFO("TCP Pong %d received: took %f seconds", pong_id, ping_time);
 
         last_tcp_pong_id = pong_id;
     } else {
@@ -307,6 +307,8 @@ int send_tcp_reconnect_message() {
         Returns:
             0 on success, -1 on failure
     */
+
+    LOG_INFO("RECOVERING TCP CONNECTION");
 
     FractalClientMessage fmsg;
     fmsg.type = MESSAGE_TCP_RECOVERY;

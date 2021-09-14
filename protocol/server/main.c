@@ -161,6 +161,7 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
             // If received a TCP message
             if (try_get_next_message_tcp(id, &tcp_packet) == 0 && tcp_packet != NULL) {
                 FractalClientMessage* fmsg = (FractalClientMessage*)tcp_packet->data;
+                LOG_INFO("TCP Packet type: %d", fmsg->type);
                 handle_fractal_client_message(fmsg, id);
             }
             // Free the tcp packet if we received one
