@@ -10,7 +10,7 @@ import NotionLogo from "@app/assets/icons/notionLogo.svg"
 import ShopifyLogo from "@app/assets/icons/shopifyLogo.svg"
 import AirtableLogo from "@app/assets/icons/airtableLogo.svg"
 import FigmaLogo from "@app/assets/icons/figmaLogo.svg"
-import GoogleDriveLogo from "@app/assets/icons/googledriveLogo.svg"
+import GoogleDriveLogo from "@app/assets/icons/googleDriveLogo.svg"
 
 import {
   FractalButton,
