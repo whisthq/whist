@@ -160,7 +160,6 @@ jobs:
 
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
   # EBS volumes from CI and old dev/staging/production AMIs
   # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
