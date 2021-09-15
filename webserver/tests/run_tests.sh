@@ -50,4 +50,4 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov=app --cov=auth0 --
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (cd .. && bash <(curl -s https://codecov.io/bash))
+test "$IN_CI" = "false" || (cd .. && bash <(curl -s https://codecov.io/bash) -F webserver)
