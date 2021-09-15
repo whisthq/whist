@@ -12,24 +12,22 @@ extern "C" {
 
 
 
-TEST(ClientTest, DumbTest) {
+TEST(ClientTest, EqualityTest) {
     int i = 3;
     int j = 3;
-    std::cout << "About to run dumb test using GoogleTest!" << std::endl;
     EXPECT_EQ(i, j);
 }
 
-TEST(ClientTest, EvenDumberTest) {
-    int i = 3;
-    int j = 4;
-    std::cout << "About to run even dumber test using GoogleTest!" << std::endl;
-    EXPECT_EQ(i, j);
-}
-
-TEST(ClientTest, AnotherTest) {
+TEST(ClientTest, NotEqualityTest) {
     int i = 150;
     int j = 350;
     EXPECT_NE(i,j);
+}
+
+TEST(ClientTest, FailingTest) {
+    int i = 3;
+    int j = 4;
+    EXPECT_EQ(i, j);
 }
 
 

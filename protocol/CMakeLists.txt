@@ -23,13 +23,7 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 
-# Host is needed since CMAKE_SYSTEM_NAME is set by the project() command
-if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
-    # Clang can't handle CXX for some reason
-    project(FractalProtocol LANGUAGES C CXX)
-else ()
-    project(FractalProtocol LANGUAGES C CXX)
-endif ()
+project(FractalProtocol LANGUAGES C CXX)
 
 if (CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
@@ -265,14 +259,13 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
-# The googletest subdirectory needs to be included before the call to set(CMAKE_C_COMPILER clang) is made.
-#add_subdirectory(googletest)
+# GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
 include(FetchContent)
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/heads/master.zip
 )
-# For Windows: Prevent overriding the parent project's compiler/linker settings
+# From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
@@ -297,13 +290,12 @@ include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 #Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
 add_subdirectory(client)
-add_subdirectory(test)
-
-#add_subdirectory(test)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "FractalServer")
     add_subdirectory(server)
 endif()
+# Include the unit tests code
+add_subdirectory(test)
 
 if (WSL)
     message(STATUS "Native bash not found (only WSL), clang-tidy will not be an option")
