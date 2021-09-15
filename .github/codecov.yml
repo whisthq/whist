@@ -47,9 +47,10 @@ parsers:
 comment:
   layout: "reach, diff, flags, files, footer"
   behavior: default
-  require_changes: no
-  require_head: yes
+  require_changes: no # Wether it must have a base report to post
+  require_head: no # Whether it must have a head report to post
   branches: null
+  show_carryforward_flags: true
 
 # This is where we define every flag from the Codecov uploader and update when new Flags added
 # See here for carryforward documentation: https://docs.codecov.com/docs/carryforward-flags
