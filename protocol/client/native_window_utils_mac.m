@@ -25,6 +25,7 @@ Includes
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <VideoToolbox/VideoToolbox.h>
 #include <fractal/core/fractal.h>
+#include "sdl_utils.h"
 
 /*
 ============================
@@ -134,20 +135,68 @@ FractalYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_dat
     return yuv_color;
 }
 
+static IOPMAssertionID power_assertion_id = kIOPMNullAssertionID;
+static SDL_mutex *last_user_activity_timer_mutex = NULL;
+static clock last_user_activity_timer;
+static bool assertion_set = false;
+
+// Timeout the screensaver after 1min of inactivity,
+// Their own screensaver timer will pick up the rest of the time
+#define SCREENSAVER_TIMEOUT_SECONDS (1 * 60)
+
+int user_activity_deactivator(void *unique) {
+    UNUSED(unique);
+
+    while (true) {
+        // Only wake up once every 30 seconds, resolution doesn't matter that much here
+        fractal_sleep(30 * 1000);
+        safe_SDL_LockMutex(last_user_activity_timer_mutex);
+        if (get_timer(last_user_activity_timer) > SCREENSAVER_TIMEOUT_SECONDS && assertion_set) {
+            IOReturn result = IOPMAssertionRelease(power_assertion_id);
+            if (result != kIOReturnSuccess) {
+                LOG_ERROR("IOPMAssertionRelease Failed!");
+            }
+            assertion_set = false;
+        }
+        safe_SDL_UnlockMutex(last_user_activity_timer_mutex);
+    }
+
+    return 0;
+}
+
 void declare_user_activity() {
+    if (!last_user_activity_timer_mutex) {
+        last_user_activity_timer_mutex = safe_SDL_CreateMutex();
+        start_timer(&last_user_activity_timer);
+        fractal_create_thread(user_activity_deactivator, "user_activity_deactivator", NULL);
+    }
+
     // Static bool because we'll only accept one failure,
     // in order to not spam LOG_ERROR's
     static bool failed = false;
     if (!failed) {
+        // Reset the last activity timer
+        safe_SDL_LockMutex(last_user_activity_timer_mutex);
+        start_timer(&last_user_activity_timer);
+        safe_SDL_UnlockMutex(last_user_activity_timer_mutex);
+
         // Declare user activity to MacOS
-        IOPMAssertionID assertion_id;
-        IOReturn r = IOPMAssertionDeclareUserActivity(CFSTR("Fractal User Activity"),
-                                                      kIOPMUserActiveLocal, &assertion_id);
-        if (r != kIOReturnSuccess) {
-            LOG_ERROR("Failed to DeclareUserActivity");
-            // If the call failed, we'll just disable the screensaver then
-            SDL_DisableScreenSaver();
-            failed = true;
+        if (!assertion_set) {
+            IOReturn result =
+                IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
+                                            CFSTR("FractalNewFrameActivity"), &power_assertion_id);
+            // Immediatelly calling IOPMAssertionRelease here,
+            // Doesn't seem to fully reset the screensaver timer
+            // Instead, we need to call IOPMAssertionRelease a minute later
+            if (result == kIOReturnSuccess) {
+                // If the call succeeded, mark as set
+                assertion_set = true;
+            } else {
+                LOG_ERROR("Failed to IOPMAssertionCreateWithName");
+                // If the call failed, we'll just disable the screensaver then
+                SDL_DisableScreenSaver();
+                failed = true;
+            }
         }
     }
 }
