@@ -51,3 +51,8 @@ def get_host_service_unresponsive_instance_ids(database_url):
     ids = execute_query(database_url, "hardware", query)
 
     return [id[0] for id in ids]
+
+
+"""
+Need to add comparision between two and also just calling the above
+"""
