@@ -1,7 +1,5 @@
 **High-Level Description of Features**
 
-**List of PRs that Made It Into this Promotion**
-
 **Promotion Testing**
 
 In order for this PR to be merged, all of the following items need to be tested and checked. Make sure to perform these tests from the correct packaged app (on the `dev` > `staging` promotion, use the `dev` app, and on the `staging` > `prod` promotion, use the `staging` app). Everyone is encouraged to do these tests, the more people that test the better! If you don't have them already installed, you can download the applications from the following links:
@@ -30,3 +28,4 @@ In order for this PR to be merged, all of the following items need to be tested 
 - [ ] Quit button on tray works
 - [ ] Session logs successfully uploaded to Amplitude
 - [ ] Protocol logs successfully uploaded to AWS
+- [ ] Website successfully deployed to Netlify
