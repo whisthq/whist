@@ -152,14 +152,14 @@ void update_tcp_ping() {
        the lost connection was caused by the client or the server.
     */
 
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(last_tcp_ping_timer) > 1.0) {
+    // If it's been 4 seconds since the last ping, we should warn
+    if (get_timer(last_tcp_ping_timer) > 4.0) {
         LOG_WARNING("No TCP ping sent or pong received in over a second");
     }
 
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
+    // If we're waiting for a ping, and it's been 1s, then that ping will be
     // noted as failed
-    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(tcp_latency_timer) > 0.6) {
+    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(tcp_latency_timer) > 1.0) {
         LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
 
         // Only if we successfully recover the TCP connection should we continue
@@ -170,7 +170,7 @@ void update_tcp_ping() {
     }
 
     // if we've received the last ping, send another
-    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 0.5) {
+    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 2.0) {
         send_tcp_ping(last_tcp_ping_id + 1);
         start_timer(&tcp_latency_timer);
     }
