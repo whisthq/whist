@@ -47,7 +47,7 @@ parsers:
 comment:
   layout: "reach, diff, flags, files, footer"
   behavior: default
-  require_changes: yes
+  require_changes: no
   require_head: yes
   branches: null
 
