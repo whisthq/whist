@@ -45,7 +45,7 @@ def get_instance_ids(database_url, region):
     return [id[0] for id in ids]
 
 
-def get_host_service_unresponsive_instances(database_url, region):
+def get_host_service_unresponsive_instance_ids(database_url, region):
     """
     Gets all aws instance ids using the database url and region which have the status HOST_SERVICE_UNRESPONSIVE
 
@@ -54,13 +54,13 @@ def get_host_service_unresponsive_instances(database_url, region):
         region (str): current region
 
     Returns:
-        arr: array of tuples containing instance id and region
+        arr: array of instance ids
     """
 
     query = (
-        "SELECT cloud_provider_id, location FROM instance_info WHERE status='HOST_SERVICE_UNRESPONSIVE' AND location = '%s';"
+        "SELECT cloud_provider_id FROM instance_info WHERE status='HOST_SERVICE_UNRESPONSIVE' AND location = '%s';"
         % region
     )
-    instances = execute_db_query(database_url, "hardware", query)
+    ids = execute_db_query(database_url, "hardware", query)
 
-    return instances
+    return [id[0] for id in ids]
