@@ -167,3 +167,43 @@ def flag_instances(region):
                 msg += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED*\n"
 
     return msg
+
+
+def is_dev_instance(instance):
+    """
+    Determines if the instance is a person's dev instance based on tags
+
+    Args:
+        instance (dict): ec2 instance
+
+    Returns:
+        boolean: instance contains a tag with dev as part of the value
+    """
+    for tag in instance["Tags"]:
+        if tag["Key"] == "Name" and "-dev-" in tag["Value"]:
+            return True
+
+    return False
+
+
+def get_nondev_aws_instances_id(region):
+    """
+    Gets a filtered list of all aws instances that are not for development
+
+    Args:
+        region (str): current region
+
+    Returns:
+        arr: array of instance ids
+    """
+    reservations = get_all_aws_instances(region)
+    instance_ids = []
+
+    for res in reservations:
+        for instance in res["Instances"]:
+            if is_dev_instance(instance):
+                continue
+
+            instance_ids.append(instance["InstanceId"])
+
+    return instance_ids
