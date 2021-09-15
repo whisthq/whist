@@ -97,7 +97,7 @@ void init_updater() {
     last_ping_id = 1;
     ping_failures = -2;
 
-    last_tcp_ping_id = 1;
+    last_tcp_ping_id = 0;
 
     init_clipboard_synchronizer(true);
 
