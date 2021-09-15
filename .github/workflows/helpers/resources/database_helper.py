@@ -1,5 +1,6 @@
 import psycopg2
 
+
 def execute_query(database_url, path, query):
     """
     Executes a given query based on the database url and path
@@ -12,13 +13,14 @@ def execute_query(database_url, path, query):
     Returns:
         arr: result of executing query
     """
-    conn = psycopg2.connect(database_url, sslmode='require')
+    conn = psycopg2.connect(database_url, sslmode="require")
 
     cur = conn.cursor()
     cur.execute("SET search_path TO %s;", path)
     cur.execute("%s;", query)
 
     return cur.fetchall()
+
 
 def get_instance_ids(database_url):
     """
