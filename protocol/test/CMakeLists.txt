@@ -72,7 +72,7 @@ target_link_libraries(${TEST_BINARY}
 # Link more linux-specific libraries
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
-    target_sources(${TEST_BINARY} PRIVATE native_window_utils_x11.c)
+    target_sources(${TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
 
     find_package(X11 REQUIRED
             Xfixes)
@@ -113,7 +113,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
-    target_sources(${TEST_BINARY} PRIVATE native_window_utils_windows.c)
+    target_sources(${TEST_BINARY} PRIVATE ../client/native_window_utils_windows.c)
     target_link_libraries(${TEST_BINARY} fractalInput ${LIBMFX})
 
     set_property(TARGET ${TEST_BINARY} PROPERTY
