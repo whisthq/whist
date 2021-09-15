@@ -63,7 +63,4 @@ export default {
   // Powermonitor triggers
   powerResume: "powerResume",
   powerSuspend: "powerSuspend",
-
-  // Monitoring triggers
-  monitoringStatus: "monitoringStatus",
 }
