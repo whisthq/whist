@@ -21,7 +21,7 @@ Includes
 
 #include <fractal/network/network.h>
 
-#define MAX_INIT_CONNECTION_ATTEMPTS (3)
+#define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)
 #define IP_MAXLEN (31)
 
