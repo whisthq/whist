@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -244,16 +246,30 @@ func TestHttpServerIntegration(t *testing.T) {
 	if !reflect.DeepEqual(testResult, gotResult) {
 		t.Errorf("expected result %v, got %v", testResult, gotResult)
 	}
+
+	globalCancel()
+	goroutineTracker.Wait()
+	t.Log("server goroutine ended")
 }
 
-// generateTestSpinUpRequest takes a request body and
+// generateRsaKeyPair generates a random RSA key pair
+func generateRsaKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
+	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	return privkey, &privkey.PublicKey
+}
+
+// generateTestSpinUpRequest takes a request body and creates an
+// HTTP PUT request for /spin_up_mandelbox
 func generateTestSpinUpRequest(requestBody map[string]interface{}) (*http.Request, error) {
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling json: %v", err)
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://localhost:%d/spin_up_mandelbox", PortToListen), bytes.NewBuffer(jsonData))
+	httpRequest, err := http.NewRequest(http.MethodPut,
+		fmt.Sprintf("https://localhost:%d/spin_up_mandelbox", PortToListen),
+		bytes.NewBuffer(jsonData),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating put request: %v", err)
 	}
@@ -261,13 +277,16 @@ func generateTestSpinUpRequest(requestBody map[string]interface{}) (*http.Reques
 	return httpRequest, nil
 }
 
+// generateTestDrainRequest creates an HTTP POST request for /drain_and_shutdown
 func generateTestDrainRequest() (*http.Request, error) {
 	claims := auth.FractalClaims{
 		Audience: []string{"test"},
 		Scopes:   []string{"backend"},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	tokenString, err := token.SignedString([]byte("test"))
+
+	privateKey, _ := generateRsaKeyPair()
+	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error signing test token: %v", err)
 	}
@@ -280,7 +299,10 @@ func generateTestDrainRequest() (*http.Request, error) {
 		return nil, fmt.Errorf("error marshalling json: %v", err)
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, fmt.Sprintf("https://localhost:%d/drain_and_shutdown", PortToListen), bytes.NewBuffer(jsonData))
+	httpRequest, err := http.NewRequest(http.MethodPost,
+		fmt.Sprintf("https://localhost:%d/drain_and_shutdown", PortToListen),
+		bytes.NewBuffer(jsonData),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating post request: %v", err)
 	}
