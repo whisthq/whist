@@ -142,21 +142,21 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-          from resources.database_helpers import get_host_service_unresponsive_instances
+          from resources.database_helpers import get_host_service_unresponsive_instance_ids
 
-          dev_instances = get_host_service_unresponsive_instances(env.DATABASE_DEV_URL, "${{ matrix.aws-region }}")
-          staging_instances = get_host_service_unresponsive_instances(env.DATABASE_STAGING_URL, "${{ matrix.aws-region }}")
-          prod_instances = get_host_service_unresponsive_instances(env.DATABASE_PROD_URL, "${{ matrix.aws-region }}")
+          dev_instance_ids = get_host_service_unresponsive_instance_ids(env.DATABASE_DEV_URL, "${{ matrix.aws-region }}")
+          staging_instance_ids = get_host_service_unresponsive_instance_ids(env.DATABASE_STAGING_URL, "${{ matrix.aws-region }}")
+          prod_instance_ids = get_host_service_unresponsive_instance_ids(env.DATABASE_PROD_URL, "${{ matrix.aws-region }}")
 
-          if dev_instances or staging_instances or prod_instances:
+          if dev_instance_ids or staging_instance_ids or prod_instance_ids:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
             SLACK_CHANNEL = "#alerts-dev"
 
-            stages = {'dev': dev_instances, 'staging': staging_instances, 'prodution': prod_instances}
+            stages = {'dev': dev_instance_ids, 'staging': staging_instance_ids, 'prodution': prod_instance_ids}
 
             for stage in stages:
-              for instance in stages[stage]:
-                BODY = "Host service unresponsive *Instance* in _%s_ _%s_:\n%s" % (stage, instance[1], instance[0])
+              if stages[stage]:
+                BODY = "Host service unresponsive *Instances* in _%s_ _${{ matrix.aws-region }}_:\n%s" % (stage, stages[stage])
 
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
