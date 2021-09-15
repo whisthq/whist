@@ -34,3 +34,20 @@ def get_instance_ids(database_url):
     ids = execute_query(database_url, "hardware", query)
 
     return [id[0] for id in ids]
+
+
+def get_host_service_unresponsive_instance_ids(database_url):
+    """
+    Gets all aws instance ids from the database url which have the status HOST_SERVICE_UNRESPONSIVE
+
+    Args:
+        database_url (str): current database url
+
+    Returns:
+        arr: array of instance ids
+    """
+
+    query = "SELECT cloud_provider_id FROM instance_info WHERE status='HOST_SERVICE_UNRESPONSIVE';"
+    ids = execute_query(database_url, "hardware", query)
+
+    return [id[0] for id in ids]
