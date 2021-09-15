@@ -2,13 +2,14 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-    #include "client/client_utils.h" 
-    //#include "client/prova.h"
+    #include "client/client_utils.h"
 }
 // Include paths should be relative to the protocol folder
-// Examples:
-// To include file.h in protocol folder, use #include "file.h"
-// To include file2.h in protocol/client folder, use #include "client/file.h"
+//      Examples:
+//      - To include file.h in protocol folder, use #include "file.h"
+//      - To include file2.h in protocol/client folder, use #include "client/file.h"
+// To include a C source file, you need to wrap the include statement in extern "C" {}.
+
 
 
 TEST(ClientTest, DumbTest) {
@@ -34,12 +35,8 @@ TEST(ClientTest, AnotherTest) {
 
 TEST(ClientTest, ArgParsingEmptyArgsTest) {
     int argc = 1;
-    //const char * argv[] = {"./client/build64/FractalClient",0,};
 
     char argv0[] = "./client/build64/FractalClient";
-    //char argv1[] = "arg1";
-    //char argv2[] = "arg2";
-    //char *argv[] = {argv0, argv1, argv2, NULL};
     char *argv[] = {argv0, NULL};
 
     int ret_val = client_parse_args(argc,argv);

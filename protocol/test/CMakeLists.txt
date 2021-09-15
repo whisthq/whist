@@ -2,16 +2,9 @@ set(BINARY FractalClient_test)
 
 enable_testing()
 
-#[[if(MSVC) # Windows MSVC compiler base flags
-  
-else() # GCC and Clang base flags
-  add_compile_options("-Wl,-e,_main2")
-endif()]]
-
 add_executable(${BINARY} main.cpp)
 
-set(FRACTAL_CLIENT_SOURCEFILES 
-		#../client/main.c
+set(FRACTAL_CLIENT_SOURCEFILES
         ../client/audio.c
         ../client/client_utils.c
         ../client/network.c

@@ -25,7 +25,6 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 
 #include "client_utils.h"
 #include "network.h"
@@ -33,34 +32,6 @@ Includes
 #include <fractal/logging/logging.h>
 #include <fractal/logging/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
-
-
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <fractal/core/fractal.h>
-#include <fractal/network/network.h>
-#include <fractal/utils/aes.h>
-#include <fractal/utils/clock.h>
-#include <fractal/logging/logging.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/logging/error_monitor.h>
-#include "sdlscreeninfo.h"
-#include "audio.h"
-#include "client_utils.h"
-#include "network.h"
-#include "sdl_event_handler.h"
-#include "sdl_utils.h"
-#include "handle_server_message.h"
-#include "video.h"
-#include "sync_packets.h"
-#include <SDL2/SDL_syswm.h>
-#include <fractal/utils/color.h>
-#include "native_window_utils.h"
-
-#ifdef __APPLE__
-#include <mach-o/dyld.h>
-#include <fractal/utils/mac_utils.h>
-#endif  // __APPLE__
 
 
 // Taken from main.c
