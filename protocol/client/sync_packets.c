@@ -34,7 +34,7 @@ clock last_tcp_check_timer;
 extern SocketContext packet_tcp_context;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
-bool connected=true;
+bool connected = true;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;

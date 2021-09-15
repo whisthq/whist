@@ -27,10 +27,10 @@ Includes
 #include "network.h"
 
 // Keyboard state variables
-bool alt_pressed=false;
-bool ctrl_pressed=false;
-bool lgui_pressed=false;
-bool rgui_pressed=false;
+bool alt_pressed = false;
+bool ctrl_pressed = false;
+bool lgui_pressed = false;
+bool rgui_pressed = false;
 
 // Main state variables
 extern bool exiting;
@@ -38,7 +38,8 @@ extern bool exiting;
 SDL_mutex *window_resize_mutex;
 extern const float window_resize_interval;
 clock window_resize_timer;
-volatile bool pending_resize_message=false;  // should be set to true if sdl event handler was not able to process resize event due
+volatile bool pending_resize_message =
+    false;  // should be set to true if sdl event handler was not able to process resize event due
             // to throttling, so the main loop should process it
 
 extern volatile SDL_Window *window;

@@ -35,9 +35,9 @@ extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 
 // Data
 extern volatile char binary_aes_private_key[16];
-int udp_port=-1;
-int tcp_port=-1;
-int client_id=-1;
+int udp_port = -1;
+int tcp_port = -1;
+int client_id = -1;
 SocketContext packet_send_udp_context = {0};
 SocketContext packet_receive_udp_context = {0};
 SocketContext packet_tcp_context = {0};

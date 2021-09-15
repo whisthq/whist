@@ -55,6 +55,9 @@ Includes
 #include <fractal/utils/mac_utils.h>
 #endif  // __APPLE__
 
+// N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
+// used instead
+
 // Width and Height
 extern volatile int server_width;
 extern volatile int server_height;

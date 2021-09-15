@@ -33,7 +33,6 @@ Includes
 #include <fractal/logging/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
 
-
 // Taken from main.c
 volatile int server_width = -1;
 volatile int server_height = -1;
@@ -59,7 +58,7 @@ char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 
 extern bool skip_taskbar;
 
-bool using_stun=false;
+bool using_stun = false;
 
 MouseMotionAccumulation mouse_state = {0};
 volatile SDL_Window *window;

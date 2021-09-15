@@ -31,7 +31,7 @@ Includes
 
 #include <stddef.h>
 
-bool exiting=false;
+bool exiting = false;
 extern int audio_frequency;
 extern volatile double latency;
 extern volatile int try_amount;

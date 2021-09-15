@@ -11,6 +11,7 @@ extern "C" {
 // To include a C source file, you need to wrap the include statement in extern "C" {}.
 
 
+// Below are a few sample tests for illustration purposes.
 
 TEST(ClientTest, EqualityTest) {
     int i = 3;
