@@ -11,7 +11,7 @@ endif()]]
 add_executable(${BINARY} main.cpp)
 
 set(FRACTAL_CLIENT_SOURCEFILES 
-		../client/main.c
+		#../client/main.c
         ../client/audio.c
         ../client/client_utils.c
         ../client/network.c

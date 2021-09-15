@@ -32,9 +32,9 @@ bool tried_to_update_dimension;
 bool updater_initialized;
 clock last_tcp_check_timer;
 extern SocketContext packet_tcp_context;
-extern volatile bool run_sync_udp_packets;
-extern volatile bool run_sync_tcp_packets;
-extern bool connected;
+volatile bool run_sync_udp_packets;
+volatile bool run_sync_tcp_packets;
+bool connected=true;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;

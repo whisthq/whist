@@ -35,16 +35,16 @@ extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 
 // Data
 extern volatile char binary_aes_private_key[16];
-extern int udp_port;
-extern int tcp_port;
-extern int client_id;
-extern SocketContext packet_send_udp_context;
-extern SocketContext packet_receive_udp_context;
-extern SocketContext packet_tcp_context;
+int udp_port=-1;
+int tcp_port=-1;
+int client_id=-1;
+SocketContext packet_send_udp_context = {0};
+SocketContext packet_receive_udp_context = {0};
+SocketContext packet_tcp_context = {0};
 extern char *server_ip;
-extern int uid;
+int uid;
 
-extern volatile double latency;
+volatile double latency;
 extern clock last_ping_timer;
 extern volatile int last_ping_id;
 extern volatile int ping_failures;
