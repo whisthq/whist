@@ -155,7 +155,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully freed TTY %v for mandelbox %s", c.tty, c.mandelboxID)
 		c.tty = 0
 
-		if err := gpus.Free(c.gpuIndex); err != nil {
+		if err := gpus.Free(c.gpuIndex, c.mandelboxID); err != nil {
 			logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", c.gpuIndex, c.mandelboxID, err)
 		} else {
 			logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
@@ -281,7 +281,7 @@ func (c *mandelboxData) AssignGPU() error {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
-	gpu, err := gpus.Allocate()
+	gpu, err := gpus.Allocate(c.mandelboxID)
 	if err != nil {
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metrics"
+	"github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 )
 
@@ -20,7 +21,7 @@ func init() {
 		logger.Panicf(nil, "Couldn't initialize GPU allocator, since error getting metrics: %+v", errs)
 	}
 	numGPUs := metrics.NumberOfGPUs
-	usagePerGPU = make([]uint8, numGPUs)
+	gpuSlice = make([]GPU, numGPUs)
 }
 
 // Index is essentially a handle to a GPU on the system. It is the index of a
@@ -33,28 +34,32 @@ type Index int
 // only one instance type).
 const MaxMandelboxesPerGPU = 2
 
-// usagePerGPU contains the number of mandelboxes currently assigned to a
-// each GPU (indexed by the GPU's Index).
-var usagePerGPU []uint8
+var gpuSlice []GPU
 
-// Lock to protect `usagePerGPU`.
+type GPU struct {
+	isFull bool
+	assignedMandelboxes []string
+	usage uint8
+}
+
+// Lock to protect `gpuSlice`.
 var usageLock = new(sync.Mutex)
 
 // Allocate allocates a GPU with room for a mandelbox and returns its index.
-func Allocate() (Index, error) {
+func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 	usageLock.Lock()
 	defer usageLock.Unlock()
 
 	// We try to allocate as evenly as possible.
 	var minIndex = Index(-1)
 	var minVal uint8 = math.MaxUint8
-	for i, v := range usagePerGPU {
+	for i, v := range gpuSlice {
 		// Just skip full GPUs.
-		if v >= MaxMandelboxesPerGPU {
+		if v.isFull {
 			continue
 		}
-		if v < minVal {
-			minVal = v
+		if v.usage < minVal {
+			minVal = v.usage
 			minIndex = Index(i)
 		}
 	}
@@ -64,20 +69,35 @@ func Allocate() (Index, error) {
 	}
 
 	// Allocate slot on GPU and return Index
-	usagePerGPU[minIndex]++
+	gpu := &gpuSlice[minIndex]
+	mid := string(mandelboxID)
+	gpu.usage++
+	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, mid) //Store the id of assigned mandelbox
+
+	if gpu.usage == MaxMandelboxesPerGPU {
+		gpu.isFull = true
+	}
+
 	return minIndex, nil
 }
 
 // Free decrements the number of mandelboxes we consider assigned to a given
-// GPU indexed by `index`.
-func Free(index Index) error {
+// GPU indexed by `index`. The Mandelbox id is used to determine if the mandelbox
+// was assigned to a given GPU.
+func Free(index Index, mandelboxID types.MandelboxID) error {
 	usageLock.Lock()
 	defer usageLock.Unlock()
+	gpu := &gpuSlice[index]
+	mid := string(mandelboxID)
 
-	if usagePerGPU[index] <= 0 {
+	if gpu.usage <= 0 {
 		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
 	}
+	if utils.SliceContainsString(gpu.assignedMandelboxes, mid) {
+		return utils.MakeError("Current mandelbox is not allocated on GPU Index!")
+	}
 
-	usagePerGPU[index]--
+	gpu.usage--
+	gpu.assignedMandelboxes = utils.SliceRemoveString(gpu.assignedMandelboxes, mid)
 	return nil
 }
