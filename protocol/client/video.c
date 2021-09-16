@@ -1238,7 +1238,11 @@ int render_video() {
                 if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
                     LOG_ERROR("Failed to render peers.");
                 }
-                // this call takes up to 16 ms: takes 8 ms on average.
+                // If we're rendering something, then they might be watching something,,
+                // so we'll declare this user activity in order to reset
+                // the timer for the client's screensaver/sleepmode
+                declare_user_activity();
+                // This call takes up to 16 ms, and takes 8 ms on average.
                 SDL_RenderPresent(renderer);
                 log_double_statistic("Rendering time in ms", get_timer(latency_clock) * 1000);
             }

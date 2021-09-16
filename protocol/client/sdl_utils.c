@@ -139,6 +139,9 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
+    // Allow the screensaver to activate
+    SDL_EnableScreenSaver();
+
     // TODO: make this a commandline argument based on client app settings!
     int full_width = get_virtual_screen_width();
     int full_height = get_virtual_screen_height();
