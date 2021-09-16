@@ -339,25 +339,7 @@ int main(int argc, char* argv[]) {
     // Set error monitor username based on email from parsed arguments.
     error_monitor_set_username(user_email);
 
-    // Initialize the SDL window
-    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
-
-    if (!window) {
-        destroy_socket_library();
-        LOG_FATAL("Failed to initialize SDL");
-    }
-
-    // set the window minimum size
-    SDL_SetWindowMinimumSize((SDL_Window*)window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-    // Make sure that ctrl+click is processed as a right click on Mac
-    SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
-    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-
-    init_video();
-
-    run_renderer_thread = true;
-    SDL_Thread* renderer_thread =
-        SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
+    SDL_Thread* renderer_thread = NULL;
 
     print_system_info();
     LOG_INFO("Fractal client revision %s", fractal_git_revision());
@@ -438,6 +420,25 @@ int main(int argc, char* argv[]) {
         }
 
         connected = true;
+
+        // Initialize the SDL window
+        window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+
+        if (!window) {
+            destroy_socket_library();
+            LOG_FATAL("Failed to initialize SDL");
+        }
+
+        // set the window minimum size
+        SDL_SetWindowMinimumSize((SDL_Window*)window, MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+        // Make sure that ctrl+click is processed as a right click on Mac
+        SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
+        SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+
+        init_video();
+
+        run_renderer_thread = true;
+        renderer_thread = SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
 
         // Initialize audio and variables
         // reset because now connected
