@@ -67,6 +67,7 @@ volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
 volatile bool initialized_video_renderer = false;
+volatile bool initialized_video_buffer = false;
 
 static enum AVPixelFormat sws_input_fmt;
 
@@ -806,6 +807,8 @@ void init_video() {
     initialized_video_renderer = false;
     memset(&video_context, 0, sizeof(video_context));
     render_mutex = safe_SDL_CreateMutex();
+    video_ring_buffer = init_ring_buffer(FRAME_VIDEO, RECV_FRAMES_BUFFER_SIZE);
+    initialized_video_buffer = true;
 }
 
 int last_rendered_index = 0;
@@ -815,6 +818,10 @@ void update_video() {
         Calculate statistics about bitrate, I-Frame, etc. and request video
         update from the server
     */
+
+    if (!initialized_video_buffer) {
+        return;
+    }
 
     if (get_timer(video_data.frame_timer) > 3) {
         calculate_statistics();
@@ -1000,7 +1007,6 @@ int init_video_renderer() {
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
     video_context.sws = NULL;
-    video_ring_buffer = init_ring_buffer(FRAME_VIDEO, RECV_FRAMES_BUFFER_SIZE);
 
     max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
