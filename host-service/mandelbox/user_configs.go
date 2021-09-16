@@ -49,6 +49,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
+	logger.Infof("Starting S3 config download")
+
 	// Retrieve config from s3
 	s3ConfigPath := c.getS3ConfigPath()
 	getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configDir)
@@ -69,6 +71,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
 	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
 
+	logger.Infof("Starting decryption")
+
 	// At this point, config archive must exist: decrypt app config
 	decryptConfigCmd := exec.Command(
 		"/usr/bin/openssl", "aes-256-cbc", "-d",
@@ -86,6 +90,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	if err != nil {
 		logger.Errorf("getUserConfig(): Failed to delete user config encrypted archive %s", encTarPath)
 	}
+
+	logger.Infof("Starting extraction")
 
 	// Extract the config archive to the user config directory
 	untarConfigCmd := exec.Command("/usr/bin/tar", "-I", "lz4", "-xf", decTarPath, "-C", unpackedConfigPath)
