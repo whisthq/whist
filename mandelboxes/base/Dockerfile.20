@@ -353,7 +353,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/* /deb
 
 # Install dependencies/utils
+<<<<<<< HEAD
 RUN apt-get update && apt-get install --no-install-recommends -y \
+=======
+RUN apt-get upate && apt-get install --no-install-recommends -y \
+>>>>>>> 005064b48 (always run apt-get update before install)
     keyboard-configuration \
     libxtst-dev \
     xinput \
