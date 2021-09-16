@@ -9,7 +9,6 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metrics"
-	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 )
@@ -94,20 +93,12 @@ func Free(index Index, dockerID types.DockerID) error {
 	if gpu.usage <= 0 {
 		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
 	}
+	if !utils.SliceContainsString(gpu.assignedMandelboxes, dockerId) {
+		return utils.MakeError("Mandelbox is not allocated on GPU Index!")
+	}
 
 	gpu.usage--
 	gpu.isFull = false
-	CleanUpRefs(gpu.assignedMandelboxes, dockerId string) // Perform clean up
+	gpu.assignedMandelboxes = utils.SliceRemoveString(gpu.assignedMandelboxes, dockerId)
 	return nil
-}
-
-func CleanUpRefs(mandelboxes []string, dockerId string) {
-	// We verify if the assigned Mandelboxes still exist
-	// if not, we clean up the references in the GPU. 
-	for ref := range mandelboxes {
-		_, err := LookUpByDockerID(ref); if err != nil {
-			SliceRemoveString(ref)
-		}
-	}
-	SliceRemoveString(dockerId)
 }
