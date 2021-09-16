@@ -49,10 +49,10 @@ export const OneButtonError = (props: {
       )}
     >
       <BaseError title={props.title} text={props.text} />
-      <div className="mt-4 mb-10 w-full text-center bg-mint text-black">
+      <div className="mt-4 mb-10 w-full text-center text-black">
         <FractalButton
           contents={props.primaryButtonText}
-          className="px-12 mx-auto py-3"
+          className="px-12 mx-auto bg-mint py-3"
           state={
             processing
               ? FractalButtonState.PROCESSING
