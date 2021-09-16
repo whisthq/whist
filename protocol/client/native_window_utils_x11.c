@@ -60,3 +60,9 @@ FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_dat
     }
     return yuv_color;
 }
+
+void declare_user_activity() {
+    // TODO: Implement actual wake-up code
+    // For now, we'll just disable the screensaver
+    SDL_DisableScreenSaver();
+}
