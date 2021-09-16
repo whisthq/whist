@@ -46,7 +46,7 @@ type GPU struct {
 var usageLock = new(sync.Mutex)
 
 // Allocate allocates a GPU with room for a mandelbox and returns its index.
-func Allocate(dockerID types.DockerID) (Index, error) {
+func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 	usageLock.Lock()
 	defer usageLock.Unlock()
 
@@ -70,9 +70,9 @@ func Allocate(dockerID types.DockerID) (Index, error) {
 
 	// Allocate slot on GPU and return Index
 	gpu := &gpuSlice[minIndex]
-	dockerId := string(dockerID)
+	mid := string(mandelboxID)
 	gpu.usage++
-	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, dockerId) //Store the id of assigned mandelbox
+	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, mid) //Store the id of assigned mandelbox
 
 	if gpu.usage == MaxMandelboxesPerGPU {
 		gpu.isFull = true
@@ -84,21 +84,18 @@ func Allocate(dockerID types.DockerID) (Index, error) {
 // Free decrements the number of mandelboxes we consider assigned to a given
 // GPU indexed by `index`. The Mandelbox id is used to determine if the mandelbox
 // was assigned to a given GPU.
-func Free(index Index, dockerID types.DockerID) error {
+func Free(index Index, mandelboxID types.MandelboxID) error {
 	usageLock.Lock()
 	defer usageLock.Unlock()
 	gpu := &gpuSlice[index]
-	dockerId := string(dockerID)
+	mid := string(mandelboxID)
 
 	if gpu.usage <= 0 {
 		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
 	}
-	if !utils.SliceContainsString(gpu.assignedMandelboxes, dockerId) {
-		return utils.MakeError("Mandelbox is not allocated on GPU Index!")
-	}
 
 	gpu.usage--
 	gpu.isFull = false
-	gpu.assignedMandelboxes = utils.SliceRemoveString(gpu.assignedMandelboxes, dockerId)
+	gpu.assignedMandelboxes = utils.SliceRemoveString(gpu.assignedMandelboxes, mid)
 	return nil
 }

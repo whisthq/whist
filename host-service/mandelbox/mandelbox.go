@@ -281,7 +281,7 @@ func (c *mandelboxData) AssignGPU() error {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
-	gpu, err := gpus.Allocate(c.dockerID)
+	gpu, err := gpus.Allocate(c.mandelboxID)
 	if err != nil {
 		return err
 	}
