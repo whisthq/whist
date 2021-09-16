@@ -9,6 +9,7 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metrics"
+	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 )
@@ -46,7 +47,7 @@ type GPU struct {
 var usageLock = new(sync.Mutex)
 
 // Allocate allocates a GPU with room for a mandelbox and returns its index.
-func Allocate(mandelboxID types.MandelboxID) (Index, error) {
+func Allocate(dockerID types.DockerID) (Index, error) {
 	usageLock.Lock()
 	defer usageLock.Unlock()
 
@@ -70,9 +71,9 @@ func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 
 	// Allocate slot on GPU and return Index
 	gpu := &gpuSlice[minIndex]
-	mid := string(mandelboxID)
+	dockerId := string(dockerID)
 	gpu.usage++
-	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, mid) //Store the id of assigned mandelbox
+	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, dockerId) //Store the id of assigned mandelbox
 
 	if gpu.usage == MaxMandelboxesPerGPU {
 		gpu.isFull = true
@@ -84,20 +85,29 @@ func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 // Free decrements the number of mandelboxes we consider assigned to a given
 // GPU indexed by `index`. The Mandelbox id is used to determine if the mandelbox
 // was assigned to a given GPU.
-func Free(index Index, mandelboxID types.MandelboxID) error {
+func Free(index Index, dockerID types.DockerID) error {
 	usageLock.Lock()
 	defer usageLock.Unlock()
 	gpu := &gpuSlice[index]
-	mid := string(mandelboxID)
+	dockerId := string(dockerID)
 
 	if gpu.usage <= 0 {
 		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
 	}
-	if utils.SliceContainsString(gpu.assignedMandelboxes, mid) {
-		return utils.MakeError("Current mandelbox is not allocated on GPU Index!")
-	}
 
 	gpu.usage--
-	gpu.assignedMandelboxes = utils.SliceRemoveString(gpu.assignedMandelboxes, mid)
+	gpu.isFull = false
+	CleanUpRefs(gpu.assignedMandelboxes, dockerId string) // Perform clean up
 	return nil
+}
+
+func CleanUpRefs(mandelboxes []string, dockerId string) {
+	// We verify if the assigned Mandelboxes still exist
+	// if not, we clean up the references in the GPU. 
+	for ref := range mandelboxes {
+		_, err := LookUpByDockerID(ref); if err != nil {
+			SliceRemoveString(ref)
+		}
+	}
+	SliceRemoveString(dockerId)
 }
