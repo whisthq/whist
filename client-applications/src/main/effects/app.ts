@@ -47,6 +47,7 @@ fromTrigger("appReady").subscribe(() => {
   }
 
   if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
+    app?.dock?.show()
     createAuthWindow()
   }
 })

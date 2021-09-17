@@ -44,8 +44,6 @@ export const writeStream = (
 export const protocolLaunch = async () => {
   if (childProcess !== undefined) return childProcess
 
-  if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
-
   // Protocol arguments
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
