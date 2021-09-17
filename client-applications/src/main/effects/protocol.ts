@@ -5,8 +5,6 @@
  */
 
 import { fromTrigger } from "@app/utils/flows"
-import { bounceAppDock } from "@app/utils/dock"
-import { fromSignal } from "@app/utils/observables"
 import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
 import {
   closeElectronWindows,
