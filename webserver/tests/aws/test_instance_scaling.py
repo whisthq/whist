@@ -284,6 +284,13 @@ def test_lingering_instances(monkeypatch, bulk_instance, region_name):
         last_updated_utc_unix_ms=((time() - 121) * 1000),
         creation_time_utc_unix_ms=((time() - 121) * 1000),
     )
+    bulk_instance(
+        instance_name=f"host_service_unrepsonsive_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value,
+        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
+    )
     aws_funcs.check_and_handle_lingering_instances()
     assert call_set == {instance_bad_normal.instance_name, instance_bad_preconnect.instance_name}
 
