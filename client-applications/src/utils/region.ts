@@ -30,7 +30,7 @@ const fractalPingTime = async (host: string, numberPings: number) => {
 
   // Resolve list of Promises synchronously to get a list of ping outputs
   const pingResults = await Promise.all(pingPromises)
-  return pingResults.reduce((a, b) => a < b ? a : b)
+  return pingResults.reduce((a, b) => (a < b ? a : b))
 }
 
 export const chooseRegion = async (regions: AWSRegion[]) => {
@@ -52,15 +52,19 @@ export const chooseRegion = async (regions: AWSRegion[]) => {
     const region = regions[i]
     const randomHash = Math.floor(Math.random() * Math.pow(2, 52)).toString(36)
     const endpoint = `/does-not-exist?cache-break=${randomHash}`
-    pingResultPromises.push(fractalPingTime(
-      `http://dynamodb.${region}.amazonaws.com${endpoint}`,
-      3
-    ).then((pingTime) => { return { region, pingTime } }))
+    pingResultPromises.push(
+      fractalPingTime(
+        `http://dynamodb.${region}.amazonaws.com${endpoint}`,
+        3
+      ).then((pingTime) => {
+        return { region, pingTime }
+      })
+    )
   }
   const pingResults = await Promise.all(pingResultPromises)
-  const closestRegion = pingResults.reduce((a, b) => a.pingTime < b.pingTime ? a : b).region
-  console.log(pingResults)
-  console.log(`closest region is ${closestRegion}`)
+  const closestRegion = pingResults.reduce((a, b) =>
+    a.pingTime < b.pingTime ? a : b
+  ).region
 
   return closestRegion
 }
