@@ -66,12 +66,11 @@ func Close() {
 // Info logs some info + timestamp, but does not send it to Sentry.
 func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
-	timestamp := fmt.Sprintf("time=%s", time.Now().String())
 
-	strWithTimestamp := fmt.Sprintf("%s %s", str, timestamp)
-	log.Print(strWithTimestamp)
+	log.Print(str)
 	if logzioTransport != nil {
-		logzioTransport.send(strWithTimestamp, logzioTypeInfo)
+		timestamp := fmt.Sprintf("time=%s", time.Now().String())
+		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
 	}
 }
 
