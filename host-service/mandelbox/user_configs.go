@@ -7,9 +7,19 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+)
+
+const (
+	USER_CONFIG_S3_BUCKET = "fractal-user-app-configs"
+	AES_256_KEY_LENGTH    = 32
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
@@ -49,29 +59,50 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
-	logger.Infof("Starting S3 config download")
-
-	// Retrieve config from s3
-	s3ConfigPath := c.getS3ConfigPath()
-	getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configDir)
-	getConfigOutput, err := getConfigCmd.CombinedOutput()
-	// If aws s3 cp errors out due to the file not existing, don't log an error because
-	//    this means that it's the user's first run and they don't have any settings
-	//    stored for this application yet.
-	if err != nil {
-		if strings.Contains(string(getConfigOutput), "does not exist") {
-			logger.Infof("Ran \"aws s3 cp\" and config does not exist")
-			return nil
-		}
-		return utils.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
-	}
-	logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
-
 	encTarPath := configDir + c.getEncryptedArchiveFilename()
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
 	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
 
+	logger.Infof("Starting S3 config download")
+
+	if _, err := os.Stat(encTarPath); err == nil {
+		os.Remove(encTarPath)
+	}
+
+	file, err := os.Create(encTarPath)
+	if err != nil {
+		return utils.MakeError("Could not create file for s3 download: %v", err)
+	}
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	})
+	downloader := s3manager.NewDownloader(sess)
+
+	numBytes, err := downloader.Download(file, &s3.GetObjectInput{
+		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
+		Key:    aws.String(c.getS3ConfigKey()),
+	})
+	if err != nil {
+		// If aws s3 cp errors out due to the file not existing, don't log an error because
+		// this means that it's the user's first run and they don't have any settings
+		// stored for this application yet.
+		if awsErr, ok := err.(awserr.Error); ok {
+			switch awsErr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				logger.Infof("Ran \"aws s3 cp\" and config does not exist")
+				return nil
+			}
+		}
+
+		return utils.MakeError("Failed to download user configuration from s3: %v", err)
+	}
+
+	logger.Infof("Ran \"aws s3 cp\" get config command and received %d bytes", numBytes)
+
 	logger.Infof("Starting decryption")
+
+	// Decrypt the downloaded archive directly from memory
 
 	// At this point, config archive must exist: decrypt app config
 	decryptConfigCmd := exec.Command(
@@ -172,6 +203,10 @@ func (c *mandelboxData) getUserConfigDir() string {
 
 func (c *mandelboxData) getS3ConfigPath() string {
 	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
+}
+
+func (c *mandelboxData) getS3ConfigKey() string {
+	return utils.Sprintf("%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
 }
 
 func (c *mandelboxData) getEncryptedArchiveFilename() string {
