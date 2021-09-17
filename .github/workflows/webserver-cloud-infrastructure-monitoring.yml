@@ -95,9 +95,70 @@ jobs:
           if resources:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
             SLACK_CHANNEL = "#alerts-dev"
-            BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_:\n%s" % resources
+            BODY = "Old *Instances* in _${{ matrix.aws-region }}_:\n%s" % resources
 
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+      - name: Set DB URLs for DEV, STAGING, and PROD
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        run: |
+          DATABASE_DEV_URL=$(heroku config:get DATABASE_URL --app=fractal-dev-server)
+          echo "DATABASE_DEV_URL=$DATABASE_DEV_URL" >> $GITHUB_ENV
+
+          DATABASE_STAGING_URL=$(heroku config:get DATABASE_URL --app=fractal-staging-server)
+          echo "DATABASE_STAGING_URL=$DATABASE_STAGING_URL" >> $GITHUB_ENV
+
+          DATABASE_PROD_URL=$(heroku config:get DATABASE_URL --app=fractal-prod-server)
+          echo "DATABASE_PROD_URL=$DATABASE_PROD_URL" >> $GITHUB_ENV
+
+      - name: Identifies Hanging EC2 Instances and Notify in Slack if They Exist
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          from resources.database_helpers import get_instance_ids
+          from aws.resource_helpers import get_non_personal_development_instance_ids
+
+          instance_ids = get_non_personal_development_instance_ids("${{ matrix.aws-region }}")
+
+          db_instance_ids = set()
+          db_instance_ids.update(set(get_instance_ids(env.DATABASE_DEV_URL, "${{ matrix.aws-region }}")))
+          db_instance_ids.update(set(get_instance_ids(env.DATABASE_STAGING_URL, "${{ matrix.aws-region }}")))
+          db_instance_ids.update(set(get_instance_ids(env.DATABASE_PROD_URL, "${{ matrix.aws-region }}")))
+
+          def is_not_registed_in_db(instance_id):
+            return "aws-%s" % instance_id not in db_instance_ids
+
+          hanging_instance_ids = list(filter(is_not_registed_in_db, instance_ids))
+
+          if hanging_instance_ids:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_CHANNEL = "#alerts-dev"
+            BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_:\n%s" % hanging_instance_ids
+
+            slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+      - name: List EC2 Instances that are marked as HOST_SERVICE_UNRESPONSIVE and Notify in Slack if They Exist
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          from resources.database_helpers import get_host_service_unresponsive_instance_ids
+
+          dev_instance_ids = get_host_service_unresponsive_instance_ids(env.DATABASE_DEV_URL, "${{ matrix.aws-region }}")
+          staging_instance_ids = get_host_service_unresponsive_instance_ids(env.DATABASE_STAGING_URL, "${{ matrix.aws-region }}")
+          prod_instance_ids = get_host_service_unresponsive_instance_ids(env.DATABASE_PROD_URL, "${{ matrix.aws-region }}")
+
+          if dev_instance_ids or staging_instance_ids or prod_instance_ids:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_CHANNEL = "#alerts-dev"
+
+            stages = {'dev': dev_instance_ids, 'staging': staging_instance_ids, 'prodution': prod_instance_ids}
+
+            for stage in stages:
+              if stages[stage]:
+                BODY = "Host service unresponsive *Instances* in _%s_ _${{ matrix.aws-region }}_:\n%s" % (stage, stages[stage])
+
+                slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
   # EBS volumes from CI and old dev/staging/production AMIs
