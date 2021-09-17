@@ -18,4 +18,15 @@ const updateNotification = () =>
     silent: true,
   })
 
-export { internetWarning, rebootWarning, updateNotification }
+const startupNotification = () =>
+  new Notification({
+    body: "Fractal is starting up",
+    silent: true,
+  })
+
+export {
+  internetWarning,
+  rebootWarning,
+  updateNotification,
+  startupNotification,
+}

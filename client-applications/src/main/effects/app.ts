@@ -4,38 +4,51 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { session } from "electron"
+import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
-import { merge } from "rxjs"
+import { isEmpty, pickBy } from "lodash"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
   createAuthWindow,
   createSignoutWindow,
-  createLoadingWindow,
   relaunch,
   createPaymentWindow,
   createExitTypeform,
   createBugTypeform,
   createOnboardingTypeform,
   closeAllWindows,
-  createProtocolWindow,
+  closeElectronWindows,
+  getElectronWindows,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
-import { emitCache, persist, persistClear, store } from "@app/utils/persist"
-import { showAppDock, hideAppDock } from "@app/utils/dock"
+import {
+  persist,
+  persistGet,
+  persistClear,
+  store,
+  persistedAuth,
+} from "@app/utils/persist"
 import { fromSignal } from "@app/utils/observables"
+import { startupNotification } from "@app/utils/notification"
 
 fromTrigger("appReady").subscribe(() => {
-  emitCache()
   createTray(createMenu(false))
 })
 
-fromTrigger("notPersisted").subscribe(() => {
-  showAppDock()
-  createAuthWindow()
+fromTrigger("appReady").subscribe(() => {
+  const authCache = {
+    accessToken: (persistedAuth?.accessToken ?? "") as string,
+    refreshToken: (persistedAuth?.refreshToken ?? "") as string,
+    userEmail: (persistedAuth?.userEmail ?? "") as string,
+    configToken: (persistedAuth?.configToken ?? "") as string,
+  }
+
+  if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
+    createAuthWindow()
+  }
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -43,13 +56,10 @@ fromTrigger("notPersisted").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(fromTrigger("configFlowSuccess")).subscribe(
+fromSignal(fromTrigger("configFlowSuccess"), fromTrigger("appReady")).subscribe(
   (x: { userEmail: string }) => {
-    // On MacOS, hide the app dock when the protocol is open
-    hideAppDock()
-    // Create the protocol loading window
-    createLoadingWindow()
-    createProtocolWindow().catch((err) => console.error(err))
+    // Show notification
+    startupNotification()?.show()
     // Present the tray (top right corner of screen)
     createTray(createMenu(true, x.userEmail))
   }
@@ -106,11 +116,13 @@ fromTrigger("trayBugAction").subscribe(() => {
   createBugTypeform()
 })
 
-fromSignal(fromTrigger("onboarded"), fromTrigger("authFlowSuccess")).subscribe(
-  (onboarded: boolean) => {
+fromTrigger("authFlowSuccess")
+  .pipe(take(1))
+  .subscribe(() => {
+    const onboarded =
+      (persistGet("onboardingTypeformSubmitted", "data") as boolean) ?? false
     if (!onboarded) createOnboardingTypeform()
-  }
-)
+  })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 fromTrigger("showPaymentWindow").subscribe(() => {
@@ -139,4 +151,13 @@ fromTrigger("exitTypeformSubmitted").subscribe(() => {
 
 fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
   persist("onboardingTypeformSubmitted", true, "data")
+  closeElectronWindows(getElectronWindows())
+})
+
+fromTrigger("appReady").subscribe(() => {
+  app.requestSingleInstanceLock()
+
+  app.on("second-instance", (e) => {
+    e.preventDefault()
+  })
 })

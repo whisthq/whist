@@ -8,10 +8,15 @@ import { app } from "electron"
 
 export const showAppDock = () => {
   // Regular activation policy has an app dock
-  app?.setActivationPolicy?.("regular")
+  app?.dock?.show()
 }
 
 export const hideAppDock = () => {
   // Accessory activation policy does not have an app dock
-  app?.setActivationPolicy?.("accessory")
+  app?.dock?.hide()
+}
+
+export const bounceAppDock = (bounce: boolean) => {
+  // Critical means the dock keeps bouncing, information means the dock bounces once
+  bounce ? app?.dock?.bounce("critical") : app?.dock?.hide()
 }

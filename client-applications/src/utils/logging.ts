@@ -82,7 +82,9 @@ const localLog = (
     `${title} -- ${userEmail} -- ${(msElapsed !== undefined
       ? msElapsed
       : 0
-    ).toString()} ms since flow/trigger was started`,
+    ).toString()} ms since flow/trigger was started and ${(
+      Date.now() - sessionID
+    ).toString()} ms since app was started`,
     data,
     level
   )

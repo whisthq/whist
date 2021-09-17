@@ -11,6 +11,7 @@ import { map, startWith, filter } from "rxjs/operators"
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
 import { mapValues } from "lodash"
+import { appEnvironment } from "../../../config/configs"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -37,6 +38,7 @@ const subscribed = combineLatest(
         filter((args: { userEmail?: string }) => args.userEmail !== undefined),
         map((args: { userEmail?: string }) => args.userEmail as string)
       ),
+      appEnvironment: of(appEnvironment),
     },
     (obs) => concat(of(undefined), obs)
   )

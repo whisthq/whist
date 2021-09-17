@@ -5,7 +5,14 @@
  */
 
 import { fromTrigger } from "@app/utils/flows"
-import { protocolStreamInfo } from "@app/utils/protocol"
+import { bounceAppDock } from "@app/utils/dock"
+import { fromSignal } from "@app/utils/observables"
+import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
+import {
+  closeElectronWindows,
+  createProtocolWindow,
+  getElectronWindows,
+} from "@app/utils/windows"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -24,6 +31,22 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
       port_32273: number
     }
   }) => {
-    protocolStreamInfo(info)
+    if (childProcess === undefined) {
+      createProtocolWindow()
+        .then(() => {
+          protocolStreamInfo(info)
+        })
+        .catch((err) => console.error(err))
+    } else {
+      protocolStreamInfo(info)
+    }
+    closeElectronWindows(getElectronWindows())
   }
 )
+
+fromSignal(
+  fromTrigger("mandelboxFlowSuccess"),
+  fromTrigger("appReady")
+).subscribe(() => {
+  bounceAppDock(false)
+})
