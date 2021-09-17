@@ -1,6 +1,5 @@
 import { app, IpcMainEvent, Notification } from "electron"
 import {
-  takeUntil,
   withLatestFrom,
   startWith,
   mapTo,
@@ -13,7 +12,6 @@ import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
-import { hideAppDock } from "@app/utils/dock"
 import {
   createErrorWindow,
   createProtocolWindow,
@@ -36,6 +34,9 @@ let warningLastShown = 0
 // Keeps track of if we've already asked them to fill out the exit survey
 let exitSurveyShown = false
 
+// Immediately initialize the protocol invisibly since it can take time to warm up
+createProtocolWindow().catch((err) => console.error(err))
+
 fromTrigger("appReady").subscribe(() => {
   internetNotification = internetWarning()
   rebootNotification = rebootWarning()
@@ -45,7 +46,6 @@ const quit = () => {
   logBase("Application exited", {})
     .then(() => {
       destroyTray()
-      hideAppDock()
       app.quit()
     })
     .catch((err) => {
@@ -53,13 +53,11 @@ const quit = () => {
         console.error(err)
       )
       destroyTray()
-      hideAppDock()
       app.quit()
     })
 }
 
 const allWindowsClosed = fromTrigger("windowInfo").pipe(
-  takeUntil(fromTrigger("installUpdate")),
   filter(
     (args: {
       crashed: boolean
@@ -70,11 +68,9 @@ const allWindowsClosed = fromTrigger("windowInfo").pipe(
   )
 )
 
-fromTrigger("windowsAllClosed")
-  .pipe(takeUntil(fromTrigger("installUpdate")))
-  .subscribe((evt: IpcMainEvent) => {
-    evt?.preventDefault()
-  })
+fromTrigger("windowsAllClosed").subscribe((evt: IpcMainEvent) => {
+  evt?.preventDefault()
+})
 
 allWindowsClosed
   .pipe(

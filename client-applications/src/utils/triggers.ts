@@ -40,7 +40,6 @@ export default {
   clearCacheAction: "clearCacheAction",
   exitTypeformSubmitted: "exitTypeformSubmitted",
   onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
-  installUpdate: "installUpdate",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",
