@@ -3,6 +3,8 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+sudo apt-get update
+
 # Install ffmpeg dependencies
 sudo apt-get install --no-install-recommends -y \
   libmfx1 \
