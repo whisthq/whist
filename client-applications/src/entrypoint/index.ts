@@ -1,4 +1,5 @@
 import path from "path"
+import Store from "electron-store"
 import { of } from "rxjs"
 import { spawn, ChildProcess } from "child_process"
 
@@ -6,7 +7,13 @@ import authFlow from "@app/main/flows/auth"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 
 // PROTOCOL LAUNCH STUFF
-const protocolPath = path.join(__dirname, "../..", "MacOS", "./_Fractal")
+const protocolPath = path.join(
+  __dirname,
+  "../..",
+  "protocol-build",
+  "client",
+  "./_Fractal"
+)
 
 const protocolParameters = {
   environment: "development",
