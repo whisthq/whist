@@ -44,8 +44,6 @@ export const writeStream = (
 export const protocolLaunch = async () => {
   if (childProcess !== undefined) return childProcess
 
-  if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
-
   // Protocol arguments
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
@@ -84,12 +82,12 @@ export const protocolLaunch = async () => {
     // animation PNG files.
     ...(app.isPackaged &&
       process.platform === "darwin" && {
-        cwd: path.join(protocolFolder, ".."),
-      }),
+      cwd: path.join(protocolFolder, ".."),
+    }),
     ...(app.isPackaged &&
       process.platform !== "darwin" && {
-        cwd: path.join(protocolFolder, "../.."),
-      }),
+      cwd: path.join(protocolFolder, "../.."),
+    }),
   })
 
   // Pipe to protocol.log
@@ -150,8 +148,7 @@ export const protocolStreamInfo = (info: {
   if (childProcess === undefined) return
   writeStream(
     childProcess,
-    `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
-      info.mandelboxSecret
+    `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${info.mandelboxSecret
     }\nip?${info.mandelboxIP}\nfinished?0\n`
   )
 }
