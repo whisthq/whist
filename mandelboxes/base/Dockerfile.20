@@ -23,7 +23,8 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install build dependencies for libinput
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
     git \
     gcc \
     g++ \
@@ -371,7 +372,8 @@ COPY input/Xmodmap /root/.Xmodmap
 #########################
 
 # Install general utility packages
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
+RUN apt-get update \
+    && apt-get install --allow-downgrades --no-install-recommends -y \
     xvfb \
     wmctrl \
     ca-certificates \
