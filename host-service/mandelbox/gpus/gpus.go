@@ -7,6 +7,7 @@ import (
 	"math"
 	"sync"
 
+	"github.com/fractal/fractal/host-service/dbdriver"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
@@ -36,6 +37,8 @@ const MaxMandelboxesPerGPU = 2
 
 var gpuSlice []GPU
 
+// GPU holds the state for any given GPU. It contains an array of mandelbox ids,
+// which is used to ensure we only free assigned resources.
 type GPU struct {
 	isFull bool
 	assignedMandelboxes []string
@@ -92,6 +95,9 @@ func Free(index Index, mandelboxID types.MandelboxID) error {
 
 	if gpu.usage <= 0 {
 		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
+	}
+	if !utils.SliceContainsString(gpu.assignedMandelboxes, mid) {
+		return utils.MakeError("Mandelbox is not allocated on GPU Index!")
 	}
 
 	gpu.usage--
