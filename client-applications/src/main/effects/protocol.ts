@@ -43,10 +43,3 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
     closeElectronWindows(getElectronWindows())
   }
 )
-
-fromSignal(
-  fromTrigger("mandelboxFlowSuccess"),
-  fromTrigger("appReady")
-).subscribe(() => {
-  bounceAppDock(false)
-})
