@@ -32,38 +32,44 @@
 // We follow a consistent style with our commands below, which is to write them
 // out as a list, and then concatenate the list with a " " to build the final
 // command.
-const esbuildCommand = [
+const electronMainBuildCommand = [
   "esbuild",
   "src/main/index.ts",
   "--bundle",
   "--platform=node",
   "--outdir=build/dist/main",
   "--external:electron",
-]
-// We minify our output to make this less convenient for snooping users.
-if (process.env.NODE_ENV === "production") {
-  esbuildCommand.push("--minify")
-}
+  ...((process.env.NODE_ENV === "production") ? ["--minify"] : []),
+].join(" ")
 
-const cmdMainCompile = esbuildCommand.join(" ")
+const nodeEntrypointBuildCommand = [
+  "esbuild",
+  "src/entrypoint/index.ts",
+  "--bundle",
+  "--platform=node",
+  "--outdir=build/dist/entrypoint",
+  "--external:electron",
+  ...((process.env.NODE_ENV === "production") ? ["--minify"] : []),
+].join(" ")
 
 // Every time we run Electron, we want to first compile the main process files.
 // This command will be called by a Snowpack hook, and Snowpack will take care
 // of compiling the renderer process files.
-const cmdElectron = [cmdMainCompile, "&&", "electron build/dist/main"].join(" ")
+const mainBuildCommand = [electronMainBuildCommand, "&&", nodeEntrypointBuildCommand].join(" ")
+const mainRunCommand = [mainBuildCommand, "&&", "node build/dist/entrypoint"].join(" ")
 
 // Snowpack only supplies "hot-reload" for the renderer process, so we use
 // nodemon as a "hot-reload" for the main process. We give it some folders to
 // watch, as well as a command to re-run on every file change. We simply re-run
 // our esbuild && electron command on every main process change, which restarts
 // the entire Electron application.
-const cmdMainWatch = [
+const mainWatchCommand = [
   "nodemon",
   "--watch ./src/main",
   "--watch ./src/testing",
   "--watch ./src/utils",
   "--ext js,jsx,ts,tsx,svg",
-  `--exec "${cmdElectron}"`,
+  `--exec "${mainRunCommand}"`,
 ].join(" ")
 
 // This is the actual Snowpack configuration. Most snowpack.config.js files
@@ -119,7 +125,7 @@ module.exports = {
     // that will be called in "snowpack build" and "snowpack dev".
     [
       "@snowpack/plugin-run-script",
-      { name: "electron", cmd: cmdMainCompile, watch: cmdMainWatch },
+      { name: "entrypoint|electron", cmd: mainBuildCommand, watch: mainWatchCommand },
     ],
   ],
   // We do not want to open the devTools right away. We choose instead to

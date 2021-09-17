@@ -31,6 +31,10 @@ const httpConfig = {
   endpointRefreshToken: "/token/refresh",
 }
 
+const localRequestConfig = {
+  server: "https://google.com",
+}
+
 export const withSessionID = (body: object) => {
   return {
     ...body,
