@@ -9,7 +9,7 @@ import mandelboxFlow from "@app/main/flows/mandelbox"
 // PROTOCOL LAUNCH STUFF
 const protocolPath = path.join(
   __dirname,
-  "../..",
+  "../../../",
   "protocol-build",
   "client",
   "./_Fractal"
