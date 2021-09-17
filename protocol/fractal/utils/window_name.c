@@ -80,11 +80,11 @@ int get_focused_window_name(char* name_return) {
         if (result == Success) {
             // TODO(anton): actually address non-ASCII encodings rather than just replacing
             // non-ASCII characters with spaces
-            for (int i = 0; list[0][i] != 0; i++) {
+            /*for (int i = 0; list[0][i] != 0; i++) {
                 if ((unsigned char)list[0][i] > 127) {  // > 127 means not ASCII
                     list[0][i] = ' ';
                 }
-            }
+            }*/
             safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
             XFreeStringList(list);
             return 0;
