@@ -36,5 +36,3 @@ and check the terminal output.
 To run the client to connect to a server, first start a host server instance by following the instructions in the `README` in the `host-setup` folder. Once you have the Fractal Host Service running on the server, as well as a Fractal container image (e.g. `base`), follow the instruction listed in the printout in the _host_ terminal that's running the docker container to connect. Open a terminal window on the _client_ machine, and run `fclient` followed by the IP address of your Fractal protocol server, plus some additional flags, according to the instructions on the host terminal printout. You can also add any of the flags from the list above, if desired.
 
 Once a connection has been established with the server, a new window should open on your client machine, and you should see an animated Fractal logo before the Fractal application (e.g. Base or Fractalized Chrome) starts.
-
-
