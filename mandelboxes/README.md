@@ -76,6 +76,8 @@ This will begin installing all dependencies and configurations required to run o
 ../protocol/build_protocol_targets.sh FractalServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
+⚠️ If the command above errors due a failure to build the base container image, try running `docker system prune -af` first (see paragraph below for more context on the issue). 
+
 ### Building Images
 
 To build the server protocol for use in a mandelbox image (for example with the `--update-protocol` parameter to `run_mandelbox_image.sh`), run:
@@ -93,6 +95,8 @@ To build a specific application's mandelbox image, run:
 This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
+
+⚠️ The `./build_mandelbox_image.sh APP` command can sometimes fail due to `apt` being unable to fetch some archives. In that case, if you re-run with the `-o` flag, you should be able to see an error that looks like this: `E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?`). To fix the problem, call `docker system prune -af` first, then run `./build_mandelbox_image.sh APP` again.
 
 **NOTE:** For production we do not cache builds of mandelboxes. This is for two reasons:
 
