@@ -34,6 +34,8 @@ export const paymentPortalParse = (res: any) => {
   }
 }
 
-export const hasValidSubscription = ({subscriptionStatus} : subscriptionStatus): boolean => {
+export const hasValidSubscription = ({
+  subscriptionStatus,
+}: subscriptionStatus): boolean => {
   return ["active", "trialing"].includes(subscriptionStatus)
 }
