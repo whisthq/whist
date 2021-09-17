@@ -28,8 +28,6 @@ import {
   WindowHashOnboardingTypeform,
   WindowHashBugTypeform,
   WindowHashSpeedtest,
-  WindowHashLoading,
-  WindowHashUpdate,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -179,7 +177,8 @@ export const createWindow = (args: {
     emitWindowInfo({ crashed: false, event: "close", hash: args.hash })
   })
 
-  if (args.closeOtherWindows ?? false) closeAllWindows(currentElectronWindows)
+  if (args.closeOtherWindows ?? false)
+    closeElectronWindows(currentElectronWindows)
 
   return win
 }
@@ -326,7 +325,7 @@ export const createOnboardingTypeform = () =>
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboardingTypeform,
-    closeOtherWindows: false,
+    closeOtherWindows: true,
   })
 
 export const createBugTypeform = () =>
@@ -337,6 +336,9 @@ export const createBugTypeform = () =>
       ...height.md,
       skipTaskbar: true,
       alwaysOnTop: true,
+      minimizable: false,
+      frame: false,
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashBugTypeform,
     closeOtherWindows: false,
@@ -350,47 +352,16 @@ export const createSpeedtestWindow = () =>
       ...height.md,
       skipTaskbar: true,
       alwaysOnTop: true,
+      minimizable: false,
+      frame: false,
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashSpeedtest,
     closeOtherWindows: false,
     customURL: "https://speed.cloudflare.com/",
   })
 
-export const createLoadingWindow = () =>
-  createWindow({
-    options: {
-      ...base,
-      ...width.xs,
-      ...height.xxs,
-      skipTaskbar: true,
-      alwaysOnTop: true,
-      frame: false,
-      transparent: true,
-      titleBarStyle: "customButtonsOnHover",
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashLoading,
-    closeOtherWindows: true,
-  })
-
-export const createUpdateWindow = () =>
-  createWindow({
-    options: {
-      ...base,
-      ...width.md,
-      ...height.xs,
-      skipTaskbar: true,
-      alwaysOnTop: true,
-      frame: false,
-      transparent: true,
-      minimizable: false,
-      titleBarStyle: "hidden",
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashUpdate,
-  })
-
 export const createProtocolWindow = async () => {
-  const currentElectronWindows = getElectronWindows()
-
   const protocol = await protocolLaunch()
 
   protocol.on("spawn", () => {
@@ -415,11 +386,6 @@ export const createProtocolWindow = async () => {
   protocol?.stdout?.on("data", (message) => {
     const unstable = isNetworkUnstable(message)
     windowMonitor.emit("network-is-unstable", unstable)
-  })
-
-  protocol?.stdout?.once("data", () => {
-    // When the protocol is running, we want all other Electron windows to be closed
-    closeElectronWindows(currentElectronWindows)
   })
 }
 

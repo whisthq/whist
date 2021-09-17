@@ -1,5 +1,6 @@
-import { merge, Observable } from "rxjs"
+import { merge, Observable, of } from "rxjs"
 import { map, take, filter } from "rxjs/operators"
+import { isEmpty, pickBy } from "lodash"
 
 import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"
@@ -10,22 +11,35 @@ import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
 import { AWSRegion } from "@app/@types/aws"
+import { persistedAuth, persistGet } from "@app/utils/persist"
 import TRIGGER from "@app/utils/triggers"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger("updateAvailable"))
 
-// If there's no update, get the auth credentials (access/refresh token)
-const auth = authFlow(
-  merge(
-    fromSignal(fromTrigger("authInfo"), fromTrigger(TRIGGER.notPersisted)),
-    fromTrigger(TRIGGER.persisted)
-  )
-)
+// Auth flow
+const authCache = {
+  accessToken: (persistedAuth?.accessToken ?? "") as string,
+  refreshToken: (persistedAuth?.refreshToken ?? "") as string,
+  userEmail: (persistedAuth?.userEmail ?? "") as string,
+  configToken: (persistedAuth?.configToken ?? "") as string,
+}
+
+if (isEmpty(pickBy(authCache, (x) => x === ""))) {
+  const auth = authFlow(of(authCache))
+  createTrigger(TRIGGER.authFlowSuccess, auth.success)
+  createTrigger(TRIGGER.authFlowFailure, auth.failure)
+} else {
+  const auth = authFlow(fromTrigger("authInfo"))
+  createTrigger(TRIGGER.authFlowSuccess, auth.success)
+  createTrigger(TRIGGER.authFlowFailure, auth.failure)
+}
 
 const onboarded = fromSignal(
   merge(
-    fromTrigger("onboarded").pipe(filter((onboarded: boolean) => onboarded)),
+    of(persistGet("onboardingTypeformSubmitted", "data")).pipe(
+      filter((onboarded) => onboarded as boolean)
+    ),
     fromTrigger("onboardingTypeformSubmitted")
   ),
   fromTrigger(TRIGGER.authFlowSuccess)
@@ -74,8 +88,6 @@ const refreshAtEnd = authRefreshFlow(
 
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
 
-createTrigger(TRIGGER.authFlowSuccess, auth.success)
-createTrigger(TRIGGER.authFlowFailure, auth.failure)
 createTrigger(TRIGGER.authRefreshSuccess, refreshAtEnd.success)
 
 createTrigger(TRIGGER.checkPaymentFlowSuccess, checkPayment.success)
