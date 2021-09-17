@@ -76,7 +76,7 @@ This will begin installing all dependencies and configurations required to run o
 ../protocol/build_protocol_targets.sh FractalServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
-⚠️ If the command above errors due a failure to build the base container image, try running `docker system prune -af` first (see paragraph below for more context on the issue). 
+⚠️ If the command above errors due a failure to build the base container image, try running `docker system prune -af` first (see paragraph below for more context on the issue).
 
 ### Building Images
 
