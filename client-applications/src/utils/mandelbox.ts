@@ -3,24 +3,26 @@
  * @file mandelbox.ts
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
-import { isEmpty } from "lodash"
+// import { isEmpty } from "lodash"
 import { get, post } from "@app/utils/api"
 import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
-import { appEnvironment, FractalEnvironments } from "../../config/configs"
-import config from "@app/config/environment"
+// import { appEnvironment, FractalEnvironments } from "../../config/configs"
+// import config from "@app/config/environment"
 
-const COMMIT_SHA = config.keys.COMMIT_SHA
+// const COMMIT_SHA = config.keys.COMMIT_SHA
 
-const isLocalEnv = () => {
-  const isLocal = appEnvironment === FractalEnvironments.LOCAL
-  if (!isLocal && (isEmpty(COMMIT_SHA) || COMMIT_SHA === undefined)) {
-    console.log("COMMIT_SHA is empty when appEnvironment is not LOCAL!")
-    console.log("No COMMIT_SHA may create issues communicating with server.")
-  }
-  return isLocal
-}
+// const isLocalEnv = () => {
+//   const isLocal = appEnvironment === FractalEnvironments.LOCAL
+//   if (!isLocal && (isEmpty(COMMIT_SHA) || COMMIT_SHA === undefined)) {
+//     console.log("COMMIT_SHA is empty when appEnvironment is not LOCAL!")
+//     console.log("No COMMIT_SHA may create issues communicating with server.")
+//   }
+//   return isLocal
+// }
+
+const isLocalEnv = () => true
 
 export const regionGet = async (accessToken: string) => {
   const regions: Record<string, any> = await regionRequest(accessToken)
@@ -73,7 +75,7 @@ const mandelboxRequest = async (accessToken: string, region: string) =>
     accessToken,
     body: {
       region,
-      client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
+      client_commit_hash: isLocalEnv() ? "local_dev" : "local_dev",
     },
   })
 

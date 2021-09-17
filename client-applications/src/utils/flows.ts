@@ -8,7 +8,7 @@ import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, take } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/testing"
-import { logBase, LogLevel } from "@app/utils/logging"
+// import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
@@ -68,12 +68,12 @@ export const flow = <T>(
 
     return mapValues(withMocking(name, trigger, flowFn), (obs, key) => {
       obs.subscribe((value: object) => {
-        logBase(
-          `${name}.${key}`, // e.g. authFlow.success
-          { input: triggerPayload, output: value }, // Log both the flow input (trigger) and output
-          LogLevel.DEBUG,
-          Date.now() - startTime // This is how long the flow took run
-        ).catch((err) => console.log(err))
+        // logBase(
+        //   `${name}.${key}`, // e.g. authFlow.success
+        //   { input: triggerPayload, output: value }, // Log both the flow input (trigger) and output
+        //   LogLevel.DEBUG,
+        //   Date.now() - startTime // This is how long the flow took run
+        // ).catch((err) => console.log(err))
       })
 
       return obs.pipe(share())
@@ -99,12 +99,12 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   const startTime = Date.now()
   obs.pipe(share()).subscribe((x: any) => {
     if (!triggerLogsBlacklist.includes(name)) {
-      logBase(
-        `${name}`,
-        { payload: x },
-        LogLevel.DEBUG,
-        Date.now() - startTime
-      ).catch((err) => console.log(err))
+      // logBase(
+      //   `${name}`,
+      //   { payload: x },
+      //   LogLevel.DEBUG,
+      //   Date.now() - startTime
+      // ).catch((err) => console.log(err))
     }
 
     TriggerChannel.next({

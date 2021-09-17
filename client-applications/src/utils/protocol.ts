@@ -136,18 +136,21 @@ export const protocolLaunch = async () => {
 }
 
 // Stream the rest of the info that the protocol needs
-export const protocolStreamInfo = (info: {
-  mandelboxIP: string
-  mandelboxSecret: string
-  mandelboxPorts: {
-    port_32262: number
-    port_32263: number
-    port_32273: number
-  }
-}) => {
-  if (childProcess === undefined) return
+export const protocolStreamInfo = (
+  info: {
+    mandelboxIP: string
+    mandelboxSecret: string
+    mandelboxPorts: {
+      port_32262: number
+      port_32263: number
+      port_32273: number
+    }
+  },
+  protocol: ChildProcess
+) => {
+  if (protocol === undefined) return
   writeStream(
-    childProcess,
+    protocol,
     `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
       info.mandelboxSecret
     }\nip?${info.mandelboxIP}\nfinished?0\n`

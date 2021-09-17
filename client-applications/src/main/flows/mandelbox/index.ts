@@ -3,7 +3,6 @@ import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
-import { AWSRegion } from "@app/@types/aws"
 
 export default flow(
   "mandelboxFlow",
@@ -11,7 +10,7 @@ export default flow(
     trigger: Observable<{
       accessToken: string
       configToken: string
-      region?: AWSRegion
+      region?: any
     }>
   ) => {
     const create = mandelboxCreateFlow(

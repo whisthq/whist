@@ -5,7 +5,7 @@
  */
 
 import { configGet, configPost } from "@fractal/core-ts"
-import config from "@app/config/environment"
+// import config from "@app/config/environment"
 import { sessionID } from "@app/utils/constants"
 import https from "https"
 
@@ -26,7 +26,7 @@ import https from "https"
  */
 
 const httpConfig = {
-  server: config.url.WEBSERVER_URL,
+  server: "https://dev-server.fractal.co",
   // handleAuth: (_: any) => goTo("/auth"),
   endpointRefreshToken: "/token/refresh",
 }
