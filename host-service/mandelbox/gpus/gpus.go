@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
+	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/utils"
 )
 
@@ -21,7 +21,7 @@ func init() {
 		logger.Panicf(nil, "Couldn't initialize GPU allocator, since error getting metrics: %+v", errs)
 	}
 	numGPUs := metrics.NumberOfGPUs
-	gpuSlice = make([]GPU, numGPUs)
+	gpuMetadata = make([]GPU, numGPUs)
 }
 
 // Index is essentially a handle to a GPU on the system. It is the index of a
@@ -34,17 +34,17 @@ type Index int
 // only one instance type).
 const MaxMandelboxesPerGPU = 2
 
-var gpuSlice []GPU
+// gpuMetadata is a slice of GPU structs to keep track of usage and assigned mandelboxes
+var gpuMetadata []GPU
 
 // GPU holds the state for any given GPU. It contains an array of mandelbox ids,
 // which is used to ensure we only free assigned resources.
 type GPU struct {
-	isFull bool
-	assignedMandelboxes []string
-	usage uint8
+	assignedMandelboxes []types.MandelboxID
+	usage               uint8
 }
 
-// Lock to protect `gpuSlice`.
+// Lock to protect `gpuMetadata`.
 var usageLock = new(sync.Mutex)
 
 // Allocate allocates a GPU with room for a mandelbox and returns its index.
@@ -55,9 +55,9 @@ func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 	// We try to allocate as evenly as possible.
 	var minIndex = Index(-1)
 	var minVal uint8 = math.MaxUint8
-	for i, v := range gpuSlice {
+	for i, v := range gpuMetadata {
 		// Just skip full GPUs.
-		if v.isFull {
+		if v.usage >= MaxMandelboxesPerGPU {
 			continue
 		}
 		if v.usage < minVal {
@@ -71,14 +71,9 @@ func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 	}
 
 	// Allocate slot on GPU and return Index
-	gpu := &gpuSlice[minIndex]
-	mid := string(mandelboxID)
+	gpu := &gpuMetadata[minIndex]
 	gpu.usage++
-	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, mid) //Store the id of assigned mandelbox
-
-	if gpu.usage == MaxMandelboxesPerGPU {
-		gpu.isFull = true
-	}
+	gpu.assignedMandelboxes = append(gpu.assignedMandelboxes, mandelboxID) //Store the id of assigned mandelbox
 
 	return minIndex, nil
 }
@@ -89,18 +84,31 @@ func Allocate(mandelboxID types.MandelboxID) (Index, error) {
 func Free(index Index, mandelboxID types.MandelboxID) error {
 	usageLock.Lock()
 	defer usageLock.Unlock()
-	gpu := &gpuSlice[index]
-	mid := string(mandelboxID)
+	gpu := &gpuMetadata[index]
+
+	// Copy elements to an interface slice, this is necessary to use the
+	// SliceContains and SliceRemove functions.
+	assigned := make([]interface{}, len(gpu.assignedMandelboxes))
+	for i, v := range gpu.assignedMandelboxes {
+		assigned[i] = v
+	}
 
 	if gpu.usage <= 0 {
 		return utils.MakeError("Free called on a GPU Index that has no mandelboxes allocated!")
 	}
-	if !utils.SliceContainsString(gpu.assignedMandelboxes, mid) {
+	if !utils.SliceContains(assigned, mandelboxID) {
 		return utils.MakeError("Mandelbox is not allocated on GPU Index!")
 	}
 
 	gpu.usage--
-	gpu.isFull = false
-	gpu.assignedMandelboxes = utils.SliceRemoveString(gpu.assignedMandelboxes, mid)
+
+	// Copy resulting elements into the assigned Mandelboxes slice, this is
+	// necessary because we need to assert the type to MandelboxID
+	updated := utils.SliceRemove(assigned, mandelboxID)
+	gpu.assignedMandelboxes = make([]types.MandelboxID, len(updated)) // Replace old slice with empty slice
+
+	for i, v := range updated {
+		gpu.assignedMandelboxes[i] = v.(types.MandelboxID)
+	}
 	return nil
 }

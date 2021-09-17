@@ -10,19 +10,10 @@ func SliceContains(slice []interface{}, val interface{}) bool {
 	return false
 }
 
-// SliceContainsString returns true if the given slice contains string val, and false otherwise.
-func SliceContainsString(slice []string, val string) bool {
-	for _, v := range slice {
-		if v == val {
-			return true
-		}
-	}
-	return false
-}
-
-// SliceRemoveString deletes the first occurence of string val in s.
+// SliceRemove deletes the first occurence of string val in s.
+// This represents a small memory leak.
 // https://github.com/golang/go/wiki/SliceTricks#delete-without-preserving-order
-func SliceRemoveString(s []string, val string) []string {
+func SliceRemove(s []interface{}, val interface{}) []interface{} {
 	var i int
 	var found bool
 	for index := range s {
