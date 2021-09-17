@@ -14,6 +14,7 @@ add_library(fractalUtils STATIC
         rwlock.c
         color.c
         threads.c
+        fec.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
