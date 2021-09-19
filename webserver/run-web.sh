@@ -12,4 +12,4 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-waitress-serve --port="$PORT" --url-scheme=https entry_web:app ;;
+waitress-serve --port="$PORT" --url-scheme=https entry_web:app

@@ -38,7 +38,6 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import (
     check_and_handle_lingering_instances,
 )
 from app.helpers.command_helpers.ami_upgrade import create_ami_buffer, swapover_amis
-from tests.helpers.data.test_data_generator import populate_test_data
 
 # This blueprint creates CLI commands that can be used to manipulate AMIs when it is registered to
 # a Flask application.
@@ -91,16 +90,6 @@ def swap_over_buffers(
     current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
     new_amis_list: List[str] = json.loads(new_amis)
     swapover_amis(new_amis_list)
-
-
-@command_bp.cli.command("generate_test_data")
-def _generate_test_data():
-    """Generate data required for running test cases.
-
-    This command also populates the database with this data.
-    """
-
-    populate_test_data()
 
 
 # In @owenniles's opinion, all CLI commands should contain hyphens rather than underscores. The
