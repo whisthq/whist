@@ -14,6 +14,7 @@ CLIENT_DIR="$2"
 SERVER_DIR="$3"
 DEST_DIR="$4"
 CACHE_DIR="$5"
+ARCH="$6"
 mkdir -p "$CLIENT_DIR"
 mkdir -p "$SERVER_DIR"
 mkdir -p "$CACHE_DIR"
@@ -71,7 +72,13 @@ SDL_LIB_DIR="$DEST_DIR/lib/64/SDL2/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
+
+  # TODO: add if statement depending on ARCH
+
   SDL_LIB="fractal-macos-sdl2-static-lib.tar.gz"
+
+
+
 elif [[ "$OS" == "Linux" ]]; then
   SDL_LIB="fractal-linux-sdl2-static-lib.tar.gz"
 fi
@@ -110,7 +117,13 @@ SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
+
+  # TODO: add if statement depending on ARCH
+
+
   SENTRY_LIB="fractal-macos-sentry-shared-lib.tar.gz"
+
+
 elif [[ "$OS" == "Linux" ]]; then
   SENTRY_LIB="fractal-linux-sentry-shared-lib.tar.gz"
 fi
@@ -149,7 +162,15 @@ OPENSSL_LIB_DIR="$DEST_DIR/lib/64/openssl/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
+
+
+  # TODO: add if statement depending on ARCH
+
+
   OPENSSL_LIB="fractal-macos-libcrypto-static-lib.tar.gz"
+
+
+
 elif [[ "$OS" == "Linux" ]]; then
   OPENSSL_LIB="fractal-linux-libcrypto-static-lib.tar.gz"
 fi
@@ -187,6 +208,10 @@ FFMPEG_LIB_DIR="$DEST_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
   FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
+
+  # TODO: add if statement depending on ARCH
+
+
   FFMPEG_LIB="fractal-macos-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Linux" ]]; then
   FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
