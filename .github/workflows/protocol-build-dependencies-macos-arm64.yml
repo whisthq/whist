@@ -53,7 +53,6 @@ jobs:
       - name: Install awscli, cmake, gcc, and pkg-config
         run: brew install awscli cmake pkg-config gcc 
 
-      # To publish OpenSSL libcrypto.a/libcrypto.lib to AWS S3
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
