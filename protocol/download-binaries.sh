@@ -14,7 +14,7 @@ CLIENT_DIR="$2"
 SERVER_DIR="$3"
 DEST_DIR="$4"
 CACHE_DIR="$5"
-ARCH="$6"
+MACOS_ARCH="$6"
 mkdir -p "$CLIENT_DIR"
 mkdir -p "$SERVER_DIR"
 mkdir -p "$CACHE_DIR"
@@ -67,18 +67,16 @@ fi
 # Download SDL2 libraries
 ###############################
 
-# Select SDL lib dir and SDL lib targz name based on OS
+# Select SDL lib dir and SDL lib targz name based on OS and hardware architecture (macOS)
 SDL_LIB_DIR="$DEST_DIR/lib/64/SDL2/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-
-  # TODO: add if statement depending on ARCH
-
-  SDL_LIB="fractal-macos-sdl2-static-lib.tar.gz"
-
-
-
+  if [[ "MACOS_ARCH" =~ "arm64"]]; then
+    SDL_LIB="fractal-macos-arm64-static-lib.tar.gz"
+  else
+    SDL_LIB="fractal-macos-x64-sdl2-static-lib.tar.gz"
+  fi
 elif [[ "$OS" == "Linux" ]]; then
   SDL_LIB="fractal-linux-sdl2-static-lib.tar.gz"
 fi
@@ -112,18 +110,16 @@ fi
 # Download Sentry libraries
 ###############################
 
-# Select sentry lib dir and sentry lib targz name based on OS
+# Select sentry lib dir and sentry lib targz name based on OS and hardware architecture (macOS)
 SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-
-  # TODO: add if statement depending on ARCH
-
-
-  SENTRY_LIB="fractal-macos-sentry-shared-lib.tar.gz"
-
-
+  if [[ "MACOS_ARCH" =~ "arm64"]]; then
+    SENTRY_LIB="fractal-macos-arm64-sentry-shared-lib.tar.gz"
+  else
+    SENTRY_LIB="fractal-macos-x64-sentry-shared-lib.tar.gz"
+  fi
 elif [[ "$OS" == "Linux" ]]; then
   SENTRY_LIB="fractal-linux-sentry-shared-lib.tar.gz"
 fi
@@ -157,20 +153,16 @@ fi
 # Download OpenSSL libraries
 ###############################
 
-# Select OpenSSL lib dir and OpenSSL lib targz name based on OS
+# Select OpenSSL lib dir and OpenSSL lib targz name based on OS and hardware architecture (macOS)
 OPENSSL_LIB_DIR="$DEST_DIR/lib/64/openssl/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-
-
-  # TODO: add if statement depending on ARCH
-
-
-  OPENSSL_LIB="fractal-macos-libcrypto-static-lib.tar.gz"
-
-
-
+  if [[ "MACOS_ARCH" =~ "arm64"]]; then
+    OPENSSL_LIB="fractal-macos-arm64-libcrypto-static-lib.tar.gz"
+  else
+    OPENSSL_LIB="fractal-macos-x64-libcrypto-static-lib.tar.gz"
+  fi
 elif [[ "$OS" == "Linux" ]]; then
   OPENSSL_LIB="fractal-linux-libcrypto-static-lib.tar.gz"
 fi
@@ -203,16 +195,16 @@ fi
 # Download FFmpeg libraries
 ###############################
 
-# Select FFmpeg lib dir and targz name
+# Select FFmpeg lib dir and FFmpeg lib targz name based on OS and hardware architecture (macOS)
 FFMPEG_LIB_DIR="$DEST_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
   FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
-
-  # TODO: add if statement depending on ARCH
-
-
-  FFMPEG_LIB="fractal-macos-ffmpeg-shared-lib.tar.gz"
+  if [[ "MACOS_ARCH" =~ "arm64"]]; then
+    FFMPEG_LIB="fractal-macos-arm64-ffmpeg-shared-lib.tar.gz"
+  else
+    FFMPEG_LIB="fractal-macos-x64-ffmpeg-shared-lib.tar.gz"
+  fi
 elif [[ "$OS" == "Linux" ]]; then
   FFMPEG_LIB="fractal-linux-ffmpeg-shared-lib.tar.gz"
 fi
