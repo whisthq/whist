@@ -1,7 +1,7 @@
 # workflows/protocol-build-dependencies-x64.yml
 #
 # Build & Publish Fractal protocol dependencies
-# Build and publish Fractal version-compatible builds of the Fractal protocol 
+# Build and publish Fractal version-compatible builds of the Fractal protocol
 # dependencies targeting X86_64 to AWS S3
 # This workflow only builds non-forked dependencies. Forked dependencies, i.e. SDL, are forked as
 # fractal/<dependency> (i.e. fractal/SDL) and published directly from the forked repository

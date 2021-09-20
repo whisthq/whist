@@ -1,7 +1,7 @@
 # workflows/protocol-build-dependencies-macos-arm64.yml
 #
 # Build & Publish Fractal Protocol dependencies
-# Build and publish Fractal version-compatible builds of the Fractal protocol 
+# Build and publish Fractal version-compatible builds of the Fractal protocol
 # dependencies targeting macOS ARM64 to AWS S3
 # This workflow only builds non-forked dependencies. Forked dependencies, i.e. SDL, are forked as
 # fractal/<dependency> (i.e. fractal/SDL) and published directly from the forked repository
@@ -51,7 +51,7 @@ jobs:
           ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
 
       - name: Install awscli, cmake, gcc, and pkg-config
-        run: brew install awscli cmake pkg-config gcc 
+        run: brew install awscli cmake pkg-config gcc
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
