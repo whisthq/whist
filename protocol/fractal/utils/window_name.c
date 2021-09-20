@@ -43,67 +43,60 @@ void init_window_name_getter() {
     }
 }
 
-// Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
-int convert_string_to_UTF8_format(char* string_output, char *string_input) {
-
+// Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to
+// https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
+int convert_string_to_UTF8_format(char* string_output, char* string_input) {
     int len = strlen(string_input);
-    int index_in=0, index_out = 0;
+    int index_in = 0, index_out = 0;
 
-    for (; index_in<len; index_in++) {
-
-        uint32_t codepoint = (uint32_t) (unsigned char) string_input[index_in];
+    for (; index_in < len; index_in++) {
+        uint32_t codepoint = (uint32_t)(unsigned char)string_input[index_in];
 
         if (codepoint <= ONE_BYTE_MAX_UNICODE_CODEPOINT) {
-            if (index_out+1 > WINDOW_NAME_MAXLEN) {
+            if (index_out + 1 > WINDOW_NAME_MAXLEN) {
                 break;
             }
-            string_output[index_out] = (char) codepoint;
+            string_output[index_out] = (char)codepoint;
             index_out += 1;
-        }
-        else if (codepoint <= TWO_BYTES_MAX_UNICODE_CODEPOINT) {
-            if (index_out+2 > WINDOW_NAME_MAXLEN) {
+        } else if (codepoint <= TWO_BYTES_MAX_UNICODE_CODEPOINT) {
+            if (index_out + 2 > WINDOW_NAME_MAXLEN) {
                 break;
             }
-            string_output[index_out] = (char) (((codepoint >> 6) & 0x1F) | 0xC0);
-            string_output[index_out+1] = (char) (((codepoint >> 0) & 0x3F) | 0x80);
+            string_output[index_out] = (char)(((codepoint >> 6) & 0x1F) | 0xC0);
+            string_output[index_out + 1] = (char)(((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 2;
-        }
-        else if (codepoint <= THREE_BYTES_MAX_UNICODE_CODEPOINT) {
-            if (index_out+3 > WINDOW_NAME_MAXLEN) {
+        } else if (codepoint <= THREE_BYTES_MAX_UNICODE_CODEPOINT) {
+            if (index_out + 3 > WINDOW_NAME_MAXLEN) {
                 break;
             }
-            string_output[index_out] = (char) (((codepoint >> 12) & 0x0F) | 0xE0);
-            string_output[index_out+1] = (char) (((codepoint >>  6) & 0x3F) | 0x80);
-            string_output[index_out+2] = (char) (((codepoint >>  0) & 0x3F) | 0x80);
+            string_output[index_out] = (char)(((codepoint >> 12) & 0x0F) | 0xE0);
+            string_output[index_out + 1] = (char)(((codepoint >> 6) & 0x3F) | 0x80);
+            string_output[index_out + 2] = (char)(((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 3;
-        }
-        else if (codepoint <= FOUR_BYTES_MAX_UNICODE_CODEPOINT) {
-            if (index_out+4 > WINDOW_NAME_MAXLEN) {
+        } else if (codepoint <= FOUR_BYTES_MAX_UNICODE_CODEPOINT) {
+            if (index_out + 4 > WINDOW_NAME_MAXLEN) {
                 break;
             }
-            string_output[index_out] = (char) (((codepoint >> 18) & 0x07) | 0xF0);
-            string_output[index_out+1] = (char) (((codepoint >> 12) & 0x3F) | 0x80);
-            string_output[index_out+2] = (char) (((codepoint >>  6) & 0x3F) | 0x80);
-            string_output[index_out+3] = (char) (((codepoint >>  0) & 0x3F) | 0x80);
+            string_output[index_out] = (char)(((codepoint >> 18) & 0x07) | 0xF0);
+            string_output[index_out + 1] = (char)(((codepoint >> 12) & 0x3F) | 0x80);
+            string_output[index_out + 2] = (char)(((codepoint >> 6) & 0x3F) | 0x80);
+            string_output[index_out + 3] = (char)(((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 4;
-        }
-        else { 
-            if (index_out+3 > WINDOW_NAME_MAXLEN) {
+        } else {
+            if (index_out + 3 > WINDOW_NAME_MAXLEN) {
                 break;
             }
 
             // Encoding error, use replacement character instead
-            string_output[index_out] = (char) 0xEF;  
-            string_output[index_out+1] = (char) 0xBF;
-            string_output[index_out+2] = (char) 0xBD;
+            string_output[index_out] = (char)0xEF;
+            string_output[index_out + 1] = (char)0xBF;
+            string_output[index_out + 2] = (char)0xBD;
             index_out += 3;
         }
-
     }
     string_output[index_out] = 0;
 
-    return len-index_in;
-
+    return len - index_in;
 }
 
 int get_focused_window_name(char* name_return) {
@@ -141,12 +134,15 @@ int get_focused_window_name(char* name_return) {
             return 1;
         }
         if (result == Success) {
-            char string_output[WINDOW_NAME_MAXLEN+1];
-            memset(string_output, 0, WINDOW_NAME_MAXLEN+1);
+            char string_output[WINDOW_NAME_MAXLEN + 1];
+            memset(string_output, 0, WINDOW_NAME_MAXLEN + 1);
             int res = convert_string_to_UTF8_format(string_output, list[0]);
 
-            if (res > 0 ) {
-                LOG_ERROR("The last %i characters from the focused window title got truncated upon UTF-8 encoding", res);
+            if (res > 0) {
+                LOG_ERROR(
+                    "The last %i characters from the focused window title got truncated upon UTF-8 "
+                    "encoding",
+                    res);
             }
 
             safe_strncpy(name_return, string_output, WINDOW_NAME_MAXLEN + 1);
