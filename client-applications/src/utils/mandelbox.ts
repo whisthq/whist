@@ -4,9 +4,9 @@
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
 import { isEmpty } from "lodash"
-import { get, post } from "@app/utils/api"
-import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
-import { chooseRegion } from "@app/utils/region"
+import { post } from "@app/utils/api"
+import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
+import { sortRegionByProximity } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import config from "@app/config/environment"
@@ -23,14 +23,8 @@ const isLocalEnv = () => {
 }
 
 export const regionGet = async (accessToken: string) => {
-  const regions: Record<string, any> = await regionRequest(accessToken)
-  const allowedRegions = (regions?.json as AWSRegion[]) ?? []
-
-  if (allowedRegions.length === 0) {
-    return await chooseRegion(defaultAllowedRegions)
-  } else {
-    return await chooseRegion(regions.json)
-  }
+  const sortedRegions = await sortRegionByProximity(defaultAllowedRegions)
+  return await regionRequest(accessToken, sortedRegions)
 }
 
 export const mandelboxCreate = async (
@@ -77,8 +71,11 @@ const mandelboxRequest = async (accessToken: string, region: string) =>
     },
   })
 
-const regionRequest = async (accessToken: string) =>
-  get({
-    endpoint: "/regions",
-    accessToken,
-  })
+const regionRequest = async (accessToken: string, regions: AWSRegion[]) =>
+  post(
+    {
+      endpoint: "/regions",
+      accessToken,
+    },
+    regions
+  )
