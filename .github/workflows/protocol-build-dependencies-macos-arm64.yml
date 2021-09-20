@@ -77,7 +77,7 @@ jobs:
 
       # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
       - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        # if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         run: |
           tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
           aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
@@ -192,7 +192,7 @@ jobs:
 
       # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
       - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        # if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         run: |
           tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
           aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
