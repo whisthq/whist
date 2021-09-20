@@ -69,7 +69,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         client_commit_hash = body.client_commit_hash
 
     fractal_logger.debug(
-        f"Trying to find instance for user {username} in region {body.region} with commit hash {client_commit_hash}."
+        f"Trying to find instance for user {username} in region {body.region},\
+        with commit hash {client_commit_hash}."
     )
     instance_name = find_instance(body.region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
