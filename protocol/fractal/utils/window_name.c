@@ -49,7 +49,7 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
     int index_in=0, index_out = 0;
     for (; index_in<len; index_in++) {
 
-        unsigned int codepoint = (unsigned int) string_input[i];
+        unsigned int codepoint = (unsigned int) string_input[index_in];
         
         if (codepoint <= ONE_BYTE_MAX_UNICODE_CODEPOINT) {
             if (index_out+1 > WINDOW_NAME_MAXLEN) {
@@ -66,7 +66,7 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
             string_output[index_out+1] = (char) (((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 2;
         }
-        else if (utf <= THREE_BYTES_MAX_UNICODE_CODEPOINT) {
+        else if (codepoint <= THREE_BYTES_MAX_UNICODE_CODEPOINT) {
             if (index_out+3 > WINDOW_NAME_MAXLEN) {
                 break;
             }
@@ -75,7 +75,7 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
             string_output[index_out+2] = (char) (((codepoint >>  0) & 0x3F) | 0x80);
             index_out += 3;
         }
-        else if (utf <= FOUR_BYTES_MAX_UNICODE_CODEPOINT) {
+        else if (codepoint <= FOUR_BYTES_MAX_UNICODE_CODEPOINT) {
             if (index_out+4 > WINDOW_NAME_MAXLEN) {
                 break;
             }
