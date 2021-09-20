@@ -448,6 +448,7 @@ def check_and_handle_lingering_instances() -> None:
         None
 
     """
+    # skips instances with status 'HOST_SERVICE_UNRESPONSIVE' as they should be cleaned up differently
     lingering_instances = [
         instance.instance_name
         for instance in LingeringInstances.query.filter(
