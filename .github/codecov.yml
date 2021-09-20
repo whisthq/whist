@@ -29,15 +29,6 @@ ignore:
   - "webserver/app/config.py"
   - "webserver/app/sentry.py"
 
-# Controls how Codecov parses branch coverage reports
-parsers:
-  gcov:
-    branch_detection:
-      conditional: yes
-      loop: yes
-      method: no
-      macro: no
-
 # Settings for Codecov comments on pull requests
 comment:
   layout: "reach, diff, flags, files, footer"
