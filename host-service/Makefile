@@ -77,7 +77,7 @@ test: build
 	sudo env "PATH=$(PATH)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
 
 	# Upload coverage report to Codecov
-	bash <(curl -s https://codecov.io/bash) -F host-service
+	bash <(curl -s https://codecov.io/bash) -c -F host-service
 
 docs:
 	$(GOCMD) install github.com/johnstarich/go/gopages@master

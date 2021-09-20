@@ -23,11 +23,6 @@ coverage:
   round: down # Up, down, or nearest
   range: "70...90" # First number represents red, and second represents green (default is 70..100)
 
-# Paths fixed to work with Codecov
-fixes:
-  - "::webserver/"
-  - "::host-service/"
-
 # Files ignored by Codecov
 ignore:
   - "webserver/app/cli.py"
@@ -48,6 +43,7 @@ comment:
   layout: "reach, diff, flags, files, footer"
   behavior: default
   require_changes: no # Wether it must have a base report to post
+  require_base: yes # Whether it must have a base report to post
   require_head: no # Whether it must have a head report to post
   branches: null
   show_carryforward_flags: true
