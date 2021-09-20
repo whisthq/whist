@@ -46,6 +46,18 @@ void init_window_name_getter() {
 // Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to
 // https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
 int convert_string_to_UTF8_format(char* string_output, char* string_input) {
+    /*
+        Converts a string of single-byte chars into one encoded according to UTF-8
+
+        Arguments:
+            string_output (char*): the destination for the string encoded with UTF-8
+            string_input (char*): the original string with single-byte chars
+
+        Return:
+            ret (int): the number of characters from the original string which didn't fit in the
+       output string
+    */
+
     int len = strlen(string_input);
     int index_in = 0, index_out = 0;
 
