@@ -56,6 +56,7 @@ jobs:
   webserver-hanging-resource-notification:
     name: Webserver Hanging Resource Notification
     runs-on: ubuntu-20.04
+    needs: [webserver-enumerate-all-instances]
     strategy:
       matrix:
         aws-region:
