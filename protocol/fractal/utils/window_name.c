@@ -45,11 +45,16 @@ void init_window_name_getter() {
 
 // Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
 int convert_string_to_UTF8_format(char* string_output, char *string_input) {
+
+    LOG_WARNING("Entering convert_string_to_UTF8_format");
+
     int len = strlen(string_input);
     int index_in=0, index_out = 0;
     for (; index_in<len; index_in++) {
 
         unsigned int codepoint = (unsigned int) string_input[index_in];
+
+        LOG_WARNING("Encoding string_input[%i]=%c (codepoint=%i), index_out=%i", index_in, string_input[index_in], codepoint, index_out);
         
         if (codepoint <= ONE_BYTE_MAX_UNICODE_CODEPOINT) {
             if (index_out+1 > WINDOW_NAME_MAXLEN) {
@@ -140,12 +145,15 @@ int get_focused_window_name(char* name_return) {
             return 1;
         }
         if (result == Success) {
-
+            LOG_WARNING("About to encode original title: '%s' of len %lu into UTF8", list[0], strlen(list[0]));
             char string_output[WINDOW_NAME_MAXLEN+1];
             int res = convert_string_to_UTF8_format(string_output, list[0]);
+
             if (res > 0 ) {
                 LOG_ERROR("The last %i characters from the focused window title got truncated upon UTF-8 encoding", res);
             }
+
+            LOG_WARNING("Obtained encoded title: '%s' of len %lu", string_output, strlen(string_output));
 
             safe_strncpy(name_return, string_output, WINDOW_NAME_MAXLEN + 1);
             XFreeStringList(list);
