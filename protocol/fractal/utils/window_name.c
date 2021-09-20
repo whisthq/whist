@@ -43,6 +43,11 @@ void init_window_name_getter() {
     }
 }
 
+#define ONE_BYTE_MAX_UNICODE_CODEPOINT 0x7F
+#define TWO_BYTES_MAX_UNICODE_CODEPOINT 0x07FF
+#define THREE_BYTES_MAX_UNICODE_CODEPOINT 0xFFFF
+#define FOUR_BYTES_MAX_UNICODE_CODEPOINT 0x10FFFF
+
 // Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to
 // https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
 int convert_string_to_utf8_format(char* string_output, char* string_input) {
@@ -50,12 +55,15 @@ int convert_string_to_utf8_format(char* string_output, char* string_input) {
         Converts a string of single-byte chars into one encoded according to UTF-8
 
         Arguments:
-            string_output (char*): the destination for the string encoded with UTF-8
-            string_input (char*): the original string with single-byte chars
-
+            string_output (char*): The output string, encoded in UTF-8 format. Each character may
+                                   take up more than 1 byte.
+            string_input (char*): the input string, unencoded. Each char in string_input contains
+                                  the codepoint of the desired UTF-8 character, but the codepoints
+                                  may be outside the ASCII range.
         Return:
-            ret (int): the number of characters from the original string which didn't fit in the
-       output string
+            ret (int): The number of characters in the original string which didn't fit
+                       in the string once encoded in UTF-8 format (UTF-8 characters are
+                        encoded using up to 4 bytes)
     */
 
     int len = strlen(string_input);
