@@ -10,7 +10,7 @@ func SliceContains(slice []interface{}, val interface{}) bool {
 	return false
 }
 
-// SliceRemove deletes the first occurence of string val in s.
+// SliceRemove deletes the first occurence of val in s.
 // This represents a small memory leak.
 // https://github.com/golang/go/wiki/SliceTricks#delete-without-preserving-order
 func SliceRemove(s []interface{}, val interface{}) []interface{} {
