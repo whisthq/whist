@@ -156,7 +156,8 @@ int get_focused_window_name(char* name_return) {
             return 1;
         }
         if (result == Success) {
-            size_t res = convert_string_to_utf8_format(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
+            size_t res =
+                convert_string_to_utf8_format(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
 
             if (res > 0) {
                 LOG_ERROR(
