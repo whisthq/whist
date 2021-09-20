@@ -81,8 +81,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Install boto3 and python-dateutil
-        run: pip install boto3 python-dateutil
+      - name: Install boto3, python-dateutil and psycopg2
+        run: pip install boto3 python-dateutil psycopg2-binary
 
       - name: Flag Old EC2 Instances and Notify in Slack if They Exist
         shell: python3 {0}
