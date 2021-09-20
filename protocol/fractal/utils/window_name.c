@@ -56,7 +56,7 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
 
     for (; index_in<len; index_in++) {
 
-        uint32_t codepoint = (uint32_t) string_input[index_in];
+        uint32_t codepoint = (uint32_t) (unsigned char) string_input[index_in];
 
         LOG_WARNING("Encoding string_input[%i]=%c (codepoint=%lu), index_out=%i", index_in, string_input[index_in], codepoint, index_out);
         
