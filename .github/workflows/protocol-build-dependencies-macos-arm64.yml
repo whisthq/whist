@@ -2,8 +2,8 @@
 #
 # Build & Publish Fractal Protocol dependencies
 # Build and publish Fractal version-compatible builds of the Fractal protocol
-# dependencies targeting macOS ARM64 to AWS S3. This workflow only builds non-forked dependencies, 
-# forked dependencies, i.e. SDL, are forked as fractal/<dependency> (i.e. fractal/SDL) and 
+# dependencies targeting macOS ARM64 to AWS S3. This workflow only builds non-forked dependencies,
+# forked dependencies, i.e. SDL, are forked as fractal/<dependency> (i.e. fractal/SDL) and
 # published directly from the forked repository
 
 name: "Protocol: Build Dependencies"
@@ -79,8 +79,8 @@ jobs:
       - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         run: |
-            tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
-            aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+          tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
+          aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
 
       ###################################################################################
 
@@ -194,8 +194,8 @@ jobs:
       - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         run: |
-            tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
-            aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+          tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
+          aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
 
       ###################################################################################
 
