@@ -48,6 +48,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     start_time = time.time() * 1000
     care_about_active = False
     username = get_jwt_identity()
+
+    fractal_logger.debug(f"{username} requested a mandelbox.")
+
     if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
