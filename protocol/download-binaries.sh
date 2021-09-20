@@ -14,7 +14,7 @@ CLIENT_DIR="$2"
 SERVER_DIR="$3"
 DEST_DIR="$4"
 CACHE_DIR="$5"
-MACOS_ARCH="${1-x86_64}"
+MACOS_ARCH="${6-x86_64}"
 mkdir -p "$CLIENT_DIR"
 mkdir -p "$SERVER_DIR"
 mkdir -p "$CACHE_DIR"
@@ -73,7 +73,7 @@ if [[ "$OS" =~ "Windows" ]]; then
   SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
-    SDL_LIB="fractal-macos-arm64-static-lib.tar.gz"
+    SDL_LIB="fractal-macos-arm64-sdl2-static-lib.tar.gz"
   else
     SDL_LIB="fractal-macos-x64-sdl2-static-lib.tar.gz"
   fi
