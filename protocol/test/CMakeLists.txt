@@ -36,7 +36,7 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
 	$<TARGET_FILE_DIR:${TEST_BINARY}>)
-# Copy the OpenSSL/libcrpto libraries if we are on Windows
+# Copy the OpenSSL/libcrypto libraries if we are on Windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET ${TEST_BINARY} POST_BUILD

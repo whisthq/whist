@@ -38,9 +38,8 @@ extern bool exiting;
 SDL_mutex *window_resize_mutex;
 extern const float window_resize_interval;
 clock window_resize_timer;
-volatile bool pending_resize_message =
-    false;  // should be set to true if sdl event handler was not able to process resize event due
-            // to throttling, so the main loop should process it
+// pending_resize_message should be set to true if sdl event handler was not able to process resize event due to throttling, so the main loop should process it
+volatile bool pending_resize_message = false;  
 
 extern volatile SDL_Window *window;
 
