@@ -111,7 +111,7 @@ jobs:
 
       # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
       - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        # if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -319,7 +319,7 @@ jobs:
 
       # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
       - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        # if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
