@@ -76,8 +76,11 @@ test: build
 	# We need to run some tests as root since the host service init() checks for root perms.
 	sudo env "PATH=$(PATH)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
 
+	# Download the Codecov uploader
+	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
+
 	# Upload coverage report to Codecov
-	bash <(curl -s https://codecov.io/bash) -c -F host-service
+	./codecov -t ${CODECOV_TOKEN} -c -F host-service
 
 docs:
 	$(GOCMD) install github.com/johnstarich/go/gopages@master
