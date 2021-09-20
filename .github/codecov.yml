@@ -23,31 +23,18 @@ coverage:
   round: down # Up, down, or nearest
   range: "70...90" # First number represents red, and second represents green (default is 70..100)
 
-# Paths fixed to work with Codecov
-fixes:
-  - "::webserver/"
-  - "::host-service/"
-
 # Files ignored by Codecov
 ignore:
   - "webserver/app/cli.py"
   - "webserver/app/config.py"
   - "webserver/app/sentry.py"
 
-# Controls how Codecov parses branch coverage reports
-parsers:
-  gcov:
-    branch_detection:
-      conditional: yes
-      loop: yes
-      method: no
-      macro: no
-
 # Settings for Codecov comments on pull requests
 comment:
   layout: "reach, diff, flags, files, footer"
   behavior: default
   require_changes: no # Wether it must have a base report to post
+  require_base: yes # Whether it must have a base report to post
   require_head: no # Whether it must have a head report to post
   branches: null
   show_carryforward_flags: true
