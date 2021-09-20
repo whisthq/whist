@@ -50,6 +50,10 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
 
     int len = strlen(string_input);
     int index_in=0, index_out = 0;
+
+
+    LOG_WARNING("got len=%i", len);
+
     for (; index_in<len; index_in++) {
 
         unsigned int codepoint = (unsigned int) string_input[index_in];
@@ -104,6 +108,7 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
 
 
     }
+    LOG_WARNING("Leaving convert_string_to_UTF8_format. index_in=%i, index_out=%i; returning %i", index_in, index_out, len-index_in);
     string_output[index_out] = 0;
 
     return len-index_in;
@@ -147,6 +152,7 @@ int get_focused_window_name(char* name_return) {
         if (result == Success) {
             LOG_WARNING("About to encode original title: '%s' of len %lu into UTF8", list[0], strlen(list[0]));
             char string_output[WINDOW_NAME_MAXLEN+1];
+            memset(string_output, 0, WINDOW_NAME_MAXLEN+1);
             int res = convert_string_to_UTF8_format(string_output, list[0]);
 
             if (res > 0 ) {

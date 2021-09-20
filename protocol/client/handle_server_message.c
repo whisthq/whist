@@ -212,6 +212,7 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
     }
 
     char *title = (char *)&fmsg->window_title;
+    LOG_WARNING("Got title: '%s' of len %lu", title, strlen(title));
     size_t len = strlen(title) + 1;
     char *new_window_title = safe_malloc(len);
     safe_strncpy(new_window_title, title, strlen(title) + 1);
