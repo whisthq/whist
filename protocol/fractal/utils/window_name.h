@@ -58,6 +58,9 @@ void init_window_name_getter();
  *                                 the codepoint of the desired UTF-8 character, but the codepoints
  *                                 may be outside the ASCII range.
  *
+ * @param string_output            The output string, encoded in UTF-8 format. Each character may
+ *                                 take up more than 1 byte.
+ *
  *
  * @returns                        The number of characters in the original string which didn't fit
  *                                 in the string once encoded in UTF-8 format (UTF-8 characters are
