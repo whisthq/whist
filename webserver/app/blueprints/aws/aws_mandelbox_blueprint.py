@@ -48,6 +48,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     start_time = time.time() * 1000
     care_about_active = False
     username = get_jwt_identity()
+
     if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
@@ -68,7 +69,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         client_commit_hash = body.client_commit_hash
 
     fractal_logger.debug(
-        f"Trying to find instance for region {body.region} and commit hash {client_commit_hash}."
+        f"Trying to find instance for user {username} in region {body.region},\
+        with commit hash {client_commit_hash}."
     )
     instance_name = find_instance(body.region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
