@@ -104,7 +104,7 @@ int convert_string_to_UTF8_format(char* string_output, char *string_input) {
 
 
     }
-    string_output[index_out+1] = '0';
+    string_output[index_out+1] = 0;
 
     return len-index_in;
 
