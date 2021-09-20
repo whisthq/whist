@@ -50,7 +50,8 @@ void init_window_name_getter() {
 
 // Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to
 // https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
-int convert_string_to_utf8_format(char* string_output, char* string_input) {
+size_t convert_string_to_utf8_format(char* string_output, char* string_input,
+                                     size_t max_output_length) {
     /*
         Converts a string of single-byte chars into one encoded according to UTF-8
 
@@ -69,24 +70,26 @@ int convert_string_to_utf8_format(char* string_output, char* string_input) {
     int len = strlen(string_input);
     int index_in = 0, index_out = 0;
 
+    memset(string_output, 0, max_output_length);
+
     for (; index_in < len; index_in++) {
         uint32_t codepoint = (uint32_t)(unsigned char)string_input[index_in];
 
         if (codepoint <= ONE_BYTE_MAX_UNICODE_CODEPOINT) {
-            if (index_out + 1 > WINDOW_NAME_MAXLEN) {
+            if (index_out + 1 > max_output_length) {
                 break;
             }
             string_output[index_out] = (char)codepoint;
             index_out += 1;
         } else if (codepoint <= TWO_BYTES_MAX_UNICODE_CODEPOINT) {
-            if (index_out + 2 > WINDOW_NAME_MAXLEN) {
+            if (index_out + 2 > max_output_length) {
                 break;
             }
             string_output[index_out] = (char)(((codepoint >> 6) & 0x1F) | 0xC0);
             string_output[index_out + 1] = (char)(((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 2;
         } else if (codepoint <= THREE_BYTES_MAX_UNICODE_CODEPOINT) {
-            if (index_out + 3 > WINDOW_NAME_MAXLEN) {
+            if (index_out + 3 > max_output_length) {
                 break;
             }
             string_output[index_out] = (char)(((codepoint >> 12) & 0x0F) | 0xE0);
@@ -94,7 +97,7 @@ int convert_string_to_utf8_format(char* string_output, char* string_input) {
             string_output[index_out + 2] = (char)(((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 3;
         } else if (codepoint <= FOUR_BYTES_MAX_UNICODE_CODEPOINT) {
-            if (index_out + 4 > WINDOW_NAME_MAXLEN) {
+            if (index_out + 4 > max_output_length) {
                 break;
             }
             string_output[index_out] = (char)(((codepoint >> 18) & 0x07) | 0xF0);
@@ -103,7 +106,7 @@ int convert_string_to_utf8_format(char* string_output, char* string_input) {
             string_output[index_out + 3] = (char)(((codepoint >> 0) & 0x3F) | 0x80);
             index_out += 4;
         } else {
-            if (index_out + 3 > WINDOW_NAME_MAXLEN) {
+            if (index_out + 3 > max_output_length) {
                 break;
             }
 
@@ -114,7 +117,6 @@ int convert_string_to_utf8_format(char* string_output, char* string_input) {
             index_out += 3;
         }
     }
-    string_output[index_out] = 0;
 
     return len - index_in;
 }
@@ -154,9 +156,7 @@ int get_focused_window_name(char* name_return) {
             return 1;
         }
         if (result == Success) {
-            char string_output[WINDOW_NAME_MAXLEN + 1];
-            memset(string_output, 0, WINDOW_NAME_MAXLEN + 1);
-            int res = convert_string_to_utf8_format(string_output, list[0]);
+            int res = convert_string_to_utf8_format(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
 
             if (res > 0) {
                 LOG_ERROR(
@@ -165,7 +165,6 @@ int get_focused_window_name(char* name_return) {
                     res);
             }
 
-            safe_strncpy(name_return, string_output, WINDOW_NAME_MAXLEN + 1);
             XFreeStringList(list);
             return 0;
         } else {
