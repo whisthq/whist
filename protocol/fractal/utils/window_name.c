@@ -67,8 +67,8 @@ size_t convert_string_to_utf8_format(char* string_output, char* string_input,
                         encoded using up to 4 bytes)
     */
 
-    int len = strlen(string_input);
-    int index_in = 0, index_out = 0;
+    size_t len = strlen(string_input);
+    size_t index_in = 0, index_out = 0;
 
     memset(string_output, 0, max_output_length);
 
@@ -156,7 +156,7 @@ int get_focused_window_name(char* name_return) {
             return 1;
         }
         if (result == Success) {
-            int res = convert_string_to_utf8_format(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
+            size_t res = convert_string_to_utf8_format(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
 
             if (res > 0) {
                 LOG_ERROR(
