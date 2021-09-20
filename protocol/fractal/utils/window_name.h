@@ -66,7 +66,7 @@ void init_window_name_getter();
  *                                 in the string once encoded in UTF-8 format (UTF-8 characters are
  *                                 encoded using up to 4 bytes)
  */
-int convert_string_to_UTF8_format(char* string_output, char* string_input);
+int convert_string_to_utf8_format(char* string_output, char* string_input);
 
 /**
  * @brief                          Get the name of the focused window.

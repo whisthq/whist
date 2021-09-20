@@ -45,7 +45,7 @@ void init_window_name_getter() {
 
 // Codepoint to UTF8 char encoding algorithm & bit masks acknowledged to
 // https://gist.github.com/MightyPork/52eda3e5677b4b03524e40c9f0ab1da5
-int convert_string_to_UTF8_format(char* string_output, char* string_input) {
+int convert_string_to_utf8_format(char* string_output, char* string_input) {
     /*
         Converts a string of single-byte chars into one encoded according to UTF-8
 
@@ -148,7 +148,7 @@ int get_focused_window_name(char* name_return) {
         if (result == Success) {
             char string_output[WINDOW_NAME_MAXLEN + 1];
             memset(string_output, 0, WINDOW_NAME_MAXLEN + 1);
-            int res = convert_string_to_UTF8_format(string_output, list[0]);
+            int res = convert_string_to_utf8_format(string_output, list[0]);
 
             if (res > 0) {
                 LOG_ERROR(
