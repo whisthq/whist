@@ -12,9 +12,15 @@ const rebootWarning = () =>
     silent: true,
   })
 
-const updateNotification = () =>
+const updateAvailableNotification = () =>
   new Notification({
     body: "An update is available! Fractal is downloading it in the background.",
+    silent: true,
+  })
+
+const updateDownloadedNotification = () =>
+  new Notification({
+    body: "Your update has been downloaded successfully. Fractal will auto-update the next time it is closed.",
     silent: true,
   })
 
@@ -27,6 +33,7 @@ const startupNotification = () =>
 export {
   internetWarning,
   rebootWarning,
-  updateNotification,
+  updateAvailableNotification,
+  updateDownloadedNotification,
   startupNotification,
 }
