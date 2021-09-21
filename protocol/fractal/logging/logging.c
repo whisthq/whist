@@ -421,9 +421,6 @@ void print_stacktrace() {
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
-    // TODO: Re-implement backtrace using `backtrace_symbols_fd`.
-    // We can't use `backtrace_symbols` because it doesn't work
-    // if we're in a signal handler caused by certain segfaults.
     fprintf(stdout, "Printing backtrace...\n");
     void* trace[HANDLER_ARRAY_SIZE];
     size_t trace_size;
@@ -432,7 +429,8 @@ void print_stacktrace() {
     trace_size = backtrace(trace, HANDLER_ARRAY_SIZE);
 
     // Get the backtrace symbols
-    // Print stacktrace to stdout
+    // Print stacktrace to stdout - use backtrace_symbols_fd instead of
+    //     backtrace_symbols because SIGABRT during a `malloc` can cause hangs
     backtrace_symbols_fd(trace, trace_size, STDIN_FILENO);
 #endif
     // Print out the final newlines and flush
