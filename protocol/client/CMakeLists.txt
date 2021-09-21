@@ -101,17 +101,7 @@ endif()
 #[[
 ################## Linking platform independent libs ##################
 ]]
-target_link_libraries(FractalClient
-        fractalCore
-        fractalAudio
-        fractalVideo
-        fractalClipboard
-        fractalNetwork
-        fractalLogging
-        fractalUtils
-        ${STATIC_SDL2}
-        ${LIB_SENTRY}
-        )
+target_link_libraries(FractalClient ${PLATFORM_INDEPENDENT_LIBS})
 
 #[[
 ################## LINUX ##################
@@ -124,13 +114,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(FractalClient
-            ${X11_LIBRARIES}
-            ${X11_Xfixes_LIB}
-            ${ALSA_LIBRARIES}
-            crypto
-            m
-            )
+    target_link_libraries(FractalClient ${LINUX_SPECIFIC_LIBS})
 endif()
 
 #[[
@@ -139,22 +123,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(FractalClient PRIVATE native_window_utils_mac.m)
 
-    target_link_libraries(FractalClient
-        "-framework OpenGL"
-        "-framework VideoToolbox"
-        "-framework CoreMedia"
-        "-framework CoreAudio"
-        "-framework AudioToolbox"
-        "-framework IOKit"
-        "-framework ForceFeedback"
-        "-framework Carbon"
-        "-framework AppKit"
-        "-framework Metal"
-        "-framework QuartzCore"
-        objc
-        iconv
-        ${LIB_OPENSSL}
-        )
+    target_link_libraries(FractalClient ${MAC_SPECIFIC_LIBS})
 endif()
 
 #[[
@@ -177,31 +146,5 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 
     # Link to system libs
-    target_link_libraries(FractalClient
-            ${LIB_OPENSSL}
-            libvcruntime
-            libucrt
-            libcmt
-            kernel32
-            gdi32
-            winmm
-            imm32
-            shell32
-            advapi32
-            ole32
-            oleaut32
-            opengl32
-            user32
-            uuid
-            version
-            ws2_32
-            shlwapi
-            crypt32
-            d3d11
-            dxgi
-            dxguid
-            shcore
-            DbgHelp
-            setupapi
-            )
+    target_link_libraries(FractalClient ${WINDOWS_SPECIFIC_LIBS})
 endif()
