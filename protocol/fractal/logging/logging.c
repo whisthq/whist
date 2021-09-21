@@ -421,43 +421,46 @@ void print_stacktrace() {
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
+    // TODO: Re-implement backtrace using `backtrace_symbols_fd`.
+    // We can't use `backtrace_symbols` because it doesn't work
+    // if we're in a signal handler caused by certain segfaults.
+    fprintf(stdout, "Not printing backtrace due to malloc bug.\n");
+    // void* trace[HANDLER_ARRAY_SIZE];
+    // size_t trace_size;
 
-    void* trace[HANDLER_ARRAY_SIZE];
-    size_t trace_size;
+    // // get void*'s for all entries on the stack
+    // trace_size = backtrace(trace, HANDLER_ARRAY_SIZE);
 
-    // get void*'s for all entries on the stack
-    trace_size = backtrace(trace, HANDLER_ARRAY_SIZE);
+    // // Get the backtrace symbols
+    // char** messages;
+    // messages = backtrace_symbols(trace, trace_size);
 
-    // Get the backtrace symbols
-    char** messages;
-    messages = backtrace_symbols(trace, trace_size);
+    // // Print stacktrace to stdout
+    // // Print backtrace messages
+    // for (int i = 1; i < (int)trace_size; i++) {
+    //     fprintf(stdout, "[backtrace #%02d] %s\n", i, messages[i]);
+    // }
+    // // Print addr2line commands
+    // for (int i = 1; i < (int)trace_size; i++) {
+    //     // Storage for addr2line command
+    //     char cmd[2048];
 
-    // Print stacktrace to stdout
-    // Print backtrace messages
-    for (int i = 1; i < (int)trace_size; i++) {
-        fprintf(stdout, "[backtrace #%02d] %s\n", i, messages[i]);
-    }
-    // Print addr2line commands
-    for (int i = 1; i < (int)trace_size; i++) {
-        // Storage for addr2line command
-        char cmd[2048];
+    //     // Generate addr2line command
+    //     void* ptr = trace[i];
+    //     Dl_info info;
+    //     if (dladdr(ptr, &info)) {
+    //         // Update ptr to be an offset from the dl's base
+    //         ptr = (void*)((char*)ptr - (char*)info.dli_fbase);
+    //         snprintf(cmd, sizeof(cmd), "addr2line -fp -e %s -i %p", info.dli_fname, ptr);
+    //         // Can only run on systems with addr2line
+    //         // runcmd(cmd, NULL);
+    //     } else {
+    //         snprintf(cmd, sizeof(cmd), "echo ??");
+    //     }
 
-        // Generate addr2line command
-        void* ptr = trace[i];
-        Dl_info info;
-        if (dladdr(ptr, &info)) {
-            // Update ptr to be an offset from the dl's base
-            ptr = (void*)((char*)ptr - (char*)info.dli_fbase);
-            snprintf(cmd, sizeof(cmd), "addr2line -fp -e %s -i %p", info.dli_fname, ptr);
-            // Can only run on systems with addr2line
-            // runcmd(cmd, NULL);
-        } else {
-            snprintf(cmd, sizeof(cmd), "echo ??");
-        }
-
-        // Write addr2line command to logs
-        fprintf(stdout, "%s\n", cmd);
-    }
+    //     // Write addr2line command to logs
+    //     fprintf(stdout, "%s\n", cmd);
+    // }
 #endif
     // Print out the final newlines and flush
     fprintf(stdout, "\n\n");
