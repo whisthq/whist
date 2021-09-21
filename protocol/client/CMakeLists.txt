@@ -114,7 +114,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(FractalClient ${LINUX_SPECIFIC_LIBS})
+    target_link_libraries(FractalClient ${LINUX_SPECIFIC_CLIENT_LIBS})
 endif()
 
 #[[
@@ -123,7 +123,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(FractalClient PRIVATE native_window_utils_mac.m)
 
-    target_link_libraries(FractalClient ${MAC_SPECIFIC_LIBS})
+    target_link_libraries(FractalClient ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
 
 #[[
@@ -146,5 +146,5 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 
     # Link to system libs
-    target_link_libraries(FractalClient ${WINDOWS_SPECIFIC_LIBS})
+    target_link_libraries(FractalClient ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()

@@ -31,7 +31,7 @@ TEST(ClientTest, FailingTest) {
     EXPECT_EQ(i, j);
 }
 
-
+// Example of a test using a function from the client module
 TEST(ClientTest, ArgParsingEmptyArgsTest) {
     int argc = 1;
 

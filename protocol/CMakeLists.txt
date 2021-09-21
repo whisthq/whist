@@ -302,14 +302,27 @@ set(PLATFORM_INDEPENDENT_LIBS   fractalCore
                                 ${LIB_SENTRY}
 )
 
-set(LINUX_SPECIFIC_LIBS     ${X11_LIBRARIES}
-                            ${X11_Xfixes_LIB}
-                            ${ALSA_LIBRARIES}
-                            crypto
-                            m
+set(LINUX_SPECIFIC_CLIENT_LIBS      ${X11_LIBRARIES}
+                                    ${X11_Xfixes_LIB}
+                                    ${ALSA_LIBRARIES}
+                                    crypto
+                                    m
 )
 
-set(MAC_SPECIFIC_LIBS       "-framework OpenGL"
+set(LINUX_SPECIFIC_SERVER_LIBS      ${X11_LIBRARIES}
+                                    ${X11_Xfixes_LIB}
+                                    ${X11_Xdamage_LIB}
+                                    ${X11_Xext_LIB}
+                                    ${X11_Xtst_LIB}
+                                    GL
+                                    asound
+                                    m
+                                    OpenSSL::Crypto
+)
+
+
+
+set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
                             "-framework VideoToolbox"
                             "-framework CoreMedia"
                             "-framework CoreAudio"
@@ -325,31 +338,72 @@ set(MAC_SPECIFIC_LIBS       "-framework OpenGL"
                             ${LIB_OPENSSL}
 )
 
-set(WINDOWS_SPECIFIC_LIBS   ${LIB_OPENSSL}
-                            libvcruntime
-                            libucrt
-                            libcmt
-                            kernel32
-                            gdi32
-                            winmm
-                            imm32
-                            shell32
-                            advapi32
-                            ole32
-                            oleaut32
-                            opengl32
-                            user32
-                            uuid
-                            version
-                            ws2_32
-                            shlwapi
-                            crypt32
-                            d3d11
-                            dxgi
-                            dxguid
-                            shcore
-                            DbgHelp
-                            setupapi
+set(WINDOWS_SPECIFIC_CLIENT_LIBS    ${LIB_OPENSSL}
+                                    libvcruntime
+                                    libucrt
+                                    libcmt
+                                    kernel32
+                                    gdi32
+                                    winmm
+                                    imm32
+                                    shell32
+                                    advapi32
+                                    ole32
+                                    oleaut32
+                                    opengl32
+                                    user32
+                                    uuid
+                                    version
+                                    ws2_32
+                                    shlwapi
+                                    crypt32
+                                    d3d11
+                                    dxgi
+                                    dxguid
+                                    shcore
+                                    DbgHelp
+                                    setupapi
+)
+
+set(WINDOWS_SPECIFIC_SERVER_LIBS    ${LIB_OPENSSL}
+                                    libvcruntime
+                                    libcmt
+                                    kernel32
+                                    ws2_32
+                                    crypt32
+                                    wldap32
+                                    normaliz
+                                    gdi32
+                                    winmm
+                                    imm32
+                                    shell32
+                                    advapi32
+                                    ole32
+                                    oleaut32
+                                    opengl32
+                                    user32
+                                    uuid
+                                    version
+                                    dxgi
+                                    d3d11
+                                    winspool
+                                    comdlg32
+                                    odbc32
+                                    odbccp32
+                                    ucrt
+                                    ucrtd
+                                    vcruntime
+                                    msvcrt
+                                    msvcmrt
+                                    msvcprt
+                                    avrt
+                                    d3dcompiler
+                                    dxguid
+                                    crypt32
+                                    shlwapi
+                                    shcore
+                                    DbgHelp
+                                    setupapi
 )
 
 add_subdirectory(client)

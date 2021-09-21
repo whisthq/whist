@@ -70,14 +70,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(${TEST_BINARY} ${LINUX_SPECIFIC_LIBS})
+    target_link_libraries(${TEST_BINARY} ${LINUX_SPECIFIC_CLIENT_LIBS})
 endif()
 
 # Link Mac-specific libs
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${TEST_BINARY} PRIVATE ../client/native_window_utils_mac.m)
 
-    target_link_libraries(${TEST_BINARY} ${MAC_SPECIFIC_LIBS})
+    target_link_libraries(${TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
 
 # Finally, link Windows-specific libraries
@@ -95,7 +95,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 
     # Link to system libs
-    target_link_libraries(${TEST_BINARY} ${WINDOWS_SPECIFIC_LIBS})
+    target_link_libraries(${TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
 
 # Include the GoogleTest library, and let gtest scan for the tests in the binary file
