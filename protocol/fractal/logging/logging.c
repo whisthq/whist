@@ -392,6 +392,14 @@ void mprintf(const char* tag, const char* fmt_str, va_list args) {
 FractalMutex crash_handler_mutex;
 
 void print_stacktrace() {
+    /*
+        Prints the stacktrace that led to the point at which this function was called.
+
+        NOTE: when updating this function, do NOT add anything that calls `malloc`.
+        This function is called when signals are handled, and a SIGABRT during a
+        `malloc` can cause `malloc`s called by this function to hang.
+    */
+
     fractal_lock_mutex(crash_handler_mutex);
 
     // Flush out all of the logs that occured prior to the stacktrace
@@ -432,6 +440,28 @@ void print_stacktrace() {
     // Print stacktrace to stdout - use backtrace_symbols_fd instead of
     //     backtrace_symbols because SIGABRT during a `malloc` can cause hangs
     backtrace_symbols_fd(trace, trace_size, STDOUT_FILENO);
+
+    // Print addr2line commands
+    for (int i = 1; i < (int)trace_size; i++) {
+        // Storage for addr2line command
+        char cmd[2048];
+
+        // Generate addr2line command
+        void* ptr = trace[i];
+        Dl_info info;
+        if (dladdr(ptr, &info)) {
+            // Update ptr to be an offset from the dl's base
+            ptr = (void*)((char*)ptr - (char*)info.dli_fbase);
+            snprintf(cmd, sizeof(cmd), "addr2line -fp -e %s -i %p", info.dli_fname, ptr);
+            // Can only run on systems with addr2line
+            // runcmd(cmd, NULL);
+        } else {
+            snprintf(cmd, sizeof(cmd), "echo ??");
+        }
+
+        // Write addr2line command to logs
+        fprintf(stdout, "%s\n", cmd);
+    }
 #endif
     // Print out the final newlines and flush
     fprintf(stdout, "\n\n");
