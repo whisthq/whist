@@ -175,9 +175,8 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             .one_or_none()
         )
     if instance_with_max_mandelboxes is None:
-        # If we are unable to find the instance in the required region,
-        # let's try to find an instance in nearby AZ
-        # that doesn't impact the user experience too much.
+        # If we still can't find an instance for them, see if it's because
+        # the commit hashes don't match. If so, just give them an instance.
         instance_with_max_mandelboxes = (
             InstancesWithRoomForMandelboxes.query.filter(
                 InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
