@@ -2,6 +2,8 @@
 
 # Configure GHA to import the AWS and resources packages.
 
+set -Eeuo pipefail
+
 # Create a temporary folder, and copy the aws and resources modules to that folder.
 # We copy instead of move to avoid mutating our repository.
 # The point is to ensure that this package can be imported even if our git repo changes.
