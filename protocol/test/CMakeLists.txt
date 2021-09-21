@@ -106,89 +106,90 @@ endif()
 ################## FractalServerUnitTests ##################
 ]]
 
-# Create the executable
-set(SERVER_TEST_BINARY FractalServerTest)
-add_executable(${SERVER_TEST_BINARY} ServerTest.cpp)
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on MacOS
 
-# Link the GoogleTest library, as well as the core client (but not main.c)
-set(FRACTAL_SERVER_SOURCEFILES
-        ../server/client.c
-        ../server/video.c
-        ../server/audio.c
-        ../server/parse_args.c
-        ../server/handle_client_message.c
-        ../server/network.c)
-add_library(FRACTAL_SERVER_LIBRARY ${FRACTAL_SERVER_SOURCEFILES})
-target_link_libraries(${SERVER_TEST_BINARY} gtest FRACTAL_SERVER_LIBRARY)
+    # Create the executable
+    set(SERVER_TEST_BINARY FractalServerTest)
+    add_executable(${SERVER_TEST_BINARY} ServerTest.cpp)
 
-# Link the FFmpeg libraries
-foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(VERBOSE "linking lib for ${SERVER_TEST_BINARY}: ${LIB}")
-    target_link_libraries(${SERVER_TEST_BINARY} ${LIB})
-endforeach(LIB)
+    # Link the GoogleTest library, as well as the core client (but not main.c)
+    set(FRACTAL_SERVER_SOURCEFILES
+            ../server/client.c
+            ../server/video.c
+            ../server/audio.c
+            ../server/parse_args.c
+            ../server/handle_client_message.c
+            ../server/network.c)
+    add_library(FRACTAL_SERVER_LIBRARY ${FRACTAL_SERVER_SOURCEFILES})
+    target_link_libraries(${SERVER_TEST_BINARY} gtest FRACTAL_SERVER_LIBRARY)
 
-# Link the threading and dynamic link library if we are on Mac/Linx
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(${SERVER_TEST_BINARY} ${CMAKE_DL_LIBS})
-endif()
+    # Link the FFmpeg libraries
+    foreach(LIB ${FFMPEG_LIBS_PATHS})
+        message(VERBOSE "linking lib for ${SERVER_TEST_BINARY}: ${LIB}")
+        target_link_libraries(${SERVER_TEST_BINARY} ${LIB})
+    endforeach(LIB)
 
-# Link the remaining platform-independent libraries
-target_link_libraries(${SERVER_TEST_BINARY}
-    ${PLATFORM_INDEPENDENT_SERVER_LIBS}
-)
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_package(X11 REQUIRED
-            Xfixes
-            Xdamage
-            Xext
-            Xtst)
-    include_directories(${X11_INCLUDE_DIR})
-    if(NOT X11_LIBRARIES)
-        message(FATAL_ERROR "Library X11_LIBRARIES was not found!")
-    endif()
-    if(NOT X11_Xfixes_LIB)
-        message(FATAL_ERROR "Library X11_Xfixes_LIB was not found!")
-    endif()
-    if(NOT X11_Xdamage_LIB)
-        message(FATAL_ERROR "Library X11_Xdamage_LIB was not found!")
-    endif()
-    if(NOT X11_Xext_LIB)
-        message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
+    # Link the threading and dynamic link library if we are on Mac/Linx
+    if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        target_link_libraries(${SERVER_TEST_BINARY} ${CMAKE_DL_LIBS})
     endif()
 
+    # Link the remaining platform-independent libraries
     target_link_libraries(${SERVER_TEST_BINARY}
-            ${X11_LIBRARIES}
-            ${X11_Xfixes_LIB}
-            ${X11_Xdamage_LIB}
-            ${X11_Xext_LIB}
-            ${X11_Xtst_LIB}
-            GL
-            asound
-            m
-            OpenSSL::Crypto
-            )
-endif()
+        ${PLATFORM_INDEPENDENT_SERVER_LIBS}
+    )
 
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        find_package(X11 REQUIRED
+                Xfixes
+                Xdamage
+                Xext
+                Xtst)
+        include_directories(${X11_INCLUDE_DIR})
+        if(NOT X11_LIBRARIES)
+            message(FATAL_ERROR "Library X11_LIBRARIES was not found!")
+        endif()
+        if(NOT X11_Xfixes_LIB)
+            message(FATAL_ERROR "Library X11_Xfixes_LIB was not found!")
+        endif()
+        if(NOT X11_Xdamage_LIB)
+            message(FATAL_ERROR "Library X11_Xdamage_LIB was not found!")
+        endif()
+        if(NOT X11_Xext_LIB)
+            message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
+        endif()
 
-if (${WIN32})
-    #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
-    # this comes up when we used precompiled libraries which we do not have .pdb files for
-    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
-
-    #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
-    #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
-    set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY
-            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-    if(CMAKE_CUDA_COMPILER)
-        set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
+        target_link_libraries(${SERVER_TEST_BINARY}
+                ${X11_LIBRARIES}
+                ${X11_Xfixes_LIB}
+                ${X11_Xdamage_LIB}
+                ${X11_Xext_LIB}
+                ${X11_Xtst_LIB}
+                GL
+                asound
+                m
+                OpenSSL::Crypto
+                )
     endif()
 
-    # Link to system libs
-    target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
-endif()
+    if (${WIN32})
+        #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
+        # this comes up when we used precompiled libraries which we do not have .pdb files for
+        set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
+        #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
+        #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
+        set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY
+                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+        if(CMAKE_CUDA_COMPILER)
+            set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
+        endif()
+
+        # Link to system libs
+        target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
+    endif()
+endif()
 
 #[[
 ################## FractalUnitTests ##################
@@ -198,4 +199,6 @@ endif()
 # Include the GoogleTest library, and let gtest scan for the tests in the binary file
 include(GoogleTest)
 gtest_discover_tests(${CLIENT_TEST_BINARY})
-gtest_discover_tests(${SERVER_TEST_BINARY})
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    gtest_discover_tests(${SERVER_TEST_BINARY})
+endif()

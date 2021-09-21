@@ -292,17 +292,61 @@ add_subdirectory(fractal)
 
 # Set variables to be used by the CMakeLists in the subdirectories
 set(PLATFORM_INDEPENDENT_LIBS   fractalCore
-                                fractalAudio
-                                fractalVideo
-                                fractalClipboard
-                                fractalNetwork
-                                fractalLogging
-                                fractalUtils
-                                ${STATIC_SDL2}
-                                ${LIB_SENTRY}
+    fractalAudio
+    fractalVideo
+    fractalClipboard
+    fractalNetwork
+    fractalLogging
+    fractalUtils
+    ${STATIC_SDL2}
+    ${LIB_SENTRY}
+)
+set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
+    "-framework VideoToolbox"
+    "-framework CoreMedia"
+    "-framework CoreAudio"
+    "-framework AudioToolbox"
+    "-framework IOKit"
+    "-framework ForceFeedback"
+    "-framework Carbon"
+    "-framework AppKit"
+    "-framework Metal"
+    "-framework QuartzCore"
+    objc
+    iconv
+    ${LIB_OPENSSL}
+)
+set(WINDOWS_SPECIFIC_CLIENT_LIBS    ${LIB_OPENSSL}
+    libvcruntime
+    libucrt
+    libcmt
+    kernel32
+    gdi32
+    winmm
+    imm32
+    shell32
+    advapi32
+    ole32
+    oleaut32
+    opengl32
+    user32
+    uuid
+    version
+    ws2_32
+    shlwapi
+    crypt32
+    d3d11
+    dxgi
+    dxguid
+    shcore
+    DbgHelp
+    setupapi
 )
 
-set(PLATFORM_INDEPENDENT_SERVER_LIBS  fractalCore
+add_subdirectory(client)
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
+    set(SERV "FractalServer")
+    set(PLATFORM_INDEPENDENT_SERVER_LIBS  fractalCore
         fractalAudio
         fractalVideo
         fractalClipboard
@@ -314,97 +358,47 @@ set(PLATFORM_INDEPENDENT_SERVER_LIBS  fractalCore
         ${STATIC_SDL2}
         ${LIB_SENTRY}
         ${LIBMFX}
-)
-
-
-
-set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
-                            "-framework VideoToolbox"
-                            "-framework CoreMedia"
-                            "-framework CoreAudio"
-                            "-framework AudioToolbox"
-                            "-framework IOKit"
-                            "-framework ForceFeedback"
-                            "-framework Carbon"
-                            "-framework AppKit"
-                            "-framework Metal"
-                            "-framework QuartzCore"
-                            objc
-                            iconv
-                            ${LIB_OPENSSL}
-)
-
-set(WINDOWS_SPECIFIC_CLIENT_LIBS    ${LIB_OPENSSL}
-                                    libvcruntime
-                                    libucrt
-                                    libcmt
-                                    kernel32
-                                    gdi32
-                                    winmm
-                                    imm32
-                                    shell32
-                                    advapi32
-                                    ole32
-                                    oleaut32
-                                    opengl32
-                                    user32
-                                    uuid
-                                    version
-                                    ws2_32
-                                    shlwapi
-                                    crypt32
-                                    d3d11
-                                    dxgi
-                                    dxguid
-                                    shcore
-                                    DbgHelp
-                                    setupapi
-)
-
-set(WINDOWS_SPECIFIC_SERVER_LIBS    ${LIB_OPENSSL}
-                                    libvcruntime
-                                    libcmt
-                                    kernel32
-                                    ws2_32
-                                    crypt32
-                                    wldap32
-                                    normaliz
-                                    gdi32
-                                    winmm
-                                    imm32
-                                    shell32
-                                    advapi32
-                                    ole32
-                                    oleaut32
-                                    opengl32
-                                    user32
-                                    uuid
-                                    version
-                                    dxgi
-                                    d3d11
-                                    winspool
-                                    comdlg32
-                                    odbc32
-                                    odbccp32
-                                    ucrt
-                                    ucrtd
-                                    vcruntime
-                                    msvcrt
-                                    msvcmrt
-                                    msvcprt
-                                    avrt
-                                    d3dcompiler
-                                    dxguid
-                                    crypt32
-                                    shlwapi
-                                    shcore
-                                    DbgHelp
-                                    setupapi
-)
-
-add_subdirectory(client)
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
-    set(SERV "FractalServer")
+    )
+    set(WINDOWS_SPECIFIC_SERVER_LIBS    ${LIB_OPENSSL}
+        libvcruntime
+        libcmt
+        kernel32
+        ws2_32
+        crypt32
+        wldap32
+        normaliz
+        gdi32
+        winmm
+        imm32
+        shell32
+        advapi32
+        ole32
+        oleaut32
+        opengl32
+        user32
+        uuid
+        version
+        dxgi
+        d3d11
+        winspool
+        comdlg32
+        odbc32
+        odbccp32
+        ucrt
+        ucrtd
+        vcruntime
+        msvcrt
+        msvcmrt
+        msvcprt
+        avrt
+        d3dcompiler
+        dxguid
+        crypt32
+        shlwapi
+        shcore
+        DbgHelp
+        setupapi
+    )
     add_subdirectory(server)
 endif()
 # Include the unit tests code
