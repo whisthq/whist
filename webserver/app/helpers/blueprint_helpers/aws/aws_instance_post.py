@@ -448,7 +448,14 @@ def check_and_handle_lingering_instances() -> None:
         None
 
     """
-    lingering_instances = [instance.instance_name for instance in LingeringInstances.query.all()]
+    # skips instances with status 'HOST_SERVICE_UNRESPONSIVE' as they once the `last_update` exceeds
+    # 2 minutes, they will be marked as `lingering_instances` and will be cleaned up then
+    lingering_instances = [
+        instance.instance_name
+        for instance in LingeringInstances.query.filter(
+            LingeringInstances.status != "HOST_SERVICE_UNRESPONSIVE"
+        ).all()
+    ]
     for instance_name in lingering_instances:
         set_local_lock_timeout(5)
         instance_info = InstanceInfo.query.with_for_update().get(instance_name)
