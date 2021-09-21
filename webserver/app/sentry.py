@@ -27,10 +27,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
         environment=env,
         release="webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),  # FIXME no env usage
     )
-    # Docs:
-    # https://getsentry.github.io/sentry-python/api.html?highlight=capture_message#sentry_sdk.capture_message
-    resp = sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
-    if resp is None:
-        raise SentryInitializationError(
-            f"Failed to initialize sentry DSN with env: {env}, dsn: {sentry_dsn}"
-        )
+
+    # If you want to test Sentry, uncomment the following
+    # Docs: https://getsentry.github.io/sentry-python/api.html?highlight=capture_message#sentry_sdk.capture_message
+    # resp = sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
