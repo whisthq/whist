@@ -358,6 +358,8 @@ int main(int argc, char* argv[]) {
     } else {
         SDL_Event event;
         while (continue_pumping) {
+            // If we don't delay, your computer's CPU will freak out
+            SDL_Delay(50);
             if (SDL_PollEvent(&event)) {
                 switch (event.type) {
                     case SDL_QUIT: {
