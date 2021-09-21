@@ -24,6 +24,7 @@ export default {
   updateDownloaded: "updateDownloaded",
   updateError: "updateError",
   updateChecking: "updateChecking",
+  downloadProgress: "downloadProgress",
 
   // IPC triggers
   eventIPC: "eventIPC",
@@ -62,4 +63,7 @@ export default {
   // Powermonitor triggers
   powerResume: "powerResume",
   powerSuspend: "powerSuspend",
+
+  // Protocol triggers
+  protocolError: "protocolError",
 }

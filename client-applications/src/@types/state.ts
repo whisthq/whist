@@ -6,5 +6,6 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
 export interface StateIPC {
   userEmail: string // User email returned by Auth0
   trigger: Trigger // Renderer triggers like button clicks
-  appEnvironment: string
+  appEnvironment: string // dev, staging, prod
+  updateInfo: string // emitted by autoUpdater
 }

@@ -28,6 +28,7 @@ import {
   WindowHashOnboardingTypeform,
   WindowHashBugTypeform,
   WindowHashSpeedtest,
+  WindowHashUpdate,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -129,7 +130,8 @@ export const createWindow = (args: {
   options: Partial<BrowserWindowConstructorOptions>
   hash: string
   customURL?: string
-  closeOtherWindows?: boolean
+  closeElectronWindows?: boolean
+  closeProtocolWindow?: boolean
   focus?: boolean
 }) => {
   const { title } = config
@@ -177,8 +179,10 @@ export const createWindow = (args: {
     emitWindowInfo({ crashed: false, event: "close", hash: args.hash })
   })
 
-  if (args.closeOtherWindows ?? false)
+  if (args.closeElectronWindows ?? false)
     closeElectronWindows(currentElectronWindows)
+
+  if (args.closeProtocolWindow ?? false) protocolStreamKill()
 
   return win
 }
@@ -195,7 +199,8 @@ export const createAuthWindow = () => {
     } as BrowserWindowConstructorOptions,
     hash: WindowHashAuth,
     customURL: authPortalURL(),
-    closeOtherWindows: true,
+    closeElectronWindows: true,
+    closeProtocolWindow: true,
   })
 
   // Authentication
@@ -238,7 +243,7 @@ export const createPaymentWindow = async ({
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
     customURL: paymentPortalURL,
-    closeOtherWindows: true,
+    closeElectronWindows: true,
   })
 
   const {
@@ -277,7 +282,8 @@ export const createErrorWindow = (hash: string) => {
       transparent: true,
     } as BrowserWindowConstructorOptions,
     hash: hash,
-    closeOtherWindows: true,
+    closeElectronWindows: true,
+    closeProtocolWindow: true,
   })
 }
 
@@ -309,7 +315,6 @@ export const createExitTypeform = () =>
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashExitTypeform,
-    closeOtherWindows: false,
   })
 
 export const createOnboardingTypeform = () =>
@@ -325,7 +330,8 @@ export const createOnboardingTypeform = () =>
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboardingTypeform,
-    closeOtherWindows: true,
+    closeElectronWindows: true,
+    closeProtocolWindow: true,
   })
 
 export const createBugTypeform = () =>
@@ -341,7 +347,7 @@ export const createBugTypeform = () =>
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashBugTypeform,
-    closeOtherWindows: false,
+    closeElectronWindows: false,
   })
 
 export const createSpeedtestWindow = () =>
@@ -357,7 +363,7 @@ export const createSpeedtestWindow = () =>
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashSpeedtest,
-    closeOtherWindows: false,
+    closeElectronWindows: false,
     customURL: "https://speed.cloudflare.com/",
   })
 
@@ -394,3 +400,19 @@ export const relaunch = (options?: { args: string[] }) => {
   options === undefined ? app.relaunch() : app.relaunch(options)
   app.exit()
 }
+
+export const createUpdateWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+      alwaysOnTop: true,
+      frame: false,
+      titleBarStyle: "hidden",
+      transparent: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashUpdate,
+    closeElectronWindows: true,
+    closeProtocolWindow: true,
+  })
