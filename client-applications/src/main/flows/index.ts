@@ -87,6 +87,7 @@ const refreshAtEnd = authRefreshFlow(
 )
 
 createTrigger(TRIGGER.updateDownloaded, update.downloaded)
+createTrigger(TRIGGER.downloadProgress, update.progress)
 
 createTrigger(TRIGGER.authRefreshSuccess, refreshAtEnd.success)
 

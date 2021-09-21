@@ -6,11 +6,11 @@ import {
   throttle,
   filter,
 } from "rxjs/operators"
-import { interval } from "rxjs"
+import { interval, of } from "rxjs"
 
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
-import { fromTrigger } from "@app/utils/flows"
+import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
 import {
   createErrorWindow,
@@ -18,9 +18,9 @@ import {
   createExitTypeform,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
-import { PROTOCOL_ERROR } from "@app/utils/error"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo } from "@app/utils/protocol"
+import TRIGGER from "@app/utils/triggers"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -127,7 +127,7 @@ allWindowsClosed
           .catch((err) => console.error(err))
         // If we've already tried several times to reconnect, just show the protocol error window
       } else {
-        createErrorWindow(PROTOCOL_ERROR)
+        createTrigger(TRIGGER.protocolError, of(undefined))
       }
     }
   )
