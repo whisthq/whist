@@ -331,7 +331,7 @@ export const createOnboardingTypeform = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboardingTypeform,
     closeElectronWindows: true,
-    closeProtocolWindow: true
+    closeProtocolWindow: true,
   })
 
 export const createBugTypeform = () =>
