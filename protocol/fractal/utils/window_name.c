@@ -16,6 +16,7 @@ destroy_window_name_getter();
 
 #include <fractal/core/fractal.h>
 #include "window_name.h"
+#include <locale.h>
 
 #if defined(_WIN32)
 
@@ -64,6 +65,10 @@ int get_focused_window_name(char* name_return) {
         return 1;
     }
 
+    // Ask all Fractal & library functions to use the locale defined by the environment. This
+    // prevents encoding problems (for example, when it comes to encoding strings in UTF8 format).
+    setlocale(LC_ALL, "");
+
     // https://gist.github.com/kui/2622504
     XTextProperty prop;
     Status s;
@@ -78,13 +83,6 @@ int get_focused_window_name(char* name_return) {
             return 1;
         }
         if (result == Success) {
-            // TODO(anton): actually address non-ASCII encodings rather than just replacing
-            // non-ASCII characters with spaces
-            for (int i = 0; list[0][i] != 0; i++) {
-                if ((unsigned char)list[0][i] > 127) {  // > 127 means not ASCII
-                    list[0][i] = ' ';
-                }
-            }
             safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
             XFreeStringList(list);
             return 0;
