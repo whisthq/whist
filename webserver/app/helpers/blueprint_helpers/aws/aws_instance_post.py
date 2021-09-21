@@ -175,6 +175,20 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             .one_or_none()
         )
     if instance_with_max_mandelboxes is None:
+        # If we are unable to find the instance in the required region,
+        # let's try to find an instance in nearby AZ
+        # that doesn't impact the user experience too much.
+        instance_with_max_mandelboxes = (
+            InstancesWithRoomForMandelboxes.query.filter(
+                InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
+            )
+            .filter_by(
+                status=MandelboxHostState.ACTIVE,
+            )
+            .limit(1)
+            .one_or_none()
+        )
+    if instance_with_max_mandelboxes is None:
         return None
     else:
         # 5sec arbitrarily decided as sufficient timeout when using with_for_update
