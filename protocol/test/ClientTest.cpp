@@ -25,12 +25,6 @@ TEST(ClientTest, NotEqualityTest) {
     EXPECT_NE(i,j);
 }
 
-TEST(ClientTest, FailingTest) {
-    int i = 3;
-    int j = 4;
-    EXPECT_EQ(i, j);
-}
-
 // Example of a test using a function from the client module
 TEST(ClientTest, ArgParsingEmptyArgsTest) {
     int argc = 1;
