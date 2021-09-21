@@ -302,22 +302,18 @@ set(PLATFORM_INDEPENDENT_LIBS   fractalCore
                                 ${LIB_SENTRY}
 )
 
-set(LINUX_SPECIFIC_CLIENT_LIBS      ${X11_LIBRARIES}
-                                    ${X11_Xfixes_LIB}
-                                    ${ALSA_LIBRARIES}
-                                    crypto
-                                    m
-)
-
-set(LINUX_SPECIFIC_SERVER_LIBS      ${X11_LIBRARIES}
-                                    ${X11_Xfixes_LIB}
-                                    ${X11_Xdamage_LIB}
-                                    ${X11_Xext_LIB}
-                                    ${X11_Xtst_LIB}
-                                    GL
-                                    asound
-                                    m
-                                    OpenSSL::Crypto
+set(PLATFORM_INDEPENDENT_SERVER_LIBS  fractalCore
+        fractalAudio
+        fractalVideo
+        fractalClipboard
+        fractalCursor
+        fractalInput
+        fractalNetwork
+        fractalLogging
+        fractalUtils
+        ${STATIC_SDL2}
+        ${LIB_SENTRY}
+        ${LIBMFX}
 )
 
 

@@ -70,7 +70,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(${TEST_BINARY} ${LINUX_SPECIFIC_CLIENT_LIBS})
+    target_link_libraries(${TEST_BINARY} ${X11_LIBRARIES}
+            ${X11_Xfixes_LIB}
+            ${ALSA_LIBRARIES}
+            crypto
+            m)
 endif()
 
 # Link Mac-specific libs

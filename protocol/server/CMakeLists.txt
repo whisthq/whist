@@ -81,8 +81,7 @@ endif ()
 ################## Linking platform independent libs ##################
 ]]
 target_link_libraries(FractalServer
-        ${PLATFORM_INDEPENDENT_LIBS}
-        ${LIBMFX}
+        ${PLATFORM_INDEPENDENT_SERVER_LIBS}
         )
 
 #[[
@@ -108,7 +107,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
     endif()
 
-    target_link_libraries(FractalServer ${LINUX_SPECIFIC_SERVER_LIBS})
+    target_link_libraries(FractalServer
+            ${X11_LIBRARIES}
+            ${X11_Xfixes_LIB}
+            ${X11_Xdamage_LIB}
+            ${X11_Xext_LIB}
+            ${X11_Xtst_LIB}
+            GL
+            asound
+            m
+            OpenSSL::Crypto
+            )
 endif()
 
 #[[
