@@ -7,7 +7,7 @@ from pydantic import BaseModel
 # BaseModel, but no other boilerplate after that. The type signatures are
 # fully mypy compatible.
 class MandelboxAssignBody(BaseModel):
-    region: str
+    regions: list
     client_commit_hash: str
 
 

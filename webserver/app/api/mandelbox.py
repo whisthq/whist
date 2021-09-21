@@ -46,25 +46,32 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
         client_commit_hash = (
-            RegionToAmi.query.filter_by(region_name=body.region, ami_active=True)
+            RegionToAmi.query.filter_by(region_name=body.regions[0], ami_active=True)
             .one_or_none()
             .client_commit_hash
         )
     else:
         client_commit_hash = body.client_commit_hash
 
-    fractal_logger.debug(
-        f"Trying to find instance for user {username} in region {body.region},\
-        with commit hash {client_commit_hash}."
-    )
-    instance_name = find_instance(body.region, client_commit_hash)
-    time_when_instance_found = time.time() * 1000
-    # How long did it take to find an instance?
-    time_to_find_instance = time_when_instance_found - start_time
-    fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
+    for region in body.regions:
+        fractal_logger.debug(
+            f"Trying to find instance for region {region} and commit hash {client_commit_hash}."
+        )
+        instance_name = find_instance(region, client_commit_hash)
+        time_when_instance_found = time.time() * 1000
+        # How long did it take to find an instance?
+        time_to_find_instance = time_when_instance_found - start_time
+        fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
+        current_region = region
+        fractal_logger.debug(f"Found instance with name: {instance_name}")
+        if instance_name is None:
+            continue
+        else:
+            break
+    fractal_logger.info(f"Found instance: {instance_name} in region: {current_region}")
     if instance_name is None:
         fractal_logger.info(
-            f"No instance found with body.region: {body.region},\
+            f"No instance found in regions: {body.regions},\
              body.client_commit_hash: {client_commit_hash}"
         )
 
@@ -72,16 +79,19 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             # If we're not testing, we want to scale up a new instance to handle this load
             # and we know what instance type we're missing from the request
             ami = RegionToAmi.query.get(
-                {"region_name": body.region, "client_commit_hash": client_commit_hash}
+                {"region_name": current_region, "client_commit_hash": client_commit_hash}
             )
             if ami is None:
                 fractal_logger.debug(
-                    f"No AMI found for region: {body.region}, commit hash: {client_commit_hash}"
+                    f"No AMI found for region: {current_region}, commit hash: {client_commit_hash}"
                 )
             else:
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(body.region, ami.ami_id),
+                    args=(
+                        current_region,
+                        ami.ami_id,
+                    ),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },
@@ -115,9 +125,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         scaling_thread = Thread(
             target=do_scale_up_if_necessary,
             args=(
-                body.region,
+                current_region,
                 RegionToAmi.query.get(
-                    {"region_name": body.region, "client_commit_hash": client_commit_hash}
+                    {"region_name": current_region, "client_commit_hash": client_commit_hash}
                 ).ami_id,
             ),
             kwargs={

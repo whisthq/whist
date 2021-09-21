@@ -24,15 +24,15 @@ const isLocalEnv = () => {
 
 export const regionGet = async (accessToken: string) => {
   const sortedRegions = await sortRegionByProximity(defaultAllowedRegions)
-  return await regionRequest(accessToken, sortedRegions)
+  return sortedRegions
 }
 
 export const mandelboxCreate = async (
   accessToken: string,
-  region?: AWSRegion
+  regions?: AWSRegion[]
 ) => {
-  region = region ?? (await regionGet(accessToken))
-  const response = await mandelboxRequest(accessToken, region)
+  regions = regions ?? (await regionGet(accessToken))
+  const response = await mandelboxRequest(accessToken, regions)
   return response
 }
 
@@ -61,21 +61,12 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorMaintenance(response)
 
 // Helper functions
-const mandelboxRequest = async (accessToken: string, region: string) =>
+const mandelboxRequest = async (accessToken: string, regions: AWSRegion[]) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
     body: {
-      region,
+      regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
     },
   })
-
-const regionRequest = async (accessToken: string, regions: AWSRegion[]) =>
-  post(
-    {
-      endpoint: "/regions",
-      accessToken,
-    },
-    regions
-  )
