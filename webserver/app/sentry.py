@@ -29,5 +29,4 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     )
 
     # If you want to test Sentry, uncomment the following
-    # Docs: https://getsentry.github.io/sentry-python/api.html?highlight=capture_message#sentry_sdk.capture_message
-    # resp = sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
+    # sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
