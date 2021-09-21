@@ -431,7 +431,7 @@ void print_stacktrace() {
     // Get the backtrace symbols
     // Print stacktrace to stdout - use backtrace_symbols_fd instead of
     //     backtrace_symbols because SIGABRT during a `malloc` can cause hangs
-    backtrace_symbols_fd(trace, trace_size, STDIN_FILENO);
+    backtrace_symbols_fd(trace, trace_size, STDOUT_FILENO);
 #endif
     // Print out the final newlines and flush
     fprintf(stdout, "\n\n");
