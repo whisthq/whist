@@ -91,11 +91,9 @@ export const protocolLaunch = async () => {
   })
 
   // Pipe to protocol.log
-  // protocol.stdout.pipe(protocolLogFile)
+  protocol.stdout.pipe(protocolLogFile)
 
-  // ***
   // Pipe protocol's stdout to logz.io
-  // ***
 
   // Some shared buffer to store stdout messages in
   const stdoutBuffer = {
