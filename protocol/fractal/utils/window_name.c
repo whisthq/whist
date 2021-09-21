@@ -65,6 +65,8 @@ int get_focused_window_name(char* name_return) {
         return 1;
     }
 
+    // Ask all Fractal & library functions to use the locale defined by the environment. This
+    // prevents encoding problems (for example, when it comes to encoding strings in UTF8 format).
     setlocale(LC_ALL, "");
 
     // https://gist.github.com/kui/2622504
