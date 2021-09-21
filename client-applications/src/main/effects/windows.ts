@@ -12,11 +12,7 @@ import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
-import {
-  createErrorWindow,
-  createProtocolWindow,
-  createExitTypeform,
-} from "@app/utils/windows"
+import { createProtocolWindow, createExitTypeform } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo } from "@app/utils/protocol"

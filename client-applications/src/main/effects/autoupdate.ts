@@ -4,7 +4,10 @@ import { take, takeUntil } from "rxjs/operators"
 
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
-import { updateNotification } from "@app/utils/notification"
+import {
+  updateAvailableNotification,
+  updateDownloadedNotification,
+} from "@app/utils/notification"
 import { fromSignal } from "@app/utils/observables"
 
 // Apply autoupdate config
@@ -35,12 +38,13 @@ fromTrigger("appReady")
   })
 
 fromTrigger("updateAvailable").subscribe(() => {
-  updateNotification()?.show()
+  updateAvailableNotification()?.show()
 })
 
 fromSignal(
   fromTrigger("updateDownloaded"),
   merge(fromTrigger("mandelboxFlowFailure"), fromTrigger("protocolError"))
 ).subscribe(() => {
+  updateDownloadedNotification()?.show()
   autoUpdater.quitAndInstall()
 })

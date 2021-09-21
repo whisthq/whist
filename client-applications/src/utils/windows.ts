@@ -8,12 +8,7 @@
 
 import path from "path"
 import events from "events"
-import {
-  app,
-  BrowserWindow,
-  BrowserWindowConstructorOptions,
-  protocol,
-} from "electron"
+import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { FractalCallbackUrls } from "@app/config/urls"
@@ -205,6 +200,7 @@ export const createAuthWindow = () => {
     hash: WindowHashAuth,
     customURL: authPortalURL(),
     closeElectronWindows: true,
+    closeProtocolWindow: true,
   })
 
   // Authentication
