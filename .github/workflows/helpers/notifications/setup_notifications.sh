@@ -33,6 +33,7 @@ fi
 tmpfolder=`mktemp -d`
 cp -r notifications $tmpfolder
 cp -r aws $tmpfolder
+cp -r resources $tmpfolder
 
 # Add the temp folder to our Python path, so we can import from notifications.
 # The fancy syntax means "$PYTHONPATH:" if it's defined, else ""
