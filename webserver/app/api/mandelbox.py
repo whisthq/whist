@@ -2,7 +2,7 @@ from threading import Thread
 import time
 import uuid
 from http import HTTPStatus
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app
 from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_pydantic import validate
@@ -63,12 +63,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         time_to_find_instance = time_when_instance_found - start_time
         fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
         current_region = region
-        fractal_logger.debug(f"Found instance with name: {instance_name}")
         if instance_name is None:
             continue
         else:
             break
-    fractal_logger.info(f"Found instance: {instance_name} in region: {current_region}")
     if instance_name is None:
         fractal_logger.info(
             f"No instance found in regions: {body.regions},\
