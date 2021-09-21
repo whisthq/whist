@@ -27,7 +27,7 @@ if [[ $INSTALL_DEPS == "true" ]]; then
     pip install -r notifications/requirements.txt
 fi
 
-# Create a temporary folder, and copy the notifications module to that folder.
+# Create a temporary folder, and copy the notifications/aws/resources modules to that folder.
 # We copy instead of move to avoid mutating our repository.
 # The point is to ensure that this package can be imported even if our git repo changes.
 tmpfolder=`mktemp -d`
@@ -35,6 +35,6 @@ cp -r notifications $tmpfolder
 cp -r aws $tmpfolder
 cp -r resources $tmpfolder
 
-# Add the temp folder to our Python path, so we can import from notifications.
+# Add the temp folder to our Python path, so we can import from notifications/aws/resources.
 # The fancy syntax means "$PYTHONPATH:" if it's defined, else ""
 echo "PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}$tmpfolder" >> $GITHUB_ENV
