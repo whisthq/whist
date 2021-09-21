@@ -3,8 +3,6 @@ import os
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from app.exceptions import SentryInitializationError
-
 
 def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     """
