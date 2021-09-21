@@ -63,9 +63,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         time_to_find_instance = time_when_instance_found - start_time
         fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
         current_region = region
-        if instance_name is None:
-            continue
-        else:
+        if instance_name is not None:
             break
     if instance_name is None:
         fractal_logger.info(
