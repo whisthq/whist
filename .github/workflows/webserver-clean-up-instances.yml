@@ -81,6 +81,13 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      - name: Retrieve Environment (i.e. dev/staging/prod)
+        id: environment
+        uses: ./.github/actions/set-environment
+
+      - name: Echo the name of the environment
+        run: echo "${{ steps.environment.outputs.environment }}"
+
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
@@ -114,7 +121,7 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-          SLACK_CHANNEL = "#alerts-prod"
+          SLACK_CHANNEL = "#alerts-${{ steps.environment.outputs.environment }}"
           BODY = f"@releases :rotating_light: Failed to scale down user EC2 instances, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
