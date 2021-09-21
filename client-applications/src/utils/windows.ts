@@ -315,7 +315,6 @@ export const createExitTypeform = () =>
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashExitTypeform,
-    closeElectronWindows: false,
   })
 
 export const createOnboardingTypeform = () =>
@@ -332,6 +331,7 @@ export const createOnboardingTypeform = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboardingTypeform,
     closeElectronWindows: true,
+    closeProtocolWindow: true
   })
 
 export const createBugTypeform = () =>

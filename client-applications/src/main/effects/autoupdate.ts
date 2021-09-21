@@ -45,6 +45,9 @@ fromSignal(
   fromTrigger("updateDownloaded"),
   merge(fromTrigger("mandelboxFlowFailure"), fromTrigger("protocolError"))
 ).subscribe(() => {
-  updateDownloadedNotification()?.show()
   autoUpdater.quitAndInstall()
+})
+
+fromTrigger("updateDownloaded").subscribe(() => {
+  updateDownloadedNotification()?.show()
 })
