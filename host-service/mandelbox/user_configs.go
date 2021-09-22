@@ -74,11 +74,31 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})
-	downloader := s3manager.NewDownloader(sess)
+	if err != nil {
+		utils.MakeError("Failed to create new AWS session: %v", err)
+	}
+
+	s3Client := s3.New(sess)
+	downloader := s3manager.NewDownloaderWithClient(s3Client)
+
+	// Fetch the HeadObject first to see how much memory we need to allocate
+	headObject, err := s3Client.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
+		Key:    aws.String(c.getS3ConfigKey()),
+	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			switch awsErr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				logger.Infof("Could not get head object because config does not exist")
+				return nil
+			}
+		}
+	}
 
 	// Download file into an in-memory buffer
 	// This should be okay as we don't expect configs to be very large
-	buf := aws.NewWriteAtBuffer([]byte{})
+	buf := aws.NewWriteAtBuffer(make([]byte, int(*headObject.ContentLength)))
 
 	numBytes, err := downloader.Download(buf, &s3.GetObjectInput{
 		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
