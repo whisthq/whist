@@ -11,14 +11,12 @@ export default flow(
     trigger: Observable<{
       accessToken: string
       configToken: string
-      region?: AWSRegion
     }>
   ) => {
     const create = mandelboxCreateFlow(
       trigger.pipe(
         map((t) => ({
-          accessToken: t.accessToken,
-          region: t.region,
+          accessToken: t.accessToken
         }))
       )
     )

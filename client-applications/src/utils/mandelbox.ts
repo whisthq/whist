@@ -22,16 +22,15 @@ const isLocalEnv = () => {
   return isLocal
 }
 
-export const regionGet = async (accessToken: string) => {
+export const regionGet = async () => {
   const sortedRegions = await sortRegionByProximity(defaultAllowedRegions)
   return sortedRegions
 }
 
 export const mandelboxCreate = async (
-  accessToken: string,
-  regions?: AWSRegion[]
+  accessToken: string
 ) => {
-  regions = regions ?? (await regionGet(accessToken))
+  const regions = await regionGet()
   const response = await mandelboxRequest(accessToken, regions)
   return response
 }

@@ -45,11 +45,18 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
-        client_commit_hash = (
-            RegionToAmi.query.filter_by(region_name=body.regions[0], ami_active=True)
-            .one_or_none()
-            .client_commit_hash
-        )
+        for region in body.regions:
+            fractal_logger.debug(f"Querying region: {region} for client commit hash.")
+            try:
+                client_commit_hash = (
+                    RegionToAmi.query.filter_by(region_name=region, ami_active=True)
+                    .one_or_none()
+                    .client_commit_hash
+                )
+                fractal_logger.debug(f"Using client commit hash: {client_commit_hash}")
+                break
+            except:
+                fractal_logger.debug(f"Client commit hash not found on region: {region}.")
     else:
         client_commit_hash = body.client_commit_hash
 
@@ -65,10 +72,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         current_region = region
         if instance_name is not None:
             break
-    if instance_name is None:
+
         fractal_logger.info(
-            f"No instance found in regions: {body.regions},\
-             body.client_commit_hash: {client_commit_hash}"
+            f"No instance found in region: {region},\
+            body.client_commit_hash: {client_commit_hash}"
         )
 
         if not current_app.testing:
@@ -96,9 +103,15 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         fractal_logger.debug(
             f"Returning 503 to user {username} because we didn't find an instance for them."
         )
-        return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
+        return (
+            jsonify({"ip": "None", "mandelbox_id": "None", "region": current_region}),
+            HTTPStatus.SERVICE_UNAVAILABLE,
+        )
 
     instance = InstanceInfo.query.get(instance_name)
+    current_region = (
+        instance.location
+    )  # Set this in case the mandelbox was found in a different region
     mandelbox_id = str(uuid.uuid4())
     obj = MandelboxInfo(
         mandelbox_id=mandelbox_id,

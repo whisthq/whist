@@ -15,12 +15,11 @@ import { AWSRegion } from "@app/@types/aws"
 
 export default flow<{
   accessToken: string
-  region?: AWSRegion
 }>("mandelboxCreateFlow", (trigger) => {
   const create = fork(
     trigger.pipe(
-      switchMap(({ accessToken, region }) =>
-        from(mandelboxCreate(accessToken, region))
+      switchMap(({ accessToken }) =>
+        from(mandelboxCreate(accessToken))
       )
     ),
     {
