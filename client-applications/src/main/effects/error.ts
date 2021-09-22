@@ -25,7 +25,7 @@ import { fromTrigger } from "@app/utils/flows"
 fromTrigger("mandelboxFlowFailure")
   .pipe(
     withLatestFrom(
-      fromTrigger("updateAvailable").pipe(startWith(false), mapTo(true))
+      fromTrigger("updateAvailable").pipe(mapTo(true), startWith(false))
     )
   )
   .subscribe(([x, updateAvailable]: [any, boolean]) => {
@@ -55,7 +55,7 @@ fromTrigger("stripePaymentError").subscribe(() => {
 fromTrigger("protocolError")
   .pipe(
     withLatestFrom(
-      fromTrigger("updateAvailable").pipe(startWith(false), mapTo(true))
+      fromTrigger("updateAvailable").pipe(mapTo(true), startWith(false))
     )
   )
   .subscribe(([, updateAvailable]: [any, boolean]) => {
