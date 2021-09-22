@@ -66,7 +66,6 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
-	encTarPath := configDir + c.getEncryptedArchiveFilename()
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
 	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
 
