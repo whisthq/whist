@@ -28,6 +28,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Set up Python-based helper AWS
+        working-directory: .github/workflows/helpers
+        run: ./aws/setup_aws.sh
+
       - name: Setup Python-based Notifications
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
@@ -70,6 +74,14 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
+
+      - name: Set up Python-based helper AWS
+        working-directory: .github/workflows/helpers
+        run: ./aws/setup_aws.sh
+
+      - name: Set up Python-based helper Resources
+        working-directory: .github/workflows/helpers
+        run: ./aws/setup_resources.sh
 
       - name: Setup Python-based Notifications
         working-directory: .github/workflows/helpers
