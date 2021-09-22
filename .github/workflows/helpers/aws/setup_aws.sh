@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Configure GHA to import the AWS and resources packages.
+# Adds the AWS folder to python's path.
 
 set -Eeuo pipefail
 
