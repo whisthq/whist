@@ -4,24 +4,23 @@
 
 # Create the executable
 set(CLIENT_TEST_BINARY FractalClientTest)
-add_executable(${CLIENT_TEST_BINARY} ClientTest.cpp)
+add_executable(${CLIENT_TEST_BINARY} ClientTest.cpp
+    ../client/audio.c
+    ../client/client_utils.c
+    ../client/network.c
+    ../client/sdl_event_handler.c
+    ../client/sdl_utils.c
+    ../client/handle_server_message.c
+    ../client/video.c
+    ../client/sdlscreeninfo.c
+    ../client/peercursor.c
+    ../client/ringbuffer.c
+    ../client/sync_packets.c
+    ../client/bitrate.c
+)
 
-# Link the GoogleTest library, as well as the core client (but not main.c)
-set(FRACTAL_CLIENT_SOURCEFILES
-        ../client/audio.c
-        ../client/client_utils.c
-        ../client/network.c
-        ../client/sdl_event_handler.c
-        ../client/sdl_utils.c
-        ../client/handle_server_message.c
-        ../client/video.c
-        ../client/sdlscreeninfo.c
-        ../client/peercursor.c
-        ../client/ringbuffer.c
-        ../client/sync_packets.c
-        ../client/bitrate.c)
-add_library(FRACTAL_CLIENT_LIBRARY ${FRACTAL_CLIENT_SOURCEFILES})
-target_link_libraries(${CLIENT_TEST_BINARY} gtest FRACTAL_CLIENT_LIBRARY)
+# Link the GoogleTest library
+target_link_libraries(${CLIENT_TEST_BINARY} gtest)
 
 # Copy the Sentry library to the build folder
 add_custom_command(
@@ -110,18 +109,17 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
 
     # Create the executable
     set(SERVER_TEST_BINARY FractalServerTest)
-    add_executable(${SERVER_TEST_BINARY} ServerTest.cpp)
+    add_executable(${SERVER_TEST_BINARY} ServerTest.cpp
+        ../server/client.c
+        ../server/video.c
+        ../server/audio.c
+        ../server/parse_args.c
+        ../server/handle_client_message.c
+        ../server/network.c
+    )
 
-    # Link the GoogleTest library, as well as the core client (but not main.c)
-    set(FRACTAL_SERVER_SOURCEFILES
-            ../server/client.c
-            ../server/video.c
-            ../server/audio.c
-            ../server/parse_args.c
-            ../server/handle_client_message.c
-            ../server/network.c)
-    add_library(FRACTAL_SERVER_LIBRARY ${FRACTAL_SERVER_SOURCEFILES})
-    target_link_libraries(${SERVER_TEST_BINARY} gtest FRACTAL_SERVER_LIBRARY)
+    # Link the GoogleTest library
+    target_link_libraries(${SERVER_TEST_BINARY} gtest)
 
     # Link the FFmpeg libraries
     foreach(LIB ${FFMPEG_LIBS_PATHS})

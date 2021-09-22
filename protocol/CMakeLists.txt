@@ -316,10 +316,30 @@ set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
     iconv
     ${LIB_OPENSSL}
 )
-set(WINDOWS_SPECIFIC_CLIENT_LIBS    ${LIB_OPENSSL}
-    libvcruntime
-    libucrt
-    libcmt
+if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+    set(WINDOWS_CORE_LIBS
+        ucrtd
+        libcmtd
+        libcpmtd
+        vcruntimed
+        msvcrtd
+        msvcmrtd
+        msvcprtd
+    )
+elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
+    set(WINDOWS_CORE_LIBS
+        ucrt
+        libcmt
+        libcpmt
+        vcruntime
+        msvcrt
+        msvcmrt
+        msvcprt
+    )
+endif()
+set(WINDOWS_SPECIFIC_CLIENT_LIBS
+    ${LIB_OPENSSL}
+    ${WINDOWS_CORE_LIBS}
     kernel32
     gdi32
     winmm
@@ -346,7 +366,8 @@ set(WINDOWS_SPECIFIC_CLIENT_LIBS    ${LIB_OPENSSL}
 add_subdirectory(client)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "FractalServer")
-    set(PLATFORM_INDEPENDENT_SERVER_LIBS  fractalCore
+    set(PLATFORM_INDEPENDENT_SERVER_LIBS
+        fractalCore
         fractalAudio
         fractalVideo
         fractalClipboard
@@ -359,9 +380,9 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile
         ${LIB_SENTRY}
         ${LIBMFX}
     )
-    set(WINDOWS_SPECIFIC_SERVER_LIBS    ${LIB_OPENSSL}
-        libvcruntime
-        libcmt
+    set(WINDOWS_SPECIFIC_SERVER_LIBS
+        ${LIB_OPENSSL}
+        ${WINDOWS_CORE_LIBS}
         kernel32
         ws2_32
         crypt32
@@ -384,12 +405,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile
         comdlg32
         odbc32
         odbccp32
-        ucrt
-        ucrtd
-        vcruntime
-        msvcrt
-        msvcmrt
-        msvcprt
         avrt
         d3dcompiler
         dxguid
