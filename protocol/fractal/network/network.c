@@ -1015,6 +1015,7 @@ int create_udp_server_context(SocketContext* context, int port, int recvfrom_tim
         return -1;
     }
 
+    context->udp_is_connected = false;
     context->is_tcp = false;
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
@@ -1077,6 +1078,7 @@ int create_udp_server_context_stun(SocketContext* context, int port, int recvfro
             (int): -1 on failure, 0 on success
     */
 
+    context->udp_is_connected = false;
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1192,6 +1194,7 @@ int create_udp_server_context_stun(SocketContext* context, int port, int recvfro
 
 int create_udp_client_context(SocketContext* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
+    context->udp_is_connected = false;
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1248,6 +1251,7 @@ int create_udp_client_context_stun(SocketContext* context, char* destination, in
             (int): -1 on failure, 0 on success
     */
 
+    context->udp_is_connected = false;
     context->is_tcp = false;
 
     // Create UDP socket
@@ -1568,7 +1572,17 @@ int sendp(SocketContext* context, void* buf, int len) {
     if (context->is_tcp) {
         return send(context->socket, buf, len, 0);
     } else {
-        return sendto(context->socket, buf, len, 0, (struct sockaddr*)(&context->addr),
+        if (!context->udp_is_connected) {
+            // Connect to the remote address. This means that all subsequent `sendto`
+            // calls can skip this overhead, since the address is cached.
+            int ret = connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr));
+            if (ret == -1) {
+                LOG_ERROR("Failed to UDP connect to remote address: %s", strerror(errno));
+                return -1;
+            }
+            context->udp_is_connected = true;
+        }
+        return sendto(context->socket, buf, len, 0, (struct sockaddr*)(NULL),
                       sizeof(context->addr));
     }
 }
