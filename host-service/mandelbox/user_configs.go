@@ -3,6 +3,9 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 // This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,11 +18,15 @@ import (
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
 	USER_CONFIG_S3_BUCKET = "fractal-user-app-configs"
 	AES_256_KEY_LENGTH    = 32
+	AES_256_IV_LENGTH     = 16
+	PBKDF2_ITERATIONS     = 10000
+	OPENSSL_SALT_HEADER   = "Salted__"
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
@@ -65,21 +72,16 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	logger.Infof("Starting S3 config download")
 
-	if _, err := os.Stat(encTarPath); err == nil {
-		os.Remove(encTarPath)
-	}
-
-	file, err := os.Create(encTarPath)
-	if err != nil {
-		return utils.MakeError("Could not create file for s3 download: %v", err)
-	}
-
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})
 	downloader := s3manager.NewDownloader(sess)
 
-	numBytes, err := downloader.Download(file, &s3.GetObjectInput{
+	// Download file into an in-memory buffer
+	// This should be okay as we don't expect configs to be very large
+	buf := aws.NewWriteAtBuffer([]byte{})
+
+	numBytes, err := downloader.Download(buf, &s3.GetObjectInput{
 		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
@@ -103,25 +105,24 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	logger.Infof("Starting decryption")
 
 	// Decrypt the downloaded archive directly from memory
-
-	// At this point, config archive must exist: decrypt app config
-	decryptConfigCmd := exec.Command(
-		"/usr/bin/openssl", "aes-256-cbc", "-d",
-		"-in", encTarPath,
-		"-out", decTarPath,
-		"-pass", "pass:"+string(c.configEncryptionToken), "-pbkdf2")
-	decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
+	encryptedFile := buf.Bytes()
+	salt, encryptedData, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
 	if err != nil {
-		return utils.MakeError("Could not decrypt config for userID %s and mandelboxID %s: %s. Output: %s", c.userID, c.GetMandelboxID(), err, decryptConfigOutput)
-	}
-	logger.Infof("Decrypted config to %s", decTarPath)
-
-	// Delete original encrypted config
-	err = os.Remove(encTarPath)
-	if err != nil {
-		logger.Errorf("getUserConfig(): Failed to delete user config encrypted archive %s", encTarPath)
+		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
 	}
 
+	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.configEncryptionToken), salt)
+	decryptedData, err := decryptAES256CBC(key, iv, encryptedData)
+	if err != nil {
+		return utils.MakeError("failed to decrypt user config: %v", err)
+	}
+
+	logger.Infof("decrypt complete")
+	logger.Infof("writing to file: %s", decTarPath)
+
+	err = os.WriteFile(decTarPath, decryptedData, 0777)
+
+	logger.Infof("file write completed")
 	logger.Infof("Starting extraction")
 
 	// Extract the config archive to the user config directory
@@ -219,4 +220,59 @@ func (c *mandelboxData) getDecryptedArchiveFilename() string {
 
 func (c *mandelboxData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs/"
+}
+
+// getSaltAndDataFromOpenSSLEncryptedFile takes OpenSSL encrypted data
+// and returns the salt used to encrypt and the encrypted data itself
+func getSaltAndDataFromOpenSSLEncryptedFile(file []byte) (salt, data []byte, err error) {
+	if len(file) < aes.BlockSize {
+		return nil, nil, utils.MakeError("file is too short to have been encrypted by openssl")
+	}
+
+	// All OpenSSL encrypted files that use a salt have a 16-byte header
+	// The first 8 bytes are the string "Salted__"
+	// The next 8 bytes are the salt itself
+	// See: https://security.stackexchange.com/questions/29106/openssl-recover-key-and-iv-by-passphrase
+	saltHeader := file[:aes.BlockSize]
+	byteHeaderLength := len([]byte(OPENSSL_SALT_HEADER))
+	if string(saltHeader[:byteHeaderLength]) != OPENSSL_SALT_HEADER {
+		return nil, nil, utils.MakeError("file does not appear to have been encrypted by openssl: wrong salt header")
+	}
+
+	salt = saltHeader[byteHeaderLength:]
+	data = file[aes.BlockSize:]
+
+	return
+}
+
+// getKeyAndIVFromPassAndSalt uses pbkdf2 to generate a key, IV pair
+// given a known password and salt
+func getKeyAndIVFromPassAndSalt(password, salt []byte) (key, iv []byte) {
+	derivedKey := pbkdf2.Key(password, salt, PBKDF2_ITERATIONS, AES_256_KEY_LENGTH+AES_256_IV_LENGTH, sha256.New)
+
+	// First 32 bytes of the derived key are the key and the next 16 bytes are the IV
+	key = derivedKey[:AES_256_KEY_LENGTH]
+	iv = derivedKey[AES_256_KEY_LENGTH : AES_256_KEY_LENGTH+AES_256_IV_LENGTH]
+
+	return
+}
+
+// decryptAES256CBC takes a key, IV, and AES-256 CBC encrypted data and returns the decrypted data
+// Based on example code from: https://golang.org/src/crypto/cipher/example_test.go
+func decryptAES256CBC(key, iv, data []byte) (decrypted []byte, err error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, utils.MakeError("could not create aes cipher block: %v", err)
+	}
+
+	// Validate that encrypted data follows the correct format
+	// This is because CBC encryption always works in whole blocks
+	if len(data)%aes.BlockSize != 0 {
+		return nil, utils.MakeError("given data is not a multiple of the block size")
+	}
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(decrypted, data)
+
+	return
 }

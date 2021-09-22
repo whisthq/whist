@@ -33,10 +33,14 @@ require (
 	github.com/onsi/gomega v1.13.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pborman/uuid v1.2.1 // indirect
+	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/shirou/gopsutil v3.21.6+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
-	golang.org/x/net v0.0.0-20210916014120-12bc252f5db8 // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
+	golang.org/x/sys v0.0.0-20210921065528-437939a70204 // indirect
+	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
 	google.golang.org/genproto v0.0.0-20210726200206-e7812ac95cc0 // indirect
