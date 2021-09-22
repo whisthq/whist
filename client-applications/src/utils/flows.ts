@@ -6,7 +6,7 @@
 
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, take } from "rxjs/operators"
-import { mapValues, values } from "lodash"
+import { mapValues, values, omit } from "lodash"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
@@ -70,7 +70,10 @@ export const flow = <T>(
       obs.subscribe((value: object) => {
         logBase(
           `${name}.${key}`, // e.g. authFlow.success
-          { input: triggerPayload, output: value }, // Log both the flow input (trigger) and output
+          {
+            input: omit(triggerPayload, "configToken"),
+            output: omit(value, "configToken"),
+          }, // Log both the flow input (trigger) and output
           LogLevel.DEBUG,
           Date.now() - startTime // This is how long the flow took run
         ).catch((err) => console.log(err))
