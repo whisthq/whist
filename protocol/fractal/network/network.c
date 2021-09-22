@@ -1575,7 +1575,8 @@ int sendp(SocketContext* context, void* buf, int len) {
         if (!context->udp_is_connected) {
             // Connect to the remote address. This means that all subsequent `sendto`
             // calls can skip this overhead, since the address is cached.
-            int ret = connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr));
+            int ret =
+                connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr));
             if (ret == -1) {
                 LOG_ERROR("Failed to UDP connect to remote address: %s", strerror(errno));
                 return -1;
