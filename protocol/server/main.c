@@ -19,8 +19,27 @@ Includes
 
 #include "main.h"
 
+/*
+============================
+Globals
+============================
+*/
+
 static FractalMutex packet_mutex;
 static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
+
+/*
+============================
+Private Functions
+============================
+*/
+
+void graceful_exit();
+#ifdef __linux__
+int xioerror_handler(Display* d);
+void sig_handler(int sig_num);
+#endif
+int main(int argc, char* argv[]);
 
 /*
 ============================

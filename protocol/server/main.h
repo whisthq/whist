@@ -86,17 +86,4 @@ volatile bool update_encoder;
 bool client_joined_after_window_name_broadcast = false;
 // This variable should always be an array - we call sizeof()
 
-/*
-============================
-Private Functions
-============================
-*/
-
-void graceful_exit();
-#ifdef __linux__
-int xioerror_handler(Display* d);
-void sig_handler(int sig_num);
-#endif
-int main(int argc, char* argv[]);
-
 #endif  // SERVER_MAIN_H
