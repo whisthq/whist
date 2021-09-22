@@ -81,7 +81,7 @@ jobs:
 
       - name: Set up Python-based helper Resources
         working-directory: .github/workflows/helpers
-        run: ./aws/setup_resources.sh
+        run: ./resources/setup_resources.sh
 
       - name: Setup Python-based Notifications
         working-directory: .github/workflows/helpers
@@ -126,7 +126,6 @@ jobs:
           echo "DATABASE_PROD_URL=$DATABASE_PROD_URL" >> $GITHUB_ENV
 
       - name: Identifies Hanging EC2 Instances and Notify in Slack if They Exist
-        working-directory: .github/workflows/helpers
         shell: python3 {0}
         run: |
           import os
@@ -154,7 +153,6 @@ jobs:
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
       - name: List EC2 Instances that are marked as HOST_SERVICE_UNRESPONSIVE and Notify in Slack if They Exist
-        working-directory: .github/workflows/helpers
         shell: python3 {0}
         run: |
           import os
