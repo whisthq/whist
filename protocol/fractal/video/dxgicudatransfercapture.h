@@ -41,7 +41,6 @@ Includes
  * dependencies can be included together
  */
 
-
 BEGIN_EXTERN_C
 #include <D3D11.h>
 #include "dxgicapture.h"

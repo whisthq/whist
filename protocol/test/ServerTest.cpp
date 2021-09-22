@@ -2,8 +2,8 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-    #include "server/main.h"
-    #include "server/parse_args.h"
+#include "server/main.h"
+#include "server/parse_args.h"
 }
 // Include paths should be relative to the protocol folder
 //      Examples:
