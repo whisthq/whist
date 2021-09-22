@@ -270,6 +270,7 @@ func decryptAES256CBC(key, iv, data []byte) (decrypted []byte, err error) {
 		return nil, utils.MakeError("given data is not a multiple of the block size")
 	}
 
+	decrypted = make([]byte, len(data))
 	mode := cipher.NewCBCDecrypter(block, iv)
 	mode.CryptBlocks(decrypted, data)
 
