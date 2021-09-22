@@ -27,9 +27,7 @@ export const regionGet = async () => {
   return sortedRegions
 }
 
-export const mandelboxCreate = async (
-  accessToken: string
-) => {
+export const mandelboxCreate = async (accessToken: string) => {
   const regions = await regionGet()
   const response = await mandelboxRequest(accessToken, regions)
   return response

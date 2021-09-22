@@ -3,7 +3,6 @@ import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
-import { AWSRegion } from "@app/@types/aws"
 
 export default flow(
   "mandelboxFlow",
@@ -16,7 +15,7 @@ export default flow(
     const create = mandelboxCreateFlow(
       trigger.pipe(
         map((t) => ({
-          accessToken: t.accessToken
+          accessToken: t.accessToken,
         }))
       )
     )
