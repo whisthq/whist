@@ -40,9 +40,9 @@ Includes
  * operator overloads within. we do this now so the rest of dxgicapture.h
  * dependencies can be included together
  */
+#include <D3D11.h>
 
 BEGIN_EXTERN_C
-#include <D3D11.h>
 #include "dxgicapture.h"
 #include "videoencode.h"
 END_EXTERN_C
