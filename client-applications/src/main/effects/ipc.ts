@@ -6,7 +6,7 @@
 import { combineLatest, concat, of, merge } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, startWith, filter, tap, withLatestFrom } from "rxjs/operators"
+import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
 
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
