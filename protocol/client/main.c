@@ -55,73 +55,74 @@ Includes
 #include <fractal/utils/mac_utils.h>
 #endif  // __APPLE__
 
+// N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
+// used instead
+
 // Width and Height
-volatile int server_width = -1;
-volatile int server_height = -1;
-volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
+extern volatile int server_width;
+extern volatile int server_height;
+extern volatile CodecType server_codec_type;
 
 // maximum mbps
 extern volatile int max_bitrate;
 extern volatile int max_burst_bitrate;
-volatile bool update_bitrate = false;
+extern volatile bool update_bitrate;
 
 // Global state variables
-volatile char binary_aes_private_key[16];
-volatile char hex_aes_private_key[33];
-volatile SDL_Window* window;
-volatile char* window_title;
-volatile bool should_update_window_title;
-volatile bool run_sync_udp_packets;
-volatile bool run_sync_tcp_packets;
+extern volatile char binary_aes_private_key[16];
+extern volatile char hex_aes_private_key[33];
+extern volatile SDL_Window* window;
+extern volatile char* window_title;
+extern volatile bool should_update_window_title;
+extern volatile bool run_sync_udp_packets;
+extern volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
-volatile double latency;
+extern volatile double latency;
 
-volatile FractalRGBColor* native_window_color = NULL;
-volatile bool native_window_color_update = false;
+extern volatile FractalRGBColor* native_window_color;
+extern volatile bool native_window_color_update;
 
-volatile int output_width;
-volatile int output_height;
-volatile char* program_name = NULL;
-volatile CodecType output_codec_type = CODEC_TYPE_H264;
-volatile char* server_ip;
-char user_email[FRACTAL_ARGS_MAXLEN + 1];
-char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
-bool using_stun = false;
+extern volatile int output_width;
+extern volatile int output_height;
+extern volatile char* program_name;
+extern volatile CodecType output_codec_type;
+extern volatile char* server_ip;
+extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
+extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
+extern bool using_stun;
 
 // given by server protocol during port discovery. tells client the ports to use
 // for UDP and TCP communications.
-int udp_port = -1;
-int tcp_port = -1;
-int client_id = -1;
-int uid;
+extern int udp_port;
+extern int tcp_port;
+extern int client_id;
+extern int uid;
 
 // Keyboard state variables
-bool alt_pressed = false;
-bool ctrl_pressed = false;
-bool lgui_pressed = false;
-bool rgui_pressed = false;
+extern bool alt_pressed;
+extern bool ctrl_pressed;
+extern bool lgui_pressed;
+extern bool rgui_pressed;
 
 // Mouse motion state
-MouseMotionAccumulation mouse_state = {0};
+extern MouseMotionAccumulation mouse_state;
 
 // Whether a pinch is currently active - set in sdl_event_handler.c
 extern bool active_pinch;
 
 // Window resizing state
-SDL_mutex* window_resize_mutex;  // protects pending_resize_message
-clock window_resize_timer;
-volatile bool pending_resize_message =
-    false;  // should be set to true if sdl event handler was not able to process resize event due
-            // to throttling, so the main loop should process it
+extern SDL_mutex* window_resize_mutex;  // protects pending_resize_message
+extern clock window_resize_timer;
+extern volatile bool pending_resize_message;
 
 // Function Declarations
 
-SocketContext packet_send_udp_context = {0};
-SocketContext packet_receive_udp_context = {0};
-SocketContext packet_tcp_context = {0};
+extern SocketContext packet_send_udp_context;
+extern SocketContext packet_receive_udp_context;
+extern SocketContext packet_tcp_context;
 
-volatile bool connected = true;
-volatile bool exiting = false;
+extern volatile bool connected;
+extern volatile bool exiting;
 volatile int try_amount;
 
 // Defines

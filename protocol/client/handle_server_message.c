@@ -31,12 +31,12 @@ Includes
 
 #include <stddef.h>
 
-extern bool exiting;
+bool exiting = false;
 extern int audio_frequency;
 extern volatile double latency;
 extern volatile int try_amount;
-extern volatile char *window_title;
-extern volatile bool should_update_window_title;
+volatile char *window_title;
+volatile bool should_update_window_title;
 
 /*
 ============================

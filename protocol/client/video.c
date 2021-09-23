@@ -56,8 +56,8 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-extern volatile FractalRGBColor* native_window_color;
-extern volatile bool native_window_color_update;
+volatile FractalRGBColor* native_window_color = NULL;
+volatile bool native_window_color_update = false;
 
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;

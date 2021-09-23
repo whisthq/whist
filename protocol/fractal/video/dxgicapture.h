@@ -17,10 +17,17 @@ Includes
 */
 
 #pragma warning(disable : 4201)
+#ifdef __cplusplus
+}  // End the extern C
+#endif
 #include <D3D11.h>
 #include <D3d11_1.h>
 #include <DXGITYPE.h>
 #include <dxgi1_2.h>
+#ifdef __cplusplus
+// Start the extern C again
+extern "C" {
+#endif
 
 #include <fractal/core/fractal.h>
 #include <fractal/utils/color.h>

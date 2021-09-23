@@ -23,13 +23,7 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 
-# Host is needed since CMAKE_SYSTEM_NAME is set by the project() command
-if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
-    # Clang can't handle CXX for some reason
-    project(FractalProtocol LANGUAGES C)
-else ()
-    project(FractalProtocol LANGUAGES C CXX)
-endif ()
+project(FractalProtocol LANGUAGES C CXX)
 
 if (CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
@@ -78,6 +72,7 @@ set(META_AUTHOR_ORGANIZATION "Fractal")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractal/fractal")
 
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 14)
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
 set(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -264,6 +259,16 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
+# GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/heads/master.zip
+)
+# From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 #Set OSX compiler and SDK globally
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_COMPILER clang)
@@ -284,11 +289,123 @@ include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
+
+# Set variables to be used by the CMakeLists in the subdirectories
+set(PLATFORM_INDEPENDENT_LIBS   fractalCore
+    fractalAudio
+    fractalVideo
+    fractalClipboard
+    fractalNetwork
+    fractalLogging
+    fractalUtils
+    ${STATIC_SDL2}
+    ${LIB_SENTRY}
+)
+set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
+    "-framework VideoToolbox"
+    "-framework CoreMedia"
+    "-framework CoreAudio"
+    "-framework AudioToolbox"
+    "-framework IOKit"
+    "-framework ForceFeedback"
+    "-framework Carbon"
+    "-framework AppKit"
+    "-framework Metal"
+    "-framework QuartzCore"
+    objc
+    iconv
+    ${LIB_OPENSSL}
+)
+
+# MSVC C/C++ Standard Library linking, based on Debug/Release
+if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+    set(WINDOWS_CORE_LIBS
+        ucrtd
+        libcmtd
+        libcpmtd
+        vcruntimed
+        msvcrtd
+        msvcmrtd
+        msvcprtd
+    )
+elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
+    set(WINDOWS_CORE_LIBS
+        ucrt
+        libcmt
+        libcpmt
+        vcruntime
+        msvcrt
+        msvcmrt
+        msvcprt
+    )
+endif()
+
+# Windows Libs Shared by both server and client go here
+set(WINDOWS_CORE_LIBS
+    ${WINDOWS_CORE_LIBS}
+    ${LIB_OPENSSL}
+    oldnames # Needed by gtest for things like dup2/creat/etc
+    kernel32
+    gdi32
+    winmm
+    imm32
+    shell32
+    advapi32
+    ole32
+    oleaut32
+    opengl32
+    user32
+    uuid
+    version
+    ws2_32
+    shlwapi
+    crypt32
+    d3d11
+    dxgi
+    dxguid
+    shcore
+    DbgHelp
+    setupapi
+)
+
+# Client Specific windows libs go here
+set(WINDOWS_SPECIFIC_CLIENT_LIBS
+    ${WINDOWS_CORE_LIBS}
+)
+
 add_subdirectory(client)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "FractalServer")
+    set(PLATFORM_INDEPENDENT_SERVER_LIBS
+        fractalCore
+        fractalAudio
+        fractalVideo
+        fractalClipboard
+        fractalCursor
+        fractalInput
+        fractalNetwork
+        fractalLogging
+        fractalUtils
+        ${STATIC_SDL2}
+        ${LIB_SENTRY}
+        ${LIBMFX}
+    )
+    # Server Specific windows libs go here
+    set(WINDOWS_SPECIFIC_SERVER_LIBS
+        ${WINDOWS_CORE_LIBS}
+        wldap32
+        normaliz
+        winspool
+        comdlg32
+        odbc32
+        odbccp32
+        avrt
+        d3dcompiler
+    )
     add_subdirectory(server)
 endif()
+# Include the unit tests code
+add_subdirectory(test)
 
 if (WSL)
     message(STATUS "Native bash not found (only WSL), clang-tidy will not be an option")

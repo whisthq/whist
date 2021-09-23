@@ -33,27 +33,35 @@ Includes
 #include <fractal/logging/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
 
-extern volatile char binary_aes_private_key[16];
-extern volatile char hex_aes_private_key[33];
-extern volatile char *server_ip;
-extern volatile int output_width;
-extern volatile int output_height;
-extern volatile char *program_name;
-extern volatile CodecType output_codec_type;
+// Taken from main.c
+volatile int server_width = -1;
+volatile int server_height = -1;
+volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
+
+volatile char binary_aes_private_key[16];
+volatile char hex_aes_private_key[33];
+volatile char *server_ip;
+volatile int output_width;
+volatile int output_height;
+volatile char *program_name = NULL;
+volatile CodecType output_codec_type = CODEC_TYPE_H264;
 extern volatile SDL_Window *window;
 
 extern volatile int max_bitrate;
 
+// From main.c
+volatile bool update_bitrate = false;
+
 // This variables should stay as arrays - we call sizeof() on them
-extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
-extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
+char user_email[FRACTAL_ARGS_MAXLEN + 1];
+char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 
 extern bool skip_taskbar;
 
-extern bool using_stun;
+bool using_stun = false;
 
-extern MouseMotionAccumulation mouse_state;
-extern volatile SDL_Window *window;
+MouseMotionAccumulation mouse_state = {0};
+volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];
 
