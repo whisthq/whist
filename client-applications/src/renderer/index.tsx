@@ -4,7 +4,7 @@
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */
 
-import React from "react"
+import React, { useEffect } from "react"
 import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
 
@@ -83,7 +83,14 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
-  console.log("app env is", mainState.appEnvironment)
+  useEffect(() => {
+    // We need to ask the main thread to re-emit the current StateIPC because
+    // useMainState() only subscribes to state updates after the function is
+    // called
+    setMainState({
+      trigger: { name: TRIGGER.emitIPC, payload: undefined },
+    })
+  }, [])
 
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashLoading) return <Loading />
@@ -92,7 +99,11 @@ const RootComponent = () => {
     return (
       <Typeform
         onSubmit={handleExitTypeform}
-        id={mainState.appEnvironment === "prod" ? "Yfs4GkeN" : "nRa1zGFa"}
+        id={
+          (mainState.appEnvironment ?? "prod") === "prod"
+            ? "Yfs4GkeN"
+            : "nRa1zGFa"
+        }
         email={mainState.userEmail}
       />
     )
