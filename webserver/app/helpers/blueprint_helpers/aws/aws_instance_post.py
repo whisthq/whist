@@ -125,30 +125,36 @@ def terminate_instance(instance: InstanceInfo) -> None:
     db.session.commit()
 
 
-def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
+def find_instance(regions: [str], client_commit_hash: str) -> Optional[str]:
     """
-    Given a region, finds (if it can) an instance in that region or a neighboring region with space
-    If it succeeds, returns the instance name.  Else, returns None
+    Given a list of regions, finds (if it can) an instance in that region
+    or a neighboring region with space. If it succeeds, returns the instance name.
+    Else, returns None
     Args:
-        region: which region to search
+        regions: a list of regions sorted by proximity
 
     Returns: either a good instance name or None
 
     """
-    regions_to_search = bundled_region.get(region, []) + [region]
-    # InstancesWithRoomForMandelboxes is sorted in DESC
-    # with number of mandelboxes running, So doing a
-    # query with limit of 1 returns the instance with max
-    # occupancy which can improve resource utilization.
-    instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
-        InstancesWithRoomForMandelboxes.query.filter_by(
-            commit_hash=client_commit_hash,
-            location=region,
-            status=MandelboxHostState.ACTIVE,
+    for region in regions:
+        regions_to_search = bundled_region.get(region, []) + [region]
+        # InstancesWithRoomForMandelboxes is sorted in DESC
+        # with number of mandelboxes running, So doing a
+        # query with limit of 1 returns the instance with max
+        # occupancy which can improve resource utilization.
+        current_region = region
+        instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
+            InstancesWithRoomForMandelboxes.query.filter_by(
+                commit_hash=client_commit_hash,
+                location=region,
+                status=MandelboxHostState.ACTIVE,
+            )
+            .limit(1)
+            .one_or_none()
         )
-        .limit(1)
-        .one_or_none()
-    )
+        if instance_with_max_mandelboxes is not None:
+            break
+
     if instance_with_max_mandelboxes is None:
         # If we are unable to find the instance in the required region,
         # let's try to find an instance in nearby AZ
@@ -181,7 +187,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
             return None
         else:
-            return avail_instance.instance_name  # type: ignore[no-any-return]
+            return avail_instance.instance_name, current_region  # type: ignore[no-any-return]
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
