@@ -6,7 +6,7 @@
 import { combineLatest, concat, of, merge } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, startWith, filter } from "rxjs/operators"
+import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
 
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
@@ -47,9 +47,27 @@ const subscribed = combineLatest(
   )
 )
 
-combineLatest([
+const finalState = combineLatest([
   subscribed,
   fromTrigger("eventIPC").pipe(startWith({})),
-]).subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
-  ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getElectronWindows())
-})
+])
+
+finalState.subscribe(
+  ([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
+    ipcBroadcast(
+      { ...state, ...subs } as Partial<StateIPC>,
+      getElectronWindows()
+    )
+  }
+)
+
+fromTrigger("emitIPC")
+  .pipe(withLatestFrom(finalState))
+  .subscribe(
+    ([, [subs, state]]: [any, [Partial<StateIPC>, Partial<StateIPC>]]) => {
+      ipcBroadcast(
+        { ...state, ...subs } as Partial<StateIPC>,
+        getElectronWindows()
+      )
+    }
+  )

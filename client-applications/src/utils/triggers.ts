@@ -28,6 +28,7 @@ export default {
 
   // IPC triggers
   eventIPC: "eventIPC",
+  emitIPC: "emitIPC",
 
   // Persist triggers
   persisted: "persisted",
