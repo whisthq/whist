@@ -335,7 +335,7 @@ export const createOnboardingTypeform = () =>
   })
 
 export const createBugTypeform = () => {
-  const win = createWindow({
+  createWindow({
     options: {
       ...base,
       ...width.lg,
@@ -349,9 +349,6 @@ export const createBugTypeform = () => {
     hash: WindowHashBugTypeform,
     closeElectronWindows: false,
   })
-  win.webContents.toggleDevTools()
-  return win
-}
 
 export const createSpeedtestWindow = () =>
   createWindow({
