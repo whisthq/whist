@@ -47,16 +47,12 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # commit_hashes on their local machines.
         for region in body.regions:
             fractal_logger.debug(f"Querying region: {region} for client commit hash.")
-            try:
-                client_commit_hash = (
-                    RegionToAmi.query.filter_by(region_name=region, ami_active=True)
-                    .one_or_none()
-                    .client_commit_hash
-                )
+            ami = RegionToAmi.query.filter_by(region_name=region, ami_active=True).one_or_none()
+            if ami is not None:
+                client_commit_hash = ami.client_commit_hash
                 fractal_logger.debug(f"Using client commit hash: {client_commit_hash}")
                 break
-            except:
-                fractal_logger.debug(f"Client commit hash not found on region: {region}.")
+            fractal_logger.debug(f"Client commit hash not found on region: {region}.")
     else:
         client_commit_hash = body.client_commit_hash
 
