@@ -115,7 +115,7 @@ jobs:
 
       ############################# Unix Configuration Steps END #############################
 
-      - name: Build Protocol Client and Server on Windows
+      - name: Build and Test Protocol Client and Server on Windows
         if: runner.os == 'Windows'
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         working-directory: protocol
@@ -123,15 +123,15 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "Ninja" || EXIT /B 1
-          ninja FractalClient || EXIT /B 1
-          ninja FractalServer || EXIT /B 1
+          ninja FractalClient FractalClientTest || EXIT /B 1
+          ninja FractalServer FractalServerTest || EXIT /B 1
 
-      - name: Build Protocol Client on Linux Ubuntu
+      - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
 
-      - name: Build Protocol Client on macOS
+      - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
         env:
           FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
@@ -140,12 +140,12 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
-          make FractalClient -j
+          make FractalClient FractalClientTest -j
 
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug FractalServer
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug FractalServer FractalServerTest
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
@@ -200,7 +200,7 @@ jobs:
       - name: Build Protocol Server in Docker Container
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer
+        run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer FractalServerTest
 
       # This ensures that all the build files from build_protocol_targets.sh have actually been generated
       - name: Ensure that all protocol build files are present

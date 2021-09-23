@@ -81,18 +81,7 @@ endif ()
 ################## Linking platform independent libs ##################
 ]]
 target_link_libraries(FractalServer
-        fractalCore
-        fractalAudio
-        fractalVideo
-        fractalClipboard
-        fractalCursor
-        fractalInput
-        fractalNetwork
-        fractalLogging
-        fractalUtils
-        ${STATIC_SDL2}
-        ${LIB_SENTRY}
-        ${LIBMFX}
+        ${PLATFORM_INDEPENDENT_SERVER_LIBS}
         )
 
 #[[
@@ -149,45 +138,5 @@ if (${WIN32})
     endif()
 
     # Link to system libs
-    target_link_libraries(FractalServer
-            ${LIB_OPENSSL}
-            libvcruntime
-            libcmt
-            kernel32
-            ws2_32
-            crypt32
-            wldap32
-            normaliz
-            gdi32
-            winmm
-            imm32
-            shell32
-            advapi32
-            ole32
-            oleaut32
-            opengl32
-            user32
-            uuid
-            version
-            dxgi
-            d3d11
-            winspool
-            comdlg32
-            odbc32
-            odbccp32
-            ucrt
-            ucrtd
-            vcruntime
-            msvcrt
-            msvcmrt
-            msvcprt
-            avrt
-            d3dcompiler
-            dxguid
-            crypt32
-            shlwapi
-            shcore
-            DbgHelp
-            setupapi
-            )
+    target_link_libraries(FractalServer ${WINDOWS_SPECIFIC_SERVER_LIBS})
 endif()
