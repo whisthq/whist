@@ -83,6 +83,8 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
+  console.log("app env is", mainState.appEnvironment)
+
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashLoading) return <Loading />
   if (show === WindowHashUpdate) return <Update />
