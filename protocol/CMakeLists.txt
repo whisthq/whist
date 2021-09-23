@@ -316,6 +316,8 @@ set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
     iconv
     ${LIB_OPENSSL}
 )
+
+# MSVC C/C++ Standard Library linking, based on Debug/Release
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
     set(WINDOWS_CORE_LIBS
         ucrtd
@@ -337,9 +339,12 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
         msvcprt
     )
 endif()
-set(WINDOWS_SPECIFIC_CLIENT_LIBS
-    ${LIB_OPENSSL}
+
+# Windows Libs Shared by both server and client go here
+set(WINDOWS_CORE_LIBS
     ${WINDOWS_CORE_LIBS}
+    ${LIB_OPENSSL}
+    oldnames # Needed by gtest for things like dup2/creat/etc
     kernel32
     gdi32
     winmm
@@ -363,6 +368,11 @@ set(WINDOWS_SPECIFIC_CLIENT_LIBS
     setupapi
 )
 
+# Client Specific windows libs go here
+set(WINDOWS_SPECIFIC_CLIENT_LIBS
+    ${WINDOWS_CORE_LIBS}
+)
+
 add_subdirectory(client)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "FractalServer")
@@ -380,39 +390,17 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile
         ${LIB_SENTRY}
         ${LIBMFX}
     )
+    # Server Specific windows libs go here
     set(WINDOWS_SPECIFIC_SERVER_LIBS
-        ${LIB_OPENSSL}
         ${WINDOWS_CORE_LIBS}
-        kernel32
-        ws2_32
-        crypt32
         wldap32
         normaliz
-        gdi32
-        winmm
-        imm32
-        shell32
-        advapi32
-        ole32
-        oleaut32
-        opengl32
-        user32
-        uuid
-        version
-        dxgi
-        d3d11
         winspool
         comdlg32
         odbc32
         odbccp32
         avrt
         d3dcompiler
-        dxguid
-        crypt32
-        shlwapi
-        shcore
-        DbgHelp
-        setupapi
     )
     add_subdirectory(server)
 endif()
