@@ -334,7 +334,7 @@ export const createOnboardingTypeform = () =>
     closeProtocolWindow: true,
   })
 
-export const createBugTypeform = () => {
+export const createBugTypeform = () =>
   createWindow({
     options: {
       ...base,
