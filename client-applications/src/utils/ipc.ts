@@ -11,7 +11,6 @@ import { every } from "lodash"
 import { IpcRendererEvent, BrowserWindow } from "electron"
 import { StateIPC } from "@app/@types/state"
 import { ErrorIPC, StateChannel } from "@app/utils/constants"
-import events from "events"
 
 // This function should only be called from the renderer process. It's a React
 // hook that simplifies our IPC coordination with the main process.
