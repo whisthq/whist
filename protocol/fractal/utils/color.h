@@ -15,6 +15,11 @@ The conversion functions take an initialized XXXColor struct and return a YYYCol
 Meanwhile, other functions will appropriately parse the struct and return a useful computation
 from the color.
 
+============================
+Testing
+============================
+
+The functionality provided by this file is tested in `test/ClientTest.cpp`, in `FractalColorTest`.
 */
 
 /*
