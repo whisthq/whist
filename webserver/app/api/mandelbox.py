@@ -56,7 +56,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
     else:
         client_commit_hash = body.client_commit_hash
 
-    instance_name, region = find_instance(body.regions, client_commit_hash)
+    instance_region_tuple = find_instance(body.regions, client_commit_hash)
+    if instance_region_tuple is not None:  # Safely unpack tuple
+        instance_name, region = instance_region_tuple
+
     time_when_instance_found = time.time() * 1000
     # How long did it take to find an instance?
     time_to_find_instance = time_when_instance_found - start_time

@@ -3,7 +3,7 @@ import time
 
 from collections import defaultdict
 from sys import maxsize
-from typing import Any, DefaultDict, List, Optional
+from typing import Any, DefaultDict, List, Optional, Tuple
 import requests
 from flask import current_app
 from app.database.models.cloud import (
@@ -125,7 +125,7 @@ def terminate_instance(instance: InstanceInfo) -> None:
     db.session.commit()
 
 
-def find_instance(regions: [str], client_commit_hash: str) -> Optional[str]:
+def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple[str, str]]:
     """
     Given a list of regions, finds (if it can) an instance in that region
     or a neighboring region with space. If it succeeds, returns the instance name.
@@ -187,7 +187,7 @@ def find_instance(regions: [str], client_commit_hash: str) -> Optional[str]:
         if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
             return None
         else:
-            return avail_instance.instance_name, current_region  # type: ignore[no-any-return]
+            return avail_instance.instance_name, current_region
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
