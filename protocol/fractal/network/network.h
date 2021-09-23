@@ -137,6 +137,7 @@ Custom types
 typedef struct SocketContext {
     bool is_server;
     bool is_tcp;
+    bool udp_is_connected;
     int timeout;
     SOCKET socket;
     struct sockaddr_in addr;
