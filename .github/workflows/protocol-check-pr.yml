@@ -115,7 +115,7 @@ jobs:
 
       ############################# Unix Configuration Steps END #############################
 
-      - name: Build Protocol Client and Server on Windows
+      - name: Build and Test Protocol Client and Server on Windows
         if: runner.os == 'Windows'
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         working-directory: protocol
@@ -126,12 +126,12 @@ jobs:
           ninja FractalClient FractalClientTest || EXIT /B 1
           ninja FractalServer FractalServerTest || EXIT /B 1
 
-      - name: Build Protocol Client on Linux Ubuntu
+      - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
 
-      - name: Build Protocol Client on macOS
+      - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
         env:
           FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
