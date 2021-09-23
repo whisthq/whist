@@ -132,6 +132,13 @@ else()
     set(arch 32)
 endif()
 
+# on macOS, detect if we are building arm64 or x86_64
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # should return "arm64" or "x86_64"
+    execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE MACOS_ARCHITECTURE)
+    message(STATUS "macOS Architecture: ${MACOS_ARCHITECTURE}")
+endif()
+
 # Windows option to add icon (used primarily for client app compilation pipeline)
 option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
 
@@ -167,7 +174,7 @@ if (DOWNLOAD_BINARIES)
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
     else()
-        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
+        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache ${MACOS_ARCHITECTURE})
         execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
