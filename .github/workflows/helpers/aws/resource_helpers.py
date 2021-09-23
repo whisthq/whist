@@ -171,22 +171,23 @@ def flag_instances(region):
 
 def is_personal_dev_instance(instance):
     """
-    Determines if the instance is a person's dev instance based on tags
+    Determines if the instance is a person's dev instance based on instance name
 
     Args:
         instance (dict): ec2 instance
 
     Returns:
-        boolean: instance contains a tag with dev as part of the value
+        boolean: if true instance is a personal dev instance
     """
-    for tag in instance["Tags"]:
-        if tag["Key"] == "Name" and not ("ec2" in tag["Value"] or "test-instance" in tag["Value"]):
-            return True
+    name = ""
 
-    return False
+    if "Tags" in instance:
+        name, _ = read_tags(instance["Tags"], "EC2")
+
+    return "test-instance" in name or "ec2" not in name
 
 
-def get_non_personal_development_instance_ids(region):
+def get_non_personal_development_instances(region):
     """
     Gets a filtered list of all aws instances that are not for development
 
@@ -194,16 +195,21 @@ def get_non_personal_development_instance_ids(region):
         region (str): current region
 
     Returns:
-        arr: array of instance ids
+        arr: array of tuple (instance name, instance id)
     """
     reservations = get_all_aws_instances(region)
-    instance_ids = []
+    instances = []
 
     for res in reservations:
         for instance in res["Instances"]:
             if is_personal_dev_instance(instance):
                 continue
 
-            instance_ids.append(instance["InstanceId"])
+            name = ""
 
-    return instance_ids
+            if "Tags" in instance:
+                name, _ = read_tags(instance["Tags"], "EC2")
+
+            instances.append((name, instance["InstanceId"]))
+
+    return instances
