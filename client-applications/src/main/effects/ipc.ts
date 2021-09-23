@@ -38,9 +38,7 @@ const subscribed = combineLatest(
         filter((args: { userEmail?: string }) => args.userEmail !== undefined),
         map((args: { userEmail?: string }) => args.userEmail as string)
       ),
-      appEnvironment: of(appEnvironment).pipe(
-        tap((x) => console.log("app env is", x))
-      ),
+      appEnvironment: of(appEnvironment),
       updateInfo: fromTrigger("downloadProgress").pipe(
         map((obj) => JSON.stringify(obj))
       ),
