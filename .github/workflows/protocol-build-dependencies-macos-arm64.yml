@@ -1,0 +1,246 @@
+# workflows/protocol-build-dependencies-macos-arm64.yml
+#
+# Build & Publish Fractal Protocol dependencies
+# Build and publish Fractal version-compatible builds of the Fractal protocol
+# dependencies targeting macOS ARM64 to AWS S3. This workflow only builds non-forked dependencies,
+# forked dependencies, i.e. SDL, are forked as fractal/<dependency> (i.e. fractal/SDL) and
+# published directly from the forked repository
+
+name: "Protocol: Build Dependencies"
+
+# We deploy new dependencies on modifications to this file (i.e. building a new version) or
+# manual dispatch on our default repository branch, which is `dev`
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/protocol-build-dependencies-macos-arm64.yml"
+  push:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/protocol-build-dependencies-macos-arm64.yml"
+  workflow_dispatch:
+
+jobs:
+  # Dependency #1 -- OpenSSL
+  build-and-publish-openssl:
+    name: "OpenSSL (macOS ARM64)"
+    runs-on: [self-hosted, macOS, ARM64]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    env:
+      macos-tar-name: fractal-macos-arm64-libcrypto-static-lib.tar.gz
+      s3-bucket-uri: s3://fractal-protocol-shared-libs
+      s3-bucket-region: us-east-1
+
+    steps:
+      ################################# CONFIG STEPS START ###############################
+
+      - name: Check M1 Runner Status
+        run: |
+          clang --version
+          uname -a
+
+      - name: Checkout openssl Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: openssl/openssl
+          ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
+
+      - name: Install awscli, cmake, gcc, and pkg-config
+        run: brew install awscli cmake pkg-config gcc
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.s3-bucket-region }}
+
+      ###################################################################################
+      ################################# MACOS STEPS START ###############################
+
+      - name: Build Fractal OpenSSL on macOS
+        env:
+          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+        run: |
+          # configure and build OpenSSL with -O3 flag
+          ./config --release
+          make -j
+
+      ###################################################################################
+      ################################# PUBLISH STEPS START #############################
+
+      # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
+      - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
+          aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+
+      ###################################################################################
+
+      - name: Checkout fractal Git Repository
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          BODY = f"@releases :rotating_light: Failed to deploy `OpenSSL libcrypto` Static Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  notify-slack-openssl:
+    name: Notify Slack for OpenSSL Build
+    needs: [build-and-publish-openssl]
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Success
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          TITLE = ":openssl: OpenSSL Libcrypto Static Library Deployed :openssl:"
+          BODY = f"Fractal `OpenSSL libcrypto` Static Library Deployed to Production via Upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+  # Dependency #2 -- Sentry
+  build-and-publish-sentry:
+    name: "Sentry (macOS ARM64)"
+    runs-on: [self-hosted, macOS, ARM64]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    env:
+      macos-tar-name: fractal-macos-arm64-sentry-shared-lib.tar.gz
+      s3-bucket-uri: s3://fractal-protocol-shared-libs
+      s3-bucket-region: us-east-1
+
+    steps:
+      ################################# CONFIG STEPS START ###############################
+
+      - name: Check M1 Runner Status
+        run: |
+          clang --version
+          uname -a
+
+      - name: Checkout sentry-native Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: getsentry/sentry-native
+          ref: "0.4.10" # GitHub Tag of the Sentry release we use
+          submodules: recursive # Sentry uses (nested) submodules for external dependencies
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.s3-bucket-region }}
+
+      ###################################################################################
+      ################################# MACOS STEPS START ###############################
+
+      - name: Build Sentry Native on macOS
+        env:
+          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+        run: |
+          # configure and build Sentry Native
+          cmake -S . \
+                -B build \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D SENTRY_BUILD_SHARED_LIBS=ON \
+                -D SENTRY_BUILD_RUNTIMESTATIC=ON \
+                -D SENTRY_BUILD_TESTS=OFF \
+                -D SENTRY_BACKEND=crashpad
+          cd build
+          make -j
+
+          # move files to location for publish steps to tar
+          mv crashpad_build/handler/crashpad_handler ..
+          mv libsentry.dylib ..
+
+      ###################################################################################
+      ################################# PUBLISH STEPS START #############################
+
+      # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
+      - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
+          aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+
+      ###################################################################################
+
+      - name: Checkout Fractal Git Repository
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          BODY = f"@releases :rotating_light: Failed to deploy Sentry `sentry-native` Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  notify-slack-sentry:
+    name: Notify Slack for Sentry Build
+    needs: [build-and-publish-sentry]
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Success
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          TITLE = ":sentry: Sentry `sentry-native` Shared Library Deployed :sentry:"
+          BODY = f"Fractal Sentry `sentry-native` Shared Library deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
