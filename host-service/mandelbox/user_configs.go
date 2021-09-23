@@ -3,11 +3,15 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 // This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
 
 import (
+	"archive/tar"
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,6 +22,7 @@ import (
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	"github.com/pierrec/lz4/v4"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -25,8 +30,12 @@ const (
 	USER_CONFIG_S3_BUCKET = "fractal-user-app-configs"
 	AES_256_KEY_LENGTH    = 32
 	AES_256_IV_LENGTH     = 16
-	PBKDF2_ITERATIONS     = 10000
-	OPENSSL_SALT_HEADER   = "Salted__"
+
+	// This is the default iteration value used by openssl -pbkdf2 flag
+	PBKDF2_ITERATIONS = 10000
+
+	// This is openssl's "magic" salt header value
+	OPENSSL_SALT_HEADER = "Salted__"
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
@@ -87,6 +96,9 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
 	if err != nil {
+		// If aws s3 errors out due to the file not existing, don't log an error because
+		// this means that it's the user's first run and they don't have any settings
+		// stored for this application yet.
 		if awsErr, ok := err.(awserr.Error); ok {
 			switch awsErr.Code() {
 			case s3.ErrCodeNoSuchKey:
@@ -94,20 +106,18 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 				return nil
 			}
 		}
+
+		return utils.MakeError("Failed to download head object from s3: %v", err)
 	}
 
-	// Download file into an in-memory buffer
+	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
 	buf := aws.NewWriteAtBuffer(make([]byte, int(*headObject.ContentLength)))
-
 	numBytes, err := downloader.Download(buf, &s3.GetObjectInput{
 		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
 	if err != nil {
-		// If aws s3 cp errors out due to the file not existing, don't log an error because
-		// this means that it's the user's first run and they don't have any settings
-		// stored for this application yet.
 		if awsErr, ok := err.(awserr.Error); ok {
 			switch awsErr.Code() {
 			case s3.ErrCodeNoSuchKey:
@@ -137,20 +147,51 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	}
 
 	logger.Infof("decrypt complete")
-	logger.Infof("writing to file: %s", decTarPath)
 
-	err = os.WriteFile(decTarPath, decryptedData, 0777)
+	// Unpacking the decrypted data involves:
+	// 1. Decompress the the lz4 file into a tar
+	// 2. Untar the config to the target directory
+	dataReader := bytes.NewReader(decryptedData)
+	lz4Reader := lz4.NewReader(dataReader)
+	tarReader := tar.NewReader(lz4Reader)
 
-	logger.Infof("file write completed")
-	logger.Infof("Starting extraction")
+	for {
+		header, err := tarReader.Next()
+		switch {
+		case err == io.EOF:
+			break
+		case err != nil:
+			return utils.MakeError("error reading tar file: %v", err)
+		}
 
-	// Extract the config archive to the user config directory
-	untarConfigCmd := exec.Command("/usr/bin/tar", "-I", "lz4", "-xf", decTarPath, "-C", unpackedConfigPath)
-	untarConfigOutput, err := untarConfigCmd.CombinedOutput()
-	if err != nil {
-		return utils.MakeError("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
+		if header == nil {
+			break
+		}
+
+		path := filepath.Join(unpackedConfigPath, header.Name)
+		info := header.FileInfo()
+		if info.IsDir() {
+			if err = os.MkdirAll(path, info.Mode()); err != nil {
+				return utils.MakeError("error creating directory: %v", err)
+			}
+			continue
+		}
+
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return utils.MakeError("error opening file: %v", err)
+		}
+
+		_, err = io.Copy(file, tarReader)
+		if err != nil {
+			file.Close()
+			return utils.MakeError("error copying data to file: %v", err)
+		}
+
+		file.Close()
 	}
-	logger.Infof("Untar config directory output: %s", untarConfigOutput)
+
+	logger.Infof("Untarred config to: %s", unpackedConfigPath)
 
 	return nil
 }
