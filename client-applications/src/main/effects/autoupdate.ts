@@ -21,6 +21,8 @@ fromTrigger("appReady")
     // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
     // we don't need to set it.
     switch (appEnvironment) {
+      case FractalEnvironments.PRODUCTION:
+        break
       case FractalEnvironments.STAGING:
         autoUpdater.channel = "staging-rc"
         break
