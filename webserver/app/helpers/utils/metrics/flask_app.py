@@ -45,17 +45,17 @@ def app_record_metrics(
     and extract default dimension values. Subsequent calls will use the cached logger
     and default dimensions.
 
-    Example:
+    Example::
 
-    TODO: Update the example to show metrics for web
-    * at the end of a celery task:
-        app_record_metrics(metrics={
-            "celery.task_duration.success.ms": task_duration,
-            "celery.tasks.count": -1
-        }, extra_dims={
-            "task_name": "assign_mandelbox",
-            "task_id": task_id,
-        })
+       app_record_metrics(
+           metrics={
+               "web.time_to_find_instance": time_to_find_instance,
+               "web.time_to_create_row": time_to_create_row,
+               "web.total_request_time": total_request_time,
+           },
+           extra_dims={"task_name": "assign_mandelbox"}
+       )
+
     """
     if extra_dims is None:
         extra_dims = {}

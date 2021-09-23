@@ -1,7 +1,7 @@
 """SQLAlchemy models
 
 In this module, we define Python models that represent tables in our PostgreSQL database. Each
- model's attributes are automatically loaded from database column names when we call
+model's attributes are automatically loaded from database column names when we call
 ``DeferredReflection.prepare()`` in ``app/factory.py``.
 
 Note that SQLAlchemy is unable to reflect primary key constraints from views automatically. For
@@ -46,7 +46,6 @@ class InstancesWithRoomForMandelboxes(DeferredReflection, db.Model):  # type: ig
     'how many can be', etc.
 
     Attributes:
-        instance_name (string): A unique identifier generated randomly to identify the instance.
         location (string): where is the instance?
         status (string): what's the instance's status?
         ami_id (string):  What image is the instance running?
@@ -57,6 +56,7 @@ class InstancesWithRoomForMandelboxes(DeferredReflection, db.Model):  # type: ig
     __tablename__ = "instances_with_room_for_mandelboxes"
     __table_args__ = {"schema": "hardware"}
 
+    #: str: A string that uniquely identifies the instance.
     instance_name = db.Column(db.String(), primary_key=True)
 
 
@@ -70,7 +70,6 @@ class LingeringInstances(DeferredReflection, db.Model):  # type: ignore[name-def
 
 
     Attributes:
-        instance_name (string): A unique identifier generated randomly to identify the instance.
         cloud_provider_id (string): What's it called on AWS?
         status (string):  What's it's most recent status??
     """
@@ -78,6 +77,7 @@ class LingeringInstances(DeferredReflection, db.Model):  # type: ignore[name-def
     __tablename__ = "lingering_instances"
     __table_args__ = {"schema": "hardware"}
 
+    #: str: A string that uniquely identifies the instance.
     instance_name = db.Column(db.String(), primary_key=True)
 
 

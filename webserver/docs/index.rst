@@ -10,10 +10,11 @@ Welcome to the Fractal Webserver internal documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   architecture
+   authentication
    responsibilities
+   stripe
    services
-   module_docs
+   modules
 
 
 Introduction
