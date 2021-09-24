@@ -1,7 +1,7 @@
-# workflows/client-applications-check-pr-x64.yml
+# workflows/client-applications-check-pr-macos-arm64.yml
 #
 # Client Applications: Check PR
-# Checks a client-applications PR for linting and building success on X86_64 systems.
+# Checks a client-applications PR for linting and building success on macOS ARM64 systems.
 
 name: "Client Applications: Check PR"
 
@@ -61,45 +61,10 @@ jobs:
         run: |
           print(r"""${{ steps.config-macos.outputs.config }}""")
 
-  # Linting
-  # Check that the macOS client-applications code is properly linted
-  client-applications-check-pr-linting:
-    name: Linting (macOS ARM64)
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      - name: Install Node.js 16
-        uses: actions/setup-node@v2.4.0
-        with:
-          node-version: "16"
-
-      # We need to do this since we're on a self-hosted runner
-      # Note: We also install and start the Docker daemon manually via VNC
-      - name: Install Yarn
-        run: brew install yarn
-
-      - name: Run yarn install
-        working-directory: client-applications
-        run: |
-          # We need to increase the timeout to deal with GHA's weak VMs.
-          yarn config set network-timeout 600000
-          yarn cache clean
-          yarn install
-
-      - name: Check if Code Follows ESLint Standards
-        working-directory: client-applications
-        run: yarn run lint:check
-
   # Building
   # Check that the macOS client application builds
   client-applications-check-pr-building:
-    name: Building (macOS ARM64)
+    name: Building on macOS (ARM64)
     runs-on: [self-hosted, macOS, ARM64]
     defaults:
       run:
