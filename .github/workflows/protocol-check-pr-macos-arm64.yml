@@ -43,12 +43,3 @@ jobs:
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
           make FractalClient FractalClientTest -j
-
-      - name: Verify Builds with clang-tidy
-        working-directory: protocol
-        run: |
-          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
-
-          cd build
-          make clang-tidy -j
