@@ -36,7 +36,7 @@ class InstanceInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
         commit_hash (str): what commit hash of our infrastructure is this machine running?"""
 
     __tablename__ = "instance_info"
-    __table_args__ = {"schema": "hardware"}
+    __table_args__ = {"schema": "cloud"}
 
 
 class InstancesWithRoomForMandelboxes(DeferredReflection, db.Model):  # type: ignore[name-defined]
@@ -54,7 +54,7 @@ class InstancesWithRoomForMandelboxes(DeferredReflection, db.Model):  # type: ig
     """
 
     __tablename__ = "instances_with_room_for_mandelboxes"
-    __table_args__ = {"schema": "hardware"}
+    __table_args__ = {"schema": "cloud"}
 
     #: str: A string that uniquely identifies the instance.
     instance_name = db.Column(db.String(), primary_key=True)
@@ -75,7 +75,7 @@ class LingeringInstances(DeferredReflection, db.Model):  # type: ignore[name-def
     """
 
     __tablename__ = "lingering_instances"
-    __table_args__ = {"schema": "hardware"}
+    __table_args__ = {"schema": "cloud"}
 
     #: str: A string that uniquely identifies the instance.
     instance_name = db.Column(db.String(), primary_key=True)
@@ -94,12 +94,12 @@ class MandelboxInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
 
     __tablename__ = "mandelbox_info"
-    __table_args__ = {"schema": "hardware"}
+    __table_args__ = {"schema": "cloud"}
 
 
 class RegionToAmi(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
-    This class represents the region_to_ami table in hardware
+    This class represents the region_to_ami table in cloud
     it maps region names to the AMIs which should be used
     for instances in that region
 
@@ -121,4 +121,4 @@ class RegionToAmi(DeferredReflection, db.Model):  # type: ignore[name-defined]
     """
 
     __tablename__ = "region_to_ami"
-    __table_args__ = {"schema": "hardware"}
+    __table_args__ = {"schema": "cloud"}

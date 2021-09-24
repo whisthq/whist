@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Download seed data from the hardware.region_to_ami table.
+# Download seed data from the cloud.region_to_ami table.
 # Either POSTGRES_URI is provided, or (POSTGRES_HOST, POSTGRES_USER, POSTGRES_DB, POSTGRES_PASSWORD)
 
 # exit on error and missing env var
@@ -23,7 +23,7 @@ POSTGRES_URI=${POSTGRES_URI:=""}
 # retrieve db info depending on if a URI is given or host/db/user. we check the prefix for a URI
 if [[ ^$POSTGRES_URI =~ "postgres://" ]]; then
   echo "===  Retrieving DB data  === \n"
-  (pg_dump -d $POSTGRES_URI --data-only --column-inserts -t hardware.region_to_ami) > db_data.sql
+  (pg_dump -d $POSTGRES_URI --data-only --column-inserts -t cloud.region_to_ami) > db_data.sql
 
 else
   # pg_dump will look at this and skip asking for a prompt
@@ -31,5 +31,5 @@ else
 
   echo "=== Retrieving DB data ==="
   echo ""
-  (pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" --data-only --column-inserts -t hardware.region_to_ami) > db_data.sql
+  (pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" --data-only --column-inserts -t cloud.region_to_ami) > db_data.sql
 fi

@@ -1,5 +1,5 @@
 -- name: RemoveStaleMandelboxes :exec
-DELETE FROM hardware.mandelbox_info
+DELETE FROM cloud.mandelbox_info
   WHERE
     instance_name = pggen.arg('instanceName')
     AND (

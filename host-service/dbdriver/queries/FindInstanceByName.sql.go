@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const findInstanceByNameSQL = `SELECT * FROM hardware.instance_info WHERE instance_name = $1;`
+const findInstanceByNameSQL = `SELECT * FROM cloud.instance_info WHERE instance_name = $1;`
 
 type FindInstanceByNameRow struct {
 	Ip                    pgtype.Varchar `json:"ip"`

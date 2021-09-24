@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const writeInstanceStatusSQL = `UPDATE hardware.instance_info
+const writeInstanceStatusSQL = `UPDATE cloud.instance_info
   SET status = $1
   WHERE instance_name = $2;`
 

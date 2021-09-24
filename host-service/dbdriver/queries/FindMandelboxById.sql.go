@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const findMandelboxByIDSQL = `SELECT * FROM hardware.mandelbox_info
+const findMandelboxByIDSQL = `SELECT * FROM cloud.mandelbox_info
   WHERE mandelbox_id = $1;`
 
 type FindMandelboxByIDRow struct {
