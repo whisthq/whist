@@ -8,30 +8,16 @@ import {
 const features = [
   {
     name: "North America",
-    description: (
-      <div>
-        Our servers are located in various parts of the United States and southern Canada. 
-        If you are not in these areas, you will experience high network latency. 
-        To request support in your region, email us at {" "}
-        <a
-          href="mailto:support@fractal.co"
-          target="_blank"
-          className="text-gray-300 hover:text-mint"
-          rel="noreferrer"
-        >        
-          support@fractal.co."
-        </a>
-      </div>
-    ),
-      icon: GlobeIcon,
+    description:
+      "Our servers are located in various parts of the United States and southern Canada. If you are not in these areas, you will experience high network latency.",
+    icon: GlobeIcon,
   },
   {
     name: "Stable 100Mbps+ Internet",
     description: (
       <div>
-        While Fractal only requires ~10-15Mbps Internet connection, we recommend a 
-        100Mbps+ Internet connection as a proxy for network stability. To accurately 
-        test if your Internet is stable enough, visit{" "}
+        We recommend a 100Mbps+ Internet connection as a proxy for network
+        stability. To accurately test if your Internet is stable enough, visit{" "}
         <a
           href="https://www.meter.net/ping-test/"
           target="_blank"
@@ -49,7 +35,7 @@ const features = [
   {
     name: "macOS 10.15+",
     description:
-      "For compatibility reasons, Fractal is currently only available on macOS (Intel and Apple) and requires macOS Catalina (10.15) or higher.",
+      "For compatibility reasons, Fractal requires macOS 10.15 or higher.",
     icon: DesktopComputerIcon,
   },
 ]
