@@ -98,7 +98,6 @@ jobs:
   # Building
   # Check that the macOS client application builds
   client-applications-check-pr-building:
-    name: Building on macOS (ARM64)
     name: Linting (macOS ARM64)
     runs-on: [self-hosted, macOS, ARM64]
     defaults:
