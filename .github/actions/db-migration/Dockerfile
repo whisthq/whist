@@ -4,8 +4,7 @@ FROM python:3.9.5
 # configuration so we can install postgres.
 # Note that lsb-release (with a -) is the package to install, while
 # lsb_release (with a _) is the command.
-RUN apt-get update
-RUN apt-get install -y lsb-release
+RUN apt-get update && apt-get install -y lsb-release
 
 # We will only have permissions enabled (in pg_hba.conf) for the user named
 # "postgres", which is created automatically upon postgres installation.
@@ -23,8 +22,7 @@ RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
 # of the database server. As of writing, the server is on postgres 12.
 # The version here cannot be lower than 12, but 13 has been tested and it
 # works.
-RUN apt-get update
-RUN apt-get install -y postgresql-13 postgresql-client-13
+RUN apt-get update && apt-get install -y postgresql-13 postgresql-client-13
 
 # We copy a local, modified version of pg_hba.conf (host-based authentication).
 # The only change from the postgres default is the first line, where the method
