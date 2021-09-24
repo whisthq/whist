@@ -26,6 +26,7 @@ jobs:
   protocol-build-documentation:
     name: Build & Publish Protocol Documentation to fractal/docs
     runs-on: ubuntu-20.04
+    concurrency: protocol-build-and-publish-documentation-${{ github.ref }}
 
     steps:
       ################################# CONFIG STEPS START ###############################
@@ -67,6 +68,9 @@ jobs:
 
       ###################################################################################
       ################################# PUBLISH STEPS START #############################
+
+      - name: Reset fractal/docs ahead of publishing (in case it changed between concurrent workflow runs)
+        run: git reset --hard origin/main
 
       - name: Copy New Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
