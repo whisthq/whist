@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,6 +15,14 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/golang-jwt/jwt"
 )
+
+type SpinUpResult struct {
+	Result SpinUpMandelboxRequestResult `json:"result"`
+}
+
+type DrainResult struct {
+	Result string `json:"result"`
+}
 
 // TestUnauthenticatedRequest calls authenticateAndParseRequest with improperly authenticated requests
 // and checks if the correct errors are returned
@@ -74,10 +80,6 @@ func TestUnauthenticatedRequest(t *testing.T) {
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
-	type SpinUpResult struct {
-		Result SpinUpMandelboxRequestResult `json:"result"`
-	}
-
 	testRequest := map[string]interface{}{
 		"app_name":                "test_app",
 		"config_encryption_token": "test_token",
@@ -150,10 +152,6 @@ func TestSpinUpHandler(t *testing.T) {
 // TestDrainAndShutdownHandler calls processDrainAndShutdownRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestDrainAndShutdownHandler(t *testing.T) {
-	type DrainResult struct {
-		Result string `json:"result"`
-	}
-
 	testServerQueue := make(chan ServerRequest)
 	receivedRequest := make(chan ServerRequest)
 
@@ -211,7 +209,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		"config_encryption_token": "test_token",
 		"jwt_access_token":        "test_jwt_token",
 		"mandelbox_id":            "test_mandelbox",
-		"session_id":              1234,
+		"session_id":              float64(1234),
 	}
 	req, err := generateTestSpinUpRequest(testRequest)
 	if err != nil {
@@ -224,18 +222,22 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Errorf("error calling server: %v", err)
 	}
 
-	receivedRequest := <-httpServerEvents
-
 	testResult := SpinUpMandelboxRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
 		AesKey:              "aesKey",
 	}
-	receivedRequest.ReturnResult(testResult, nil)
+	gotRequest := make(chan ServerRequest)
+
+	go func() {
+		receivedRequest := <-httpServerEvents
+		receivedRequest.ReturnResult(testResult, nil)
+		gotRequest <- receivedRequest
+	}()
 
 	// Check that we are successfully receiving requests on the server channel
-	jsonGotRequest, err := json.Marshal(receivedRequest)
+	jsonGotRequest, err := json.Marshal(gotRequest)
 	if err != nil {
 		t.Fatalf("error marshalling json: %v", err)
 	}
@@ -253,7 +255,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	}
 
 	// Check that we are successfully receiving replies on the result channel
-	var gotResult SpinUpMandelboxRequestResult
+	var gotResult SpinUpResult
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -265,19 +267,13 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
 
-	if !reflect.DeepEqual(testResult, gotResult) {
+	if !reflect.DeepEqual(testResult, gotResult.Result) {
 		t.Errorf("expected result %v, got %v", testResult, gotResult)
 	}
 
 	globalCancel()
 	goroutineTracker.Wait()
 	t.Log("server goroutine ended")
-}
-
-// generateRsaKeyPair generates a random RSA key pair
-func generateRsaKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
-	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
-	return privkey, &privkey.PublicKey
 }
 
 // generateTestSpinUpRequest takes a request body and creates an
