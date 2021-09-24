@@ -22,6 +22,7 @@ tags
 sentry-native
 
 # Cmake
+CMakeFiles/
 build/
 build-*/
 .download-binaries-cache/
