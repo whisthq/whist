@@ -26,6 +26,7 @@ jobs:
   webserver-build-documentation:
     name: Build & Publish Webserver Documentation to fractal/docs
     runs-on: ubuntu-20.04
+    concurrency: webserver-build-and-publish-documentation-${{ github.ref }}
 
     steps:
       ################################# CONFIG STEPS START ###############################
@@ -73,6 +74,9 @@ jobs:
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
         working-directory: docs
         run: |
+          # Reset fractal/docs ahead of publishing (in case it changed between concurrent workflow runs)
+          git reset --hard origin/main
+
           # Set the author of the commit in fractal/docs to be the user
           # who just pushed to the dev branch of the monorepo.
           git config user.name "${{ github.event.pusher.name }}"
