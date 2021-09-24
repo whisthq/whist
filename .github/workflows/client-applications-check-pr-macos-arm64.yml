@@ -80,8 +80,8 @@ jobs:
           node-version: "16"
 
       # We need to do this since we're on a self-hosted runner
-      - name: Install Yarn
-        run: brew install yarn
+      - name: Install Yarn, Docker
+        run: brew install yarn docker
 
       - name: Run yarn install
         working-directory: client-applications
@@ -124,8 +124,8 @@ jobs:
           node-version: "16"
 
       # We need to do this since we're on a self-hosted runner
-      - name: Install Yarn
-        run: brew install yarn
+      - name: Install Yarn, Docker
+        run: brew install yarn docker
 
       # To retrieve Fractal protocol libraries from AWS S3
       - name: Configure AWS S3 CLI
