@@ -120,6 +120,7 @@ type RuntimeMetrics struct {
 }
 
 func init() {
+	logger.Infof("current CI status is: %v", os.Getenv("CI"))
 	if os.Getenv("CI") != "true" {
 		err := startCollectionGoroutine(30 * time.Second)
 		if err != nil {
