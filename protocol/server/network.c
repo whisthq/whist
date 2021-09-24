@@ -384,7 +384,8 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet) {
     }
 
     if (fractal_try_lock_mutex(clients[client_id].TCP_lock) == 0) {
-        FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
+        FractalPacket *tcp_packet =
+            read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
         if (tcp_packet) {
             LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
             *p_tcp_packet = tcp_packet;
