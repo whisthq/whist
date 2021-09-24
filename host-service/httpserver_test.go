@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/fractal/fractal/host-service/auth"
+	"github.com/fractal/fractal/host-service/utils"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -33,7 +33,7 @@ func TestUnauthenticatedRequest(t *testing.T) {
 	}
 
 	// Sign a random JWT that should fail verification
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{})
 	tokenString, err := token.SignedString([]byte("test"))
 	if err != nil {
 		t.Fatalf("error signing test token: %v", err)
@@ -74,12 +74,16 @@ func TestUnauthenticatedRequest(t *testing.T) {
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
+	type SpinUpResult struct {
+		Result SpinUpMandelboxRequestResult `json:"result"`
+	}
+
 	testRequest := map[string]interface{}{
 		"app_name":                "test_app",
 		"config_encryption_token": "test_token",
 		"jwt_access_token":        "test_jwt_token",
 		"mandelbox_id":            "test_mandelbox",
-		"session_id":              1234,
+		"session_id":              float64(1234),
 	}
 
 	testServerQueue := make(chan ServerRequest)
@@ -108,8 +112,13 @@ func TestSpinUpHandler(t *testing.T) {
 	processSpinUpMandelboxRequest(res, httpRequest, testServerQueue)
 	gotRequest := <-receivedRequest
 
-	var gotResult SpinUpMandelboxRequestResult
-	err = json.Unmarshal(res.Body.Bytes(), &gotResult)
+	var gotResult SpinUpResult
+	resBody, err := io.ReadAll(res.Result().Body)
+	if err != nil {
+		t.Fatalf("error reading result body: %v", resBody)
+	}
+
+	err = json.Unmarshal(resBody, &gotResult)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
@@ -128,12 +137,12 @@ func TestSpinUpHandler(t *testing.T) {
 
 	for key, value := range testRequest {
 		if gotRequestMap[key] != value {
-			t.Errorf("expected request key %s to be %v, got %v", key, value, gotRequestMap[key])
+			t.Errorf("expected request key %s to be %v of type %T, got %v of type %T", key, value, value, gotRequestMap[key], gotRequestMap[key])
 		}
 	}
 
 	// Check that we are successfully receiving replies on the result channel
-	if !reflect.DeepEqual(testResult, gotResult) {
+	if !reflect.DeepEqual(testResult, gotResult.Result) {
 		t.Errorf("expected result %v, got %v", testResult, gotResult)
 	}
 }
@@ -141,6 +150,10 @@ func TestSpinUpHandler(t *testing.T) {
 // TestDrainAndShutdownHandler calls processDrainAndShutdownRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestDrainAndShutdownHandler(t *testing.T) {
+	type DrainResult struct {
+		Result string `json:"result"`
+	}
+
 	testServerQueue := make(chan ServerRequest)
 	receivedRequest := make(chan ServerRequest)
 
@@ -159,17 +172,26 @@ func TestDrainAndShutdownHandler(t *testing.T) {
 		receivedRequest <- request
 	}()
 
+	// Mock auth function to not check auth and revert it after test
+	origFunc := authenticateAndParseRequest
+	authenticateAndParseRequest = mockAuthenticateRequest
 	processDrainAndShutdownRequest(res, httpRequest, testServerQueue)
 	<-receivedRequest
+	authenticateAndParseRequest = origFunc
 
-	var gotResult string
-	err = json.Unmarshal(res.Body.Bytes(), &gotResult)
+	var gotResult DrainResult
+	resBody, err := io.ReadAll(res.Result().Body)
+	if err != nil {
+		t.Fatalf("error reading result body: %v", resBody)
+	}
+
+	err = json.Unmarshal(resBody, &gotResult)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
 
 	// Check that we are successfully receiving replies on the result channel
-	if !reflect.DeepEqual(testResult, gotResult) {
+	if testResult != gotResult.Result {
 		t.Errorf("expected result %v, got %v", testResult, gotResult)
 	}
 }
@@ -263,15 +285,15 @@ func generateRsaKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
 func generateTestSpinUpRequest(requestBody map[string]interface{}) (*http.Request, error) {
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling json: %v", err)
+		return nil, utils.MakeError("error marshalling json: %v", err)
 	}
 
 	httpRequest, err := http.NewRequest(http.MethodPut,
-		fmt.Sprintf("https://localhost:%d/spin_up_mandelbox", PortToListen),
+		utils.Sprintf("https://localhost:%d/spin_up_mandelbox", PortToListen),
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error creating put request: %v", err)
+		return nil, utils.MakeError("error creating put request: %v", err)
 	}
 
 	return httpRequest, nil
@@ -280,15 +302,13 @@ func generateTestSpinUpRequest(requestBody map[string]interface{}) (*http.Reques
 // generateTestDrainRequest creates an HTTP POST request for /drain_and_shutdown
 func generateTestDrainRequest() (*http.Request, error) {
 	claims := auth.FractalClaims{
-		Audience: []string{"test"},
-		Scopes:   []string{"backend"},
+		Audience: auth.Audience{"test"},
+		Scopes:   auth.Scopes{"backend"},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	privateKey, _ := generateRsaKeyPair()
-	tokenString, err := token.SignedString(privateKey)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte("test"))
 	if err != nil {
-		return nil, fmt.Errorf("error signing test token: %v", err)
+		return nil, utils.MakeError("error signing test token: %v", err)
 	}
 
 	testRequest := map[string]interface{}{
@@ -296,16 +316,48 @@ func generateTestDrainRequest() (*http.Request, error) {
 	}
 	jsonData, err := json.Marshal(testRequest)
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling json: %v", err)
+		return nil, utils.MakeError("error marshalling json: %v", err)
 	}
 
 	httpRequest, err := http.NewRequest(http.MethodPost,
-		fmt.Sprintf("https://localhost:%d/drain_and_shutdown", PortToListen),
+		utils.Sprintf("https://localhost:%d/drain_and_shutdown", PortToListen),
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error creating post request: %v", err)
+		return nil, utils.MakeError("error creating post request: %v", err)
 	}
 
 	return httpRequest, nil
+}
+
+func mockAuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
+	// Get body of request
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Malformed body", http.StatusBadRequest)
+		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
+	}
+
+	// Extract only the auth_secret field from a raw JSON unmarshalling that
+	// delays as much decoding as possible
+	var rawmap map[string]*json.RawMessage
+	err = json.Unmarshal(body, &rawmap)
+	if err != nil {
+		http.Error(w, "Malformed body", http.StatusBadRequest)
+		return utils.MakeError("Error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
+	}
+
+	// Skip the authentication steps for mock
+
+	// Now, actually do the unmarshalling into the right object type
+	err = json.Unmarshal(body, s)
+	if err != nil {
+		http.Error(w, "Malformed body", http.StatusBadRequest)
+		return utils.MakeError("Could not fully unmarshal the body of a request sent on %s to URL %s: %s", r.Host, r.URL, err)
+	}
+
+	// Set up the result channel
+	s.createResultChan()
+
+	return nil
 }
