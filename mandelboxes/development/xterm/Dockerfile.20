@@ -4,7 +4,7 @@ FROM fractal/base:current-build
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 # Install xterm and dependencies
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libc6 \
     libfontconfig1 \
     libfreetype6 \

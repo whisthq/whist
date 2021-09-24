@@ -23,7 +23,7 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install build dependencies for libinput
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     git \
     gcc \
     g++ \
@@ -293,7 +293,7 @@ RUN apt-get update \
 #########################
 
 # Install systemd
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     systemd \
     systemd-sysv \
     && apt-get autoremove -y \
@@ -345,7 +345,7 @@ COPY --from=libinput-build /libinput-fractal.deb /deb/libinput-fractal.deb
 COPY --from=xf86-input-libinput-build /xf86-input-libinput-fractal.deb deb/xf86-input-libinput-fractal.deb
 
 # Install patched libinput and xf86-input-libinput
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     ./deb/libinput-fractal.deb \
     ./deb/xf86-input-libinput-fractal.deb \
     && apt-get autoremove -y \
@@ -353,7 +353,7 @@ RUN apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/* /deb
 
 # Install dependencies/utils
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     keyboard-configuration \
     libxtst-dev \
     xinput \
@@ -395,14 +395,14 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 # Install time while avoiding interactive installation for tzdata - uses UTC
 ENV LOCAL="yes"
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install utilities for debugging/testing
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     less \
     vim \
     && apt-get autoremove -y \
@@ -447,7 +447,7 @@ RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
 #########################
 
 # Install the Nvidia GRID Driver
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libglvnd0 \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -455,7 +455,7 @@ RUN apt-get install --no-install-recommends -y \
 COPY --from=nvidia-grid-driver /dist /
 
 # Install libraries for (limited) hardware acceleration
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     vainfo \
     vdpauinfo \
     mesa-vdpau-drivers \
@@ -469,7 +469,7 @@ RUN apt-get install --no-install-recommends -y \
 #########################
 
 # Install dependencies
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libxdamage-dev \
     xclip \
     x11-xserver-utils \
@@ -521,7 +521,7 @@ ENV DISPLAY :10
 #########################
 
 # Install dependencies
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     awesome \
     awesome-extra \
     lxappearance \
@@ -546,7 +546,7 @@ RUN wget -qO font-sans.zip https://fonts.google.com/download?family=Inter \
     && rm font-*.zip
 
 # Install fonts for full Unicode support (or as close as we can get)
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     fonts-noto \
     fonts-noto-core \
     fonts-noto-cjk \
@@ -581,7 +581,7 @@ COPY display/theme/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
 #########################
 
 # Install dependencies
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libunwind8 \
     liborc-0.4-0 \
     libpulse0 \
@@ -602,7 +602,7 @@ RUN apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install Pulse Audio
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     pulseaudio \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -647,7 +647,7 @@ CMD ["/usr/share/fractal/entrypoint.sh"]
 # Set up the default (harmless/useless) Fractal application (eyes)
 
 # Install xeyes and dependencies
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libc6 \
     libfontconfig1 \
     libfreetype6 \
@@ -679,7 +679,7 @@ RUN chmod 0555 /usr/bin/run-fractal-application.sh
 # Set up the teleport FUSE service
 
 # Install FUSE dependencies
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     fuse3 \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -694,7 +694,7 @@ RUN chmod +x /usr/bin/run-fractal-teleport.sh
 # Set up the teleport URI handler
 
 # Install XDG dependencies
-RUN apt-get install --allow-downgrades --no-install-recommends -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     xdg-utils \
     && apt-get autoremove -y \
     && apt-get clean \
