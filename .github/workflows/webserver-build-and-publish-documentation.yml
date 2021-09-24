@@ -75,7 +75,7 @@ jobs:
         working-directory: docs
         run: |
           # Reset fractal/docs ahead of publishing (in case it changed between concurrent workflow runs)
-          git reset --hard origin/main
+          git fetch && git reset --hard origin/main
 
           # Set the author of the commit in fractal/docs to be the user
           # who just pushed to the dev branch of the monorepo.
