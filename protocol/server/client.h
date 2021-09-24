@@ -40,6 +40,7 @@ typedef struct Client {
     SocketContext TCP_context;  // protected by global is_active_rwlock
     int UDP_port;               // protected by global is_active_rwlock
     int TCP_port;               // protected by global is_active_rwlock
+    FractalMutex TCP_lock;      // protects TCP_context for synchrony-sensitive sends and recvs
 
     /* MOUSE */
     struct {
