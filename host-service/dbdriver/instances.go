@@ -88,7 +88,7 @@ func RegisterInstance() error {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
 
-	// Since the `instance_name` is the primary key of `hardware.instance_info`,
+	// Since the `instance_name` is the primary key of `cloud.instance_info`,
 	// we know that `rows` ought to contain either 0 or 1 results.
 	if len(rows) == 0 {
 		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
@@ -134,7 +134,7 @@ func RegisterInstance() error {
 		InstanceName: string(instanceName),
 	})
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
+		return utils.MakeError("Couldn't register instance: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't register instance in database: row went missing!")
 	}
@@ -175,7 +175,7 @@ func markDraining() error {
 	},
 		string(instanceName))
 	if err != nil {
-		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `hardware.instance_info`: %s", err)
+		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't mark instance as draining: row in database went missing!")
 	}
@@ -184,8 +184,8 @@ func markDraining() error {
 }
 
 // unregisterInstance removes the row for the instance from the
-// `hardware.instance_info` table. Note that due to the `delete cascade`
-// constraint on `hardware.mandelbox_info` this automatically removes all the
+// `cloud.instance_info` table. Note that due to the `delete cascade`
+// constraint on `cloud.mandelbox_info` this automatically removes all the
 // mandelboxes for the instance as well.
 func unregisterInstance() error {
 	if !enabled {
