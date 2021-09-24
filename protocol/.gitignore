@@ -33,7 +33,11 @@ include/openssl/
 # FFmpeg
 include/ffmpeg/
 
+# Protocol Client
+client/build64/
+
 # Cmake
+CMakeCache.txt
 CMakeFiles/
 build/
 build-*/
