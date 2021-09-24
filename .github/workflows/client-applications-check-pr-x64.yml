@@ -34,7 +34,7 @@ jobs:
   # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
   # configuration object.
   config:
-    name: Building config
+    name: Building Config
     runs-on: ubuntu-20.04
     outputs:
       macos: ${{ steps.config-macos.outputs.config }}

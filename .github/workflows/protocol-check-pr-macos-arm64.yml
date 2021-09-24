@@ -41,8 +41,8 @@ jobs:
         run: |
           # llvm for clang-tidy, coreutils for realpath
           brew install llvm coreutils perl doxygen
-          ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
-          ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+          ln -s "/opt/homebrew/llvm/bin/clang-format" "/opt/homebrew/bin/clang-format"
+          ln -s "/opt/homebrew/llvm/bin/clang-tidy" "/opt/homebrew/bin/clang-tidy"
 
       ############################# Unix Configuration Steps END #############################
 

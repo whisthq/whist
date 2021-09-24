@@ -34,14 +34,10 @@ jobs:
   # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
   # configuration object.
   config:
-    name: Building Config (macOS ARM64)
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+    name: Building Config
+    runs-on: ubuntu-20.04
     outputs:
       macos: ${{ steps.config-macos.outputs.config }}
-      win32: ${{ steps.config-win32.outputs.config }}
 
     steps:
       - name: Checkout Git Repository
