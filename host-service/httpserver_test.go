@@ -220,15 +220,13 @@ func TestHttpServerIntegration(t *testing.T) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
+
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
+
 	client := &http.Client{
 		Transport: tr,
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		t.Errorf("error calling server: %v", err)
 	}
 
 	testResult := SpinUpMandelboxRequestResult{
@@ -244,6 +242,11 @@ func TestHttpServerIntegration(t *testing.T) {
 		receivedRequest.ReturnResult(testResult, nil)
 		gotRequestChan <- receivedRequest
 	}()
+
+	res, err := client.Do(req)
+	if err != nil {
+		t.Errorf("error calling server: %v", err)
+	}
 
 	// Check that we are successfully receiving requests on the server channel
 	gotRequest := <-gotRequestChan
