@@ -141,7 +141,7 @@ jobs:
       - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
         env:
-          FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
+          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         working-directory: protocol
         run: |
           # Build the protocol and its test suite

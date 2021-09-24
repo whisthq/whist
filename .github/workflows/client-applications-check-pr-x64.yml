@@ -1,7 +1,7 @@
-# workflows/client-applications-check-pr.yml
+# workflows/client-applications-check-pr-x64.yml
 #
 # Client Applications: Check PR
-# Checks a client-applications PR for linting and building success.
+# Checks a client-applications PR for linting and building success on X86_64 systems.
 
 name: "Client Applications: Check PR"
 
@@ -10,7 +10,7 @@ on:
     paths:
       - "client-applications/**"
       - "core-ts/**"
-      - ".github/workflows/client-applications-check-pr.yml"
+      - ".github/workflows/client-applications-check-pr-x64.yml"
       - ".github/workflows/core-ts-check-pr.yml"
       - "!client-applications/README.md"
       - "!core-ts/README.md"
@@ -74,6 +74,8 @@ jobs:
         run: |
           print(r"""${{ steps.config-win32.outputs.config }}""")
 
+  # Linting
+  # Check that the client-applications code is properly linted
   client-applications-check-pr-linting:
     name: Linting
     runs-on: ubuntu-20.04
@@ -111,7 +113,7 @@ jobs:
         config:
           - name: Windows
             os: windows-2019
-          - name: macOS
+          - name: macOS (X64)
             os: macos-10.15
 
     steps:
@@ -215,7 +217,7 @@ jobs:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
 
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
