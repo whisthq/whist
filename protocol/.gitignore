@@ -24,3 +24,7 @@ sentry-native
 # Cmake
 build/
 build-*/
+
+# Test
+_deps
+test/*.dylib
