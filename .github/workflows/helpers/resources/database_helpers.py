@@ -42,7 +42,7 @@ def get_instance_ids(database_url, region):
         arr: array of instance ids
     """
     query = "SELECT cloud_provider_id FROM instance_info WHERE location='%s';" % region
-    ids = execute_db_query(database_url, "hardware", query)
+    ids = execute_db_query(database_url, "cloud", query)
 
     return [id[0] for id in ids]
 
@@ -63,6 +63,6 @@ def get_host_service_unresponsive_instances(database_url, region):
         "SELECT instance_name, cloud_provider_id FROM instance_info WHERE status='HOST_SERVICE_UNRESPONSIVE' AND location = '%s';"
         % region
     )
-    instances = execute_db_query(database_url, "hardware", query)
+    instances = execute_db_query(database_url, "cloud", query)
 
     return instances
