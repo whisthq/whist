@@ -644,8 +644,8 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-          TITLE = ":bezos: Webserver successfully upgraded AMIs :bezos:"
-          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to create buffers for AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":package: Webserver Successfully Created Buffer of New AMIs :package:"
+          BODY = f"Webserver at {WEBSERVER_URL} created buffers for new AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
@@ -761,8 +761,8 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
-          TITLE = ":bezos: Webserver successfully upgraded AMIs :bezos:"
-          BODY = f"A PR was merged and triggered the webserver at {WEBSERVER_URL} to swap over active AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":bezos: Webserver Successfully Swapped to New AMIs :bezos:"
+          BODY = f"Webserver at {WEBSERVER_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
