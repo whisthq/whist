@@ -19,7 +19,7 @@ tags
 .DS_Store
 
 # Sentry
-sentry-native
+sentry-native/
 
 # Cmake
 build/

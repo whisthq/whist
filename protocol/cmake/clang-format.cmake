@@ -3,9 +3,9 @@ find_program(
   NAMES "clang-format"
   DOC "Path to clang-format executable")
 if(NOT CLANG_FORMAT_EXE)
-  message(STATUS "clang-format not found.")
+  message(STATUS "Detecting clang-format - not found")
 else()
-  message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}")
+  message(STATUS "Detecting clang-format - found: ${CLANG_FORMAT_EXE}")
 endif()
 
 # Get all project files
