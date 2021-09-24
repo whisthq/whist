@@ -10,7 +10,7 @@ on:
     paths:
       - "client-applications/**"
       - "core-ts/**"
-      - ".github/workflows/client-applications-check-pr-x64.yml"
+      - ".github/workflows/client-applications-check-pr-macos-arm64.yml"
       - ".github/workflows/core-ts-check-pr.yml"
       - "!client-applications/README.md"
       - "!core-ts/README.md"
