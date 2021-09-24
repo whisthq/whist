@@ -18,13 +18,27 @@ tags
 # macOS
 .DS_Store
 
+# SDL
+lib/64/SDL2/
+include/SDL2
+
 # Sentry
-sentry-native
+sentry-native/
+lib/64/sentry/
+include/sentry/
+
+# OpenSSL
+include/openssl/
+
+# FFmpeg
+include/ffmpeg/
 
 # Cmake
 CMakeFiles/
 build/
 build-*/
+test/CMakeFiles/
+client/CMakeFiles/
 .download-binaries-cache/
 
 # Test
