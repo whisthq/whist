@@ -139,12 +139,14 @@ int handle_discovery_port_message(SocketContext *context, int *client_id, bool *
             // We wouldn't have called closesocket on this socket before, so we can safely call
             //     close regardless of what caused the socket failure without worrying about
             //     undefined behavior.
+            fractal_lock_mutex(clients[*client_id].TCP_lock);
             closesocket(clients[*client_id].TCP_context.socket);
             if (create_tcp_context(&(clients[*client_id].TCP_context), NULL,
                                    clients[*client_id].TCP_port, 1, TCP_CONNECTION_WAIT,
                                    get_using_stun(), binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
             }
+            fractal_unlock_mutex(clients[*client_id].TCP_lock);
 
             break;
         }
@@ -252,8 +254,12 @@ int broadcast_ack(void) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            ack(&(clients[id].TCP_context));
-            ack(&(clients[id].UDP_context));
+            if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
+                ack(&(clients[id].TCP_context));
+                ack(&(clients[id].UDP_context));
+
+                fractal_unlock_mutex(clients[id].TCP_lock);
+            }
         }
     }
     return ret;
@@ -348,9 +354,12 @@ int broadcast_tcp_packet(FractalPacketType type, void *data, int len) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            if (send_tcp_packet(&(clients[id].TCP_context), type, (uint8_t *)data, len) < 0) {
-                LOG_WARNING("Failed to send TCP packet to client id: %d", id);
-                if (ret == 0) ret = -1;
+            if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
+                if (send_tcp_packet(&(clients[id].TCP_context), type, (uint8_t *)data, len) < 0) {
+                    LOG_WARNING("Failed to send TCP packet to client id: %d", id);
+                    if (ret == 0) ret = -1;
+                }
+                fractal_unlock_mutex(clients[id].TCP_lock);
             }
         }
     }
@@ -370,10 +379,13 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
-    if (tcp_packet) {
-        LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
-        *p_tcp_packet = tcp_packet;
+    if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
+        FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
+        if (tcp_packet) {
+            LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
+            *p_tcp_packet = tcp_packet;
+        }
+        fractal_unlock_mutex(clients[id].TCP_lock);
     }
     return 0;
 }
@@ -474,6 +486,8 @@ int multithreaded_manage_clients(void *opaque) {
             continue;
         }
 
+        // This can either be a new client connecting, or an existing client asking for a TCP
+        //     connection to be recovered
         if (handle_discovery_port_message(&discovery_context, &client_id, &new_client) != 0) {
             LOG_WARNING("Discovery handshake failed.");
             continue;
