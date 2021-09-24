@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const removeStaleMandelboxesSQL = `DELETE FROM hardware.mandelbox_info
+const removeStaleMandelboxesSQL = `DELETE FROM cloud.mandelbox_info
   WHERE
     instance_name = $1
     AND (

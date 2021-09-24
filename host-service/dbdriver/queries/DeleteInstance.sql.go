@@ -220,7 +220,7 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const deleteInstanceSQL = `DELETE FROM hardware.instance_info WHERE instance_name = $1;`
+const deleteInstanceSQL = `DELETE FROM cloud.instance_info WHERE instance_name = $1;`
 
 // DeleteInstance implements Querier.DeleteInstance.
 func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceName string) (pgconn.CommandTag, error) {

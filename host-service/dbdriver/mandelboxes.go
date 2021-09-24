@@ -81,7 +81,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 		Status: pgtype.Present,
 	}, string(mandelboxID))
 	if err != nil {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `hardware.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
 	}
@@ -108,7 +108,7 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus)
 		Status: pgtype.Present,
 	}, string(mandelboxID))
 	if err != nil {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `hardware.mandelbox_info`: %s", status, mandelboxID, err)
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", status, mandelboxID)
 	}

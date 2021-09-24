@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const writeMandelboxStatusSQL = `UPDATE hardware.mandelbox_info
+const writeMandelboxStatusSQL = `UPDATE cloud.mandelbox_info
   SET status = $1
   WHERE mandelbox_id = $2;`
 
