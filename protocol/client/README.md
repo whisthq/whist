@@ -20,7 +20,7 @@ The option flags are as follows:
   -u, --user                    Tell fractal the users email, optional defaults to None"
   -e, --environment             The environment the protocol is running
                                 in. e.g prod, staging, dev. This is used
-                                for sentry. Optional defaults to dev
+                                for Sentry. Optional defaults to dev
   --help     display this help and exit"
   --version  output version information and exit;
 ```
