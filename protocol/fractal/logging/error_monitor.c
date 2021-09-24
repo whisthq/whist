@@ -213,8 +213,8 @@ void error_monitor_initialize(bool is_client) {
 #if USING_SENTRY
     sentry_options_t *options = sentry_options_new();
 
-    // By default, sentry will use the SENTRY_DSN environment variable. We could use this instead
-    // of baking it into the protocol like this, but should only do so after setting up sentry for
+    // By default, Sentry will use the SENTRY_DSN environment variable. We could use this instead
+    // of baking it into the protocol like this, but should only do so after setting up Sentry for
     // the callers (client app and mandelboxes).
     sentry_options_set_dsn(options, SENTRY_DSN);
 
@@ -230,7 +230,7 @@ void error_monitor_initialize(bool is_client) {
     sentry_options_set_debug(options, false);
 
     // For GDPR, etc., we will need to eventually prompt the user to give/revoke consent.
-    // If user is set and consent is required but not given, sentry will drop all events.
+    // If user is set and consent is required but not given, Sentry will drop all events.
     sentry_options_set_require_user_consent(options, false);
 
     // Sentry doesn't document it, but this will free options.

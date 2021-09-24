@@ -98,13 +98,13 @@ OPTION(CI OFF)
 
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
-    message(STATUS "cppcheck found: ${CPPCHECK}")
+    message(STATUS "Detecting cppcheck - found: ${CPPCHECK}")
 else()
-    message(STATUS "cppcheck not found")
+    message(STATUS "Detecting cppcheck - not found")
 endif()
 
 if (CPPCHECK AND ${CI} MATCHES "TRUE" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    message(STATUS "cppcheck active")
+    message(STATUS "Detecting cppcheck status - active")
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
             "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
             "--enable=performance,portability"
@@ -118,12 +118,12 @@ if (CPPCHECK AND ${CI} MATCHES "TRUE" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "--inline-suppr" # Allow cppcheck-suppress comments in code
             )
 else()
-    message(STATUS "cppcheck inactive")
+    message(STATUS "Detecting cppcheck status - inactive")
 endif()
 
 # export compile commands database - not needed if not running clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-message(STATUS "Exporting compile commands for clang-tidy")
+message(STATUS "Exporting compile commands for clang-tidy - done")
 
 # detect if we are building 64bit or 32bit
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
@@ -136,7 +136,7 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # should return "arm64" or "x86_64"
     execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE MACOS_ARCHITECTURE)
-    message(STATUS "macOS Architecture: ${MACOS_ARCHITECTURE}")
+    message(STATUS "Detecting macOS Architecture: ${MACOS_ARCHITECTURE}")
 endif()
 
 # Windows option to add icon (used primarily for client app compilation pipeline)
@@ -167,7 +167,7 @@ endif()
 # download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
-    message(STATUS "Downloading binaries from AWS S3")
+    message(STATUS "Downloading Fractal Protocol binaries from AWS S3")
     if (WSL)
         set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_BINARY_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
         execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}
@@ -194,7 +194,7 @@ endif()
 
 set(FFMPEG_LIBS_PATHS "")
 FOREACH(LIB ${FFMPEG_LIBS})
-    message(STATUS "Looking for lib ${LIB}")
+    message(STATUS "Looking for FFmpeg lib: ${LIB}")
     set(LIB_VAR "LIB_${LIB}")
     find_library(${LIB_VAR}
             NAMES ${LIB}
@@ -205,7 +205,7 @@ FOREACH(LIB ${FFMPEG_LIBS})
             NO_SYSTEM_ENVIRONMENT_PATH
             NO_CMAKE_SYSTEM_PATH
             NO_CMAKE_FIND_ROOT_PATH)
-    message(VERBOSE "found lib ${LIB_VAR}")
+    message(VERBOSE "Found FFmpeg lib: ${LIB_VAR}")
     LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
 endforeach(LIB)
 message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
@@ -240,7 +240,7 @@ find_library(LIB_SENTRY NAMES sentry PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/sent
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 if (NOT LIB_SENTRY)
-    message(FATAL_ERROR "Library sentry was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
+    message(FATAL_ERROR "Library Sentry was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
 endif()
 
 find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}"

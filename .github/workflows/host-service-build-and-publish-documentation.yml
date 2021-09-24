@@ -12,13 +12,13 @@ on:
     branches:
       - dev
     paths:
-      - ".github/workflows/host-service-build-and-publish-docs.yml"
+      - ".github/workflows/host-service-build-and-publish-documentation.yml"
       - "host-service/**"
   push:
     branches:
       - dev
     paths:
-      - ".github/workflows/host-service-build-and-publish-docs.yml"
+      - ".github/workflows/host-service-build-and-publish-documentation.yml"
       - "host-service/**"
   workflow_dispatch:
 

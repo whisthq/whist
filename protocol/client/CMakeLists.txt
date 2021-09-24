@@ -30,7 +30,7 @@ set_target_properties(FractalClient PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch})
 
-# copy the sentry shared library and crashpad handler to the build folder after the build
+# copy the Sentry shared library and crashpad handler to the build folder after the build
 add_custom_command(
         TARGET FractalClient POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

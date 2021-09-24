@@ -212,7 +212,7 @@ For a useful workflow for server development on Linux, see the [server-specific 
 
 The sentry-native SDK gets automatically built by our CMake build system.
 
-To start the protocol with a given sentry configuration, use the `-e` argument, for instance with `.\FractalClient.exe -e prod <IP>`. See the output of `FractalClient.exe --help` for more details.
+To start the protocol with a given Sentry configuration, use the `-e` argument, for instance with `.\FractalClient.exe -e prod <IP>`. See the output of `FractalClient.exe --help` for more details.
 
 ### Tips for Specific Tools
 
