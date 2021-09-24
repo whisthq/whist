@@ -34,22 +34,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      ############################# Unix Configuration Steps START #############################
-
-      - name: Install macOS Client Protocol Dependencies
-        working-directory: protocol
-        run: |
-          # Install needed dependencies
-          brew install coreutils perl jq clang-format llvm
-
-          # Set llvm for clang-tidy, coreutils for realpath
-          # Note: This step is commented out because we're on a self-hosted runner and the state isn't ephemeral,
-          # so since these have already been run it now fails. They're kept commented out for reference.
-          ln -s "/opt/homebrew/llvm/bin/clang-format" "/usr/local/bin/clang-format"
-          ln -s "/opt/homebrew/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-
-      ############################# Unix Configuration Steps END #############################
-
       - name: Build and Test Protocol Client
         env:
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"

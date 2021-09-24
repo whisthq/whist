@@ -78,7 +78,7 @@ jobs:
         uses: actions/setup-node@v2.4.0
         with:
           node-version: "16"
-      
+
       # We need to do this since we're on a self-hosted runner
       - name: Install Yarn
         run: brew install yarn
