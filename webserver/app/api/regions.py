@@ -9,7 +9,7 @@ from app.models import RegionToAmi
 aws_region_bp = Blueprint("aws_region_bp", __name__)
 
 
-@aws_region_bp.route("/region", methods=("GET",))
+@aws_region_bp.route("/regions", methods=("GET",))
 @log_request
 @jwt_required()
 def regions():
