@@ -3,7 +3,6 @@
 # Fractal: Build & Deploy
 # Build and deploy the Fractal client application for macOS ARM64 systems.
 
-
 name: "Fractal: Build & Deploy"
 
 on:
@@ -304,9 +303,6 @@ jobs:
       - name: Log Win32 Configuration
         shell: python3 {0}
         run: print(r"""${{ steps.config-win32.outputs.config }}""")
-
-
-
 
   # Client Applications: Build & Publish to AWS S3
   # Build and publish the client applications to their respective AWS S3 bucket,
