@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -216,7 +217,15 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Fatalf("error creating spin up request: %v", err)
 	}
 
-	client := &http.Client{}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	tr := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	res, err := client.Do(req)
 	if err != nil {
 		t.Errorf("error calling server: %v", err)
@@ -228,15 +237,16 @@ func TestHttpServerIntegration(t *testing.T) {
 		HostPortForTCP32273: 32273,
 		AesKey:              "aesKey",
 	}
-	gotRequest := make(chan ServerRequest)
+	gotRequestChan := make(chan ServerRequest)
 
 	go func() {
 		receivedRequest := <-httpServerEvents
 		receivedRequest.ReturnResult(testResult, nil)
-		gotRequest <- receivedRequest
+		gotRequestChan <- receivedRequest
 	}()
 
 	// Check that we are successfully receiving requests on the server channel
+	gotRequest := <-gotRequestChan
 	jsonGotRequest, err := json.Marshal(gotRequest)
 	if err != nil {
 		t.Fatalf("error marshalling json: %v", err)
