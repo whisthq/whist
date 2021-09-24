@@ -124,7 +124,9 @@ int handle_discovery_port_message(SocketContext *context, int *client_id, bool *
             clients[*client_id].user_id = user_id;
             LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
-            do_discovery_handshake(context, *client_id, fcmsg);
+            if (do_discovery_handshake(context, *client_id, fcmsg) != 0) {
+                LOG_WARNING("Discovery handshake failed.");
+            }
 
             free_tcp_packet(tcp_packet);
             fcmsg = NULL;
@@ -204,6 +206,8 @@ int do_discovery_handshake(SocketContext *context, int client_id, FractalClientM
 
     closesocket(context->socket);
     free(fsmsg);
+
+    LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
     return 0;
 }
 
@@ -487,13 +491,12 @@ int multithreaded_manage_clients(void *opaque) {
         }
 
         // This can either be a new client connecting, or an existing client asking for a TCP
-        //     connection to be recovered
+        //     connection to be recovered. We use the discovery port because it is always
+        //     accepting connections and is reliable for both discovery and recovery messages.
         if (handle_discovery_port_message(&discovery_context, &client_id, &new_client) != 0) {
-            LOG_WARNING("Discovery handshake failed.");
+            LOG_WARNING("Discovery port message could not be handled.");
             continue;
         }
-
-        LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
 
         // If the handled message was not for a discovery handshake, then skip
         //     over everything that is necessary for setting up a new client
