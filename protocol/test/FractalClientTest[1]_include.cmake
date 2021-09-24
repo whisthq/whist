@@ -1,5 +1,0 @@
-if(EXISTS "/Users/phil/Downloads/fractal/protocol/test/FractalClientTest[1]_tests.cmake")
-  include("/Users/phil/Downloads/fractal/protocol/test/FractalClientTest[1]_tests.cmake")
-else()
-  add_test(FractalClientTest_NOT_BUILT FractalClientTest_NOT_BUILT)
-endif()
