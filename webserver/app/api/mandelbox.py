@@ -22,6 +22,7 @@ from payments import payment_required
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
+
 @aws_mandelbox_bp.route("/mandelbox/assign", methods=("POST",))
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
@@ -80,10 +81,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             else:
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(
-                        body.region,
-                        ami.ami_id,
-                    ),
+                    args=(body.region, ami.ami_id),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },

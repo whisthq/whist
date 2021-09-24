@@ -8,6 +8,7 @@ from app.models import RegionToAmi
 
 aws_region_bp = Blueprint("aws_region_bp", __name__)
 
+
 @aws_region_bp.route("/region", methods=("GET",))
 @log_request
 @jwt_required()
@@ -21,4 +22,3 @@ def regions():
     enabled_regions = RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
 
     return jsonify([region.region_name for region in enabled_regions])
-
