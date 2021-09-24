@@ -40,7 +40,7 @@ jobs:
         working-directory: protocol
         run: |
           # Install needed dependencies
-          brew install jq llvm coreutils perl doxygen
+          brew install jq llvm coreutils perl doxygen clang-format
 
           # Set llvm for clang-tidy, coreutils for realpath
           # Note: This step is commented out because we're on a self-hosted runner and the state isn't ephemeral,
