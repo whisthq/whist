@@ -26,7 +26,6 @@ jobs:
   webserver-build-documentation:
     name: Build & Publish Webserver Documentation to fractal/docs
     runs-on: ubuntu-20.04
-    concurrency: webserver-build-and-publish-documentation-${{ github.ref }}
 
     steps:
       ################################# CONFIG STEPS START ###############################
