@@ -16,7 +16,7 @@ set_target_properties(FractalServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch})
 
-# copy the sentry shared library and crashpad handler to the build folder after the build
+# copy the Sentry shared library and crashpad handler to the build folder after the build
 add_custom_command(
         TARGET FractalServer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

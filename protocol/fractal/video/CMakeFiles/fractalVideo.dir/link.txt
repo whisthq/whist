@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libfractalVideo.a CMakeFiles/fractalVideo.dir/videodecode.c.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libfractalVideo.a

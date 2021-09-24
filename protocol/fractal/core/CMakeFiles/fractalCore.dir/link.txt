@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libfractalCore.a CMakeFiles/fractalCore.dir/fractal_memory.c.o CMakeFiles/fractalCore.dir/fractal.c.o CMakeFiles/fractalCore.dir/fractalgetopt.c.o CMakeFiles/fractalCore.dir/fractal_frame.c.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libfractalCore.a

@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libfractalNetwork.a CMakeFiles/fractalNetwork.dir/network.c.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libfractalNetwork.a
