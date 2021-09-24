@@ -73,6 +73,8 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome"
 RUN su - fractal -c "touch /home/fractal/.config/google-chrome/'First Run'"
 
 # Install Fractal wrapper script to run Google Chrome into /usr/bin
+COPY bbb-1080p-75.mp4 /home/fractal/bbb-1080p.mp4
+COPY 1080p_60fps.html /home/fractal/1080p_60fps.html
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome
 
