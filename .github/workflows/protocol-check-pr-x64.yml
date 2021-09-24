@@ -188,7 +188,7 @@ jobs:
 
           ./build_protocol_targets.sh clang-tidy
 
-      - name: Verify Builds with clang-tidy on MacOS
+      - name: Verify Builds with clang-tidy on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
         run: |

@@ -36,17 +36,17 @@ jobs:
 
       ############################# Unix Configuration Steps START #############################
 
-      - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
+      - name: Install macOS Client Protocol Dependencies
         working-directory: protocol
         run: |
           # llvm for clang-tidy, coreutils for realpath
-          brew install llvm coreutils perl doxygen
+          brew install jq llvm coreutils perl doxygen
           ln -s "/opt/homebrew/llvm/bin/clang-format" "/opt/homebrew/bin/clang-format"
           ln -s "/opt/homebrew/llvm/bin/clang-tidy" "/opt/homebrew/bin/clang-tidy"
 
       ############################# Unix Configuration Steps END #############################
 
-      - name: Build and Test Protocol Client on macOS
+      - name: Build and Test Protocol Client
         env:
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         working-directory: protocol
@@ -56,7 +56,7 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
           make FractalClient FractalClientTest -j
 
-      - name: Verify Builds with clang-tidy on MacOS
+      - name: Verify Builds with clang-tidy
         working-directory: protocol
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
