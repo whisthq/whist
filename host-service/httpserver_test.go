@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/utils"
@@ -201,9 +202,12 @@ func TestHttpServerIntegration(t *testing.T) {
 	goroutineTracker := sync.WaitGroup{}
 
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
-	if err != nil {
+	if err != nil && err.Error() != "Shut down httpserver with error context canceled" {
 		t.Fatalf("error starting http server: %v", err)
 	}
+
+	// Wait for server startup
+	time.Sleep(5 * time.Second)
 
 	testRequest := map[string]interface{}{
 		"app_name":                "test_app",
