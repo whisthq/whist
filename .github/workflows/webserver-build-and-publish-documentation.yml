@@ -66,9 +66,6 @@ jobs:
       ###################################################################################
       ################################# PUBLISH STEPS START #############################
 
-      - name: Reset fractal/docs ahead of publishing (in case it changed between concurrent workflow runs)
-        run: git reset --hard origin/main
-
       - name: Copy New Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
         run: rm -r docs/webserver && cp -r fractal/webserver/docs/_build/html docs/webserver
@@ -77,6 +74,9 @@ jobs:
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.diff.outputs.changed == true}}
         working-directory: docs
         run: |
+          # Reset fractal/docs ahead of publishing (in case it changed between concurrent workflow runs)
+          git reset --hard origin/main
+
           # Set the author of the commit in fractal/docs to be the user
           # who just pushed to the dev branch of the monorepo.
           git config user.name "${{ github.event.pusher.name }}"
