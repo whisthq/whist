@@ -20,3 +20,7 @@ tags
 
 # Sentry
 sentry-native/
+
+# Cmake
+build/
+build-*/
