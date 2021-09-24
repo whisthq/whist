@@ -43,6 +43,16 @@ build/
 build-*/
 test/CMakeFiles/
 client/CMakeFiles/
+fractal/CMakeFiles/
+fractal/audio/CMakeFiles/
+fractal/clipboard/CMakeFiles/
+fractal/core/CMakeFiles/
+fractal/cursor/CMakeFiles/
+fractal/input/CMakeFiles/
+fractal/logging/CMakeFiles/
+fractal/network/CMakeFiles/
+fractal/utils/CMakeFiles/
+fractal/video/CMakeFiles/
 .download-binaries-cache/
 
 # Test

@@ -1,2 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/ar qc libfractalLogging.a CMakeFiles/fractalLogging.dir/logging.c.o CMakeFiles/fractalLogging.dir/log_statistic.c.o CMakeFiles/fractalLogging.dir/error_monitor.c.o
-/Library/Developer/CommandLineTools/usr/bin/ranlib libfractalLogging.a
