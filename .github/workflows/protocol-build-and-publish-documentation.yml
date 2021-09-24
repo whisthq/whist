@@ -26,7 +26,6 @@ jobs:
   protocol-build-documentation:
     name: Build & Publish Protocol Documentation to fractal/docs
     runs-on: ubuntu-20.04
-    concurrency: protocol-build-and-publish-documentation-${{ github.ref }}
 
     steps:
       ################################# CONFIG STEPS START ###############################
