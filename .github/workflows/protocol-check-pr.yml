@@ -111,8 +111,8 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: protocol
         run: |
-          # llvm for clang-tidy, coreutils for realpath, lcov for codecov
-          brew install llvm coreutils perl doxygen lcov
+          # llvm for clang-tidy, coreutils for realpath
+          brew install llvm coreutils perl doxygen
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
@@ -145,11 +145,6 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
           make FractalClient FractalClientTest -j
 
-          # Generate Codecov aggregated report with lcov
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-          lcov --list coverage.info # debug info
-
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
 
@@ -158,7 +153,7 @@ jobs:
           # -t is for Codecov authorization token
           # -c is to clean the previous report when uploading a new one
           # -F is to set a flag for the report
-          ./codecov -R /Users/runner/work/fractal/fractal/protocol/ -t ${CODECOV_TOKEN} -c -F protocol
+          ./codecov -R /Users/runner/work/fractal/fractal/protocol/build -t ${CODECOV_TOKEN} -c -F protocol
 
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'

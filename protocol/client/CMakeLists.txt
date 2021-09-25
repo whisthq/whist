@@ -101,7 +101,9 @@ endif()
 #[[
 ################## Linking platform independent libs ##################
 ]]
-target_link_libraries(FractalClient ${PLATFORM_INDEPENDENT_LIBS})
+target_link_libraries(FractalClient 
+            ${PLATFORM_INDEPENDENT_LIBS}
+            )
 
 #[[
 ################## LINUX ##################
