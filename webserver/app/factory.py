@@ -142,9 +142,11 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .blueprints.aws.aws_mandelbox_blueprint import aws_mandelbox_bp
+    from .api.mandelbox import aws_mandelbox_bp
+    from .api.regions import aws_region_bp
 
     app.register_blueprint(aws_mandelbox_bp)
+    app.register_blueprint(aws_region_bp)
 
     app.add_url_rule(
         "/payment_portal_url",
