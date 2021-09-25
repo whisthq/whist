@@ -202,6 +202,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	goroutineTracker := sync.WaitGroup{}
 
 	initializeFilesystem(globalCancel)
+	defer uninitializeFilesystem()
 
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil && err.Error() != "Shut down httpserver with error context canceled" {
@@ -223,6 +224,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Fatalf("error creating spin up request: %v", err)
 	}
 
+	// Disable certificate verification on client for testing
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -243,6 +245,8 @@ func TestHttpServerIntegration(t *testing.T) {
 	}
 	gotRequestChan := make(chan ServerRequest)
 
+	// Receive requests from the HTTP server and "process" them in a
+	// separate goroutine by returning a predetermined result
 	go func() {
 		receivedRequest := <-httpServerEvents
 		receivedRequest.ReturnResult(testResult, nil)
@@ -345,6 +349,9 @@ func generateTestDrainRequest() (*http.Request, error) {
 	return httpRequest, nil
 }
 
+// mockAuthenticateRequest pretends to be the authenticateAndParseRequest function
+// but skips JWT signature verification steps to allow for unit testing
+// without real Auth0 tokens
 func mockAuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
 	// Get body of request
 	body, err := io.ReadAll(r.Body)
