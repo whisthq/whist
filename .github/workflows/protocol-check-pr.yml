@@ -151,8 +151,6 @@ jobs:
           # Upload coverage report to Codecov
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
 
-
-
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
