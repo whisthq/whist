@@ -153,7 +153,7 @@ jobs:
           # -t is for Codecov authorization token
           # -c is to clean the previous report when uploading a new one
           # -F is to set a flag for the report
-          ./codecov -R protocol/ -t ${CODECOV_TOKEN} -c -F protocol
+          ./codecov -R /Users/runner/work/fractal/fractal/protocol/ -t ${CODECOV_TOKEN} -c -F protocol
 
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
