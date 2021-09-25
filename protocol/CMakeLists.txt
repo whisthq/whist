@@ -74,6 +74,9 @@ set(META_AUTHOR_DOMAIN       "https://github.com/fractal/fractal")
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 14)
 
+# Code Coverage Configuration
+add_library(coverage_config INTERFACE)
+
 # verbose cmake outputs, useful for debugging CMake issues such as linking
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
