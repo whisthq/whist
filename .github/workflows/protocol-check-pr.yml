@@ -31,6 +31,9 @@ jobs:
           - name: "Build and Check Protocol on macOS (clang)"
             os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
 
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -140,7 +143,15 @@ jobs:
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
-          make FractalClient FractalClientTest -j
+          make FractalClient FractalClientTest -j -coverage
+
+          # Download the Codecov uploader
+          curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
+
+          # Upload coverage report to Codecov
+          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
+
+
 
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'

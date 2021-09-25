@@ -19,6 +19,11 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - host-service
+      protocol:
+        target: autho # /protocol code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base  branch
+        flags:
+          - protocol
   precision: 2 # Number of decimal places on code coverage, between 0 and 5
   round: down # Up, down, or nearest
   range: "70...90" # First number represents red, and second represents green (default is 70..100)
@@ -49,4 +54,8 @@ flags:
   host-service:
     paths:
       - host-service/
+    carryforward: true
+  protocol:
+    paths:
+      - protocol/
     carryforward: true
