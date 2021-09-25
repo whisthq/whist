@@ -201,6 +201,8 @@ func TestHttpServerIntegration(t *testing.T) {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	initializeFilesystem(globalCancel)
+
 	httpServerEvents, err := StartHTTPServer(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil && err.Error() != "Shut down httpserver with error context canceled" {
 		t.Fatalf("error starting http server: %v", err)
