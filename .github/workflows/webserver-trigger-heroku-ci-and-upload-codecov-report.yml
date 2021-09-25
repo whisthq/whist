@@ -35,13 +35,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
-
-      - name: pwd
-        run: |
-          pwd
-          echo $PWD
-
-
       - name: Run and Wait for Heroku CI Test Run
         working-directory: webserver
         env:
