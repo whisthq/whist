@@ -38,7 +38,7 @@ def test_assign(client, bulk_instance, monkeypatch):
         return instance.instance_name
 
     monkeypatch.setattr(
-        "app.blueprints.aws.aws_mandelbox_blueprint.find_instance",
+        "app.api.mandelbox.find_instance",
         patched_find,
     )
 
@@ -64,7 +64,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
         return True
 
     monkeypatch.setattr(
-        "app.blueprints.aws.aws_mandelbox_blueprint.is_user_active",
+        "app.api.mandelbox.is_user_active",
         patched_active,
     )
 
