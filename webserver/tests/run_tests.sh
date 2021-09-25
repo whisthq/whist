@@ -51,13 +51,8 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov=app --cov=auth0 --
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
-
-
-
-echo $pwd
-
-
-
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov -R /Users/runner/work/fractal/fractal/webserver/ -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R 
+
+/Users/runner/work/fractal/fractal/webserver/ -t ${CODECOV_TOKEN} -c -F webserver)

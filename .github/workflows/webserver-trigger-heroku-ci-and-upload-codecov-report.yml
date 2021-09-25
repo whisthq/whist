@@ -37,7 +37,10 @@ jobs:
 
 
       - name: pwd
-        run: echo $pwd
+        run: |
+          pwd
+          echo $PWD
+
 
       - name: Run and Wait for Heroku CI Test Run
         working-directory: webserver
