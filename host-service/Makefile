@@ -80,7 +80,7 @@ test: build
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
 	# Upload coverage report to Codecov
-	./codecov -t ${CODECOV_TOKEN} -c -F host-service
+	./codecov -R host-service/ -t ${CODECOV_TOKEN} -c -F host-service
 
 docs:
 	$(GOCMD) install github.com/johnstarich/go/gopages@master
