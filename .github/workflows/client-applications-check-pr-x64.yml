@@ -50,7 +50,7 @@ jobs:
         with:
           ref: ${{ github.base_ref }} # The git ref of the target branch
 
-      - name: Build Monorepo Configuration for Mac
+      - name: Build Monorepo Configuration for macOS
         id: config-macos
         uses: ./.github/actions/monorepo-config
         with:
@@ -64,7 +64,7 @@ jobs:
           os: win32
           deploy: ${{ steps.set-environment.outputs.environment }}
 
-      - name: Log MacOS Configuration
+      - name: Log macOS Configuration
         shell: python3 {0}
         run: |
           print(r"""${{ steps.config-macos.outputs.config }}""")
@@ -102,7 +102,7 @@ jobs:
         run: yarn run lint:check
 
   # Building
-  # Check that the Client Applications build.
+  # Check that the macOS client application builds
   client-applications-check-pr-building:
     name: Building on ${{ matrix.config.name }}
     needs: [config]
@@ -167,8 +167,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      ############################# Windows Configuration Steps END #############################
-
+      ##########################################################################################
       ############################# Unix Configuration Steps START #############################
 
       - name: Install macOS Codesigning Certificates on macOS GHA Machine

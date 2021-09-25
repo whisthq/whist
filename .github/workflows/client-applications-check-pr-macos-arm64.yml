@@ -56,7 +56,7 @@ jobs:
           os: macos
           deploy: ${{ steps.set-environment.outputs.environment }}
 
-      - name: Log MacOS Configuration
+      - name: Log macOS Configuration
         shell: python3 {0}
         run: |
           print(r"""${{ steps.config-macos.outputs.config }}""")
