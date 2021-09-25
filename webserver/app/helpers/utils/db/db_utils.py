@@ -4,7 +4,7 @@ Contains helpers for our SQLAlchemy db connection. Specifically:
 """
 
 
-from app.models import db
+from app.database.cloud import db
 
 
 def set_local_lock_timeout(seconds: int):

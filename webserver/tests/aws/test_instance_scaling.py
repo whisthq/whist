@@ -6,7 +6,7 @@ import requests
 
 
 from flask import current_app
-from app.models import db, RegionToAmi, InstanceInfo
+from app.database.cloud import db, RegionToAmi, InstanceInfo
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
 from app.constants.mandelbox_host_states import MandelboxHostState

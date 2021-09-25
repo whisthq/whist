@@ -1,6 +1,6 @@
 import time
 
-from app.models import (
+from app.database.cloud import (
     db,
     InstanceInfo,
 )

@@ -11,7 +11,7 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
 from app.factory import create_app
-from app.models import MandelboxInfo, db, InstanceInfo, RegionToAmi
+from app.database.cloud import MandelboxInfo, db, InstanceInfo, RegionToAmi
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
