@@ -63,7 +63,7 @@ def scope_required(scope: str) -> Callable[..., Any]:
     Returns:
         A decorator that can be applied to a Flask view function to enforce authentication.
 
-    Raises:
+    Raises: 
         ScopeError: The access token does not authorize access to the specified API scope.
     """
 

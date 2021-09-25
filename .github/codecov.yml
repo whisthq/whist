@@ -20,7 +20,7 @@ coverage:
         flags:
           - host-service
       protocol:
-        target: autho # /protocol code coverage
+        target: auto # /protocol code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base  branch
         flags:
           - protocol
