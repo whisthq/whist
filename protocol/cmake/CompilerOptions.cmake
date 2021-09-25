@@ -23,5 +23,5 @@ else() # GCC and Clang base flags
     "$<$<BOOL:${CI}>:-Werror>"
     "$<$<CONFIG:DEBUG>:-Og;-g;-O0>"
     "$<$<CONFIG:RELEASE>:-O3>")
-  add_link_options("-pthread" "-rdynamic")
+  add_link_options("-pthread" "-rdynamic" "--coverage")
 endif()
