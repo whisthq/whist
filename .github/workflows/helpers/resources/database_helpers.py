@@ -15,7 +15,7 @@ def execute_db_query(database_url, path, query):
 
     Args:
         database_url (str): current database url
-        path (str): the search path
+        path (str): the search path (schema)
         query (str): query to be executed
 
     Returns:
@@ -24,6 +24,22 @@ def execute_db_query(database_url, path, query):
     conn = psycopg2.connect(database_url, sslmode="require")
 
     cur = conn.cursor()
+
+    # The schema path "hardware" was recently changed to "cloud" but
+    # some environments (staging and prod) still have not updated the path "hardware".
+    # The PRs that modified the DB need to be merged into staging/prod for the changes to occur.
+    # The verifying below changes path to "hardware" if "cloud" is not a valid schema.
+
+    # TODO (aaron): remove verifying/updating schema path once "cloud" path exists on PROD dbthis
+    verify_schema_path_exist_query = (
+        "SELECT 1 FROM information_schema.schemata WHERE schema_name = '%s';" % path
+    )
+
+    cur.execute("%s;" % verify_schema_path_exist_query)
+
+    if cur.fetchone() is None and path == "cloud":
+        path = "hardware"
+
     cur.execute("SET search_path TO %s;" % path)
     cur.execute("%s;" % query)
 
