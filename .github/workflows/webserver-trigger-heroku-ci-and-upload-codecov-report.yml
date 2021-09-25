@@ -40,5 +40,8 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
+
+          echo $pwd
+
           heroku --version
           heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
