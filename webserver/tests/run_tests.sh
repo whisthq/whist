@@ -45,6 +45,11 @@ export TESTING=true
 # to unit/integration testing
 (cd .. && pytest --ignore=scripts --cov=./ "$@")
 
+
+
+ls
+
+
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
