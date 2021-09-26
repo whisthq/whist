@@ -39,9 +39,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
-    if (
-        current_app.config["ENVIRONMENT"] == DEVELOPMENT
-        and body.client_commit_hash == os.environ.get("CLIENT_COMMIT_HASH_DEV_OVERRIDE")
+    if current_app.config[
+        "ENVIRONMENT"
+    ] == DEVELOPMENT and body.client_commit_hash == os.environ.get(
+        "CLIENT_COMMIT_HASH_DEV_OVERRIDE"
     ):
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
