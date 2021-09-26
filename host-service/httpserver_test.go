@@ -27,7 +27,7 @@ type DrainResult struct {
 }
 
 // TestUnauthenticatedRequest calls authenticateAndParseRequest with improperly authenticated requests
-// and checks if the correct errors are returned
+// and checks if the correct errors are returned.
 func TestUnauthenticatedRequest(t *testing.T) {
 	testCases := make(map[string]map[string]string)
 
