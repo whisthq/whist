@@ -43,11 +43,11 @@ export TESTING=true
 
 # pass args to pytest, including Codecov flags, and ignore the scripts/ folder as it's irrelevant
 # to unit/integration testing
-(cd .. && pytest --ignore=scripts --cov="$DIR" "$@")
+(cd .. && pytest --ignore=scripts --cov=./ "$@")
 
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov -R "$DIR" -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -t ${CODECOV_TOKEN} -c -F webserver)
