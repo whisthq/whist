@@ -41,14 +41,9 @@ fi
 # regardless of in CI or local tests, we set this variable
 export TESTING=true
 
-# pass args to pytest, including Codecov flags, and ignore the scripts/ folder as it's irrelevant
-# to unit/integration testing
-(cd .. && pytest --ignore=scripts --cov=./ "$@")
-
-
-
-ls
-
+# pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
+# folder as it's irrelevant to unit/integration testing
+(cd .. && pytest --ignore=scripts --cov-report xml --cov=app/ --cov=auth0 --cov=/payments "$@")
 
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
