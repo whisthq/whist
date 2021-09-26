@@ -41,11 +41,9 @@ fi
 # regardless of in CI or local tests, we set this variable
 export TESTING=true
 
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov=./")"
-
 # pass args to pytest, including Codecov flags, and ignore the scripts/ folder as it's irrelevant
 # to unit/integration testing
-(cd .. && pytest --ignore=scripts $cov "$@")
+(cd .. && pytest --ignore=scripts --cov=./ "$@")
 
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
