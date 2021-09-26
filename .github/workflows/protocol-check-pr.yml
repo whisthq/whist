@@ -153,10 +153,6 @@ jobs:
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
 
           # Upload coverage report to Codecov
-          # -R is for Codecov project root
-          # -t is for Codecov authorization token
-          # -c is to clean the previous report when uploading a new one
-          # -F is to set a flag for the report
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
 
       - name: Build Protocol Server on Linux Ubuntu
