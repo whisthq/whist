@@ -1,4 +1,3 @@
-import os
 from threading import Thread
 import time
 import uuid
@@ -21,6 +20,8 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from payments import payment_required
 
+from config.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
+
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
 
@@ -41,9 +42,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
     if current_app.config[
         "ENVIRONMENT"
-    ] == DEVELOPMENT and body.client_commit_hash == os.environ.get(
-        "CLIENT_COMMIT_HASH_DEV_OVERRIDE"
-    ):
+    ] == DEVELOPMENT and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE:
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
