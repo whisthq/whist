@@ -6,6 +6,7 @@ package metrics // import "github.com/fractal/fractal/host-service/metrics"
 
 import (
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -119,10 +120,14 @@ type RuntimeMetrics struct {
 }
 
 func init() {
-	err := startCollectionGoroutine(30 * time.Second)
-	if err != nil {
-		// We can safely do a "real" panic in an init function.
-		logger.Panicf(nil, "Error starting metrics collection goroutine: %s", err)
+	if os.Getenv("CI") != "true" {
+		err := startCollectionGoroutine(30 * time.Second)
+		if err != nil {
+			// We can safely do a "real" panic in an init function.
+			logger.Panicf(nil, "Error starting metrics collection goroutine: %s", err)
+		}
+	} else {
+		logger.Info("Skipping metrics collection in CI")
 	}
 }
 

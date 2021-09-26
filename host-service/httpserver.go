@@ -205,7 +205,9 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 // 3. If we get a bad, unauthenticated request we can minimize the amount of
 // processsing power we devote to it. This is useful for being resistant to
 // Denial-of-Service attacks.
-func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
+// Note: authenticateAndParseRequest is declared as a variable to allow
+// it to be mocked for testing.
+var authenticateAndParseRequest = func(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
 	// Get body of request
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
