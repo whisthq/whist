@@ -50,4 +50,4 @@ curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov -f coverage.xml -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R /app -t ${CODECOV_TOKEN} -c -F webserver)
