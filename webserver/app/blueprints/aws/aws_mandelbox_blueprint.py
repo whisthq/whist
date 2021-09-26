@@ -3,14 +3,13 @@ from threading import Thread
 import time
 import uuid
 from http import HTTPStatus
-
 from flask import Blueprint, current_app
 from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_pydantic import validate
 from app.validation import MandelboxAssignBody
 
-from app import fractal_pre_process
+from app import fractal_pre_process, log_request
 from app.constants.env_names import DEVELOPMENT
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
@@ -18,10 +17,25 @@ from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.metrics.flask_app import app_record_metrics
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
-from app.models import db, InstanceInfo, MandelboxInfo, RegionToAmi
+from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from payments import payment_required
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
+
+
+@aws_mandelbox_bp.route("/regions", methods=("GET",))
+@log_request
+@jwt_required()
+def regions():
+    """Return the list of regions in which users are allowed to deploy tasks.
+
+    Returns:
+        A list of strings, where each string is the name of a region.
+    """
+
+    enabled_regions = RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
+
+    return jsonify([region.region_name for region in enabled_regions])
 
 
 @aws_mandelbox_bp.route("/mandelbox/assign", methods=("POST",))
@@ -82,7 +96,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             else:
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(body.region, ami.ami_id),
+                    args=(
+                        body.region,
+                        ami.ami_id,
+                    ),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },

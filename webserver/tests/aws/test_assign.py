@@ -1,5 +1,6 @@
 """Tests for the /mandelbox/assign endpoint."""
 
+import os
 from http import HTTPStatus
 import pytest
 
@@ -92,7 +93,7 @@ def test_client_commit_hash_local_dev_override_fail(
 
     args = {
         "region": region_name,
-        "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
+        "client_commit_hash": os.environ.get("CLIENT_COMMIT_HASH_DEV_OVERRIDE"),
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -114,7 +115,7 @@ def test_client_commit_hash_local_dev_override_success(
 
     args = {
         "region": region_name,
-        "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
+        "client_commit_hash": os.environ.get("CLIENT_COMMIT_HASH_DEV_OVERRIDE"),
     }
     response = client.post("/mandelbox/assign", json=args)
 
