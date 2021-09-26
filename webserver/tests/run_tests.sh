@@ -40,7 +40,6 @@ fi
 
 # regardless of in CI or local tests, we set these variables
 export TESTING=true
-COMMIT_SHA="$(git rev-parse --short HEAD)"
 
 # Only set Codecov flags if running in CI
 cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=app/ --cov=auth0 --cov=payments")"
@@ -56,4 +55,4 @@ curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 # stored as a Heroku config variable
 # -R is to specify the project root folder, necessary since we move only the /app folder to Heroku CI
 # -S is to specify the commit sha, necessary since Codecov can't detect GHA due to using Heroku CI
-test "$IN_CI" = "false" || (./codecov -R /app --sha ${COMMIT_SHA} -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R /app --sha ${APP_GIT_COMMIT} -t ${CODECOV_TOKEN} -c -F webserver)
