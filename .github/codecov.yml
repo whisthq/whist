@@ -33,7 +33,6 @@ ignore:
   - "webserver/app/cli.py"
   - "webserver/app/config.py"
   - "webserver/app/sentry.py"
-  - "protocol/build/_deps"
 
 # Settings for Codecov comments on pull requests
 comment:
