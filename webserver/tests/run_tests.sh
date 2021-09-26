@@ -36,17 +36,14 @@ else
   # we use the remote user and remote db to make ephemeral db look as close to dev as possible
   # but of course, host and port are local
   export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-
 fi
 
 # regardless of in CI or local tests, we set this variable
 export TESTING=true
 
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov=app --cov=auth0 --cov=payments")"
-
 # pass args to pytest, including Codecov flags, and ignore the scripts/ folder as it's irrelevant
 # to unit/integration testing
-(cd .. && pytest --ignore=scripts $cov "$@")
+(cd .. && pytest --ignore=scripts --cov=./ "$@")
 
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov

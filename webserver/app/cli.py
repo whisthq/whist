@@ -23,7 +23,6 @@ custom commands will appear in the ``flask help`` output and can be called as su
    ...
    $ flask ami generate_test_data
    ...
-
 """
 
 import json
