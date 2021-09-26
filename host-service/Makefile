@@ -74,7 +74,8 @@ vet: build
 test: build
 	echo "Running go tests..."
 	# We need to run some tests as root since the host service init() checks for root perms.
-	sudo env "PATH=$(PATH)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
+	# Set CI flag in test environment so we can properly skip metrics collection in CI
+	sudo env "PATH=$(PATH)" "CI=$(CI)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
 
 	# Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
