@@ -6,6 +6,17 @@
 name: "Protocol: Check PR"
 
 on:
+  push:
+    # Trigger Heroku CI to run when commits that modify Webserver source files
+    # are pushed to `dev`, since we need to run Heroku CI in order to generate an
+    # updated test coverage report for the `dev` branch.
+    branches:
+      - dev
+    paths:
+      - "protocol/**"
+      - "!protocol/**/README.md"
+      - ".github/workflows/protocol-check-pr.yml"
+      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   pull_request:
     paths:
       - "protocol/**"
