@@ -38,16 +38,22 @@ else
   export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 fi
 
-# regardless of in CI or local tests, we set this variable
+# regardless of in CI or local tests, we set these variables
 export TESTING=true
+export COMMIT_SHA="$(git rev-parse --short HEAD)"
+
+# Only set Codecov flags if running in CI
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=app/ --cov=auth0 --cov=payments")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
 # folder as it's irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts --cov-report xml --cov=app/ --cov=auth0 --cov=payments "$@")
+(cd .. && pytest --ignore=scripts $cov "$@")
 
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov -R /app -t ${CODECOV_TOKEN} -c -F webserver)
+# -R is to specify the project root folder, necessary since we move only the /app folder to Heroku CI
+# -S is to specify the commit sha, necessary since Codecov can't detect GHA due to using Heroku CI
+test "$IN_CI" = "false" || (./codecov -R /app -S ${COMMIT_SHA} -t ${CODECOV_TOKEN} -c -F webserver)
