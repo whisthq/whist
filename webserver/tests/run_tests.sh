@@ -49,8 +49,11 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=a
 # folder as it's irrelevant to unit/integration testing
 (cd .. && pytest --ignore=scripts $cov "$@")
 
+# Download the Codecov uploader
+curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
+
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
 # -R is to specify the project root folder, necessary since we move only the /app folder to Heroku CI
 # -S is to specify the commit sha, necessary since Codecov can't detect GHA due to using Heroku CI
-test "$IN_CI" = "false" || (bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R /app -C ${COMMIT_SHA} -t ${CODECOV_TOKEN} -c -F webserver)
