@@ -13,10 +13,10 @@ from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from jwt import PyJWKClient
 from sqlalchemy.ext.declarative import DeferredReflection
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
-from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
+from app.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
 from app.database.models.cloud import db
 
@@ -82,7 +82,7 @@ def create_app(testing: bool = False) -> Flask:
     # Set the Stripe API key.
     stripe.api_key = app.config["STRIPE_SECRET"]
 
-    from .helpers.utils.general.limiter import limiter
+    from .utils.general.limiter import limiter
 
     limiter.init_app(app)
     db.init_app(app)

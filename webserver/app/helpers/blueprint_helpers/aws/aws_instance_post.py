@@ -13,10 +13,10 @@ from app.database.models.cloud import (
     InstancesWithRoomForMandelboxes,
     LingeringInstances,
 )
-from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from app.helpers.utils.aws.base_ec2_client import EC2Client
-from app.helpers.utils.general.name_generation import generate_name
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.db.db_utils import set_local_lock_timeout
+from app.utils.aws.base_ec2_client import EC2Client
+from app.utils.general.name_generation import generate_name
+from app.utils.general.logs import fractal_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 from app.constants.ec2_instance_states import EC2InstanceState
 

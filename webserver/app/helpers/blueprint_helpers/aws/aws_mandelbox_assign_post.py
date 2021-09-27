@@ -1,5 +1,5 @@
 from app.database.models.cloud import MandelboxInfo
-from app.helpers.utils.general.timing import log_time
+from app.utils.general.timing import log_time
 
 
 @log_time

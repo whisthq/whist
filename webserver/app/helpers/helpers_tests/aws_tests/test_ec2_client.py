@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from app.helpers.utils.aws.base_ec2_client import EC2Client, InstancesNotRunningException
+from app.utils.aws.base_ec2_client import EC2Client, InstancesNotRunningException
 
 
 def test_single() -> None:

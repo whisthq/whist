@@ -5,7 +5,7 @@ from app.database.models.cloud import (
     InstanceInfo,
 )
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 
 MAX_POLL_TIME = 900  # seconds

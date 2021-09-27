@@ -7,7 +7,7 @@ import pytest
 from flask import current_app, Flask
 from flask_jwt_extended import create_access_token, JWTManager, verify_jwt_in_request
 
-from app.helpers.utils.general.limiter import limiter
+from app.utils.general.limiter import limiter
 from payments import (
     check_payment,
     get_customer_id,

@@ -6,7 +6,7 @@ from flask import current_app, Flask
 from sqlalchemy import or_, and_
 
 from app.database.models.cloud import db, RegionToAmi, InstanceInfo
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import (
     do_scale_up_if_necessary,
     drain_instance,

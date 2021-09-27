@@ -13,7 +13,7 @@ from flask import (
     make_response,
 )
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 # global lock-protected variable indicating whether webserver can process web requests
 _WEB_REQUESTS_ENABLED = True
