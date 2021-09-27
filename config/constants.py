@@ -1,3 +1,7 @@
+import sys
+from os.path import dirname
+sys.path.append(dirname(__file__))
+
 # A preshared client commit hash that is accepted along with the
 # client commit hash corresponding to the active AMI in the database
 # in dev environment. Used for enabling client app developers to be able to
