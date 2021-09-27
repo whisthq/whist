@@ -1,7 +1,7 @@
 from functools import wraps
 import time
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 
 def log_time(func):

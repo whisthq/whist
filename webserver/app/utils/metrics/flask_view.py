@@ -3,11 +3,11 @@ import time
 
 import flask
 
-from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.metrics import monotonic_duration_ms
-from app.helpers.utils.metrics.flask_app import app_record_metrics
-import app.helpers.utils.metrics.keys as mkey
-import app.helpers.utils.metrics.keys_dims as dkey
+from app.utils.general.logs import fractal_logger
+from app.utils.metrics import monotonic_duration_ms
+from app.utils.metrics.flask_app import app_record_metrics
+import app.utils.metrics.keys as mkey
+import app.utils.metrics.keys_dims as dkey
 
 
 # This should be a globally unique key that shouldn't conflict with any other
