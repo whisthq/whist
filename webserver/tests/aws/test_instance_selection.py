@@ -84,19 +84,19 @@ def test_assignment_logic(bulk_instance, location):
     replacement_region = bundled_region[location][0]
     bulk_instance(associated_mandelboxes=10, location=location)
     assert (
-        find_instance([location], CLIENT_COMMIT_HASH_FOR_TESTING)[0] is None
+        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
     ), f"we assigned an already full instance in the main region, {location}"
     bulk_instance(associated_mandelboxes=10, location=replacement_region)
     assert (
-        find_instance([location], CLIENT_COMMIT_HASH_FOR_TESTING)[0] is None
+        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
     ), f"we assigned an already full instance in the secondary region, {replacement_region}"
     bulk_instance(location=replacement_region, instance_name="replacement-mandelbox")
-    assert find_instance([location], CLIENT_COMMIT_HASH_FOR_TESTING)[0] is not None, (
+    assert find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is not None, (
         f"we failed to find the available instance "
         f"in the replacement region {replacement_region}"
     )
     bulk_instance(location=location, instance_name="main-mandelbox")
-    instance, _ = find_instance([location], CLIENT_COMMIT_HASH_FOR_TESTING)
+    instance_name = find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
     assert (
-        instance is not None and instance == "main-mandelbox"
+        instance_name is not None and instance_name == "main-mandelbox"
     ), f"we failed to find the available instance in the main region {location}"
