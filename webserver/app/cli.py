@@ -50,7 +50,10 @@ compute_bp = Blueprint("compute", __name__)
 @command_bp.cli.command("create_buffers")
 @click.argument("client_commit_hash")
 @click.argument("region_to_ami_id_mapping_str")
-def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str,) -> None:
+def create_buffers(
+    client_commit_hash: str,
+    region_to_ami_id_mapping_str: str,
+) -> None:
     """
     This function creates buffers of instances for a given set of AMIs.
     Args:
@@ -71,7 +74,9 @@ def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str,) 
 
 @command_bp.cli.command("swap_over_buffers")
 @click.argument("new_amis")
-def swap_over_buffers(new_amis: str,):
+def swap_over_buffers(
+    new_amis: str,
+):
     """
     This function sets the new AMIs to active, the old AMIs to inactive,
     and drains all previously active instances.

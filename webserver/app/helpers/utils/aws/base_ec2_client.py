@@ -35,7 +35,10 @@ class EC2Client(CloudClient):
     """
 
     def __init__(
-        self, region_name: str, key_id: Optional[str] = None, access_key: Optional[str] = None,
+        self,
+        region_name: str,
+        key_id: Optional[str] = None,
+        access_key: Optional[str] = None,
     ):
         #  We create a new session here to preserve BOTO3 thread safety
         #  See https://github.com/boto/boto3/issues/1592
@@ -73,7 +76,12 @@ class EC2Client(CloudClient):
             "MaxCount": num_instances,
             "MinCount": num_instances,
             "TagSpecifications": [
-                {"ResourceType": "instance", "Tags": [{"Key": "Name", "Value": instance_name},],},
+                {
+                    "ResourceType": "instance",
+                    "Tags": [
+                        {"Key": "Name", "Value": instance_name},
+                    ],
+                },
             ],
             "UserData": userdata_template,
             "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},

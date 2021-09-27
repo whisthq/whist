@@ -39,9 +39,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
     if (
-        (current_app.config["ENVIRONMENT"] == DEVELOPMENT or current_app.config["ENVIRONMENT"] == LOCAL)
-        and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE
-    ):
+        current_app.config["ENVIRONMENT"] == DEVELOPMENT
+        or current_app.config["ENVIRONMENT"] == LOCAL
+    ) and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE:
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
@@ -55,7 +55,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             fractal_logger.debug(f"Client commit hash not found on region: {region}.")
     else:
         client_commit_hash = body.client_commit_hash
-    
+
     # Of the regions provided in the request, filter out the ones that are not active
     enabled_regions = find_enabled_regions()
     enabled_regions = [r.region_name for r in enabled_regions]
@@ -103,7 +103,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             else:
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(region, ami.ami_id,),
+                    args=(
+                        region,
+                        ami.ami_id,
+                    ),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },

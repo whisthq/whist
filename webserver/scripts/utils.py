@@ -27,7 +27,10 @@ def make_get_request(web_url: str, endpoint: str, params: dict = None, bearer_to
 
 
 def make_post_request(
-    web_url: str, endpoint: str, payload: dict, bearer_token: str = None,
+    web_url: str,
+    endpoint: str,
+    payload: dict,
+    bearer_token: str = None,
 ) -> requests.Response:
     """
     Makes a POST request. Properly formats bearer_token (if given) and payload.

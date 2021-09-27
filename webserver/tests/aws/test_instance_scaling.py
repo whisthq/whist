@@ -576,7 +576,7 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
     region_ami_pairs_length = 2
     randomly_picked_ami_objs = get_allowed_regions()
     assert len(randomly_picked_ami_objs) >= 2
-    randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]    
+    randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]
 
     region_ami_pairs = [
         (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs

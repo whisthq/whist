@@ -111,7 +111,12 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
             # checkout session so the user can enroll in a new subscription.
             session = stripe.checkout.Session.create(
                 customer=customer,
-                line_items=[{"price": current_app.config["STRIPE_PRICE_ID"], "quantity": 1,},],
+                line_items=[
+                    {
+                        "price": current_app.config["STRIPE_PRICE_ID"],
+                        "quantity": 1,
+                    },
+                ],
                 payment_method_types=("card",),
                 success_url="http://localhost/callback/payment?success=true",
                 cancel_url="http://localhost/callback/payment?success=false",
@@ -122,7 +127,8 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
             # "incomplete"). Create a customer portal session so the user can update their billing
             # and subscription information.
             session = stripe.billing_portal.Session.create(
-                customer=customer, return_url="http://localhost/callback/payment",
+                customer=customer,
+                return_url="http://localhost/callback/payment",
             )
 
         return jsonify(url=session.url)

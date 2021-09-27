@@ -38,7 +38,8 @@ def test_assign(client, bulk_instance, monkeypatch):
         return instance.instance_name
 
     monkeypatch.setattr(
-        "app.api.mandelbox.find_instance", patched_find,
+        "app.api.mandelbox.find_instance",
+        patched_find,
     )
 
     args = {
@@ -63,7 +64,8 @@ def test_assign_active(client, bulk_instance, monkeypatch):
         return True
 
     monkeypatch.setattr(
-        "app.api.mandelbox.is_user_active", patched_active,
+        "app.api.mandelbox.is_user_active",
+        patched_active,
     )
 
     args = {
@@ -132,7 +134,11 @@ def test_client_commit_hash_local_dev_override_success(
 def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
     user = make_user()
     response = client.post(
-        "/mandelbox/assign", json={"app": "Google Chrome", "region": get_allowed_region_names(),},
+        "/mandelbox/assign",
+        json={
+            "app": "Google Chrome",
+            "region": get_allowed_region_names(),
+        },
     )
 
     assert response.status_code == status_code

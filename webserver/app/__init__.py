@@ -96,7 +96,8 @@ def log_request(view_func: _F) -> _F:
 
                     fractal_logger.info(
                         "{}. Body: {}".format(
-                            request.method + " request at " + request.url, safe_body,
+                            request.method + " request at " + request.url,
+                            safe_body,
                         )
                     )
         except:

@@ -1,5 +1,6 @@
 from random import sample
 from app.database.models.cloud import RegionToAmi
+from app.helpers.blueprint_helpers.aws.aws_instance_post import find_enabled_regions
 
 
 def get_allowed_regions():
@@ -22,7 +23,7 @@ def get_allowed_region_names():
     Returns:
             Specified number of random region names or None
     """
-    allowed_regions = get_allowed_regions()
+    allowed_regions = find_enabled_regions()
     return [region.region_name for region in allowed_regions]
 
 
@@ -34,8 +35,8 @@ def get_random_region_name():
     Returns:
         A random region name or None
     """
-    regions = get_allowed_regions()
-    if not regions: 
+    regions = get_allowed_region_names()
+    if not regions:
         return None
     else:
-        return sample(regions, k=1).region_name
+        return sample(regions, k=1)[0]

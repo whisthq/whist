@@ -18,7 +18,11 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from tests.client import FractalAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
-from tests.helpers.utils import get_allowed_regions, get_random_region_name, get_allowed_region_names
+from tests.helpers.utils import (
+    get_allowed_regions,
+    get_random_region_name,
+    get_allowed_region_names,
+)
 
 
 @pytest.fixture(scope="session")
