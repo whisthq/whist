@@ -48,6 +48,7 @@ build: checkCI
 	# Temporarily resolve build issues by skipping go mod tidy
 	# $(GOCMD) mod tidy -v
 	$(GOCMD) get -u github.com/pierrec/lz4/v4
+	$(GOCMD) get github.com/fractal/fractal/host-service/mandelbox
 	$(GOCMD) get github.com/jschaf/pggen/cmd/pggen
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
