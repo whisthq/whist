@@ -55,4 +55,4 @@ curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 # stored as a Heroku config variable
 # -R is to specify the project root folder, necessary since we move only the /app folder to Heroku CI
 # -S is to specify the commit sha, necessary since Codecov can't detect GHA due to using Heroku CI
-test "$IN_CI" = "false" || (./codecov -R /app --sha ${APP_GIT_COMMIT} -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R /app --sha $HEROKU_TEST_RUN_COMMIT_VERSION -t ${CODECOV_TOKEN} -c -F webserver)
