@@ -42,7 +42,7 @@ fi
 export TESTING=true
 
 # Only set Codecov flags if running in CI
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=app/ --cov=/tests --cov=auth0 --cov=payments")"
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=./")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
 # folder as it's irrelevant to unit/integration testing
