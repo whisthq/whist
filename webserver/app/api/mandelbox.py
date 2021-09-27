@@ -16,7 +16,7 @@ from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.metrics.flask_app import app_record_metrics
-from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
+from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from payments import payment_required
 
@@ -39,7 +39,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
     if (
-        current_app.config["ENVIRONMENT"] == DEVELOPMENT
+        (current_app.config["ENVIRONMENT"] == DEVELOPMENT or current_app.config["ENVIRONMENT"] == LOCAL)
         and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE
     ):
         # This condition is to accomodate the worflow for developers of client_apps
@@ -55,8 +55,29 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             fractal_logger.debug(f"Client commit hash not found on region: {region}.")
     else:
         client_commit_hash = body.client_commit_hash
+    
+    # Of the regions provided in the request, filter out the ones that are not active
+    enabled_regions = find_enabled_regions()
+    enabled_regions = [r.region_name for r in enabled_regions]
+    allowed_regions = [r for r in body.regions if r in enabled_regions]
 
-    instance_name, region = find_instance(body.regions, client_commit_hash)
+    if not allowed_regions:
+        fractal_logger.error(
+            f"None of the request regions {body.regions} are enabled, enabled regions are {enabled_regions}"
+        )
+        return (
+            jsonify({"ip": "None", "mandelbox_id": "None", "region": "None"}),
+            HTTPStatus.SERVICE_UNAVAILABLE,
+        )
+
+    # Find an instance in the closest active region
+    region = allowed_regions[0]
+
+    fractal_logger.debug(
+        f"Trying to find instance for user {username} in region {region},\
+        with commit hash {client_commit_hash}."
+    )
+    instance_name = find_instance(region, client_commit_hash)
 
     time_when_instance_found = time.time() * 1000
     # How long did it take to find an instance?
@@ -65,7 +86,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
 
     if instance_name is None:
         fractal_logger.info(
-            f"No instance found in region: {region},\
+            f"No instance found in region {region},\
               with client_commit_hash: {client_commit_hash}"
         )
 
@@ -73,7 +94,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             # If we're not testing, we want to scale up a new instance to handle this load
             # and we know what instance type we're missing from the request
             ami = RegionToAmi.query.get(
-                {"region_name": region, "client_commit_hash": client_commit_hash}
+                {"region_name": body.regions[0], "client_commit_hash": client_commit_hash}
             )
             if ami is None:
                 fractal_logger.debug(

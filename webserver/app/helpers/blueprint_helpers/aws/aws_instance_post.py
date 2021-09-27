@@ -124,8 +124,14 @@ def terminate_instance(instance: InstanceInfo) -> None:
     db.session.delete(instance)
     db.session.commit()
 
+def find_enabled_regions():
+    """
+    Returns a list of regions that are currently active
+    """
 
-def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple[str, str]]:
+    return RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
+
+def find_instance(region: str, client_commit_hash: str) -> Optional[Tuple[str, str]]:
     """
     Given a list of regions, finds (if it can) an instance in that region
     or a neighboring region with space. If it succeeds, returns the instance name.
@@ -133,23 +139,10 @@ def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple
     Args:
         regions: a list of regions sorted by proximity
 
-    Returns: either a good instance name or None
+    Returns: either an instance name or None
 
     """
-    # Find the closest region that's also enabled
-    enabled_regions = RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
-    enabled_regions = [r.region_name for r in enabled_regions]
-    allowed_regions = [r for r in regions if r in enabled_regions]
-
-    if not allowed_regions:
-        fractal_logger.error(
-            f"None of the request regions {''.join(map(str, regions))} are enabled, enabled regions are {''.join(map(str, enabled_regions))}"
-        )
-        return None, None
-
-    closest_allowed_region = allowed_regions[0]
-
-    bundled_regions = bundled_region.get(closest_allowed_region, [])
+    bundled_regions = bundled_region.get(region, [])
     # InstancesWithRoomForMandelboxes is sorted in DESC
     # with number of mandelboxes running, So doing a
     # query with limit of 1 returns the instance with max
@@ -157,7 +150,7 @@ def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
         InstancesWithRoomForMandelboxes.query.filter_by(
             commit_hash=client_commit_hash,
-            location=closest_allowed_region,
+            location=region,
             status=MandelboxHostState.ACTIVE,
         )
         .limit(1)
@@ -177,7 +170,7 @@ def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple
             .one_or_none()
         )
     if instance_with_max_mandelboxes is None:
-        return None, None
+        return None
     else:
         # 5sec arbitrarily decided as sufficient timeout when using with_for_update
         set_local_lock_timeout(5)
@@ -191,9 +184,9 @@ def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple
         )
         # The instance that was available earlier might be lost before we try to grab a lock.
         if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
-            return None, None
+            return None
         else:
-            return avail_instance.instance_name, avail_instance.location
+            return avail_instance.instance_name
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:

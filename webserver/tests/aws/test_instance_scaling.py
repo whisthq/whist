@@ -11,7 +11,7 @@ import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
 
 from app.constants.mandelbox_host_states import MandelboxHostState
 
-from tests.helpers.utils import get_random_regions
+from tests.helpers.utils import get_allowed_regions
 
 
 def test_scale_up_single(app, hijack_ec2_calls, mock_get_num_new_instances, hijack_db, region_name):
@@ -526,8 +526,10 @@ def test_buffer_region_sensitive(app, bulk_instance):
     For the other region, we don't spin up any instance so the recommendation from `_get_num_new_instances` should return
     a configuration value <DEFAULT_INSTANCE_BUFFER>
     """
-    randomly_picked_ami_objs = get_random_regions(2)
-    assert len(randomly_picked_ami_objs) == 2
+    randomly_picked_ami_objs = get_allowed_regions()
+    assert len(randomly_picked_ami_objs) >= 2
+    randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]
+
     region_ami_pairs = [
         (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
     ]
@@ -572,7 +574,10 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
 
     monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
     region_ami_pairs_length = 2
-    randomly_picked_ami_objs = get_random_regions(region_ami_pairs_length)
+    randomly_picked_ami_objs = get_allowed_regions()
+    assert len(randomly_picked_ami_objs) >= 2
+    randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]    
+
     region_ami_pairs = [
         (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
     ]

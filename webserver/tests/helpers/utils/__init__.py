@@ -2,7 +2,7 @@ from random import sample
 from app.database.models.cloud import RegionToAmi
 
 
-def get_random_regions(count=2):
+def get_allowed_regions():
     """
     Returns a randomly picked region to AMI objects from RegionToAmi table
     with ami_active flag marked as true
@@ -11,15 +11,10 @@ def get_random_regions(count=2):
     Returns:
             Specified number of random region objects or None
     """
-    all_regions = RegionToAmi.query.filter_by(ami_active=True).all()
-    if len(all_regions) >= count:
-        randomly_picked_regions = sample(all_regions, k=count)
-        return randomly_picked_regions
-    else:
-        return None
+    return RegionToAmi.query.filter_by(ami_active=True).all()
 
 
-def get_random_region_names(count=2):
+def get_allowed_region_names():
     """
     Returns a randomly picked region name from RegionToAmi table.
     Args:
@@ -27,11 +22,8 @@ def get_random_region_names(count=2):
     Returns:
             Specified number of random region names or None
     """
-    randomly_picked_regions = get_random_regions(count)
-    if len(randomly_picked_regions) >= count:
-        return [region.region_name for region in randomly_picked_regions]
-    else:
-        return None
+    allowed_regions = get_allowed_regions()
+    return [region.region_name for region in allowed_regions]
 
 
 def get_random_region_name():
@@ -42,8 +34,8 @@ def get_random_region_name():
     Returns:
         A random region name or None
     """
-    random_region = get_random_region_names(1)
-    if random_region is not None:
-        return random_region[0]
-    else:
+    regions = get_allowed_regions()
+    if not regions: 
         return None
+    else:
+        return sample(regions, k=1).region_name

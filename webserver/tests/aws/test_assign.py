@@ -6,7 +6,7 @@ import pytest
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
-from tests.helpers.utils import get_random_region_names
+from tests.helpers.utils import get_allowed_region_names
 
 
 @pytest.mark.usefixtures("authorized")
@@ -42,7 +42,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     )
 
     args = {
-        "regions": get_random_region_names(4),
+        "regions": get_allowed_region_names(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
     }
     response = client.post("/mandelbox/assign", json=args)
@@ -67,7 +67,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     )
 
     args = {
-        "regions": get_random_region_names(4),
+        "regions": get_allowed_region_names(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
     }
     response = client.post("/mandelbox/assign", json=args)
@@ -85,7 +85,7 @@ def test_client_commit_hash_local_dev_override_fail(
     """
 
     override_environment(PRODUCTION)
-    region_names = get_random_region_names(4)
+    region_names = get_allowed_region_names()
     bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_names[0])
 
     args = {
@@ -107,7 +107,7 @@ def test_client_commit_hash_local_dev_override_success(
     """
 
     override_environment(DEVELOPMENT)
-    region_names = get_random_region_names()
+    region_names = get_allowed_region_names()
     bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_names[0])
 
     args = {
@@ -132,7 +132,7 @@ def test_client_commit_hash_local_dev_override_success(
 def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
     user = make_user()
     response = client.post(
-        "/mandelbox/assign", json={"app": "Google Chrome", "region": get_random_region_names(4),},
+        "/mandelbox/assign", json={"app": "Google Chrome", "region": get_allowed_region_names(),},
     )
 
     assert response.status_code == status_code
