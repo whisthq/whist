@@ -5,7 +5,6 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 import (
 	"archive/tar"
 	"bytes"
-	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -77,11 +76,9 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
-	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
-
 	logger.Infof("Starting S3 config download")
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(c.ctx)
 	if err != nil {
 		return utils.MakeError("failed to load aws config: %v", err)
 	}
@@ -92,7 +89,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	downloader := manager.NewDownloader(s3Client)
 
 	// Fetch the HeadObject first to see how much memory we need to allocate
-	headObject, err := s3Client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+	headObject, err := s3Client.HeadObject(c.ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
@@ -113,13 +110,13 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
 	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(context.TODO(), buf, &s3.GetObjectInput{
+	numBytes, err := downloader.Download(c.ctx, buf, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
-			logger.Infof("Could not get head object because config does not exist")
+			logger.Infof("Could not download user config because config does not exist")
 			return nil
 		}
 
@@ -169,7 +166,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 			break
 		}
 
-		path := filepath.Join(unpackedConfigPath, header.Name)
+		path := filepath.Join(unpackedConfigDir, header.Name)
 		info := header.FileInfo()
 
 		// Create directory if it doesn't exist, otherwise go next
@@ -197,7 +194,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		file.Close()
 	}
 
-	logger.Infof("Untarred config to: %s", unpackedConfigPath)
+	logger.Infof("Untarred config to: %s", unpackedConfigDir)
 
 	return nil
 }
