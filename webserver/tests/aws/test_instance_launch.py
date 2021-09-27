@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import random, requests
 
-from app.models import RegionToAmi, db
+from app.database.models.cloud import RegionToAmi, db
 from tests.patches import function
 
 from app.helpers.command_helpers import ami_upgrade

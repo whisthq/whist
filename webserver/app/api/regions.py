@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 
 from app import log_request
 
-from app.models import RegionToAmi
+from app.database.models.cloud import RegionToAmi
 
 aws_region_bp = Blueprint("aws_region_bp", __name__)
 
