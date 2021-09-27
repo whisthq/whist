@@ -9,6 +9,7 @@ import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
+import { sessionID } from "@app/utils/constants"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
@@ -74,6 +75,7 @@ const mandelboxRequest = async (accessToken: string, region: string) =>
     body: {
       region,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
+      session_id: sessionID,
     },
   })
 

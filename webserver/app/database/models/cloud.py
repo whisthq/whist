@@ -91,6 +91,7 @@ class MandelboxInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
         instance_name (string): the instance the mandelbox lives on.
         user_id (string): who requested it?
         status (string): is it running?
+        session_id (int): session ID of the user
     """
 
     __tablename__ = "mandelbox_info"
