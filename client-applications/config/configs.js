@@ -38,7 +38,7 @@ const configs = {
       LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
     },
     url: {
-      WEBSERVER_URL: FractalWebservers.dev,
+      WEBSERVER_URL: "http://127.0.0.1:7730",
       FRONTEND_URL: "https://dev.fractal.co",
     },
     auth0: {
@@ -65,7 +65,7 @@ const configs = {
       LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
     },
     url: {
-      WEBSERVER_URL: FractalWebservers.dev,
+      WEBSERVER_URL: "http://127.0.0.1:7730",
       FRONTEND_URL: "https://dev.fractal.co",
     },
     auth0: {
