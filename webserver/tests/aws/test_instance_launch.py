@@ -4,8 +4,8 @@ import random, requests
 from app.models import RegionToAmi, db
 from tests.patches import function
 
-from app.helpers.command_helpers import ami_upgrade
-from app.helpers.command_helpers.ami_upgrade import (
+from app.utils.aws.ami import ami_upgrade
+from app.utils.aws.ami.ami_upgrade import (
     launch_new_ami_buffer,
     insert_new_amis,
     create_ami_buffer,
