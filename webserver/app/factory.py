@@ -79,7 +79,7 @@ def create_app(testing=False):
     # Set the Stripe API key.
     stripe.api_key = app.config["STRIPE_SECRET"]
 
-    from .helpers.utils.general.limiter import limiter
+    from app.utils.general.limiter import limiter
 
     limiter.init_app(app)
     db.init_app(app)
