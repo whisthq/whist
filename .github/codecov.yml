@@ -1,6 +1,6 @@
 codecov:
   branch: dev
-  require_ci_to_pass: yes
+  require_ci_to_pass: no # Whether Codecov waits for all other statuses to pass before sending its status
 
 # Setting coverage targets per flag
 coverage:

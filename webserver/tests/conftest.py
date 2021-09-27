@@ -41,6 +41,7 @@ def app():
     Returns:
         An instance of the Flask application for testing.
     """
+
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
     _app.test_client_class = FractalAPITestClient
