@@ -49,7 +49,7 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=a
 (cd .. && pytest --ignore=scripts $cov "$@")
 
 # Download the Codecov uploader
-curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
+(cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
