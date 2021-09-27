@@ -46,13 +46,15 @@ endif
 
 build: checkCI
 	# Temporarily resolve build issues by skipping go mod tidy
-	# $(GOCMD) mod tidy -v
-	$(GOCMD) get -u github.com/pierrec/lz4/v4
-	$(GOCMD) get github.com/fractal/fractal/host-service/mandelbox
+	$(GOCMD) mod tidy -v
 	$(GOCMD) get github.com/jschaf/pggen/cmd/pggen
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
-	$(GOCMD) generate ./...
+
+	# GOFLAGS fixes go.sum issue with lz4 package
+	# Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
+	GOFLAGS=-mod=mod $(GOCMD) generate ./...
+
 	$(GOCMD) build -ldflags "\
 		-X 'github.com/fractal/fractal/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
