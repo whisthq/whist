@@ -46,7 +46,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     args = {
         "region": get_random_region_name(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
-        "session_id": str(randint(0, 10000000)),
+        "session_id": randint(0, 10000000),
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -73,7 +73,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     args = {
         "region": get_random_region_name(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
-        "session_id": str(randint(0, 10000000)),
+        "session_id": randint(0, 10000000),
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -96,7 +96,7 @@ def test_client_commit_hash_local_dev_override_fail(
     args = {
         "region": region_name,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
-        "session_id": str(randint(0, 10000000)),
+        "session_id": randint(0, 10000000),
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -119,7 +119,7 @@ def test_client_commit_hash_local_dev_override_success(
     args = {
         "region": region_name,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
-        "session_id": str(randint(0, 10000000)),
+        "session_id": randint(0, 10000000),
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -143,7 +143,7 @@ def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed)
         json={
             "app": "Google Chrome",
             "region": get_random_region_name(),
-            "session_id": str(randint(0, 10000000)),
+            "session_id": randint(0, 10000000),
         },
     )
 
