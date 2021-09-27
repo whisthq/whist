@@ -56,4 +56,4 @@ echo $HEROKU_TEST_RUN_COMMIT_VERSION
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov -R /app -S $HEROKU_TEST_RUN_COMMIT_VERSION -r fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R /app -N $HEROKU_TEST_RUN_COMMIT_VERSION -r fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
