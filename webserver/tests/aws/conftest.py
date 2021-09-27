@@ -1,7 +1,7 @@
 import pytest
 
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
-from app.helpers.utils.aws.base_ec2_client import EC2Client
+from app.utils.aws.base_ec2_client import EC2Client
 from app.models import db
 
 

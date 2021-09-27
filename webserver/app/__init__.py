@@ -8,7 +8,7 @@ from functools import wraps
 
 from flask import current_app, request
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 from .config import _callback_webserver_hostname
 from .factory import jwtManager

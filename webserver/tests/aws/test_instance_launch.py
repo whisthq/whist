@@ -13,7 +13,7 @@ from app.helpers.command_helpers.ami_upgrade import (
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 
-from app.helpers.utils.general.name_generation import generate_name
+from app.utils.general.name_generation import generate_name
 
 from app.constants.mandelbox_host_states import MandelboxHostState
 

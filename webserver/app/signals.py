@@ -6,7 +6,7 @@ for more details on when this happens and how we are solving it.
 """
 import signal
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 from app.flask_handlers import set_web_requests_status
 
 
