@@ -79,7 +79,7 @@ def create_app(testing=False):
     # Set the Stripe API key.
     stripe.api_key = app.config["STRIPE_SECRET"]
 
-    from app.utils.general.limiter import limiter
+    from .utils.general.limiter import limiter
 
     limiter.init_app(app)
     db.init_app(app)
@@ -128,7 +128,7 @@ def register_commands(app):
         - app: Flask object
     """
 
-    from app.utils.flask.cli import command_bp, compute_bp
+    from .utils.flask.cli import command_bp, compute_bp
 
     app.register_blueprint(command_bp)
     app.register_blueprint(compute_bp)
