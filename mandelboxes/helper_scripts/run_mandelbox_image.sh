@@ -18,9 +18,12 @@ cd "$DIR"
 output=$(sudo python3 run_mandelbox_image.py "$@" | tee /dev/tty)
 docker_id="${output##*$'\n'}"
 
-# Start bash in the mandelbox.
-docker exec -it "$docker_id" /bin/bash || true
+if [[ ! -v FRACTAL_SKIP_EXEC_BASH ]]
+then
+  # Start bash in the mandelbox.
+  docker exec -it "$docker_id" /bin/bash || true
 
-# Kill the mandelbox once we're done
-docker kill "$docker_id" > /dev/null
-docker rm "$docker_id" > /dev/null
+  # Kill the mandelbox once we're done
+  docker kill "$docker_id" > /dev/null
+  docker rm "$docker_id" > /dev/null
+fi
