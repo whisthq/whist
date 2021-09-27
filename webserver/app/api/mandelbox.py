@@ -20,7 +20,7 @@ from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from payments import payment_required
 
-from config.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
+from ....config.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 

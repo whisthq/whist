@@ -2,7 +2,7 @@
 from http import HTTPStatus
 import pytest
 
-from config.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
+from ....config.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_random_region_name
