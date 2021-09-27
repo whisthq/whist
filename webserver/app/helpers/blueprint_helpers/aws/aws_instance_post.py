@@ -139,15 +139,17 @@ def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple
     # Find the closest region that's also enabled
     enabled_regions = RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
     enabled_regions = [r.region_name for r in enabled_regions]
-    allowed_regions = [r for r in regions if r in enabled_regions] 
-    
+    allowed_regions = [r for r in regions if r in enabled_regions]
+
     if not allowed_regions:
-        fractal_logger.error(f"None of the request regions {''.join(map(str, regions))} are enabled, enabled regions are {''.join(map(str, enabled_regions))}")
+        fractal_logger.error(
+            f"None of the request regions {''.join(map(str, regions))} are enabled, enabled regions are {''.join(map(str, enabled_regions))}"
+        )
         return None, None
 
     closest_allowed_region = allowed_regions[0]
 
-    bundled_regions = bundled_region.get(closest_allowed_region, []) + [closest_allowed_region]
+    bundled_regions = bundled_region.get(closest_allowed_region, [])
     # InstancesWithRoomForMandelboxes is sorted in DESC
     # with number of mandelboxes running, So doing a
     # query with limit of 1 returns the instance with max
@@ -170,10 +172,7 @@ def find_instance(regions: List[str], client_commit_hash: str) -> Optional[Tuple
             InstancesWithRoomForMandelboxes.query.filter(
                 InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
             )
-            .filter_by(
-                commit_hash=client_commit_hash,
-                status=MandelboxHostState.ACTIVE,
-            )
+            .filter_by(commit_hash=client_commit_hash, status=MandelboxHostState.ACTIVE,)
             .limit(1)
             .one_or_none()
         )

@@ -24,9 +24,7 @@ def setup_review_app(app_name: str):
     # capture stdout of this process so we get the eph db url
     print(f"Getting DATABASE_URL from review app {app_name}...")
     ret = subprocess.run(
-        f"heroku config:get DATABASE_URL --app {app_name}",
-        capture_output=True,
-        shell=True,
+        f"heroku config:get DATABASE_URL --app {app_name}", capture_output=True, shell=True,
     )
     assert ret.returncode == 0
 
@@ -54,10 +52,7 @@ def setup_review_app(app_name: str):
 if __name__ == "__main__":
     setup_review_app_parser = argparse.ArgumentParser(description="Setup the review app.")
     setup_review_app_parser.add_argument(
-        "--app_name",
-        type=str,
-        required=True,
-        help="Name of the Heroku Review App.",
+        "--app_name", type=str, required=True, help="Name of the Heroku Review App.",
     )
 
     args, _ = setup_review_app_parser.parse_known_args()

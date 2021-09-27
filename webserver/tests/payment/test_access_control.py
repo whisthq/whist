@@ -125,10 +125,7 @@ def test_check_payment_valid(monkeypatch, subscription_status):
 
 @pytest.mark.parametrize(
     "mock_kwargs, status_code",
-    [
-        [{}, HTTPStatus.OK],
-        [{"raises": PaymentRequired}, HTTPStatus.PAYMENT_REQUIRED],
-    ],
+    [[{}, HTTPStatus.OK], [{"raises": PaymentRequired}, HTTPStatus.PAYMENT_REQUIRED],],
 )
 def test_payment_required(client, make_user, mock_kwargs, monkeypatch, status_code):
     """Ensure that the @payment_required decorator returns correct HTTP response codes.
@@ -152,10 +149,7 @@ def test_payment_required(client, make_user, mock_kwargs, monkeypatch, status_co
 
 @pytest.mark.parametrize(
     "login_kwargs, status_code",
-    [
-        [{}, HTTPStatus.PAYMENT_REQUIRED],
-        [{"admin": True}, HTTPStatus.OK],
-    ],
+    [[{}, HTTPStatus.PAYMENT_REQUIRED], [{"admin": True}, HTTPStatus.OK],],
 )
 def test_payment_required_token(client, login_kwargs, make_user, status_code):
     """Ensure that the @payment_required interprets the contents of the access token correctly.

@@ -69,8 +69,7 @@ def test_no_find_full_small_instance(bulk_instance, region_name):
 
 
 @pytest.mark.parametrize(
-    "location",
-    bundled_region.keys(),
+    "location", bundled_region.keys(),
 )
 def test_assignment_logic(bulk_instance, location):
     # ensures that replacement will work for all regions

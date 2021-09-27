@@ -39,7 +39,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
     if (
-        current_app.config["ENVIRONMENT"] == LOCAL
+        current_app.config["ENVIRONMENT"] == DEVELOPMENT
         and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE
     ):
         # This condition is to accomodate the worflow for developers of client_apps
@@ -82,10 +82,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             else:
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(
-                        region,
-                        ami.ami_id,
-                    ),
+                    args=(region, ami.ami_id,),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },

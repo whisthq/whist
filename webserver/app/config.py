@@ -142,8 +142,7 @@ def getter(key, fetch=True, **kwargs) -> Any:
             if fetch:
                 # Attempt to read a fallback value from the configuration database.
                 result = config.session.execute(
-                    f"SELECT value FROM {config.config_table} WHERE key=:key",
-                    {"key": key},
+                    f"SELECT value FROM {config.config_table} WHERE key=:key", {"key": key},
                 )
                 row = result.fetchone()
 

@@ -231,11 +231,7 @@ def logged_event_cluster_lifecycle(cluster_name, time_taken="unknown"):
 
     basic_logging_event(
         title="Cluster Lifecycle Ended",
-        text=to_text(
-            cluster_name=cluster_name,
-            end_date=deletion_date,
-            shutdown_time=time_taken,
-        ),
+        text=to_text(cluster_name=cluster_name, end_date=deletion_date, shutdown_time=time_taken,),
         tags=[CLUSTER_LIFECYCLE, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
     )
 
