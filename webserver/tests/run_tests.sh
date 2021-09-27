@@ -38,11 +38,11 @@ else
   export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 fi
 
-# regardless of in CI or local tests, we set these variables
+# regardless of in CI or local tests, we set this variable
 export TESTING=true
 
 # Only set Codecov flags if running in CI
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=app/ --cov=auth0 --cov=payments")"
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=app/ --cov=/tests --cov=auth0 --cov=payments")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
 # folder as it's irrelevant to unit/integration testing
@@ -51,9 +51,6 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=a
 # Download the Codecov uploader
 curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
-
-echo $HEROKU_TEST_RUN_COMMIT_VERSION
-
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov -R /app --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)

@@ -11,8 +11,7 @@ from app.flask_handlers import set_web_requests_status
 
 
 class WebSignalHandler:
-    """
-    Handles signals for the web dyno. Specifically:
+    """Handles signals for the web dyno. Specifically:
     - SIGTERM (`handle_sigterm`)
 
     Initialize in webserver with:
