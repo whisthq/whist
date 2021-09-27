@@ -128,7 +128,7 @@ def register_commands(app):
         - app: Flask object
     """
 
-    from app.cli import command_bp, compute_bp
+    from app.utils.flask.cli import command_bp, compute_bp
 
     app.register_blueprint(command_bp)
     app.register_blueprint(compute_bp)
@@ -142,7 +142,7 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .blueprints.aws.aws_mandelbox_blueprint import aws_mandelbox_bp
+    from app.api.mandelbox import aws_mandelbox_bp
 
     app.register_blueprint(aws_mandelbox_bp)
 
