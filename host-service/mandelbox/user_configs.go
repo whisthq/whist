@@ -5,20 +5,22 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
@@ -27,15 +29,15 @@ import (
 )
 
 const (
-	USER_CONFIG_S3_BUCKET = "fractal-user-app-configs"
-	AES_256_KEY_LENGTH    = 32
-	AES_256_IV_LENGTH     = 16
+	userConfigS3Bucket = "fractal-user-app-configs"
+	aes256KeyLength    = 32
+	aes256IVLength     = 16
 
 	// This is the default iteration value used by openssl -pbkdf2 flag
-	PBKDF2_ITERATIONS = 10000
+	pbkdf2Iterations = 10000
 
 	// This is openssl's "magic" salt header value
-	OPENSSL_SALT_HEADER = "Salted__"
+	opensslSaltHeader = "Salted__"
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
@@ -79,31 +81,30 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	logger.Infof("Starting S3 config download")
 
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1"),
-	})
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		utils.MakeError("Failed to create new AWS session: %v", err)
+		return utils.MakeError("failed to load aws config: %v", err)
 	}
 
-	s3Client := s3.New(sess)
-	downloader := s3manager.NewDownloaderWithClient(s3Client)
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.Region = "us-east-1"
+	})
+	downloader := manager.NewDownloader(s3Client)
 
 	// Fetch the HeadObject first to see how much memory we need to allocate
-	headObject, err := s3Client.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
+	headObject, err := s3Client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
+
+	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		// If aws s3 errors out due to the file not existing, don't log an error because
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
-		if awsErr, ok := err.(awserr.Error); ok {
-			switch awsErr.Code() {
-			case s3.ErrCodeNoSuchKey:
-				logger.Infof("Could not get head object because config does not exist")
-				return nil
-			}
+		if errors.As(err, &noSuchKeyErr) {
+			logger.Infof("Could not get head object because config does not exist")
+			return nil
 		}
 
 		return utils.MakeError("Failed to download head object from s3: %v", err)
@@ -111,24 +112,21 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
-	buf := aws.NewWriteAtBuffer(make([]byte, int(*headObject.ContentLength)))
-	numBytes, err := downloader.Download(buf, &s3.GetObjectInput{
-		Bucket: aws.String(USER_CONFIG_S3_BUCKET),
+	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
+	numBytes, err := downloader.Download(context.TODO(), buf, &s3.GetObjectInput{
+		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			switch awsErr.Code() {
-			case s3.ErrCodeNoSuchKey:
-				logger.Infof("Ran \"aws s3 cp\" and config does not exist")
-				return nil
-			}
+		if errors.As(err, &noSuchKeyErr) {
+			logger.Infof("Could not get head object because config does not exist")
+			return nil
 		}
 
 		return utils.MakeError("Failed to download user configuration from s3: %v", err)
 	}
 
-	logger.Infof("Ran \"aws s3 cp\" get config command and received %d bytes", numBytes)
+	logger.Infof("Downloaded %d bytes from s3", numBytes)
 
 	logger.Infof("Starting decryption")
 
@@ -155,7 +153,10 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	tarReader := tar.NewReader(lz4Reader)
 
 	for {
+		// Read the header for the next file in the tar
 		header, err := tarReader.Next()
+
+		// If we reach EOF, that means we are done untaring
 		switch {
 		case err == io.EOF:
 			break
@@ -163,12 +164,15 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 			return utils.MakeError("error reading tar file: %v", err)
 		}
 
+		// Not certain why this case happens, but causes segfaults if removed
 		if header == nil {
 			break
 		}
 
 		path := filepath.Join(unpackedConfigPath, header.Name)
 		info := header.FileInfo()
+
+		// Create directory if it doesn't exist, otherwise go next
 		if info.IsDir() {
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
 				return utils.MakeError("error creating directory: %v", err)
@@ -176,6 +180,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 			continue
 		}
 
+		// Create file and copy contents
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
 			return utils.MakeError("error opening file: %v", err)
@@ -187,6 +192,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 			return utils.MakeError("error copying data to file: %v", err)
 		}
 
+		// Manually close file instead of defer otherwise files are only
+		// closed when ALL files are done unpacking
 		file.Close()
 	}
 
@@ -282,7 +289,7 @@ func (c *mandelboxData) getUnpackedConfigsDirectoryName() string {
 }
 
 // getSaltAndDataFromOpenSSLEncryptedFile takes OpenSSL encrypted data
-// and returns the salt used to encrypt and the encrypted data itself
+// and returns the salt used to encrypt and the encrypted data itself.
 func getSaltAndDataFromOpenSSLEncryptedFile(file []byte) (salt, data []byte, err error) {
 	if len(file) < aes.BlockSize {
 		return nil, nil, utils.MakeError("file is too short to have been encrypted by openssl")
@@ -293,8 +300,8 @@ func getSaltAndDataFromOpenSSLEncryptedFile(file []byte) (salt, data []byte, err
 	// The next 8 bytes are the salt itself
 	// See: https://security.stackexchange.com/questions/29106/openssl-recover-key-and-iv-by-passphrase
 	saltHeader := file[:aes.BlockSize]
-	byteHeaderLength := len([]byte(OPENSSL_SALT_HEADER))
-	if string(saltHeader[:byteHeaderLength]) != OPENSSL_SALT_HEADER {
+	byteHeaderLength := len([]byte(opensslSaltHeader))
+	if string(saltHeader[:byteHeaderLength]) != opensslSaltHeader {
 		return nil, nil, utils.MakeError("file does not appear to have been encrypted by openssl: wrong salt header")
 	}
 
@@ -305,19 +312,19 @@ func getSaltAndDataFromOpenSSLEncryptedFile(file []byte) (salt, data []byte, err
 }
 
 // getKeyAndIVFromPassAndSalt uses pbkdf2 to generate a key, IV pair
-// given a known password and salt
+// given a known password and salt.
 func getKeyAndIVFromPassAndSalt(password, salt []byte) (key, iv []byte) {
-	derivedKey := pbkdf2.Key(password, salt, PBKDF2_ITERATIONS, AES_256_KEY_LENGTH+AES_256_IV_LENGTH, sha256.New)
+	derivedKey := pbkdf2.Key(password, salt, pbkdf2Iterations, aes256KeyLength+aes256IVLength, sha256.New)
 
 	// First 32 bytes of the derived key are the key and the next 16 bytes are the IV
-	key = derivedKey[:AES_256_KEY_LENGTH]
-	iv = derivedKey[AES_256_KEY_LENGTH : AES_256_KEY_LENGTH+AES_256_IV_LENGTH]
+	key = derivedKey[:aes256KeyLength]
+	iv = derivedKey[aes256KeyLength : aes256KeyLength+aes256IVLength]
 
 	return
 }
 
 // decryptAES256CBC takes a key, IV, and AES-256 CBC encrypted data and returns the decrypted data
-// Based on example code from: https://golang.org/src/crypto/cipher/example_test.go
+// Based on example code from: https://golang.org/src/crypto/cipher/example_test.go.
 func decryptAES256CBC(key, iv, data []byte) (decrypted []byte, err error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {

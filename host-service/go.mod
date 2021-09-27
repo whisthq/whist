@@ -6,9 +6,10 @@ require (
 	github.com/MicahParks/keyfunc v0.6.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/NVIDIA/go-nvml v0.11.1-0
-	github.com/aws/aws-sdk-go v1.40.43
-	github.com/aws/aws-sdk-go-v2/config v1.5.0
+	github.com/aws/aws-sdk-go-v2/config v1.8.2
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.5.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.12.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.16.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
 	github.com/containerd/containerd v1.5.4 // indirect
