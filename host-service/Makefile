@@ -45,7 +45,8 @@ else
 endif
 
 build: checkCI
-	$(GOCMD) mod tidy
+	# Temporarily resolve build issues by skipping go mod tidy
+	# $(GOCMD) mod tidy -v
 	$(GOCMD) get github.com/jschaf/pggen/cmd/pggen
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
