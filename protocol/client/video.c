@@ -1296,7 +1296,7 @@ void destroy_video() {
     */
 
     if (!initialized_video_renderer) {
-        LOG_ERROR("Destroying video, but never called init_video_renderer");
+        LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
         SDL_DestroyRenderer((SDL_Renderer*)video_context.renderer);
 
