@@ -11,7 +11,7 @@ from app.helpers.command_helpers.ami_upgrade import (
     create_ami_buffer,
     swapover_amis,
 )
-from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.utils.aws.aws_instance_post import do_scale_up_if_necessary
 
 from app.utils.general.name_generation import generate_name
 

@@ -7,11 +7,11 @@ from sqlalchemy import or_, and_
 
 from app.models import db, RegionToAmi, InstanceInfo
 from app.utils.general.logs import fractal_logger
-from app.helpers.blueprint_helpers.aws.aws_instance_post import (
+from app.utils.aws.aws_instance_post import (
     do_scale_up_if_necessary,
     terminate_instance,
 )
-from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
+from app.utils.aws.aws_instance_state import _poll
 from app.constants.mandelbox_host_states import MandelboxHostState
 
 #  This list allows thread success to be passed back to the main thread.

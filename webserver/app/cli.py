@@ -32,7 +32,7 @@ from typing import Dict, List
 import click
 from flask import Blueprint, current_app
 
-from app.helpers.blueprint_helpers.aws.aws_instance_post import (
+from app.utils.aws.aws_instance_post import (
     try_scale_down_if_necessary_all_regions,
     check_and_handle_lingering_instances,
 )
