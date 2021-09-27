@@ -13,8 +13,10 @@ from app.helpers.command_helpers.ami_upgrade import (
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 
+from app.helpers.utils.aws.base_ec2_client import EC2Client
 from app.helpers.utils.general.name_generation import generate_name
 
+from app.constants.ec2_instance_states import EC2InstanceState
 from app.constants.mandelbox_host_states import MandelboxHostState
 
 
@@ -158,6 +160,12 @@ def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance,
         raise requests.exceptions.RequestException()
 
     monkeypatch.setattr(requests, "post", _helper)
+
+    # The following make instances appear active so that we can attempt to drain them.
+    def _active_instances(*args, **kwargs):
+        return EC2InstanceState.RUNNING
+
+    monkeypatch.setattr(EC2Client, "get_instance_states", _active_instances)
 
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
