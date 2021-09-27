@@ -12,10 +12,10 @@ from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from jwt import PyJWKClient
 from sqlalchemy.ext.declarative import DeferredReflection
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
-from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
+from app.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
 from app.models import db
 
@@ -142,11 +142,9 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .api.mandelbox import aws_mandelbox_bp
-    from .api.regions import aws_region_bp
+    from .blueprints.aws.aws_mandelbox_blueprint import aws_mandelbox_bp
 
     app.register_blueprint(aws_mandelbox_bp)
-    app.register_blueprint(aws_region_bp)
 
     app.add_url_rule(
         "/payment_portal_url",
