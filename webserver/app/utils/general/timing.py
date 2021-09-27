@@ -2,7 +2,7 @@ from functools import wraps
 import time
 from typing import Any, Callable, TypeVar
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 _ReturnType = TypeVar("_ReturnType")
 

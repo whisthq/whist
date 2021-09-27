@@ -46,7 +46,7 @@ def _create_fractal_logger() -> logging.Logger:
 # pylint: disable=pointless-string-statement
 """
 Usage:
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 fractal_logger.<loglevel>(msg)
 

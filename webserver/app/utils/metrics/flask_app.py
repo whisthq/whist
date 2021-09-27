@@ -8,7 +8,7 @@ import logging
 from typing import Mapping, Union, Optional
 
 from flask import current_app, Flask
-import app.helpers.utils.metrics.keys_dims as dkey
+import app.utils.metrics.keys_dims as dkey
 from . import setup_metrics_logger, record_metrics as record_metrics
 
 

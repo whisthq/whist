@@ -1,10 +1,10 @@
 from time import time
 from typing import List
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 # ones with F at the end must be formatted
-from app.helpers.utils.event_logging.event_tags import (
+from app.utils.event_logging.event_tags import (
     MANDELBOX_ASSIGNMENT,
     MANDELBOX_CREATION,
     MANDELBOX_DELETION,
@@ -18,7 +18,7 @@ from app.helpers.utils.event_logging.event_tags import (
     SUCCESS,
     valid_tags,
 )
-from app.helpers.utils.event_logging.event_text import to_text
+from app.utils.event_logging.event_text import to_text
 
 
 def basic_logging_event(title: str, tags: List[str], text: str = "") -> None:

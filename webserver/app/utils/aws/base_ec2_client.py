@@ -14,8 +14,8 @@ import boto3
 
 from app.constants.ec2_instance_states import EC2InstanceState
 
-from app.helpers.utils.aws.ec2_userdata import userdata_template
-from app.helpers.utils.cloud_interface.base_cloud_interface import CloudClient
+from app.utils.aws.ec2_userdata import userdata_template
+from app.utils.cloud_interface.base_cloud_interface import CloudClient
 
 
 class InstancesNotRunningException(Exception):
