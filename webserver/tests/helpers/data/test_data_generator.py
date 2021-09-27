@@ -1,5 +1,5 @@
 from sqlalchemy.sql.expression import true
-from app.models import db, RegionToAmi
+from app.database.models.cloud import db, RegionToAmi
 from app.helpers.utils.general.name_generation import generate_name
 
 from tests.constants import REGION_NAMES, CLIENT_COMMIT_HASH_FOR_TESTING, ACTIVE_AMI, INACTIVE_AMIS

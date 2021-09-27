@@ -1,5 +1,5 @@
 from random import sample
-from app.models import RegionToAmi
+from app.database.models.cloud import RegionToAmi
 
 
 def get_random_regions(count=2):
