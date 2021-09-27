@@ -56,6 +56,4 @@ echo $HEROKU_TEST_RUN_COMMIT_VERSION
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-# -R is to specify the project root folder, necessary since we move only the /app folder to Heroku CI
-# -N is to specify the commit sha, necessary since Codecov can't detect GHA due to using Heroku CI
-test "$IN_CI" = "false" || (./codecov -R /app -N $HEROKU_TEST_RUN_COMMIT_VERSION -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (./codecov -R /app -S $HEROKU_TEST_RUN_COMMIT_VERSION -r fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
