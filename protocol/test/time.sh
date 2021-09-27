@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # Download the video
 cd ~/fractal/mandelboxes/development/benchmark
 if [ ! -f bbb-1080p-75.mp4 ]; then
