@@ -38,23 +38,6 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
-    if (
-        current_app.config["ENVIRONMENT"] == DEVELOPMENT
-        or current_app.config["ENVIRONMENT"] == LOCAL
-    ) and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE:
-        # This condition is to accomodate the worflow for developers of client_apps
-        # to test their changes without needing to update the development database with
-        # commit_hashes on their local machines.
-        for region in body.regions:
-            fractal_logger.debug(f"Querying region: {region} for client commit hash.")
-            ami = RegionToAmi.query.filter_by(region_name=region, ami_active=True).one_or_none()
-            if ami is not None:
-                client_commit_hash = ami.client_commit_hash
-                fractal_logger.debug(f"Using client commit hash: {client_commit_hash}")
-                break
-            fractal_logger.debug(f"Client commit hash not found on region: {region}.")
-    else:
-        client_commit_hash = body.client_commit_hash
 
     # Of the regions provided in the request, filter out the ones that are not active
     enabled_regions = find_enabled_regions()
@@ -70,16 +53,32 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
-    # Find an instance in the closest active region
     region = allowed_regions[0]
 
+    # Override the commit hash if in dev
+    if (
+        current_app.config["ENVIRONMENT"] == DEVELOPMENT
+        or current_app.config["ENVIRONMENT"] == LOCAL
+    ) and body.client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE:
+        # This condition is to accomodate the worflow for developers of client_apps
+        # to test their changes without needing to update the development database with
+        # commit_hashes on their local machines.
+        client_commit_hash = (
+            RegionToAmi.query.filter_by(region_name=region, ami_active=True)
+            .one_or_none()
+            .client_commit_hash
+        )
+    else:
+        client_commit_hash = body.client_commit_hash
+
+    # Begin finding an instance
     fractal_logger.debug(
         f"Trying to find instance for user {username} in region {region},\
         with commit hash {client_commit_hash}."
     )
     instance_name = find_instance(region, client_commit_hash)
-
     time_when_instance_found = time.time() * 1000
+
     # How long did it take to find an instance?
     time_to_find_instance = time_when_instance_found - start_time
     fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
