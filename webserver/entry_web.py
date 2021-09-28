@@ -17,7 +17,7 @@ import sys
 from app.factory import create_app
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.general.logs import fractal_logger
-from app.signals import WebSignalHandler
+from app.utils.signal_handler.signals import WebSignalHandler
 
 # if testing, TESTING env var should be set. Default is False
 is_testing = os.environ.get("TESTING", "False") in ("True", "true")

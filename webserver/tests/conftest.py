@@ -13,7 +13,7 @@ from flask_jwt_extended.default_callbacks import default_decode_key_callback
 from app.factory import create_app
 from app.database.models.cloud import MandelboxInfo, db, InstanceInfo, RegionToAmi
 from app.utils.flask.flask_handlers import set_web_requests_status
-from app.signals import WebSignalHandler
+from app.utils.signal_handler.signals import WebSignalHandler
 from app.utils.general.logs import fractal_logger
 from app.utils.general.limiter import limiter
 from tests.client import FractalAPITestClient
