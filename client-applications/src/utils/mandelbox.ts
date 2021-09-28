@@ -31,7 +31,7 @@ export const regionGet = async () => {
 export const mandelboxCreate = async (accessToken: string) => {
   const regions = await regionGet()
 
-  logBase(`AWS regions are [${regions}]`, {})
+  logBase(`Sorted AWS regions are [${regions.toString()}]`, {})
 
   return await mandelboxRequest(accessToken, regions)
 }
