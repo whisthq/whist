@@ -242,12 +242,31 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 	logger.Infof("Encrypted config to %s", encTarPath)
 
-	saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", encTarPath, s3ConfigPath)
-	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
+	cfg, err := config.LoadDefaultConfig(c.ctx)
 	if err != nil {
-		return utils.MakeError("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
+		return utils.MakeError("failed to load aws config: %v", err)
 	}
-	logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.Region = "us-east-1"
+	})
+	uploader := manager.NewUploader(s3Client)
+
+	encryptedConfig, err := os.Open(encTarPath)
+	if err != nil {
+		return utils.MakeError("failed to open encrypted config: %v", err)
+	}
+
+	_, err = uploader.Upload(c.ctx, &s3.PutObjectInput{
+		Bucket: aws.String(userConfigS3Bucket),
+		Key:    aws.String(c.getS3ConfigKey()),
+		Body:   encryptedConfig,
+	})
+	if err != nil {
+		return utils.MakeError("error uploading encrypted config to s3: %v", err)
+	}
+
+	logger.Infof("Ran \"aws s3 cp\" save config command with output")
 
 	return nil
 }
