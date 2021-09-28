@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# Make sure we are always running this script with working directory `webserver/tests`
+# Make sure we are always running this script with working directory `webserver/`
 cd "$DIR"
 
 # if in CI, run setup tests and set env vars
@@ -17,14 +17,14 @@ if [ $IN_CI == true ]; then
   export POSTGRES_DEST_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
   export DB_EXISTS=true # Heroku has created the db
   # this sets up the local db to look like the remote db
-  bash setup/setup_tests.sh
+  (cd tests && bash setup/setup_tests.sh)
   # override DATABASE_URL to the ephemeral db
   export DATABASE_URL=$POSTGRES_DEST_URI
 else
   echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
   # add env vars to current env. these tell us the host, db, role, pwd
-  export $(cat ../docker/.env | xargs)
+  export $(cat docker/.env | xargs)
 
   # override POSTGRES_HOST and POSTGRES_PORT to be local
   export POSTGRES_HOST="localhost"
@@ -42,15 +42,15 @@ fi
 export TESTING=true
 
 # Only set Codecov flags if running in CI (generate XML for uploading and print to terminal for debugging)
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report term --cov-report xml --cov=./")"
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=webserver/")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
-# and .heroku/ folders as they are irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts/ --ignore=.heroku/ $cov "$@")
+# folder as it is irrelevant to unit/integration testing
+(pytest --ignore=scripts/ $cov "$@")
 
 # Download the Codecov uploader
-(cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
+(curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (cd .. && ./codecov --branch $HEROKU_TEST_RUN_BRANCH --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -v -F webserver)
+test "$IN_CI" = "false" || (./codecov --branch $HEROKU_TEST_RUN_BRANCH --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
