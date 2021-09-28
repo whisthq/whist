@@ -48,7 +48,8 @@ Private Functions
 ============================
 */
 
-int do_discovery_handshake(SocketContext *context, int *client_id);
+int handle_discovery_port_message(SocketContext *context, int *client_id, bool *new_client);
+int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage *fcmsg);
 
 /*
 ============================
@@ -56,7 +57,19 @@ Private Function Implementations
 ============================
 */
 
-int do_discovery_handshake(SocketContext *context, int *client_id) {
+int handle_discovery_port_message(SocketContext *context, int *client_id, bool *new_client) {
+    /*
+        Handle a message from the client over received over the discovery port.
+
+        Arguments:
+            context (SocketContext*): the socket context for the discovery port
+            client_id (int*): pointer to the client ID to be populated
+            new_client (bool*): pointer to indicate whether this message created a new client
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
     FractalPacket *tcp_packet;
     clock timer;
     start_timer(&timer);
@@ -66,54 +79,101 @@ int do_discovery_handshake(SocketContext *context, int *client_id) {
     } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
     // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
     if (tcp_packet == NULL) {
-        LOG_WARNING("Did not receive discovery request from client.");
+        LOG_WARNING("Did not receive request over discovery port from client.");
         closesocket(context->socket);
         return -1;
     }
 
     FractalClientMessage *fcmsg = (FractalClientMessage *)tcp_packet->data;
-    int user_id = fcmsg->discoveryRequest.user_id;
+    *new_client = false;
 
-    read_lock(&is_active_rwlock);
-    bool found;
-    int ret;
-    if ((ret = try_find_client_id_by_user_id(user_id, &found, client_id)) != 0) {
-        LOG_ERROR(
-            "Failed to try to find client ID by user ID. "
-            " (User ID: %s)",
-            user_id);
-    }
-    if (ret == 0 && found) {
-        read_unlock(&is_active_rwlock);
-        write_lock(&is_active_rwlock);
-        ret = quit_client(*client_id);
-        if (ret != 0) {
-            LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
-        }
-        write_unlock(&is_active_rwlock);
-    } else {
-        ret = get_available_client_id(client_id);
-        if (ret != 0) {
-            LOG_ERROR("Failed to find available client ID.");
-            closesocket(context->socket);
-        }
-        read_unlock(&is_active_rwlock);
-        if (ret != 0) {
+    switch (fcmsg->type) {
+        case MESSAGE_DISCOVERY_REQUEST: {
+            int user_id = fcmsg->discoveryRequest.user_id;
+
+            read_lock(&is_active_rwlock);
+            bool found;
+            int ret;
+            if ((ret = try_find_client_id_by_user_id(user_id, &found, client_id)) != 0) {
+                LOG_ERROR(
+                    "Failed to try to find client ID by user ID. "
+                    " (User ID: %s)",
+                    user_id);
+            }
+            if (ret == 0 && found) {
+                read_unlock(&is_active_rwlock);
+                write_lock(&is_active_rwlock);
+                ret = quit_client(*client_id);
+                if (ret != 0) {
+                    LOG_ERROR("Failed to quit client. (ID: %d)", *client_id);
+                }
+                write_unlock(&is_active_rwlock);
+            } else {
+                ret = get_available_client_id(client_id);
+                if (ret != 0) {
+                    LOG_ERROR("Failed to find available client ID.");
+                    closesocket(context->socket);
+                }
+                read_unlock(&is_active_rwlock);
+                if (ret != 0) {
+                    free_tcp_packet(tcp_packet);
+                    return -1;
+                }
+            }
+
+            clients[*client_id].user_id = user_id;
+            LOG_INFO("Found ID for client. (ID: %d)", *client_id);
+
+            if (do_discovery_handshake(context, *client_id, fcmsg) != 0) {
+                LOG_WARNING("Discovery handshake failed.");
+            }
+
             free_tcp_packet(tcp_packet);
+            fcmsg = NULL;
+            tcp_packet = NULL;
+
+            *new_client = true;
+            break;
+        }
+        case MESSAGE_TCP_RECOVERY: {
+            *client_id = fcmsg->tcpRecovery.client_id;
+
+            // We wouldn't have called closesocket on this socket before, so we can safely call
+            //     close regardless of what caused the socket failure without worrying about
+            //     undefined behavior.
+            fractal_lock_mutex(clients[*client_id].TCP_lock);
+            closesocket(clients[*client_id].TCP_context.socket);
+            if (create_tcp_context(&(clients[*client_id].TCP_context), NULL,
+                                   clients[*client_id].TCP_port, 1, TCP_CONNECTION_WAIT,
+                                   get_using_stun(), binary_aes_private_key) < 0) {
+                LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
+            }
+            fractal_unlock_mutex(clients[*client_id].TCP_lock);
+
+            break;
+        }
+        default: {
             return -1;
         }
     }
 
-    clients[*client_id].user_id = user_id;
-    LOG_INFO("Found ID for client. (ID: %d)", *client_id);
+    return 0;
+}
 
-    // TODO: Should check for is_controlling, but that happens after this function call
-    handle_client_message(fcmsg, *client_id, true);
-    // fcmsg points into tcp_packet, but after this point, we don't use either,
-    // so here we free the tcp packet
-    free_tcp_packet(tcp_packet);
-    fcmsg = NULL;
-    tcp_packet = NULL;
+int do_discovery_handshake(SocketContext *context, int client_id, FractalClientMessage *fcmsg) {
+    /*
+        Perform a discovery handshake over the discovery port socket context
+
+        Arguments:
+            context (SocketContext*): the socket context for the discovery port
+            client_id (int): the ID of the client to perform a handshake with
+            fcmsg (FractalClientMessage*): discovery message sent from client
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
+    handle_client_message(fcmsg, client_id, true);
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
@@ -124,9 +184,9 @@ int do_discovery_handshake(SocketContext *context, int *client_id) {
     FractalDiscoveryReplyMessage *reply_msg =
         (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
-    reply_msg->client_id = *client_id;
-    reply_msg->UDP_port = clients[*client_id].UDP_port;
-    reply_msg->TCP_port = clients[*client_id].TCP_port;
+    reply_msg->client_id = client_id;
+    reply_msg->UDP_port = clients[client_id].UDP_port;
+    reply_msg->TCP_port = clients[client_id].TCP_port;
 
     // Set connection ID in error monitor.
     error_monitor_set_connection_id(connection_id);
@@ -146,6 +206,8 @@ int do_discovery_handshake(SocketContext *context, int *client_id) {
 
     closesocket(context->socket);
     free(fsmsg);
+
+    LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
     return 0;
 }
 
@@ -196,8 +258,12 @@ int broadcast_ack(void) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            ack(&(clients[id].TCP_context));
-            ack(&(clients[id].UDP_context));
+            if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
+                ack(&(clients[id].TCP_context));
+                ack(&(clients[id].UDP_context));
+
+                fractal_unlock_mutex(clients[id].TCP_lock);
+            }
         }
     }
     return ret;
@@ -292,9 +358,12 @@ int broadcast_tcp_packet(FractalPacketType type, void *data, int len) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            if (send_tcp_packet(&(clients[id].TCP_context), type, (uint8_t *)data, len) < 0) {
-                LOG_WARNING("Failed to send TCP packet to client id: %d", id);
-                if (ret == 0) ret = -1;
+            if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
+                if (send_tcp_packet(&(clients[id].TCP_context), type, (uint8_t *)data, len) < 0) {
+                    LOG_WARNING("Failed to send TCP packet to client id: %d", id);
+                    if (ret == 0) ret = -1;
+                }
+                fractal_unlock_mutex(clients[id].TCP_lock);
             }
         }
     }
@@ -314,10 +383,14 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
-    if (tcp_packet) {
-        LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
-        *p_tcp_packet = tcp_packet;
+    if (fractal_try_lock_mutex(clients[client_id].TCP_lock) == 0) {
+        FractalPacket *tcp_packet =
+            read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
+        if (tcp_packet) {
+            LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
+            *p_tcp_packet = tcp_packet;
+        }
+        fractal_unlock_mutex(clients[client_id].TCP_lock);
     }
     return 0;
 }
@@ -367,6 +440,7 @@ int multithreaded_manage_clients(void *opaque) {
 
     SocketContext discovery_context;
     int client_id;
+    bool new_client;
 
     clock last_update_timer;
     start_timer(&last_update_timer);
@@ -417,12 +491,19 @@ int multithreaded_manage_clients(void *opaque) {
             continue;
         }
 
-        if (do_discovery_handshake(&discovery_context, &client_id) != 0) {
-            LOG_WARNING("Discovery handshake failed.");
+        // This can either be a new client connecting, or an existing client asking for a TCP
+        //     connection to be recovered. We use the discovery port because it is always
+        //     accepting connections and is reliable for both discovery and recovery messages.
+        if (handle_discovery_port_message(&discovery_context, &client_id, &new_client) != 0) {
+            LOG_WARNING("Discovery port message could not be handled.");
             continue;
         }
 
-        LOG_INFO("Discovery handshake succeeded. (ID: %d)", client_id);
+        // If the handled message was not for a discovery handshake, then skip
+        //     over everything that is necessary for setting up a new client
+        if (!new_client) {
+            continue;
+        }
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
