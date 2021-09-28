@@ -35,7 +35,7 @@ def test_prior_ami(db_session):
         ami_id="prior-ami-us-east-1",
         ami_active=False,
     )
-    print(region_name)
+    print("region: %s" % region_name)
     second_region = "us-east-2" if region_name != "us-east-2" else "us-east-1"
     db.session.add(prior_ami)
     db.session.commit()
