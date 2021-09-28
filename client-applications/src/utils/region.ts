@@ -53,25 +53,6 @@ const pingLoop = (regions: AWSRegion[]) => {
   return pingResultPromises
 }
 
-export const chooseRegion = async (regions: AWSRegion[]) => {
-  /*
-    Description:
-        Pulls AWS regions from SQL and pings each region, and finds the closest region
-        by shortest ping time
-
-    Arguments:
-        none
-    Returns:
-        (string): Closest region e.g. us-east-1
-    */
-  const pingResults = await Promise.all(pingLoop(regions))
-  const closestRegion = pingResults.reduce((a, b) =>
-    a.pingTime < b.pingTime ? a : b
-  ).region
-
-  return closestRegion
-}
-
 export const getRegionFromArgv = (argv: string[]) => {
   return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
     ? argv[argv.length - 1]
