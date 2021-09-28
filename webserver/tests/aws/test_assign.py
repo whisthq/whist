@@ -7,7 +7,7 @@ from random import randint
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
-from tests.helpers.utils import get_random_region_name
+from tests.helpers.utils import get_allowed_region_names
 
 
 @pytest.mark.usefixtures("authorized")
@@ -44,7 +44,7 @@ def test_assign(client, bulk_instance, monkeypatch):
     )
 
     args = {
-        "region": get_random_region_name(),
+        "regions": get_allowed_region_names(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
         "session_id": randint(0, 10000000),
     }
@@ -71,7 +71,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
     )
 
     args = {
-        "region": get_random_region_name(),
+        "regions": get_allowed_region_names(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
         "session_id": randint(0, 10000000),
     }
@@ -90,11 +90,11 @@ def test_client_commit_hash_local_dev_override_fail(
     """
 
     override_environment(PRODUCTION)
-    region_name = get_random_region_name()
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_name)
+    region_names = get_allowed_region_names()
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_names[0])
 
     args = {
-        "region": region_name,
+        "regions": region_names,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
         "session_id": randint(0, 10000000),
     }
@@ -113,11 +113,11 @@ def test_client_commit_hash_local_dev_override_success(
     """
 
     override_environment(DEVELOPMENT)
-    region_name = get_random_region_name()
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_name)
+    region_names = get_allowed_region_names()
+    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_names[0])
 
     args = {
-        "region": region_name,
+        "regions": region_names,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
         "session_id": randint(0, 10000000),
     }
@@ -142,7 +142,7 @@ def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed)
         "/mandelbox/assign",
         json={
             "app": "Google Chrome",
-            "region": get_random_region_name(),
+            "region": get_allowed_region_names(),
             "session_id": randint(0, 10000000),
         },
     )

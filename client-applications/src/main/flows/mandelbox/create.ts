@@ -11,17 +11,13 @@ import { map, switchMap } from "rxjs/operators"
 
 import { mandelboxCreate, mandelboxCreateSuccess } from "@app/utils/mandelbox"
 import { fork, flow } from "@app/utils/flows"
-import { AWSRegion } from "@app/@types/aws"
 
 export default flow<{
   accessToken: string
-  region?: AWSRegion
 }>("mandelboxCreateFlow", (trigger) => {
   const create = fork(
     trigger.pipe(
-      switchMap(({ accessToken, region }) =>
-        from(mandelboxCreate(accessToken, region))
-      )
+      switchMap(({ accessToken }) => from(mandelboxCreate(accessToken)))
     ),
     {
       success: (req) => mandelboxCreateSuccess(req),

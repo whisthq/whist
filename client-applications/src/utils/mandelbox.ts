@@ -4,12 +4,14 @@
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
 import { isEmpty } from "lodash"
-import { get, post } from "@app/utils/api"
-import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
-import { chooseRegion } from "@app/utils/region"
+import { post } from "@app/utils/api"
+import { AWSRegion } from "@app/@types/aws"
+import { defaultAllowedRegions } from "@app/utils/constants"
+import { sortRegionByProximity } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import { sessionID } from "@app/utils/constants"
+import { logBase } from "@app/utils/logging"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
@@ -23,24 +25,17 @@ const isLocalEnv = () => {
   return isLocal
 }
 
-export const regionGet = async (accessToken: string) => {
-  const regions: Record<string, any> = await regionRequest(accessToken)
-  const allowedRegions = (regions?.json as AWSRegion[]) ?? []
-
-  if (allowedRegions.length === 0) {
-    return await chooseRegion(defaultAllowedRegions)
-  } else {
-    return await chooseRegion(regions.json)
-  }
+export const regionGet = async () => {
+  const sortedRegions = await sortRegionByProximity(defaultAllowedRegions)
+  return sortedRegions
 }
 
-export const mandelboxCreate = async (
-  accessToken: string,
-  region?: AWSRegion
-) => {
-  region = region ?? (await regionGet(accessToken))
-  const response = await mandelboxRequest(accessToken, region)
-  return response
+export const mandelboxCreate = async (accessToken: string) => {
+  const regions = await regionGet()
+
+  logBase(`Sorted AWS regions are [${regions.toString()}]`, {})
+
+  return await mandelboxRequest(accessToken, regions)
 }
 
 export const mandelboxCreateSuccess = (
@@ -68,19 +63,13 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorMaintenance(response)
 
 // Helper functions
-const mandelboxRequest = async (accessToken: string, region: string) =>
+const mandelboxRequest = async (accessToken: string, regions: AWSRegion[]) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
     body: {
-      region,
+      regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
       session_id: sessionID,
     },
-  })
-
-const regionRequest = async (accessToken: string) =>
-  get({
-    endpoint: "/regions",
-    accessToken,
   })

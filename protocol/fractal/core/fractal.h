@@ -500,7 +500,7 @@ typedef struct FractalMultigestureMessage {
 
 /**
  * @brief   Discovery request message.
- * @details Discover packet to be sent from client to server.
+ * @details Discovery packet to be sent from client to server.
  */
 typedef struct FractalDiscoveryRequestMessage {
     int user_id;
@@ -508,6 +508,14 @@ typedef struct FractalDiscoveryRequestMessage {
     char user_email[FRACTAL_ARGS_MAXLEN + 1];
     FractalOSType os;
 } FractalDiscoveryRequestMessage;
+
+/**
+ * @brief   TCP recovery message.
+ * @details Client message to ask the server to restart the TCP connection.
+ */
+typedef struct FractalTCPRecoveryMessage {
+    int client_id;
+} FractalTCPRecoveryMessage;
 
 /**
  * @brief   Discovery reply message.
@@ -545,14 +553,16 @@ typedef enum FractalClientMessageType {
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
     MESSAGE_MBPS = 107,             ///< `mbps` double is valid in FractClientMessage.
     MESSAGE_PING = 108,
-    MESSAGE_DIMENSIONS = 109,  ///< `dimensions.width` int and `dimensions.height`
+    MESSAGE_TCP_PING = 109,
+    MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
-    MESSAGE_VIDEO_NACK = 110,
-    MESSAGE_AUDIO_NACK = 111,
-    CMESSAGE_CLIPBOARD = 112,
-    MESSAGE_IFRAME_REQUEST = 113,
+    MESSAGE_VIDEO_NACK = 111,
+    MESSAGE_AUDIO_NACK = 112,
+    CMESSAGE_CLIPBOARD = 113,
+    MESSAGE_IFRAME_REQUEST = 114,
     CMESSAGE_INTERACTION_MODE = 115,
     MESSAGE_DISCOVERY_REQUEST = 116,
+    MESSAGE_TCP_RECOVERY = 117,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -588,6 +598,7 @@ typedef struct FractalClientMessage {
         FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+        FractalTCPRecoveryMessage tcpRecovery;            ///< TCP recovery message.
 
         // MESSAGE_MULTIGESTURE
         FractalMultigestureMessage multigesture;  ///< Multigesture message.
@@ -601,7 +612,7 @@ typedef struct FractalClientMessage {
             int burst_bitrate;
         } bitrate_data;
 
-        // MESSAGE_PING
+        // MESSAGE_PING or MESSAGE_TCP_PING
         int ping_id;
 
         // MESSAGE_DIMENSIONS
@@ -640,11 +651,12 @@ typedef struct FractalClientMessage {
 typedef enum FractalServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
-    MESSAGE_AUDIO_FREQUENCY = 2,
-    SMESSAGE_CLIPBOARD = 3,
-    SMESSAGE_WINDOW_TITLE = 4,
-    MESSAGE_DISCOVERY_REPLY = 5,
-    SMESSAGE_OPEN_URI = 6,
+    MESSAGE_TCP_PONG = 2,
+    MESSAGE_AUDIO_FREQUENCY = 3,
+    SMESSAGE_CLIPBOARD = 4,
+    SMESSAGE_WINDOW_TITLE = 5,
+    MESSAGE_DISCOVERY_REPLY = 6,
+    SMESSAGE_OPEN_URI = 7,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 

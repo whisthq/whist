@@ -125,17 +125,26 @@ def terminate_instance(instance: InstanceInfo) -> None:
     db.session.commit()
 
 
+def find_enabled_regions():
+    """
+    Returns a list of regions that are currently active
+    """
+
+    return RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
+
+
 def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
-    Given a region, finds (if it can) an instance in that region or a neighboring region with space
-    If it succeeds, returns the instance name.  Else, returns None
+    Given a list of regions, finds (if it can) an instance in that region
+    or a neighboring region with space. If it succeeds, returns the instance name.
+    Else, returns None
     Args:
-        region: which region to search
+        regions: a list of regions sorted by proximity
 
-    Returns: either a good instance name or None
+    Returns: either an instance name or None
 
     """
-    regions_to_search = bundled_region.get(region, []) + [region]
+    bundled_regions = bundled_region.get(region, [])
     # InstancesWithRoomForMandelboxes is sorted in DESC
     # with number of mandelboxes running, So doing a
     # query with limit of 1 returns the instance with max
@@ -149,13 +158,14 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         .limit(1)
         .one_or_none()
     )
+
     if instance_with_max_mandelboxes is None:
         # If we are unable to find the instance in the required region,
         # let's try to find an instance in nearby AZ
         # that doesn't impact the user experience too much.
         instance_with_max_mandelboxes = (
             InstancesWithRoomForMandelboxes.query.filter(
-                InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
+                InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
             )
             .filter_by(
                 commit_hash=client_commit_hash,
@@ -181,7 +191,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
             return None
         else:
-            return avail_instance.instance_name  # type: ignore[no-any-return]
+            return str(avail_instance.instance_name)
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
@@ -325,17 +335,22 @@ def do_scale_up_if_necessary(
     return new_instance_names
 
 
-def drain_instance(instance: InstanceInfo) -> None:
+def drain_instance(instance: InstanceInfo) -> bool:
     """
     Attempts to drain an instance, logging an error and marking unresponsive
     if it cannot be drained, and removing from the database if the instance
-    in question does not actually exist
+    in question does not actually exist. Note that we will terminate instances
+    that do not have a valid IP (since host service is not up/connected yet).
+
+    Note that we should not call this function multiple times on a single host
+    since subsequent calls will fail and we will unfairly mark the host
+    service as unresponsive.
 
     Args:
         instance: The instance to drain
 
     Returns:
-        None
+        True if the instance is marked for draining, else False.
 
     """
     # We need to modify the status to DRAINING to ensure that we don't assign a new
@@ -344,36 +359,36 @@ def drain_instance(instance: InstanceInfo) -> None:
     old_status = instance.status
     instance.status = MandelboxHostState.DRAINING
     db.session.commit()
+    job_status = False
     if (
         old_status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
         or str(instance.ip) == ""
+        or not check_instance_exists(get_instance_id(instance), instance.location)
     ):
         terminate_instance(instance)
+        job_status = True
     else:
-        instance_id = get_instance_id(instance)
-        if check_instance_exists(instance_id, instance.location):
-            # If the instance exists, tell it to drain
-            try:
-                base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-                resp = requests.post(
-                    f"{base_url}/drain_and_shutdown",
-                    json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
-                    verify=False,
+        # If the instance exists, tell it to drain
+        try:
+            base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+            resp = requests.post(
+                f"{base_url}/drain_and_shutdown",
+                json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
+                verify=False,
+            )
+            resp.raise_for_status()
+            job_status = True
+        except requests.exceptions.RequestException as error:
+            fractal_logger.error(
+                (
+                    f"Unable to send drain_and_shutdown request to host service"
+                    f" on instance {instance.instance_name}: {error}"
                 )
-                resp.raise_for_status()
-            except requests.exceptions.RequestException as error:
-                fractal_logger.error(
-                    (
-                        f"Unable to send drain_and_shutdown request to host service"
-                        f" on instance {instance.instance_name}: {error}"
-                    )
-                )
-                instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
-                db.session.commit()
-        else:
-            # If the instance doesn't exist, purge it from our database
-            terminate_instance(instance)
+            )
+            instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
+            db.session.commit()
+    return job_status
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:

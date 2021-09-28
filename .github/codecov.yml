@@ -1,10 +1,11 @@
 codecov:
   branch: dev
-  require_ci_to_pass: yes
+  require_ci_to_pass: no # Whether Codecov waits for all other statuses to pass before sending its status
 
 # Setting coverage targets per flag
 coverage:
   status:
+    patch: off # Disable codecov/patch status, it's not informative
     project:
       default:
         target: auto # Overall monorepo code coverage

@@ -11,8 +11,6 @@ import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
 
-import { defaultAllowedRegions } from "@app/@types/aws"
-import { chooseRegion } from "@app/utils/region"
 import config, {
   loggingBaseFilePath,
   loggingFiles,
@@ -25,11 +23,6 @@ app.setPath("userData", loggingBaseFilePath)
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
-
-// Variable to let us know whether the user's aws_region in Amplitude has been
-// set for this session. We want it to only have to happen once, but we can't
-// call `chooseRegion` up here because top level awaits aren't allowed.
-let regionSet = false
 
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
@@ -94,32 +87,15 @@ const localLog = (
   logFile.write(logs)
 }
 
-const amplitudeLog = async (
+const amplitudeLog = (
   title: string,
   data: object,
   userEmail: string,
   msElapsed?: number
 ) => {
-  if (userEmail !== "") {
-    if (!regionSet) {
-      const region = await chooseRegion(defaultAllowedRegions)
-      await amplitude.logEvent({
-        event_type: `[${
-          (config.appEnvironment as string) ?? "LOCAL"
-        }] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail,
-        event_properties: {
-          ...data,
-          msElapsed: msElapsed !== undefined ? msElapsed : 0,
-        },
-        user_properties: {
-          aws_region: region,
-        },
-      })
-      regionSet = true
-    } else {
-      await amplitude.logEvent({
+  if (userEmail !== "")
+    amplitude
+      .logEvent({
         event_type: `[${
           (config.appEnvironment as string) ?? "LOCAL"
         }] ${title}`,
@@ -130,11 +106,10 @@ const amplitudeLog = async (
           msElapsed: msElapsed !== undefined ? msElapsed : 0,
         },
       })
-    }
-  }
+      .catch((err) => console.error(err))
 }
 
-export const logBase = async (
+export const logBase = (
   title: string,
   data: object,
   level?: LogLevel,
@@ -151,10 +126,7 @@ export const logBase = async (
   const userEmail = persistGet("userEmail") ?? ""
   localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 
-  if (app.isPackaged)
-    await amplitudeLog(title, data, userEmail as string, msElapsed).catch(
-      (err) => console.log(err)
-    )
+  if (app.isPackaged) amplitudeLog(title, data, userEmail as string, msElapsed)
 }
 
 export const protocolToLogz = (line: string) => {

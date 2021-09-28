@@ -18,7 +18,11 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from tests.client import FractalAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
-from tests.helpers.utils import get_random_regions, get_random_region_name, get_random_region_names
+from tests.helpers.utils import (
+    get_allowed_regions,
+    get_random_region_name,
+    get_allowed_region_names,
+)
 
 
 @pytest.fixture(scope="session")
@@ -41,6 +45,7 @@ def app():
     Returns:
         An instance of the Flask application for testing.
     """
+
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
     _app.test_client_class = FractalAPITestClient
@@ -184,19 +189,19 @@ def region_ami_pair():
     """
     Returns a randomly picked region and corresponding ami_id
     """
-    region_ami_pair = get_random_regions(1)
-    if region_ami_pair is not None:
+    region_ami_pair = get_allowed_regions()
+    if region_ami_pair:
         return region_ami_pair[0].region_name, region_ami_pair[0].ami_id
 
 
 @pytest.fixture
 def region_names():
     """
-    Returns two randomly picked regions. The function call to `get_random_region_names`
+    Returns two randomly picked regions. The function call to `get_allowed_region_names`
     can be supplied with argument to return more than two but at this moment the test cases
     don't require more than two region names at once.
     """
-    return get_random_region_names()
+    return get_allowed_region_names()
 
 
 @pytest.fixture

@@ -156,7 +156,7 @@ jobs:
               # Start at index 4 to remove prefix "aws-" from the id
               msg += f"     - `{instance[0]}` - id: `{instance[1]}`\n"
 
-            BODY = "Hanging *Instances* in _${{ matrix.aws-region }}_:\n%s" % msg
+            BODY = "*Instances* in AWS but not in our databases in _${{ matrix.aws-region }}_:\n%s" % msg
 
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -175,7 +175,7 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
             SLACK_CHANNEL = "#alerts-dev"
 
-            stages = {'dev': dev_instances, 'staging': staging_instances, 'prodution': prod_instances}
+            stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
 
             for stage in stages:
               if stages[stage]:
