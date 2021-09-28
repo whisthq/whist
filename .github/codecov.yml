@@ -5,6 +5,7 @@ codecov:
 # Setting coverage targets per flag
 coverage:
   status:
+    patch: off # Disable codecov/patch status, it's not informative
     project:
       default:
         target: auto # Overall monorepo code coverage
