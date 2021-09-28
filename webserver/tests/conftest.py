@@ -10,7 +10,7 @@ import pytest
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
-from app.factory import create_app
+from app.utils.flask.factory import create_app
 from app.database.models.cloud import MandelboxInfo, db, InstanceInfo, RegionToAmi
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.signal_handler.signals import WebSignalHandler

@@ -1,7 +1,7 @@
 from flask import Flask
 import pytest
 
-from app.factory import create_app
+from app.utils.flask.factory import create_app
 
 
 @pytest.fixture
