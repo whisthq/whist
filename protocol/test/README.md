@@ -1,4 +1,5 @@
 `test.sh` does the following:
+
 - Downloads the test video
 - Launches two containers with Chrome playing a looped video
 - Gets server.log and extracts the end-to-end time between frames
