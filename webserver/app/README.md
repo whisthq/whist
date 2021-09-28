@@ -10,7 +10,7 @@ A blueprint is a collection of related API endpoints, and is the entry point for
 
 Each file is associated with route(s) based on the resource (ie mandelbox or region) being requested. For most files, we use POST and/or GET requests.
 
-API and Flask code should leave any computation besides directly pulling params out of requests and authorization to their defined helpers — helpers for something that just is expected to take no more than 5 seconds (e.g. API calls or database updates).
+API and Flask code should leave any computation besides directly pulling params out of requests and authorization to their defined  helpers — helpers for something that just is expected to take no more than 5 seconds (e.g. API calls or database updates).
 
 Helpers for APIs live in the `helpers/` directory, and for SQL check out `database/models/` or `utils/db/`. Any exceptions raised by helpers should be directly re-raised to aid debugging (that means that you should not wrap helpers in a try-catch block unless you anticipate some exception, and even then you should try to rewrite the code or the helper to detect that exception-causing condition without raising it, since using exceptions as control flow is an antipattern). For helpers that do not raise exceptions and instead have special error return values, check for those values and fail immediately after those helpers return a failing error code, again to aid debugging.
 
@@ -46,7 +46,7 @@ We want to separate models based on schema. Feel free to create a new file if th
 
 ## Mandelbox creation flow:
 
-~~This goes from `app\api\mandelbox.py` to `app\helper\aws\aws_instance_post.py`
+~~This goes from `app\api\mandelbox.py` to `app\helper\aws\aws_instance_post.py` 
 with `app\helpers\aws\aws_mandelbox_assign_post.py` and uses `app\utils\aws\base_ecs_client.py` to handle ECS client operations.~~
 
 ## Mandelbox status checking:
