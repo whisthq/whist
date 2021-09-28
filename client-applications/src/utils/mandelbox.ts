@@ -6,11 +6,10 @@
 import { isEmpty } from "lodash"
 import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
-import { defaultAllowedRegions } from "@app/utils/constants"
+import { defaultAllowedRegions, sessionID } from "@app/utils/constants"
 import { sortRegionByProximity } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
-import { sessionID } from "@app/utils/constants"
 import { logBase } from "@app/utils/logging"
 import config from "@app/config/environment"
 
