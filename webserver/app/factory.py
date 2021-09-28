@@ -107,7 +107,7 @@ def register_handlers(app: Flask) -> None:
     happens via blueprints in `register_blueprints`. These handlers should be other functions
     that need to be decorated by a Flask app (such as app.before_request(func)).
     """
-    from app.flask_handlers import can_process_requests_handler
+    from app.utils.flask.flask_handlers import can_process_requests_handler
 
     can_process_requests_handler(app)
 

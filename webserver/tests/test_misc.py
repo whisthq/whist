@@ -13,7 +13,7 @@ from sqlalchemy.exc import OperationalError
 from flask import current_app, g
 from app.config import _callback_webserver_hostname
 from app.database.models.cloud import RegionToAmi
-from app.flask_handlers import can_process_requests, set_web_requests_status
+from app.utils.flask.flask_handlers import can_process_requests, set_web_requests_status
 from app.utils.general.logs import fractal_logger
 from app.utils.db.db_utils import set_local_lock_timeout
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, REGION_NAMES

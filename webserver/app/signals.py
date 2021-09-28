@@ -8,7 +8,7 @@ import signal
 from types import FrameType
 
 from app.utils.general.logs import fractal_logger
-from app.flask_handlers import set_web_requests_status
+from app.utils.flask.flask_handlers import set_web_requests_status
 
 
 class WebSignalHandler:
