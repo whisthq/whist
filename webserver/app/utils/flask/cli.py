@@ -8,7 +8,7 @@ Example usage::
    # wsgi.py
 
    from flask import Flask
-   from app.cli import command_bp
+   from app.utils.flask.cli import command_bp
 
    app = Flask(__name__)
    app.register_blueprint(command_bp)
