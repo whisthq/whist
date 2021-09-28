@@ -35,12 +35,18 @@ extern SocketContext packet_tcp_context;
 volatile bool run_sync_udp_packets;
 volatile bool run_sync_tcp_packets;
 bool connected = true;
+extern bool using_stun;
 // Ping variables
 clock last_ping_timer;
 volatile int last_ping_id;
 volatile int last_pong_id;
 volatile int ping_failures;
 clock latency_timer;
+// TCP ping variables
+clock last_tcp_ping_timer;
+volatile int last_tcp_ping_id;
+volatile int last_tcp_pong_id;
+clock tcp_latency_timer;
 extern volatile double latency;
 // MBPS variables
 extern volatile int max_bitrate;
@@ -63,6 +69,7 @@ void init_updater();
 void destroy_updater();
 void try_update_bitrate();
 void update_ping();
+void update_tcp_ping();
 void update_initial_dimensions();
 
 /*
@@ -82,12 +89,15 @@ void init_updater() {
 
     start_timer(&last_tcp_check_timer);
     start_timer(&latency_timer);
+    start_timer(&tcp_latency_timer);
 
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its declaration above. We start at 25ms before the first ping.
     latency = 25.0 / 1000.0;
     last_ping_id = 1;
     ping_failures = -2;
+
+    last_tcp_ping_id = 0;
 
     init_clipboard_synchronizer(true);
 
@@ -96,11 +106,12 @@ void init_updater() {
 
 void update_ping() {
     /*
-        Check if we should send more pings, disconnect, etc. If no valid pong has been received for
+       Check if we should send more pings, disconnect, etc. If no valid pong has been received for
        600ms, we mark that as a ping failure. If we successfully received a pong and it has been
        500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
        pong and it has been 210 ms, resend the ping.
     */
+
     // If it's been 1 second since the last ping, we should warn
     if (get_timer(last_ping_timer) > 1.0) {
         LOG_WARNING("No ping sent or pong received in over a second");
@@ -131,6 +142,37 @@ void update_ping() {
     // if we haven't received the last ping, send the same ping
     if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
         send_ping(last_ping_id);
+    }
+}
+
+void update_tcp_ping() {
+    /*
+       If no valid TCP pong has been received or sending a TCP ping is failing, then
+       send a TCP reconnection request to the server. This is agnostic of whether
+       the lost connection was caused by the client or the server.
+    */
+
+    // If it's been 4 seconds since the last ping, we should warn
+    if (get_timer(last_tcp_ping_timer) > 4.0) {
+        LOG_WARNING("No TCP ping sent or pong received in over a second");
+    }
+
+    // If we're waiting for a ping, and it's been 1s, then that ping will be
+    // noted as failed
+    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(tcp_latency_timer) > 1.0) {
+        LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
+
+        // Only if we successfully recover the TCP connection should we continue
+        //     as if the ping was successful.
+        if (send_tcp_reconnect_message(using_stun) == 0) {
+            last_tcp_pong_id = last_tcp_ping_id;
+        }
+    }
+
+    // if we've received the last ping, send another
+    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 2.0) {
+        send_tcp_ping(last_tcp_ping_id + 1);
+        start_timer(&tcp_latency_timer);
     }
 }
 
@@ -330,6 +372,9 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // last_tcp_check_timer indicates the last successful TCP check, or, if we've not had a
         // successful TCP check for at least a second, the time since the last LOG_ERROR indicating
         // lost TCP connection
+
+        update_tcp_ping();
+
         int result = ack(&packet_tcp_context);
         if (result < 0) {
             // If the TCP checks are unsuccessful for 1 second, we should LOG_ERROR and restart the
