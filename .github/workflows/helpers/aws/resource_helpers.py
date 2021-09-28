@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from datetime import date, datetime, timedelta, timezone
+from logging import Filter
 import os
 import sys
 import boto3
@@ -101,7 +102,16 @@ def get_all_aws_instances(region):
         arr: array containing all instances (and info) from the given region
     """
     client = boto3.client("ec2", region_name=region)
-    response = client.describe_instances()
+    response = client.describe_instances(
+        Filters=[
+            {
+                "Name": "instance-state-name",
+                "Values": [
+                    "pending", "running", "stopping", "stopped"
+                ]
+            }
+        ]
+    )
 
     return response["Reservations"]
 
