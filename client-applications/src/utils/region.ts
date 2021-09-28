@@ -8,6 +8,7 @@ import { values } from "lodash"
 import events from "events"
 
 import { AWSRegion } from "@app/@types/aws"
+import { logBase } from "@app/utils/logging"
 import fetch from "node-fetch"
 
 const internetEvent = new events.EventEmitter()
@@ -81,10 +82,14 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
       (AWSRegion[]): Sorted array of regions
   */
   const pingResults = await Promise.all(pingLoop(regions))
-  return pingResults
+  const sortedResults = pingResults
     .sort((a, b) => (a.pingTime < b.pingTime ? -1 : 1))
     .filter((r) => r.pingTime > 0)
     .map((r) => r.region)
+
+  logBase(`Sorted AWS regions are [${sortedResults.toString()}]`, {})
+
+  return sortedResults
 }
 
 export { internetEvent, getRegionFromArgv, sortRegionByProximity }

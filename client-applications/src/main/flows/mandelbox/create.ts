@@ -25,6 +25,8 @@ import { AWSRegion } from "@app/@types/aws"
 export default flow<{
   accessToken: string
 }>("mandelboxCreateFlow", (trigger) => {
+  let attempts = 0
+
   const region = fork(
     trigger.pipe(
       switchMap(({ accessToken }) =>
@@ -33,10 +35,20 @@ export default flow<{
         )
       ),
       map(([regions, accessToken]: [AWSRegion[], string]) => {
-        if (regions.length === 0) throw [regions, accessToken]
+        if (regions.length === 0) throw new Error()
         return [regions, accessToken]
       }),
-      retryWhen((errors) => errors.pipe(delayWhen(() => timer(250)))),
+      retryWhen((errors) =>
+        errors.pipe(
+          delayWhen(() => {
+            if (attempts < 20) {
+              attempts = attempts + 1
+              return timer(500)
+            }
+            throw new Error()
+          })
+        )
+      ),
       catchError((error) => of(error))
     ),
     {
