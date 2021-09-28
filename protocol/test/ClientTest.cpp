@@ -65,6 +65,23 @@ TEST(ClientTest, FractalColorTest) {
     EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
 }
 
+TEST(ClientTest, TimersTest) {
+    // Note that this test will detect if either the timer or the sleep function
+    // is broken, but not necessarily if both are broken.
+    clock timer;
+    start_timer(&timer);
+    fractal_sleep(25);
+    double elapsed = get_timer(timer);
+    EXPECT_GE(elapsed, 0.025);
+    EXPECT_LE(elapsed, 0.035);
+
+    start_timer(&timer);
+    fractal_sleep(100);
+    elapsed = get_timer(timer);
+    EXPECT_GE(elapsed, 0.100);
+    EXPECT_LE(elapsed, 0.110);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
