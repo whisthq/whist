@@ -15,7 +15,7 @@ from sqlalchemy.ext.declarative import DeferredReflection
 
 from app.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
-from app.sentry import init_and_ensure_sentry_connection
+from app.utils.flask.sentry import init_and_ensure_sentry_connection
 from app.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
 from app.database.models.cloud import db
