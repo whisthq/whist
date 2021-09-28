@@ -57,7 +57,7 @@ jobs:
           import json
           import os
 
-          apps = filter(lambda app: "-ci" not in app, os.environ["APPS"].split(","))
+          apps = filter(lambda app: "-ci-" not in app, os.environ["APPS"].split(","))
           commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances"]
           lookup = {"fractal-prod-server": "prod", "fractal-staging-server": "staging"}
           include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
