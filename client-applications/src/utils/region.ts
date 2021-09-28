@@ -5,13 +5,10 @@
  */
 
 import { values } from "lodash"
-import events from "events"
 
 import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/utils/logging"
 import fetch from "node-fetch"
-
-const internetEvent = new events.EventEmitter()
 
 const fractalPingTime = async (host: string, numberPings: number) => {
   /*
@@ -33,7 +30,6 @@ const fractalPingTime = async (host: string, numberPings: number) => {
       fetch(host)
         .then(() => Date.now() - startTime)
         .catch(() => {
-          internetEvent.emit("internet-error")
           return -1
         })
     )
@@ -92,4 +88,4 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
   return sortedResults
 }
 
-export { internetEvent, getRegionFromArgv, sortRegionByProximity }
+export { getRegionFromArgv, sortRegionByProximity }

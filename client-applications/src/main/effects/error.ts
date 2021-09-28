@@ -19,7 +19,6 @@ import {
   AUTH_ERROR,
   MAINTENANCE_ERROR,
   PROTOCOL_ERROR,
-  INTERNET_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
@@ -56,10 +55,6 @@ withAppReady(fromTrigger("authFlowFailure")).subscribe(() => {
 
 withAppReady(fromTrigger("stripePaymentError")).subscribe(() => {
   createErrorWindow(NO_PAYMENT_ERROR)
-})
-
-withAppReady(fromTrigger("internetError")).subscribe(() => {
-  createErrorWindow(INTERNET_ERROR)
 })
 
 withAppReady(fromTrigger("protocolError"))

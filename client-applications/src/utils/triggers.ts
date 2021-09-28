@@ -64,7 +64,6 @@ export default {
   // System triggers (power, Internet)
   powerResume: "powerResume",
   powerSuspend: "powerSuspend",
-  internetError: "internetError",
 
   // Protocol triggers
   protocolError: "protocolError",
