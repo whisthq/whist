@@ -33,18 +33,7 @@ const fractalPingTime = async (host: string, numberPings: number) => {
   return pingResults.reduce((a, b) => (a < b ? a : b))
 }
 
-export const chooseRegion = async (regions: AWSRegion[]) => {
-  /*
-    Description:
-        Pulls AWS regions from SQL and pings each region, and finds the closest region
-        by shortest ping time
-
-    Arguments:
-        none
-    Returns:
-        (string): Closest region e.g. us-east-1
-    */
-
+const pingLoop = (regions: AWSRegion[]) => {
   // Ping each region and find the closest region by lowest ping time
   const pingResultPromises = []
   /* eslint-disable no-await-in-loop */
@@ -61,16 +50,28 @@ export const chooseRegion = async (regions: AWSRegion[]) => {
       })
     )
   }
-  const pingResults = await Promise.all(pingResultPromises)
-  const closestRegion = pingResults.reduce((a, b) =>
-    a.pingTime < b.pingTime ? a : b
-  ).region
-
-  return closestRegion
+  return pingResultPromises
 }
 
 export const getRegionFromArgv = (argv: string[]) => {
   return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
     ? argv[argv.length - 1]
     : undefined
+}
+
+export const sortRegionByProximity = async (regions: AWSRegion[]) => {
+  /*
+  Description:
+      Pulls AWS regions from SQL and pings each region, and sorts regions
+      by shortest ping time
+
+  Arguments:
+      (AWSRegion[]): Unsorted array of regions
+  Returns:
+      (AWSRegion[]): Sorted array of regions
+  */
+  const pingResults = await Promise.all(pingLoop(regions))
+  return pingResults
+    .sort((a, b) => (a.pingTime < b.pingTime ? -1 : 1))
+    .map((r) => r.region)
 }

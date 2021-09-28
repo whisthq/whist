@@ -125,17 +125,26 @@ def terminate_instance(instance: InstanceInfo) -> None:
     db.session.commit()
 
 
+def find_enabled_regions():
+    """
+    Returns a list of regions that are currently active
+    """
+
+    return RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
+
+
 def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     """
-    Given a region, finds (if it can) an instance in that region or a neighboring region with space
-    If it succeeds, returns the instance name.  Else, returns None
+    Given a list of regions, finds (if it can) an instance in that region
+    or a neighboring region with space. If it succeeds, returns the instance name.
+    Else, returns None
     Args:
-        region: which region to search
+        regions: a list of regions sorted by proximity
 
-    Returns: either a good instance name or None
+    Returns: either an instance name or None
 
     """
-    regions_to_search = bundled_region.get(region, []) + [region]
+    bundled_regions = bundled_region.get(region, [])
     # InstancesWithRoomForMandelboxes is sorted in DESC
     # with number of mandelboxes running, So doing a
     # query with limit of 1 returns the instance with max
@@ -149,13 +158,14 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         .limit(1)
         .one_or_none()
     )
+
     if instance_with_max_mandelboxes is None:
         # If we are unable to find the instance in the required region,
         # let's try to find an instance in nearby AZ
         # that doesn't impact the user experience too much.
         instance_with_max_mandelboxes = (
             InstancesWithRoomForMandelboxes.query.filter(
-                InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
+                InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
             )
             .filter_by(
                 commit_hash=client_commit_hash,
@@ -181,7 +191,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
             return None
         else:
-            return avail_instance.instance_name  # type: ignore[no-any-return]
+            return str(avail_instance.instance_name)
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:

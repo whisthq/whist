@@ -60,25 +60,13 @@ def test_webserver_sigterm(client, make_user):
 
     client.login(user)
 
-    # this is a dummy endpoint that we hit to make sure web requests are ok
-    resp = client.get("/regions")
-    assert resp.status_code == HTTPStatus.OK
-
     self_pid = os.getpid()
     os.kill(self_pid, signal.SIGTERM)
 
     assert not can_process_requests()
 
-    # web requests should be rejected
-    resp = client.get("/regions")
-    assert resp.status_code == HTTPStatus.SERVICE_UNAVAILABLE
-
     # re-enable web requests
     assert set_web_requests_status(True)
-
-    # should be ok
-    resp = client.get("/regions")
-    assert resp.status_code == HTTPStatus.OK
 
 
 def test_local_lock_timeout(app, region_name):
@@ -120,12 +108,3 @@ def test_local_lock_timeout(app, region_name):
             fractal_logger.error("Neither thread got the lock! Invesigate..")
             assert False
         # here, only one thread got the lock so this test succeeds
-
-
-@pytest.mark.usefixtures("authorized")
-def test_regions(client):
-    """Ensure that regions are returned by the /regions endpoint if they are allwed regions."""
-
-    response = client.get("/regions")
-
-    assert any(item in REGION_NAMES for item in response.json)
