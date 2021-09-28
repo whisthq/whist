@@ -45,12 +45,13 @@ comment:
   branches: null
   show_carryforward_flags: true
 
-# This is where we define every flag from the Codecov uploader and update when new Flags added
+# This is where we define every flag for the Codecov uploader and update when new Flags are added
 # See here for carryforward documentation: https://docs.codecov.com/docs/carryforward-flags
 flags:
   webserver:
     paths:
       - webserver/
+      - app/
     carryforward: true
   host-service:
     paths:
