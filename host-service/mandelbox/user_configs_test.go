@@ -69,7 +69,7 @@ func TestUserConfigIntegration(t *testing.T) {
 		}
 
 		relativePath := strings.ReplaceAll(filePath, testBase, "")
-		unpackedPath := path.Join(unpackedConfigPath, relativePath)
+		unpackedPath := path.Join(unpackedConfigPath, "testBase", relativePath)
 		matchingFile, err := os.Open(unpackedPath)
 		if err != nil {
 			t.Fatalf("error opening matching file %s: %v", unpackedPath, err)
