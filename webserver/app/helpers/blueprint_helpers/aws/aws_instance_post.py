@@ -19,6 +19,7 @@ from app.helpers.utils.general.name_generation import generate_name
 from app.helpers.utils.general.logs import fractal_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 from app.constants.ec2_instance_states import EC2InstanceState
+from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -174,19 +175,27 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             .limit(1)
             .one_or_none()
         )
-    if instance_with_max_mandelboxes is None:
-        # If we still can't find an instance for them, see if it's because
-        # the commit hashes don't match. If so, just give them an instance.
-        instance_with_max_mandelboxes = (
-            InstancesWithRoomForMandelboxes.query.filter(
-                InstancesWithRoomForMandelboxes.location.in_(regions_to_search)
+    if instance_with_max_mandelboxes is None and not client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE:
+        # If we still can't find an instance for them, check if it's because
+        # the commit hashes don't match, likely because the client making 
+        # the request is on an older commit hash. If so, give them an instance
+        # anyway.
+        active_ami_for_given_region = RegionToAmi.query.filter_by(
+            region_name=region, ami_active=True
+        ).one_or_none()
+
+        if active_ami_for_given_region:
+            latest_commit_hash = active_ami_for_given_region.client_commit_hash
+            instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
+                InstancesWithRoomForMandelboxes.query.filter_by(
+                    commit_hash=latest_commit_hash,
+                    location=region,
+                    status=MandelboxHostState.ACTIVE,
+                )
+                .limit(1)
+                .one_or_none()
             )
-            .filter_by(
-                status=MandelboxHostState.ACTIVE,
-            )
-            .limit(1)
-            .one_or_none()
-        )
+
     if instance_with_max_mandelboxes is None:
         return None
     else:

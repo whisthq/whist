@@ -6,7 +6,7 @@ from random import randint
 
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, OUTDATED_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_allowed_region_names
 
 
@@ -79,14 +79,13 @@ def test_assign_active(client, bulk_instance, monkeypatch):
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
 
-
 @pytest.mark.usefixtures("authorized")
-def test_client_commit_hash_local_dev_override_fail(
+def test_client_commit_hash_local_dev_override_success(
     app, client, bulk_instance, override_environment
 ):
     """
-    Ensure that in production environment, passing the pre-shared client commit hash for dev enviroment
-    returns a status code of RESOURCE_UNAVAILABLE
+    Ensure that in development environment, passing the pre-shared client commit hash for dev enviroment
+    returns a status code of ACCEPTED
     """
 
     override_environment(PRODUCTION)
@@ -100,11 +99,10 @@ def test_client_commit_hash_local_dev_override_fail(
     }
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
-
+    assert response.status_code == HTTPStatus.ACCEPTED
 
 @pytest.mark.usefixtures("authorized")
-def test_client_commit_hash_local_dev_override_success(
+def test_client_using_outdated_commit_hash(
     app, client, bulk_instance, override_environment
 ):
     """
@@ -118,7 +116,7 @@ def test_client_commit_hash_local_dev_override_success(
 
     args = {
         "regions": region_names,
-        "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
+        "client_commit_hash": OUTDATED_COMMIT_HASH_FOR_TESTING,
         "session_id": randint(1600000000, 9999999999),
     }
     response = client.post("/mandelbox/assign", json=args)

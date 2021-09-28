@@ -67,7 +67,6 @@ def test_no_find_full_small_instance(bulk_instance, region_name):
     _ = bulk_instance(location=region_name, mandelbox_capacity=5, associated_mandelboxes=5)
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
-
 @pytest.mark.parametrize(
     "location",
     bundled_region.keys(),
