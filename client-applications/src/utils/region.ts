@@ -7,6 +7,7 @@
 import { values } from "lodash"
 
 import { AWSRegion } from "@app/@types/aws"
+import { logBase } from "@app/utils/logging"
 import fetch from "node-fetch"
 
 const fractalPingTime = async (host: string, numberPings: number) => {
@@ -25,7 +26,13 @@ const fractalPingTime = async (host: string, numberPings: number) => {
   const pingPromises = []
   for (let i = 0; i < numberPings; i += 1) {
     const startTime = Date.now()
-    pingPromises.push(fetch(host).then(() => Date.now() - startTime))
+    pingPromises.push(
+      fetch(host)
+        .then(() => Date.now() - startTime)
+        .catch(() => {
+          return -1
+        })
+    )
   }
 
   // Resolve list of Promises synchronously to get a list of ping outputs
@@ -53,13 +60,13 @@ const pingLoop = (regions: AWSRegion[]) => {
   return pingResultPromises
 }
 
-export const getRegionFromArgv = (argv: string[]) => {
+const getRegionFromArgv = (argv: string[]) => {
   return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
     ? argv[argv.length - 1]
     : undefined
 }
 
-export const sortRegionByProximity = async (regions: AWSRegion[]) => {
+const sortRegionByProximity = async (regions: AWSRegion[]) => {
   /*
   Description:
       Pulls AWS regions from SQL and pings each region, and sorts regions
@@ -71,7 +78,14 @@ export const sortRegionByProximity = async (regions: AWSRegion[]) => {
       (AWSRegion[]): Sorted array of regions
   */
   const pingResults = await Promise.all(pingLoop(regions))
-  return pingResults
+  const sortedResults = pingResults
     .sort((a, b) => (a.pingTime < b.pingTime ? -1 : 1))
+    .filter((r) => r.pingTime > 0)
     .map((r) => r.region)
+
+  logBase(`Sorted AWS regions are [${sortedResults.toString()}]`, {})
+
+  return sortedResults
 }
+
+export { getRegionFromArgv, sortRegionByProximity }
