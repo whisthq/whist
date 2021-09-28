@@ -9,6 +9,7 @@ import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
 import { sortRegionByProximity } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
+import { logBase } from "@app/utils/logging"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
@@ -29,8 +30,10 @@ export const regionGet = async () => {
 
 export const mandelboxCreate = async (accessToken: string) => {
   const regions = await regionGet()
-  const response = await mandelboxRequest(accessToken, regions)
-  return response
+  
+  logBase(`AWS regions are [${regions}]`, {})
+  
+  return await mandelboxRequest(accessToken, regions)
 }
 
 export const mandelboxCreateSuccess = (

@@ -53,6 +53,8 @@ int init_clients(void) {
         clients[id].UDP_port = BASE_UDP_PORT + id;
         clients[id].TCP_port = BASE_TCP_PORT + id;
 
+        clients[id].TCP_lock = fractal_create_mutex();
+
         memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(FractalRGBColor));
     }
     return 0;

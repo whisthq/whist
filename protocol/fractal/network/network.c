@@ -727,7 +727,7 @@ int create_tcp_client_context(SocketContext* context, char* destination, int por
         return -1;
     }
     if (destination == NULL) {
-        LOG_WARNING("destiniation is NULL");
+        LOG_WARNING("destination is NULL");
         return -1;
     }
     context->is_tcp = true;

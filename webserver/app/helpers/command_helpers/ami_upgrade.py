@@ -9,7 +9,7 @@ from app.database.models.cloud import db, RegionToAmi, InstanceInfo
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.blueprint_helpers.aws.aws_instance_post import (
     do_scale_up_if_necessary,
-    terminate_instance,
+    drain_instance,
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_state import _poll
 from app.constants.mandelbox_host_states import MandelboxHostState
@@ -96,69 +96,6 @@ def launch_new_ami_buffer(
             if result:
                 region_wise_upgrade_threads[index_in_thread_list][3] = new_instance_name
     region_wise_upgrade_threads[index_in_thread_list][1] = result
-
-
-def mark_instance_for_draining(active_instance: InstanceInfo) -> bool:
-    """
-    Marks the instance for draining by calling the drain_and_shutdown endpoint
-    of the host service and marks the instance as draining. If the endpoint
-    errors out with an unexpected status code, we are going to mark the
-    instance as unresponsive. We are not going to kill the instance as at this
-    point in time, we won't be sure if all the users have left the instance.
-    However, note that we will terminate instances who don't have a valid IP
-    (since the host service has not yet started up/connected). Once the
-    instance is marked as draining, we won't launch associate a "mandelbox"
-    running on this instance to an user.
-
-    Note that we shouldn't call this function on a single instance multiple
-    times. In particular, the http server in a host service is shut down soon
-    after the endpoint is called, which means that future requests are always
-    going to fail, unfairly marking the host service as unresponsive.
-
-    Args:
-        active_instance: InstanceInfo object for the instance that need to be marked as draining.
-    Returns:
-        job_status: A boolean indicating if we are able to mark the instance as draining by
-        calling the drain_and_shutdown endpoint on host service.
-    """
-    job_status = False
-    fractal_logger.info(
-        f"mark_instance_for_draining called for instance {active_instance.instance_name}"
-    )
-    # If the IP is empty, the instance has yet to connect
-    if (
-        active_instance.status == MandelboxHostState.PRE_CONNECTION
-        or active_instance.ip is None
-        or str(active_instance.ip) == ""
-    ):
-        try:
-            terminate_instance(active_instance)
-            job_status = True
-        except:
-            job_status = False
-    try:
-        base_url = f"https://{active_instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-        resp = requests.post(
-            f"{base_url}/drain_and_shutdown",
-            json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
-            verify=False,  # SSL verification turned off due to self signed certs on host service.
-        )
-        resp.raise_for_status()
-        # Host service would be setting the state in the DB once we call the drain endpoint.
-        # However, there is no downside to us setting this as well.
-        active_instance.status = MandelboxHostState.DRAINING
-        fractal_logger.info(
-            f"mark_instance_for_draining successfully sent POST to instance {active_instance.instance_name}"
-        )
-        job_status = True
-    except requests.exceptions.RequestException as error:
-        active_instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
-        fractal_logger.error(
-            f"mark_instance_for_draining failed to send POST to instance {active_instance.instance_name}: {error}"
-        )
-    finally:
-        db.session.commit()
-    return job_status
 
 
 def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[InstanceInfo]:
@@ -280,7 +217,7 @@ def create_ami_buffer(
         for instance in instances_created:
             instance = cast(str, instance)
             instanceinfo = InstanceInfo.query.get(instance)
-            mark_instance_for_draining(instanceinfo)
+            drain_instance(instanceinfo)
         # If any thread here failed, fail the workflow
         raise Exception("AMIS failed to upgrade, see logs")
     return new_amis_str
@@ -318,7 +255,7 @@ def swapover_amis(new_amis_str: List[str]) -> None:
     for active_instance in current_running_instances:
         # At this point, the instance is marked as DRAINING in the database. But we need
         # to inform the HOST_SERVICE that we have marked the instance as draining.
-        active_instance_draining_status = mark_instance_for_draining(active_instance)
+        active_instance_draining_status = drain_instance(active_instance)
         if active_instance_draining_status is False:
             # Mark the status for draining all instances as False when marking any instance draining fails.
             fractal_logger.error(

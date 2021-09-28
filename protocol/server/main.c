@@ -161,6 +161,7 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
             // If received a TCP message
             if (try_get_next_message_tcp(id, &tcp_packet) == 0 && tcp_packet != NULL) {
                 FractalClientMessage* fmsg = (FractalClientMessage*)tcp_packet->data;
+                LOG_INFO("TCP Packet type: %d", fmsg->type);
                 handle_fractal_client_message(fmsg, id);
             }
             // Free the tcp packet if we received one
@@ -320,6 +321,9 @@ int main(int argc, char* argv[]) {
     clock last_ping_check;
     start_timer(&last_ping_check);
 
+    clock last_tcp_ping_check;
+    start_timer(&last_tcp_ping_check);
+
     LOG_INFO("Receiving packets...");
 
     init_window_name_getter();
@@ -411,23 +415,20 @@ int main(int argc, char* argv[]) {
 #endif  // ! _WIN32
 
         if (get_timer(last_ping_check) > 20.0) {
-            for (;;) {
-                read_lock(&is_active_rwlock);
-                bool exists, should_reap = false;
-                if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
-                    LOG_ERROR("Failed to find if a client has timed out.");
-                } else {
-                    should_reap = exists;
+            read_lock(&is_active_rwlock);
+            bool exists, should_reap = false;
+            if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
+                LOG_ERROR("Failed to find if a client has timed out.");
+            } else {
+                should_reap = exists;
+            }
+            read_unlock(&is_active_rwlock);
+            if (should_reap) {
+                write_lock(&is_active_rwlock);
+                if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
+                    LOG_ERROR("Failed to reap timed out clients.");
                 }
-                read_unlock(&is_active_rwlock);
-                if (should_reap) {
-                    write_lock(&is_active_rwlock);
-                    if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
-                        LOG_ERROR("Failed to reap timed out clients.");
-                    }
-                    write_unlock(&is_active_rwlock);
-                }
-                break;
+                write_unlock(&is_active_rwlock);
             }
             start_timer(&last_ping_check);
         }
