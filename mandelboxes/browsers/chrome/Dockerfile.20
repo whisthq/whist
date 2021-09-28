@@ -63,8 +63,7 @@ RUN echo {} \
 
 # Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
-RUN chmod +x /usr/bin/install-extensions.sh
-RUN /usr/bin/install-extensions.sh
+RUN chmod +x /usr/bin/install-extensions.sh && /usr/bin/install-extensions.sh
 
 # Create default config paths
 RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome"
@@ -74,7 +73,4 @@ RUN su - fractal -c "touch /home/fractal/.config/google-chrome/'First Run'"
 
 # Install Fractal wrapper script to run Google Chrome into /usr/bin
 COPY start-chrome.sh /usr/bin/start-chrome
-RUN chmod +x /usr/bin/start-chrome
-
-# Setup Fractal application symlink
-RUN ln -sf /usr/bin/start-chrome /usr/bin/fractal-application
+RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/fractal-application
