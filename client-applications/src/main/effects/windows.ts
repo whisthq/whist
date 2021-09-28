@@ -40,17 +40,8 @@ fromTrigger("appReady").subscribe(() => {
 
 const quit = () => {
   logBase("Application exited", {})
-    .then(() => {
-      destroyTray()
-      app.quit()
-    })
-    .catch((err) => {
-      logBase("Error while quitting", { error: err }).catch((err) =>
-        console.error(err)
-      )
-      destroyTray()
-      app.quit()
-    })
+  destroyTray()
+  app.quit()
 }
 
 const allWindowsClosed = fromTrigger("windowInfo").pipe(
