@@ -61,9 +61,10 @@ export default {
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   configFlowSuccess: "configFlowSuccess",
 
-  // Powermonitor triggers
+  // System triggers (power, Internet)
   powerResume: "powerResume",
   powerSuspend: "powerSuspend",
+  internetError: "internetError",
 
   // Protocol triggers
   protocolError: "protocolError",

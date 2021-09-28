@@ -5,9 +5,12 @@
  */
 
 import { values } from "lodash"
+import events from "events"
 
 import { AWSRegion } from "@app/@types/aws"
 import fetch from "node-fetch"
+
+const internetEvent = new events.EventEmitter()
 
 const fractalPingTime = async (host: string, numberPings: number) => {
   /*
@@ -28,7 +31,10 @@ const fractalPingTime = async (host: string, numberPings: number) => {
     pingPromises.push(
       fetch(host)
         .then(() => Date.now() - startTime)
-        .catch((err) => console.error(err))
+        .catch(() => {
+          internetEvent.emit("internet-error")
+          return -1
+        })
     )
   }
 
@@ -57,13 +63,13 @@ const pingLoop = (regions: AWSRegion[]) => {
   return pingResultPromises
 }
 
-export const getRegionFromArgv = (argv: string[]) => {
+const getRegionFromArgv = (argv: string[]) => {
   return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
     ? argv[argv.length - 1]
     : undefined
 }
 
-export const sortRegionByProximity = async (regions: AWSRegion[]) => {
+const sortRegionByProximity = async (regions: AWSRegion[]) => {
   /*
   Description:
       Pulls AWS regions from SQL and pings each region, and sorts regions
@@ -77,5 +83,8 @@ export const sortRegionByProximity = async (regions: AWSRegion[]) => {
   const pingResults = await Promise.all(pingLoop(regions))
   return pingResults
     .sort((a, b) => (a.pingTime < b.pingTime ? -1 : 1))
+    .filter((r) => r.pingTime > 0)
     .map((r) => r.region)
 }
+
+export { internetEvent, getRegionFromArgv, sortRegionByProximity }
