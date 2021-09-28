@@ -25,7 +25,11 @@ const fractalPingTime = async (host: string, numberPings: number) => {
   const pingPromises = []
   for (let i = 0; i < numberPings; i += 1) {
     const startTime = Date.now()
-    pingPromises.push(fetch(host).then(() => Date.now() - startTime))
+    pingPromises.push(
+      fetch(host)
+        .then(() => Date.now() - startTime)
+        .catch((err) => console.error(err))
+    )
   }
 
   // Resolve list of Promises synchronously to get a list of ping outputs
