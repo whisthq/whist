@@ -104,12 +104,7 @@ def get_all_aws_instances(region):
     client = boto3.client("ec2", region_name=region)
     response = client.describe_instances(
         Filters=[
-            {
-                "Name": "instance-state-name",
-                "Values": [
-                    "pending", "running", "stopping", "stopped"
-                ]
-            }
+            {"Name": "instance-state-name", "Values": ["pending", "running", "stopping", "stopped"]}
         ]
     )
 
