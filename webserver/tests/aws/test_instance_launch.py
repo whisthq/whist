@@ -22,11 +22,12 @@ from app.constants.mandelbox_host_states import MandelboxHostState
 
 def test_prior_ami(db_session):
     all_amis = RegionToAmi.query.all()
-    if len(all_amis) > 0:
-        randomized_ami = random.choice(all_amis)
-        region_name = randomized_ami.region_name
-    else:
-        region_name = "us-east-1"
+    # if len(all_amis) > 0:
+    #     randomized_ami = random.choice(all_amis)
+    #     region_name = randomized_ami.region_name
+    # else:
+    #     region_name = "us-east-1"
+    region_name = "us-east-2"
     client_commit_hash = "test-client-commit-hash"
     prior_ami = RegionToAmi(
         region_name=region_name,
@@ -38,6 +39,7 @@ def test_prior_ami(db_session):
     db.session.add(prior_ami)
     db.session.commit()
     region_to_ami_map = {region_name: f"new-ami-{region_name}", second_region: "new-ami-us-east-2"}
+    print(region_to_ami_map)
     mixed_ami_ids = [ami.ami_id for ami in insert_new_amis(client_commit_hash, region_to_ami_map)]
     print(mixed_ami_ids)
     assert "new-ami-us-east-2" in mixed_ami_ids, "failed to insert new AMI"
