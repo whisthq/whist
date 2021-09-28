@@ -4,7 +4,7 @@ import random, requests
 from app.database.models.cloud import RegionToAmi, db
 from tests.patches import function
 
-from app.helpers.ami.ami_upgrade import ami_upgrade
+from app.helpers.ami import ami_upgrade
 from app.helpers.ami.ami_upgrade import (
     launch_new_ami_buffer,
     insert_new_amis,
