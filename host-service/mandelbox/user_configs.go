@@ -215,7 +215,6 @@ func (c *mandelboxData) backupUserConfigs() error {
 	encTarPath := configDir + c.getEncryptedArchiveFilename()
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
 	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
-	s3ConfigPath := c.getS3ConfigPath()
 
 	tarConfigCmd := exec.Command(
 		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
