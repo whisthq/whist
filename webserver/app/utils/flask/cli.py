@@ -32,11 +32,11 @@ from typing import Dict, List
 import click
 from flask import Blueprint, current_app
 
-from app.helpers.blueprint_helpers.aws.aws_instance_post import (
+from app.helpers.aws.aws_instance_post import (
     try_scale_down_if_necessary_all_regions,
     check_and_handle_lingering_instances,
 )
-from app.helpers.command_helpers.ami_upgrade import create_ami_buffer, swapover_amis
+from app.helpers.ami.ami_upgrade import create_ami_buffer, swapover_amis
 
 # This blueprint creates CLI commands that can be used to manipulate AMIs when it is registered to
 # a Flask application.
