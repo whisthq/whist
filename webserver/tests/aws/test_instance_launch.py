@@ -13,6 +13,7 @@ from app.helpers.command_helpers.ami_upgrade import (
 )
 from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 
+from app.utils.aws.base_ec2_client import EC2Client
 from app.utils.general.name_generation import generate_name
 
 from app.constants.ec2_instance_states import EC2InstanceState
@@ -34,7 +35,7 @@ def test_prior_ami(db_session):
         ami_id="prior-ami-us-east-1",
         ami_active=False,
     )
-    print(region_name)
+    print("region: %s" % region_name)
     second_region = "us-east-2" if region_name != "us-east-2" else "us-east-1"
     db.session.add(prior_ami)
     db.session.commit()
