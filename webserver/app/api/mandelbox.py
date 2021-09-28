@@ -17,7 +17,7 @@ from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_
 from app.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.utils.general.logs import fractal_logger
 from app.utils.metrics.flask_app import app_record_metrics
-from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
+from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from payments import payment_required
 
