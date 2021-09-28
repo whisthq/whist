@@ -5,7 +5,8 @@
  */
 import { isEmpty } from "lodash"
 import { post } from "@app/utils/api"
-import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
+import { AWSRegion } from "@app/@types/aws"
+import { defaultAllowedRegions } from "@app/utils/constants"
 import { sortRegionByProximity } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
