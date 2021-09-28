@@ -71,7 +71,7 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorMaintenance(response)
 
 // Helper functions
-export const mandelboxRequest = async (accessToken: string, region: string) =>
+const mandelboxRequest = async (accessToken: string, region: string) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
