@@ -82,7 +82,7 @@ def create_app(testing: bool = False) -> Flask:
     # Set the Stripe API key.
     stripe.api_key = app.config["STRIPE_SECRET"]
 
-    from .utils.general.limiter import limiter
+    from app.utils.general.limiter import limiter
 
     limiter.init_app(app)
     db.init_app(app)
@@ -145,8 +145,8 @@ def register_blueprints(app: Flask) -> None:
         - app: Flask object
     """
 
-    from .api.mandelbox import aws_mandelbox_bp
-    from .api.regions import aws_region_bp
+    from app.api.mandelbox import aws_mandelbox_bp
+    from app.api.regions import aws_region_bp
 
     app.register_blueprint(aws_mandelbox_bp)
     app.register_blueprint(aws_region_bp)
