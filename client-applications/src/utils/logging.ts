@@ -94,47 +94,25 @@ const localLog = (
   logFile.write(logs)
 }
 
-const amplitudeLog = async (
+const amplitudeLog = (
   title: string,
   data: object,
   userEmail: string,
   msElapsed?: number
 ) => {
-  if (userEmail !== "") {
-    if (!regionSet) {
-      const region = await chooseRegion(defaultAllowedRegions)
-      await amplitude.logEvent({
-        event_type: `[${
-          (config.appEnvironment as string) ?? "LOCAL"
-        }] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail,
-        event_properties: {
-          ...data,
-          msElapsed: msElapsed !== undefined ? msElapsed : 0,
-        },
-        user_properties: {
-          aws_region: region,
-        },
-      })
-      regionSet = true
-    } else {
-      await amplitude.logEvent({
-        event_type: `[${
-          (config.appEnvironment as string) ?? "LOCAL"
-        }] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail,
-        event_properties: {
-          ...data,
-          msElapsed: msElapsed !== undefined ? msElapsed : 0,
-        },
-      })
-    }
-  }
+  if (userEmail !== "")
+    amplitude.logEvent({
+      event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
+      session_id: sessionID,
+      user_id: userEmail,
+      event_properties: {
+        ...data,
+        msElapsed: msElapsed !== undefined ? msElapsed : 0,
+      },
+    })
 }
 
-export const logBase = async (
+export const logBase = (
   title: string,
   data: object,
   level?: LogLevel,
@@ -151,10 +129,7 @@ export const logBase = async (
   const userEmail = persistGet("userEmail") ?? ""
   localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 
-  if (app.isPackaged)
-    await amplitudeLog(title, data, userEmail as string, msElapsed).catch(
-      (err) => console.log(err)
-    )
+  if (app.isPackaged) amplitudeLog(title, data, userEmail as string, msElapsed)
 }
 
 export const protocolToLogz = (line: string) => {

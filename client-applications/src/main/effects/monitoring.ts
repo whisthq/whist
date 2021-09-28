@@ -1,8 +1,8 @@
 import { logBase } from "@app/utils/logging"
 import { interval } from "rxjs"
 
-const minutes = 10
+const LOG_INTERVAL_IN_MINUTES = 5
 
-interval((minutes > 0 ? minutes : 10) * 60 * 1000).subscribe(() => {
-  logBase("heartbeat", {}).catch((err) => console.log(err))
+interval(LOG_INTERVAL_IN_MINUTES * 60 * 1000).subscribe(() => {
+  logBase("heartbeat", {})
 })

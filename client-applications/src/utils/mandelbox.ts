@@ -9,6 +9,7 @@ import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
+import { logBase } from "@app/utils/logging"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
@@ -38,6 +39,9 @@ export const mandelboxCreate = async (
   region?: AWSRegion
 ) => {
   region = region ?? (await regionGet(accessToken))
+
+  logBase(`AWS region is ${region}`, {})
+
   const response = await mandelboxRequest(accessToken, region)
   return response
 }
@@ -67,7 +71,7 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorMaintenance(response)
 
 // Helper functions
-const mandelboxRequest = async (accessToken: string, region: string) =>
+export const mandelboxRequest = async (accessToken: string, region: string) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
