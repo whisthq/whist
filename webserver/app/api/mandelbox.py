@@ -7,7 +7,7 @@ from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_pydantic import validate
 from typing import Any, Tuple
-from app.validation import MandelboxAssignBody
+from app.utils.mandelbox.validation import MandelboxAssignBody
 
 from app import fractal_pre_process
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
