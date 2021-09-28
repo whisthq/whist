@@ -63,12 +63,13 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 
 	// Verify that all files in original directory are still there and correct
-	err = filepath.Walk(testBase, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(testBase, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		unpackedPath := strings.ReplaceAll(path, testBase, unpackedConfigPath)
+		relativePath := strings.ReplaceAll(filePath, testBase, "")
+		unpackedPath := path.Join(unpackedConfigPath, relativePath)
 		matchingFile, err := os.Open(unpackedPath)
 		if err != nil {
 			t.Fatalf("error opening matching file %s: %v", unpackedPath, err)
@@ -86,9 +87,9 @@ func TestUserConfigIntegration(t *testing.T) {
 				t.Errorf("expected %s to be a directory", unpackedPath)
 			}
 		} else {
-			testFileContents, err := ioutil.ReadFile(path)
+			testFileContents, err := ioutil.ReadFile(filePath)
 			if err != nil {
-				t.Fatalf("error reading test file %s: %v", path, err)
+				t.Fatalf("error reading test file %s: %v", filePath, err)
 			}
 
 			matchingFileBuf := bytes.NewBuffer(nil)
@@ -99,7 +100,7 @@ func TestUserConfigIntegration(t *testing.T) {
 
 			// Check contents match
 			if string(testFileContents) != string(matchingFileBuf.Bytes()) {
-				t.Errorf("file contents don't match for file %s: '%s' vs '%s'", path, testFileContents, matchingFileBuf.Bytes())
+				t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
 			}
 		}
 
