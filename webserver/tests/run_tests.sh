@@ -6,13 +6,8 @@ set -Eeuo pipefail
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# Make sure we are always running this script with working directory `webserver/`
-
+# Make sure we are always running this script with working directory `webserver/tests`
 cd "$DIR"
-
-
-echo "$DIR"
-
 
 # if in CI, run setup tests and set env vars
 IN_CI=${CI:=false} # default: false
@@ -29,7 +24,7 @@ else
   echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
   # add env vars to current env. these tell us the host, db, role, pwd
-  export $(cat docker/.env | xargs)
+  export $(cat ../docker/.env | xargs)
 
   # override POSTGRES_HOST and POSTGRES_PORT to be local
   export POSTGRES_HOST="localhost"
@@ -47,15 +42,15 @@ fi
 export TESTING=true
 
 # Only set Codecov flags if running in CI (generate XML for uploading and print to terminal for debugging)
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=webserver/")"
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=./")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
 # folder as it is irrelevant to unit/integration testing
-(pytest --ignore=scripts/ $cov "$@")
+(cd .. && pytest --ignore=scripts/ $cov "$@")
 
 # Download the Codecov uploader
-(curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
+(cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (./codecov --branch $HEROKU_TEST_RUN_BRANCH --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (cd .. && ./codecov --branch $HEROKU_TEST_RUN_BRANCH --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
