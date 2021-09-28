@@ -18,6 +18,8 @@ cd "$DIR"
 output=$(sudo python3 run_mandelbox_image.py "$@" | tee /dev/tty)
 docker_id="${output##*$'\n'}"
 
+# This flag skips executing bash and automatically killing the docker container.
+# Primarily used for benchmarking.
 if [[ ! -v FRACTAL_SKIP_EXEC_BASH ]]
 then
   # Start bash in the mandelbox.

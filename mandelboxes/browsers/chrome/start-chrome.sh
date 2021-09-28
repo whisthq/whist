@@ -15,4 +15,4 @@ exec google-chrome \
   --disable-smooth-scrolling \
   --disable-font-subpixel-positioning \
   --flag-switches-end \
-  /home/fractal/1080p_60fps.html
+  --restore-last-session
