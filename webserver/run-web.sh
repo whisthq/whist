@@ -11,5 +11,5 @@
 
 # Exit on subcommand errors
 set -Eeuo pipefail
-
+sleep 5 # this fixes an existing race condition between postgres initialization and web server
 waitress-serve --port="$PORT" --url-scheme=https entry_web:app

@@ -97,7 +97,7 @@ def test_assignment_logic(bulk_instance, location):
         f"in the replacement region {replacement_region}"
     )
     bulk_instance(location=location, instance_name="main-mandelbox")
-    instance = find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
+    instance_name = find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
     assert (
-        instance is not None and instance == "main-mandelbox"
+        instance_name is not None and instance_name == "main-mandelbox"
     ), f"we failed to find the available instance in the main region {location}"

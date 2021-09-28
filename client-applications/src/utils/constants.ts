@@ -3,6 +3,7 @@
  * @file constants.ts
  * @brief This file contains constant values that are passed around to other parts of the application.
  */
+import { AWSRegion } from "@app/@types/aws"
 
 export const allowPayments = true
 
@@ -35,3 +36,11 @@ export const ErrorIPC = [
 ].join(" ")
 
 export const sessionID = Date.now()
+
+export const defaultAllowedRegions = [
+  AWSRegion.US_EAST_1,
+  AWSRegion.US_EAST_2,
+  AWSRegion.US_WEST_1,
+  AWSRegion.US_WEST_2,
+  AWSRegion.CA_CENTRAL_1,
+]
