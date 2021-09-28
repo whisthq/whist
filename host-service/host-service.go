@@ -40,6 +40,7 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/subscriptions"
 
 	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
@@ -317,12 +318,13 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 }
 
 // Drain and shutdown the host service
-func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *DrainAndShutdownRequest) {
+func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, result subscriptions.SubscriptionStatusResult) {
+	// req *DrainAndShutdownRequest) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
 
 	// Note that the caller won't actually know if the `shutdown` command failed.
 	// This response is just saying that we got the request successfully.
-	defer req.ReturnResult("request successful", nil)
+	// defer req.ReturnResult("request successful", nil)
 
 	shutdownInstanceOnExit = true
 	globalCancel()
@@ -871,11 +873,16 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
+	subscriptionEvents, err := subscriptions.Run()
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
 	// needs to stay alive after the global context is cancelled, so we can
 	// process mandelbox death events.
-	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents)
+	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -895,7 +902,9 @@ func main() {
 // (including Docker events).
 var eventLoopKeepalive = make(chan interface{}, 1)
 
-func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, httpServerEvents <-chan ServerRequest) {
+func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
+	goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client,
+	httpServerEvents <-chan ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionStatusResult) {
 	// Note that we don't use globalCtx for the docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
@@ -965,9 +974,9 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			case *SpinUpMandelboxRequest:
 				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*SpinUpMandelboxRequest))
 
-			case *DrainAndShutdownRequest:
-				// Don't do this in a separate goroutine, since there's no reason to.
-				drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*DrainAndShutdownRequest))
+			// case *DrainAndShutdownRequest:
+			// 	// Don't do this in a separate goroutine, since there's no reason to.
+			// 	drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*DrainAndShutdownRequest))
 
 			default:
 				if serverevent != nil {
@@ -976,6 +985,9 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					serverevent.ReturnResult("", err)
 				}
 			}
+
+		case subscriptionEvent := <-subscriptionEvents:
+			drainAndShutdown(globalCtx, globalCancel, goroutineTracker, subscriptionEvent)
 		}
 	}
 }
