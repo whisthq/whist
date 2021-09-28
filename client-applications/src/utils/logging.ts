@@ -94,19 +94,15 @@ const amplitudeLog = (
   msElapsed?: number
 ) => {
   if (userEmail !== "")
-    amplitude
-      .logEvent({
-        event_type: `[${
-          (config.appEnvironment as string) ?? "LOCAL"
-        }] ${title}`,
-        session_id: sessionID,
-        user_id: userEmail,
-        event_properties: {
-          ...data,
-          msElapsed: msElapsed !== undefined ? msElapsed : 0,
-        },
-      })
-      .catch((err) => console.error(err))
+    amplitude.logEvent({
+      event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
+      session_id: sessionID,
+      user_id: userEmail,
+      event_properties: {
+        ...data,
+        msElapsed: msElapsed !== undefined ? msElapsed : 0,
+      },
+    })
 }
 
 export const logBase = (
