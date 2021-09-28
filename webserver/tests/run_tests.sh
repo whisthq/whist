@@ -7,7 +7,12 @@ set -Eeuo pipefail
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Make sure we are always running this script with working directory `webserver/`
+
 cd "$DIR"
+
+
+echo "$DIR"
+
 
 # if in CI, run setup tests and set env vars
 IN_CI=${CI:=false} # default: false
@@ -17,7 +22,7 @@ if [ $IN_CI == true ]; then
   export POSTGRES_DEST_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
   export DB_EXISTS=true # Heroku has created the db
   # this sets up the local db to look like the remote db
-  (cd tests && bash setup/setup_tests.sh)
+  bash setup/setup_tests.sh
   # override DATABASE_URL to the ephemeral db
   export DATABASE_URL=$POSTGRES_DEST_URI
 else
