@@ -31,9 +31,17 @@ if (require.main === module) {
       alias: ["P"],
       type: "boolean",
     })
+    .option("use-local-server", {
+      description: "Use 127.0.0.1:7730 instead of the dev server",
+      type: "boolean",
+    })
     .help().argv
+
   start(
-    { SHOW_PROTOCOL_LOGS: argv.showProtocolLogs ? "true" : "false" },
+    {
+      SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
+      DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
+    },
     argv.config
   )
 }

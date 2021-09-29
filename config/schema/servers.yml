@@ -17,7 +17,7 @@ CLIENT_DOWNLOAD_URL:
     linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Fractal.AppImage"
 
 WEBSERVER_URL:
-  local: "https://dev-server.fractal.co"
+  local: "http://127.0.0.1:7730"
   dev: "https://dev-server.fractal.co"
   staging: "https://staging-server.fractal.co"
   prod: "https://prod-server.fractal.co"
