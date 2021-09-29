@@ -202,14 +202,15 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
             // the old encoder, since we'll no longer be able to pass captured frames into
             // it
             // For now, we'll just always destroy the encoder right here
-            /*
-            if (encoder != NULL) {bool ext(device, encoder);
+            if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
+                if (transfer_context_active) {
+                    close_transfer_context(device, encoder);
                     transfer_context_active = false;
                 }
                 destroy_video_encoder(encoder);
                 encoder = NULL;
             }
-            */
+
             if (encoder == NULL) {
                 // Run on this thread bc we have to wait for it anyway since encoder == NULL
                 multithreaded_encoder_factory(NULL);
@@ -412,6 +413,11 @@ int32_t multithreaded_send_video(void* opaque) {
             LOG_WARNING("Failed to capture screen");
             transfer_context_active = false;
             close_transfer_context(device, encoder);
+            // The Nvidia Encoder must be wrapped in the lifetime of the capture device
+            if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
+                multithreaded_destroy_encoder(encoder);
+                encoder = NULL;
+            }
             destroy_capture_device(device);
             device = NULL;
             update_device = true;
@@ -651,10 +657,12 @@ int32_t multithreaded_send_video(void* opaque) {
         }
     }
 
-    destroy_capture_device(device);
-    device = NULL;
+    // The Nvidia Encoder must be wrapped in the lifetime of the capture device,
+    // So we destroy the encoder first
     multithreaded_destroy_encoder(encoder);
     encoder = NULL;
+    destroy_capture_device(device);
+    device = NULL;
 
     return 0;
 }
