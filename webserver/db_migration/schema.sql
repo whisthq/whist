@@ -301,7 +301,7 @@ CREATE VIEW cloud.lingering_instances AS
     instance_info.cloud_provider_id,
     instance_info.status
    FROM cloud.instance_info
-  WHERE ((((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 120000) AND ((instance_info.status)::text <> 'PRE_CONNECTION'::text)) OR (((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 900000) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.creation_time_utc_unix_ms) > 900000) AND ((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text)) OR (((instance_info.status)::text = 'DRAINING'::text OR (instance_info.status)::text = 'HOST_SERVICE_UNRESPONSIVE'::text))));
+  WHERE ((((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 120000) AND ((instance_info.status)::text <> 'PRE_CONNECTION'::text)) OR (((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 900000) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.creation_time_utc_unix_ms) > 900000) AND ((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text)) OR (((instance_info.status)::text = 'DRAINING'::text OR (instance_info.status)::text = 'HOST_SERVICE_UNRESPONSIVE'::text)));
 
 
 --
