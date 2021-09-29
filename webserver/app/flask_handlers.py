@@ -76,7 +76,7 @@ def can_process_requests_handler(app: Flask) -> None:
     """
 
     @app.before_request
-    def handler() -> None:  # pylint: disable=unused-variable
+    def handler() -> None:
         """
         Make sure web requests can actually be processed before proceeding
         """
