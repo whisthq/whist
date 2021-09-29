@@ -72,4 +72,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: core-ts
           fail_ci_if_error: true # optional (default = false)
-          verbose: true # optional (default = false)
