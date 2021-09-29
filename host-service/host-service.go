@@ -318,7 +318,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 }
 
 // Drain and shutdown the host service
-func DrainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
 	// req *DrainAndShutdownRequest) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
 

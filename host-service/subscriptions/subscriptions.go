@@ -41,8 +41,15 @@ func Run(instanceName string, done chan bool) error {
 		if err != nil {
 			return nil
 		}
-		// We notify via the done channel to start the drain and shutdown process
-		done <- true
+
+		var result SubscriptionStatusResult
+		json.Unmarshal(*data, &result)
+
+		if len(result.Hardware_instance_info) > 0 {
+			// We notify via the done channel to start the drain and shutdown process
+			done <- true
+		}
+
 		return nil
 	})
 
