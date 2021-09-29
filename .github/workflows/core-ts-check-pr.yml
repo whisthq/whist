@@ -6,6 +6,16 @@
 name: "Core TypeScript Library: Check PR"
 
 on:
+  push:
+    # Trigger CI to run when commits that modify /core-ts source files
+    # are pushed to `dev`, since we need to run CI in order to generate an
+    # updated test coverage report for the `dev` branch.
+    branches:
+      - dev
+    paths:
+      - "core-ts/**"
+      - "!core-ts/README.md"
+      - ".github/workflows/core-ts-check-pr.yml"
   pull_request:
     paths:
       - "core-ts/**"
