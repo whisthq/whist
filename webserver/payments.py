@@ -39,7 +39,7 @@ import stripe
 from flask import current_app, jsonify
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
 
-from auth0 import has_scope
+from app.utils.auth.auth0 import has_scope
 
 
 class PaymentRequired(Exception):
