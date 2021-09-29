@@ -2,7 +2,7 @@
 
 This repository contains the code for the Fractal client application, which is the end user's gateway into Fractal's technology. The user downloads and installs the client into `Applications` (MacOS) or `Program Files` (Windows), and launches it anytime they want to open up the Fractal browser.
 
-At a high-level, this repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in "packaging" the application for the user. This "packaging" involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS. Below, we'll discuss each of these functions in more detail.
+This repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in packaging the application for the user. Packaging involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS.
 
 ## Setting Up for Development
 
@@ -18,6 +18,12 @@ We use `yarn` as the package manager for this project. All of the commands requi
 
 5. To start the application in the `dev` environment, run `yarn start`. `yarn start` will install
    the protocol for you if it's not already installed.
+
+## Helpful `yarn` Commands
+
+`yarn start:lite` skips the protocol building step to launch Electron faster
+
+`yarn start --help` and `yarn start:lite --help` display custom options. In particular, the `--show-protocol-logs` and `--use-local-server` can be used to `console.log` protocol logs and use localhost instead of the dev server, respectively.
 
 ## How To Contribute
 
