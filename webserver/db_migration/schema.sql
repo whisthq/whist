@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.7 (Ubuntu 12.7-1.pgdg16.04+1)
--- Dumped by pg_dump version 13.3
+-- Dumped from database version 13.3 (Ubuntu 13.3-1.pgdg20.04+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,6 +21,13 @@ SET row_security = off;
 --
 
 CREATE SCHEMA cloud;
+
+
+--
+-- Name: hdb_catalog; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA hdb_catalog;
 
 
 --
@@ -48,7 +55,21 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
 -- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
 --
 
-COMMENT ON EXTENSION pg_stat_statements IS 'track execution statistics of all SQL statements executed';
+COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statistics of all SQL statements executed';
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
@@ -124,6 +145,15 @@ row_to_json(OLD));
          END IF;
        END;
 $$;
+
+
+--
+-- Name: gen_hasura_uuid(); Type: FUNCTION; Schema: hdb_catalog; Owner: -
+--
+
+CREATE FUNCTION hdb_catalog.gen_hasura_uuid() RETURNS uuid
+    LANGUAGE sql
+    AS $$select gen_random_uuid()$$;
 
 
 SET default_tablespace = '';
@@ -221,9 +251,9 @@ CREATE TABLE cloud.mandelbox_info (
     mandelbox_id character varying NOT NULL,
     user_id character varying NOT NULL,
     instance_name character varying NOT NULL,
-    session_id character varying NOT NULL,
     status character varying NOT NULL,
-    creation_time_utc_unix_ms bigint NOT NULL
+    creation_time_utc_unix_ms bigint NOT NULL,
+    session_id character varying NOT NULL
 );
 
 
@@ -284,6 +314,127 @@ CREATE TABLE cloud.region_to_ami (
     ami_active boolean DEFAULT false NOT NULL,
     client_commit_hash character varying NOT NULL,
     protected_from_scale_down boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: hdb_action_log; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_action_log (
+    id uuid DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
+    action_name text,
+    input_payload jsonb NOT NULL,
+    request_headers jsonb NOT NULL,
+    session_variables jsonb NOT NULL,
+    response_payload jsonb,
+    errors jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    response_received_at timestamp with time zone,
+    status text NOT NULL,
+    CONSTRAINT hdb_action_log_status_check CHECK ((status = ANY (ARRAY['created'::text, 'processing'::text, 'completed'::text, 'error'::text])))
+);
+
+
+--
+-- Name: hdb_cron_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_cron_event_invocation_logs (
+    id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: hdb_cron_events; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_cron_events (
+    id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
+    trigger_name text NOT NULL,
+    scheduled_time timestamp with time zone NOT NULL,
+    status text DEFAULT 'scheduled'::text NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    next_retry_at timestamp with time zone,
+    CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+);
+
+
+--
+-- Name: hdb_metadata; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_metadata (
+    id integer NOT NULL,
+    metadata json NOT NULL,
+    resource_version integer DEFAULT 1 NOT NULL
+);
+
+
+--
+-- Name: hdb_scheduled_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_scheduled_event_invocation_logs (
+    id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: hdb_scheduled_events; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_scheduled_events (
+    id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
+    webhook_conf json NOT NULL,
+    scheduled_time timestamp with time zone NOT NULL,
+    retry_conf json,
+    payload json,
+    header_conf json,
+    status text DEFAULT 'scheduled'::text NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    next_retry_at timestamp with time zone,
+    comment text,
+    CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+);
+
+
+--
+-- Name: hdb_schema_notifications; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_schema_notifications (
+    id integer NOT NULL,
+    notification json NOT NULL,
+    resource_version integer DEFAULT 1 NOT NULL,
+    instance_id uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT hdb_schema_notifications_id_check CHECK ((id = 1))
+);
+
+
+--
+-- Name: hdb_version; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_version (
+    hasura_uuid uuid DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
+    version text NOT NULL,
+    upgraded_on timestamp with time zone NOT NULL,
+    cli_state jsonb DEFAULT '{}'::jsonb NOT NULL,
+    console_state jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -376,11 +527,111 @@ ALTER TABLE ONLY cloud.mandelbox_info
 
 
 --
--- Name: region_to_ami region_to_ami_pkey; Type: CONSTRAINT; Schema: hardwcloudare; Owner: -
+-- Name: region_to_ami region_to_ami_pkey; Type: CONSTRAINT; Schema: cloud; Owner: -
 --
 
 ALTER TABLE ONLY cloud.region_to_ami
     ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
+
+
+--
+-- Name: hdb_action_log hdb_action_log_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_action_log
+    ADD CONSTRAINT hdb_action_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
+    ADD CONSTRAINT hdb_cron_event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_cron_events hdb_cron_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_events
+    ADD CONSTRAINT hdb_cron_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_metadata hdb_metadata_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_metadata
+    ADD CONSTRAINT hdb_metadata_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_metadata hdb_metadata_resource_version_key; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_metadata
+    ADD CONSTRAINT hdb_metadata_resource_version_key UNIQUE (resource_version);
+
+
+--
+-- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
+    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_scheduled_events hdb_scheduled_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_events
+    ADD CONSTRAINT hdb_scheduled_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_schema_notifications hdb_schema_notifications_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_schema_notifications
+    ADD CONSTRAINT hdb_schema_notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_version hdb_version_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_version
+    ADD CONSTRAINT hdb_version_pkey PRIMARY KEY (hasura_uuid);
+
+
+--
+-- Name: hdb_cron_event_status; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX hdb_cron_event_status ON hdb_catalog.hdb_cron_events USING btree (status);
+
+
+--
+-- Name: hdb_cron_events_unique_scheduled; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE UNIQUE INDEX hdb_cron_events_unique_scheduled ON hdb_catalog.hdb_cron_events USING btree (trigger_name, scheduled_time) WHERE (status = 'scheduled'::text);
+
+
+--
+-- Name: hdb_scheduled_event_status; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX hdb_scheduled_event_status ON hdb_catalog.hdb_scheduled_events USING btree (status);
+
+
+--
+-- Name: hdb_version_one_row; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (((version IS NOT NULL)));
 
 
 --
@@ -403,6 +654,22 @@ CREATE TRIGGER t BEFORE INSERT OR DELETE OR UPDATE ON cloud.region_to_ami FOR EA
 
 ALTER TABLE ONLY cloud.mandelbox_info
     ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES cloud.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
+    ADD CONSTRAINT hdb_cron_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_cron_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
+    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
