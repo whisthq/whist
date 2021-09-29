@@ -42,7 +42,7 @@ func TestUserConfigIntegration(t *testing.T) {
 		t.Fatalf("failed to create config dir %s: %v", unpackedConfigPath, err)
 	}
 
-	testBase := path.Join(utils.Sprintf("%s%s", utils.FractalDir, testConfig.mandelboxID), "testBase")
+	testBase := path.Join(utils.FractalDir, string(testConfig.mandelboxID), "testBase")
 
 	// Copy test directory to unpacked config path
 	copyCommand := exec.Command("cp", "-R", testBase, unpackedConfigPath)
@@ -111,8 +111,10 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 }
 
+// setupTestDirs creates a sample user config with some nested directories
+// and files inside.
 func setupTestDirs(c *mandelboxData) error {
-	configDir := utils.Sprintf("%s%s", utils.FractalDir, c.mandelboxID)
+	configDir := path.Join(utils.FractalDir, string(c.mandelboxID))
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("failed to create config dir %s: %v", configDir, err)
 	}
@@ -164,6 +166,9 @@ func setupTestDirs(c *mandelboxData) error {
 	return nil
 }
 
+// cleanupTestDirs removes the created directories created by the integration
+// test. This allows the test to be runnable multiple times without
+// creation errors.
 func cleanupTestDirs(c *mandelboxData) error {
-	return os.RemoveAll(utils.FractalDir)
+	return os.RemoveAll(path.Join(utils.FractalDir, string(c.mandelboxID)))
 }

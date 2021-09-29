@@ -5,6 +5,7 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -78,7 +79,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	logger.Infof("Starting S3 config download")
 
-	cfg, err := config.LoadDefaultConfig(c.ctx)
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return utils.MakeError("failed to load aws config: %v", err)
 	}
@@ -89,7 +90,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	downloader := manager.NewDownloader(s3Client)
 
 	// Fetch the HeadObject first to see how much memory we need to allocate
-	headObject, err := s3Client.HeadObject(c.ctx, &s3.HeadObjectInput{
+	headObject, err := s3Client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
@@ -110,7 +111,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
 	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(c.ctx, buf, &s3.GetObjectInput{
+	numBytes, err := downloader.Download(context.Background(), buf, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 	})
@@ -241,7 +242,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 	logger.Infof("Encrypted config to %s", encTarPath)
 
-	cfg, err := config.LoadDefaultConfig(c.ctx)
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return utils.MakeError("failed to load aws config: %v", err)
 	}
@@ -256,7 +257,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 		return utils.MakeError("failed to open encrypted config: %v", err)
 	}
 
-	_, err = uploader.Upload(c.ctx, &s3.PutObjectInput{
+	_, err = uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKey()),
 		Body:   encryptedConfig,
@@ -287,6 +288,7 @@ func (c *mandelboxData) getS3ConfigPath() string {
 	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
 }
 
+// getS3ConfigKey returns the S3 key where a user's config can be found.
 func (c *mandelboxData) getS3ConfigKey() string {
 	return utils.Sprintf("%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
 }
