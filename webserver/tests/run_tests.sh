@@ -42,15 +42,15 @@ fi
 export TESTING=true
 
 # Only set Codecov flags if running in CI
-cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=app/ --cov=tests/ --cov=auth0 --cov=payments")"
+cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=./")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
-# folder as it's irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts $cov "$@")
+# folder as it is irrelevant to unit/integration testing
+(cd .. && pytest --ignore=scripts/ $cov "$@")
 
 # Download the Codecov uploader
 (cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (cd .. && ./codecov --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)
+test "$IN_CI" = "false" || (cd .. && ./codecov --branch $HEROKU_TEST_RUN_BRANCH --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F webserver)

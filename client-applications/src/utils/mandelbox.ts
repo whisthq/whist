@@ -6,11 +6,9 @@
 import { isEmpty } from "lodash"
 import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
-import { defaultAllowedRegions } from "@app/utils/constants"
-import { sortRegionByProximity } from "@app/utils/region"
+import { sessionID } from "@app/utils/constants"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
-import { logBase } from "@app/utils/logging"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
@@ -24,37 +22,24 @@ const isLocalEnv = () => {
   return isLocal
 }
 
-export const regionGet = async () => {
-  const sortedRegions = await sortRegionByProximity(defaultAllowedRegions)
-  return sortedRegions
-}
-
-export const mandelboxCreate = async (accessToken: string) => {
-  const regions = await regionGet()
-
-  logBase(`Sorted AWS regions are [${regions.toString()}]`, {})
-
-  return await mandelboxRequest(accessToken, regions)
-}
-
 export const mandelboxCreateSuccess = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+  response: AsyncReturnType<typeof mandelboxRequest>
 ) => [200, 202].includes(response.status as number)
 
 export const mandelboxCreateErrorNoAccess = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+  response: AsyncReturnType<typeof mandelboxRequest>
 ) => response.status === 402
 
 export const mandelboxCreateErrorUnauthorized = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+  response: AsyncReturnType<typeof mandelboxRequest>
 ) => response.status === 422 || response.status === 401
 
 export const mandelboxCreateErrorMaintenance = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+  response: AsyncReturnType<typeof mandelboxRequest>
 ) => response.status === 512
 
 export const mandelboxCreateErrorInternal = (
-  response: AsyncReturnType<typeof mandelboxCreate>
+  response: AsyncReturnType<typeof mandelboxRequest>
 ) =>
   (response?.json?.ID ?? "") === "" &&
   !mandelboxCreateErrorNoAccess(response) &&
@@ -62,12 +47,16 @@ export const mandelboxCreateErrorInternal = (
   !mandelboxCreateErrorMaintenance(response)
 
 // Helper functions
-const mandelboxRequest = async (accessToken: string, regions: AWSRegion[]) =>
+export const mandelboxRequest = async (
+  accessToken: string,
+  regions: AWSRegion[]
+) =>
   post({
     endpoint: "/mandelbox/assign",
     accessToken,
     body: {
       regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
+      session_id: sessionID,
     },
   })
