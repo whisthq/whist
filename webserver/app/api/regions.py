@@ -12,7 +12,7 @@ aws_region_bp = Blueprint("aws_region_bp", __name__)
 
 @aws_region_bp.route("/regions", methods=("GET",))
 @log_request
-@jwt_required()
+@jwt_required()  # type: ignore
 def regions() -> Any:
     """Return the list of regions in which users are allowed to deploy tasks.
 

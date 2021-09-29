@@ -25,11 +25,11 @@ aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
 
 @aws_mandelbox_bp.route("/mandelbox/assign", methods=("POST",))
-@limiter.limit(RATE_LIMIT_PER_MINUTE)
+@limiter.limit(RATE_LIMIT_PER_MINUTE) # type: ignore
 @fractal_pre_process
-@jwt_required()
+@jwt_required() # type: ignore
 @payment_required
-@validate()
+@validate() # type: ignore
 def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Response, HTTPStatus]:
     start_time = time.time() * 1000
     care_about_active = False
