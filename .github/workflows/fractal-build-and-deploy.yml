@@ -346,7 +346,7 @@ jobs:
         with:
           python-version: "3.9.5"
 
-      - name: Setup Python-based notifications # Need to set up notifications before errors can occur
+      - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
