@@ -33,7 +33,7 @@ export const fractalError = {
   },
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "There was an error connecting to the Fractal servers.",
-    text: "Please try again in a few minutes or contact support@fractal.co for help.",
+    text: "Please check your Internet connection or try again in a few minutes.",
   },
   [AUTH_ERROR]: {
     title: "We've added extra security measures to our login system.",
