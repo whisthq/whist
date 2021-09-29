@@ -88,7 +88,7 @@ def swap_over_buffers(new_amis: str,) -> None:
 
 # In @owenniles's opinion, all CLI commands should contain hyphens rather than underscores. The
 # pattern of using hyphens over underscores when necessary is prevalent in established CLIs.
-@compute_bp.cli.command("scale-down-instances")
+@compute_bp.cli.command("scale-down-instances")  # type: ignore
 def scale_down() -> None:
     """Scale compute resources down to the minimum required levels in all regions.
 
