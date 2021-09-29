@@ -151,6 +151,7 @@ def bulk_instance():
                 mandelbox_id=str(randint(0, 10000000)),
                 instance_name=new_instance.instance_name,
                 user_id=kwargs.get("user_for_mandelboxes", "test-user"),
+                session_id=str(randint(1600000000, 9999999999)),
                 status="Running",
                 creation_time_utc_unix_ms=int(time.time() * 1000),
             )
