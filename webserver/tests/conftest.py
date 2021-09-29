@@ -212,6 +212,7 @@ def region_name():
     region_name = get_random_region_name()
     return region_name
 
+
 @pytest.fixture
 def override_environment(app):
     """

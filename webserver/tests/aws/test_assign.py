@@ -79,6 +79,7 @@ def test_assign_active(client, bulk_instance, monkeypatch):
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
 
+
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_success(
     app, client, bulk_instance, override_environment
@@ -101,10 +102,9 @@ def test_client_commit_hash_local_dev_override_success(
 
     assert response.status_code == HTTPStatus.ACCEPTED
 
+
 @pytest.mark.usefixtures("authorized")
-def test_client_using_outdated_commit_hash(
-    app, client, bulk_instance, override_environment
-):
+def test_client_using_outdated_commit_hash(app, client, bulk_instance, override_environment):
     """
     Ensure that in development environment, passing the pre-shared client commit hash for dev enviroment
     returns a status code of ACCEPTED

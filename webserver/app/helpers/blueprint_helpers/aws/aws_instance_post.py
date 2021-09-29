@@ -152,8 +152,8 @@ def find_instance(region: str, valid_commit_hashes: List[str]) -> Optional[str]:
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
         InstancesWithRoomForMandelboxes.query.filter(
             InstancesWithRoomForMandelboxes.commit_hash.in_(valid_commit_hashes)
-        ).
-        filter_by(
+        )
+        .filter_by(
             location=region,
             status=MandelboxHostState.ACTIVE,
         )
@@ -169,9 +169,7 @@ def find_instance(region: str, valid_commit_hashes: List[str]) -> Optional[str]:
             InstancesWithRoomForMandelboxes.query.filter(
                 InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
             )
-            .filter(
-                InstancesWithRoomForMandelboxes.commit_hash.in_(valid_commit_hashes)
-            )
+            .filter(InstancesWithRoomForMandelboxes.commit_hash.in_(valid_commit_hashes))
             .filter_by(
                 status=MandelboxHostState.ACTIVE,
             )

@@ -43,9 +43,16 @@ def test_find_part_full_instance_order(bulk_instance, region_name):
         == instance_with_max_occupancy.instance_name
     )
 
+
 def test_find_instance_with_latest_commit_hash(bulk_instance, region_name):
     instance = bulk_instance(location=region_name)
-    assert find_instance(region_name, [OUTDATED_COMMIT_HASH_FOR_TESTING, CLIENT_COMMIT_HASH_FOR_TESTING]) == instance.instance_name
+    assert (
+        find_instance(
+            region_name, [OUTDATED_COMMIT_HASH_FOR_TESTING, CLIENT_COMMIT_HASH_FOR_TESTING]
+        )
+        == instance.instance_name
+    )
+
 
 def test_no_find_full_instance(bulk_instance, region_name):
     """
