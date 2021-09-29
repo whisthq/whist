@@ -4,7 +4,7 @@ Example usage::
 
     # wsgi.py
 
-    from auth0 import scope_required, ScopeError
+    from app.utils.auth.auth0 import scope_required, ScopeError
     from flask import Flask
 
     app = Flask(__name__)
