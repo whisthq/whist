@@ -41,7 +41,7 @@ fi
 # regardless of in CI or local tests, we set this variable
 export TESTING=true
 
-# Only set Codecov flags if running in CI (generate XML for uploading and print to terminal for debugging)
+# Only set Codecov flags if running in CI
 cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=./")"
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
