@@ -734,9 +734,9 @@ RUN systemctl enable fractal-main
 #########################
 
 # Set our fractal systemd files to be root-visible only
-RUN chgrp root /etc/systemd/system/fractal*
-RUN chown root:root /etc/systemd/system/fractal*
-RUN chmod 600 /etc/systemd/system/fractal*
+RUN chgrp root /etc/systemd/system/fractal* \
+    && chown root:root /etc/systemd/system/fractal* \
+    && chmod 600 /etc/systemd/system/fractal*
 
 # Install Fractal Protocol binaries and helper files
 # We do this last and symlink `/usr/share/fractal/bin` earlier
