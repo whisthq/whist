@@ -4,8 +4,8 @@ import pytest
 from flask import Flask
 from flask_jwt_extended import create_access_token, JWTManager
 
-from app.helpers.utils.general.limiter import limiter
-from auth0 import has_scope, scope_required, ScopeError
+from app.utils.general.limiter import limiter
+from app.utils.auth.auth0 import has_scope, scope_required, ScopeError
 from tests.client import FractalAPITestClient
 
 

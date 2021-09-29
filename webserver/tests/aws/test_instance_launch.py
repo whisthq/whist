@@ -4,17 +4,17 @@ import random, requests
 from app.database.models.cloud import RegionToAmi, db
 from tests.patches import function
 
-from app.helpers.command_helpers import ami_upgrade
-from app.helpers.command_helpers.ami_upgrade import (
+from app.helpers.ami import ami_upgrade
+from app.helpers.ami.ami_upgrade import (
     launch_new_ami_buffer,
     insert_new_amis,
     create_ami_buffer,
     swapover_amis,
 )
-from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
 
-from app.helpers.utils.aws.base_ec2_client import EC2Client
-from app.helpers.utils.general.name_generation import generate_name
+from app.utils.aws.base_ec2_client import EC2Client
+from app.utils.general.name_generation import generate_name
 
 from app.constants.ec2_instance_states import EC2InstanceState
 from app.constants.mandelbox_host_states import MandelboxHostState

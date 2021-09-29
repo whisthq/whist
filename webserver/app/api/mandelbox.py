@@ -7,19 +7,19 @@ from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_pydantic import validate
 from typing import Any, Tuple
-from app.validation import MandelboxAssignBody
+from app.utils.mandelbox.validation import MandelboxAssignBody
 
 from app import fractal_pre_process
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, LOCAL
-from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
-from app.helpers.blueprint_helpers.aws.aws_mandelbox_assign_post import is_user_active
-from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
-from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.metrics.flask_app import app_record_metrics
-from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance, find_enabled_regions
+from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.helpers.aws.aws_mandelbox_assign_post import is_user_active
+from app.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
+from app.utils.general.logs import fractal_logger
+from app.utils.metrics.flask_app import app_record_metrics
+from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
-from payments import payment_required
+from app.utils.stripe.payments import payment_required
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
@@ -103,10 +103,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             else:
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(
-                        region,
-                        ami.ami_id,
-                    ),
+                    args=(region, ami.ami_id),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },

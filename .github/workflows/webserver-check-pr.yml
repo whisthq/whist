@@ -42,11 +42,11 @@ jobs:
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
 
       - name: Check if Code Matches Pylint Standards
-        run: pylint-wrapper webserver/app webserver/auth0.py webserver/payments.py
+        run: pylint-wrapper webserver/app
 
       - name: Perform static type analysis with mypy
         working-directory: webserver
-        run: mypy --strict
+        run: mypy --strict app # TODO (aaron): include script and tests
 
   # Heroku Testing
   # Checks unit tests on the Heroku pipeline.
