@@ -40,10 +40,12 @@ ignore:
   - "webserver/app/config.py"
   - "webserver/app/sentry.py"
 
-# Heroku CI makes /app the root on the Heroku CI instances,
-# so we need this fix to retrive /webserver as the root folder
+# Heroku CI makes /app the root on the Heroku CI instances, 
+# so we need this fix to retrieve /webserver as the root folder
+# We do the same for /core-ts, since Jest runs in the subfolder
 fixes:
   - "app/::webserver/" # Move path  e.g., "before/path" => "after/path"
+  - "src/::core-ts/"   # Move path  e.g., "before/path" => "after/path"
 
 # Settings for Codecov comments on pull requests
 comment:
