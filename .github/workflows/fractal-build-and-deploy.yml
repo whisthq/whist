@@ -342,6 +342,10 @@ jobs:
         with:
           python-version: "3.9.5"
 
+      - name: Install webserver scripting dependencies
+        working-directory: webserver
+        run: pip install -r scripts/requirements.txt
+
       - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
@@ -392,10 +396,6 @@ jobs:
 
       ##########################################################################################
       ####################### Stage 3 - Build & Publish AMIs to AWS EC2 ########################
-
-      - name: Install webserver scripting dependencies
-        working-directory: webserver
-        run: pip install -r scripts/requirements.txt
 
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
