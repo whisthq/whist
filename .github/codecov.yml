@@ -35,7 +35,7 @@ ignore:
   - "webserver/app/config.py"
   - "webserver/app/sentry.py"
 
-# Heroku CI makes /app the root on the Heroku CI instances, 
+# Heroku CI makes /app the root on the Heroku CI instances,
 # so we need this fix to retrive /webserver as the root folder
 fixes:
   - "app/::webserver/" # Move path  e.g., "before/path" => "after/path"
