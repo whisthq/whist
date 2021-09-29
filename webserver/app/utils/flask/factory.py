@@ -152,6 +152,5 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(aws_region_bp)
 
     app.add_url_rule(
-        "/payment_portal_url",
-        view_func=jwt_required()(payment_portal_factory(get_customer_id)),
+        "/payment_portal_url", view_func=jwt_required()(payment_portal_factory(get_customer_id))
     )

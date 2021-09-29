@@ -7,11 +7,7 @@ import threading
 from http import HTTPStatus
 
 from flask import Flask
-from flask import (
-    abort,
-    jsonify,
-    make_response,
-)
+from flask import abort, jsonify, make_response
 
 from app.utils.general.logs import fractal_logger
 

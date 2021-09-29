@@ -47,13 +47,10 @@ command_bp = Blueprint("command", __name__, cli_group="ami")
 compute_bp = Blueprint("compute", __name__)
 
 
-@command_bp.cli.command("create_buffers") # type: ignore
-@click.argument("client_commit_hash") # type: ignore
-@click.argument("region_to_ami_id_mapping_str") # type: ignore
-def create_buffers(
-    client_commit_hash: str,
-    region_to_ami_id_mapping_str: str,
-) -> None:
+@command_bp.cli.command("create_buffers")  # type: ignore
+@click.argument("client_commit_hash")  # type: ignore
+@click.argument("region_to_ami_id_mapping_str")  # type: ignore
+def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str) -> None:
     """
     This function creates buffers of instances for a given set of AMIs.
     Args:
@@ -72,11 +69,9 @@ def create_buffers(
     print(f"::set-output name=new_amis::{json.dumps(new_amis)}")
 
 
-@command_bp.cli.command("swap_over_buffers") # type: ignore
-@click.argument("new_amis") # type: ignore
-def swap_over_buffers(
-    new_amis: str,
-) -> None:
+@command_bp.cli.command("swap_over_buffers")  # type: ignore
+@click.argument("new_amis")  # type: ignore
+def swap_over_buffers(new_amis: str,) -> None:
     """
     This function sets the new AMIs to active, the old AMIs to inactive,
     and drains all previously active instances.
@@ -105,7 +100,7 @@ def scale_down() -> None:
     try_scale_down_if_necessary_all_regions()
 
 
-@compute_bp.cli.command("prune-lingering-instances") # type: ignore
+@compute_bp.cli.command("prune-lingering-instances")  # type: ignore
 def prune() -> None:
     """Identify and terminate compute instances left over from past deployments.
 
