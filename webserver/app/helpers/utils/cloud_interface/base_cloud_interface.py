@@ -51,7 +51,7 @@ class CloudClient(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def spin_til_instances_running(self, instance_ids: List[str], time_wait=10) -> None:
+    def spin_til_instances_running(self, instance_ids: List[str], time_wait: int = 10) -> None:
         """
         Polls the cloud provider every time_wait seconds until all specified
         instances are marked as running by the cloud provider (NOT necessarily

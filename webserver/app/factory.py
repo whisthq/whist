@@ -2,10 +2,11 @@ import os
 
 from http import HTTPStatus
 from urllib.parse import urlunsplit
+from typing import Any, Dict, Tuple
 
 import stripe
 
-from flask import current_app, Flask, jsonify
+from flask import current_app, Flask, jsonify, Response
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
@@ -25,8 +26,10 @@ from payments import payment_portal_factory, get_customer_id, PaymentRequired
 jwtManager = JWTManager()
 
 
-@jwtManager.decode_key_loader
-def decode_key_callback(unverified_headers, _unverified_payload):
+@jwtManager.decode_key_loader  # type: ignore
+def decode_key_callback(
+    unverified_headers: Dict[str, Any], _unverified_payload: Dict[str, Any]
+) -> Any:
     """Dynamically determine the key to use to validate each JWT.
 
     The AUTH0_DOMAIN Flask configuration variable MUST be set.
@@ -48,7 +51,7 @@ def decode_key_callback(unverified_headers, _unverified_payload):
     return jwks_client.get_signing_key(unverified_headers["kid"]).key
 
 
-def create_app(testing=False):
+def create_app(testing: bool = False) -> Flask:
     """A Flask application factory.
 
     See https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/?highlight=factory.
@@ -98,7 +101,7 @@ def create_app(testing=False):
     return app
 
 
-def register_handlers(app: Flask):
+def register_handlers(app: Flask) -> None:
     """
     Register all Flask app handlers. This should SHOULD NOT include endpoint definitions, which
     happens via blueprints in `register_blueprints`. These handlers should be other functions
@@ -109,18 +112,18 @@ def register_handlers(app: Flask):
     can_process_requests_handler(app)
 
     @app.errorhandler(ScopeError)
-    def _handle_scope_error(e):
+    def _handle_scope_error(e: Any) -> Any:
         return default_unauthorized_callback(str(e))
 
     @app.errorhandler(PaymentRequired)
-    def _handle_payment_required(_error):
+    def _handle_payment_required(_error: Any) -> Tuple[Response, HTTPStatus]:
         return (
             jsonify(error="That resource is only available to Fractal subscribers"),
             HTTPStatus.PAYMENT_REQUIRED,
         )
 
 
-def register_commands(app):
+def register_commands(app: Flask) -> None:
     """
     Registers all blueprints (cli commands) for the Flask app
 
@@ -134,7 +137,7 @@ def register_commands(app):
     app.register_blueprint(compute_bp)
 
 
-def register_blueprints(app):
+def register_blueprints(app: Flask) -> None:
     """
     Registers all blueprints (endpoints) for the Flask app
 

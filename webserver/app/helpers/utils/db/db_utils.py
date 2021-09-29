@@ -7,7 +7,7 @@ Contains helpers for our SQLAlchemy db connection. Specifically:
 from app.database.models.cloud import db
 
 
-def set_local_lock_timeout(seconds: int):
+def set_local_lock_timeout(seconds: int) -> None:
     """
     Call this right before a SQLAlchemy query that uses with_for_update() to put a timeout on the
     locking mechanism. Example (with error handling):

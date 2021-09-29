@@ -164,7 +164,7 @@ class EC2Client(CloudClient):
         states = self.get_instance_states(instance_ids)
         return EC2InstanceState.RUNNING not in set(states)
 
-    def spin_til_instances_running(self, instance_ids: List[str], time_wait=10) -> None:
+    def spin_til_instances_running(self, instance_ids: List[str], time_wait: int = 10) -> None:
         """
         Polls AWS every time_wait seconds until all specified instances are
         marked as running by AWS (NOT necessarily fully initialized and ready
@@ -179,7 +179,7 @@ class EC2Client(CloudClient):
         while not self.all_running(instance_ids):
             time.sleep(time_wait)
 
-    def spin_til_instances_not_running(self, instance_ids: List[str], time_wait=10) -> None:
+    def spin_til_instances_not_running(self, instance_ids: List[str], time_wait: int = 10) -> None:
         """
         Polls AWS every time_wait seconds until all specified instances are
         marked as not running by AWS.
