@@ -71,7 +71,9 @@ def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str) -
 
 @command_bp.cli.command("swap_over_buffers")  # type: ignore
 @click.argument("new_amis")  # type: ignore
-def swap_over_buffers(new_amis: str,) -> None:
+def swap_over_buffers(
+    new_amis: str,
+) -> None:
     """
     This function sets the new AMIs to active, the old AMIs to inactive,
     and drains all previously active instances.
