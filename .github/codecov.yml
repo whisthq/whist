@@ -38,7 +38,7 @@ ignore:
 # Heroku CI makes /app the root on the Heroku CI instances, 
 # so we need this fix to retrive /webserver as the root folder
 fixes:
-  - "::webserver/" # Move root  e.g., "path/" => "after/path/"
+  - "app/::webserver/app/" # Move path  e.g., "before/path" => "after/path"
 
 # Settings for Codecov comments on pull requests
 comment:
