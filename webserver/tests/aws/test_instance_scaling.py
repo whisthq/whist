@@ -353,7 +353,7 @@ def test_lingering_instances(
     assert call_set == {
         instance_bad_normal.instance_name,
         instance_bad_preconnect.instance_name,
-        instance_no_associated_mandelbox.name,
+        instance_no_associated_mandelbox.instance_name,
     }
 
 
