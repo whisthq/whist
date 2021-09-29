@@ -106,7 +106,7 @@ def test_check_payment_invalid(monkeypatch, subscription_status):
     states.
     """
 
-    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
+    monkeypatch.setattr("app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status))
 
     with current_app.test_request_context():
         with pytest.raises(PaymentRequired):
@@ -117,7 +117,7 @@ def test_check_payment_invalid(monkeypatch, subscription_status):
 def test_check_payment_valid(monkeypatch, subscription_status):
     """Ensure that check_payment() returns when there is a valid subscription."""
 
-    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
+    monkeypatch.setattr("app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status))
 
     with current_app.test_request_context():
         check_payment()
@@ -145,7 +145,7 @@ def test_payment_required(client, make_user, mock_kwargs, monkeypatch, status_co
     user = make_user()
 
     client.login(user)
-    monkeypatch.setattr("payments.check_payment", function(**mock_kwargs))
+    monkeypatch.setattr("app.utils.stripe.payments.check_payment", function(**mock_kwargs))
 
     assert client.get("/").status_code == status_code
 
