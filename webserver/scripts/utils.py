@@ -4,7 +4,9 @@ from typing import Any, Dict
 import requests
 
 
-def make_get_request(web_url: str, endpoint: str, params: Dict[str, Any] = None, bearer_token: str = None):
+def make_get_request(
+    web_url: str, endpoint: str, params: Dict[str, Any] = None, bearer_token: str = None
+):
     """
     Makes an optionally authenticated GET request. Properly formats bearer_token (if given).
 
@@ -20,17 +22,12 @@ def make_get_request(web_url: str, endpoint: str, params: Dict[str, Any] = None,
     url = urljoin(web_url, endpoint)
     headers = None
     if bearer_token is not None:
-        headers = {
-            "Authorization": f"Bearer {bearer_token}",
-        }
+        headers = {"Authorization": f"Bearer {bearer_token}"}
     return requests.get(url=url, headers=headers, params=params)
 
 
 def make_post_request(
-    web_url: str,
-    endpoint: str,
-    payload: Dict[str, Any],
-    bearer_token: str = None,
+    web_url: str, endpoint: str, payload: Dict[str, Any], bearer_token: str = None
 ) -> requests.Response:
     """
     Makes a POST request. Properly formats bearer_token (if given) and payload.
@@ -47,9 +44,7 @@ def make_post_request(
     url = urljoin(web_url, endpoint)
     headers = None
     if bearer_token is not None:
-        headers = {
-            "Authorization": f"Bearer {bearer_token}",
-        }
+        headers = {"Authorization": f"Bearer {bearer_token}"}
     payload_str = None
     if payload is not None:
         payload_str = json.dumps(payload)
