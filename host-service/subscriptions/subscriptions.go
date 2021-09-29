@@ -8,15 +8,13 @@ package subscriptions // import "github.com/fractal/fractal/host-service/subscri
 import (
 	"encoding/json"
 	"log"
-	"time"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 
 // Run is responsible for starting the subscription client, as well as
 // subscribing to the subscriptions defined in queries.go
-func Run(instanceName string, done chan<- bool) error {
+func Run(instanceName string, done chan bool) error {
 	// We set up the client with auth and logging parameters
 	url := "http://localhost:8080/v1/graphql"
 	client := graphql.NewSubscriptionClient(url).
@@ -31,9 +29,6 @@ func Run(instanceName string, done chan<- bool) error {
 			return err
 		})
 
-	// Close the client when we are done
-	defer client.Close()
-
 	// variables holds the values needed to run the graphql subscription
 	variables := map[string]interface{}{
 		"instance_name": graphql.String(instanceName),
@@ -41,7 +36,7 @@ func Run(instanceName string, done chan<- bool) error {
 	}
 
 	// This subscriptions fires when the running instance status changes to draining on the database
-	_, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
+	id, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
 
 		if err != nil {
 			return nil
@@ -53,13 +48,20 @@ func Run(instanceName string, done chan<- bool) error {
 
 	if err != nil {
 		// handle subscription error
-		logger.Errorf("Subscription error!")
+		return err
 	}
+
+	defer func(id string) {
+		// We have to ensure we unsubscribe before closing the client,
+		// otherwise it will result in a deadlock!
+		client.Unsubscribe(id)
+		client.Close()
+		done <- true
+	}(id)
 
 	// Run the client on a go routine to make sure it closes properly when we are done
 	go client.Run()
-	// This sleep fixes race conditions when running the client on a go routine
-	time.Sleep(time.Minute)
 
+	<-done
 	return nil
 }
