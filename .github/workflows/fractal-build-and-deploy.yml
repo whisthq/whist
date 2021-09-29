@@ -327,6 +327,10 @@ jobs:
       aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
 
     steps:
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
@@ -392,10 +396,6 @@ jobs:
       - name: Install webserver scripting dependencies
         working-directory: webserver
         run: pip install -r scripts/requirements.txt
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
 
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
