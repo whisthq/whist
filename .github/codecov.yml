@@ -38,11 +38,7 @@ ignore:
 # Heroku CI makes /app the root on the Heroku CI instances, 
 # so we need this fix to retrive /webserver as the root folder
 fixes:
-  - "app/::webserver/app/" # Move path  e.g., "before/path" => "after/path"
-  - "app/::webserver/tests/"
-  - "app/::webserver/scripts/"
-  - "app/::webserver/auth0.py"
-  - "app/::webserver/payments.py"
+  - "app/::webserver/" # Move path  e.g., "before/path" => "after/path"
 
 # Settings for Codecov comments on pull requests
 comment:
