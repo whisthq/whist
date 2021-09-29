@@ -70,5 +70,6 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: core-ts/coverage/clover.xml
           flags: core-ts
           fail_ci_if_error: true # optional (default = false)
