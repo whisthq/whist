@@ -4,7 +4,7 @@ from flask.testing import FlaskClient
 from flask_jwt_extended import create_access_token
 
 
-class FractalAPITestClient(FlaskClient):
+class FractalAPITestClient(FlaskClient): # type: ignore
     """A custom test client class that makes it easy to authenticate requests."""
 
     def login(self, username, *, admin=False, **additional_claims):
