@@ -29,30 +29,7 @@ func Run(instanceName string, done chan bool) error {
 			return err
 		})
 
-	// variables holds the values needed to run the graphql subscription
-	variables := map[string]interface{}{
-		"instance_name": graphql.String(instanceName),
-		"status":        graphql.String("DRAINING"),
-	}
-
-	// This subscriptions fires when the running instance status changes to draining on the database
-	id, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
-
-		if err != nil {
-			return nil
-		}
-
-		var result SubscriptionStatusResult
-		json.Unmarshal(*data, &result)
-
-		if len(result.Hardware_instance_info) > 0 {
-			// We notify via the done channel to start the drain and shutdown process
-			done <- true
-		}
-
-		return nil
-	})
-
+	id, err := SubscribeDrainingStatus(instanceName, client, done)
 	if err != nil {
 		// handle subscription error
 		return err
@@ -71,4 +48,39 @@ func Run(instanceName string, done chan bool) error {
 
 	<-done
 	return nil
+}
+
+// SubscribeDrainingStatus handles the hasura subscription to detect changes on instance instanceName
+// to the status DRAINING in the database.
+func SubscribeDrainingStatus(instanceName string, client *graphql.SubscriptionClient, done chan<- bool) (string, error) {
+	// variables holds the values needed to run the graphql subscription
+	variables := map[string]interface{}{
+		"instance_name": graphql.String(instanceName),
+		"status":        graphql.String("DRAINING"),
+	}
+	// This subscriptions fires when the running instance status changes to draining on the database
+	id, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
+
+		if err != nil {
+			return nil
+		}
+
+		var result SubscriptionStatusResult
+		json.Unmarshal(*data, &result)
+
+		// If the result array returned by Hasura is not empty, it means
+		// there was a change in the database row
+		if len(result.Hardware_instance_info) > 0 {
+			// We notify via the done channel to start the drain and shutdown process
+			done <- true
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
