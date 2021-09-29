@@ -26,7 +26,7 @@ from app.utils.stripe.payments import payment_portal_factory, get_customer_id, P
 jwtManager = JWTManager()
 
 
-@jwtManager.decode_key_loader  # type: ignore
+@jwtManager.decode_key_loader
 def decode_key_callback(
     unverified_headers: Dict[str, Any], _unverified_payload: Dict[str, Any]
 ) -> Any:

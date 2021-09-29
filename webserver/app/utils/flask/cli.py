@@ -47,9 +47,9 @@ command_bp = Blueprint("command", __name__, cli_group="ami")
 compute_bp = Blueprint("compute", __name__)
 
 
-@command_bp.cli.command("create_buffers")  # type: ignore
-@click.argument("client_commit_hash")  # type: ignore
-@click.argument("region_to_ami_id_mapping_str")  # type: ignore
+@command_bp.cli.command("create_buffers")
+@click.argument("client_commit_hash")
+@click.argument("region_to_ami_id_mapping_str")
 def create_buffers(
     client_commit_hash: str,
     region_to_ami_id_mapping_str: str,
@@ -72,8 +72,8 @@ def create_buffers(
     print(f"::set-output name=new_amis::{json.dumps(new_amis)}")
 
 
-@command_bp.cli.command("swap_over_buffers")  # type: ignore
-@click.argument("new_amis")  # type: ignore
+@command_bp.cli.command("swap_over_buffers")
+@click.argument("new_amis")
 def swap_over_buffers(
     new_amis: str,
 ) -> None:
@@ -93,7 +93,7 @@ def swap_over_buffers(
 
 # In @owenniles's opinion, all CLI commands should contain hyphens rather than underscores. The
 # pattern of using hyphens over underscores when necessary is prevalent in established CLIs.
-@compute_bp.cli.command("scale-down-instances")  # type: ignore
+@compute_bp.cli.command("scale-down-instances")
 def scale_down() -> None:
     """Scale compute resources down to the minimum required levels in all regions.
 
@@ -105,7 +105,7 @@ def scale_down() -> None:
     try_scale_down_if_necessary_all_regions()
 
 
-@compute_bp.cli.command("prune-lingering-instances")  # type: ignore
+@compute_bp.cli.command("prune-lingering-instances")
 def prune() -> None:
     """Identify and terminate compute instances left over from past deployments.
 
