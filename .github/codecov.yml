@@ -22,9 +22,14 @@ coverage:
           - host-service
       protocol:
         target: auto # /protocol code coverage
-        threshold: 1% # Percentage of tolerable code coverage decrease from the base  branch
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - protocol
+      core-ts:
+        target: auto # /core-ts code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
+        flags:
+          - core-ts
   precision: 2 # Number of decimal places on code coverage, between 0 and 5
   round: down # Up, down, or nearest
   range: "70...90" # First number represents red, and second represents green (default is 70..100)
@@ -64,4 +69,8 @@ flags:
   protocol:
     paths:
       - protocol/
+    carryforward: true
+  core-ts:
+    paths:
+      - core-ts/
     carryforward: true

@@ -65,3 +65,11 @@ jobs:
         env:
           CONFIG: ${{ steps.config.outputs.config }}
         run: yarn run test:ci
+
+      - name: Upload Codecov Report
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: core-ts
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
