@@ -5,11 +5,11 @@ for a wrapper around this that automatically handles the Flask app context.
 import json
 import logging
 from math import ceil
-from typing import Union, Any, Mapping
+from typing import Union, Mapping, Optional
 from logzio.handler import LogzioHandler  # type: ignore
 
 
-def setup_metrics_logger(logz_token: str = None, local_file: str = None) -> logging.Logger:
+def setup_metrics_logger(logz_token: str = "", local_file: str = "") -> logging.Logger:
     """Configure a logging.Logger instance for metrics reporting.
 
     If logz_token is provided then metrics will be shipped to Logz using the
@@ -39,7 +39,7 @@ def setup_metrics_logger(logz_token: str = None, local_file: str = None) -> logg
 def record_metrics(
     metrics_logger: logging.Logger,
     metrics: Mapping[str, Union[str, int, float, None]],
-    dimensions: Mapping[str, Union[str, int, float, None]] = None,
+    dimensions: Optional[Mapping[str, Union[str, int, float, None]]] = None,
 ) -> None:
     """Record a set of metrics with corresponding dimensions.
 

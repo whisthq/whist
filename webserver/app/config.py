@@ -14,7 +14,7 @@ import os
 
 from collections import namedtuple
 from urllib.parse import urlsplit, urlunsplit
-from typing import Any
+from typing import Any, Type
 
 from dotenv import load_dotenv
 from flask import request
@@ -33,7 +33,7 @@ _ConfigMatrix = namedtuple("_ConfigMatrix", ("deployment", "local"))
 _ConfigVector = namedtuple("_ConfigVector", ("serve", "test"))
 
 
-def _callback_webserver_hostname():
+def _callback_webserver_hostname() -> str:
     """Return the hostname of the web server with which the protocol server should communicate.
 
     The callback web server will receive pings from the protocol server and will receive the
@@ -81,7 +81,7 @@ def _ensure_postgresql(conn_string: str) -> str:
     return urlunsplit(("postgresql", *parts))
 
 
-def getter(key, fetch=True, **kwargs) -> Any:
+def getter(key: str, fetch: bool = True, **kwargs: Any) -> Any:
     """Return a getter function that can be passed to the builtin property decorator.
 
     This function attempts to retrieve the value associated with a configuration variable key. It
@@ -106,11 +106,11 @@ def getter(key, fetch=True, **kwargs) -> Any:
         process's execution environment, optionally falling back on the configuration database.
     """
 
-    default = kwargs.get("default")
+    default = kwargs.get("default", "")
     has_default = "default" in kwargs
     raising = kwargs.get("raising", not has_default)
 
-    def _getter(config):
+    def _getter(config: Any) -> Any:
         """Return an instance attribute value.
 
         This function is an instance method suitable to be passed as the first argument to the
@@ -172,7 +172,7 @@ class DeploymentConfig:
     execution environment.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         engine = create_engine(
             _ensure_postgresql(os.environ["CONFIG_DB_URL"]), echo=False, pool_pre_ping=True
         )
@@ -281,7 +281,7 @@ class DeploymentConfig:
         return env_names.DEVELOPMENT
 
     @property
-    def config_table(self):
+    def config_table(self) -> str:
         """Determine which config database table fallback configuration values should be read.
 
         Returns:
@@ -290,7 +290,7 @@ class DeploymentConfig:
         return config_table_names.from_env(self.ENVIRONMENT)
 
     @property
-    def APP_GIT_BRANCH(self):  # pylint: disable=invalid-name
+    def APP_GIT_BRANCH(self) -> str:  # pylint: disable=invalid-name
         """The git branch (i.e. sha) of the source code for this particular instance of the
         application.
 
@@ -314,7 +314,7 @@ class DeploymentConfig:
         ]  # requires each environment, dev, staging, and prod to have a branch variable
 
     @property
-    def APP_GIT_COMMIT(self):  # pylint: disable=invalid-name
+    def APP_GIT_COMMIT(self) -> str:  # pylint: disable=invalid-name
         """The git commit (i.e. sha) of the source code for this particular instance of the
         application.
 
@@ -337,7 +337,7 @@ class DeploymentConfig:
         return os.environ["HEROKU_SLUG_COMMIT"]  # requires heroku lab's runtime-dyno-metadata
 
     @property
-    def HOST_SERVER(self):  # pylint: disable=invalid-name
+    def HOST_SERVER(self) -> str:  # pylint: disable=invalid-name
         """A unique identifier representing the server (ie. VM) that this instance of the
         application is running on.
 
@@ -358,7 +358,7 @@ class DeploymentConfig:
         return "heroku-" + os.environ["HEROKU_DYNO_ID"]
 
     @property
-    def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
+    def SQLALCHEMY_DATABASE_URI(self) -> str:  # pylint: disable=invalid-name
         """The connection string of the application's main database.
 
         Returns:
@@ -375,14 +375,14 @@ class LocalConfig(DeploymentConfig):
     process's execution environment or in a .env file.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     ENVIRONMENT = property(getter("ENVIRONMENT", fetch=False, default=env_names.LOCAL))  # type: ignore # pylint: disable=line-too-long
-    APP_GIT_BRANCH = property(getter("APP_GIT_BRANCH", default="unknown", fetch=False))
-    APP_GIT_COMMIT = property(getter("APP_GIT_COMMIT", default="unknown", fetch=False))
+    APP_GIT_BRANCH = property(getter("APP_GIT_BRANCH", default="unknown", fetch=False))  # type: ignore # pylint: disable=line-too-long
+    APP_GIT_COMMIT = property(getter("APP_GIT_COMMIT", default="unknown", fetch=False))  # type: ignore # pylint: disable=line-too-long
     HOST_SERVER = "local-unknown"
     AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
     AUTH0_WEBSERVER_CLIENT_ID = property(getter("AUTH0_WEBSERVER_CLIENT_ID"))
@@ -394,7 +394,9 @@ class LocalConfig(DeploymentConfig):
     SENTRY_DSN = ""  # type: ignore
 
 
-def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
+def _TestConfig(  # pylint: disable=invalid-name
+    BaseConfig: Type[DeploymentConfig],
+) -> Type[DeploymentConfig]:
     """Generate a test configuration class that is a subclass of a base configuration class.
 
     Arguments:
@@ -404,7 +406,7 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         A configuration class to be used to configure a Flask application for testing.
     """
 
-    class TestConfig(BaseConfig):  # pylint: disable=invalid-name
+    class TestConfig(BaseConfig):  # type: ignore
         """Place the application in testing mode."""
 
         config_table = config_table_names.DEVELOPMENT
