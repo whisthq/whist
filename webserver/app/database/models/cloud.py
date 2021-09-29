@@ -2,7 +2,7 @@
 
 In this module, we define Python models that represent tables in our PostgreSQL database
 with the schema cloud. Each model's attributes are automatically loaded from database
-column names when we call ``DeferredReflection.prepare()`` in ``app/factory.py``.
+column names when we call ``DeferredReflection.prepare()`` in ``app/utils/flask/factory.py``.
 
 Note that SQLAlchemy is unable to reflect primary key constraints from views automatically. For
 models representing SQL views (e.g. :class:`LingeringInstances`), the attribute representing the
