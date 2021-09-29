@@ -284,7 +284,8 @@ def test_lingering_instances(
     """
     Tests that lingering_instances properly drains only those instances that are
     inactive for the specified period of time:
-    2 min for running instances, 15 for preconnected instances
+    2 min for running instances, 15 for preconnected instances, and
+    draining/host service unresponsive instances whose status updated more than 2 mins ago
 
     """
     call_set = set()
@@ -293,6 +294,17 @@ def test_lingering_instances(
         call_set.add(instance.instance_name)
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+    instance_no_associated_mandelbox = bulk_instance(
+        instance_name="no_associated_mandelbox_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=MandelboxHostState.DRAINING.value,
+        last_updated_utc_unix_ms=time() + 125 * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+
+    sleep(125)
+
     bulk_instance(
         instance_name=f"active_instance",
         aws_ami_id="test-AMI",
@@ -338,7 +350,11 @@ def test_lingering_instances(
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     aws_funcs.check_and_handle_lingering_instances()
-    assert call_set == {instance_bad_normal.instance_name, instance_bad_preconnect.instance_name}
+    assert call_set == {
+        instance_bad_normal.instance_name,
+        instance_bad_preconnect.instance_name,
+        instance_no_associated_mandelbox.name,
+    }
 
 
 def test_buffer_wrong_region() -> None:
