@@ -127,7 +127,7 @@ We use Cmake >= 3.15 to compile, format and run tests on all systems, and also u
 
 ### Installation of Dependencies
 
-On all three platforms, you will need to install and log into the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) before you can build the protocol.
+On all three platforms, you will need to install and log into the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) before you can build the protocol. On command line, you should run `aws configure`, and pass in your AWS Access Key ID, AWS Secret Access Key, Region of us-east-1, and default output format.
 
 #### Linux
 
@@ -153,21 +153,27 @@ You also need to have installed Xcode and installed the Xcode CLI tools, which y
 
 ##### Windows
 
-First you will have to install [gitbash](https://git-scm.com/downloads). Then, you can install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol.
+First, you will want to install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol.
 
 Install the latest version of Ninja as well if you are compiling on Windows (this may come with your Visual Studio, depending on how you configured it).
 
-In order to compile it, you need to first install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. **In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.**
+In order to compile it, you need to first install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. **In order to compile the protocol, you need to make sure to be using x86_64 Visual Studio Developer Command Prompt.** In order to open the x86_64 Visual Studio Developer Command Prompt, you must First hit the "Windows Key", then you must type in "x86_64", and then the first result should indeed be the x86_64 Visual Studio Developer Command Prompt. **All future steps must be done using this terminal, otherwise compilation will not work**
 
-If you plan to develop the Windows _server_ protocol, you also need to install the Nvidia CUDA Compiler, NVCC. Note that you won't need this to build the client! You'll need at least [Toolkit version 11.0](https://developer.nvidia.com/cuda-11.0-download-archive?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exenetwork), which is latest at time of writing. If you have an Nvidia GPU, feel free to install all the components if you don't mind overwriting your display driver with whatever comes with the 11.0 release. If you don't have an Nvidia GPU, you have to be careful which components you install. At the Options page of the installer, choose the Custom Install. Don't install the Driver components or the Other components (it might be bad to overwrite your driver if you don't have an Nvidia GPU or you don't want the driver packaged with the 11.0 release). Meanwhile, under CUDA, you MUST install the Development→Compiler and Runtime→Library. Everything else is optional, though you might find the extra tools, samples, or visual studio integration useful.
+---
+
+NOTE: Ignore the below paragraph. CUDA is not necessary for Windows Development.
+
+If you wish to get CUDA working anyway (Not Recommended), you also need to install the Nvidia CUDA Compiler, NVCC. Note that CUDA is serverside only, you do not need this for the Windows client! You'll need at least [Toolkit version 11.0](https://developer.nvidia.com/cuda-11.0-download-archive?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exenetwork), which is latest at time of writing. If you have an Nvidia GPU, feel free to install all the components if you don't mind overwriting your display driver with whatever comes with the 11.0 release. If you don't have an Nvidia GPU, you have to be careful which components you install. At the Options page of the installer, choose the Custom Install. Don't install the Driver components or the Other components (it might be bad to overwrite your driver if you don't have an Nvidia GPU or you don't want the driver packaged with the 11.0 release). Meanwhile, under CUDA, you MUST install the Development→Compiler and Runtime→Library. Everything else is optional, though you might find the extra tools, samples, or visual studio integration useful.
+
+---
 
 After doing this all this, you might have to restart your terminal or IDE, after which you'll be able to build using CMake.
 
 ### Building the Protocol
 
-In order to save time recompiling dependencies repeatedly (and use CI to update them), we store some precompiled libraries in [AWS S3](https://s3.console.aws.amazon.com/s3/buckets/fractal-protocol-shared-libs?region=us-east-1&tab=objects). Downloading them will require the AWS CLI to be installed and set up on your machine.
+In order to save time recompiling dependencies repeatedly (and use CI to update them), we store some precompiled libraries in [AWS S3](https://s3.console.aws.amazon.com/s3/buckets/fractal-protocol-shared-libs?region=us-east-1&tab=objects). Downloading them will require the AWS CLI to be installed and set up on your machine. Instructions for installing and configuring awscli can be found above.
 
-If you want to manually retrieve the binaries yourself (not recommended), download the files from S3 into the proper locations (see `download-binaries.sh`), and _then_ run `cmake` with the `-D DOWNLOAD_BINARIES=OFF` option. The order of these operations is important.
+If you want to manually retrieve the binaries yourself (Not Recommended), download the files from S3 into the proper locations (see `download-binaries.sh`), and _then_ run `cmake` with the `-D DOWNLOAD_BINARIES=OFF` option. The order of these operations is important.
 
 To compile on MacOS/Linux, run:
 
@@ -207,6 +213,8 @@ fserver [OPTION]...
 For the specific option flags for the client, see the [client-specific README](./client/README.md). If you want to see the specific option flags for the server, you're straight out of luck.
 
 For a useful workflow for server development on Linux, see the [server-specific README](./server/README.md).
+
+**Important:** When running the protocol, please ensure that the client and server are both running on the exact same git commit. If you run into issues, check `git log` on both client and server to ensure the top git hash matches, and ensure that both sides have been compiled.
 
 #### Sentry
 
