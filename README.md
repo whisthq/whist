@@ -61,7 +61,9 @@ Note that there is also additional documentation for some subrepos (and other Fr
 
 ## Development
 
-To get started with development, clone this repository and navigate to a specific subrepository. While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
+To get started with development, you will have to clone this repository and navigate to a specific subrepository. On windows, you will have to install [gitbash](https://git-scm.com/downloads). It is recommended to use [SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent), so that you don't have to type in your github password on every push.
+
+While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
 To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
 
