@@ -44,6 +44,10 @@ jobs:
       - name: Check if Code Matches Pylint Standards
         run: pylint-wrapper webserver/app
 
+      - name: Perform static type analysis with mypy
+        working-directory: webserver
+        run: mypy app tests scripts
+
   # Heroku Testing
   # Checks unit tests on the Heroku pipeline.
   # This step now gets run by `webserver-trigger-heroku-ci-and-upload-codecov-report.yml` to also run on
