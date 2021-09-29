@@ -26,7 +26,7 @@ def parse_request(view_func: _F) -> _F:
     """
 
     @wraps(view_func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         start_time = time() * 1000
         received_from = (
             request.headers.getlist("X-Forwarded-For")[0]
@@ -67,7 +67,7 @@ def log_request(view_func: _F) -> _F:
     """
 
     @wraps(view_func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Don't let a logging failure kill the request processing
         start_time = time() * 1000
         try:
@@ -120,7 +120,7 @@ def fractal_pre_process(view_func: _F) -> _F:
     @parse_request
     @log_request
     @wraps(view_func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return view_func(*args, **kwargs)
 
     return cast(_F, wrapper)

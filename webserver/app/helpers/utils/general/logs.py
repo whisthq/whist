@@ -7,11 +7,11 @@ class _ExtraHandler(logging.StreamHandler):
     be printed as: "{function} | {label} | {message}"
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.message_format = "{function} | {label} | {message}"
 
-    def emit(self, record: logging.LogRecord):
+    def emit(self, record: logging.LogRecord) -> None:
         """
         This is called prior to any logging. We check which variables are
         given by the caller and fill them with defaults if not provided.
@@ -28,7 +28,7 @@ class _ExtraHandler(logging.StreamHandler):
         record.msg = full_msg
 
 
-def _create_fractal_logger():
+def _create_fractal_logger() -> logging.Logger:
     """
     Create and configure a logger for fractal's purposes.
     """

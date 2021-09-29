@@ -125,7 +125,7 @@ def terminate_instance(instance: InstanceInfo) -> None:
     db.session.commit()
 
 
-def find_enabled_regions():
+def find_enabled_regions() -> Any:
     """
     Returns a list of regions that are currently active
     """

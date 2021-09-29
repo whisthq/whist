@@ -5,6 +5,7 @@ https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a
 for more details on when this happens and how we are solving it.
 """
 import signal
+from types import FrameType
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.flask_handlers import set_web_requests_status
@@ -19,10 +20,12 @@ class WebSignalHandler:
     >>> WebSignalHandler() # signals are now handled
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def handle_sigterm(self, signum, frame):  # pylint: disable=no-self-use,unused-argument
+    def handle_sigterm(  # pylint: disable=no-self-use
+        self, signum: int, frame: FrameType  # pylint: disable=unused-argument
+    ) -> None:
         """
         Handles SIGTERM, which is sent by Heroku on various conditions outlined here:
         https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6

@@ -2,6 +2,9 @@
 more easily than plain string searches
 """
 
+from typing import List
+
+
 MANDELBOX_CREATION = "mandelbox-creation"
 MANDELBOX_ASSIGNMENT = "mandelbox-assignment"
 MANDELBOX_DELETION = "mandelbox-deletion"
@@ -34,7 +37,7 @@ CLUSTER_NAME = "cluster-name:{cluster_name}"
 MANDELBOX_USER = "mandelbox-user:{mandelbox_user}"
 
 
-def valid_tags(tags):
+def valid_tags(tags: List[str]) -> bool:
     """Check whether the given tags are valid in that
     they contain the minimum requirements to be
     logged to event_logging. There should not be more than one of these.

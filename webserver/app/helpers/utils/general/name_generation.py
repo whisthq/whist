@@ -10,7 +10,7 @@ def generate_name(
     test_prefix: bool = False,
     branch: Optional[str] = None,
     commit: Optional[str] = None,
-):
+) -> str:
     """
     Helper function for generating a name with a random UID
     Args:

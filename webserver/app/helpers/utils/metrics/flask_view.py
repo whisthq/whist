@@ -22,13 +22,13 @@ def _get_dims_from_request(request: flask.Request) -> Mapping[str, Optional[str]
     return {dkey.WEB_REQ_ENDPOINT: request.endpoint}
 
 
-def _before_request_metrics():
+def _before_request_metrics() -> None:
     """Instrument a request with various attributes for later usage to produce request metrics"""
     # time.monotonic is only valid when compared against other time.monotonic calls
     setattr(flask.request, ATTR__REQUEST_START, time.monotonic())
 
 
-def _after_request_metrics(response: flask.Response):
+def _after_request_metrics(response: flask.Response) -> flask.Response:
     """Extract information from a request that's been handled and record various metrics
     such as the request duration and response code.
     """
