@@ -19,7 +19,9 @@ def test_payment_portal_no_subscription(client, make_user, monkeypatch, subscrip
     user = make_user()
 
     monkeypatch.setattr(checkout_session, "url", url)
-    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
+    monkeypatch.setattr(
+        "app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status)
+    )
     monkeypatch.setattr(stripe.billing_portal.Session, "create", function(raises=Exception))
     monkeypatch.setattr(stripe.checkout.Session, "create", function(returns=checkout_session))
     client.login(
@@ -45,7 +47,9 @@ def test_create_billing_portal_unauthorized(client, make_user, monkeypatch, subs
     user = make_user()
 
     monkeypatch.setattr(portal_session, "url", url)
-    monkeypatch.setattr("payments.get_subscription_status", function(returns=subscription_status))
+    monkeypatch.setattr(
+        "app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status)
+    )
     monkeypatch.setattr(stripe.billing_portal.Session, "create", function(returns=portal_session))
     monkeypatch.setattr(stripe.checkout.Session, "create", function(raises=Exception))
     client.login(

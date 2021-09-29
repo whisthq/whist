@@ -36,9 +36,9 @@ coverage:
 
 # Files ignored by Codecov
 ignore:
-  - "webserver/app/cli.py"
+  - "webserver/app/utils/flask/cli.py"
   - "webserver/app/config.py"
-  - "webserver/app/sentry.py"
+  - "webserver/app/utils/flask/sentry.py"
 
 # Heroku CI makes /app the root on the Heroku CI instances,
 # so we need this fix to retrieve /webserver as the root folder

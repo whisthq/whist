@@ -8,10 +8,10 @@ from functools import wraps
 
 from flask import current_app, request
 
-from app.helpers.utils.general.logs import fractal_logger
+from app.utils.general.logs import fractal_logger
 
 from .config import _callback_webserver_hostname
-from .factory import jwtManager
+from .utils.flask.factory import jwtManager
 
 # Taken from https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 _F = TypeVar("_F", bound=Callable[..., Any])

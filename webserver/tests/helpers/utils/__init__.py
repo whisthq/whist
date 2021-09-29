@@ -1,6 +1,6 @@
 from random import sample
 from app.database.models.cloud import RegionToAmi
-from app.helpers.blueprint_helpers.aws.aws_instance_post import find_enabled_regions
+from app.helpers.aws.aws_instance_post import find_enabled_regions
 
 
 def get_allowed_regions():

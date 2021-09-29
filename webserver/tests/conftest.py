@@ -10,12 +10,12 @@ import pytest
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
-from app.factory import create_app
+from app.utils.flask.factory import create_app
 from app.database.models.cloud import MandelboxInfo, db, InstanceInfo, RegionToAmi
-from app.flask_handlers import set_web_requests_status
-from app.signals import WebSignalHandler
-from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.general.limiter import limiter
+from app.utils.flask.flask_handlers import set_web_requests_status
+from app.utils.signal_handler.signals import WebSignalHandler
+from app.utils.general.logs import fractal_logger
+from app.utils.general.limiter import limiter
 from tests.client import FractalAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import (
