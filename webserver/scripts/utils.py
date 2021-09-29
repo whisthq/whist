@@ -1,10 +1,10 @@
 import json
 from urllib.parse import urljoin
-
+from typing import Any, Dict
 import requests
 
 
-def make_get_request(web_url: str, endpoint: str, params: dict = None, bearer_token: str = None):
+def make_get_request(web_url: str, endpoint: str, params: Dict[str, Any] = None, bearer_token: str = None):
     """
     Makes an optionally authenticated GET request. Properly formats bearer_token (if given).
 
@@ -29,7 +29,7 @@ def make_get_request(web_url: str, endpoint: str, params: dict = None, bearer_to
 def make_post_request(
     web_url: str,
     endpoint: str,
-    payload: dict,
+    payload: Dict[str, Any],
     bearer_token: str = None,
 ) -> requests.Response:
     """
