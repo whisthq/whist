@@ -238,13 +238,17 @@ local_development_steps () {
   find ./mandelboxes -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
   cd host-setup
 
-  echo "================================================"
-  echo "Installing latest stable version of Go..."
-  echo "================================================"
-  sudo rm -rf /usr/local/go
-  wget -qO - "https://dl.google.com/go/$(curl https://golang.org/VERSION?m=text).linux-amd64.tar.gz" | sudo tar -xz -C /usr/local
-  echo 'export PATH=$PATH:/usr/local/go/bin' | sudo tee /etc/profile.d/02-golang-path
-  source /etc/profile.d/02-golang-path
+  if which go &>/dev/null; then
+    echo "================================================"
+    echo "Go Installation: Found"
+    echo "================================================"
+  else
+    echo "================================================"
+    echo "Go Installation: Not Found"
+    echo "Installing Go..."
+    echo "================================================"
+    sudo snap install go --classic
+  fi
 
   echo "================================================"
   echo "Installing Heroku CLI..."
