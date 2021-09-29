@@ -55,6 +55,11 @@ const resources = [
     href: "https://tryfractal.notion.site/Fractal-Release-Log-c7ea1639eb734d90bd48c34924d72f0a",
     target: "_blank",
   },
+  {
+    name: "Join Our Discord",
+    href: "https://discord.com/invite/HjPpDGvEeA",
+    target: "_blank",
+  },
 ]
 
 function classNames(...classes: any[]) {
@@ -193,14 +198,6 @@ const Header = () => {
                   </>
                 )}
               </Popover>
-              <a
-                href="https://discord.com/invite/HjPpDGvEeA"
-                className="hover:no-underline"
-              >
-                <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
-                  Join our Discord
-                </span>
-              </a>
               <a href="/download#top" className="hover:no-underline">
                 <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
                   Download

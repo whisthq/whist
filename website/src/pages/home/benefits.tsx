@@ -1,5 +1,4 @@
 import React from "react"
-import { Row, Col } from "react-bootstrap"
 import { CheckIcon } from "@heroicons/react/outline"
 
 import ChromeBackground from "@app/assets/graphics/speedTestBackground.svg"
@@ -55,20 +54,16 @@ export const VerticalTemplate = (props: {
   const { title, text, image, visible } = props
 
   return (
-    <div className="mt-24 md:mt-36">
-      <Row>
-        <Col md={12} className="text-center">
-          <div className="text-gray dark:text-gray-300 text-4xl md:text-6xl mb-8 leading-relaxed">
-            {title}
-          </div>
-          <div className="max-w-screen-sm m-auto text-gray dark:text-gray-400 md:text-lg tracking-wider">
-            {text}
-          </div>
-        </Col>
-        <Col md={12} className="text-center mt-4">
-          {visible && image}
-        </Col>
-      </Row>
+    <div className="mt-24 md:mt-36 relative">
+      <div className="text-center">
+        <div className="text-gray dark:text-gray-300 text-4xl md:text-6xl mb-8 leading-relaxed">
+          {title}
+        </div>
+        <div className="max-w-screen-sm m-auto text-gray dark:text-gray-400 md:text-lg tracking-wider">
+          {text}
+        </div>
+      </div>
+      <div className="text-center mt-4">{visible && image}</div>
     </div>
   )
 }
@@ -115,7 +110,7 @@ export const Middle = () => {
               alt=""
             />
             <img
-              className="absolute inline-block top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/3 md:-translate-y-28 w-1/2 max-w-xs"
+              className="absolute inline-block top-1/2 left-1/2 transform -translate-x-1/2 translate-y-20 md:-translate-y-4 w-1/2 max-w-xs"
               src={SpeedTest}
               alt=""
             />
