@@ -6,6 +6,7 @@
 import { isEmpty } from "lodash"
 import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
+import { sessionID } from "@app/utils/constants"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import config from "@app/config/environment"
@@ -56,5 +57,6 @@ export const mandelboxRequest = async (
     body: {
       regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
+      session_id: sessionID,
     },
   })

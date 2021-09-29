@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class MandelboxAssignBody(BaseModel):
     regions: list[str]
     client_commit_hash: str
+    session_id: int
 
 
 # flask-pydantic ships a decorator called validate().

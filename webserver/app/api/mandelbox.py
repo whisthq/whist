@@ -125,6 +125,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs):
         mandelbox_id=mandelbox_id,
         instance_name=instance.instance_name,
         user_id=username,
+        session_id=str(body.session_id),
         status="ALLOCATED",
         creation_time_utc_unix_ms=int(time.time() * 1000),
     )
