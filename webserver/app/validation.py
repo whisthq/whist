@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 from pydantic import BaseModel
-
+from typing import List
 
 # With pydantic, we can define our query/body datastructures with
 # "one-time use" classes like this. They need to inherit from the pydantic
 # BaseModel, but no other boilerplate after that. The type signatures are
 # fully mypy compatible.
 class MandelboxAssignBody(BaseModel):
-    regions: list[str]
+    regions: List[str]
     client_commit_hash: str
     session_id: int
 
