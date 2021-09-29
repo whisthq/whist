@@ -318,7 +318,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 }
 
 // Drain and shutdown the host service
-func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, result subscriptions.SubscriptionStatusResult) {
+func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
 	// req *DrainAndShutdownRequest) {
 	logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
 
@@ -873,7 +873,12 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	subscriptionEvents, err := subscriptions.Run()
+	instanceName, err = aws.GetInstanceName()
+	if err != nil {
+		logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+	}
+	subscriptionDone := make(chan bool, 1)
+	err = subscriptions.Run(string(instanceName), subscriptionDone)
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
@@ -882,7 +887,7 @@ func main() {
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
 	// needs to stay alive after the global context is cancelled, so we can
 	// process mandelbox death events.
-	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionEvents)
+	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionDone)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -904,7 +909,7 @@ var eventLoopKeepalive = make(chan interface{}, 1)
 
 func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
 	goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client,
-	httpServerEvents <-chan ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionStatusResult) {
+	httpServerEvents <-chan ServerRequest, subscriptionDone <-chan bool) {
 	// Note that we don't use globalCtx for the docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
@@ -986,8 +991,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				}
 			}
 
-		case subscriptionEvent := <-subscriptionEvents:
-			drainAndShutdown(globalCtx, globalCancel, goroutineTracker, subscriptionEvent)
+		case <-subscriptionDone:
+			drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
 		}
 	}
 }

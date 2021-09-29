@@ -1,3 +1,8 @@
+/*
+	The subscriptions package is responsible for implementing a pubsub architecture
+	on the host-service. This is achieved using Hasura live subscriptions, so that
+	the host-service can be notified instantly of any change in the database
+*/
 package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
 
 import (
@@ -6,14 +11,15 @@ import (
 	"time"
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	graphql "github.com/hasura/go-graphql-client"
+	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 
-func Run() (<-chan SubscriptionStatusResult, error) {
-	events := make(chan SubscriptionStatusResult, 100)
-
+// Run is responsible for starting the subscription client, as well as
+// subscribing to the subscriptions defined in queries.go
+func Run(instanceName string, done chan<- bool) error {
+	// We set up the client with auth and logging parameters
 	url := "http://localhost:8080/v1/graphql"
-	Client := graphql.NewSubscriptionClient(url).
+	client := graphql.NewSubscriptionClient(url).
 		WithConnectionParams(map[string]interface{}{
 			"headers": map[string]string{
 				"x-hasura-admin-secret": "hasura",
@@ -25,27 +31,23 @@ func Run() (<-chan SubscriptionStatusResult, error) {
 			return err
 		})
 
-	defer Client.Close()
+	// Close the client when we are done
+	defer client.Close()
 
+	// variables holds the values needed to run the graphql subscription
 	variables := map[string]interface{}{
-		// "instance_name": graphql.String(""),
-		"status": graphql.String("DRAINING"),
+		"instance_name": graphql.String(instanceName),
+		"status":        graphql.String("DRAINING"),
 	}
 
-	// This subscriptions fires when the instance status is draining
-	_, err := Client.Subscribe(&SubscriptionInstanceStatus, variables, func(message *json.RawMessage, err error) error {
+	// This subscriptions fires when the running instance status changes to draining on the database
+	_, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
+
 		if err != nil {
-			logger.Errorf("Subscription error: %v", err)
 			return nil
 		}
-
-		var result SubscriptionStatusResult
-
-		json.Unmarshal(*message, &result)
-		logger.Infof("DB Event: %v", result)
-		if result.Hardware_instance_info[0].Status == "DRAINING" {
-			events <- result
-		}
+		// We notify via the done channel to start the drain and shutdown process
+		done <- true
 		return nil
 	})
 
@@ -54,8 +56,10 @@ func Run() (<-chan SubscriptionStatusResult, error) {
 		logger.Errorf("Subscription error!")
 	}
 
-	go Client.Run()
+	// Run the client on a go routine to make sure it closes properly when we are done
+	go client.Run()
+	// This sleep fixes race conditions when running the client on a go routine
 	time.Sleep(time.Minute)
 
-	return events, nil
+	return nil
 }
