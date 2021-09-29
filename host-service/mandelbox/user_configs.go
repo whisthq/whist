@@ -280,27 +280,34 @@ func (c *mandelboxData) cleanUserConfigDir() {
 	}
 }
 
+// getUserConfigDir returns the absolute path to the user config directory.
 func (c *mandelboxData) getUserConfigDir() string {
 	return utils.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.mandelboxID)
 }
 
+// getS3ConfigPath returns the s3 URL to the encrypted user config file.
 func (c *mandelboxData) getS3ConfigPath() string {
 	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
 }
 
-// getS3ConfigKey returns the S3 key where a user's config can be found.
+// getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (c *mandelboxData) getS3ConfigKey() string {
 	return utils.Sprintf("%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
 }
 
+// getEncryptedArchiveFilename returns the name of the encrypted user config file.
 func (c *mandelboxData) getEncryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4.enc"
 }
 
+// getDecryptedArchiveFilename returns the name of the
+// decrypted (but still compressed) user config file.
 func (c *mandelboxData) getDecryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4"
 }
 
+// getUnpackedConfigsDirectoryName returns the name of the
+// directory that stores unpacked user configs.
 func (c *mandelboxData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs/"
 }
