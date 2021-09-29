@@ -13,9 +13,6 @@
     "build:netlify": "./scripts/build-netlify.sh"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.35",
-    "@fortawesome/free-solid-svg-icons": "^5.15.3",
-    "@fortawesome/react-fontawesome": "^0.1.14",
     "@headlessui/react": "^1.4.0",
     "@heroicons/react": "^1.0.2",
     "@sentry/react": "^6.13.2",
@@ -28,22 +25,14 @@
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
-    "konva": "^8.2.0",
     "lodash": "^4.17.21",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
-    "react-bootstrap": "^1.6.0",
     "react-dom": "^17.0.2",
-    "react-fade-in": "^2.0.1",
-    "react-ga": "^3.3.0",
     "react-icons": "^4.2.0",
-    "react-modal": "^3.13.1",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
-    "react-scroll": "^1.8.2",
-    "react-spring": "^9.2.1",
-    "reactjs-popup": "^2.0.4",
-    "zdog": "^1.1.2"
+    "react-scroll": "^1.8.2"
   },
   "devDependencies": {
     "@fractal/core-ts": "file:../core-ts",

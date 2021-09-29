@@ -2,8 +2,6 @@ import React from "react"
 import classNames from "classnames"
 import { Switch, Route } from "react-router-dom"
 
-import withTracker from "@app/shared/utils/withTracker"
-
 import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"
 import Hero from "@app/pages/home/hero"
@@ -50,7 +48,7 @@ const Router = () => {
   return (
     <div>
       <Switch>
-        <Route exact path="/" component={withTracker(Home)} />
+        <Route exact path="/" component={Home} />
       </Switch>
     </div>
   )
