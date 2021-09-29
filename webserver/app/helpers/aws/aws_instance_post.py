@@ -10,6 +10,7 @@ from app.database.models.cloud import (
     db,
     RegionToAmi,
     InstanceInfo,
+    MandelboxInfo,
     InstancesWithRoomForMandelboxes,
     LingeringInstances,
 )
@@ -381,10 +382,8 @@ def drain_instance(instance: InstanceInfo) -> bool:
             job_status = True
         except requests.exceptions.RequestException as error:
             fractal_logger.error(
-                (
-                    f"Unable to send drain_and_shutdown request to host service"
-                    f" on instance {instance.instance_name}: {error}"
-                )
+                "Unable to send drain_and_shutdown request to host service"
+                f" on instance {instance.instance_name}: {error}"
             )
             instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
             db.session.commit()
@@ -406,6 +405,19 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
     """
     with scale_mutex[f"{region}-{ami}"]:
         num_new = _get_num_new_instances(region, ami)
+        instances = InstanceInfo.query.filter_by(location=region, aws_ami_id=ami).all()
+        fractal_logger.info(f"ami {region}/{ami} | instances {len(instances)} | delta {num_new}")
+        for instance in instances:
+            mandelboxes = MandelboxInfo.query.filter_by(instance_name=instance.instance_name).all()
+            fractal_logger.info(
+                f">>> instance {instance.instance_name} | mandelboxes {len(mandelboxes)} | status"
+                f" {instance.status}"
+            )
+            for mandelbox in mandelboxes:
+                fractal_logger.info(
+                    f">>> >>> mandelbox {mandelbox.mandelbox_id} | user {mandelbox.user_id} |"
+                    f" status {mandelbox.status}"
+                )
         if num_new < 0:
             # we only want to scale down unused instances
             available_empty_instances = list(
@@ -429,6 +441,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 ):
                     db.session.commit()
                     continue
+                fractal_logger.info(f">>> sending drain request to {instance.instance_name}")
                 drain_instance(instance_info)
 
 
