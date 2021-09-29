@@ -19,7 +19,7 @@ from app.utils.general.logs import fractal_logger
 from app.utils.metrics.flask_app import app_record_metrics
 from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
-from payments import payment_required
+from app.utils.stripe.payments import payment_required
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 

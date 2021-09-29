@@ -8,7 +8,7 @@ from flask import current_app, Flask
 from flask_jwt_extended import create_access_token, JWTManager, verify_jwt_in_request
 
 from app.utils.general.limiter import limiter
-from payments import (
+from app.utils.stripe.payments import (
     check_payment,
     get_customer_id,
     get_subscription_status,

@@ -21,7 +21,7 @@ from app.constants import env_names
 from app.database.models.cloud import db
 
 from app.utils.auth.auth0 import ScopeError
-from payments import payment_portal_factory, get_customer_id, PaymentRequired
+from app.utils.stripe.payments import payment_portal_factory, get_customer_id, PaymentRequired
 
 jwtManager = JWTManager()
 
