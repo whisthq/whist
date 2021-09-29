@@ -13,7 +13,6 @@ import Contact from "@app/pages/resources/contact"
 import Download from "@app/pages/download"
 
 import routes from "@app/shared/constants/routes"
-import withTracker from "@app/shared/utils/withTracker"
 
 const RootApp = () => {
   /*
@@ -26,22 +25,14 @@ const RootApp = () => {
       <Switch>
         <Route exact path={routes.DOWNLOAD} component={Download} />
         <Route exact path={routes.CONTACT} component={Contact} />
-        <Route exact path={routes.ABOUT} component={withTracker(Company)} />
-        <Route
-          exact
-          path={routes.TECHNOLOGY}
-          component={withTracker(Technology)}
-        />
-        <Route exact path={routes.FAQ} component={withTracker(FAQ)} />
-        <Route exact path={routes.SECURITY} component={withTracker(Security)} />
-        <Route exact path={routes.COOKIES} component={withTracker(Cookies)} />
-        <Route exact path={routes.PRIVACY} component={withTracker(Privacy)} />
-        <Route
-          exact
-          path={routes.TOS}
-          component={withTracker(TermsOfService)}
-        />
-        <Route exact path={routes.LANDING} component={withTracker(Landing)} />
+        <Route exact path={routes.ABOUT} component={Company} />
+        <Route exact path={routes.TECHNOLOGY} component={Technology} />
+        <Route exact path={routes.FAQ} component={FAQ} />
+        <Route exact path={routes.SECURITY} component={Security} />
+        <Route exact path={routes.COOKIES} component={Cookies} />
+        <Route exact path={routes.PRIVACY} component={Privacy} />
+        <Route exact path={routes.TOS} component={TermsOfService} />
+        <Route exact path={routes.LANDING} component={Landing} />
       </Switch>
     </div>
   )
