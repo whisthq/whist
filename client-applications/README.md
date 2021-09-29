@@ -19,6 +19,11 @@ We use `yarn` as the package manager for this project. All of the commands requi
 5. To start the application in the `dev` environment, run `yarn start`. `yarn start` will install
    the protocol for you if it's not already installed.
 
+## Helpful `yarn` Commands
+
+`yarn start:lite`: Skips the protocol building step to launch Electron faster
+`yarn start --help` and `yarn start:lite --help`: Shows you the options you can use to launch Electron. In particular, the `--show-protocol-logs` and `--use-local-server` options can be used to `console.log` protocol logs and use localhost instead of the dev server, respectively.
+
 ## How To Contribute
 
 Before making a pull request, ensure that the following steps are taken:
