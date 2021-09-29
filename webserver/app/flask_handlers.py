@@ -69,14 +69,14 @@ def can_process_requests() -> bool:
     return web_requests_status
 
 
-def can_process_requests_handler(app: Flask):
+def can_process_requests_handler(app: Flask) -> None:
     """
     Registers a before_request handler to the Flask app `app`. Makes
     sure web requests are enabled before processing them.
     """
 
     @app.before_request
-    def handler():  # pylint: disable=unused-variable
+    def handler() -> None:
         """
         Make sure web requests can actually be processed before proceeding
         """

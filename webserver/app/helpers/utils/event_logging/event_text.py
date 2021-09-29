@@ -1,3 +1,6 @@
+from typing import Dict, Any
+
+
 # this is meant to help us format event text since
 # we will need the text to be formatted to do more interesting logs
 # (possible in the future it may be better to straight up do like a pickle
@@ -27,7 +30,7 @@ FORMAT_VERSION = "format_version"
 CURRENT_FORMAT_VERSION = "1.0"
 
 
-def format_into_text(key_val_store):
+def format_into_text(key_val_store: Dict[Any, Any]) -> str:
     text = ""
     for key, value in key_val_store.items():
         text += str(key) + ":" + str(value) + "\n"
@@ -36,5 +39,5 @@ def format_into_text(key_val_store):
 
 
 # a wrapper since we might want the original for fancy things later
-def to_text(**kwargs):
+def to_text(**kwargs: Any) -> str:
     return format_into_text(kwargs)

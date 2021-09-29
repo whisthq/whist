@@ -2,7 +2,7 @@ import sys
 from threading import Thread
 from typing import cast, Any, List, Mapping
 import requests
-from flask import current_app
+from flask import current_app, Flask
 from sqlalchemy import or_, and_
 
 from app.database.models.cloud import db, RegionToAmi, InstanceInfo
@@ -63,7 +63,7 @@ def insert_new_amis(
 
 
 def launch_new_ami_buffer(
-    region_name: str, ami_id: str, index_in_thread_list: int, flask_app
+    region_name: str, ami_id: str, index_in_thread_list: int, flask_app: Flask
 ) -> None:
     """
     This function will be invoked from the Flask CLI command to upgrade the AMIs for regions.

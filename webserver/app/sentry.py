@@ -4,7 +4,7 @@ import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 
-def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
+def init_and_ensure_sentry_connection(env: str, sentry_dsn: str) -> None:
     """
     Initialized sentry with Flask integration as well as the default
     integrations. Also makes sure initialization succeeds. We do this by logging

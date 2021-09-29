@@ -5,7 +5,7 @@ application deployment stage and version) from the Flask current_app to be sent 
 any metrics.
 """
 import logging
-from typing import Mapping, Union
+from typing import Mapping, Union, Optional
 
 from flask import current_app, Flask
 import app.helpers.utils.metrics.keys_dims as dkey
@@ -35,7 +35,7 @@ _DEFAULT_DIMENSIONS = None
 
 def app_record_metrics(
     metrics: Mapping[str, Union[str, int, float, None]],
-    extra_dims: Mapping[str, Union[str, int, float, None]] = None,
+    extra_dims: Optional[Mapping[str, Union[str, int, float, None]]] = None,
 ) -> None:
     """Record a set of metrics. Dimensions extracted from the application's config will
     automatically be set, in addition to any extra_dims supplied by the callee.

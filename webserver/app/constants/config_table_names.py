@@ -5,7 +5,7 @@ STAGING = "staging"
 DEVELOPMENT = "dev"  # FIXME switch to development
 
 
-def from_env(env: str):
+def from_env(env: str) -> str:
     return {
         env_names.PRODUCTION: PRODUCTION,
         env_names.STAGING: STAGING,
