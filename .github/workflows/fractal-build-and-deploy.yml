@@ -337,6 +337,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Set up Python 3.9.5
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9.5"
+
+      - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
       - name: Build release protocol # No need to run this for debug, just for release
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer
@@ -384,18 +393,9 @@ jobs:
       ##########################################################################################
       ####################### Stage 3 - Build & Publish AMIs to AWS EC2 ########################
 
-      - name: Set up Python 3.9.5
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.9.5"
-
       - name: Install webserver scripting dependencies
         working-directory: webserver
         run: pip install -r scripts/requirements.txt
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
 
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
