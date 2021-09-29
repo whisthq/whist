@@ -73,7 +73,9 @@ module.exports = {
     // container afterwards. The output of these will be a JSON string
     // of the config object.
     const run = `docker run --rm ${configImageTag} ${secrets} ${os} ${deploy}`
-    return execSync(run, { encoding: "utf-8", stdio: "pipe" })
+    const config = execSync(run, { encoding: "utf-8", stdio: "pipe" })
+    console.log("Got config", config)
+    return config
   },
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: () => {
