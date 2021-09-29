@@ -56,6 +56,13 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     region = allowed_regions[0]
 
+    # Find the latest commit hash
+    latest_commit_hash = (
+        RegionToAmi.query.filter_by(region_name=region, ami_active=True)
+        .one_or_none()
+        .client_commit_hash
+    )
+
     # Override the commit hash if in dev
     if (
         current_app.config["ENVIRONMENT"] == DEVELOPMENT
@@ -64,11 +71,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
-        client_commit_hash = (
-            RegionToAmi.query.filter_by(region_name=region, ami_active=True)
-            .one_or_none()
-            .client_commit_hash
-        )
+        client_commit_hash = latest_commit_hash
     else:
         client_commit_hash = body.client_commit_hash
 
@@ -77,7 +80,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         f"Trying to find instance for user {username} in region {region},\
         with commit hash {client_commit_hash}."
     )
-    instance_name = find_instance(region, client_commit_hash)
+
+    valid_commit_hashes = list(set([client_commit_hash] + [latest_commit_hash]))
+    instance_name = find_instance(region, valid_commit_hashes)
     time_when_instance_found = time.time() * 1000
 
     # How long did it take to find an instance?

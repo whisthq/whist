@@ -19,7 +19,6 @@ from app.helpers.utils.general.name_generation import generate_name
 from app.helpers.utils.general.logs import fractal_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 from app.constants.ec2_instance_states import EC2InstanceState
-from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -134,7 +133,7 @@ def find_enabled_regions() -> Any:
     return RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
 
 
-def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
+def find_instance(region: str, valid_commit_hashes: List[str]) -> Optional[str]:
     """
     Given a list of regions, finds (if it can) an instance in that region
     or a neighboring region with space. If it succeeds, returns the instance name.
@@ -151,8 +150,10 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     # query with limit of 1 returns the instance with max
     # occupancy which can improve resource utilization.
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
-        InstancesWithRoomForMandelboxes.query.filter_by(
-            commit_hash=client_commit_hash,
+        InstancesWithRoomForMandelboxes.query.filter(
+            InstancesWithRoomForMandelboxes.commit_hash.in_(valid_commit_hashes)
+        ).
+        filter_by(
             location=region,
             status=MandelboxHostState.ACTIVE,
         )
@@ -168,33 +169,15 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
             InstancesWithRoomForMandelboxes.query.filter(
                 InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
             )
+            .filter(
+                InstancesWithRoomForMandelboxes.commit_hash.in_(valid_commit_hashes)
+            )
             .filter_by(
-                commit_hash=client_commit_hash,
                 status=MandelboxHostState.ACTIVE,
             )
             .limit(1)
             .one_or_none()
         )
-    if instance_with_max_mandelboxes is None and not client_commit_hash == CLIENT_COMMIT_HASH_DEV_OVERRIDE:
-        # If we still can't find an instance for them, check if it's because
-        # the commit hashes don't match, likely because the client making 
-        # the request is on an older commit hash. If so, give them an instance
-        # anyway.
-        active_ami_for_given_region = RegionToAmi.query.filter_by(
-            region_name=region, ami_active=True
-        ).one_or_none()
-
-        if active_ami_for_given_region:
-            latest_commit_hash = active_ami_for_given_region.client_commit_hash
-            instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
-                InstancesWithRoomForMandelboxes.query.filter_by(
-                    commit_hash=latest_commit_hash,
-                    location=region,
-                    status=MandelboxHostState.ACTIVE,
-                )
-                .limit(1)
-                .one_or_none()
-            )
 
     if instance_with_max_mandelboxes is None:
         return None

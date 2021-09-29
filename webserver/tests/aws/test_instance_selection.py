@@ -1,14 +1,14 @@
 from random import randint
 import pytest
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance, bundled_region
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, OUTDATED_COMMIT_HASH_FOR_TESTING
 
 
 def test_empty_instances(region_name):
     """
     Confirms that we don't find any instances on a fresh db
     """
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING]) is None
 
 
 def test_find_initial_instance(bulk_instance, region_name):
@@ -16,7 +16,7 @@ def test_find_initial_instance(bulk_instance, region_name):
     Confirms that we find an empty instance
     """
     instance = bulk_instance(location=region_name)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    assert find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING]) == instance.instance_name
 
 
 def test_find_part_full_instance(bulk_instance, region_name):
@@ -24,7 +24,7 @@ def test_find_part_full_instance(bulk_instance, region_name):
     Confirms that we find an in-use instance
     """
     instance = bulk_instance(location=region_name, associated_mandelboxes=3)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    assert find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING]) == instance.instance_name
 
 
 def test_find_part_full_instance_order(bulk_instance, region_name):
@@ -39,17 +39,20 @@ def test_find_part_full_instance_order(bulk_instance, region_name):
         # Generating multiple instances with occupancy less than our max_occupied instance
         bulk_instance(location=region_name, associated_mandelboxes=randint(0, max_occupancy - 1))
     assert (
-        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
+        find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING])
         == instance_with_max_occupancy.instance_name
     )
 
+def test_find_instance_with_latest_commit_hash(bulk_instance, region_name):
+    instance = bulk_instance(location=region_name)
+    assert find_instance(region_name, [OUTDATED_COMMIT_HASH_FOR_TESTING, CLIENT_COMMIT_HASH_FOR_TESTING]) == instance.instance_name
 
 def test_no_find_full_instance(bulk_instance, region_name):
     """
     Confirms that we don't find a full instance
     """
     _ = bulk_instance(location=region_name, associated_mandelboxes=10)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING]) is None
 
 
 def test_no_find_pre_connected_instance(bulk_instance, region_name):
@@ -57,7 +60,7 @@ def test_no_find_pre_connected_instance(bulk_instance, region_name):
     Confirms that we don't find a pre-connection instance
     """
     _ = bulk_instance(location=region_name, associated_mandelboxes=0, status="PRE_CONNECTION")
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING]) is None
 
 
 def test_no_find_full_small_instance(bulk_instance, region_name):
@@ -65,7 +68,8 @@ def test_no_find_full_small_instance(bulk_instance, region_name):
     Confirms that we don't find a full instance with <10 max
     """
     _ = bulk_instance(location=region_name, mandelbox_capacity=5, associated_mandelboxes=5)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert find_instance(region_name, [CLIENT_COMMIT_HASH_FOR_TESTING]) is None
+
 
 @pytest.mark.parametrize(
     "location",
@@ -84,19 +88,19 @@ def test_assignment_logic(bulk_instance, location):
     replacement_region = bundled_region[location][0]
     bulk_instance(associated_mandelboxes=10, location=location)
     assert (
-        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+        find_instance(location, [CLIENT_COMMIT_HASH_FOR_TESTING]) is None
     ), f"we assigned an already full instance in the main region, {location}"
     bulk_instance(associated_mandelboxes=10, location=replacement_region)
     assert (
-        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+        find_instance(location, [CLIENT_COMMIT_HASH_FOR_TESTING]) is None
     ), f"we assigned an already full instance in the secondary region, {replacement_region}"
     bulk_instance(location=replacement_region, instance_name="replacement-mandelbox")
-    assert find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is not None, (
+    assert find_instance(location, [CLIENT_COMMIT_HASH_FOR_TESTING]) is not None, (
         f"we failed to find the available instance "
         f"in the replacement region {replacement_region}"
     )
     bulk_instance(location=location, instance_name="main-mandelbox")
-    instance_name = find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
+    instance_name = find_instance(location, [CLIENT_COMMIT_HASH_FOR_TESTING])
     assert (
         instance_name is not None and instance_name == "main-mandelbox"
     ), f"we failed to find the available instance in the main region {location}"
