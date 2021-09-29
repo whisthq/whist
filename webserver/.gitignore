@@ -9,6 +9,7 @@ env3.6
 .venv/
 venv/
 __pycache__/
+.python-version
 
 # Heroku
 herokulogs.txt

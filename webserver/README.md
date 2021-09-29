@@ -86,7 +86,8 @@ In CI, we use Black, mypy, and Pylint to format and catch errors in our code wit
 webserver/ $ black --config ../pyproject.toml .
 
 # Perform static type checking with mypy
-webserver/ $ mypy --strict
+# Note: We need to re-enable this for scripts and tests!
+webserver/ $ mypy --strict app
 
 # Lint with Pylint
 webserver/ $ pylint --rcfile=../pylintrc app auth0 payments
