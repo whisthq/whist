@@ -97,7 +97,7 @@ add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 OPTION(CI OFF)
 
 # Generate code coverage if we're running in CI on Linux/macOS (code coverage is not well supported through Cmake on Windows)
-if (${CI} MATCHES "TRUE" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CI} MATCHES "TRUE" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_CXX_FLAGS --coverage)
 endif()
 
@@ -436,4 +436,4 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         COMMAND ${CMAKE_COMMAND} -E echo "OUTPUT_DIRECTORY = ${CMAKE_BINARY_DIR}/docs" >> ${CMAKE_BINARY_DIR}/docs/Doxyfile
         COMMAND doxygen ${CMAKE_BINARY_DIR}/docs/Doxyfile
         )
-endif ()
+endif()
