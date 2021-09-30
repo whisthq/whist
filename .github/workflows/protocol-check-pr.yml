@@ -122,8 +122,8 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: protocol
         run: |
-          # llvm for clang-tidy, coreutils for realpath, gcov for codecov
-          brew install llvm coreutils perl doxygen gcov
+          # llvm for clang-tidy, coreutils for realpath, gcovr for codecov
+          brew install llvm coreutils perl doxygen gcovr
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
