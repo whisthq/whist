@@ -96,6 +96,11 @@ add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 # You can locally set to ON as well if you like, just make sure to have cppcheck installed
 OPTION(CI OFF)
 
+# Generate code coverage if we're running in CI
+if (${CI} MATCHES "TRUE")
+    set(CMAKE_CXX_FLAGS --coverage)
+endif()
+
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
     message(STATUS "Detecting cppcheck - found: ${CPPCHECK}")
