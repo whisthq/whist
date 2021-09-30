@@ -9,6 +9,12 @@
 
 # Arguments
 # ${1}: HEROKU_APP_NAME: name of webserver Heroku app. Ex: fractal-dev-server.
+# ${2}: MIGRA_EXIT_CODE: the exit code of the migra diff (i.e. whether there's a diff or not)
+# ${3}: SQL_DIFF_STRING: the SQL diff to apply to migrate the database
+# ${4}: CI: whether this script is being run in CI or not
+#
+# If you want to run a manual deploy of the webserver without doing a DB migration,
+# first install splitsh-lite and run this script locally while providing only ${1}
 
 set -Eeuo pipefail
 
@@ -20,11 +26,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR/.."
 
 HEROKU_APP_NAME=${1}
-MIGRA_EXIT_CODE=${2}
-SQL_DIFF_STRING=${3}
+MIGRA_EXIT_CODE=${2:-1} # Default to 1 (Migra error, no DB migration will be performed)
+SQL_DIFF_STRING=${3:-""} # Default to "" (No DB migration to apply)
+CI=${4:-"LOCAL_DEPLOY"} # Default to "LOCAL_DEPLOY" (Not running in CI)
 
 # if true, a future step will send a slack notification
-echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
+if [ $CI == "CI_DEPLOY" ]; then
+  echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
+fi
 
 # Get the DB associated with the app. If this fails, the entire deploy will fail.
 DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
@@ -57,7 +66,9 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
   # bring webserver back online
   heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
 
-  echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
+  if [ $CI == "CI_DEPLOY" ]; then
+    echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
+  fi
 
 elif [ $MIGRA_EXIT_CODE == "0" ]; then
   echo "No diff. Continuing redeploy."
@@ -72,4 +83,3 @@ else
   echo "extremely serious error and should be investigated immediately."
   exit 1
 fi
-
