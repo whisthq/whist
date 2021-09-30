@@ -10,7 +10,8 @@ import os
 import re
 import threading
 import subprocess
-import sys
+import signal
+import time
 
 # Argument parser
 parser = argparse.ArgumentParser(description="Build Fractal mandelbox image(s).")
@@ -107,7 +108,7 @@ def build_image_path(img_path):
         if build_process.returncode != 0:
             # If _any_ build fails, we exit with return code 1
             print("Build of " + img_path + " failed, terminating")
-            sys.exit(1)
+            terminate()
 
     # Notify successful build
     print("Built " + img_path + "!")
@@ -138,14 +139,26 @@ def build_image_path(img_path):
         proc.join()
 
 
+def terminate():
+    print("Terminating child processes...")
+    os.killpg(0, signal.SIGTERM)
+    time.sleep(0.5)
+    os.killpg(0, signal.SIGKILL)
+    # pylint: disable=protected-access
+    os._exit(1)
+
+
 # Get all image_path's with no dependencies
-root_level_images = []
-for image_path, dependency_of_image in dependencies.items():
-    if dependency_of_image is None:
-        root_level_images.append(image_path)
+if __name__ == "__main__":
+    os.setpgrp()
 
-# Build all root_level_images
-for image_path in root_level_images:
-    build_image_path(image_path)
+    root_level_images = []
+    for image_path, dependency_of_image in dependencies.items():
+        if dependency_of_image is None:
+            root_level_images.append(image_path)
 
-print("All images have been built successfully!")
+    # Build all root_level_images
+    for image_path in root_level_images:
+        build_image_path(image_path)
+
+    print("All images have been built successfully!")
