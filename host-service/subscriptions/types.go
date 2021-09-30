@@ -1,11 +1,9 @@
-/*
-	This file contains the types used to process
-	subscription results.
-*/
+//nolint We need to use snake case so that Hasura finds the database fields.
 package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
 
 // Instance represents instance_info in the database.
 // These fields are defined in queries.go
+//nolint We need to use snake case so that Hasura finds the database fields.
 type Instance struct {
 	Instance_name string
 	Status        string

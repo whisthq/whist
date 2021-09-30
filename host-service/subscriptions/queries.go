@@ -1,7 +1,4 @@
-/*
-	This file defines the graphql queries/subscriptions to be used in
-	subscriptions.go
-*/
+//nolint We need to use snake case so that Hasura finds the database fields.
 package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
 
 import graphql "github.com/hasura/go-graphql-client"

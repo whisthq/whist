@@ -1,7 +1,7 @@
 /*
-	The subscriptions package is responsible for implementing a pubsub architecture
-	on the host-service. This is achieved using Hasura live subscriptions, so that
-	the host-service can be notified instantly of any change in the database
+Package subscriptions is responsible for implementing a pubsub architecture
+on the host-service. This is achieved using Hasura live subscriptions, so that
+the host-service can be notified instantly of any change in the database
 */
 package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
 
