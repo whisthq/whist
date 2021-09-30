@@ -129,8 +129,8 @@ jobs:
 
       - name: Install lcov on Linux
         if: runner.os == 'Linux'
-        run: apt-get install lcov
-        
+        run: sudo apt-get install lcov
+
       ############################# Unix Configuration Steps END #############################
 
       - name: Build and Test Protocol Client and Server on Windows
