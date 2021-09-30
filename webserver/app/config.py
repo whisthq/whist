@@ -219,7 +219,6 @@ class DeploymentConfig:
     #: See https://stripe.com/docs/api/subscriptions/object#subscription_object-status for a list
     #: of possible values.
     STRIPE_SUBSCRIPTION_STATUS_CLAIM = "https://api.fractal.co/subscription_status"
-    AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     AWS_INSTANCE_TYPE_TO_LAUNCH = property(
         # Having a `fetch=True` can let us dynamically change the instance type to be launched.
         getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g4dn.12xlarge")
@@ -389,7 +388,6 @@ class LocalConfig(DeploymentConfig):
     AUTH0_WEBSERVER_CLIENT_SECRET = property(getter("AUTH0_WEBSERVER_CLIENT_SECRET"))
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
-    AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     SENTRY_DSN = ""  # type: ignore
 
