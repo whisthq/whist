@@ -285,8 +285,8 @@ def test_lingering_instances(
     Tests that lingering_instances properly drains only those instances that are
     inactive for the specified period of time:
     2 min for running instances, 15 for preconnected instances
-    or (draining/host unresponsive) instances that do not have an associated mandelbox and 
-    status last changed > 2 mins 
+    or (draining/host service unresponsive) instances that do not have an associated mandelbox and
+    status last changed > 2 mins
 
     """
     call_set = set()
