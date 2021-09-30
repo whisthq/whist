@@ -8,12 +8,14 @@ from typing import Any, Callable, Dict, Tuple
 import pytest
 from flask import current_app, Flask
 from flask_jwt_extended import create_access_token, JWTManager, verify_jwt_in_request
+import stripe
 
 from app.utils.general.limiter import limiter
 from app.utils.stripe.payments import (
     check_payment,
     get_customer_id,
     get_subscription_status,
+    get_stripe_subscription_status,
     payment_required,
     PaymentRequired,
 )
@@ -66,6 +68,18 @@ def test_get_missing_subscription_status() -> None:
         assert get_subscription_status() is None
 
 
+def test_get_no_subscription_status_stripe(monkeypatch):
+    """Return None from get_subscription_status() if the subscription status claim is omitted."""
+
+    monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
+
+    token = create_access_token("test")
+
+    with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+        verify_jwt_in_request()
+        assert get_stripe_subscription_status("DNE") is None
+
+
 def test_get_customer_id() -> None:
     """Ensure that get_customer_id() returns the customer ID claimed in the access token."""
 
@@ -96,6 +110,31 @@ def test_get_subscription_status(subscription_status: str) -> None:
     with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
         verify_jwt_in_request()
         assert get_subscription_status() == subscription_status
+
+
+@pytest.mark.parametrize(
+    "subscription_status",
+    ("active", "past_due", "unpaid", "canceled", "incomplete", "incomplete_expired", "trialing"),
+)
+def test_get_stripe_subscription_status(subscription_status, monkeypatch):
+    """Ensure that get_subscription_status() extracts the subscription status correctly."""
+
+    monkeypatch.setattr(
+        stripe.Subscription, "list", function(returns={"data": [{"status": subscription_status}]})
+    )
+
+    customer_id = f"cus_{os.urandom(8).hex()}"
+    token = create_access_token(
+        "test",
+        additional_claims={
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: "WrongStatus",
+            current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: customer_id,
+        },
+    )
+
+    with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+        verify_jwt_in_request()
+        assert get_stripe_subscription_status(customer_id) == subscription_status
 
 
 @pytest.mark.parametrize(
