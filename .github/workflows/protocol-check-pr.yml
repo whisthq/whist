@@ -122,8 +122,8 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: protocol
         run: |
-          # llvm for clang-tidy, coreutils for realpath, lcov for codecov
-          brew install llvm coreutils perl doxygen lcov
+          # llvm for clang-tidy, coreutils for realpath, gcov for codecov
+          brew install llvm coreutils perl doxygen gcov
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
@@ -147,8 +147,8 @@ jobs:
           ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
 
           # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
+          gcov --capture --directory . --output-file coverage.info
+          gcov --list coverage.info # debug info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
@@ -168,8 +168,8 @@ jobs:
           make FractalClient FractalClientTest -j
 
           # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
+          gcov --capture --directory . --output-file coverage.info
+          gcov --list coverage.info # debug info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
@@ -184,8 +184,8 @@ jobs:
           ./build_protocol_targets.sh --cmakebuildtype=Debug FractalServer FractalServerTest
 
           # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
+          gcov --capture --directory . --output-file coverage.info
+          gcov --list coverage.info # debug info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
@@ -250,8 +250,8 @@ jobs:
           ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer FractalServerTest
 
           # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
+          gcov --capture --directory . --output-file coverage.info
+          gcov --list coverage.info # debug info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/linux/macos/codecov && chmod +x codecov
