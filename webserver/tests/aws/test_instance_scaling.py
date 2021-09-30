@@ -303,6 +303,16 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=time() * 1000,
     )
 
+    bulk_instance(
+        instance_name="associated_mandelbox_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        associated_mandelboxes=1,
+        status=MandelboxHostState.DRAINING.value,
+        last_updated_utc_unix_ms=time() + 125 * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+
     sleep(125)
 
     bulk_instance(
