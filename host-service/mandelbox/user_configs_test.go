@@ -170,5 +170,5 @@ func setupTestDirs(c *mandelboxData) error {
 // test. This allows the test to be runnable multiple times without
 // creation errors.
 func cleanupTestDirs(c *mandelboxData) error {
-	return os.RemoveAll(path.Join(utils.FractalDir, string(c.mandelboxID)))
+	return os.RemoveAll(utils.FractalDir)
 }
