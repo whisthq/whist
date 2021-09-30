@@ -127,10 +127,6 @@ jobs:
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
-      - name: Install lcov on Linux
-        if: runner.os == 'Linux'
-        run: sudo apt-get install lcov
-
       ############################# Unix Configuration Steps END #############################
 
       - name: Build and Test Protocol Client and Server on Windows
@@ -147,18 +143,7 @@ jobs:
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: |
-          ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
-
-          # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
-
-          # Download the Codecov uploader
-          curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
-
-          # Upload coverage report to Codecov
-          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
 
       - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
@@ -184,18 +169,7 @@ jobs:
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: |
-          ./build_protocol_targets.sh --cmakebuildtype=Debug FractalServer FractalServerTest
-
-          # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
-
-          # Download the Codecov uploader
-          curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
-
-          # Upload coverage report to Codecov
-          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug FractalServer FractalServerTest
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format

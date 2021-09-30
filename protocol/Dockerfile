@@ -53,6 +53,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     sudo \
     clang-format \
     awscli \
+    lcov \
     jq \
     build-essential \
     && apt-get autoremove -y \
