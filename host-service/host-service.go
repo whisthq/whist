@@ -979,10 +979,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			case *SpinUpMandelboxRequest:
 				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*SpinUpMandelboxRequest))
 
-			// case *DrainAndShutdownRequest:
-			// 	// Don't do this in a separate goroutine, since there's no reason to.
-			// 	drainAndShutdown(globalCtx, globalCancel, goroutineTracker, serverevent.(*DrainAndShutdownRequest))
-
 			default:
 				if serverevent != nil {
 					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
