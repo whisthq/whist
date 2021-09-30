@@ -130,13 +130,13 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := buf.Bytes()
-	salt, encryptedData, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
+	salt, data, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
 	if err != nil {
 		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
 	}
 
 	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.configEncryptionToken), salt)
-	decryptedData, err := decryptAES256CBC(key, iv, encryptedData)
+	err = decryptAES256CBC(key, iv, data)
 	if err != nil {
 		return utils.MakeError("failed to decrypt user config: %v", err)
 	}
@@ -146,7 +146,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	// Unpacking the decrypted data involves:
 	// 1. Decompress the the lz4 file into a tar
 	// 2. Untar the config to the target directory
-	dataReader := bytes.NewReader(decryptedData)
+	dataReader := bytes.NewReader(data)
 	lz4Reader := lz4.NewReader(dataReader)
 	tarReader := tar.NewReader(lz4Reader)
 
@@ -347,23 +347,23 @@ func getKeyAndIVFromPassAndSalt(password, salt []byte) (key, iv []byte) {
 	return
 }
 
-// decryptAES256CBC takes a key, IV, and AES-256 CBC encrypted data and returns the decrypted data
+// decryptAES256CBC takes a key, IV, and AES-256 CBC encrypted data and decrypts
+// the data in place.
 // Based on example code from: https://golang.org/src/crypto/cipher/example_test.go.
-func decryptAES256CBC(key, iv, data []byte) (decrypted []byte, err error) {
+func decryptAES256CBC(key, iv, data []byte) error {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, utils.MakeError("could not create aes cipher block: %v", err)
+		return utils.MakeError("could not create aes cipher block: %v", err)
 	}
 
 	// Validate that encrypted data follows the correct format
 	// This is because CBC encryption always works in whole blocks
 	if len(data)%aes.BlockSize != 0 {
-		return nil, utils.MakeError("given data is not a multiple of the block size")
+		return utils.MakeError("given data is not a multiple of the block size")
 	}
 
-	decrypted = make([]byte, len(data))
 	mode := cipher.NewCBCDecrypter(block, iv)
-	mode.CryptBlocks(decrypted, data)
+	mode.CryptBlocks(data, data)
 
-	return
+	return nil
 }
