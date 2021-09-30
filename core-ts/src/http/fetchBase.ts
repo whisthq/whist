@@ -6,6 +6,11 @@ import {
 } from "../types/api"
 import { isNode } from "browser-or-node"
 import nodeFetch from "node-fetch"
+import https from "https"
+
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+})
 
 // TODO: I don't think fractalBackoff() actually works as it's supposed to.
 // Here's a way we can fix: https://www.npmjs.com/package/fetch-retry
@@ -22,6 +27,7 @@ import nodeFetch from "node-fetch"
  */
 export const fetchBase: ServerEffect = async (req: ServerRequest) => {
   const fetchFunc = isNode ? nodeFetch : fetch
+
   const response = await fetchFunc(req.url || "", {
     method: req.method || "",
     // mode: "cors",
@@ -30,6 +36,9 @@ export const fetchBase: ServerEffect = async (req: ServerRequest) => {
       Authorization: `Bearer ${req.token}`,
     },
     body: JSON.stringify(req.body),
+    // TODO: Once Electron fixes https://github.com/electron/electron/issues/31212
+    // we can get rid of this
+    ...((req.url ?? "").startsWith("https") && { agent }),
   })
 
   return { request: req, response } as ServerResponse
