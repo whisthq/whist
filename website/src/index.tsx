@@ -19,7 +19,7 @@ if (import.meta.env.FRACTAL_ENVIRONMENT === "production") {
 }
 
 const RootComponent = () => (
-  <Sentry.ErrorBoundary fallback={"An error has occurred"}>
+  <Sentry.ErrorBoundary>
     <Router history={history}>
       <MainProvider>
         <RootApp />
