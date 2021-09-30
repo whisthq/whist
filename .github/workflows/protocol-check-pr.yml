@@ -220,23 +220,6 @@ jobs:
           cd build
           ninja clang-tidy || EXIT /B 1
 
-      # This tests building the protocol in a container, the same way we do it in production
-      - name: Build Protocol Server in Docker Container
-        if: runner.os == 'Linux'
-        working-directory: protocol
-        run: |
-          ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer FractalServerTest
-
-          # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
-
-          # Download the Codecov uploader
-          curl -Os https://uploader.codecov.io/linux/macos/codecov && chmod +x codecov
-
-          # Upload coverage report to Codecov
-          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
-
       # This ensures that all the build files from build_protocol_targets.sh have actually been generated
       - name: Ensure that all protocol build files are present
         if: runner.os == 'Linux'

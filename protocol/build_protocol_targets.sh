@@ -92,7 +92,7 @@ docker run \
   "
 
 # If we're running in CI, upload code coverage to Codecov
-if [ ${CMAKE_SET_CI} == True]; then
+if [[ ${CMAKE_SET_CI} == "True" ]]; then
   # Generate code coverage report from gcc/clang `--coverage` flag
   lcov --capture --directory . --output-file coverage.info
   lcov --list coverage.info # debug info
