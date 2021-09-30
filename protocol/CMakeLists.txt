@@ -96,8 +96,8 @@ add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 # You can locally set to ON as well if you like, just make sure to have cppcheck installed
 OPTION(CI OFF)
 
-# Generate code coverage if we're running in CI
-if (${CI} MATCHES "TRUE")
+# Generate code coverage if we're running in CI on Linux/macOS (code coverage is not well supported through Cmake on Windows)
+if (${CI} MATCHES "TRUE" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS --coverage)
 endif()
 
