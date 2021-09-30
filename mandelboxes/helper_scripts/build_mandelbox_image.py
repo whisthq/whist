@@ -141,7 +141,6 @@ def build_image_path(img_path):
 
 def terminate():
     print("Terminating child processes...")
-    # Disable SIGTERM for this process!
     os.killpg(0, signal.SIGTERM)
     time.sleep(0.5)
     os.killpg(0, signal.SIGKILL)
