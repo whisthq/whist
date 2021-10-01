@@ -41,33 +41,6 @@ const (
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
-	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
-	// from under us.
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
-
-	// Make directory for user configs
-	configDir := c.getUserConfigDir()
-	if err := os.MkdirAll(configDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
-	}
-
-	unpackedConfigDir := configDir + c.getUnpackedConfigsDirectoryName()
-	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
-	}
-
-	// Once we've extracted everything, we open up permissions for the user
-	// config directory so it's accessible by the non-root user in the
-	// mandelboxes. We also are okay with setting executable bits here, since
-	// it's possible that some apps store executable scripts in their config.
-	defer func() {
-		cmd := exec.Command("chown", "-R", "ubuntu", configDir)
-		cmd.Run()
-		cmd = exec.Command("chmod", "-R", "777", configDir)
-		cmd.Run()
-	}()
-
 	// If userID is not set, then we don't retrieve configs from s3
 	if len(c.userID) == 0 {
 		return nil
@@ -142,6 +115,33 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	logger.Infof("Finished decrypting user config for mandelbox %s", c.mandelboxID)
 	logger.Infof("Decompressing user config for mandelbox %s", c.mandelboxID)
+
+	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
+	// from under us.
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	// Make directory for user configs
+	configDir := c.getUserConfigDir()
+	if err := os.MkdirAll(configDir, 0777); err != nil {
+		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
+	}
+
+	unpackedConfigDir := configDir + c.getUnpackedConfigsDirectoryName()
+	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+	}
+
+	// Once we've extracted everything, we open up permissions for the user
+	// config directory so it's accessible by the non-root user in the
+	// mandelboxes. We also are okay with setting executable bits here, since
+	// it's possible that some apps store executable scripts in their config.
+	defer func() {
+		cmd := exec.Command("chown", "-R", "ubuntu", configDir)
+		cmd.Run()
+		cmd = exec.Command("chmod", "-R", "777", configDir)
+		cmd.Run()
+	}()
 
 	// Unpacking the decrypted data involves:
 	// 1. Decompress the the lz4 file into a tar

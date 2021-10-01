@@ -391,6 +391,18 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 
+	// Begin populating user configs at the same time as other setup is being done
+	go func() {
+		// User config errors aren't fatal --- we still want to spin up a mandelbox,
+		// and we will just use the provided encryption token to save configs when
+		// the mandelbox dies.
+		err := fc.PopulateUserConfigs()
+		if err != nil {
+			logger.Warningf("Error populating user configs: %v", err)
+		}
+		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", req.MandelboxID)
+	}()
+
 	// Request port bindings for the mandelbox.
 	if err := fc.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -589,15 +601,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	fc.AssignToUser(userID)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
-
-	err = fc.PopulateUserConfigs()
-	if err != nil {
-		// Not a fatal error --- we still want to spin up a mandelbox, and we will
-		// just use the provided encryption token to save configs when the
-		// mandelbox dies.
-		logger.Warning(err)
-	}
-	logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", req.MandelboxID)
 
 	err = fc.MarkReady()
 	if err != nil {
