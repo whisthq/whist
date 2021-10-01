@@ -200,7 +200,6 @@ export const createAuthWindow = () => {
     hash: WindowHashAuth,
     customURL: authPortalURL(),
     closeElectronWindows: true,
-    closeProtocolWindow: true,
   })
 
   // Authentication
@@ -331,7 +330,6 @@ export const createOnboardingTypeform = () =>
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboardingTypeform,
     closeElectronWindows: true,
-    closeProtocolWindow: true,
   })
 
 export const createBugTypeform = () =>
