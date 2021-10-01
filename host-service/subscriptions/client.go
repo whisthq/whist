@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"log"
 
+	logger "github.com/fractal/fractal/host-service/fractallogger"
 	graphql "github.com/hasura/go-graphql-client"
 )
 
@@ -34,19 +35,27 @@ func Close(client *graphql.SubscriptionClient, subscriptionIDs []string, done ch
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!
 
+	logger.Infof("Closing Hasura subscriptions...")
 	for _, id := range subscriptionIDs {
 		// This is safe to do because the Unsubscribe method
 		// acquires a lock when closing the connection.
 		err := client.Unsubscribe(id)
 
 		if err != nil {
+			logger.Errorf("Failed to unsubscribe from:%v", id)
 			return err
 		}
 	}
 
 	// Once we have successfully unsubscribed, close the connection to the
 	// Hasura server.
-	client.Close()
+	logger.Infof("Closing connection to Hasura server...")
+	err := client.Close()
+	if err != nil {
+		logger.Errorf("Error closing connection with Hasura server.")
+		return err
+	}
+
 	done <- true // Notify the client closed successfully.
 	return nil
 }
