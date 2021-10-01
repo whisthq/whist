@@ -9,5 +9,5 @@ var SubscriptionInstanceStatus struct {
 	HardwareInstanceInfo struct {
 		InstanceName graphql.String `graphql:"instance_name"`
 		Status       graphql.String `graphql:"status"`
-	} `graphql:"hardware_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
+	} `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
 }
