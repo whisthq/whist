@@ -1,12 +1,15 @@
 import pytest
+from typing import Any, Callable, Dict, Generator, List
 
 import app.helpers.aws.aws_instance_post as aws_funcs
 from app.utils.aws.base_ec2_client import EC2Client
-from app.database.models.cloud import db
+from app.database.models.cloud import RegionToAmi, db
 
 
 @pytest.fixture
-def hijack_ec2_calls(monkeypatch):
+def hijack_ec2_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[List[Dict[str, Any]], None, None]:
     """
     This fixture mocks any calls to EC2client side-effecting endpoints
     and just puts arguments to those calls into a list.
@@ -15,14 +18,14 @@ def hijack_ec2_calls(monkeypatch):
     """
     call_list = []
 
-    def _set_state_helper(*args, **kwargs):
+    def _set_state_helper(*args: Any, **kwargs: Any) -> List[str]:
         call_list.append({"args": args, "kwargs": kwargs})
         return ["test_id"]
 
-    def _trivial_true(*args, **kwargs):
+    def _trivial_true(*args: Any, **kwargs: Any) -> bool:
         return True
 
-    def _get_state_helper(*args, **kwargs):
+    def _get_state_helper(*args: Any, **kwargs: Any) -> List[str]:
         # Pretend the instance is running when we call get_instance_states!
         return ["running"]
 
@@ -34,13 +37,15 @@ def hijack_ec2_calls(monkeypatch):
 
 
 @pytest.fixture
-def mock_get_num_new_instances(monkeypatch):
+def mock_get_num_new_instances(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[Callable[[Any], None], None, None]:
     """
     This fixture mocks the _get_num_new_instances function
     from aws_instance_post, making it easy to set what that function should return.
     """
 
-    def _patcher(return_value):
+    def _patcher(return_value: Any) -> None:
         monkeypatch.setattr(
             aws_funcs, "_get_num_new_instances", (lambda *args, **kwargs: return_value)
         )
@@ -49,7 +54,7 @@ def mock_get_num_new_instances(monkeypatch):
 
 
 @pytest.fixture
-def hijack_db(monkeypatch):
+def hijack_db(monkeypatch: pytest.MonkeyPatch) -> Generator[List[Dict[str, Any]], None, None]:
     """
     This fixture mocks any calls to DB side effecting endpoints,
     putting added objects into a list.
@@ -58,14 +63,14 @@ def hijack_db(monkeypatch):
     """
     call_list = []
 
-    def _helper(*args, **kwargs):
+    def _helper(*args: Any, **kwargs: Any) -> None:
         call_list.append({"args": args, "kwargs": kwargs})
 
-    def _add_all_helper(*args):
+    def _add_all_helper(*args: Any) -> None:
         for obj in args[0]:
             call_list.append({"args": obj})
 
-    def _empty(*args):
+    def _empty(*args: Any) -> None:
         return
 
     monkeypatch.setattr(db.session, "add", _helper)
@@ -76,11 +81,11 @@ def hijack_db(monkeypatch):
 
 
 @pytest.fixture(autouse=False)
-def set_amis_state():
-    amis = []
+def set_amis_state() -> Generator[Callable[[RegionToAmi, bool], None], None, None]:
+    amis: List[RegionToAmi] = []
     amis_original_enabled_value = []
 
-    def _setter(amis_to_be_modified, enabled_state):
+    def _setter(amis_to_be_modified: RegionToAmi, enabled_state: bool) -> None:
         for ami in amis_to_be_modified:
             amis_original_enabled_value.append(ami.ami_active)
             ami.ami_active = enabled_state

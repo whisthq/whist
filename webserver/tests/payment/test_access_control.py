@@ -1,7 +1,9 @@
 """Tests for the access control helpers check_payment() and @payment_required"""
 
+import http
 import os
 from http import HTTPStatus
+from typing import Any, Callable, Dict, Tuple
 
 import pytest
 from flask import current_app, Flask
@@ -20,7 +22,7 @@ from tests.patches import function
 
 
 @pytest.fixture
-def app():
+def app() -> Flask:
     """Create a test Flask application.
 
     Returns:
@@ -35,7 +37,7 @@ def app():
     _app.config["ENVIRONMENT"] = "TESTING"
 
     @_app.errorhandler(PaymentRequired)
-    def _handle_payment_required(_error):
+    def _handle_payment_required(_error: Any) -> Tuple[str, HTTPStatus]:
         return HTTPStatus.PAYMENT_REQUIRED.phrase, HTTPStatus.PAYMENT_REQUIRED
 
     JWTManager(_app)
@@ -44,7 +46,7 @@ def app():
     return _app
 
 
-def test_get_missing_customer_id():
+def test_get_missing_customer_id() -> None:
     """Ensure that get_customer_id() returns None when the access token contains no customer ID."""
 
     token = create_access_token("test")
@@ -54,7 +56,7 @@ def test_get_missing_customer_id():
         assert get_customer_id() is None
 
 
-def test_get_missing_subscription_status():
+def test_get_missing_subscription_status() -> None:
     """Return None from get_subscription_status() if the subscription status claim is omitted."""
 
     token = create_access_token("test")
@@ -64,7 +66,7 @@ def test_get_missing_subscription_status():
         assert get_subscription_status() is None
 
 
-def test_get_customer_id():
+def test_get_customer_id() -> None:
     """Ensure that get_customer_id() returns the customer ID claimed in the access token."""
 
     customer_id = f"cus_{os.urandom(8).hex()}"
@@ -81,7 +83,7 @@ def test_get_customer_id():
     "subscription_status",
     ("active", "past_due", "unpaid", "canceled", "incomplete", "incomplete_expired", "trialing"),
 )
-def test_get_subscription_status(subscription_status):
+def test_get_subscription_status(subscription_status: str) -> None:
     """Ensure that get_subscription_status() extracts the subscription status correctly."""
 
     token = create_access_token(
@@ -99,7 +101,7 @@ def test_get_subscription_status(subscription_status):
 @pytest.mark.parametrize(
     "subscription_status", ("past_due", "unpaid", "canceled", "incomplete", "incomplete_expired")
 )
-def test_check_payment_invalid(monkeypatch, subscription_status):
+def test_check_payment_invalid(monkeypatch: pytest.MonkeyPatch, subscription_status: str) -> None:
     """Ensure that check_payment() raises PaymentRequired when there is no valid subscription.
 
     Subscriptions are considered valid if and only if they are in the "active" or "trialing"
@@ -116,7 +118,7 @@ def test_check_payment_invalid(monkeypatch, subscription_status):
 
 
 @pytest.mark.parametrize("subscription_status", ("active", "trialing"))
-def test_check_payment_valid(monkeypatch, subscription_status):
+def test_check_payment_valid(monkeypatch: pytest.MonkeyPatch, subscription_status: str) -> None:
     """Ensure that check_payment() returns when there is a valid subscription."""
 
     monkeypatch.setattr(
@@ -131,7 +133,13 @@ def test_check_payment_valid(monkeypatch, subscription_status):
     "mock_kwargs, status_code",
     [[{}, HTTPStatus.OK], [{"raises": PaymentRequired}, HTTPStatus.PAYMENT_REQUIRED]],
 )
-def test_payment_required(client, make_user, mock_kwargs, monkeypatch, status_code):
+def test_payment_required(
+    client: FractalAPITestClient,
+    make_user: Callable[..., str],
+    mock_kwargs: Dict[str, PaymentRequired],
+    monkeypatch: pytest.MonkeyPatch,
+    status_code: HTTPStatus,
+) -> None:
     """Ensure that the @payment_required decorator returns correct HTTP response codes.
 
     @payment_required should cause the application to return 402 when check_payment() raises
@@ -140,7 +148,7 @@ def test_payment_required(client, make_user, mock_kwargs, monkeypatch, status_co
 
     @current_app.route("/")
     @payment_required
-    def index():
+    def index() -> Tuple[str, HTTPStatus]:
         return HTTPStatus.OK.phrase, HTTPStatus.OK
 
     user = make_user()
@@ -152,10 +160,15 @@ def test_payment_required(client, make_user, mock_kwargs, monkeypatch, status_co
 
 
 @pytest.mark.parametrize(
-    "login_kwargs, status_code",
-    [[{}, HTTPStatus.PAYMENT_REQUIRED], [{"admin": True}, HTTPStatus.OK]],
+    "admin, status_code",
+    [[False, HTTPStatus.PAYMENT_REQUIRED], [True, HTTPStatus.OK]],
 )
-def test_payment_required_token(client, login_kwargs, make_user, status_code):
+def test_payment_required_token(
+    client: FractalAPITestClient,
+    admin: bool,
+    make_user: Callable[..., str],
+    status_code: HTTPStatus,
+) -> None:
     """Ensure that the @payment_required interprets the contents of the access token correctly.
 
     Administrators (i.e. users whose access tokens contain "admin" in the "scope" claim) should
@@ -165,11 +178,11 @@ def test_payment_required_token(client, login_kwargs, make_user, status_code):
 
     @current_app.route("/")
     @payment_required
-    def index():
+    def index() -> Tuple[str, HTTPStatus]:
         return HTTPStatus.OK.phrase, HTTPStatus.OK
 
     user = make_user()
 
-    client.login(user, **login_kwargs)
+    client.login(user, admin=admin)
 
     assert client.get("/").status_code == status_code

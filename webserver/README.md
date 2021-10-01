@@ -87,7 +87,7 @@ webserver/ $ black --config ../pyproject.toml .
 
 # Perform static type checking with mypy
 # Note: We need to re-enable this for scripts and tests!
-webserver/ $ mypy --strict app
+webserver/ $ mypy --strict app scripts tests
 
 # Lint with Pylint
 webserver/ $ pylint --rcfile=../pylintrc app auth0 payments

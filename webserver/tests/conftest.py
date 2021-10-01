@@ -1,10 +1,13 @@
 import os
+import sys
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 import uuid
 import time
 
 from random import randint
 import platform
 
+from flask import Flask
 import pytest
 
 from flask_jwt_extended import create_access_token
@@ -26,7 +29,7 @@ from tests.helpers.utils import (
 
 
 @pytest.fixture(scope="session")
-def app():
+def app() -> Flask:
     """Flask application test fixture required by pytest-flask.
 
     https://pytest-flask.readthedocs.io/en/latest/tutorial.html#step-2-configure.
@@ -56,7 +59,7 @@ def app():
     # enable web requests
     if not set_web_requests_status(True):
         fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
-        os.sys.exit(1)
+        sys.exit(1)
 
     # enable the web signal handler. This should work on OSX and Linux.
     if "windows" in platform.platform().lower():
@@ -70,13 +73,13 @@ def app():
 
 
 @pytest.fixture
-def _db(app):
+def _db(app: Flask) -> db:
     # Necessary for pytest-flask-sqlalchemy to work
     return db
 
 
 @pytest.fixture
-def authorized(client, user, monkeypatch):
+def authorized(client: FractalAPITestClient, user: str, monkeypatch: pytest.MonkeyPatch) -> str:
     """Bypass authorization decorators.
 
     Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
@@ -96,7 +99,9 @@ def authorized(client, user, monkeypatch):
 
 
 @pytest.fixture
-def bulk_instance():
+def bulk_instance() -> Generator[
+    Callable[[int, Optional[str], Optional[str], Optional[int]], InstanceInfo], None, None
+]:
     """Add 1+ rows to the instance_info table for testing.
 
     Returns:
@@ -106,12 +111,12 @@ def bulk_instance():
     instances = []
 
     def _instance(
-        associated_mandelboxes=0,
-        instance_name=None,
-        location=None,
-        mandelbox_capacity=None,
-        **kwargs,
-    ):
+        associated_mandelboxes: int = 0,
+        instance_name: Optional[str] = None,
+        location: Optional[str] = None,
+        mandelbox_capacity: Optional[int] = None,
+        **kwargs: Any,
+    ) -> InstanceInfo:
         """Create a dummy instance for testing.
 
         Arguments:
@@ -175,7 +180,7 @@ def bulk_instance():
 
 
 @pytest.fixture
-def region_to_ami_map(app):
+def region_to_ami_map(app: Flask) -> Dict[str, str]:
     """
     Returns a dict of active <Region:AMI> pairs.
     """
@@ -185,17 +190,18 @@ def region_to_ami_map(app):
 
 
 @pytest.fixture
-def region_ami_pair():
+def region_ami_pair() -> Optional[Tuple[str, str]]:
     """
     Returns a randomly picked region and corresponding ami_id
     """
     region_ami_pair = get_allowed_regions()
     if region_ami_pair:
         return region_ami_pair[0].region_name, region_ami_pair[0].ami_id
+    return None
 
 
 @pytest.fixture
-def region_names():
+def region_names() -> List[str]:
     """
     Returns two randomly picked regions. The function call to `get_allowed_region_names`
     can be supplied with argument to return more than two but at this moment the test cases
@@ -205,7 +211,7 @@ def region_names():
 
 
 @pytest.fixture
-def region_name():
+def region_name() -> Optional[str]:
     """
     Returns a randomly picked region
     """
@@ -214,7 +220,7 @@ def region_name():
 
 
 @pytest.fixture
-def override_environment(app):
+def override_environment(app: Flask) -> Generator[Callable[[Any], None], None, None]:
     """
     Override the environment temporarily to test environment specific behaviour.
 
@@ -225,7 +231,7 @@ def override_environment(app):
     """
     environment_ = None
 
-    def _environment(_value):
+    def _environment(_value: Any) -> None:
         nonlocal environment_
         environment_ = app.config["ENVIRONMENT"]
         app.config["ENVIRONMENT"] = _value
@@ -235,7 +241,7 @@ def override_environment(app):
 
 
 @pytest.fixture
-def make_user():
+def make_user() -> Callable[[], str]:
     """Create a new user for testing purposes.
 
     See tests.conftest.user.
@@ -245,13 +251,15 @@ def make_user():
 
 
 @pytest.fixture
-def make_authorized_user(client, make_user, monkeypatch):
+def make_authorized_user(
+    client: FractalAPITestClient, make_user: Callable[..., str], monkeypatch: pytest.MonkeyPatch
+) -> Callable[..., str]:
     """Create a new user for testing purposes and authorize all future test requests as that user.
 
     See tests.conftest.user.
     """
 
-    def _authorized_user(**kwargs):
+    def _authorized_user(**kwargs: Any) -> str:
         username = make_user(**kwargs)
         access_token = create_access_token(identity=username, additional_claims={"scope": "admin"})
 
@@ -263,14 +271,14 @@ def make_authorized_user(client, make_user, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def reset_limiter():
+def reset_limiter() -> None:
     """
     Reset the rate limiter after every test.
     """
     limiter.reset()
 
 
-def user(*, domain="fractal.co", user_id=None):
+def user(*, domain: str = "fractal.co", user_id: Optional[str] = None) -> str:
     """Generate a fake email address for a test user.
 
     Args:
