@@ -100,8 +100,8 @@ def test_client_commit_hash_local_dev_override_fail(
     override_environment: Callable[[str], None],
 ) -> None:
     """
-    Ensure that in production environment, passing the pre-shared client commit hash for dev enviroment
-    returns a status code of RESOURCE_UNAVAILABLE
+    Ensure that in production environment, passing the pre-shared client commit hash for dev
+    enviroment returns a status code of RESOURCE_UNAVAILABLE
     """
 
     override_environment(PRODUCTION)
@@ -126,8 +126,8 @@ def test_client_commit_hash_local_dev_override_success(
     override_environment: Callable[[str], None],
 ) -> None:
     """
-    Ensure that in development environment, passing the pre-shared client commit hash for dev enviroment
-    returns a status code of ACCEPTED
+    Ensure that in development environment, passing the pre-shared client commit hash for dev
+    enviroment returns a status code of ACCEPTED
     """
 
     override_environment(DEVELOPMENT)
