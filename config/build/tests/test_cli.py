@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import click
 import platform
 import tests.mock_data as mock_data
 import helpers.cli

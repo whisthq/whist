@@ -1,4 +1,3 @@
-black==21.8b0
 pylint==2.10.2
 docker==5.0.0
 psutil==5.8.0
