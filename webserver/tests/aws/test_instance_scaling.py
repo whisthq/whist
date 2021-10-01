@@ -345,14 +345,24 @@ def test_buffer_wrong_region() -> None:
     """
     checks that we return -sys.maxsize when we ask about a nonexistent region
     """
-    assert aws_funcs._get_num_new_instances("fake_region", "fake-AMI") == -maxsize  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(  # pylint: disable=protected-access
+            "fake_region", "fake-AMI"
+        )
+        == -maxsize
+    )
 
 
 def test_buffer_wrong_ami() -> None:
     """
     checks that we return -sys.maxsize when we ask about a nonexistent ami
     """
-    assert aws_funcs._get_num_new_instances("us-east-1", "fake-AMI") == -maxsize  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(  # pylint: disable=protected-access
+            "us-east-1", "fake-AMI"
+        )
+        == -maxsize
+    )
 
 
 def test_buffer_empty(region_ami_pair: Tuple[str, str]) -> None:
@@ -360,7 +370,10 @@ def test_buffer_empty(region_ami_pair: Tuple[str, str]) -> None:
     Tests that we ask for a new instance when the buffer is empty
     """
     region_name, ami_id = region_ami_pair
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 1
+    )
 
 
 def test_buffer_part_full(
@@ -373,7 +386,10 @@ def test_buffer_part_full(
     bulk_instance(
         aws_ami_id=ami_id, associated_mandelboxes=10, mandelbox_capacity=10, location=region_name
     )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 1
+    )
 
 
 def test_buffer_good(
@@ -388,7 +404,10 @@ def test_buffer_good(
     bulk_instance(
         aws_ami_id=ami_id, mandelbox_capacity=desired_free_mandelboxes, location=region_name
     )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 0
+    )
 
 
 def test_buffer_with_multiple(
@@ -411,7 +430,10 @@ def test_buffer_with_multiple(
             mandelbox_capacity=mandelbox_capacity,
             location=region_name,
         )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 0
+    )
 
 
 def test_buffer_with_multiple_draining(
@@ -450,7 +472,10 @@ def test_buffer_with_multiple_draining(
         status="DRAINING",
         location=region_name,
     )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 0
+    )
 
 
 def test_buffer_overfull(
@@ -477,7 +502,10 @@ def test_buffer_overfull(
         # Break out when we allocated more buffer than our threshold.
         if buffer_capacity_available > buffer_threshold:
             break
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == -1
+    )
 
 
 def test_buffer_not_too_full(
@@ -507,7 +535,10 @@ def test_buffer_not_too_full(
             mandelbox_capacity=mandelbox_capacity,
             location=region_name,
         )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 0
+    )
 
 
 def test_buffer_overfull_split(
@@ -538,7 +569,10 @@ def test_buffer_overfull_split(
         if buffer_available > buffer_threshold:
             break
 
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == -1
+    )
 
 
 def test_buffer_not_too_full_split(
@@ -575,7 +609,10 @@ def test_buffer_not_too_full_split(
             # we cross the buffer_threshold, we should be atleast equal to desired_free_mandelboxes.
             break
 
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
+    assert (
+        aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
+        == 0
+    )
 
 
 def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., InstanceInfo]) -> None:
@@ -617,10 +654,15 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
             break
 
     assert (
-        aws_funcs._get_num_new_instances(region_ami_with_buffer[0], region_ami_with_buffer[1]) == -1  # pylint: disable=protected-access
+        aws_funcs._get_num_new_instances(  # pylint: disable=protected-access
+            region_ami_with_buffer[0], region_ami_with_buffer[1]
+        )
+        == -1
     )
     assert (
-        aws_funcs._get_num_new_instances(region_ami_without_buffer[0], region_ami_without_buffer[1])  # pylint: disable=protected-access
+        aws_funcs._get_num_new_instances(  # pylint: disable=protected-access
+            region_ami_without_buffer[0], region_ami_without_buffer[1]
+        )
         == app.config["DEFAULT_INSTANCE_BUFFER"]
     )
 

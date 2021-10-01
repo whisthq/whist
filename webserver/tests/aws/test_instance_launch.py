@@ -163,7 +163,9 @@ def test_perform_ami_upgrade(
 
     num_running_instances = 10
 
-    def _mock_instance_info_query(*args: Any, **kwargs: Any) -> List[InstanceInfo]:   # pylint: disable=unused-argument
+    def _mock_instance_info_query(
+        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> List[InstanceInfo]:
         return [
             bulk_instance(
                 instance_name=generate_name("current_running_instance", True),

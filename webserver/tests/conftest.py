@@ -82,7 +82,7 @@ def _db() -> db:
 def authorized(
     client: FractalAPITestClient,
     user: str,  # pylint: disable=redefined-outer-name
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> str:
     """Bypass authorization decorators.
 
@@ -184,7 +184,9 @@ def bulk_instance() -> Generator[
 
 
 @pytest.fixture
-def region_to_ami_map(app: Flask) -> Dict[str, str]:  # pylint: disable=redefined-outer-name,unused-argument
+def region_to_ami_map(
+    app: Flask,  # pylint: disable=redefined-outer-name,unused-argument
+) -> Dict[str, str]:
     """
     Returns a dict of active <Region:AMI> pairs.
     """
@@ -224,7 +226,9 @@ def region_name() -> Optional[str]:
 
 
 @pytest.fixture
-def override_environment(app: Flask) -> Generator[Callable[[Any], None], None, None]: # pylint: disable=redefined-outer-name
+def override_environment(
+    app: Flask,  # pylint: disable=redefined-outer-name
+) -> Generator[Callable[[Any], None], None, None]:
     """
     Override the environment temporarily to test environment specific behaviour.
 
@@ -259,7 +263,7 @@ def make_user() -> Callable[[], str]:
 def make_authorized_user(
     client: FractalAPITestClient,
     make_user: Callable[..., str],  # pylint: disable=redefined-outer-name
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> Callable[..., str]:
     """Create a new user for testing purposes and authorize all future test requests as that user.
 
@@ -285,7 +289,9 @@ def reset_limiter() -> None:
     limiter.reset()
 
 
-def user(*, domain: str = "fractal.co", user_id: Optional[str] = None) -> str:  # pylint: disable=unused-argument
+def user(
+    *, domain: str = "fractal.co", user_id: Optional[str] = None  # pylint: disable=unused-argument
+) -> str:
     """Generate a fake email address for a test user.
 
     Args:

@@ -26,7 +26,9 @@ def hijack_ec2_calls(
     def _trivial_true(*args: Any, **kwargs: Any) -> bool:  # pylint: disable=unused-argument
         return True
 
-    def _get_state_helper(*args: Any, **kwargs: Any) -> List[str]:  # pylint: disable=unused-argument
+    def _get_state_helper(
+        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> List[str]:
         # Pretend the instance is running when we call get_instance_states!
         return ["running"]
 
