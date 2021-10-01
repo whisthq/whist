@@ -1,8 +1,8 @@
 """A custom subclass of the Flask testing client."""
 
+from typing import Any, Optional
 from flask.testing import FlaskClient
 from flask_jwt_extended import create_access_token
-from typing import Any, Optional
 
 
 class FractalAPITestClient(FlaskClient):  # type: ignore
