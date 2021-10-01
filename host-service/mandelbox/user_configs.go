@@ -125,7 +125,6 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	}
 
 	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, c.mandelboxID)
-
 	logger.Infof("Decrypting user config for mandelbox %s", c.mandelboxID)
 
 	// Decrypt the downloaded archive directly from memory
@@ -141,7 +140,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("failed to decrypt user config: %v", err)
 	}
 
-	logger.Infof("decrypt complete")
+	logger.Infof("Finished decrypting user config for mandelbox %s", c.mandelboxID)
+	logger.Infof("Decompressing user config for mandelbox %s", c.mandelboxID)
 
 	// Unpacking the decrypted data involves:
 	// 1. Decompress the the lz4 file into a tar
