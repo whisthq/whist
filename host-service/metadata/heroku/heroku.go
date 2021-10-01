@@ -83,5 +83,5 @@ func GetHasuraURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return app.WebURL + "/v1/graphql", nil
+	return app.WebURL + "v1/graphql", nil
 }

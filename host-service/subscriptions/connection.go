@@ -28,9 +28,9 @@ func getFractalHasuraParams() (HasuraParams, error) {
 	if err != nil {
 		return HasuraParams{}, utils.MakeError("Couldn't get Hasura config: %s", err)
 	}
-	result, ok := config["HASURA_GRAPHQL-ACCESS-KEY"]
+	result, ok := config["HASURA_GRAPHQL_ACCESS_KEY"]
 	if !ok {
-		return HasuraParams{}, utils.MakeError("Couldn't get Hasura connection URL: couldn't find HASURA_GRAPHQL-ACCESS-KEY in Heroku environment.")
+		return HasuraParams{}, utils.MakeError("Couldn't get Hasura connection URL: couldn't find HASURA_GRAPHQL_ACCESS_KEY in Heroku environment.")
 	}
 
 	params := HasuraParams{
