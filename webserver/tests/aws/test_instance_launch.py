@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
+from typing import Any, Callable, Dict, List
+import random
+import requests
+
 from flask import Flask
 from pytest import MonkeyPatch
-import random, requests
-from typing import Any, Callable, Dict, List
 
 from app.database.models.cloud import RegionToAmi, db, InstanceInfo
-from tests.patches import function
-
 from app.helpers.ami import ami_upgrade
 from app.helpers.ami.ami_upgrade import (
     launch_new_ami_buffer,
@@ -15,15 +15,14 @@ from app.helpers.ami.ami_upgrade import (
     swapover_amis,
 )
 from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
-
 from app.utils.aws.base_ec2_client import EC2Client
 from app.utils.general.name_generation import generate_name
-
 from app.constants.ec2_instance_states import EC2InstanceState
 from app.constants.mandelbox_host_states import MandelboxHostState
+from tests.patches import function
 
 
-def test_prior_ami(db_session: db.session) -> None:
+def test_prior_ami(db_session: db.session) -> None:  # pylint: disable=unused-argument
     all_amis = RegionToAmi.query.all()
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
@@ -56,7 +55,7 @@ def test_prior_ami(db_session: db.session) -> None:
 def test_fail_disabled_instance_launch(
     app: Flask,
     hijack_ec2_calls: List[Dict[str, Any]],
-    hijack_db: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],  # pylint: disable=unused-argument
     set_amis_state: Callable[[List[RegionToAmi], bool], None],
 ) -> None:
     """
@@ -75,7 +74,7 @@ def test_fail_disabled_instance_launch(
 def test_success_enabled_instance_launch(
     app: Flask,
     hijack_ec2_calls: List[Dict[str, Any]],
-    hijack_db: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],  # pylint: disable=unused-argument
     set_amis_state: Callable[[List[RegionToAmi], bool], None],
 ) -> None:
     """
@@ -96,7 +95,7 @@ def test_launch_buffer_in_a_region(
     app: Flask,
     monkeypatch: MonkeyPatch,
     hijack_ec2_calls: List[Dict[str, Any]],
-    hijack_db: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],  # pylint: disable=unused-argument
 ) -> None:
     """
     `launch_new_ami_buffer` function takes a region name, AMI to ensure that we
@@ -128,7 +127,7 @@ def test_perform_ami_upgrade(
     monkeypatch: MonkeyPatch,
     region_to_ami_map: Dict[str, str],
     bulk_instance: Callable[..., InstanceInfo],
-    db_session: db.session,
+    db_session: db.session,  # pylint: disable=unused-argument
 ) -> None:
     """
     In this test case, we are testing the whole AMI upgrade flow. This involves the
@@ -164,7 +163,7 @@ def test_perform_ami_upgrade(
 
     num_running_instances = 10
 
-    def _mock_instance_info_query(*args: Any, **kwargs: Any) -> List[InstanceInfo]:
+    def _mock_instance_info_query(*args: Any, **kwargs: Any) -> List[InstanceInfo]:   # pylint: disable=unused-argument
         return [
             bulk_instance(
                 instance_name=generate_name("current_running_instance", True),
@@ -189,7 +188,7 @@ def test_perform_ami_upgrade(
     monkeypatch.setattr(requests, "post", _helper)
 
     # The following make instances appear active so that we can attempt to drain them.
-    def _active_instances(*args: Any, **kwargs: Any) -> str:
+    def _active_instances(*args: Any, **kwargs: Any) -> str:  # pylint: disable=unused-argument
         return EC2InstanceState.RUNNING
 
     monkeypatch.setattr(EC2Client, "get_instance_states", _active_instances)

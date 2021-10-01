@@ -20,7 +20,7 @@ def test_scale_up_single(
     app: Flask,
     hijack_ec2_calls: List[Dict[str, Any]],
     mock_get_num_new_instances: Callable[[Any], None],
-    hijack_db: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],  # pylint: disable=unused-argument
     region_name: str,
 ) -> None:
     """
@@ -41,7 +41,7 @@ def test_scale_up_multiple(
     app: Flask,
     hijack_ec2_calls: List[Dict[str, Any]],
     mock_get_num_new_instances: Callable[[Any], None],
-    hijack_db: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],  # pylint: disable=unused-argument
     region_name: str,
 ) -> None:
     """
@@ -62,7 +62,7 @@ def test_scale_up_multiple(
 def test_scale_down_single_available(
     app: Flask,
     monkeypatch: MonkeyPatch,
-    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
     mock_get_num_new_instances: Callable[[Any], None],
     bulk_instance: Callable[..., InstanceInfo],
     region_name: str,
@@ -129,7 +129,7 @@ def test_terminate_single_available(
 
 
 def test_scale_down_single_unavailable(
-    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
     mock_get_num_new_instances: Callable[[Any], None],
     bulk_instance: Callable[..., InstanceInfo],
     region_name: str,
@@ -150,7 +150,7 @@ def test_scale_down_single_unavailable(
 
 
 def test_scale_down_single_wrong_region(
-    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
     mock_get_num_new_instances: Callable[[Any], None],
     bulk_instance: Callable[..., InstanceInfo],
     region_names: List[str],
@@ -184,7 +184,7 @@ def test_check_instance_exists(region_name: str) -> None:
 
 
 def test_scale_down_single_wrong_ami(
-    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
     mock_get_num_new_instances: Callable[[Any], None],
     bulk_instance: Callable[..., InstanceInfo],
     region_name: str,
@@ -207,7 +207,7 @@ def test_scale_down_single_wrong_ami(
 def test_scale_down_multiple_available(
     app: Flask,
     bulk_instance: Callable[..., InstanceInfo],
-    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
     mock_get_num_new_instances: Callable[[Any], None],
     monkeypatch: MonkeyPatch,
     region_name: str,
@@ -237,7 +237,7 @@ def test_scale_down_multiple_available(
 def test_scale_down_multiple_partial_available(
     app: Flask,
     bulk_instance: Callable[..., InstanceInfo],
-    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
     mock_get_num_new_instances: Callable[[Any], None],
     monkeypatch: MonkeyPatch,
     region_name: str,
@@ -294,21 +294,21 @@ def test_lingering_instances(
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
     bulk_instance(
-        instance_name=f"active_instance",
+        instance_name="active_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
     )
     instance_bad_normal = bulk_instance(
-        instance_name=f"inactive_instance",
+        instance_name="inactive_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         last_updated_utc_unix_ms=((time() - 121) * 1000),
         creation_time_utc_unix_ms=((time() - 121) * 1000),
     )
     instance_bad_preconnect = bulk_instance(
-        instance_name=f"inactive_starting_instance",
+        instance_name="inactive_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         status=MandelboxHostState.PRE_CONNECTION.value,
@@ -316,14 +316,14 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=((time() - 1801) * 1000),
     )
     bulk_instance(
-        instance_name=f"still starting",
+        instance_name="still starting",
         aws_ami_id="test-AMI",
         location=region_name,
         status=MandelboxHostState.PRE_CONNECTION.value,
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     bulk_instance(
-        instance_name=f"active_starting_instance",
+        instance_name="active_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         status=MandelboxHostState.PRE_CONNECTION.value,
@@ -331,7 +331,7 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=((time() - 121) * 1000),
     )
     bulk_instance(
-        instance_name=f"host_service_unrepsonsive_instance",
+        instance_name="host_service_unrepsonsive_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value,
@@ -345,14 +345,14 @@ def test_buffer_wrong_region() -> None:
     """
     checks that we return -sys.maxsize when we ask about a nonexistent region
     """
-    assert aws_funcs._get_num_new_instances("fake_region", "fake-AMI") == -maxsize
+    assert aws_funcs._get_num_new_instances("fake_region", "fake-AMI") == -maxsize  # pylint: disable=protected-access
 
 
 def test_buffer_wrong_ami() -> None:
     """
     checks that we return -sys.maxsize when we ask about a nonexistent ami
     """
-    assert aws_funcs._get_num_new_instances("us-east-1", "fake-AMI") == -maxsize
+    assert aws_funcs._get_num_new_instances("us-east-1", "fake-AMI") == -maxsize  # pylint: disable=protected-access
 
 
 def test_buffer_empty(region_ami_pair: Tuple[str, str]) -> None:
@@ -360,7 +360,7 @@ def test_buffer_empty(region_ami_pair: Tuple[str, str]) -> None:
     Tests that we ask for a new instance when the buffer is empty
     """
     region_name, ami_id = region_ami_pair
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1  # pylint: disable=protected-access
 
 
 def test_buffer_part_full(
@@ -373,7 +373,7 @@ def test_buffer_part_full(
     bulk_instance(
         aws_ami_id=ami_id, associated_mandelboxes=10, mandelbox_capacity=10, location=region_name
     )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 1  # pylint: disable=protected-access
 
 
 def test_buffer_good(
@@ -388,7 +388,7 @@ def test_buffer_good(
     bulk_instance(
         aws_ami_id=ami_id, mandelbox_capacity=desired_free_mandelboxes, location=region_name
     )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
 
 
 def test_buffer_with_multiple(
@@ -411,7 +411,7 @@ def test_buffer_with_multiple(
             mandelbox_capacity=mandelbox_capacity,
             location=region_name,
         )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
 
 
 def test_buffer_with_multiple_draining(
@@ -450,7 +450,7 @@ def test_buffer_with_multiple_draining(
         status="DRAINING",
         location=region_name,
     )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
 
 
 def test_buffer_overfull(
@@ -477,7 +477,7 @@ def test_buffer_overfull(
         # Break out when we allocated more buffer than our threshold.
         if buffer_capacity_available > buffer_threshold:
             break
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1  # pylint: disable=protected-access
 
 
 def test_buffer_not_too_full(
@@ -507,7 +507,7 @@ def test_buffer_not_too_full(
             mandelbox_capacity=mandelbox_capacity,
             location=region_name,
         )
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
 
 
 def test_buffer_overfull_split(
@@ -538,7 +538,7 @@ def test_buffer_overfull_split(
         if buffer_available > buffer_threshold:
             break
 
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == -1  # pylint: disable=protected-access
 
 
 def test_buffer_not_too_full_split(
@@ -575,18 +575,19 @@ def test_buffer_not_too_full_split(
             # we cross the buffer_threshold, we should be atleast equal to desired_free_mandelboxes.
             break
 
-    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0
+    assert aws_funcs._get_num_new_instances(region_name, ami_id) == 0  # pylint: disable=protected-access
 
 
 def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., InstanceInfo]) -> None:
     """
     Tests that our buffer is based on region. In this test case, we pick two regions randomly.
 
-    One region will be given more buffer capacity available than buffer_threshold which should result in a recommendation
-    from `_get_num_new_instances` for scale down, returning a value of -1.
+    One region will be given more buffer capacity available than buffer_threshold which
+    should result in a recommendation from `_get_num_new_instances` for scale down,
+    returning a value of -1.
 
-    For the other region, we don't spin up any instance so the recommendation from `_get_num_new_instances` should return
-    a configuration value <DEFAULT_INSTANCE_BUFFER>
+    For the other region, we don't spin up any instance so the recommendation from
+    `_get_num_new_instances` should return a configuration value <DEFAULT_INSTANCE_BUFFER>
     """
     randomly_picked_ami_objs = get_allowed_regions()
     assert len(randomly_picked_ami_objs) >= 2
@@ -616,10 +617,10 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
             break
 
     assert (
-        aws_funcs._get_num_new_instances(region_ami_with_buffer[0], region_ami_with_buffer[1]) == -1
+        aws_funcs._get_num_new_instances(region_ami_with_buffer[0], region_ami_with_buffer[1]) == -1  # pylint: disable=protected-access
     )
     assert (
-        aws_funcs._get_num_new_instances(region_ami_without_buffer[0], region_ami_without_buffer[1])
+        aws_funcs._get_num_new_instances(region_ami_without_buffer[0], region_ami_without_buffer[1])  # pylint: disable=protected-access
         == app.config["DEFAULT_INSTANCE_BUFFER"]
     )
 
@@ -628,7 +629,8 @@ def test_scale_down_harness(
     monkeypatch: MonkeyPatch, bulk_instance: Callable[..., InstanceInfo]
 ) -> None:
     """
-    tests that try_scale_down_if_necessary_all_regions actually runs on every region/AMI pair in our db
+    tests that try_scale_down_if_necessary_all_regions
+    actually runs on every region/AMI pair in our db
     """
     call_list = []
 

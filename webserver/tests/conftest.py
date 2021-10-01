@@ -79,7 +79,11 @@ def _db() -> db:
 
 
 @pytest.fixture
-def authorized(client: FractalAPITestClient, user: str, monkeypatch: pytest.MonkeyPatch) -> str:
+def authorized(
+    client: FractalAPITestClient,
+    user: str,  # pylint: disable=redefined-outer-name
+    monkeypatch: pytest.MonkeyPatch
+) -> str:
     """Bypass authorization decorators.
 
     Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
@@ -180,7 +184,7 @@ def bulk_instance() -> Generator[
 
 
 @pytest.fixture
-def region_to_ami_map(app: Flask) -> Dict[str, str]:
+def region_to_ami_map(app: Flask) -> Dict[str, str]:  # pylint: disable=redefined-outer-name,unused-argument
     """
     Returns a dict of active <Region:AMI> pairs.
     """
@@ -194,7 +198,7 @@ def region_ami_pair() -> Optional[Tuple[str, str]]:
     """
     Returns a randomly picked region and corresponding ami_id
     """
-    region_ami_pair = get_allowed_regions()
+    region_ami_pair = get_allowed_regions()  # pylint: disable=redefined-outer-name
     if region_ami_pair:
         return region_ami_pair[0].region_name, region_ami_pair[0].ami_id
     return None
@@ -215,12 +219,12 @@ def region_name() -> Optional[str]:
     """
     Returns a randomly picked region
     """
-    region_name = get_random_region_name()
+    region_name = get_random_region_name()  # pylint: disable=redefined-outer-name
     return region_name
 
 
 @pytest.fixture
-def override_environment(app: Flask) -> Generator[Callable[[Any], None], None, None]:
+def override_environment(app: Flask) -> Generator[Callable[[Any], None], None, None]: # pylint: disable=redefined-outer-name
     """
     Override the environment temporarily to test environment specific behaviour.
 
@@ -253,7 +257,9 @@ def make_user() -> Callable[[], str]:
 
 @pytest.fixture
 def make_authorized_user(
-    client: FractalAPITestClient, make_user: Callable[..., str], monkeypatch: pytest.MonkeyPatch
+    client: FractalAPITestClient,
+    make_user: Callable[..., str],  # pylint: disable=redefined-outer-name
+    monkeypatch: pytest.MonkeyPatch
 ) -> Callable[..., str]:
     """Create a new user for testing purposes and authorize all future test requests as that user.
 
@@ -279,7 +285,7 @@ def reset_limiter() -> None:
     limiter.reset()
 
 
-def user(*, domain: str = "fractal.co", user_id: Optional[str] = None) -> str:
+def user(*, domain: str = "fractal.co", user_id: Optional[str] = None) -> str:  # pylint: disable=unused-argument
     """Generate a fake email address for a test user.
 
     Args:

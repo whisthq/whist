@@ -1,15 +1,16 @@
 """Tests for the /mandelbox/assign endpoint."""
+from random import randint
+from typing import Any, Callable
 
 from http import HTTPStatus
 from flask import Flask
 import pytest
-from random import randint
-from typing import Any, Callable
 
-from tests.client import FractalAPITestClient
+
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from app.database.models.cloud import InstanceInfo
+from tests.client import FractalAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_allowed_region_names
 
@@ -23,7 +24,7 @@ def test_bad_app(client: FractalAPITestClient) -> None:
 
 @pytest.mark.usefixtures("authorized")
 def test_no_app(client: FractalAPITestClient) -> None:
-    response = client.post("/mandelbox/assign", json=dict())
+    response = client.post("/mandelbox/assign", json={})
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -43,7 +44,7 @@ def test_assign(
 ) -> None:
     instance = bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
-    def patched_find(*args: Any, **kwargs: Any) -> Any:
+    def patched_find(*args: Any, **kwargs: Any) -> Any:  # pylint: disable=unused-argument
         return instance.instance_name
 
     monkeypatch.setattr(
@@ -74,7 +75,7 @@ def test_assign_active(
     """
     bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
-    def patched_active(*args: Any, **kwargs: Any) -> bool:
+    def patched_active(*args: Any, **kwargs: Any) -> bool:  # pylint: disable=unused-argument
         return True
 
     monkeypatch.setattr(
@@ -94,7 +95,7 @@ def test_assign_active(
 
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_fail(
-    app: Flask,
+    app: Flask,  # pylint: disable=unused-argument
     client: FractalAPITestClient,
     bulk_instance: Callable[..., InstanceInfo],
     override_environment: Callable[[str], None],
@@ -120,7 +121,7 @@ def test_client_commit_hash_local_dev_override_fail(
 
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_success(
-    app: Flask,
+    app: Flask,  # pylint: disable=unused-argument
     client: FractalAPITestClient,
     bulk_instance: Callable[..., InstanceInfo],
     override_environment: Callable[[str], None],
@@ -155,14 +156,14 @@ def test_client_commit_hash_local_dev_override_success(
     ),
 )
 def test_payment(
-    admin: bool,
+    admin: bool,  # pylint: disable=unused-argument
     client: FractalAPITestClient,
     make_user: Callable[..., str],
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,  # pylint: disable=unused-argument
     status_code: HTTPStatus,
-    subscribed: bool,
+    subscribed: bool,  # pylint: disable=unused-argument
 ) -> None:
-    user = make_user()
+    user = make_user()  # pylint: disable=unused-variable
     response = client.post(
         "/mandelbox/assign",
         json={
