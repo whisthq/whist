@@ -1,6 +1,8 @@
 from random import randint
-import pytest
 from typing import Callable
+
+import pytest
+
 from app.database.models.cloud import InstanceInfo
 from app.helpers.aws.aws_instance_post import find_instance, bundled_region
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING

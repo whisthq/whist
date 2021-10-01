@@ -1,5 +1,6 @@
-import pytest
 from typing import Any, Callable, Dict, Generator, List
+
+import pytest
 
 import app.helpers.aws.aws_instance_post as aws_funcs
 from app.utils.aws.base_ec2_client import EC2Client
@@ -22,10 +23,12 @@ def hijack_ec2_calls(
         call_list.append({"args": args, "kwargs": kwargs})
         return ["test_id"]
 
-    def _trivial_true(*args: Any, **kwargs: Any) -> bool:
+    def _trivial_true(*args: Any, **kwargs: Any) -> bool:  # pylint: disable=unused-argument
         return True
 
-    def _get_state_helper(*args: Any, **kwargs: Any) -> List[str]:
+    def _get_state_helper(
+        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> List[str]:
         # Pretend the instance is running when we call get_instance_states!
         return ["running"]
 
@@ -70,7 +73,7 @@ def hijack_db(monkeypatch: pytest.MonkeyPatch) -> Generator[List[Dict[str, Any]]
         for obj in args[0]:
             call_list.append({"args": obj})
 
-    def _empty(*args: Any) -> None:
+    def _empty(*args: Any) -> None:  # pylint: disable=unused-argument
         return
 
     monkeypatch.setattr(db.session, "add", _helper)

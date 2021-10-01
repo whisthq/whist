@@ -42,7 +42,7 @@ jobs:
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
 
       - name: Check if Code Matches Pylint Standards
-        run: pylint-wrapper webserver/app
+        run: pylint-wrapper webserver/app webserver/tests webserver/scripts
 
       - name: Perform static type analysis with mypy
         working-directory: webserver
