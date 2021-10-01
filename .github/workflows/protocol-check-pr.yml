@@ -156,8 +156,11 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
           make FractalClient FractalClientTest -j
 
+          # Run protocol tests
+          ./test/FractalClientTest
+
           # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
+          lcov --capture --directory . --output-file gtest_coverage.info
           lcov --list coverage.info # debug info
 
           # Download the Codecov uploader
