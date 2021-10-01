@@ -78,31 +78,28 @@ docker run \
   --name fractal-protocol-builder-$(date +"%s") \
   --user "$DOCKER_USER" \
   fractal/protocol-builder \
-  sh -c "\
-    cd protocol &&                                      \
-    mkdir -p build-docker &&                            \
-    cd build-docker &&                                  \
-    cmake                                               \
-        -S ..                                           \
-        -B .                                            \
-        -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
-        -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
-        -DCI=${CMAKE_SET_CI} &&                         \
-    make -j ${TARGETS}                                  \
+  bash -c "\
+    cd protocol &&                                                                      \
+    mkdir -p build-docker &&                                                            \
+    cd build-docker &&                                                                  \
+    cmake                                                                               \
+        -S ..                                                                           \
+        -B .                                                                            \
+        -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}                                  \
+        -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}                                         \
+        -DCI=${CMAKE_SET_CI} &&                                                         \
+    make -j ${TARGETS}                                                                  \
+                                                                                        \
+    # If running in CI, upload coverage to Codecov                                      \
+    if [[ ${CMAKE_SET_CI} == True ]]; then                                              \
+      # Generate code coverage report from gcc/clang `--coverage` flag                  \
+      lcov --capture --directory . --output-file coverage.info                          \
+      lcov --list coverage.info # debug info                                            \
+                                                                                        \
+      # Download the Codecov uploader                                                   \
+      curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov     \
+                                                                                        \
+      # Upload coverage report to Codecov                                               \
+      ./codecov -t ${CODECOV_TOKEN} -c -F protocol                                      \
+    fi
   "
-
-# If we're running in CI, upload code coverage to Codecov
-if [[ ${CMAKE_SET_CI} == "True" ]]; then
-  # Install lcov
-  sudo apt-get install lcov
-
-  # Generate code coverage report from gcc/clang `--coverage` flag
-  lcov --capture --directory . --output-file coverage.info
-  lcov --list coverage.info # debug info
-
-  # Download the Codecov uploader
-  curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
-
-  # Upload coverage report to Codecov
-  ./codecov -t ${CODECOV_TOKEN} -c -F protocol
-fi
