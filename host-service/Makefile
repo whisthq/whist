@@ -45,11 +45,15 @@ else
 endif
 
 build: checkCI
-	$(GOCMD) mod tidy
+	$(GOCMD) mod tidy -v
 	$(GOCMD) get github.com/jschaf/pggen/cmd/pggen
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
-	$(GOCMD) generate ./...
+
+	# GOFLAGS fixes go.sum issue with lz4 package
+	# Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
+	GOFLAGS=-mod=mod $(GOCMD) generate ./...
+
 	$(GOCMD) build -ldflags "\
 		-X 'github.com/fractal/fractal/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
@@ -73,9 +77,11 @@ vet: build
 
 test: build
 	echo "Running go tests..."
+
 	# We need to run some tests as root since the host service init() checks for root perms.
 	# Set CI flag in test environment so we can properly skip metrics collection in CI
-	sudo env "PATH=$(PATH)" "CI=$(CI)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
+	# Set AWS credentials to allow user config integration tests to run
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
 
 	# Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
