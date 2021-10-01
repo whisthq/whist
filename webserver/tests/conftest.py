@@ -73,7 +73,7 @@ def app() -> Flask:
 
 
 @pytest.fixture
-def _db(app: Flask) -> db:
+def _db() -> db:
     # Necessary for pytest-flask-sqlalchemy to work
     return db
 
@@ -225,9 +225,10 @@ def override_environment(app: Flask) -> Generator[Callable[[Any], None], None, N
     Override the environment temporarily to test environment specific behaviour.
 
     Example:
-    POST `/mandelbox/assign` requires a client commit hash to be sent for matching the client application
-    to a compatible instance. However, in dev environment, for `/mandelbox/assign` call we accept a pre-shared
-    static client_commit_hash along with the entry in the database to figure out the latest active AMI.
+    POST `/mandelbox/assign` requires a client commit hash to be sent for matching the client
+    application to a compatible instance. However, in dev environment, for `/mandelbox/assign`
+    call we accept a pre-shared static client_commit_hash along with the entry in the database
+    to figure out the latest active AMI.
     """
     environment_ = None
 

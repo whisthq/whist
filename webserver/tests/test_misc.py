@@ -5,13 +5,12 @@ import concurrent.futures
 import platform
 import os
 import signal
-from http import HTTPStatus
 from typing import Callable, Optional
 
 import pytest
 from sqlalchemy.exc import OperationalError
 
-from flask import current_app, g, Flask
+from flask import current_app, Flask
 from app.config import _callback_webserver_hostname
 from app.database.models.cloud import RegionToAmi
 from app.utils.flask.flask_handlers import can_process_requests, set_web_requests_status
