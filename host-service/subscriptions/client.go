@@ -31,6 +31,8 @@ func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
 	return client, nil
 }
 
+// Close manages all the logic to unsubscribe to every subscription and close the connection
+// to the Hasura server correctly.
 func Close(client *graphql.SubscriptionClient, subscriptionIDs []string, done chan<- bool) error {
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!

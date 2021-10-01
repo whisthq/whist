@@ -40,7 +40,6 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	"github.com/fractal/fractal/host-service/subscriptions"
 
 	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
@@ -50,6 +49,7 @@ import (
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/metrics"
+	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
 
 	dockertypes "github.com/docker/docker/api/types"
