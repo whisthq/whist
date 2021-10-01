@@ -336,8 +336,6 @@ jobs:
     strategy:
       matrix:
         config:
-          - name: "Windows Desktop Application"
-            os: windows-2019 # cmake is pre-installed on windows-2019+ GHA machines
           - name: "macOS Desktop Application"
             os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
 
@@ -363,19 +361,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      ############################# Windows Configuration Steps START #############################
-
-      - name: Install cmake via Chocolatey on Windows GHA Machine
-        if: runner.os == 'Windows'
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install cmake --pre --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
-
-      - name: Set up Visual Studio Developer Command Prompt (for nmake)
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-
-      #############################################################################################
       ############################### Unix Configuration Steps START ##############################
 
       - name: Install macOS Codesigning Certificates on macOS GHA Machine
@@ -501,27 +486,6 @@ jobs:
           rm packageOld.json
 
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
-      - name: Publish the Windows Electron Application
-        if: false && runner.os == 'Windows'
-        working-directory: client-applicationsp
-        env:
-          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-        run: |
-          REM We use "call" before since ancient DOS versions don't support recursively executing batch files
-          REM We need to increase the timeout to deal with GHA's weak VMs.
-          call yarn config set network-timeout 600000
-          call yarn cache clean
-          call yarn install
-          call yarn package:publish \
-          --config='${{ needs.fractal-build-monorepo-config.outputs.win32 }}' \
-          --version='${{ env.desktop_app_new_version }}' \
-          --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
-          --commit='${{ github.sha }}'
-
-      # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the MacOS Electron Application
         if: runner.os == 'macOS'
         working-directory: client-applications
@@ -628,63 +592,3 @@ jobs:
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-  # Create GitHub Tag
-  # Create a GitHub Tag when promoting to the `prod` branch
-  # Runs if the entire deployment succeeds and the promotion is running on `prod`
-  fractal-create-github-release-tag:
-    name: "Create GitHub Release Tag"
-    runs-on: ubuntu-20.04
-    needs:
-      [
-        fractal-publish-build-config,
-        webserver-deploy-heroku,
-        microservices-deploy-auth0-rules,
-        mandelboxes-and-amis-publish-ghcr-and-aws,
-        webserver-spin-up-new-buffer,
-        client-applications-publish-build-s3,
-        webserver-swap-active-amis,
-      ]
-    if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Retrieve Today's Date
-        run: echo "date=$(date)" >> $GITHUB_ENV
-
-      - name: Create GitHub Tag
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
-          body: Fractal Production Release on ${{ env.date }}
-          draft: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Notify Slack on Job Success
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          TITLE = ":github: Fractal GitHub Release Completed :github:"
-          BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
-
-      - name: Notify Slack on Job Error
-        if: failure()
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `fractal-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
