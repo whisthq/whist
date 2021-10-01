@@ -7,34 +7,23 @@ package subscriptions // import "github.com/fractal/fractal/host-service/subscri
 
 import (
 	"encoding/json"
-	"log"
 
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
-
-// SetUpHasuraClient does all the necessary work to set up the Hasura client
-func SetUpHasuraClient(url string, adminSecret string) *graphql.SubscriptionClient {
-	client := graphql.NewSubscriptionClient(url).
-		WithConnectionParams(map[string]interface{}{
-			"headers": map[string]string{
-				"x-hasura-admin-secret": adminSecret,
-			},
-		}).WithLog(log.Println).
-		WithoutLogTypes(graphql.GQL_DATA, graphql.GQL_CONNECTION_KEEP_ALIVE).
-		OnError(func(sc *graphql.SubscriptionClient, err error) error {
-			log.Print("err", err)
-			return err
-		})
-	return client
-}
 
 // Run is responsible for starting the subscription client, as well as
 // subscribing to the subscriptions defined in queries.go
 func Run(instanceName string, done chan bool) error {
 	// We set up the client with auth and logging parameters
-	url := "http://localhost:8080/v1/graphql"
-	secret := "hasura"
-	client := SetUpHasuraClient(url, secret)
+	client, err := SetUpHasuraClient()
+
+	if err != nil {
+		// Error creating the hasura client
+		return err
+	}
+
+	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
+	var subscriptionIDs []string
 
 	// Subscribe to the DRAINING status
 	id, err := SubscribeStatus(instanceName, "DRAINING", client, done)
@@ -42,14 +31,9 @@ func Run(instanceName string, done chan bool) error {
 		// handle subscription error
 		return err
 	}
+	subscriptionIDs = append(subscriptionIDs, id)
 
-	defer func(id string) {
-		// We have to ensure we unsubscribe before closing the client,
-		// otherwise it will result in a deadlock!
-		client.Unsubscribe(id)
-		client.Close()
-		done <- true
-	}(id)
+	defer Close(client, subscriptionIDs, done)
 
 	// Run the client on a go routine to make sure it closes properly when we are done
 	go client.Run()
