@@ -35,9 +35,9 @@ def test_single() -> None:
     # And check that the instance is live
     assert (
         ids[0]
-        in ec2_client.get_ip_of_instances(
+        in ec2_client.get_ip_of_instances(  # pylint: disable=consider-iterating-dictionary
             ids
-        ).keys()  # pylint: disable=consider-iterating-dictionary
+        ).keys()
     )
 
     # Now, we test stop in the same way we tested start
