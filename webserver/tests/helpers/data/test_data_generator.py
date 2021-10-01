@@ -1,11 +1,14 @@
 from sqlalchemy.sql.expression import true
 from app.database.models.cloud import db, RegionToAmi
 from app.utils.general.name_generation import generate_name
+from typing import List
 
 from tests.constants import REGION_NAMES, CLIENT_COMMIT_HASH_FOR_TESTING, ACTIVE_AMI, INACTIVE_AMIS
 
 
-def _generate_region_to_ami_objs(ami_id, client_commit_hash, is_ami_active):
+def _generate_region_to_ami_objs(
+    ami_id: str, client_commit_hash: str, is_ami_active: bool
+) -> List[RegionToAmi]:
     """
     This function generates RegionToAmi objects with the supplied <ami_id>, <client_commit_hash>,
     <ami_active> for all the regions.
@@ -29,7 +32,7 @@ def _generate_region_to_ami_objs(ami_id, client_commit_hash, is_ami_active):
     return region_ami_objs
 
 
-def populate_test_data():
+def populate_test_data() -> None:
     """
     This function generates RegionToAmi objects across all regions with active and inactive client hashes
     and populates them into the database.
