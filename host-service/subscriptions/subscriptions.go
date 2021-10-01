@@ -79,13 +79,13 @@ func SubscribeStatus(instanceName string, status string, client *graphql.Subscri
 		var instance Instance
 		// If the result array returned by Hasura is not empty, it means
 		// there was a change in the database row
-		if len(result.Hardware_instance_info) > 0 {
-			instance = result.Hardware_instance_info[0]
+		if len(result.HardwareInstanceInfo) > 0 {
+			instance = result.HardwareInstanceInfo[0]
 		} else {
 			return nil
 		}
 
-		if (instance.Instance_name == instanceName) && (instance.Status == status) {
+		if (instance.InstanceName == instanceName) && (instance.Status == status) {
 			// We notify via the done channel to start the drain and shutdown process
 			done <- true
 		}
