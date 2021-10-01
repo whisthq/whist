@@ -15,9 +15,9 @@ type Instance struct {
 	Status       string `json:"status"`
 }
 
-// SubscriptionStatusResult is a struct used to hold
+// SubscriptionResult is a struct used to hold
 // the subscription results. Hasura always returns an array
 // as a result.
-type SubscriptionStatusResult struct {
-	HardwareInstanceInfo []Instance `json:"hardware_instance_info"`
+type SubscriptionResult struct {
+	CloudInstanceInfo []Instance `json:"cloud_instance_info"`
 }

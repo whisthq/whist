@@ -57,14 +57,14 @@ func SubscribeStatus(instanceName string, status string, client *graphql.Subscri
 			return nil
 		}
 
-		var result SubscriptionStatusResult
+		var result SubscriptionResult
 		json.Unmarshal(*data, &result)
 
 		var instance Instance
 		// If the result array returned by Hasura is not empty, it means
 		// there was a change in the database row
-		if len(result.HardwareInstanceInfo) > 0 {
-			instance = result.HardwareInstanceInfo[0]
+		if len(result.CloudInstanceInfo) > 0 {
+			instance = result.CloudInstanceInfo[0]
 		} else {
 			return nil
 		}
