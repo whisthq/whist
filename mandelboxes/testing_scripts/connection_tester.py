@@ -21,10 +21,10 @@ def server():
 
     while time.time() - start_time < 30.0:
         data, address = test_socket.recvfrom(4096)
-        print("Received %d bytes from %s" % (len(data), address))
+        print(f"Received {len(data)} bytes from {address}")
         if len(data) > 0:
             time_delay = current_milli_time() - int.from_bytes(data, byteorder="big")
-            print("Time delay is %d" % time_delay)
+            print(f"Time delay is {time_delay}")
 
     print("Been doing this for 30 seconds, retiring")
     test_socket.close()
