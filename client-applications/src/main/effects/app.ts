@@ -31,7 +31,7 @@ import {
   store,
   persistedAuth,
 } from "@app/utils/persist"
-import { fromSignal, withAppReady } from "@app/utils/observables"
+import { withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
 
 fromTrigger("appReady").subscribe(() => {

@@ -3,7 +3,6 @@
  * @file app.ts
  * @brief This file contains subscriptions to error Observables.
  */
-import { Observable } from "rxjs"
 import { withLatestFrom, startWith, mapTo } from "rxjs/operators"
 
 import {
@@ -21,7 +20,7 @@ import {
   PROTOCOL_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
-import { fromSignal, withAppReady } from "@app/utils/observables"
+import { withAppReady } from "@app/utils/observables"
 
 // For any failure, close all windows and display error window
 withAppReady(
