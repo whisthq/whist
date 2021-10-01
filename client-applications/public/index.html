@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Fractal Client Application" />
-        <title>Fractal</title>
-        <link rel="stylesheet" href="./css/tailwind.css" />
-        <link rel="stylesheet" href="./css/global.css" />
-        <script src="https://js.stripe.com/v3/"></script>
-    </head>
-    <body class="relative">
-        <!-- This div allows for the window to be dragged on MacOS -->
-        <div
-            class="absolute w-full h-6 z-50"
-            style="-webkit-app-region: drag"
-        ></div>
-        <!--The app renders into this div-->
-        <div id="root"></div>
-        <noscript>You need to enable JavaScript to run this app.</noscript>
-        <script type="module" src="./dist/renderer/index.js"></script>
-    </body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Fractal Client Application" />
+    <title>Fractal</title>
+    <link rel="stylesheet" href="./css/tailwind.css" />
+    <link rel="stylesheet" href="./css/global.css" />
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body class="relative">
+    <!-- This div allows for the window to be dragged on MacOS -->
+    <div
+      class="absolute w-full h-6 z-50"
+      style="-webkit-app-region: drag"
+    ></div>
+    <!--The app renders into this div-->
+    <div id="root"></div>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script type="module" src="./dist/renderer/index.js"></script>
+  </body>
 </html>

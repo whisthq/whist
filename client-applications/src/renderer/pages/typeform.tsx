@@ -6,14 +6,18 @@ const Typeform = (props: {
   email: string
   onSubmit: () => void
 }) => {
-  return (
-    <Widget
-      id={props.id}
-      className="w-screen h-screen"
-      onSubmit={props.onSubmit}
-      hidden={{ email: props.email }}
-    />
-  )
+  if ((props.email ?? "") !== "") {
+    return (
+      <Widget
+        id={props.id}
+        className="w-screen h-screen"
+        onSubmit={props.onSubmit}
+        hidden={{ email: props.email }}
+      />
+    )
+  } else {
+    return <div className="relative w-screen h-screen bg-opacity-0"></div>
+  }
 }
 
 export default Typeform
