@@ -91,15 +91,13 @@ docker run \
     make -j ${TARGETS}                                                                  \
                                                                                         \
     # If running in CI, upload coverage to Codecov                                      \
-    if [[ ${CMAKE_SET_CI} == True ]]; then                                              \
-      # Generate code coverage report from gcc/clang `--coverage` flag                  \
-      lcov --capture --directory . --output-file coverage.info                          \
-      lcov --list coverage.info # debug info                                            \
+    # Generate code coverage report from gcc/clang `--coverage` flag                    \
+    lcov --capture --directory . --output-file coverage.info                            \
+    lcov --list coverage.info # debug info                                              \
                                                                                         \
-      # Download the Codecov uploader                                                   \
-      curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov     \
+    # Download the Codecov uploader                                                     \
+    curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov       \
                                                                                         \
-      # Upload coverage report to Codecov                                               \
-      ./codecov -t ${CODECOV_TOKEN} -c -F protocol                                      \
-    fi
+    # Upload coverage report to Codecov                                                 \
+    ./codecov -t ${CODECOV_TOKEN} -c -F protocol                                        \
   "
