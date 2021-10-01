@@ -77,7 +77,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
-	logger.Infof("Starting S3 config download")
+	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
 
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
@@ -101,7 +101,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
 		if errors.As(err, &noSuchKeyErr) {
-			logger.Infof("Could not get head object because config does not exist")
+			logger.Infof("Could not get head object because config does not exist for user %s", c.userID)
 			return nil
 		}
 
@@ -117,16 +117,16 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	})
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
-			logger.Infof("Could not download user config because config does not exist")
+			logger.Infof("Could not download user config because config does not exist for user %s", c.userID)
 			return nil
 		}
 
 		return utils.MakeError("Failed to download user configuration from s3: %v", err)
 	}
 
-	logger.Infof("Downloaded %d bytes from s3", numBytes)
+	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, c.mandelboxID)
 
-	logger.Infof("Starting decryption")
+	logger.Infof("Decrypting user config for mandelbox %s", c.mandelboxID)
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := buf.Bytes()
