@@ -1,9 +1,9 @@
 """Unit tests for Auth0 access control utilities."""
+from typing import Any, Callable, Dict, Tuple
 
 import pytest
 from flask import Flask
 from flask_jwt_extended import create_access_token, JWTManager
-from typing import Any, Callable, Dict, Tuple
 
 from app.utils.general.limiter import limiter
 from app.utils.auth.auth0 import has_scope, scope_required, ScopeError

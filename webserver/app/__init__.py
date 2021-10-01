@@ -93,12 +93,8 @@ def log_request(view_func: _F) -> _F:
                                 if "password" not in k and "key" not in k
                             }
                         )
-
                     fractal_logger.info(
-                        "{}. Body: {}".format(
-                            request.method + " request at " + request.url,
-                            safe_body,
-                        )
+                        f"{request.method} request at {request.url}. Body: {safe_body}"
                     )
         except:
             fractal_logger.error("Failed to log request", exc_info=True)

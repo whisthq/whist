@@ -1,8 +1,8 @@
+from typing import List
+
 from sqlalchemy.sql.expression import true
 from app.database.models.cloud import db, RegionToAmi
 from app.utils.general.name_generation import generate_name
-from typing import List
-
 from tests.constants import REGION_NAMES, CLIENT_COMMIT_HASH_FOR_TESTING, ACTIVE_AMI, INACTIVE_AMIS
 
 
@@ -34,8 +34,8 @@ def _generate_region_to_ami_objs(
 
 def populate_test_data() -> None:
     """
-    This function generates RegionToAmi objects across all regions with active and inactive client hashes
-    and populates them into the database.
+    This function generates RegionToAmi objects across all regions with
+    active and inactive client hashes and populates them into the database.
     """
     for inactive_ami in INACTIVE_AMIS:
         db.session.add_all(

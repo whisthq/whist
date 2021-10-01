@@ -27,6 +27,7 @@ def setup_review_app(app_name: str) -> None:
         f"heroku config:get DATABASE_URL --app {app_name}",
         capture_output=True,
         shell=True,
+        check=True,
     )
     assert ret.returncode == 0
 
@@ -47,6 +48,7 @@ def setup_review_app(app_name: str) -> None:
         f"bash {os.path.join(WEBSERVER_ROOT, 'ephemeral_db_setup/db_setup.sh')}",
         start_new_session=True,
         shell=True,
+        check=True,
     )
     assert ret.returncode == 0
 
