@@ -31,7 +31,7 @@ import {
   store,
   persistedAuth,
 } from "@app/utils/persist"
-import { fromSignal } from "@app/utils/observables"
+import { fromSignal, withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
 
 fromTrigger("appReady").subscribe(() => {
@@ -57,7 +57,7 @@ fromTrigger("appReady").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-fromSignal(fromTrigger("configFlowSuccess"), fromTrigger("appReady")).subscribe(
+withAppReady(fromTrigger("configFlowSuccess")).subscribe(
   (x: { userEmail: string }) => {
     // Show notification
     startupNotification()?.show()
@@ -105,19 +105,19 @@ fromTrigger("relaunchAction").subscribe(() => {
   relaunch()
 })
 
-fromTrigger("showSignoutWindow").subscribe(() => {
+withAppReady(fromTrigger("showSignoutWindow")).subscribe(() => {
   createSignoutWindow()
 })
 
-fromTrigger("trayFeedbackAction").subscribe(() => {
+withAppReady(fromTrigger("trayFeedbackAction")).subscribe(() => {
   createExitTypeform()
 })
 
-fromTrigger("trayBugAction").subscribe(() => {
+withAppReady(fromTrigger("trayBugAction")).subscribe(() => {
   createBugTypeform()
 })
 
-fromTrigger("authFlowSuccess")
+withAppReady(fromTrigger("authFlowSuccess"))
   .pipe(take(1))
   .subscribe(() => {
     const onboarded =
@@ -126,7 +126,7 @@ fromTrigger("authFlowSuccess")
   })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-fromTrigger("showPaymentWindow").subscribe(() => {
+withAppReady(fromTrigger("showPaymentWindow")).subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
   const refreshToken = (store.get("auth.refreshToken") ?? "") as string
   createPaymentWindow({
@@ -136,7 +136,7 @@ fromTrigger("showPaymentWindow").subscribe(() => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-fromTrigger("checkPaymentFlowFailure").subscribe(
+withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
   ({ accessToken, refreshToken }) => {
     createPaymentWindow({
       accessToken,
@@ -145,12 +145,12 @@ fromTrigger("checkPaymentFlowFailure").subscribe(
   }
 )
 
-fromTrigger("exitTypeformSubmitted").subscribe(() => {
+withAppReady(fromTrigger("exitTypeformSubmitted")).subscribe(() => {
   persist("exitTypeformSubmitted", true, "data")
   closeAllWindows()
 })
 
-fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
+withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
   persist("onboardingTypeformSubmitted", true, "data")
   closeElectronWindows(getElectronWindows())
 })

@@ -16,6 +16,7 @@ import {
 } from "rxjs"
 import { map, mapTo, switchMap, take } from "rxjs/operators"
 import { toPairs } from "lodash"
+import { fromTrigger } from "@app/utils/flows"
 
 export const loadingFrom = (
   /*
@@ -107,3 +108,6 @@ export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
             An observable that fires only when the "signal" observable has fired.
     */
   combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))
+
+export const withAppReady = (obs: Observable<any>) =>
+  fromSignal(obs, fromTrigger("appReady"))

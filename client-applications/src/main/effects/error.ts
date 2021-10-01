@@ -21,10 +21,7 @@ import {
   PROTOCOL_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
-import { fromSignal } from "@app/utils/observables"
-
-const withAppReady = (obs: Observable<any>) =>
-  fromSignal(obs, fromTrigger("appReady"))
+import { fromSignal, withAppReady } from "@app/utils/observables"
 
 // For any failure, close all windows and display error window
 withAppReady(

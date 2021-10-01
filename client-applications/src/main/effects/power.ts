@@ -8,6 +8,7 @@ import { persist, persistGet } from "@app/utils/persist"
 import { protocolStreamKill } from "@app/utils/protocol"
 import { createErrorWindow, relaunch } from "@app/utils/windows"
 import { WindowHashSleep } from "@app/utils/constants"
+import { fromSignal } from "@app/utils/observables"
 
 const fractalAutoLaunch = new AutoLaunch({
   name: config.title,
@@ -34,10 +35,12 @@ fromTrigger("trayAutolaunchAction").subscribe(() => {
   autolaunch ? fractalAutoLaunch.disable() : fractalAutoLaunch.enable()
 })
 
-fromTrigger("powerSuspend").subscribe(() => {
-  createErrorWindow(WindowHashSleep)
-  protocolStreamKill()
-})
+fromSignal(fromTrigger("powerSuspend"), fromTrigger("appReady")).subscribe(
+  () => {
+    createErrorWindow(WindowHashSleep)
+    protocolStreamKill()
+  }
+)
 
 fromTrigger("powerResume").subscribe(() => {
   relaunch()
