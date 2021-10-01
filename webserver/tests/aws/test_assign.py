@@ -1,41 +1,49 @@
 """Tests for the /mandelbox/assign endpoint."""
 
 from http import HTTPStatus
+from flask import Flask
 import pytest
 from random import randint
+from typing import Any, Callable
 
+from tests.client import FractalAPITestClient
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
+from app.database.models.cloud import InstanceInfo
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_allowed_region_names
 
 
 @pytest.mark.usefixtures("authorized")
-def test_bad_app(client):
+def test_bad_app(client: FractalAPITestClient) -> None:
     response = client.post("/mandelbox/assign", json=dict(app="Bad App"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
-def test_no_app(client):
+def test_no_app(client: FractalAPITestClient) -> None:
     response = client.post("/mandelbox/assign", json=dict())
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
-def test_no_region(client):
+def test_no_region(client: FractalAPITestClient) -> None:
     response = client.post("/mandelbox/assign", json=dict(app="VSCode"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
-def test_assign(client, bulk_instance, monkeypatch):
+def test_assign(
+    client: FractalAPITestClient,
+    bulk_instance: Callable[..., InstanceInfo],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance = bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
-    def patched_find(*args, **kwargs):
+    def patched_find(*args: Any, **kwargs: Any) -> Any:
         return instance.instance_name
 
     monkeypatch.setattr(
@@ -56,13 +64,17 @@ def test_assign(client, bulk_instance, monkeypatch):
 
 @pytest.mark.skip(reason="We currently ignore user activity.")
 @pytest.mark.usefixtures("authorized")
-def test_assign_active(client, bulk_instance, monkeypatch):
+def test_assign_active(
+    client: FractalAPITestClient,
+    bulk_instance: Callable[..., InstanceInfo],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """
     Ensures we 503 a user with active mandelboxes
     """
     bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
 
-    def patched_active(*args, **kwargs):
+    def patched_active(*args: Any, **kwargs: Any) -> bool:
         return True
 
     monkeypatch.setattr(
@@ -82,8 +94,11 @@ def test_assign_active(client, bulk_instance, monkeypatch):
 
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_fail(
-    app, client, bulk_instance, override_environment
-):
+    app: Flask,
+    client: FractalAPITestClient,
+    bulk_instance: Callable[..., InstanceInfo],
+    override_environment: Callable[[str], None],
+) -> None:
     """
     Ensure that in production environment, passing the pre-shared client commit hash for dev enviroment
     returns a status code of RESOURCE_UNAVAILABLE
@@ -105,8 +120,11 @@ def test_client_commit_hash_local_dev_override_fail(
 
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_success(
-    app, client, bulk_instance, override_environment
-):
+    app: Flask,
+    client: FractalAPITestClient,
+    bulk_instance: Callable[..., InstanceInfo],
+    override_environment: Callable[[str], None],
+) -> None:
     """
     Ensure that in development environment, passing the pre-shared client commit hash for dev enviroment
     returns a status code of ACCEPTED
@@ -136,7 +154,14 @@ def test_client_commit_hash_local_dev_override_success(
         (False, False, HTTPStatus.PAYMENT_REQUIRED),
     ),
 )
-def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
+def test_payment(
+    admin: bool,
+    client: FractalAPITestClient,
+    make_user: Callable[..., str],
+    monkeypatch: pytest.MonkeyPatch,
+    status_code: HTTPStatus,
+    subscribed: bool,
+) -> None:
     user = make_user()
     response = client.post(
         "/mandelbox/assign",

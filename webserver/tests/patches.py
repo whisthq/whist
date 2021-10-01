@@ -1,7 +1,9 @@
 """Helpful patch utilities."""
 
+from typing import Any, Callable
 
-def function(**kwargs):
+
+def function(**kwargs: Any) -> Callable[..., Any]:
     """Create a function that either raises or returns the specified value.
 
     Args:
@@ -13,7 +15,7 @@ def function(**kwargs):
         A function that either raises or returns the specified value.
     """
 
-    def _function(*_args, **_kwargs):
+    def _function(*_args: Any, **_kwargs: Any) -> Any:
         if kwargs.get("raises"):
             raise kwargs["raises"]
 
@@ -29,7 +31,7 @@ class Object:
     The custom implementation of __getattr__ here is intended to swallow those exceptions.
     """
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> None:
         """If the desired attribute cannot be found, don't do anything.
 
         The trivial implementation of this method allows us to do write the following:

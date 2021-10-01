@@ -1,9 +1,10 @@
 from random import sample
+from typing import Any, List, Optional
 from app.database.models.cloud import RegionToAmi
 from app.helpers.aws.aws_instance_post import find_enabled_regions
 
 
-def get_allowed_regions():
+def get_allowed_regions() -> Any:
     """
     Returns a randomly picked region to AMI objects from RegionToAmi table
     with ami_active flag marked as true
@@ -15,7 +16,7 @@ def get_allowed_regions():
     return RegionToAmi.query.filter_by(ami_active=True).all()
 
 
-def get_allowed_region_names():
+def get_allowed_region_names() -> List[str]:
     """
     Returns a randomly picked region name from RegionToAmi table.
     Args:
@@ -27,7 +28,7 @@ def get_allowed_region_names():
     return [region.region_name for region in allowed_regions]
 
 
-def get_random_region_name():
+def get_random_region_name() -> Optional[str]:
     """
     Returns a single randomly picked region name which has an active AMI
     Args:

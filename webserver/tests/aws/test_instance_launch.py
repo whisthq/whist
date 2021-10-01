@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from flask import Flask
+from pytest import MonkeyPatch
 import random, requests
+from typing import Any, Callable, Dict, List
 
-from app.database.models.cloud import RegionToAmi, db
+from app.database.models.cloud import RegionToAmi, db, InstanceInfo
 from tests.patches import function
 
 from app.helpers.ami import ami_upgrade
@@ -20,7 +23,7 @@ from app.constants.ec2_instance_states import EC2InstanceState
 from app.constants.mandelbox_host_states import MandelboxHostState
 
 
-def test_prior_ami(db_session):
+def test_prior_ami(db_session: db.session) -> None:
     all_amis = RegionToAmi.query.all()
     if len(all_amis) > 0:
         randomized_ami = random.choice(all_amis)
@@ -50,7 +53,12 @@ def test_prior_ami(db_session):
     ), "still inserted new AMI despite prior ami existing"
 
 
-def test_fail_disabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
+def test_fail_disabled_instance_launch(
+    app: Flask,
+    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],
+    set_amis_state: Callable[[List[RegionToAmi], bool], None],
+) -> None:
     """
     Tests that we won't be able to launch an AMI that is marked as inactive.
     """
@@ -64,7 +72,12 @@ def test_fail_disabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_ami
         assert len(call_list) == 0
 
 
-def test_success_enabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_amis_state):
+def test_success_enabled_instance_launch(
+    app: Flask,
+    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],
+    set_amis_state: Callable[[List[RegionToAmi], bool], None],
+) -> None:
     """
     Tests that we should be able to launch an AMI that is marked as active.
     """
@@ -79,7 +92,12 @@ def test_success_enabled_instance_launch(app, hijack_ec2_calls, hijack_db, set_a
         assert call_list[0]["kwargs"]["image_id"] == randomized_ami.ami_id
 
 
-def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db):
+def test_launch_buffer_in_a_region(
+    app: Flask,
+    monkeypatch: MonkeyPatch,
+    hijack_ec2_calls: List[Dict[str, Any]],
+    hijack_db: List[Dict[str, Any]],
+) -> None:
     """
     `launch_new_ami_buffer` function takes a region name, AMI to ensure that we
     have the preconfigured buffer mandelbox capacity (currently 10) for the given AMI.
@@ -105,7 +123,13 @@ def test_launch_buffer_in_a_region(app, monkeypatch, hijack_ec2_calls, hijack_db
         assert call_list[0]["kwargs"]["image_id"] == randomly_picked_ami_id
 
 
-def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance, db_session):
+def test_perform_ami_upgrade(
+    app: Flask,
+    monkeypatch: MonkeyPatch,
+    region_to_ami_map: Dict[str, str],
+    bulk_instance: Callable[..., InstanceInfo],
+    db_session: db.session,
+) -> None:
     """
     In this test case, we are testing the whole AMI upgrade flow. This involves the
     following checks
@@ -122,9 +146,9 @@ def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance,
 
     monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
 
-    launch_new_ami_buffer_calls = []
+    launch_new_ami_buffer_calls: List[Dict[str, Any]] = []
 
-    def _mock_launch_new_ami_buffer(*args, **kwargs):
+    def _mock_launch_new_ami_buffer(*args: Any, **kwargs: Any) -> None:
         launch_new_ami_buffer_calls.append({"args": args, "kwargs": kwargs})
         # region_wise_upgrade_threads is a global variable that stores the
         # status of each threads's success state, we need to mark this as true
@@ -140,7 +164,7 @@ def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance,
 
     num_running_instances = 10
 
-    def _mock_instance_info_query(*args, **kwargs):
+    def _mock_instance_info_query(*args: Any, **kwargs: Any) -> List[InstanceInfo]:
         return [
             bulk_instance(
                 instance_name=generate_name("current_running_instance", True),
@@ -158,14 +182,14 @@ def test_perform_ami_upgrade(app, monkeypatch, region_to_ami_map, bulk_instance,
 
     drain_and_shutdown_call_list = []
 
-    def _helper(*args, **kwargs):
+    def _helper(*args: Any, **kwargs: Any) -> None:
         drain_and_shutdown_call_list.append({"args": args, "kwargs": kwargs})
         raise requests.exceptions.RequestException()
 
     monkeypatch.setattr(requests, "post", _helper)
 
     # The following make instances appear active so that we can attempt to drain them.
-    def _active_instances(*args, **kwargs):
+    def _active_instances(*args: Any, **kwargs: Any) -> str:
         return EC2InstanceState.RUNNING
 
     monkeypatch.setattr(EC2Client, "get_instance_states", _active_instances)

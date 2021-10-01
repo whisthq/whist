@@ -8,7 +8,7 @@ CURRENT_DIR = os.path.join(os.getcwd(), os.path.dirname(__file__))
 WEBSERVER_ROOT = os.path.join(CURRENT_DIR, "../..")
 
 
-def setup_review_app(app_name: str):
+def setup_review_app(app_name: str) -> None:
     """
     Setup the review app. Specifically:
     1. Fetch the ephemeral db URL from the review app

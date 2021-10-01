@@ -46,7 +46,7 @@ jobs:
 
       - name: Perform static type analysis with mypy
         working-directory: webserver
-        run: mypy --strict app # TODO (aaron): include script and tests
+        run: mypy --strict app scripts tests
 
   # Heroku Testing
   # Checks unit tests on the Heroku pipeline.

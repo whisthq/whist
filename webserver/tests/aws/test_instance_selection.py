@@ -1,17 +1,21 @@
 from random import randint
 import pytest
+from typing import Callable
+from app.database.models.cloud import InstanceInfo
 from app.helpers.aws.aws_instance_post import find_instance, bundled_region
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 
 
-def test_empty_instances(region_name):
+def test_empty_instances(region_name: str) -> None:
     """
     Confirms that we don't find any instances on a fresh db
     """
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
-def test_find_initial_instance(bulk_instance, region_name):
+def test_find_initial_instance(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
     """
     Confirms that we find an empty instance
     """
@@ -19,7 +23,9 @@ def test_find_initial_instance(bulk_instance, region_name):
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
-def test_find_part_full_instance(bulk_instance, region_name):
+def test_find_part_full_instance(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
     """
     Confirms that we find an in-use instance
     """
@@ -27,7 +33,9 @@ def test_find_part_full_instance(bulk_instance, region_name):
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
 
 
-def test_find_part_full_instance_order(bulk_instance, region_name):
+def test_find_part_full_instance_order(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
     """
     Confirms that we find an in-use instance with max occupancy
     """
@@ -44,7 +52,9 @@ def test_find_part_full_instance_order(bulk_instance, region_name):
     )
 
 
-def test_no_find_full_instance(bulk_instance, region_name):
+def test_no_find_full_instance(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
     """
     Confirms that we don't find a full instance
     """
@@ -52,7 +62,9 @@ def test_no_find_full_instance(bulk_instance, region_name):
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
-def test_no_find_pre_connected_instance(bulk_instance, region_name):
+def test_no_find_pre_connected_instance(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
     """
     Confirms that we don't find a pre-connection instance
     """
@@ -60,7 +72,9 @@ def test_no_find_pre_connected_instance(bulk_instance, region_name):
     assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
 
 
-def test_no_find_full_small_instance(bulk_instance, region_name):
+def test_no_find_full_small_instance(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
     """
     Confirms that we don't find a full instance with <10 max
     """
@@ -72,7 +86,7 @@ def test_no_find_full_small_instance(bulk_instance, region_name):
     "location",
     bundled_region.keys(),
 )
-def test_assignment_logic(bulk_instance, location):
+def test_assignment_logic(bulk_instance: Callable[..., InstanceInfo], location: str) -> None:
     # ensures that replacement will work for all regions
     """
     tests 4 properties of our find unassigned algorithm:

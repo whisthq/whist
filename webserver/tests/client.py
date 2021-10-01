@@ -2,12 +2,15 @@
 
 from flask.testing import FlaskClient
 from flask_jwt_extended import create_access_token
+from typing import Any, Optional
 
 
 class FractalAPITestClient(FlaskClient):  # type: ignore
     """A custom test client class that makes it easy to authenticate requests."""
 
-    def login(self, username, *, admin=False, **additional_claims):
+    def login(
+        self, username: Any, *, admin: bool = False, **additional_claims: Optional[str]
+    ) -> None:
         """Authenticate all future requests as the user with the specified username.
 
         Args:
@@ -28,7 +31,7 @@ class FractalAPITestClient(FlaskClient):  # type: ignore
 
         self.environ_base["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
 
-    def logout(self):
+    def logout(self) -> None:
         """Ensure that all future requests are unauthenticated.
 
         Returns:

@@ -6,27 +6,29 @@ import platform
 import os
 import signal
 from http import HTTPStatus
+from typing import Callable, Optional
 
 import pytest
 from sqlalchemy.exc import OperationalError
 
-from flask import current_app, g
+from flask import current_app, g, Flask
 from app.config import _callback_webserver_hostname
 from app.database.models.cloud import RegionToAmi
 from app.utils.flask.flask_handlers import can_process_requests, set_web_requests_status
 from app.utils.general.logs import fractal_logger
 from app.utils.db.db_utils import set_local_lock_timeout
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, REGION_NAMES
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from tests.client import FractalAPITestClient
 
 
-def test_callback_webserver_hostname_localhost():
+def test_callback_webserver_hostname_localhost() -> None:
     """Make sure the callback webserver hostname is that of the Heroku dev server."""
 
     with current_app.test_request_context():
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
 
 
-def test_callback_webserver_hostname_not_localhost():
+def test_callback_webserver_hostname_not_localhost() -> None:
     """Make sure the callback webserver hostname is the same as the Host request header."""
 
     hostname = "google.com"
@@ -35,7 +37,7 @@ def test_callback_webserver_hostname_not_localhost():
         assert _callback_webserver_hostname() == hostname
 
 
-def test_callback_webserver_hostname_localhost_with_port():
+def test_callback_webserver_hostname_localhost_with_port() -> None:
     """Make sure the callback webserver hostname is that of the Heroku dev server."""
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
@@ -46,7 +48,7 @@ def test_callback_webserver_hostname_localhost_with_port():
 @pytest.mark.skipif(
     "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
 )
-def test_webserver_sigterm(client, make_user):
+def test_webserver_sigterm(client: FractalAPITestClient, make_user: Callable[..., str]) -> None:
     """
     Make sure SIGTERM is properly handled by webserver. After a SIGTERM, all new web requests should
     error out with code RESOURCE_UNAVAILABLE. For more info, see app/signals.py.
@@ -69,13 +71,13 @@ def test_webserver_sigterm(client, make_user):
     assert set_web_requests_status(True)
 
 
-def test_local_lock_timeout(app, region_name):
+def test_local_lock_timeout(app: Flask, region_name: Optional[str]) -> None:
     """
     Test the function `set_local_lock_timeout` by running concurrent threads that try to grab
     the lock. One should time out.
     """
 
-    def acquire_lock(lock_timeout: int, hold_time: int):
+    def acquire_lock(lock_timeout: int, hold_time: int) -> bool:
         try:
             with app.app_context():
                 set_local_lock_timeout(lock_timeout)
