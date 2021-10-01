@@ -48,6 +48,8 @@ const show = chain(window.location.search.substring(1))
   .get("show")
   .value()
 
+console.log("here!!", show)
+
 const RootComponent = () => {
   const [mainState, setMainState] = useMainState()
   const relaunch = () =>
@@ -107,7 +109,7 @@ const RootComponent = () => {
         email={mainState.userEmail}
       />
     )
-  if (show === WindowHashOnboardingTypeform)
+  if (show === WindowHashOnboardingTypeform) {
     return (
       <Typeform
         onSubmit={handleOnboardingTypeform}
@@ -115,6 +117,7 @@ const RootComponent = () => {
         email={mainState.userEmail}
       />
     )
+  }
   if (show === WindowHashBugTypeform)
     return (
       <Typeform onSubmit={() => {}} id="VMWBFgGc" email={mainState.userEmail} />
