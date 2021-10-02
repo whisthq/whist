@@ -146,26 +146,6 @@ TEST(FractalLibraryTest, BmpToPngToBmp) {
         EXPECT_EQ(bmp_buffer[index], new_bmp_data[index]);
 }
 
-/** Testing avpacket_buffer.c/h **/
-void avpackets_equal(AVPacket pkt1, AVPacket pkt2) {
-    LOG_INFO("We good");
-    EXPECT_TRUE(pkt1.buf == pkt2.buf); //both should be NULL
-    LOG_INFO("We good");
-    EXPECT_EQ(pkt1.pts, pkt2.pts);
-    LOG_INFO("We good");
-    EXPECT_EQ(pkt1.dts, pkt2.dts);
-    LOG_INFO("We good");
-    EXPECT_TRUE(strcmp((char*) pkt1.data, (char*) pkt2.data) == 0);
-    LOG_INFO("We good");
-    EXPECT_EQ(pkt1.size, pkt2.size);
-    LOG_INFO("We good");
-    EXPECT_EQ(pkt1.stream_index, pkt2.stream_index);
-    EXPECT_TRUE(pkt1.side_data == pkt2.side_data);
-    EXPECT_EQ(pkt1.side_data_elems, pkt2.side_data_elems);
-    EXPECT_EQ(pkt1.duration, pkt2.duration);
-    EXPECT_EQ(pkt1.pos, pkt2.pos);
-}
-
 TEST(FractalLibraryTest, PacketsToBuffer) {
 
     //Make some dummy packets
@@ -177,7 +157,7 @@ TEST(FractalLibraryTest, PacketsToBuffer) {
         .pts = AV_NOPTS_VALUE,
         .dts = AV_NOPTS_VALUE,
         .data = (uint8_t*) data1,
-        .size = strlen(data1),
+        .size = (int) strlen(data1),
         .stream_index = 0,
         .side_data = NULL,
         .side_data_elems = 0,
