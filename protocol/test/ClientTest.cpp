@@ -4,6 +4,7 @@
 extern "C" {
     #include <fractal/core/fractal.h>
     #include "client/client_utils.h"
+    #include "client/ringbuffer.h"
     #include "fractal/utils/color.h"
 }
 // Include paths should be relative to the protocol folder
@@ -12,6 +13,8 @@ extern "C" {
 //      - To include file2.h in protocol/client folder, use #include "client/file.h"
 // To include a C source file, you need to wrap the include statement in extern "C" {}.
 
+#define NUM_AUDIO_TEST_FRAMES 25
+#define MAX_RING_BUFFER_SIZE 500
 
 // Below are a few sample tests for illustration purposes.
 
@@ -87,6 +90,7 @@ TEST(ClientTest, TimersTest) {
 }
 
 
+<<<<<<< HEAD
 TEST(ClientTest, BitArrayMemCpyTest) {
     #define MAX_RING_BUFFER_SIZE 300
     // A bunch of prime numbers + {10,100,200,250,299,300}
@@ -139,6 +143,108 @@ TEST(ClientTest, BitArrayMemCpyTest) {
     }
 }
 
+=======
+/** ringbuffer.c **/
+
+
+//Tests that an initialized ring buffer is correct size and has
+//frame IDs initialized to -1
+TEST(ClientTest, InitRingBuffer) {
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_AUDIO_TEST_FRAMES);
+
+    EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
+    EXPECT_EQ(rb->currently_rendering_id, -1);
+    EXPECT_EQ(rb->currently_rendering_frame.id, get_frame_at_id(rb, -1)->id);
+
+    for(int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
+        EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
+    
+    destroy_ring_buffer(rb);
+}
+
+//Tests that an initialized ring buffer with a bad size returns NULL 
+TEST(ClientTest, InitRingBufferBadSize) {
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE+1);
+    EXPECT_TRUE(rb == NULL);
+}
+
+//Tests adding packets into ringbuffer
+TEST(ClientTest, AddingPacketsToRingBuffer) {
+    //initialize ringbuffer
+    const size_t NUM_PACKETS = 1;
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_PACKETS);
+
+    //setup packets to add to ringbuffer
+    FractalPacket pkt1 = {
+        .type = PACKET_VIDEO,
+        .id = 0,
+        .index = 0,
+        .is_a_nack = false,
+    };
+
+    FractalPacket pkt2 = {
+        .type = PACKET_VIDEO,
+        .id = 1,
+        .index = 0,
+        .is_a_nack = false,
+    };
+
+    //checks that everything goes well when adding to an empty ringbuffer
+    EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+    EXPECT_EQ(get_frame_at_id(rb, pkt1.id)->id, pkt1.id);
+
+    //checks that 1 is returned when overwriting a valid frame
+    EXPECT_EQ(receive_packet(rb, &pkt2), 1);
+    EXPECT_EQ(get_frame_at_id(rb, pkt2.id)->id, pkt2.id);
+
+    //check that -1 is returned when we get a duplicate
+    EXPECT_EQ(receive_packet(rb, &pkt2), -1);
+
+    destroy_ring_buffer(rb);
+}
+
+//Test that resetting the ringbuffer resets the values
+TEST(ClientTest, ResetRingBufferFrame) {
+    //initialize ringbuffer
+    const size_t NUM_PACKETS = 1;
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_PACKETS);
+
+    //fill ringbuffer
+    FractalPacket pkt1 = {
+        .type = PACKET_VIDEO,
+        .id = 0,
+        .index = 0,
+        .is_a_nack = false,
+    };
+
+    FractalPacket pkt2 = {
+        .type = PACKET_VIDEO,
+        .id = 1,
+        .index = 0,
+        .is_a_nack = false,
+    };
+
+    receive_packet(rb, &pkt1);
+    reset_frame(rb, get_frame_at_id(rb, pkt1.id));
+
+    EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+}
+
+//Test that set_rendering works
+TEST(ClientTest, SetRenderingTest) {
+    //initialize ringbuffer
+    const size_t NUM_PACKETS = 1;
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_PACKETS);
+
+    set_rendering(rb, 5);
+    EXPECT_EQ(rb->currently_rendering_id, 5);
+
+    set_rendering(rb, -5);
+    EXPECT_EQ(rb->currently_rendering_id, -5);
+}
+
+
+>>>>>>> Adding unit tests to ClientTest.cpp for ringbuffer.c, modifying unit tests to FractalLibraryTest.cpp, updating CMakeList.txt to create FractalLibrary unit test executable, update README to include unit testing information, fixing absence of null-check for destroy_ring_buffer, adding negative size check for init_ring_buffer
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

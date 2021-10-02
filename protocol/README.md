@@ -113,10 +113,22 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │       ├── x11capture.c <- Capture screen using X11
 │       └── x11nvidiacapture.c <- Capture h264/h265 compressed screen with NvidiaCaptureSDK
 └── server
+<<<<<<< HEAD
     ├── client.c <- Handle multiclient messages
     ├── handle_client_message.c <- Handle client fsmsg's
     ├── main.c <- Initialize server, receive packets and pass to where it needs to go
     ├── network.c <- Networking code for multiclient
+=======
+|    ├── client.c <- Handle multiclient messages
+|    ├── handle_client_message.c <- Handle client fmsg's
+|    ├── main.c <- Initialize server, receive packets and pass to where it needs to go
+|    ├── network.c <- Networking code for multiclient
+└── test
+    ├── images <- images for unit testing
+    ├── ClientTest.cpp <- tests code in client module
+    ├── ServerTest.cpp <- tests code in server module
+    └── FractalLibraryTest.cpp <- tests code in fractal module
+>>>>>>> Adding unit tests to ClientTest.cpp for ringbuffer.c, modifying unit tests to FractalLibraryTest.cpp, updating CMakeList.txt to create FractalLibrary unit test executable, update README to include unit testing information, fixing absence of null-check for destroy_ring_buffer, adding negative size check for init_ring_buffer
 ```
 
 The above files are fairly static. If you add or remove a file, or change what a file does, please update this directory so we can keep track of it all!
@@ -258,6 +270,23 @@ These builds will also have `cppcheck` run against them which is a static analys
 These builds will also (TODO) be tested against a live server VM. This workflow will spin up an Azure VM, upload the server build to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute. This will also occur nightly against the `dev` branch, but these builds will not be released (this can be removed once testing is stable and re-enabled on all commits).
 
 To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated.
+
+#### Unit Testing
+
+The protocol currently uses gtest to create and execute unit tests for the `protocol` repository. 
+To add tests for the `protocol/client` module, add tests to the `ClientTest.cp`p file in the test folder. 
+To add tests for the `protocol/server` module, add tests to the `ServerTest.cpp` file in the test folder. 
+To add tests for the `protocol/fractal` module, add tests to the `FractalLibraryTest.cpp` file in the test folder. 
+
+To run all unit tests, recompile the protocol by going into the `protocol/build` directory and 
+running `make -j`. This is assuming you have already ran `cmake -S .. -B .` from the Building the Protocol 
+section. If you have not done that, do so before running  `make -j`.
+
+Next, run `cd test`. Now:
+
+To run the unit tests for the client, run `./FractalClientTest`
+To run the unit tests for the server, run `./FractalServerTest`
+To run the unit tests for the fractal module, run `./FractalLibraryTest`
 
 ### Continuous Integration
 
