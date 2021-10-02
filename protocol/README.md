@@ -273,14 +273,14 @@ To see the warnings in context go to the Actions tab, click on your PR/push that
 
 #### Unit Testing
 
-The protocol currently uses gtest to create and execute unit tests for the `protocol` repository. 
-To add tests for the `protocol/client` module, add tests to the `ClientTest.cp`p file in the test folder. 
-To add tests for the `protocol/server` module, add tests to the `ServerTest.cpp` file in the test folder. 
-To add tests for the `protocol/fractal` module, add tests to the `FractalLibraryTest.cpp` file in the test folder. 
+The protocol currently uses gtest to create and execute unit tests for the `protocol` repository.
+To add tests for the `protocol/client` module, add tests to the `ClientTest.cp`p file in the test folder.
+To add tests for the `protocol/server` module, add tests to the `ServerTest.cpp` file in the test folder.
+To add tests for the `protocol/fractal` module, add tests to the `FractalLibraryTest.cpp` file in the test folder.
 
-To run all unit tests, recompile the protocol by going into the `protocol/build` directory and 
-running `make -j`. This is assuming you have already ran `cmake -S .. -B .` from the Building the Protocol 
-section. If you have not done that, do so before running  `make -j`.
+To run all unit tests, recompile the protocol by going into the `protocol/build` directory and
+running `make -j`. This is assuming you have already ran `cmake -S .. -B .` from the Building the Protocol
+section. If you have not done that, do so before running `make -j`.
 
 Next, run `cd test`. Now:
 
