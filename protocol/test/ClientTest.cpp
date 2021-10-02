@@ -171,8 +171,8 @@ TEST(ClientTest, InitRingBufferBadSize) {
 //Tests adding packets into ringbuffer
 TEST(ClientTest, AddingPacketsToRingBuffer) {
     //initialize ringbuffer
-    const size_t NUM_PACKETS = 1;
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_PACKETS);
+    const size_t num_packets = 1;
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
     //setup packets to add to ringbuffer
     FractalPacket pkt1 = {
@@ -206,8 +206,8 @@ TEST(ClientTest, AddingPacketsToRingBuffer) {
 //Test that resetting the ringbuffer resets the values
 TEST(ClientTest, ResetRingBufferFrame) {
     //initialize ringbuffer
-    const size_t NUM_PACKETS = 1;
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_PACKETS);
+    const size_t num_packets = 1;
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
     //fill ringbuffer
     FractalPacket pkt1 = {
@@ -233,8 +233,8 @@ TEST(ClientTest, ResetRingBufferFrame) {
 //Test that set_rendering works
 TEST(ClientTest, SetRenderingTest) {
     //initialize ringbuffer
-    const size_t NUM_PACKETS = 1;
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_PACKETS);
+    const size_t num_packets = 1;
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
     set_rendering(rb, 5);
     EXPECT_EQ(rb->currently_rendering_id, 5);
