@@ -92,12 +92,12 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
-# CI will by-default by off, but we set to ON in github actions
+# CI will by-default be off, but we set to ON in GitHub Actions
 # You can locally set to ON as well if you like, just make sure to have cppcheck installed
 OPTION(CI OFF)
 
-# Generate code coverage if we're running in CI on Linux/macOS (code coverage is not supported on Windows)
-if (${CI} MATCHES "TRUE" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+# Generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_CXX_FLAGS --coverage)
 endif()
 
