@@ -161,7 +161,7 @@ jobs:
 
           # Generate code coverage report from gcc/clang `--coverage` flag
           lcov --capture --directory . --output-file gtest_coverage.info
-          lcov --list coverage.info # debug info
+          lcov --list gtest_coverage.info # debug info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
