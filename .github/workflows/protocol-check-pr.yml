@@ -161,8 +161,12 @@ jobs:
           ./test/FractalClientTest
 
           # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file gtest_coverage.info
-          lcov --list gtest_coverage.info # debug info
+          lcov --capture --directory . --output-file coverage.info
+
+          # Remove files we don't want in the coverage port
+          lcov --remove coverage.info -o coverage.info '/build/*'
+
+          lcov --list coverage.info # debug info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
