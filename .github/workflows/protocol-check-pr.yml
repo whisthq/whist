@@ -164,7 +164,9 @@ jobs:
           lcov --capture --directory . --output-file coverage.info
 
           # Remove files we don't want in the coverage port
-          lcov --remove coverage.info -o coverage.info 'build/*'
+          lcov --remove coverage.info -o coverage.info \
+            '/Users/runner/work/fractal/fractal/protocol/build/*' \
+            '/Applications/*'
 
           lcov --list coverage.info # debug info
 
