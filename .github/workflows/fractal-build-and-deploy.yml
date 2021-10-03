@@ -966,7 +966,7 @@ jobs:
 
       # This solves the "unable to find utility "altool", not a developer tool or in PATH" error
       - name: Reset Command Line Tools Path
-        run: xcode-select -r
+        run: sudo xcode-select -r
 
       #############################################################################################
       #################################### Publish Steps START ####################################
