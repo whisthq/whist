@@ -70,16 +70,16 @@ TEST(ClientTest, TimersTest) {
     // is broken, but not necessarily if both are broken.
     clock timer;
     start_timer(&timer);
-    fractal_sleep(25);
+    fractal_sleep(250);
     double elapsed = get_timer(timer);
-    EXPECT_GE(elapsed, 0.025);
-    EXPECT_LE(elapsed, 0.035);
+    EXPECT_GE(elapsed, 0.250);
+    EXPECT_LE(elapsed, 0.260);
 
     start_timer(&timer);
-    fractal_sleep(100);
+    fractal_sleep(1000);
     elapsed = get_timer(timer);
-    EXPECT_GE(elapsed, 0.100);
-    EXPECT_LE(elapsed, 0.110);
+    EXPECT_GE(elapsed, 1.000);
+    EXPECT_LE(elapsed, 1.010);
 }
 
 int main(int argc, char **argv) {
