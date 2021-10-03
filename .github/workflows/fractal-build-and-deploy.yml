@@ -964,6 +964,10 @@ jobs:
           mkdir -p ~/private_keys
           aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
+      # This solves the "unable to find utility "altool", not a developer tool or in PATH" error
+      - name: Reset Command Line Tools Path
+        run: xcode-select -r
+
       #############################################################################################
       #################################### Publish Steps START ####################################
 
