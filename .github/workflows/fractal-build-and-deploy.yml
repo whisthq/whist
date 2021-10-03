@@ -1,4 +1,4 @@
-# workflows/fractal-build-and-deploy-x64.yml
+# workflows/fractal-build-and-deploy.yml
 #
 # Fractal: Build & Deploy
 # Build and deploy each of the relevant Fractal projects for our production, staging and dev environments.
@@ -147,7 +147,8 @@ jobs:
           job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelboxes"
           job_dependencies[webserver-update-fractal-services]=" "
           job_dependencies[webserver-deploy-heroku]="webserver"
-          job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
+          job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
+          job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
           # Files that all jobs depend on
           universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
@@ -669,12 +670,13 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       [
-        client-applications-publish-build-s3,
+        client-applications-publish-build-x64-s3,
+        client-applications-publish-build-arm64-s3,
         webserver-spin-up-new-buffer,
         fractal-publish-build-config,
       ]
     concurrency: webserver-swap-active-amis-${{ github.ref }}
-    if: always() && (needs.client-applications-publish-build-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
+    if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
     env:
       TOKEN_FILE: .access_token
     steps:
@@ -898,8 +900,205 @@ jobs:
   # Build and publish the client applications to their respective AWS S3 bucket,
   # from which Electron-Updater pulls them for auto-updating
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
-  client-applications-publish-build-s3:
-    name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
+  client-applications-publish-build-arm64-s3:
+    name: "Client Applications: Build & Deploy macOS Desktop Application (ARM64)"
+    runs-on: [self-hosted, macOS, ARM64]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+    needs:
+      [
+        fractal-build-monorepo-config,
+        fractal-publish-build-config,
+        webserver-deploy-heroku,
+        microservices-deploy-auth0-rules,
+        mandelboxes-and-amis-publish-ghcr-and-aws,
+        webserver-spin-up-new-buffer,
+      ]
+    concurrency: client-applications-publish-build-arm64-s3-${{ matrix.config.os }}-${{ github.ref }}
+
+    # Only run client-apps deployment if none of the previous steps failed
+    if: |
+      always() &&
+      (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|')) &&
+      (needs.webserver-deploy-heroku.result == 'success') &&
+      (needs.webserver-spin-up-new-buffer.result == 'success') &&
+      (needs.microservices-deploy-auth0-rules.result == 'success') &&
+      (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+        with:
+          # Get the whole git history. We must do this because the
+          # client app calls `git describe` in order to bake the
+          # version number into the react frontend.
+          fetch-depth: 0
+
+      - name: Install Node.js 16
+        uses: actions/setup-node@v2.4.0
+        with:
+          node-version: "16"
+
+      # Necessary for Electron to upload packaged applications to AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      ############################### Unix Configuration Steps START ##############################
+
+      # This step must only be done once and permission must be granted to use the keychain
+      # manually, since the runner is self-hosted and its state persists across runs
+      # - name: Install macOS Codesigning Certificates on macOS GHA Machine
+      #   uses: apple-actions/import-codesign-certs@v1
+      #   with:
+      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+      #     p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+
+      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
+      - name: Install macOS Notarization API Key
+        run: |
+          mkdir -p ~/private_keys
+          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+
+      #############################################################################################
+      #################################### Publish Steps START ####################################
+
+      - name: Retrieve Desktop App Version from Config Database
+        run: |
+          BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+          ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
+
+          # curl GraphQL API to retrieve version number from config database
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
+          --data "{ \"query\": \"query { desktop_app_version { major minor micro dev_rc staging_rc } }\" }" \
+          https://config-database.fractal.co/v1/graphql > response.json
+
+          # Check if we actually got back valid json. If not, we should
+          # throw a human-readable error because the config DB might be
+          # down.
+          if cat response.json | jq -e . > /dev/null 2>&1; then
+            echo "Got some valid JSON from the config DB:"
+            cat response.json
+            echo
+            echo "Continuing..."
+          else
+            echo "Failed to parse the JSON from the config DB. Is it up?" && false
+          fi
+
+          # parse JSON into major.minor.micro-rc
+          MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
+          MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
+          MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
+          DEV_RC=$(cat response.json | jq '.data.desktop_app_version[0].dev_rc')
+          STAGING_RC=$(cat response.json | jq '.data.desktop_app_version[0].staging_rc')
+
+          # remove temporary JSON file
+          rm response.json
+
+          echo "Current prod version: $MAJOR.$MINOR.$MICRO"
+          echo "Current staging version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
+          echo "Current dev version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
+
+          # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
+          if [[ "$BRANCH_NAME" == "prod" ]]; then
+            echo 'Using prod configuration...'
+            # increment version by 0.0.1
+            NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new desktop app version
+            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
+
+            # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
+            echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
+            echo "new_staging_rc_version=0" >> $GITHUB_ENV
+            echo "new_dev_rc_version=0" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == "staging" ]]; then
+            echo 'Using staging configuration...'
+            # increment version by staging-rc.1
+            NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
+
+            # set temporary variable for upcoming micro version which is 1 ahead of current, since
+            # staging/dev are release candiates (rc) for the next version
+            # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
+            UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new desktop app version
+            NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-staging-rc.${NEW_STAGING_RC}"
+
+            # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
+            echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == "dev" ]]; then
+            echo 'Using dev configuration...'
+            # increment version by dev-rc.1
+            NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
+
+            # set temporary variable for upcoming micro version which is 1 ahead of current, since
+            # staging/dev are release candiates (rc) for the next version
+            # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
+            UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
+            # set new desktop app version
+            NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
+
+            # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
+            echo "new_dev_rc_version=${NEW_DEV_RC}" >> $GITHUB_ENV
+          else
+            echo 'Error: Invalid branch' && false
+          fi
+
+          echo "New $BRANCH_NAME version: ${NEW_VERSION}"
+
+          # store new desktop app version as GitHub env to substitute in client-apps package.json
+          echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+          # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
+          echo "::set-output name=release_version::${NEW_VERSION}"
+
+      # Bump the package version in package.json using jq
+      - name: Update Package Version
+        working-directory: client-applications
+        run: |
+          mv package.json packageOld.json
+          # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
+          cat packageOld.json | jq '.version = "${{ env.desktop_app_new_version }}"' > package.json
+          rm packageOld.json
+
+      # (builds the branch that it is run on automatically, so prod if running on push to prod)
+      - name: Publish the MacOS Electron Application
+        working-directory: client-applications
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+
+          # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
+        run: |
+          # Build the Fractal protocol and package the Electron application
+          # We need to increase the timeout to deal with GHA's weak VMs.
+          yarn config set network-timeout 600000
+          yarn cache clean
+          yarn install
+          yarn package:publish \
+          --config='${{ needs.fractal-build-monorepo-config.outputs.macos }}' \
+          --version='${{ env.desktop_app_new_version }}' \
+          --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
+          --commit='${{ github.sha }}'
+
+  # Client Applications: Build & Publish to AWS S3
+  # Build and publish the client applications to their respective AWS S3 bucket,
+  # from which Electron-Updater pulls them for auto-updating
+  # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
+  client-applications-publish-build-x64-s3:
+    name: "Client Applications: Build & Deploy ${{ matrix.config.name }} (X86_64)"
     runs-on: ${{ matrix.config.os }}
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
@@ -912,12 +1111,12 @@ jobs:
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-spin-up-new-buffer,
       ]
-    concurrency: client-applications-publish-build-s3-${{ matrix.config.os }}-${{ github.ref }}
+    concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
 
     # Only run client-apps deployment if none of the previous steps failed
     if: |
       always() &&
-      (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')) &&
+      (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) &&
       (needs.webserver-deploy-heroku.result == 'success') &&
       (needs.webserver-spin-up-new-buffer.result == 'success') &&
       (needs.microservices-deploy-auth0-rules.result == 'success') &&
@@ -1173,9 +1372,14 @@ jobs:
   client-applications-notify-slack:
     name: "Client Applications: Notify Slack"
     runs-on: ubuntu-20.04
-    needs: [fractal-publish-build-config, client-applications-publish-build-s3]
-    # run if client-applications-publish-build-s3 succeeds or fails (but not skipped or cancelled)
-    if: always() && (needs.client-applications-publish-build-s3.result == 'success' || needs.client-applications-publish-build-s3.result == 'failure' )
+    needs:
+      [
+        fractal-publish-build-config,
+        client-applications-publish-build-x64-s3,
+        client-applications-publish-build-arm64-s3,
+      ]
+    # run if client-applications-publish-build-[x64/arm64]-s3 succeeds or fails (but not skipped or cancelled)
+    if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' || needs.client-applications-publish-build-x64-s3.result == 'failure' ) && (needs.client-applications-publish-build-arm64-s3.result == 'success' || needs.client-applications-publish-build-arm64-s3.result == 'failure' )
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -1186,7 +1390,7 @@ jobs:
 
       - name: Notify Slack on Job Success
         shell: python3 {0}
-        if: needs.client-applications-publish-build-s3.result == 'success'
+        if: needs.client-applications-publish-build-x64-s3.result == 'success' || needs.client-applications-publish-build-arm64-s3.result == 'success'
         run: |
           from notifications.slack_bot import slack_post
 
@@ -1207,14 +1411,14 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
-        if: needs.client-applications-publish-build-s3.result == 'failure'
+        if: needs.client-applications-publish-build-x64-s3.result == 'failure' || needs.client-applications-publish-build-arm64-s3.result == 'failure'
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-x64-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -1293,7 +1497,8 @@ jobs:
         microservices-deploy-auth0-rules,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-spin-up-new-buffer,
-        client-applications-publish-build-s3,
+        client-applications-publish-build-x64-s3,
+        client-applications-publish-build-arm64-s3,
         webserver-swap-active-amis,
       ]
     if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
@@ -1311,7 +1516,7 @@ jobs:
       - name: Create GitHub Tag
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
+          tag_name: v${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }}
           body: Fractal Production Release on ${{ env.date }}
           draft: false
         env:
@@ -1325,7 +1530,7 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":github: Fractal GitHub Release Completed :github:"
-          BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 

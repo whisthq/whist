@@ -115,6 +115,8 @@ jobs:
 
       ############################# Unix Configuration Steps START #############################
 
+      # This step must only be done once and permission must be granted to use the keychain
+      # manually, since the runner is self-hosted and its state persists across runs
       # - name: Install macOS Codesigning Certificates on macOS GHA Machine
       #   uses: apple-actions/import-codesign-certs@v1
       #   with:
@@ -137,11 +139,9 @@ jobs:
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-
         working-directory: client-applications
         run: |
           # Build the Fractal protocol and package the Electron application, using a hardcoded test version
