@@ -160,10 +160,6 @@ jobs:
           # Run protocol tests
           ./test/FractalClientTest
 
-
-
-
-
           # Generate code coverage report from gcc/clang `--coverage` flag
           lcov --capture --directory . --output-file gtest_coverage.info
           lcov --list gtest_coverage.info # debug info
