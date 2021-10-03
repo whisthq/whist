@@ -27,6 +27,9 @@ jobs:
     name: Build & Publish Protocol Documentation to fractal/docs
     runs-on: ubuntu-20.04
 
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
     steps:
       ################################# CONFIG STEPS START ###############################
 
