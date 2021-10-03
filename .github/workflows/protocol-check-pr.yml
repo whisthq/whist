@@ -163,12 +163,13 @@ jobs:
           # Generate code coverage report from gcc/clang `--coverage` flag
           lcov --capture --directory . --output-file coverage.info
 
-          # Remove files we don't want in the coverage port
+          # Remove non-Fractal files from the coverage report
           lcov --remove coverage.info -o coverage.info \
             '/Users/runner/work/fractal/fractal/protocol/build/*' \
             '/Applications/*'
 
-          lcov --list coverage.info # debug info
+          # Debug info
+          lcov --list coverage.info
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov

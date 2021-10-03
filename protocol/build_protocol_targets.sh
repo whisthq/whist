@@ -90,6 +90,11 @@ docker run \
         -DCI=${CMAKE_SET_CI} &&                                                         \
     make -j ${TARGETS}                                                                  \
                                                                                         \
+                                                                                        \
+    echo ${TARGETS}                                                                     \
+    echo ${TARGETS[0]}                                                                  \
+    echo ${TARGETS1}                                                                    \              
+    ./test/${TARGETS[1]}                                                                \
     # If running in CI, upload coverage to Codecov                                      \
     # Generate code coverage report from gcc/clang `--coverage` flag                    \
     lcov --capture --directory . --output-file coverage.info                            \
