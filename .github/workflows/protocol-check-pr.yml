@@ -151,6 +151,7 @@ jobs:
           FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
         working-directory: protocol
         run: |
+          # Build the protocol and its test suite
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
@@ -158,6 +159,10 @@ jobs:
 
           # Run protocol tests
           ./test/FractalClientTest
+          
+
+
+
 
           # Generate code coverage report from gcc/clang `--coverage` flag
           lcov --capture --directory . --output-file gtest_coverage.info

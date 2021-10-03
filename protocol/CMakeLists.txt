@@ -98,6 +98,7 @@ OPTION(CI OFF)
 
 # Generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
 if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(CMAKE_C_FLAGS --coverage)
     set(CMAKE_CXX_FLAGS --coverage)
 endif()
 
