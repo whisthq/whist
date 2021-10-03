@@ -159,7 +159,7 @@ jobs:
 
           # Run protocol tests
           ./test/FractalClientTest
-          
+
 
 
 
