@@ -90,19 +90,21 @@ docker run \
         -DCI=${CMAKE_SET_CI} &&                                                         \
     make -j ${TARGETS}                                                                  \
                                                                                         \
+    # If a second argument (test suite) argument is supplied, run tests                 \
+    if [[ -z ${TARGETS[2]} ]]; then                                                     \
+      echo 'No tests to run'                                                            \
+    else                                                                                \
+      ./test/${TARGETS[2]}                                                              \
                                                                                         \
-    echo ${TARGETS}                                                                     \
-    echo ${TARGETS[0]}                                                                  \
-    echo ${TARGETS1}                                                                    \              
-    ./test/${TARGETS[1]}                                                                \
-    # If running in CI, upload coverage to Codecov                                      \
-    # Generate code coverage report from gcc/clang `--coverage` flag                    \
-    lcov --capture --directory . --output-file coverage.info                            \
-    lcov --list coverage.info # debug info                                              \
+      # If running in CI, upload coverage to Codecov                                    \
+      # Generate code coverage report from gcc/clang `--coverage` flag                  \
+      lcov --capture --directory . --output-file coverage.info                          \
+      lcov --list coverage.info # debug info                                            \
                                                                                         \
-    # Download the Codecov uploader                                                     \
-    curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov       \
+      # Download the Codecov uploader                                                   \
+      curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov     \
                                                                                         \
-    # Upload coverage report to Codecov                                                 \
-    ./codecov -t ${CODECOV_TOKEN} -c -F protocol                                        \
+      # Upload coverage report to Codecov                                               \
+      ./codecov -t ${CODECOV_TOKEN} -c -F protocol                                      \
+    fi                                                                                  \
   "
