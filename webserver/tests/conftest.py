@@ -19,7 +19,6 @@ from app.database.models.cloud import (
     db,
     InstanceInfo,
     RegionToAmi,
-    InstanceStatusChanges,
 )
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.signal_handler.signals import WebSignalHandler
@@ -102,23 +101,6 @@ def authorized(client: FractalAPITestClient, user: str, monkeypatch: pytest.Monk
     monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
     return user
-
-
-@pytest.fixture
-def update_status_change_time(timestamp: Any, instance_name: str) -> None:
-    """
-    Update the time of the most recent instance status change
-
-    Arguments:
-        timestamp: new time to update the timestamp field
-        instance_name: name of instance being updated
-    """
-
-    instance = InstanceStatusChanges.query.filter(
-        InstanceStatusChanges.instance_name == instance_name
-    ).first()
-    instance.timestamp = timestamp
-    db.session.commit()
 
 
 @pytest.fixture
