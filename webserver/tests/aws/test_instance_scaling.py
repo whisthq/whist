@@ -14,7 +14,7 @@ import app.helpers.aws.aws_instance_post as aws_funcs
 
 from app.constants.mandelbox_host_states import MandelboxHostState
 
-from tests.helpers.utils import get_allowed_regions
+from tests.helpers.utils import get_allowed_regions, update_status_change_time
 
 
 def test_scale_up_single(
@@ -283,7 +283,6 @@ def test_lingering_instances(
     monkeypatch: MonkeyPatch,
     bulk_instance: Callable[..., InstanceInfo],
     region_name: str,
-    update_status_change_time: Callable[[Any, str], None],
 ) -> None:
     """
     Tests that lingering_instances properly drains only those instances that are
