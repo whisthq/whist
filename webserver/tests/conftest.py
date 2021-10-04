@@ -120,8 +120,6 @@ def update_status_change_time(timestamp: Any, instance_name: str) -> None:
     instance.timestamp = timestamp
     db.session.commit()
 
-    return
-
 
 @pytest.fixture
 def bulk_instance() -> Generator[

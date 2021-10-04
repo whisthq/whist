@@ -2,7 +2,7 @@ from random import randint
 from sys import maxsize
 from time import time
 from typing import Any, Callable, Dict, List, Tuple
-from datetime import fromtimestamp
+from datetime import date
 
 import requests
 
@@ -323,7 +323,7 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=time() * 1000,
     )
 
-    time_2_mins_ago = fromtimestamp(time() - 125)
+    time_2_mins_ago = date.fromtimestamp(time() - 125)
 
     update_status_change_time(time_2_mins_ago, "no_associated_mandelbox_instance")
     update_status_change_time(time_2_mins_ago, "associated_mandelbox_instance")
