@@ -63,6 +63,7 @@ func Close(client *graphql.SubscriptionClient, subscriptionIDs []string, done ch
 			logger.Errorf("Error closing connection with Hasura server.")
 			return err
 		}
+		isRunning = false
 	} else {
 		logger.Infof("Hasura client already closed.")
 	}
