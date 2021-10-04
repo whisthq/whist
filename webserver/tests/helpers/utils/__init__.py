@@ -1,6 +1,6 @@
 from random import sample
 from typing import Any, List, Optional
-from app.database.models.cloud import RegionToAmi
+from app.database.models.cloud import InstanceStatusChanges, RegionToAmi, db
 from app.helpers.aws.aws_instance_post import find_enabled_regions
 
 
@@ -41,3 +41,19 @@ def get_random_region_name() -> Optional[str]:
         return None
     else:
         return sample(regions, k=1)[0]
+
+
+def update_status_change_time(timestamp: Any, instance_name: str) -> None:
+    """
+    Update the time of the most recent instance status change
+
+    Arguments:
+        timestamp: new time to update the timestamp field
+        instance_name: name of instance being updated
+    """
+
+    instance = InstanceStatusChanges.query.filter(
+        InstanceStatusChanges.instance_name == instance_name
+    ).first()
+    instance.timestamp = timestamp
+    db.session.commit()
