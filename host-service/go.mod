@@ -36,7 +36,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8
-	github.com/shirou/gopsutil v3.21.6+incompatible
+	github.com/shirou/gopsutil v3.21.9+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
