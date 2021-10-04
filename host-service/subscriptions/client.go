@@ -7,6 +7,10 @@ import (
 	graphql "github.com/hasura/go-graphql-client"
 )
 
+// isRunning is a helper variable to close the connection to Hasura correctly,
+// in case the global context gets canceled or a drain and shutdown event is received.
+var isRunning = false
+
 // SetUpHasuraClient does all the necessary work to set up the Hasura client
 func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
 	params, err := getFractalHasuraParams()
@@ -27,6 +31,8 @@ func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
 			log.Print("err", err)
 			return err
 		})
+
+	isRunning = true
 	return client, nil
 }
 
@@ -36,27 +42,32 @@ func Close(client *graphql.SubscriptionClient, subscriptionIDs []string, done ch
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!
 
-	logger.Infof("Closing Hasura subscriptions...")
-	for _, id := range subscriptionIDs {
-		// This is safe to do because the Unsubscribe method
-		// acquires a lock when closing the connection.
-		err := client.Unsubscribe(id)
+	if isRunning {
+		logger.Infof("Closing Hasura subscriptions...")
+		for _, id := range subscriptionIDs {
+			// This is safe to do because the Unsubscribe method
+			// acquires a lock when closing the connection.
+			err := client.Unsubscribe(id)
 
+			if err != nil {
+				logger.Errorf("Failed to unsubscribe from:%v", id)
+				return err
+			}
+		}
+
+		// Once we have successfully unsubscribed, close the connection to the
+		// Hasura server.
+		logger.Infof("Closing connection to Hasura server...")
+		err := client.Close()
 		if err != nil {
-			logger.Errorf("Failed to unsubscribe from:%v", id)
+			logger.Errorf("Error closing connection with Hasura server.")
 			return err
 		}
-	}
-
-	// Once we have successfully unsubscribed, close the connection to the
-	// Hasura server.
-	logger.Infof("Closing connection to Hasura server...")
-	err := client.Close()
-	if err != nil {
-		logger.Errorf("Error closing connection with Hasura server.")
-		return err
+	} else {
+		logger.Infof("Hasura client already closed.")
 	}
 
 	done <- true // Notify the client closed successfully.
+
 	return nil
 }
