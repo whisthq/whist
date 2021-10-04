@@ -79,32 +79,14 @@ docker run \
   --user "$DOCKER_USER" \
   fractal/protocol-builder \
   bash -c "\
-    cd protocol &&                                                                      \
-    mkdir -p build-docker &&                                                            \
-    cd build-docker &&                                                                  \
-    cmake                                                                               \
-        -S ..                                                                           \
-        -B .                                                                            \
-        -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}                                  \
-        -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}                                         \
-        -DCI=${CMAKE_SET_CI} &&                                                         \
-    make -j ${TARGETS}                                                                  \
-                                                                                        \
-    # If a second argument (test suite) argument is supplied, run tests                 \
-    if [[ -z ${TARGETS[1]} ]]; then                                                     \
-      echo 'No tests to run'                                                            \
-    else                                                                                \
-      ./test/${TARGETS[1]}                                                              \
-                                                                                        \
-      # If running in CI, upload coverage to Codecov                                    \
-      # Generate code coverage report from gcc/clang `--coverage` flag                  \
-      lcov --capture --directory . --output-file coverage.info                          \
-      lcov --list coverage.info # debug info                                            \
-                                                                                        \
-      # Download the Codecov uploader                                                   \
-      curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov     \
-                                                                                        \
-      # Upload coverage report to Codecov                                               \
-      ./codecov -t ${CODECOV_TOKEN} -c -F protocol                                      \
-    fi                                                                                  \
+    cd protocol &&                                      \
+    mkdir -p build-docker &&                            \
+    cd build-docker &&                                  \
+    cmake                                               \
+        -S ..                                           \
+        -B .                                            \
+        -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
+        -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
+        -DCI=${CMAKE_SET_CI} &&                         \
+    make -j ${TARGETS}                                  \
   "
