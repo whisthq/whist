@@ -299,7 +299,7 @@ def test_lingering_instances(
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
 
-    # A draining instance which status last updated 2 mins ago and 
+    # A draining instance which status last updated 2 mins ago and
     # has NO associated mandelbox should be included to lingering_instances
     # (we check instance status change table to not be mislead by heart beating)
     instance_no_associated_mandelbox = bulk_instance(
