@@ -41,6 +41,7 @@ const (
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
+	c.rwlock.RLock()
 	// If userID is not set, then we don't retrieve configs from s3
 	if len(c.userID) == 0 {
 		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", c.mandelboxID)
@@ -50,6 +51,9 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	if len(c.configEncryptionToken) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
+
+	s3ConfigKey := c.getS3ConfigKey()
+	c.rwlock.RUnlock()
 
 	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
 
@@ -66,7 +70,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	// Fetch the HeadObject first to see how much memory we need to allocate
 	headObject, err := s3Client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(c.getS3ConfigKey()),
+		Key:    aws.String(s3ConfigKey),
 	})
 
 	var noSuchKeyErr *types.NoSuchKey
@@ -87,7 +91,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
 	numBytes, err := downloader.Download(context.Background(), buf, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(c.getS3ConfigKey()),
+		Key:    aws.String(s3ConfigKey),
 	})
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {

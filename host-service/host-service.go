@@ -391,6 +391,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 
+	fc.AssignToUser(userID)
+	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
+
 	// Begin populating user configs at the same time as other setup is being done
 	go func() {
 		// User config errors aren't fatal --- we still want to spin up a mandelbox,
@@ -599,9 +602,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		HostPortForTCP32273: hostPortForTCP32273,
 		AesKey:              aesKey,
 	}
-
-	fc.AssignToUser(userID)
-	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
 
 	err = fc.MarkReady()
 	if err != nil {
