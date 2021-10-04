@@ -299,8 +299,8 @@ def test_lingering_instances(
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
 
-    # We want to test if an instance with the status as draining, last status update being
-    # longer than 2 min ago and has no associated mandelbox will be added to lingering instance
+    # A draining instance which status last updated 2 mins ago and has NO associated mandelbox should
+    # be included to lingering_instances (we check status update table to not be mislead by heart beating)
     instance_no_associated_mandelbox = bulk_instance(
         instance_name="no_associated_mandelbox_instance",
         aws_ami_id="test-AMI",
@@ -310,8 +310,8 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=time() * 1000,
     )
 
-    # We want to test if an instance with the status as draining, last status update being
-    # longer than 2 min ago and has an associated mandelbox will not be added to lingering instance
+    # A draining instance which status last updated 2 mins ago and has associated mandelbox(es) should NOT
+    # be included to lingering_instances (we check status update table to not be mislead by heart beating)
     bulk_instance(
         instance_name="associated_mandelbox_instance",
         aws_ami_id="test-AMI-2",
