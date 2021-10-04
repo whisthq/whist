@@ -463,7 +463,7 @@ def try_scale_down_if_necessary_all_regions() -> None:
             .with_for_update()
             .one_or_none()
         )
-        if not region_row.protected_from_scale_down:
+        if region_row and not region_row.protected_from_scale_down:
             try_scale_down_if_necessary(region, ami)
         # and release it after scaling
         db.session.commit()
