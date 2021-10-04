@@ -28,12 +28,14 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
         $<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
+
 # Copy the FFmpeg library to the build folder
 add_custom_command(
 	TARGET ${CLIENT_TEST_BINARY} POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
 	$<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
+
 # Copy the OpenSSL/libcrypto libraries if we are on Windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
@@ -61,7 +63,6 @@ target_link_libraries(${CLIENT_TEST_BINARY}
 
 # Link more linux-specific libraries
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
     target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
 
     find_package(X11 REQUIRED
@@ -105,7 +106,7 @@ endif()
 ################## FractalServerUnitTests ##################
 ]]
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on MacOS
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on macOS
 
     # Create the executable
     set(SERVER_TEST_BINARY FractalServerTest)
@@ -192,7 +193,6 @@ endif()
 #[[
 ################## FractalUnitTests ##################
 ]]
-
 
 # Include the GoogleTest library, and let gtest scan for the tests in the binary file
 include(GoogleTest)
