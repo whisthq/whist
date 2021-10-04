@@ -137,7 +137,7 @@ class InstanceStatusChanges(DeferredReflection, db.Model):  # type: ignore[name-
 
     """
 
-    __tablename__ = "instance_Status_changes"
+    __tablename__ = "instance_status_changes"
     __table_args__ = {"schema": "cloud"}
 
     #: str: A string that uniquely identifies the instance.
