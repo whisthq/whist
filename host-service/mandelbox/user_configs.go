@@ -43,6 +43,7 @@ const (
 func (c *mandelboxData) PopulateUserConfigs() error {
 	// If userID is not set, then we don't retrieve configs from s3
 	if len(c.userID) == 0 {
+		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", c.mandelboxID)
 		return nil
 	}
 
