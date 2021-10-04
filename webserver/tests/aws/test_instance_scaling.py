@@ -2,6 +2,7 @@ from random import randint
 from sys import maxsize
 from time import time
 from typing import Any, Callable, Dict, List, Tuple
+from datetime import fromtimestamp
 
 import requests
 
@@ -314,7 +315,10 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=time() * 1000,
     )
 
-    sleep(125)
+    time_now = fromtimestamp(time.time())
+
+    update_status_change_time(time_now, "no_associated_mandelbox_instance")
+    update_status_change_time(time_now, "associated_mandelbox_instance")
 
     bulk_instance(
         instance_name=f"active_instance",
