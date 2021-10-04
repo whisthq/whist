@@ -6,14 +6,16 @@ the host-service can be notified instantly of any change in the database
 package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
 
 import (
+	"context"
 	"encoding/json"
+	"sync"
 
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 
 // Run is responsible for starting the subscription client, as well as
 // subscribing to the subscriptions defined in queries.go
-func Run(instanceName string, done chan bool) error {
+func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, instanceName string, done chan bool) error {
 	// We set up the client with auth and logging parameters
 	client, err := SetUpHasuraClient()
 
@@ -34,6 +36,17 @@ func Run(instanceName string, done chan bool) error {
 	subscriptionIDs = append(subscriptionIDs, id)
 
 	defer Close(client, subscriptionIDs, done)
+
+	// Start goroutine that shuts down hasura client if the global context gets
+	// cancelled.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+
+		// Listen for global context cancellation
+		<-globalCtx.Done()
+		Close(client, subscriptionIDs, done)
+	}()
 
 	// Run the client on a go routine to make sure it closes properly when we are done
 	go client.Run()
