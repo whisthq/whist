@@ -157,26 +157,6 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
           make FractalClient FractalClientTest -j
 
-          # Run protocol tests
-          ./test/FractalClientTest
-
-          # Generate code coverage report from gcc/clang `--coverage` flag
-          lcov --capture --directory . --output-file coverage.info
-
-          # Remove non-Fractal files from the coverage report
-          lcov --remove coverage.info -o coverage.info \
-            '/Users/runner/work/fractal/fractal/protocol/build/*' \
-            '/Applications/*'
-
-          # Debug info
-          lcov --list coverage.info
-
-          # Download the Codecov uploader
-          curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
-
-          # Upload coverage report to Codecov
-          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
-
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol

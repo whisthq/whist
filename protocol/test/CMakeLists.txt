@@ -101,11 +101,22 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${CLIENT_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
 
-# Now that the tests are built, we run them
-add_custom_command(
-    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-    COMMAND ./${CLIENT_TEST_BINARY}
-)
+# If we're running in CI for testing, automatically run tests and upload code coverage
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_command(
+        TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+        COMMAND ./${CLIENT_TEST_BINARY}
+
+        COMMAND lcov --capture --directory . --output-file coverage.info # generate code coverage from gcc/clang `--coverage` flag
+        COMMAND lcov --list coverage.info # debug info
+        COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov # download Codecov uploader
+        COMMAND ./codecov -t ${CODECOV_TOKEN} -c -F protocol # upload coverage reportto Codecov
+        # Remove non-Fractal files from the coverage report
+        # lcov --remove coverage.info -o coverage.info \
+        #  '/Users/runner/work/fractal/fractal/protocol/build/*' \
+        #  '/Applications/*'
+    )
+endif()
 
 #[[
 ################## FractalServerUnitTests ##################
