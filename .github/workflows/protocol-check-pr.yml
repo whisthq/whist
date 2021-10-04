@@ -25,9 +25,6 @@ on:
 
 jobs:
   # Check Protocol PR on Intel X86_64 systems (via GHA runners)
-
-
-
   protocol-check-pr-x64:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -47,6 +44,8 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
+      ################################## CONFIG STEPS START ##############################
+
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
@@ -58,7 +57,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      ############################# Windows Configuration Steps START #############################
+      ####################################################################################
+
+      ########################## Windows Configuration Steps START ##########################
 
       - name: Install Chocolatey dependencies on Windows GHA Machine
         if: runner.os == 'Windows'
@@ -115,9 +116,9 @@ jobs:
               echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           fi
 
-      ############################# Windows Configuration Steps END #############################
-
-      ############################# Unix Configuration Steps START #############################
+      #######################################################################################
+      ########################### macOS Configuration Steps START ###########################
+      
 
       - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
         if: runner.os == 'macOS'
@@ -128,7 +129,7 @@ jobs:
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
-      ############################# Unix Configuration Steps END #############################
+      #############################################################################################
 
       - name: Build and Test Protocol Client and Server on Windows
         if: runner.os == 'Windows'
