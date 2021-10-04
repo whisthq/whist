@@ -91,10 +91,10 @@ docker run \
     make -j ${TARGETS}                                                                  \
                                                                                         \
     # If a second argument (test suite) argument is supplied, run tests                 \
-    if [[ -z ${TARGETS[2]} ]]; then                                                     \
+    if [[ -z ${TARGETS[1]} ]]; then                                                     \
       echo 'No tests to run'                                                            \
     else                                                                                \
-      ./test/${TARGETS[2]}                                                              \
+      ./test/${TARGETS[1]}                                                              \
                                                                                         \
       # If running in CI, upload coverage to Codecov                                    \
       # Generate code coverage report from gcc/clang `--coverage` flag                  \
