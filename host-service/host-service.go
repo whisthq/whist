@@ -396,6 +396,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// User config errors aren't fatal --- we still want to spin up a mandelbox,
 		// and we will just use the provided encryption token to save configs when
 		// the mandelbox dies.
+		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", req.MandelboxID)
 		err := fc.PopulateUserConfigs()
 		if err != nil {
 			logger.Warningf("Error populating user configs: %v", err)
