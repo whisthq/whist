@@ -11,7 +11,6 @@ extern "C" {
 //      - To include file2.h in protocol/server folder, use #include "server/file.h"
 // To include a C source file, you need to wrap the include statement in extern "C" {}.
 
-
 // Below are a few sample tests for illustration purposes.
 
 TEST(ServerTest, EqualityTest) {
@@ -23,7 +22,7 @@ TEST(ServerTest, EqualityTest) {
 TEST(ServerTest, NotEqualityTest) {
     int i = 150;
     int j = 350;
-    EXPECT_NE(i,j);
+    EXPECT_NE(i, j);
 }
 
 // Example of a test using a function from the client module
@@ -34,12 +33,11 @@ TEST(ServerTest, ArgParsingUsageArgTest) {
     char argv1[] = "--help";
     char *argv[] = {argv0, argv1, NULL};
 
-    int ret_val = server_parse_args(argc,argv);
-    EXPECT_EQ(ret_val,1);
+    int ret_val = server_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 1);
 }
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-

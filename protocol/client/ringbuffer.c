@@ -57,12 +57,10 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
         Returns:
             (RingBuffer*): pointer to the created ring buffer
             */
-    if (ring_buffer_size <= 0){
-        LOG_ERROR("Requested ring buffer size %d cannot be negative",
-                  ring_buffer_size);
+    if (ring_buffer_size <= 0) {
+        LOG_ERROR("Requested ring buffer size %d cannot be negative", ring_buffer_size);
         return NULL;
-    }
-    else if (ring_buffer_size > MAX_RING_BUFFER_SIZE) {
+    } else if (ring_buffer_size > MAX_RING_BUFFER_SIZE) {
         LOG_ERROR("Requested ring buffer size %d too large - ensure size is at most %d",
                   ring_buffer_size, MAX_RING_BUFFER_SIZE);
         return NULL;
@@ -460,7 +458,7 @@ void destroy_ring_buffer(RingBuffer* ring_buffer) {
             */
 
     // if the ringbuffer is already NULL, nothing for us to do. Simply exit
-    if(!ring_buffer) {
+    if (!ring_buffer) {
         LOG_ERROR("Attemp to deallocate a NULL ring buffer was made");
         return;
     }

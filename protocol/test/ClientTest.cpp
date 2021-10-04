@@ -2,10 +2,16 @@
 #include "gtest/gtest.h"
 
 extern "C" {
+<<<<<<< HEAD
     #include <fractal/core/fractal.h>
     #include "client/client_utils.h"
     #include "client/ringbuffer.h"
     #include "fractal/utils/color.h"
+=======
+#include "client/client_utils.h"
+#include "client/ringbuffer.h"
+#include "fractal/utils/color.h"
+>>>>>>> Fixing clang format errors, deleted FractalTest.cpp (as it is replaced by FractalLibraryTest.cpp)
 }
 // Include paths should be relative to the protocol folder
 //      Examples:
@@ -27,7 +33,7 @@ TEST(ClientTest, EqualityTest) {
 TEST(ClientTest, NotEqualityTest) {
     int i = 150;
     int j = 350;
-    EXPECT_NE(i,j);
+    EXPECT_NE(i, j);
 }
 
 // Example of a test using a function from the client module
@@ -35,10 +41,10 @@ TEST(ClientTest, ArgParsingEmptyArgsTest) {
     int argc = 1;
 
     char argv0[] = "./client/build64/FractalClient";
-    char *argv[] = {argv0, NULL};
+    char* argv[] = {argv0, NULL};
 
-    int ret_val = client_parse_args(argc,argv);
-    EXPECT_EQ(ret_val,-1);
+    int ret_val = client_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, -1);
 }
 
 TEST(ClientTest, FractalColorTest) {
@@ -89,6 +95,7 @@ TEST(ClientTest, TimersTest) {
     // EXPECT_LE(elapsed, 0.110);
 }
 
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 TEST(ClientTest, BitArrayMemCpyTest) {
@@ -144,11 +151,12 @@ TEST(ClientTest, BitArrayMemCpyTest) {
 }
 
 =======
+=======
+>>>>>>> Fixing clang format errors, deleted FractalTest.cpp (as it is replaced by FractalLibraryTest.cpp)
 /** ringbuffer.c **/
 
-
-//Tests that an initialized ring buffer is correct size and has
-//frame IDs initialized to -1
+// Tests that an initialized ring buffer is correct size and has
+// frame IDs initialized to -1
 TEST(ClientTest, InitRingBuffer) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_AUDIO_TEST_FRAMES);
 
@@ -156,25 +164,25 @@ TEST(ClientTest, InitRingBuffer) {
     EXPECT_EQ(rb->currently_rendering_id, -1);
     EXPECT_EQ(rb->currently_rendering_frame.id, get_frame_at_id(rb, -1)->id);
 
-    for(int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
+    for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
         EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
-    
+
     destroy_ring_buffer(rb);
 }
 
-//Tests that an initialized ring buffer with a bad size returns NULL 
+// Tests that an initialized ring buffer with a bad size returns NULL
 TEST(ClientTest, InitRingBufferBadSize) {
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE+1);
+    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
     EXPECT_TRUE(rb == NULL);
 }
 
-//Tests adding packets into ringbuffer
+// Tests adding packets into ringbuffer
 TEST(ClientTest, AddingPacketsToRingBuffer) {
-    //initialize ringbuffer
+    // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
-    //setup packets to add to ringbuffer
+    // setup packets to add to ringbuffer
     FractalPacket pkt1;
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
@@ -187,28 +195,27 @@ TEST(ClientTest, AddingPacketsToRingBuffer) {
     pkt2.index = 0;
     pkt2.is_a_nack = false;
 
-
-    //checks that everything goes well when adding to an empty ringbuffer
+    // checks that everything goes well when adding to an empty ringbuffer
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
     EXPECT_EQ(get_frame_at_id(rb, pkt1.id)->id, pkt1.id);
 
-    //checks that 1 is returned when overwriting a valid frame
+    // checks that 1 is returned when overwriting a valid frame
     EXPECT_EQ(receive_packet(rb, &pkt2), 1);
     EXPECT_EQ(get_frame_at_id(rb, pkt2.id)->id, pkt2.id);
 
-    //check that -1 is returned when we get a duplicate
+    // check that -1 is returned when we get a duplicate
     EXPECT_EQ(receive_packet(rb, &pkt2), -1);
 
     destroy_ring_buffer(rb);
 }
 
-//Test that resetting the ringbuffer resets the values
+// Test that resetting the ringbuffer resets the values
 TEST(ClientTest, ResetRingBufferFrame) {
-    //initialize ringbuffer
+    // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
-    //fill ringbuffer
+    // fill ringbuffer
     FractalPacket pkt1;
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
@@ -222,9 +229,9 @@ TEST(ClientTest, ResetRingBufferFrame) {
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
 }
 
-//Test that set_rendering works
+// Test that set_rendering works
 TEST(ClientTest, SetRenderingTest) {
-    //initialize ringbuffer
+    // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
@@ -235,9 +242,13 @@ TEST(ClientTest, SetRenderingTest) {
     EXPECT_EQ(rb->currently_rendering_id, -5);
 }
 
+<<<<<<< HEAD
 
 >>>>>>> Adding unit tests to ClientTest.cpp for ringbuffer.c, modifying unit tests to FractalLibraryTest.cpp, updating CMakeList.txt to create FractalLibrary unit test executable, update README to include unit testing information, fixing absence of null-check for destroy_ring_buffer, adding negative size check for init_ring_buffer
 int main(int argc, char **argv) {
+=======
+int main(int argc, char** argv) {
+>>>>>>> Fixing clang format errors, deleted FractalTest.cpp (as it is replaced by FractalLibraryTest.cpp)
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
