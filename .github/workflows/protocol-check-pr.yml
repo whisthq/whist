@@ -24,10 +24,7 @@ on:
   workflow_dispatch:
 
 jobs:
-
-
-
-
+  # Check Protocol PR on Intel X86_64 systems (via GHA runners)
 
 
 
@@ -75,11 +72,11 @@ jobs:
 
       - name: Install CUDA on Windows GHA Machine
         if: runner.os == 'Windows' && matrix.config.cuda
+        working-directory: .github\workflows\helpers\protocol
         env:
           visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
           cuda: "11.0.167" # Imported from env in the .ps1 script, we use CUDA 11.0
         shell: powershell
-        working-directory: .github\workflows\helpers\protocol
         run: |
           .\install_cuda_windows.ps1
 
@@ -146,9 +143,9 @@ jobs:
 
       - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
+        working-directory: protocol
         env:
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-        working-directory: protocol
         run: |
           # Build the protocol and its test suite
           mkdir build

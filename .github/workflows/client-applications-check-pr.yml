@@ -193,13 +193,13 @@ jobs:
 
       - name: Build the Windows Electron Application
         if: false && runner.os == 'Windows'
-        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+        working-directory: client-applications
         env:
           CONFIG: ${{ needs.config.outputs.win32 }}
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-        working-directory: client-applications
+        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
           REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
           REM We use "call" before since ancient DOS versions don't support recursively executing batch files
@@ -211,18 +211,16 @@ jobs:
 
       - name: Build the macOS Electron Application
         if: runner.os == 'macOS'
+        working-directory: client-applications
         env:
           CONFIG: ${{ needs.config.outputs.macos }}
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-
-        working-directory: client-applications
         run: |
           # Build the Fractal protocol and package the Electron application, using a hardcoded test version
           # We need to increase the timeout to deal with GHA's weak VMs.
@@ -379,6 +377,7 @@ jobs:
 
       - name: Build the macOS Electron Application
         if: runner.os == 'macOS'
+        working-directory: client-applications
         env:
           CONFIG: ${{ needs.config.outputs.macos }}
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
@@ -388,7 +387,6 @@ jobs:
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-        working-directory: client-applications
         run: |
           # Build the Fractal protocol and package the Electron application, using a hardcoded test version
           # We need to increase the timeout to deal with GHA's weak VMs.
