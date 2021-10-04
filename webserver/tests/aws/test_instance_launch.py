@@ -200,7 +200,7 @@ def test_perform_ami_upgrade(
     for current_active_ami in current_active_amis:
         region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
-    regions_to_upgrade = random.sample(region_to_ami_map.keys(), 2)
+    regions_to_upgrade = random.sample(list(region_to_ami_map.keys()), 2)
     new_ami_list = []
     region_to_new_ami_map = {}
     for region in regions_to_upgrade:
