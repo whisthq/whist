@@ -96,10 +96,18 @@ add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 # You can locally set to ON as well if you like, just make sure to have cppcheck installed
 OPTION(CI OFF)
 
-# Generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
+# Configure code coverage
+# We only generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
 if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_C_FLAGS --coverage)
     set(CMAKE_CXX_FLAGS --coverage)
+
+    # Download Codecov 
+    if ($(CMAKE_SYSTEM_NAME) MATCHES "Darwin")
+        curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
+    else()
+        curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
+    endif()
 endif()
 
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)

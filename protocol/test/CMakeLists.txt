@@ -106,15 +106,12 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
     add_custom_command(
         TARGET ${CLIENT_TEST_BINARY} POST_BUILD
         COMMAND ./${CLIENT_TEST_BINARY}
-
-        COMMAND lcov --capture --directory . --output-file coverage.info # generate code coverage from gcc/clang `--coverage` flag
-        COMMAND lcov --list coverage.info # debug info
-        COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov # download Codecov uploader
-        COMMAND ./codecov -t ${CODECOV_TOKEN} -c -F protocol # upload coverage reportto Codecov
-        # Remove non-Fractal files from the coverage report
-        # lcov --remove coverage.info -o coverage.info \
-        #  '/Users/runner/work/fractal/fractal/protocol/build/*' \
-        #  '/Applications/*'
+        COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+        COMMAND if [[ $OSTYPE == 'darwin'* ]]; then # Remove non-Fractal files from the coverage report
+                    lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*'
+                fi
+        COMMAND lcov --list coverage.info # Print verbose debug info
+        COMMAND ./codecov -t ${CODECOV_TOKEN} -c -F protocol
     )
 endif()
 
@@ -209,6 +206,9 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
     add_custom_command(
         TARGET ${SERVER_TEST_BINARY} POST_BUILD
         COMMAND ./${SERVER_TEST_BINARY}
+        COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+        COMMAND lcov --list coverage.info # Print verbose debug info
+        COMMAND ./codecov -t ${CODECOV_TOKEN} -c -F protocol
     )
 endif()
 
