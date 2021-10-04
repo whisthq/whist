@@ -96,6 +96,12 @@ add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 # You can locally set to ON as well if you like, just make sure to have cppcheck installed
 OPTION(CI OFF)
 
+# Generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(CMAKE_C_FLAGS --coverage)
+    set(CMAKE_CXX_FLAGS --coverage)
+endif()
+
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
     message(STATUS "Detecting cppcheck - found: ${CPPCHECK}")
@@ -414,6 +420,7 @@ endif()
 # Include the unit tests code
 add_subdirectory(test)
 
+# Clang-tidy target
 if (WSL)
     message(STATUS "Native bash not found (only WSL), clang-tidy will not be an option")
 else()
@@ -423,6 +430,7 @@ else()
         DEPENDS FractalClient ${SERV})
 endif()
 
+# Documentation target
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target(docs
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -431,17 +439,4 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         COMMAND ${CMAKE_COMMAND} -E echo "OUTPUT_DIRECTORY = ${CMAKE_BINARY_DIR}/docs" >> ${CMAKE_BINARY_DIR}/docs/Doxyfile
         COMMAND doxygen ${CMAKE_BINARY_DIR}/docs/Doxyfile
         )
-endif()
-
-if (not ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_target(test
-    
-    
-    
-
-
-    
-    
-    
-    )
 endif()

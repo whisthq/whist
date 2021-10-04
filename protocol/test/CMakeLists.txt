@@ -76,7 +76,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             m)
 endif()
 
-# Link Mac-specific libs
+# Link macOS-specific libs
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_mac.m)
 
@@ -101,6 +101,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${CLIENT_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
 
+# Now that the tests are built, we run them
+add_custom_command(
+    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+    COMMAND ./${CLIENT_TEST_BINARY}
+)
 
 #[[
 ################## FractalServerUnitTests ##################
@@ -188,6 +193,12 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         # Link to system libs
         target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
     endif()
+
+    # Now that the tests are built, we run them
+    add_custom_command(
+        TARGET ${SERVER_TEST_BINARY} POST_BUILD
+        COMMAND ./${SERVER_TEST_BINARY}
+    )
 endif()
 
 #[[
