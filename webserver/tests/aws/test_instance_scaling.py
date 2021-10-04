@@ -2,7 +2,7 @@ from random import randint
 from sys import maxsize
 from time import time
 from typing import Any, Callable, Dict, List, Tuple
-from datetime import fromtimestamp
+from datetime import today
 
 import requests
 
@@ -280,7 +280,10 @@ def test_scale_down_multiple_partial_available(
 
 
 def test_lingering_instances(
-    monkeypatch: MonkeyPatch, bulk_instance: Callable[..., InstanceInfo], region_name: str
+    monkeypatch: MonkeyPatch,
+    bulk_instance: Callable[..., InstanceInfo],
+    region_name: str,
+    update_status_change_time: Callable[[Any, str], None],
 ) -> None:
     """
     Tests that lingering_instances properly drains only those instances that are
@@ -315,10 +318,8 @@ def test_lingering_instances(
         creation_time_utc_unix_ms=time() * 1000,
     )
 
-    time_now = fromtimestamp(time.time())
-
-    update_status_change_time(time_now, "no_associated_mandelbox_instance")
-    update_status_change_time(time_now, "associated_mandelbox_instance")
+    update_status_change_time(today(), "no_associated_mandelbox_instance")
+    update_status_change_time(today(), "associated_mandelbox_instance")
 
     bulk_instance(
         instance_name=f"active_instance",
