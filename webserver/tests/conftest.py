@@ -14,7 +14,7 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
 from app.utils.flask.factory import create_app
-from app.database.models.cloud import MandelboxInfo, db, InstanceInfo, RegionToAmi
+from app.database.models.cloud import MandelboxInfo, db, InstanceInfo, RegionToAmi, InstanceStatusChanges
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.signal_handler.signals import WebSignalHandler
 from app.utils.general.logs import fractal_logger
@@ -96,6 +96,25 @@ def authorized(client: FractalAPITestClient, user: str, monkeypatch: pytest.Monk
     monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
     return user
+
+
+@pytest.fixture
+def update_status_change_time(timestamp, instance_name):
+    """
+    Update the time of the most recent instance status change
+
+    Arguments:
+        timestamp: new time to update the timestamp field
+        instance_name: name of instance being updated
+    """
+
+    instance = InstanceStatusChanges.query.filter(
+        InstanceStatusChanges.instance_name == instance_name
+    ).first()
+    instance.timestamp = timestamp
+    db.session.commit()
+
+    return
 
 
 @pytest.fixture
