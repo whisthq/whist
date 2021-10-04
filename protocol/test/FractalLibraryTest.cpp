@@ -152,18 +152,17 @@ TEST(FractalLibraryTest, PacketsToBuffer) {
 
     char* data1 = "testing...testing";
 
-    AVPacket avpkt1 = {
-        .buf = NULL,
-        .pts = AV_NOPTS_VALUE,
-        .dts = AV_NOPTS_VALUE,
-        .data = (uint8_t*) data1,
-        .size = (int) strlen(data1),
-        .stream_index = 0,
-        .side_data = NULL,
-        .side_data_elems = 0,
-        .duration = 0,
-        .pos = -1
-    };
+    AVPacket avpkt1;
+    avpkt1.buf = NULL;
+    avpkt1.pts = AV_NOPTS_VALUE;
+    avpkt1.dts = AV_NOPTS_VALUE;
+    avpkt1.data = (uint8_t*) data1;
+    avpkt1.size = (int) strlen(data1);
+    avpkt1.stream_index = 0;
+    avpkt1.side_data = NULL;
+    avpkt1.side_data_elems = 0;
+    avpkt1.duration = 0;
+    avpkt1.pos = -1;
     
 
     //add them to AVPacket array
@@ -179,7 +178,9 @@ TEST(FractalLibraryTest, PacketsToBuffer) {
     EXPECT_EQ(strncmp((char*)(buffer+2), data1, strlen(data1)), 0);
 }
 
+
 int main(int argc, char **argv) {
+
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

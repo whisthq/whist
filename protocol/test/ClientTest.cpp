@@ -175,19 +175,18 @@ TEST(ClientTest, AddingPacketsToRingBuffer) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
     //setup packets to add to ringbuffer
-    FractalPacket pkt1 = {
-        .type = PACKET_VIDEO,
-        .id = 0,
-        .index = 0,
-        .is_a_nack = false,
-    };
+    FractalPacket pkt1;
+    pkt1.type = PACKET_VIDEO;
+    pkt1.id = 0;
+    pkt1.index = 0;
+    pkt1.is_a_nack = false;
 
-    FractalPacket pkt2 = {
-        .type = PACKET_VIDEO,
-        .id = 1,
-        .index = 0,
-        .is_a_nack = false,
-    };
+    FractalPacket pkt2;
+    pkt2.type = PACKET_VIDEO;
+    pkt2.id = 1;
+    pkt2.index = 0;
+    pkt2.is_a_nack = false;
+
 
     //checks that everything goes well when adding to an empty ringbuffer
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
@@ -210,19 +209,12 @@ TEST(ClientTest, ResetRingBufferFrame) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
     //fill ringbuffer
-    FractalPacket pkt1 = {
-        .type = PACKET_VIDEO,
-        .id = 0,
-        .index = 0,
-        .is_a_nack = false,
-    };
-
-    FractalPacket pkt2 = {
-        .type = PACKET_VIDEO,
-        .id = 1,
-        .index = 0,
-        .is_a_nack = false,
-    };
+    FractalPacket pkt1;
+    pkt1.type = PACKET_VIDEO;
+    pkt1.id = 0;
+    pkt1.index = 0;
+    pkt1.is_a_nack = false;
+    pkt1.payload_size = 0;
 
     receive_packet(rb, &pkt1);
     reset_frame(rb, get_frame_at_id(rb, pkt1.id));
