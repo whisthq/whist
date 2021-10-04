@@ -1,4 +1,4 @@
-# workflows/client-applications-check-pr-x64.yml
+# workflows/client-applications-check-pr.yml
 #
 # Client Applications: Check PR
 # Checks a client-applications PR for linting and building success on X86_64 systems.
@@ -10,7 +10,7 @@ on:
     paths:
       - "client-applications/**"
       - "core-ts/**"
-      - ".github/workflows/client-applications-check-pr-x64.yml"
+      - ".github/workflows/client-applications-check-pr.yml"
       - ".github/workflows/core-ts-check-pr.yml"
       - "!client-applications/README.md"
       - "!core-ts/README.md"
@@ -222,6 +222,172 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
 
+        working-directory: client-applications
+        run: |
+          # Build the Fractal protocol and package the Electron application, using a hardcoded test version
+          # We need to increase the timeout to deal with GHA's weak VMs.
+          yarn config set network-timeout 600000
+          yarn cache clean
+          yarn install
+          yarn package:notarize --config $CONFIG --version 1.0.0 --commit=${{ github.sha }}
+
+
+
+
+
+
+
+
+
+
+
+# workflows/client-applications-check-pr-macos-arm64.yml
+#
+# Client Applications: Check PR
+# Checks a client-applications PR for linting and building success on macOS ARM64 systems.
+
+name: "Client Applications: Check PR"
+
+on:
+  pull_request:
+    paths:
+      - "client-applications/**"
+      - "core-ts/**"
+      - ".github/workflows/client-applications-check-pr-macos-arm64.yml"
+      - ".github/workflows/core-ts-check-pr.yml"
+      - "!client-applications/README.md"
+      - "!core-ts/README.md"
+  workflow_dispatch:
+
+jobs:
+  # We use a separate job for building the monorepo configuration. The monorepo
+  # configuration is built in a Docker container, and Docker Actions can only be
+  # run on Linux environments on GitHub. As we need to build the client application
+  # in Mac and Windows environments, we need to run the configuration builder as a
+  # separate job. We set the JSON configuration data as "outputs" of this job step,
+  # so that it can be consumed by other jobs.
+  #
+  # Before we set the "outputs" of this job step, we need to perform a small trick
+  # to get around a implementation detail of GitHub Actions. The GitHub Actions runner
+  # will silently ignore any "outputs" that contain values inside the GitHub secrets
+  # store. This is for security purposes, but it's rather inconvenient when we're trying
+  # to pass around a configuration object that may contain secret values. To get around
+  # GitHub's limitation, we first double-encode the configuration string to base-64. (We
+  # need to double-encode since GitHub also checks for a base64 representation of each
+  # secret). Other jobs will need to double-decode the base-64 string to produce the JSON
+  # configuration object.
+  config:
+    name: Building Config
+    runs-on: ubuntu-20.04
+    outputs:
+      macos: ${{ steps.config-macos.outputs.config }}
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Set the workflow's environment parameters
+        id: set-environment
+        uses: ./.github/actions/set-environment
+        with:
+          ref: ${{ github.base_ref }} # The git ref of the target branch
+
+      - name: Build Monorepo Configuration for macOS
+        id: config-macos
+        uses: ./.github/actions/monorepo-config
+        with:
+          os: macos
+          deploy: ${{ steps.set-environment.outputs.environment }}
+
+      - name: Log macOS Configuration
+        shell: python3 {0}
+        run: |
+          print(r"""${{ steps.config-macos.outputs.config }}""")
+
+  # Building
+  # Check that the macOS client application builds
+  client-applications-check-pr-building:
+    name: Building on macOS (ARM64)
+    runs-on: [self-hosted, macOS, ARM64]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    steps:
+      - name: Log needs
+        shell: python3 {0}
+        run: |
+          print(r"""${{ toJSON(needs) }}""")
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+        with:
+          # Get the whole git history. We must do this because the
+          # client app calls `git describe` in order to bake the
+          # version number into the react frontend.
+          fetch-depth: 0
+
+      - name: Install Node.js 16
+        uses: actions/setup-node@v2.4.0
+        with:
+          node-version: "16"
+
+      # We need to do this since we're on a self-hosted runner
+      # Note: We also install and start the Docker daemon manually via VNC
+      - name: Install Yarn
+        run: brew install yarn
+
+      # To retrieve Fractal protocol libraries from AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set Deploy Environment Based on Git Branch
+        run: |
+          if [ "${GITHUB_REF##*/}" == "prod" ]; then
+              echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+              echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+          else
+              echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+          fi
+          echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
+
+      ############################# Unix Configuration Steps START #############################
+
+      # This step must only be done once and permission must be granted to use the keychain
+      # manually, since the runner is self-hosted and its state persists across runs
+      # - name: Install macOS Codesigning Certificates on macOS GHA Machine
+      #   uses: apple-actions/import-codesign-certs@v1
+      #   with:
+      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+      #     p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+
+      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
+      - name: Install macOS Notarization API Key
+        run: |
+          mkdir -p ~/private_keys
+          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
+
+      # If you get the "unable to find utility "altool", not a developer tool or in PATH" error, VNC into the
+      # M1 runner and run `sudo xcode-select -r` and provide the password
+
+      ############################# Unix Configuration Steps END #############################
+
+      - name: Build the macOS Electron Application
+        if: runner.os == 'macOS'
+        env:
+          CONFIG: ${{ needs.config.outputs.macos }}
+          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
         working-directory: client-applications
         run: |
           # Build the Fractal protocol and package the Electron application, using a hardcoded test version
