@@ -46,7 +46,7 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=.
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/ 
 # folder as it is irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts/ $cov "$@")
+(cd .. && pytest -p no:unraisableexception -W error --ignore=scripts/ $cov "$@")
 
 # Download the Codecov uploader
 (cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
