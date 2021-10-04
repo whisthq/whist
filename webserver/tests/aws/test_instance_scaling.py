@@ -2,7 +2,7 @@ from random import randint
 from sys import maxsize
 from time import time
 from typing import Any, Callable, Dict, List, Tuple
-from datetime import today
+from datetime import fromtimestamp
 
 import requests
 
@@ -299,27 +299,34 @@ def test_lingering_instances(
         call_set.add(instance.instance_name)
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+
+    # We want to test if an instance with the status as draining, last status update being
+    # longer than 2 min ago and has no associated mandelbox will be added to lingering instance
     instance_no_associated_mandelbox = bulk_instance(
         instance_name="no_associated_mandelbox_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         status=MandelboxHostState.DRAINING.value,
-        last_updated_utc_unix_ms=(time() + 125) * 1000,
+        last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
     )
 
+    # We want to test if an instance with the status as draining, last status update being
+    # longer than 2 min ago and has an associated mandelbox will not be added to lingering instance
     bulk_instance(
         instance_name="associated_mandelbox_instance",
         aws_ami_id="test-AMI-2",
         location=region_name,
         associated_mandelboxes=1,
         status=MandelboxHostState.DRAINING.value,
-        last_updated_utc_unix_ms=(time() + 125) * 1000,
+        last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
     )
 
-    update_status_change_time(today(), "no_associated_mandelbox_instance")
-    update_status_change_time(today(), "associated_mandelbox_instance")
+    time_2_mins_ago = fromtimestamp(time() - 125)
+
+    update_status_change_time(time_2_mins_ago, "no_associated_mandelbox_instance")
+    update_status_change_time(time_2_mins_ago, "associated_mandelbox_instance")
 
     bulk_instance(
         instance_name=f"active_instance",
