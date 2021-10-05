@@ -104,18 +104,10 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
     set(CMAKE_CXX_FLAGS --coverage)
 
     # Download Codecov 
-    if ($(CMAKE_SYSTEM_NAME) MATCHES "Darwin")
-        FetchContent_Declare(
-            codecov
-            URL https://uploader.codecov.io/latest/macos/codecov
-        )
-        FetchContent_MakeAvailable(codecov)
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov)
     else()
-        FetchContent_Declare(
-            codecov
-            URL https://uploader.codecov.io/latest/linux/codecov
-        )
-        FetchContent_MakeAvailable(codecov)
+        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/linux/codecov)
     endif()
 
     # Make Codecov executable
