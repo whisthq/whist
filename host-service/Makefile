@@ -122,14 +122,14 @@ endif
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=development $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=development USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runstaging: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with staging configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=staging $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=staging $USE_PROD_LOGGING=0 (BUILD_FOLDER)/$(BINARY_NAME)
 
 runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=production USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev runstaging runprod format lint vet check
