@@ -113,12 +113,12 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
     else()
         add_custom_command(
             TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-            COMMAND ./${CLIENT_TEST_BINARY}
+            COMMAND cd .. && ./tests/${CLIENT_TEST_BINARY}
             COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
             COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
             COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
             COMMAND lcov --list coverage.info # Print verbose debug info
-            COMMAND .././codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+            COMMAND ./codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
     endif()
 endif()
@@ -222,12 +222,12 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         else()
             add_custom_command(
                 TARGET ${SERVER_TEST_BINARY} POST_BUILD
-                COMMAND ./${SERVER_TEST_BINARY}
+                COMMAND cd .. && ./tests/${SERVER_TEST_BINARY}
                 COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
                 COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal macOS files
                 COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
                 COMMAND lcov --list coverage.info # Print verbose debug info
-                COMMAND .././codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+                COMMAND ./codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
             )
         endif()
     endif()
