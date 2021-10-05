@@ -230,7 +230,7 @@ else()
 endif()
 
 set(FFMPEG_LIBS_PATHS "")
-FOREACH(LIB ${FFMPEG_LIBS})
+foreach(LIB ${FFMPEG_LIBS})
     message(STATUS "Looking for FFmpeg lib: ${LIB}")
     set(LIB_VAR "LIB_${LIB}")
     find_library(${LIB_VAR}
@@ -243,7 +243,7 @@ FOREACH(LIB ${FFMPEG_LIBS})
             NO_CMAKE_SYSTEM_PATH
             NO_CMAKE_FIND_ROOT_PATH)
     message(VERBOSE "Found FFmpeg lib: ${LIB_VAR}")
-    LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
+    list(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
 endforeach()
 message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 
@@ -304,14 +304,14 @@ if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
-FetchContent_Declare(
+fetchcontent_declare(
     googletest
     GIT_REPOSITORY "https://github.com/google/googletest.git"
     GIT_TAG "release-1.11.0"
 )
 # From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+fetchcontent_makeavailable(googletest)
 
 #Set OSX compiler and SDK globally
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

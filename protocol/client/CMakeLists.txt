@@ -54,10 +54,10 @@ endif()
 
 # Copy over FFmpeg shared libs (on all OSes) into the FractalClient dir
 add_custom_command(
-	TARGET FractalClient POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-	$<TARGET_FILE_DIR:FractalClient>)
+    TARGET FractalClient POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+    $<TARGET_FILE_DIR:FractalClient>)
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
@@ -137,7 +137,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
-    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
+    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
     target_sources(FractalClient PRIVATE native_window_utils_windows.c)
 

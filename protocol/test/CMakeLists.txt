@@ -91,7 +91,9 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_windows.c)
+    target_sources(${CLIENT_TEST_BINARY} PRIVATE
+        ../client/native_window_utils_windows.c
+)
     target_link_libraries(${CLIENT_TEST_BINARY} fractalInput ${LIBMFX})
 
     set_property(TARGET ${CLIENT_TEST_BINARY} PROPERTY

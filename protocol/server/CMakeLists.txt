@@ -40,10 +40,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 add_custom_command(
-	TARGET FractalServer POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-	$<TARGET_FILE_DIR:FractalServer>)
+    TARGET FractalServer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+    $<TARGET_FILE_DIR:FractalServer>)
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
@@ -128,7 +128,7 @@ endif()
 if(${WIN32})
     #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
-    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
+    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
     #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
     #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
