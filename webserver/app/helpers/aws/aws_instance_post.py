@@ -365,9 +365,18 @@ def drain_instance(instance: InstanceInfo) -> bool:
         or str(instance.ip) == ""
         or not check_instance_exists(get_instance_id(instance), instance.location)
     ):
+        if instance.status == MandelboxHostState.PRE_CONNECTION:
+            why = "status pre_condition"
+        elif instance.ip is None:
+            why = "instance_ip is None"
+        elif str(instance.ip) == "":
+            why = "instance_ip is empty string"
+        else:
+            why = "check_instance_exists failed"
+
         fractal_logger.info(
             f"instance {instance.instance_name} | status {instance.status} |"
-            " terminating instance"
+            f" terminating instance | reasoning {why}"
         )
         terminate_instance(instance)
         job_status = True
