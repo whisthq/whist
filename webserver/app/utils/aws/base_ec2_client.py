@@ -13,9 +13,9 @@ from typing import Dict, List, Optional
 import boto3
 
 from app.constants.ec2_instance_states import EC2InstanceState
-
 from app.utils.aws.ec2_userdata import userdata_template
 from app.utils.cloud_interface.base_cloud_interface import CloudClient
+from app.utils.general.logs import fractal_logger
 
 
 class InstancesNotRunningException(Exception):
@@ -98,7 +98,8 @@ class EC2Client(CloudClient):
         Args:
             instance_ids: which instances to disable
         """
-        self.ec2_client.terminate_instances(InstanceIds=instance_ids)
+        resp = self.ec2_client.terminate_instances(InstanceIds=instance_ids)
+        fractal_logger.info(f"terminating instances {instance_ids} | response {resp}")
 
     def get_instance_states(self, instance_ids: List[str]) -> List[EC2InstanceState]:
         """
