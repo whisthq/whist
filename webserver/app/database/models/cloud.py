@@ -123,3 +123,22 @@ class RegionToAmi(DeferredReflection, db.Model):  # type: ignore[name-defined]
 
     __tablename__ = "region_to_ami"
     __table_args__ = {"schema": "cloud"}
+
+
+class InstanceStatusChanges(DeferredReflection, db.Model):  # type: ignore[name-defined]
+    """
+    A view that has historical information on status change of all instances
+
+    Attributes:
+        timestamp: A timestamp of when the change occured.
+        instance_name: A string representing the instance name.
+        new_status: A string representing the new status.
+        old_status: A string representing the old status.
+
+    """
+
+    __tablename__ = "instance_status_changes"
+    __table_args__ = {"schema": "cloud"}
+
+    #: str: A string that uniquely identifies the instance.
+    instance_name = db.Column(db.String(), primary_key=True)
