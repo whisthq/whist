@@ -6,11 +6,11 @@ package metrics // import "github.com/fractal/fractal/host-service/metrics"
 
 import (
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
