@@ -101,21 +101,25 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${CLIENT_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
 
-# Run the tests
-add_custom_command(
-    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-    COMMAND ./${CLIENT_TEST_BINARY}
-)
-
-# If we're not running on Windows and are running in CI for testing, retrieve and upload code coverage to Codecov
-if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_command(
-        TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-        COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
-        COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
-        COMMAND lcov --list coverage.info # Print verbose debug info
-        COMMAND .././codecov -t ${CODECOV_TOKEN} -c -F protocol
-    )
+# Run the tests if we're running in CI for testing
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
+    # On Windows, we run tests without coverage since it's not supported
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        add_custom_command(
+            TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+            COMMAND ./${CLIENT_TEST_BINARY}
+        )
+    # On macOS and Linux, we run tests with code coverage and upload the report to Codecov
+    else()
+        add_custom_command(
+            TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+            COMMAND ./${CLIENT_TEST_BINARY}
+            COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+            COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
+            COMMAND lcov --list coverage.info # Print verbose debug info
+            COMMAND .././codecov -t ${CODECOV_TOKEN} -c -F protocol
+        )
+    endif()
 endif()
 
 #[[
@@ -205,20 +209,25 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
     endif()
 
-    # Run the tests
-    add_custom_command(
-        TARGET ${SERVER_TEST_BINARY} POST_BUILD
-        COMMAND ./${SERVER_TEST_BINARY}
-    )
-
-    # If we're not running on Windows and are running in CI for testing, retrieve and upload code coverage to Codecov
-    if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        add_custom_command(
-            TARGET ${SERVER_TEST_BINARY} POST_BUILD
-            COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
-            COMMAND lcov --list coverage.info # Print verbose debug info
-            COMMAND .././codecov -t ${CODECOV_TOKEN} -c -F protocol
-        )
+    # Run the tests if we're running in CI for testing
+    if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
+        # On Windows, we run tests without coverage since it's not supported
+        if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+            add_custom_command(
+                TARGET ${SERVER_TEST_BINARY} POST_BUILD
+                COMMAND ./${SERVER_TEST_BINARY}
+            )
+        # On Linux, we run tests with code coverage and upload the report to Codecov
+        else()
+            add_custom_command(
+                TARGET ${SERVER_TEST_BINARY} POST_BUILD
+                COMMAND ./${SERVER_TEST_BINARY}
+                COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+                COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
+                COMMAND lcov --list coverage.info # Print verbose debug info
+                COMMAND .././codecov -t ${CODECOV_TOKEN} -c -F protocol
+            )
+        endif()
     endif()
 endif()
 
