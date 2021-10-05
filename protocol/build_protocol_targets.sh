@@ -21,7 +21,7 @@ build parameter. It defaults to \`Debug\`.
 The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
 not to download the libraries used to build the Fractal protocol from S3.
 The optional argument \`--cmakesetCI\`, if provided, is used to set
-\`-DCI=True\` in the cmake configuration.
+\`-DCI=TRUE\` in the cmake configuration.
 EOF
 
   # We set a nonzero exit code so that CI doesn't accidentally only run `usage` and think it succeeded.
@@ -35,13 +35,13 @@ eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug
 CMAKE_DOWNLOAD_BINARIES=ON
-CMAKE_SET_CI=False
+CMAKE_SET_CI=FALSE
 while true; do
   case "$1" in
     -h | --help | --usage ) usage ;;
     --cmakebuildtype ) CMAKE_BUILD_TYPE="$2"; shift 2 ;;
     --nodownloadbinaries ) CMAKE_DOWNLOAD_BINARIES=OFF; shift ;;
-    --cmakesetCI ) CMAKE_SET_CI=True; shift ;;
+    --cmakesetCI ) CMAKE_SET_CI=TRUE; shift ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
   esac
@@ -72,13 +72,13 @@ fi
 # We also mount entire ./fractal directory so that git works for git revision
 docker run \
   --rm \
-  --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT \
+  --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
   $MOUNT_AWS \
   --name fractal-protocol-builder-$(date +"%s") \
   --user "$DOCKER_USER" \
   fractal/protocol-builder \
-  sh -c "\
+  bash -c "\
     cd protocol &&                                      \
     mkdir -p build-docker &&                            \
     cd build-docker &&                                  \

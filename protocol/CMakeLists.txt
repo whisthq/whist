@@ -22,6 +22,7 @@ the verbose messages will be printed regardless of whether verbose output is set
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
+include(FetchContent)
 
 project(FractalProtocol LANGUAGES C CXX)
 
@@ -92,9 +93,28 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
-# CI will by-default by off, but we set to ON in github actions
+# CI will by-default be off, but we set to ON in GitHub Actions
 # You can locally set to ON as well if you like, just make sure to have cppcheck installed
 OPTION(CI OFF)
+
+# Configure code coverage
+# We only generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(CMAKE_C_FLAGS --coverage)
+    set(CMAKE_CXX_FLAGS --coverage)
+
+    # Download Codecov
+    message(STATUS "Downloading Codecov")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov)
+    else()
+        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/linux/codecov)
+    endif()
+
+    # Make Codecov executable
+    execute_process(COMMAND chmod +x codecov)
+    message(STATUS "Downloading Codecov - done")
+endif()
 
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
@@ -164,7 +184,7 @@ else()
     set(BASH "/bin/bash")
 endif()
 
-# download AWS S3 binaries unless indicated otherwise
+# Download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
     message(STATUS "Downloading Fractal Protocol binaries from AWS S3")
@@ -184,7 +204,7 @@ if (DOWNLOAD_BINARIES)
     endif()
 endif()
 
-# FFmpeg: Use the ffmpeg libs in /lib/${arch}/ffmpeg
+# FFmpeg: Use the FFmpeg libs in /lib/${arch}/ffmpeg
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.4.dylib;libavcodec.59.dylib;libavdevice.59.dylib;libavfilter.8.dylib;
                     libavformat.59.dylib;libswscale.6.dylib;libavutil.57.dylib;libpostproc.56.dylib)
@@ -267,7 +287,6 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
-include(FetchContent)
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/heads/master.zip
@@ -414,6 +433,7 @@ endif()
 # Include the unit tests code
 add_subdirectory(test)
 
+# Clang-tidy target
 if (WSL)
     message(STATUS "Native bash not found (only WSL), clang-tidy will not be an option")
 else()
@@ -423,6 +443,7 @@ else()
         DEPENDS FractalClient ${SERV})
 endif()
 
+# Documentation target
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target(docs
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -431,4 +452,4 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         COMMAND ${CMAKE_COMMAND} -E echo "OUTPUT_DIRECTORY = ${CMAKE_BINARY_DIR}/docs" >> ${CMAKE_BINARY_DIR}/docs/Doxyfile
         COMMAND doxygen ${CMAKE_BINARY_DIR}/docs/Doxyfile
         )
-endif ()
+endif()
