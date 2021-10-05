@@ -72,7 +72,7 @@ fi
 # We also mount entire ./fractal directory so that git works for git revision
 docker run \
   --rm \
-  --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT \
+  --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
   $MOUNT_AWS \
   --name fractal-protocol-builder-$(date +"%s") \
