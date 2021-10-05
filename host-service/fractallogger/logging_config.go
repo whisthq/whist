@@ -31,9 +31,9 @@ var usingProdLogging func() bool = func(unmemoized func() bool) func() bool {
 	// check that the app environment is dev, staging, or prod.
 	strProd := strings.ToLower(os.Getenv("USE_PROD_LOGGING"))
 	switch strProd {
-	case "1", "yes", "true", "on":
+	case "1", "yes", "true", "on", "yep":
 		return true
-	case "0", "no", "false", "off":
+	case "0", "no", "false", "off", "nope":
 		return false
 	default:
 		return !metadata.IsLocalEnv()

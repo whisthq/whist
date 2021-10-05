@@ -72,9 +72,9 @@ func GetAppEnvironmentLowercase() string {
 func IsRunningInCI() bool {
 	strCI := strings.ToLower(os.Getenv("CI"))
 	switch strCI {
-	case "1", "yes", "true", "on":
+	case "1", "yes", "true", "on", "yep":
 		return true
-	case "0", "no", "false", "off":
+	case "0", "no", "false", "off", "nope":
 		return false
 	default:
 		return false
