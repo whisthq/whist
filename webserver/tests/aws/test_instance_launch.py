@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import Any, Callable, Dict, List
 import random
-import requests
 
 from flask import Flask
 from pytest import MonkeyPatch
