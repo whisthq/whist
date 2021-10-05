@@ -23,14 +23,15 @@ add_custom_command(
         ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
         $<TARGET_FILE_DIR:FractalServer>)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/server/fserver
             ${CMAKE_BINARY_DIR})
 endif()
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
@@ -46,7 +47,7 @@ add_custom_command(
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
@@ -54,7 +55,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             $<TARGET_FILE_DIR:FractalServer>)
 endif()
 
-#Print out compile flags in verbose mode of CMake
+# Print out compile flags in verbose mode of CMake
 message(VERBOSE "c base flags ${CMAKE_C_FLAGS}")
 message(VERBOSE "c release flags ${CMAKE_C_FLAGS_RELEASE}")
 message(VERBOSE "c debug flags ${CMAKE_C_FLAGS_DEBUG}")
@@ -63,31 +64,32 @@ message(VERBOSE "c debug flags ${CMAKE_C_FLAGS_DEBUG}")
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for FractalServer: ${LIB}")
     target_link_libraries(FractalServer ${LIB})
-endforeach(LIB)
+endforeach()
 
 # Threading and Dynamic link for linux/macosx only
 # if we add other target platforms we may need to come back to this
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 #    set(THREADS_PREFER_PTHREAD_FLAG ON)
 #    find_package(Threads REQUIRED)
     target_link_libraries(FractalServer
-#            Threads::Threads
-            ${CMAKE_DL_LIBS}
-            )
-endif ()
+#       Threads::Threads
+        ${CMAKE_DL_LIBS}
+        )
+endif()
 
 
 #[[
 ################## Linking platform independent libs ##################
 ]]
+
 target_link_libraries(FractalServer
-        ${PLATFORM_INDEPENDENT_SERVER_LIBS}
-        )
+    ${PLATFORM_INDEPENDENT_SERVER_LIBS}
+    )
 
 #[[
 ################## LINUX ##################
 ]]
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(X11 REQUIRED
             Xfixes
             Xdamage
@@ -123,15 +125,14 @@ endif()
 #[[
 ################## WINDOWS ##################
 ]]
-if (${WIN32})
+if(${WIN32})
     #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
 
     #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
     #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
-    set_property(TARGET FractalServer PROPERTY
-            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set_property(TARGET FractalServer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
     if(CMAKE_CUDA_COMPILER)
         set_property(TARGET FractalServer PROPERTY CUDA_ARCHITECTURES OFF)

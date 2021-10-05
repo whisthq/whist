@@ -4,13 +4,13 @@ add_library(fractalAudio STATIC
         audiodecode.h
         )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(fractalAudio PRIVATE alsacapture.c alsacapture.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(fractalAudio PRIVATE wasapicapture.c wasapicapture.h)
-endif ()
+endif()
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(fractalAudio PRIVATE audioencode.h audioencode.c)
 endif()
 
@@ -20,4 +20,4 @@ set_property(TARGET fractalAudio PROPERTY
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for fractalAudio: ${LIB}")
     target_link_libraries(fractalAudio ${LIB})
-endforeach(LIB)
+endforeach()
