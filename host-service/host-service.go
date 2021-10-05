@@ -872,10 +872,7 @@ func main() {
 		logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
 	}
 	subscriptionDone := make(chan bool, 1)
-	err = subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionDone)
-	if err != nil {
-		logger.Panic(globalCancel, err)
-	}
+	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionDone)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
