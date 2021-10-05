@@ -43,7 +43,9 @@ ignore:
 # Heroku CI makes /app the root on the Heroku CI instances,
 # so we need this fix to retrieve /webserver as the root folder
 fixes:
-  - "app/::webserver/" # Move path  e.g., "before/path" => "after/path"
+  - "app/::webserver/" # Replace app/... with webserver/...
+  - "*/fractal/protocol/::protocol/" # Make protocol coverage relative to protocol directory
+  - "*/fractal/host-service/::host-service/" # Make host service coverage relative to host-service directory
 
 # Settings for Codecov comments on pull requests
 comment:
