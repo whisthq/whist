@@ -122,6 +122,7 @@ def terminate_instance(instance: InstanceInfo) -> None:
     if check_instance_exists(instance_id, instance.location):
         ec2_client = EC2Client(region_name=instance.location)
         ec2_client.stop_instances([instance_id])
+    fractal_logger.info(f"instance {instance.instance_name} | deleting from db")
     db.session.delete(instance)
     db.session.commit()
 
@@ -357,16 +358,26 @@ def drain_instance(instance: InstanceInfo) -> bool:
     # We need to modify the status to DRAINING to ensure that we don't assign a new
     # mandelbox to the instance. We need to commit here as we don't want to enter a
     # deadlock with host service where it tries to modify the instance_info row.
-    old_status = instance.status
-    instance.status = MandelboxHostState.DRAINING
-    db.session.commit()
     job_status = False
     if (
-        old_status == MandelboxHostState.PRE_CONNECTION
+        instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
         or str(instance.ip) == ""
         or not check_instance_exists(get_instance_id(instance), instance.location)
     ):
+        if instance.status == MandelboxHostState.PRE_CONNECTION:
+            why = "status pre_condition"
+        elif instance.ip is None:
+            why = "instance_ip is None"
+        elif str(instance.ip) == "":
+            why = "instance_ip is empty string"
+        else:
+            why = "check_instance_exists failed"
+
+        fractal_logger.info(
+            f"instance {instance.instance_name} | status {instance.status} |"
+            f" terminating instance | reasoning {why}"
+        )
         terminate_instance(instance)
         job_status = True
     else:
@@ -379,6 +390,12 @@ def drain_instance(instance: InstanceInfo) -> bool:
                 verify=False,
             )
             resp.raise_for_status()
+            fractal_logger.info(
+                f"instance {instance.instance_name} | status {instance.status} |"
+                " successfully called drain_and_shutdown, marking draining in db"
+            )
+            instance.status = MandelboxHostState.DRAINING
+            db.session.commit()
             job_status = True
         except requests.exceptions.RequestException as error:
             fractal_logger.error(
@@ -428,6 +445,9 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 .all()
             )
             if len(available_empty_instances) == 0:
+                fractal_logger.info(
+                    f"ami {region}/{ami} | there are no avaliable empty instances to scale down"
+                )
                 return
             for instance in available_empty_instances:
                 # grab a lock on the instance to ensure nothing new's being assigned to it
