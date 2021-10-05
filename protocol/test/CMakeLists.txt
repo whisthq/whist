@@ -101,22 +101,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${CLIENT_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
 
-# Run the tests if we're running in CI for testing
-if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # On macOS and Linux CI, we run tests with code coverage and upload the report to Codecov
+add_custom_command(
+    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+    COMMAND ./${CLIENT_TEST_BINARY}
+)
+
+if (GENERATE_COVERAGE)
     add_custom_command(
         TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-        COMMAND ./${CLIENT_TEST_BINARY}
-        COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
-        COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
-        COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
-        COMMAND lcov --list coverage.info # Print verbose debug info
-        COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+        COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
+        COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
+        COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
     )
-else()
+endif()
+
+if (UPLOAD_COVERAGE)
     add_custom_command(
         TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-        COMMAND ./${CLIENT_TEST_BINARY}
+        COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
     )
 endif()
 
@@ -207,22 +209,24 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
     endif()
 
-    # Run the tests if we're running in CI for testing
-    if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        # On Linux, we run tests with code coverage and upload the report to Codecov
+    add_custom_command(
+        TARGET ${SERVER_TEST_BINARY} POST_BUILD
+        COMMAND ./${SERVER_TEST_BINARY}
+    )
+
+    if (GENERATE_COVERAGE)
         add_custom_command(
             TARGET ${SERVER_TEST_BINARY} POST_BUILD
-            COMMAND ./${SERVER_TEST_BINARY}
-            COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
-            COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal macOS files
-            COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
-            COMMAND lcov --list coverage.info # Print verbose debug info
-            COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+            COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
+            COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
+            COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
         )
-    else()
+    endif()
+
+    if (UPLOAD_COVERAGE)
         add_custom_command(
             TARGET ${SERVER_TEST_BINARY} POST_BUILD
-            COMMAND ./${SERVER_TEST_BINARY}
+            COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
     endif()
 endif()

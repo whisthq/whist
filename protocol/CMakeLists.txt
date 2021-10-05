@@ -23,6 +23,7 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 include(FetchContent)
+include(CMakeDependentOption)
 
 project(FractalProtocol LANGUAGES C CXX)
 
@@ -93,52 +94,67 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
-# CI will by-default be off, but we set to ON in GitHub Actions
-# You can locally set to ON as well if you like, just make sure to have cppcheck installed
-OPTION(CI OFF)
+option(CHECK_CI "Run checks for the CI environment" OFF)
+if (CHECK_CI)
+    message(STATUS "Automatically enabling checks for the CI environment")
+    cmake_dependent_option(RUN_CPPCHECK "Run cppcheck" ON "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
+    cmake_dependent_option(GENERATE_COVERAGE "Generate code coverage with lcov" ON "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
+    cmake_dependent_option(UPLOAD_COVERAGE "Upload code coveraget to Codecov" ON "${GENERATE_COVERAGE}" OFF)
+else()
+    cmake_dependent_option(RUN_CPPCHECK "Run cppcheck" OFF "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
+    cmake_dependent_option(GENERATE_COVERAGE "Generate code coverage with lcov" OFF "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
+    cmake_dependent_option(UPLOAD_COVERAGE "Upload code coveraget to Codecov" OFF "${GENERATE_COVERAGE}" OFF)
+endif()
 
-# Configure code coverage
-# We only generate code coverage if we're running in CI (only testing, not releasing) and on Linux/macOS (code coverage is not supported on Windows)
-if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+# We configure coverage here, since we don't want this flag to be passed to gtest.
+if (GENERATE_COVERAGE)
+    message(STATUS "Enabling code coverage generation.")
     set(CMAKE_C_FLAGS --coverage)
     set(CMAKE_CXX_FLAGS --coverage)
+endif()
+
+if (UPLOAD_COVERAGE)
+    message(STATUS "Enabling code coverage uploading.")
+    message(STATUS "Downloading Codecov to ${CMAKE_BINARY_DIR}/codecov")
 
     # Download Codecov
-    message(STATUS "Downloading Codecov")
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov)
+        execute_process(COMMAND curl -s https://uploader.codecov.io/latest/macos/codecov -o ${CMAKE_BINARY_DIR}/codecov)
     else()
-        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/linux/codecov)
+        execute_process(COMMAND curl -s https://uploader.codecov.io/latest/linux/codecov -o ${CMAKE_BINARY_DIR}/codecov)
     endif()
 
     # Make Codecov executable
-    execute_process(COMMAND chmod +x codecov)
+    execute_process(COMMAND chmod +x ${CMAKE_BINARY_DIR}/codecov)
+
     message(STATUS "Downloading Codecov - done")
 endif()
 
-find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
-if (CPPCHECK)
-    message(STATUS "Detecting cppcheck - found: ${CPPCHECK}")
-else()
-    message(STATUS "Detecting cppcheck - not found")
-endif()
+if (RUN_CPPCHECK)
+    find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
+    if (CPPCHECK)
+        message(STATUS "Detecting cppcheck - found: ${CPPCHECK}")
+    else()
+        message(STATUS "Detecting cppcheck - not found")
+    endif()
 
-if (CPPCHECK AND ${CI} MATCHES "TRUE" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    message(STATUS "Detecting cppcheck status - active")
-    set(CMAKE_C_CPPCHECK "${CPPCHECK}"
-            "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
-            "--enable=performance,portability"
-            "--verbose"
-            "--std=c99"
-            "-j 8" # Run in 8 threads
-            "--error-exitcode=1" # Propagate cppcheck errors to cmake
-            "--suppress=shiftTooManyBitsSigned"
-            "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-            "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
-            "--inline-suppr" # Allow cppcheck-suppress comments in code
-            )
-else()
-    message(STATUS "Detecting cppcheck status - inactive")
+    if (CPPCHECK)
+        message(STATUS "Detecting cppcheck status - active")
+        set(CMAKE_C_CPPCHECK "${CPPCHECK}"
+                "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
+                "--enable=performance,portability"
+                "--verbose"
+                "--std=c99"
+                "-j 8" # Run in 8 threads
+                "--error-exitcode=1" # Propagate cppcheck errors to cmake
+                "--suppress=shiftTooManyBitsSigned"
+                "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+                "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
+                "--inline-suppr" # Allow cppcheck-suppress comments in code
+                )
+    else()
+        message(STATUS "Detecting cppcheck status - inactive")
+    endif()
 endif()
 
 # export compile commands database - not needed if not running clang-tidy
@@ -289,7 +305,8 @@ endif()
 # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
 FetchContent_Declare(
     googletest
-    URL https://github.com/google/googletest/archive/refs/heads/master.zip
+    GIT_REPOSITORY "https://github.com/google/googletest.git"
+    GIT_TAG "release-1.11.0"
 )
 # From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

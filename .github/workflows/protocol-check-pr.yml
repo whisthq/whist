@@ -136,7 +136,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "Ninja" || EXIT /B 1
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -G "Ninja" || EXIT /B 1
           ninja FractalClient FractalClientTest || EXIT /B 1
           ninja FractalServer FractalServerTest || EXIT /B 1
 
@@ -149,7 +149,7 @@ jobs:
           # Build the protocol and its test suite
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
           make FractalClient FractalClientTest -j
 
       - name: Build and Test Protocol Client on Linux Ubuntu
