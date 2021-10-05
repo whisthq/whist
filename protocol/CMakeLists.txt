@@ -116,9 +116,9 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
         )
         FetchContent_MakeAvailable(codecov)
     endif()
-    
+
     # Make Codecov executable
-    chmod +x codecov
+    execute_process(COMMAND chmod +x codecov)
 endif()
 
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
