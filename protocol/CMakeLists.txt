@@ -204,7 +204,7 @@ if (DOWNLOAD_BINARIES)
     endif()
 endif()
 
-# FFmpeg: Use the ffmpeg libs in /lib/${arch}/ffmpeg
+# FFmpeg: Use the FFmpeg libs in /lib/${arch}/ffmpeg
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.4.dylib;libavcodec.59.dylib;libavdevice.59.dylib;libavfilter.8.dylib;
                     libavformat.59.dylib;libswscale.6.dylib;libavutil.57.dylib;libpostproc.56.dylib)
