@@ -3,14 +3,8 @@
 ]]
 
 # Retrieve git commit/branch for Codecov upload parameters
-execute_process(
-    COMMAND git rev-list -1 HEAD
-    OUTPUT_VARIABLE GIT_COMMIT
-    )
-execute_process(
-    COMMAND git rev-parse --abbrev-ref HEAD
-    OUTPUT_VARIABLE GIT_BRANCH
-    )
+execute_process(COMMAND git rev-list -1 HEAD OUTPUT_VARIABLE GIT_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git rev-parse --abbrev-ref HEAD OUTPUT_VARIABLE GIT_BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 #[[
 ################## FractalClientUnitTests ##################
