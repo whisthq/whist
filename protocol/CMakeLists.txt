@@ -22,6 +22,7 @@ the verbose messages will be printed regardless of whether verbose output is set
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
+include(FetchContent)
 
 project(FractalProtocol LANGUAGES C CXX)
 
@@ -292,7 +293,6 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
-include(FetchContent)
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/heads/master.zip
