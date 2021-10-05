@@ -184,7 +184,7 @@ else()
     set(BASH "/bin/bash")
 endif()
 
-# download AWS S3 binaries unless indicated otherwise
+# Download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
     message(STATUS "Downloading Fractal Protocol binaries from AWS S3")
