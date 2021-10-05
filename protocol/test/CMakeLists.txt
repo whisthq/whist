@@ -3,7 +3,6 @@
 ]]
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on MacOS
-
     # Create the executable
     set(FRACTAL_LIBRARY_TEST_BINARY FractalLibraryTest)
     add_executable(${FRACTAL_LIBRARY_TEST_BINARY} FractalLibraryTest.cpp
@@ -38,16 +37,16 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
                 Xext
                 Xtst)
         include_directories(${X11_INCLUDE_DIR})
-        if(NOT X11_LIBRARIES)
+        if (NOT X11_LIBRARIES)
             message(FATAL_ERROR "Library X11_LIBRARIES was not found!")
         endif()
-        if(NOT X11_Xfixes_LIB)
+        if (NOT X11_Xfixes_LIB)
             message(FATAL_ERROR "Library X11_Xfixes_LIB was not found!")
         endif()
-        if(NOT X11_Xdamage_LIB)
+        if (NOT X11_Xdamage_LIB)
             message(FATAL_ERROR "Library X11_Xdamage_LIB was not found!")
         endif()
-        if(NOT X11_Xext_LIB)
+        if (NOT X11_Xext_LIB)
             message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
         endif()
 
