@@ -1,7 +1,8 @@
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
 
 # Write git revision #define to a file
-# Copy_if_different to only trigger a fractal.v change when the contents of the file actually changes
+# Copy_if_different to only trigger a fractal.v change when the contents
+# of the file actually changes
 add_custom_target(git_revision ALL
         VERBATIM
         COMMAND ${CMAKE_COMMAND} -E echo_append "#define FRACTAL_GIT_REVISION " > ${CMAKE_BINARY_DIR}/include/fractal.sha.v
@@ -17,7 +18,9 @@ add_library(fractalCore STATIC
         fractalgetopt.h
         fractalgetopt.c
         fractal_frame.h
-        fractal_frame.c)
+        fractal_frame.c
+        )
+
 # Ensure that fractal.v is updated prior to compiling fractalCore
 add_dependencies(fractalCore git_revision)
 
