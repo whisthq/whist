@@ -118,7 +118,7 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
             COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
             COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
             COMMAND lcov --list coverage.info # Print verbose debug info
-            COMMAND ./codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+            COMMAND cd .. && ./codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
     endif()
 endif()
@@ -227,7 +227,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
                 COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal macOS files
                 COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
                 COMMAND lcov --list coverage.info # Print verbose debug info
-                COMMAND ./codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+                COMMAND cd .. && ./codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
             )
         endif()
     endif()
