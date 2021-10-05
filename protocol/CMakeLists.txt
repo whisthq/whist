@@ -105,13 +105,13 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
 
     # Download Codecov 
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        execute_process(COMMAND bash -c "curl -O -s https://uploader.codecov.io/latest/macos/codecov")
+        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov)
     else()
-        execute_process(COMMAND bash -c "curl -O -s https://uploader.codecov.io/latest/linux/codecov")
+        execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/linux/codecov)
     endif()
 
     # Make Codecov executable
-    execute_process(COMMAND bash -c "chmod +x codecov")
+    execute_process(COMMAND chmod +x codecov)
 endif()
 
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
