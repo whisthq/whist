@@ -155,17 +155,11 @@ jobs:
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        env:
-          GIT_COMMIT: "${{ github.sha }}"
-          GIT_BRANCH: "${{ github.ref }}##*/"
         run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
 
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        env:
-          GIT_COMMIT: "${{ github.sha }}"
-          GIT_BRANCH: "${{ github.ref }}##*/"
         run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer FractalServerTest
 
       # Verify clang-format on Linux
