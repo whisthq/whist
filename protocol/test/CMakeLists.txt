@@ -109,7 +109,7 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
         COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
         COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
         COMMAND lcov --list coverage.info # Print verbose debug info
-        COMMAND ./codecov -t ${CODECOV_TOKEN} -c -F protocol
+        COMMAND .././codecov -t ${CODECOV_TOKEN} -c -F protocol
     )
 endif()
 
