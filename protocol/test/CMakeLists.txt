@@ -17,6 +17,7 @@ add_executable(${CLIENT_TEST_BINARY} ClientTest.cpp
     ../client/ringbuffer.c
     ../client/sync_packets.c
     ../client/bitrate.c
+    ../lib/bitarray/bitarray.c
 )
 
 # Link the GoogleTest library
@@ -143,6 +144,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or
         ../server/parse_args.c
         ../server/handle_client_message.c
         ../server/network.c
+        ../lib/bitarray/bitarray.c
     )
 
     # Link the GoogleTest library

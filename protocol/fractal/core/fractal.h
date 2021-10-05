@@ -65,6 +65,8 @@ Includes
 #include <fractal/utils/clock.h>
 #include <fractal/logging/logging.h>
 
+#include <lib/bitarray/bitarray.h>
+
 #ifdef _WIN32
 #pragma warning(disable : 4200)
 #endif
@@ -148,6 +150,9 @@ Defines
 // this maxlen is the determined Fractal environment max length (the upper bound on all flags passed
 // into the protocol)
 #define FRACTAL_ARGS_MAXLEN 255
+
+#define MAX_FRAME_VIDEO_PACKETS 500
+#define MAX_FRAME_AUDIO_PACKETS 3
 
 /*
 ============================
@@ -557,12 +562,14 @@ typedef enum FractalClientMessageType {
     MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
     MESSAGE_VIDEO_NACK = 111,
-    MESSAGE_AUDIO_NACK = 112,
-    CMESSAGE_CLIPBOARD = 113,
-    MESSAGE_IFRAME_REQUEST = 114,
-    CMESSAGE_INTERACTION_MODE = 115,
-    MESSAGE_DISCOVERY_REQUEST = 116,
-    MESSAGE_TCP_RECOVERY = 117,
+    MESSAGE_VIDEO_BITARRAY_NACK = 112,
+    MESSAGE_AUDIO_NACK = 113,
+    MESSAGE_AUDIO_BITARRAY_NACK = 114,
+    CMESSAGE_CLIPBOARD = 115,
+    MESSAGE_IFRAME_REQUEST = 116,
+    CMESSAGE_INTERACTION_MODE = 117,
+    MESSAGE_DISCOVERY_REQUEST = 118,
+    MESSAGE_TCP_RECOVERY = 119,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -585,6 +592,14 @@ typedef struct {
     bool active_pinch;
 } FractalKeyboardState;
 
+#ifndef CHAR_BIT
+#warning CHAR_BIT not defined.  Assuming 8 bits.
+#define CHAR_BIT 8
+#endif
+/* number of characters required to contain number of bits */
+#define BITS_TO_CHARS(bits) ((((bits)-1) / CHAR_BIT) + 1)
+#define MAX_VIDEO_PACKETS 500
+#define MAX_AUDIO_PACKETS 3
 /**
  * @brief   Client message.
  * @details Message from a Fractal client to a Fractal server.
@@ -627,7 +642,23 @@ typedef struct FractalClientMessage {
         struct {
             int id;
             int index;
-        } nack_data;
+        } simple_nack;
+
+        // MESSAGE_VIDEO_BITARRAY_NACK
+        struct {
+            int id;
+            int index;
+            int numBits;
+            unsigned char ba_raw[BITS_TO_CHARS(MAX_VIDEO_PACKETS)];
+        } bitarray_video_nack;
+
+        // MESSAGE_AUDIO_BITARRAY_NACK
+        struct {
+            int id;
+            int index;
+            int numBits;
+            unsigned char ba_raw[BITS_TO_CHARS(MAX_AUDIO_PACKETS)];
+        } bitarray_audio_nack;
 
         // MESSAGE_KEYBOARD_STATE
         FractalKeyboardState keyboard_state;

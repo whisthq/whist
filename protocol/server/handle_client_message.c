@@ -27,6 +27,7 @@ Includes
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include <lib/bitarray/bitarray.h>
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
@@ -91,6 +92,11 @@ static int handle_init_message(FractalClientMessage *fmsg, int client_id, bool i
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling);
 
+struct bit_array_t {
+    unsigned char *array; /* pointer to array containing bits */
+    unsigned int numBits; /* number of bits in array */
+};
+
 /*
 ============================
 Public Function Implementations
@@ -141,7 +147,11 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
             return handle_clipboard_message(fmsg, client_id, is_controlling);
         case MESSAGE_AUDIO_NACK:
             return handle_audio_nack_message(fmsg, client_id, is_controlling);
+        case MESSAGE_AUDIO_BITARRAY_NACK:
+            return handle_audio_nack_message(fmsg, client_id, is_controlling);
         case MESSAGE_VIDEO_NACK:
+            return handle_video_nack_message(fmsg, client_id, is_controlling);
+        case MESSAGE_VIDEO_BITARRAY_NACK:
             return handle_video_nack_message(fmsg, client_id, is_controlling);
         case MESSAGE_IFRAME_REQUEST:
             return handle_iframe_request_message(fmsg, client_id, is_controlling);
@@ -412,6 +422,27 @@ static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id,
     return 0;
 }
 
+static void handle_nack_single_audio_packet(int packet_id, int packet_index, int client_id) {
+    // LOG_INFO("Audio NACK requested for: ID %d Index %d",
+    // packet_id, packet_index);
+    FractalPacket *audio_packet = &audio_buffer[packet_id % AUDIO_BUFFER_SIZE][packet_index];
+    int len = audio_buffer_packet_len[packet_id % AUDIO_BUFFER_SIZE][packet_index];
+    if (audio_packet->id == packet_id) {
+        LOG_INFO(
+            "NACKed audio packet %d found of length %d. "
+            "Relaying!",
+            packet_id, len);
+        replay_packet(&(clients[client_id].UDP_context), audio_packet, len);
+    }
+    // If we were asked for an invalid index, just ignore it
+    else if (packet_index < audio_packet->num_indices) {
+        LOG_WARNING(
+            "NACKed audio packet %d %d not found, ID %d %d was "
+            "located instead.",
+            packet_id, packet_index, audio_packet->id, audio_packet->index);
+    }
+}
+
 static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
     /*
@@ -427,28 +458,67 @@ static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
     */
 
     if (!is_controlling) return 0;
-    // LOG_INFO("Audio NACK requested for: ID %d Index %d",
-    // fmsg->nack_data.id, fmsg->nack_data.index);
-    FractalPacket *audio_packet =
-        &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
-    int len =
-        audio_buffer_packet_len[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
-    if (audio_packet->id == fmsg->nack_data.id) {
+
+    if (fmsg->type == MESSAGE_AUDIO_NACK) {
+        handle_nack_single_audio_packet(fmsg->simple_nack.id, fmsg->simple_nack.index, client_id);
+    } else {
+        // fmsg->type == MESSAGE_AUDIO_BITARRAY_NACK
+        LOG_INFO("Preparing a bit array with %i entries for handling audio nacking",
+                 fmsg->bitarray_audio_nack.numBits);
+        bit_array_t *bit_arr = BitArrayCreate(fmsg->bitarray_audio_nack.numBits);
+        BitArrayClearAll(bit_arr);
+
+        LOG_INFO("Copying audio nack data from raw arr %p to BitArray %p with %i entries (size %i)",
+                 fmsg->bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
+                 fmsg->bitarray_audio_nack.numBits,
+                 BITS_TO_CHARS(fmsg->bitarray_audio_nack.numBits));
+
+        memcpy(BitArrayGetBits(bit_arr), fmsg->bitarray_audio_nack.ba_raw,
+               BITS_TO_CHARS(fmsg->bitarray_audio_nack.numBits));
+
         LOG_INFO(
-            "NACKed audio packet %d found of length %d. "
-            "Relaying!",
-            fmsg->nack_data.id, len);
-        replay_packet(&(clients[client_id].UDP_context), audio_packet, len);
-    }
-    // If we were asked for an invalid index, just ignore it
-    else if (fmsg->nack_data.index < audio_packet->num_indices) {
-        LOG_WARNING(
-            "NACKed audio packet %d %d not found, ID %d %d was "
-            "located instead.",
-            fmsg->nack_data.id, fmsg->nack_data.index, audio_packet->id, audio_packet->index);
+            "Done copying audio nack data from raw arr %p to BitArray %p with %i entries (size %i)",
+            fmsg->bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
+            fmsg->bitarray_audio_nack.numBits, BITS_TO_CHARS(fmsg->bitarray_audio_nack.numBits));
+
+        for (int i = 0; i < fmsg->bitarray_audio_nack.numBits; i++) {
+            LOG_INFO("Calling BitArrayTestBit on bit %i/%i", i, fmsg->bitarray_audio_nack.numBits);
+            if (BitArrayTestBit(bit_arr, i)) {
+                handle_nack_single_audio_packet(fmsg->simple_nack.id, fmsg->simple_nack.index + i,
+                                                client_id);
+            }
+        }
+        LOG_INFO("About to destroy audio-nacking BitArray with %i entries (size %i)",
+                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
+        BitArrayDestroy(bit_arr);
+        LOG_INFO("Destruction of audio-nacking BitArray with %i entries (size %i) COMPLETE!",
+                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
     }
     return 0;
 }
+
+static void handle_nack_single_video_packet(int packet_id, int packet_index, int client_id) {
+    // LOG_INFO("Video NACK requested for: ID %d Index %d",
+    // fmsg->nack_data.simple_nack.id, fmsg->nack_data.simple_nack.index);
+    FractalPacket *video_packet = &video_buffer[packet_id % VIDEO_BUFFER_SIZE][packet_index];
+    int len = video_buffer_packet_len[packet_id % VIDEO_BUFFER_SIZE][packet_index];
+    if (video_packet->id == packet_id) {
+        LOG_INFO(
+            "NACKed video packet ID %d Index %d found of "
+            "length %d. Relaying!",
+            packet_id, packet_index, len);
+        replay_packet(&(clients[client_id].UDP_context), video_packet, len);
+    }
+
+    // If we were asked for an invalid index, just ignore it
+    else if (packet_index < video_packet->num_indices) {
+        LOG_WARNING(
+            "NACKed video packet %d %d not found, ID %d %d was "
+            "located instead.",
+            packet_id, packet_index, video_packet->id, video_packet->index);
+    }
+}
+
 static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
     /*
@@ -464,29 +534,43 @@ static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
     */
 
     if (!is_controlling) return 0;
-    // Video nack received, relay the packet
 
-    // LOG_INFO("Video NACK requested for: ID %d Index %d",
-    // fmsg->nack_data.id, fmsg->nack_data.index);
-    FractalPacket *video_packet =
-        &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];
-    int len =
-        video_buffer_packet_len[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];
-    if (video_packet->id == fmsg->nack_data.id) {
+    if (fmsg->type == MESSAGE_VIDEO_NACK) {
+        handle_nack_single_video_packet(fmsg->simple_nack.id, fmsg->simple_nack.index, client_id);
+    } else {
+        // fmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
+        LOG_INFO("Preparing a bit array with %i entries for handling video nacking",
+                 fmsg->bitarray_video_nack.numBits);
+        bit_array_t *bit_arr = BitArrayCreate(fmsg->bitarray_video_nack.numBits);
+        BitArrayClearAll(bit_arr);
+
+        LOG_INFO("Copying video nack data from raw arr %p to BitArray %p with %i entries (size %i)",
+                 fmsg->bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
+                 fmsg->bitarray_video_nack.numBits,
+                 BITS_TO_CHARS(fmsg->bitarray_video_nack.numBits));
+
+        memcpy(BitArrayGetBits(bit_arr), fmsg->bitarray_video_nack.ba_raw,
+               BITS_TO_CHARS(fmsg->bitarray_video_nack.numBits));
+
         LOG_INFO(
-            "NACKed video packet ID %d Index %d found of "
-            "length %d. Relaying!",
-            fmsg->nack_data.id, fmsg->nack_data.index, len);
-        replay_packet(&(clients[client_id].UDP_context), video_packet, len);
+            "Done copying video nack data from raw arr %p to BitArray %p with %i entries (size %i)",
+            fmsg->bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
+            fmsg->bitarray_video_nack.numBits, BITS_TO_CHARS(fmsg->bitarray_video_nack.numBits));
+
+        for (int i = 0; i < fmsg->bitarray_video_nack.numBits; i++) {
+            LOG_INFO("Calling BitArrayTestBit on bit %i/%i", i, fmsg->bitarray_video_nack.numBits);
+            if (BitArrayTestBit(bit_arr, i)) {
+                handle_nack_single_video_packet(fmsg->simple_nack.id, fmsg->simple_nack.index + i,
+                                                client_id);
+            }
+        }
+        LOG_INFO("About to destroy video-nacking BitArray with %i entries (size %i)",
+                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
+        BitArrayDestroy(bit_arr);
+        LOG_INFO("Destruction of video-nacking BitArray with %i entries (size %i) COMPLETE!",
+                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
     }
 
-    // If we were asked for an invalid index, just ignore it
-    else if (fmsg->nack_data.index < video_packet->num_indices) {
-        LOG_WARNING(
-            "NACKed video packet %d %d not found, ID %d %d was "
-            "located instead.",
-            fmsg->nack_data.id, fmsg->nack_data.index, video_packet->id, video_packet->index);
-    }
     return 0;
 }
 

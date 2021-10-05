@@ -24,3 +24,6 @@ sentry-native/
 # Cmake
 build/
 build-*/
+
+# bitarray library
+*bitarray*

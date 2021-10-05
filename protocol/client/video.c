@@ -879,7 +879,7 @@ void update_video() {
                                 ctx->id, i, ctx->num_packets,
                                 get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
                             ctx->nacked_indices[i]++;
-                            nack_packet(video_ring_buffer, ctx->id, i);
+                            nack_single_packet(video_ring_buffer, ctx->id, i);
                         }
                         ctx->last_nacked_index = i;
                     }

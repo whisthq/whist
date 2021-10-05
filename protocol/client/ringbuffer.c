@@ -1,4 +1,6 @@
 #include "ringbuffer.h"
+#include <lib/bitarray/bitarray.h>
+#include <assert.h>
 
 #define MAX_RING_BUFFER_SIZE 500
 #define MAX_VIDEO_PACKETS 500
@@ -11,6 +13,11 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 void init_frame(RingBuffer* ring_buffer, int id, int num_indices);
 void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
+
+struct bit_array_t {
+    unsigned char* array; /* pointer to array containing bits */
+    unsigned int numBits; /* number of bits in array */
+};
 
 void reset_ring_buffer(RingBuffer* ring_buffer) {
     /*
@@ -304,7 +311,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     }
 }
 
-void nack_packet(RingBuffer* ring_buffer, int id, int index) {
+void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
     /*
         Nack the packet at ID id and index index.
 
@@ -317,8 +324,51 @@ void nack_packet(RingBuffer* ring_buffer, int id, int index) {
     LOG_INFO("NACKing for Packet ID %d, Index %d", id, index);
     FractalClientMessage fmsg = {0};
     fmsg.type = ring_buffer->type == FRAME_AUDIO ? MESSAGE_AUDIO_NACK : MESSAGE_VIDEO_NACK;
-    fmsg.nack_data.id = id;
-    fmsg.nack_data.index = index;
+
+    fmsg.simple_nack.id = id;
+    fmsg.simple_nack.index = index;
+    send_fmsg(&fmsg);
+}
+
+void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, bit_array_t* bit_arr) {
+    /*
+        Nack the packets at ID id and start_index start_index.
+
+        Arguments:
+            ring_buffer (RingBuffer*): the ring buffer waiting for the packet
+            id (int): Frame ID of the packet
+            start_index (int): index of the first packet to be NACKed
+            bit_arr (bit_array_t): the bit array with the indexes of the packets to NACK.
+            */
+
+    LOG_INFO("entering nack_bitarray_packets, id:%i, start_index:%i", id, start_index);
+
+    FractalClientMessage fmsg = {0};
+    if (ring_buffer->type == FRAME_AUDIO) {
+        fmsg.type = MESSAGE_AUDIO_BITARRAY_NACK;
+        fmsg.bitarray_audio_nack.id = id;
+        fmsg.bitarray_audio_nack.index = start_index;
+        memset(fmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
+        memcpy(fmsg.bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
+               BITS_TO_CHARS(bit_arr->numBits));
+        fmsg.bitarray_audio_nack.numBits = bit_arr->numBits;
+    } else {
+        fmsg.type = MESSAGE_VIDEO_BITARRAY_NACK;
+        fmsg.bitarray_video_nack.id = id;
+        fmsg.bitarray_video_nack.index = start_index;
+        memset(fmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
+        memcpy(fmsg.bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
+               BITS_TO_CHARS(bit_arr->numBits));
+        fmsg.bitarray_video_nack.numBits = bit_arr->numBits;
+    }
+
+    for (unsigned int i = 0; i < bit_arr->numBits; i++) {
+        if (BitArrayTestBit(bit_arr, i)) {
+            ring_buffer->num_packets_nacked++;
+            LOG_INFO("Bitarray-NACKing for Packet ID %d, Index %d", id, start_index + i);
+        }
+    }
+
     send_fmsg(&fmsg);
 }
 
@@ -338,7 +388,7 @@ void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {
             if (get_frame_at_id(ring_buffer, i)->id != i) {
                 LOG_INFO("Missing all packets for frame %d, NACKing now for index 0", i);
                 start_timer(&ring_buffer->missing_frame_nack_timer);
-                nack_packet(ring_buffer, i, 0);
+                nack_single_packet(ring_buffer, i, 0);
             }
         }
     }
@@ -352,17 +402,73 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
             ring_buffer (RingBuffer*): ring buffer missing packets
             frame_data (FrameData*): frame missing packets
             index (int): index up to which to nack missing packets
-            */
+    */
+
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
+        // LOG_INFO("nack_missing_packets_up_to_index with index=%i", index);
+
+        int first_packet_to_nack = -1;
+        // Create the bitmap handle, we don't know the size yet
+        bit_array_t* bit_arr = NULL;
+        bool simple_nacking = true;
+
         for (int i = max(0, frame_data->last_nacked_index + 1); i <= index; i++) {
-            frame_data->last_nacked_index = max(frame_data->last_nacked_index, i);
-            if (!frame_data->received_indices[i] &&
-                frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
-                frame_data->nacked_indices[i]++;
-                nack_packet(ring_buffer, frame_data->id, i);
-                start_timer(&frame_data->last_nacked_timer);
-                break;
+            if (!frame_data->received_indices[i]) {
+                if (!bit_arr && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
+                    assert(first_packet_to_nack == -1);
+                    // Found first packet to NACK!
+                    bit_arr = BitArrayCreate(index - i + 1);
+                    LOG_INFO("nack_missing_packets_up_to_index with index=%i", index);
+                    LOG_INFO("        Creating bit_arr of size %i", index - i + 1);
+                    BitArrayClearAll(bit_arr);
+                    first_packet_to_nack = i;
+                    BitArraySetBit(bit_arr, i);
+                } else if (bit_arr) {
+                    assert(first_packet_to_nack != -1);
+                    // We already have a candidate packet for NACKing. Check if we can NACK for more
+                    // using the bitarray.
+                    if (frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
+                        BitArraySetBit(bit_arr, i);
+                        simple_nacking = false;
+                    } else {
+                        break;
+                    }
+                }
             }
+        }
+
+        if (simple_nacking) {
+            if (bit_arr) {
+                LOG_INFO(
+                    "\tbit_arr is non-NULL, and we are doing simple nacking, so we can destroy it "
+                    "now!");
+                BitArrayDestroy(bit_arr);
+            }
+            if (first_packet_to_nack != -1) {
+                LOG_INFO("\t Simple nacking packet from frame:%i and with id:%i", frame_data->id,
+                         first_packet_to_nack);
+                frame_data->last_nacked_index =
+                    max(frame_data->last_nacked_index, first_packet_to_nack);
+                frame_data->nacked_indices[first_packet_to_nack]++;
+                nack_single_packet(ring_buffer, frame_data->id, first_packet_to_nack);
+
+                start_timer(&frame_data->last_nacked_timer);
+            }  // else {
+               // LOG_INFO("\t first_packet_to_nack==-1!");
+            //}
+        } else {
+            LOG_INFO("\t Nacking using bitarray!");
+            for (int i = 0; i < (int)bit_arr->numBits; i++) {
+                if (BitArrayTestBit(bit_arr, i)) {
+                    frame_data->nacked_indices[first_packet_to_nack + i]++;
+                    frame_data->last_nacked_index =
+                        max(frame_data->last_nacked_index, first_packet_to_nack + i);
+                }
+            }
+            nack_bitarray_packets(ring_buffer, frame_data->id, first_packet_to_nack, bit_arr);
+            LOG_INFO("Done nacking packets, destroying BitArray now!");
+            BitArrayDestroy(bit_arr);
+            start_timer(&frame_data->last_nacked_timer);
         }
     }
 }

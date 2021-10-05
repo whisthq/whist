@@ -313,6 +313,12 @@ fetchcontent_declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 fetchcontent_makeavailable(googletest)
 
+# Download BitArray library for bitmap-nacking
+FetchContent_Declare(bitarray
+    URL https://github.com/MichaelDipperstein/bitarray/archive/refs/heads/master.zip
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/lib/bitarray)
+FetchContent_MakeAvailable(bitarray)
+
 #Set OSX compiler and SDK globally
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_COMPILER clang)

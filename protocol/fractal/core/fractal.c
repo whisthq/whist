@@ -306,6 +306,8 @@ int get_fmsg_size(FractalClientMessage* fmsg) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
         return sizeof(*fmsg) + fmsg->clipboard.size;
+    } else if (fmsg->type == MESSAGE_VIDEO_BITARRAY_NACK) {
+        return sizeof(fmsg->type) + 92;
     } else {
         // Send small fmsg's when we don't need unnecessarily large ones
         return sizeof(fmsg->type) + 40;
