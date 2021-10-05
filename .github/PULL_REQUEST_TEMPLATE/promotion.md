@@ -24,7 +24,7 @@ In order for this PR to be merged, all of the following items need to be tested 
 - [ ] Go to Figma and verify pinch-to-zoom works
 - [ ] Verify that smooth two-finger scrolling works
 - [ ] Log into any website, close Fractal, and re-open. I am still logged in.
-- [ ] Signout button on tray works
+- [ ] Sign out button on tray works
 - [ ] Quit button on tray works
 - [ ] Session logs successfully uploaded to Amplitude
 - [ ] Protocol logs successfully uploaded to AWS
