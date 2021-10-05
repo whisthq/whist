@@ -2,6 +2,7 @@ from random import randint
 from sys import maxsize
 from time import time
 from typing import Any, Callable, Dict, List, Tuple
+from datetime import date
 
 import requests
 
@@ -13,7 +14,7 @@ import app.helpers.aws.aws_instance_post as aws_funcs
 
 from app.constants.mandelbox_host_states import MandelboxHostState
 
-from tests.helpers.utils import get_allowed_regions
+from tests.helpers.utils import get_allowed_regions, update_status_change_time
 
 
 def test_scale_up_single(
@@ -279,12 +280,16 @@ def test_scale_down_multiple_partial_available(
 
 
 def test_lingering_instances(
-    monkeypatch: MonkeyPatch, bulk_instance: Callable[..., InstanceInfo], region_name: str
+    monkeypatch: MonkeyPatch,
+    bulk_instance: Callable[..., InstanceInfo],
+    region_name: str,
 ) -> None:
     """
     Tests that lingering_instances properly drains only those instances that are
     inactive for the specified period of time:
     2 min for running instances, 15 for preconnected instances
+    or (draining/host service unresponsive) instances that do not have an associated mandelbox and
+    status last changed > 2 mins
 
     """
     call_set = set()
@@ -293,6 +298,36 @@ def test_lingering_instances(
         call_set.add(instance.instance_name)
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+
+    # A draining instance which status last updated 2 mins ago and
+    # has NO associated mandelbox should be included to lingering_instances
+    # (we check instance status change table to not be mislead by heart beating)
+    instance_no_associated_mandelbox = bulk_instance(
+        instance_name="no_associated_mandelbox_instance",
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=MandelboxHostState.DRAINING.value,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+
+    # A draining instance which status last updated 2 mins ago and
+    # has associated mandelbox(es) should NOT be included to lingering_instances
+    bulk_instance(
+        instance_name="associated_mandelbox_instance",
+        aws_ami_id="test-AMI-2",
+        location=region_name,
+        associated_mandelboxes=1,
+        status=MandelboxHostState.DRAINING.value,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+
+    time_2_mins_ago = date.fromtimestamp(time() - 125)
+
+    update_status_change_time(time_2_mins_ago, "no_associated_mandelbox_instance")
+    update_status_change_time(time_2_mins_ago, "associated_mandelbox_instance")
+
     bulk_instance(
         instance_name="active_instance",
         aws_ami_id="test-AMI",
@@ -338,7 +373,11 @@ def test_lingering_instances(
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     aws_funcs.check_and_handle_lingering_instances()
-    assert call_set == {instance_bad_normal.instance_name, instance_bad_preconnect.instance_name}
+    assert call_set == {
+        instance_bad_normal.instance_name,
+        instance_bad_preconnect.instance_name,
+        instance_no_associated_mandelbox.instance_name,
+    }
 
 
 def test_buffer_wrong_region() -> None:
