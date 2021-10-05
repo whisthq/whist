@@ -1,12 +1,4 @@
 #[[
-################## Fractal Protocol Tests ##################
-]]
-
-# Retrieve git commit/branch for Codecov upload parameters
-execute_process(COMMAND git rev-list -1 HEAD OUTPUT_VARIABLE GIT_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND git rev-parse --abbrev-ref HEAD OUTPUT_VARIABLE GIT_BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-#[[
 ################## FractalClientUnitTests ##################
 ]]
 
@@ -126,7 +118,7 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
             COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
             COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
             COMMAND lcov --list coverage.info # Print verbose debug info
-            COMMAND .././codecov --branch ${GIT_BRANCH} --sha ${GIT_COMMIT} --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F protocol
+            COMMAND .././codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
     endif()
 endif()
@@ -235,7 +227,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
                 COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal macOS files
                 COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
                 COMMAND lcov --list coverage.info # Print verbose debug info
-                COMMAND .././codecov --branch ${GIT_BRANCH} --sha ${GIT_COMMIT} --slug fractal/fractal -t ${CODECOV_TOKEN} -c -F protocol
+                COMMAND .././codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
             )
         endif()
     endif()
