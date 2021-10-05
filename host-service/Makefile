@@ -126,7 +126,7 @@ rundev: build
 
 runstaging: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with staging configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=staging $USE_PROD_LOGGING=0 (BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=staging USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
