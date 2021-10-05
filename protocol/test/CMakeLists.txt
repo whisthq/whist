@@ -28,12 +28,14 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
         $<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
+
 # Copy the FFmpeg library to the build folder
 add_custom_command(
 	TARGET ${CLIENT_TEST_BINARY} POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory
 	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
 	$<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
+
 # Copy the OpenSSL/libcrypto libraries if we are on Windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
@@ -61,7 +63,6 @@ target_link_libraries(${CLIENT_TEST_BINARY}
 
 # Link more linux-specific libraries
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
     target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
 
     find_package(X11 REQUIRED
@@ -75,7 +76,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             m)
 endif()
 
-# Link Mac-specific libs
+# Link macOS-specific libs
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_mac.m)
 
@@ -100,12 +101,33 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${CLIENT_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
 endif()
 
+# Run the tests if we're running in CI for testing
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
+    # On Windows, we run tests without coverage since it's not supported
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        add_custom_command(
+            TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+            COMMAND ./${CLIENT_TEST_BINARY}
+        )
+    # On macOS and Linux, we run tests with code coverage and upload the report to Codecov
+    else()
+        add_custom_command(
+            TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+            COMMAND ./${CLIENT_TEST_BINARY}
+            COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+            COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
+            COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
+            COMMAND lcov --list coverage.info # Print verbose debug info
+            COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+        )
+    endif()
+endif()
 
 #[[
 ################## FractalServerUnitTests ##################
 ]]
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on MacOS
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on macOS
 
     # Create the executable
     set(SERVER_TEST_BINARY FractalServerTest)
@@ -187,12 +209,33 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         # Link to system libs
         target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
     endif()
+
+    # Run the tests if we're running in CI for testing
+    if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug)
+        # On Windows, we run tests without coverage since it's not supported
+        if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+            add_custom_command(
+                TARGET ${SERVER_TEST_BINARY} POST_BUILD
+                COMMAND ./${SERVER_TEST_BINARY}
+            )
+        # On Linux, we run tests with code coverage and upload the report to Codecov
+        else()
+            add_custom_command(
+                TARGET ${SERVER_TEST_BINARY} POST_BUILD
+                COMMAND ./${SERVER_TEST_BINARY}
+                COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+                COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal macOS files
+                COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
+                COMMAND lcov --list coverage.info # Print verbose debug info
+                COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+            )
+        endif()
+    endif()
 endif()
 
 #[[
 ################## FractalUnitTests ##################
 ]]
-
 
 # Include the GoogleTest library, and let gtest scan for the tests in the binary file
 include(GoogleTest)
