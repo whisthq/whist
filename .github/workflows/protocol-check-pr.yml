@@ -159,7 +159,7 @@ jobs:
           GIT_COMMIT: "$GITHUB_SHA"
           GIT_BRANCH: "$GITHUB_REF##*/"
         run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
-          
+
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
