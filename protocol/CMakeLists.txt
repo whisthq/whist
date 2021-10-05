@@ -103,10 +103,6 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
     set(CMAKE_C_FLAGS --coverage)
     set(CMAKE_CXX_FLAGS --coverage)
 
-    # Retrieve git commit/branch for Codecov parameters
-    execute_process(COMMAND git rev-list -1 HEAD OUTPUT_VARIABLE GIT_COMMIT)
-    execute_process(COMMAND git rev-parse --abbrev-ref HEAD OUTPUT_VARIABLE GIT_BRANCH)
-
     # Download Codecov
     message(STATUS "Downloading Codecov")
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
