@@ -12,9 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
-
 	"github.com/MicahParks/keyfunc"
+	"github.com/golang-jwt/jwt/v4"
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/utils"
@@ -125,7 +124,7 @@ func (scopes *Scopes) UnmarshalJSON(data []byte) error {
 // checks are successful.
 func Verify(tokenString string) (*FractalClaims, error) {
 	claims := new(FractalClaims)
-	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.KeyFunc)
+	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.Keyfunc)
 
 	if err != nil {
 		return nil, err

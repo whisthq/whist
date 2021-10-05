@@ -3,25 +3,24 @@ module github.com/fractal/fractal/host-service
 go 1.16
 
 require (
-	github.com/MicahParks/keyfunc v0.6.0
+	github.com/MicahParks/keyfunc v0.8.3
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/NVIDIA/go-nvml v0.11.1-0
 	github.com/aws/aws-sdk-go-v2 v1.9.1
 	github.com/aws/aws-sdk-go-v2/config v1.8.2
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.5.3
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.12.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.16.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
-	github.com/containerd/containerd v1.5.4 // indirect
-	github.com/docker/docker v20.10.7+incompatible
+	github.com/containerd/containerd v1.5.7 // indirect
+	github.com/docker/docker v20.10.9+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
-	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-errors/errors v1.4.0 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jackc/pgconn v1.10.0
@@ -37,13 +36,13 @@ require (
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8
 	github.com/shirou/gopsutil v3.21.9+incompatible
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
-	golang.org/x/sys v0.0.0-20210921065528-437939a70204 // indirect
+	golang.org/x/net v0.0.0-20211004195052-b30845b58a23 // indirect
+	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
-	google.golang.org/genproto v0.0.0-20210726200206-e7812ac95cc0 // indirect
+	google.golang.org/genproto v0.0.0-20211001223012-bfb93cce50d9 // indirect
+	google.golang.org/grpc v1.41.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

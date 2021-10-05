@@ -61,7 +61,7 @@ import (
 	dockerunits "github.com/docker/go-units"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
