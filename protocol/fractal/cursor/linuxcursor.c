@@ -25,6 +25,53 @@ Includes
 
 static Display* disp;
 
+int get_cursor_id(const char* cursor_name) {
+    /*
+        Get the corresponding cursor image id for by cursor type
+
+        Arguments:
+            cursor_name (const char*): name of cursor icon defined in X11/cursorfont.h
+            NOTE: The name is the macro name without the initial "XC_", so "XC_arrow"
+            would be "arrow"
+
+        Returns:
+            (FractalCursorImage): the corresponding FractalCursorImage id
+                for the X11 cursor name
+    */
+
+    int fractal_cursor_id = 0;
+
+    if (strcmp(cursor_name, "left_ptr") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_ARROW;
+    } else if (strcmp(cursor_name, "crosshair") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_CROSSHAIR;
+    } else if (strcmp(cursor_name, "hand1") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_HAND;
+    } else if (strcmp(cursor_name, "xterm") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_IBEAM;
+    } else if (strcmp(cursor_name, "x_cursor") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_NO;
+    } else if (strcmp(cursor_name, "fleur") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_SIZEALL;
+    } else if (strcmp(cursor_name, "bottom_left_corner") == 0 || strcmp(cursor_name, "top_right_corner") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_SIZENESW;
+    } else if (strcmp(cursor_name, "sb_v_double_arrow") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_SIZENS;
+    } else if (strcmp(cursor_name, "sizing") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_SIZENWSE;
+    } else if (strcmp(cursor_name, "sb_h_double_arrow") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_SIZEWE;
+    } else if (strcmp(cursor_name, "watch") == 0) {
+        fractal_cursor_id = FRACTAL_CURSOR_WAITARROW;
+    } else {
+        fractal_cursor_id = FRACTAL_CURSOR_ARROW;
+    }
+
+    return fractal_cursor_id;
+}
+
+
+
 /*
 ============================
 Public Function Implementations
@@ -62,19 +109,12 @@ void get_current_cursor(FractalCursorImage* image) {
                 ci->width, ci->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
         }
 
-        image->using_bmp = true;
+        image->using_bmp = false;
         image->bmp_width = min(MAX_CURSOR_WIDTH, ci->width);
         image->bmp_height = min(MAX_CURSOR_HEIGHT, ci->height);
         image->bmp_hot_x = ci->xhot;
         image->bmp_hot_y = ci->yhot;
-
-        // memcpy(image->bmp, ci->pixels, image->bmp_width * image->bmp_height * sizeof(uint32_t));
-
-        for (int k = 0; k < image->bmp_width * image->bmp_height; ++k) {
-            // we need to do this in case ci->pixels uses 8 bytes per pixel
-            uint32_t argb = (uint32_t)ci->pixels[k];
-            image->bmp[k] = argb;
-        }
+        image->cursor_id = get_cursor_id(ci->name);
 
         XFree(ci);
     }
