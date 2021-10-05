@@ -157,7 +157,7 @@ jobs:
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
 
-      - name: Build Protocol Server on Linux Ubuntu
+      - name: Build and Test Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer FractalServerTest
