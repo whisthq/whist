@@ -107,9 +107,7 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
         TARGET ${CLIENT_TEST_BINARY} POST_BUILD
         COMMAND ./${CLIENT_TEST_BINARY}
         COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
-        COMMAND if [[ $OSTYPE == 'darwin'* ]]; then # Remove non-Fractal files from the coverage report
-                    lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*'
-                fi
+        COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
         COMMAND lcov --list coverage.info # Print verbose debug info
         COMMAND ./codecov -t ${CODECOV_TOKEN} -c -F protocol
     )
