@@ -87,6 +87,6 @@ docker run \
         -B .                                            \
         -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
         -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
-        -DCI=${CMAKE_SET_CI} &&                         \
+        -DCHECK_CI=${CMAKE_SET_CI} &&                   \
     make -j ${TARGETS}                                  \
   "
