@@ -105,8 +105,10 @@ if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_S
 
     # Download Codecov 
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        message(STATUS "Downloading Codecov for macOS")
         execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/macos/codecov)
     else()
+        message(STATUS "Downloading Codecov for Linux")
         execute_process(COMMAND curl -Os https://uploader.codecov.io/latest/linux/codecov)
     endif()
 
