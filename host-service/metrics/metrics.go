@@ -120,7 +120,7 @@ type RuntimeMetrics struct {
 }
 
 func init() {
-	if os.Getenv("CI") != "true" {
+	if !metadata.IsRunningInCI() {
 		err := startCollectionGoroutine(30 * time.Second)
 		if err != nil {
 			// We can safely do a "real" panic in an init function.

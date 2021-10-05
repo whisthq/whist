@@ -66,3 +66,17 @@ func IsLocalEnv() bool {
 func GetAppEnvironmentLowercase() string {
 	return strings.ToLower(string(GetAppEnvironment()))
 }
+
+// IsRunningInCI returns true if the host service is running in continuous
+// integration (i.e. for tests), and false otherwise.
+func IsRunningInCI() bool {
+	strCI := strings.ToLower(os.Getenv("CI"))
+	switch strCI {
+	case "1", "yes", "true", "on":
+		return true
+	case "0", "no", "false", "off":
+		return false
+	default:
+		return false
+	}
+}
