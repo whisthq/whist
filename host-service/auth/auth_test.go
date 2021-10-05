@@ -7,7 +7,7 @@ import (
 
 	"github.com/fractal/fractal/host-service/auth"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func TestUnmarshalScopes(t *testing.T) {
