@@ -36,11 +36,11 @@ typedef struct Client {
     int user_id;  // not lock protected
 
     /* NETWORK */
-    SocketContext UDP_context;  // protected by global is_active_rwlock
-    SocketContext TCP_context;  // protected by global is_active_rwlock
-    int UDP_port;               // protected by global is_active_rwlock
-    int TCP_port;               // protected by global is_active_rwlock
-    FractalMutex TCP_lock;      // protects TCP_context for synchrony-sensitive sends and recvs
+    SocketContext udp_context;  // protected by global is_active_rwlock
+    SocketContext tcp_context;  // protected by global is_active_rwlock
+    int udp_port;               // protected by global is_active_rwlock
+    int tcp_port;               // protected by global is_active_rwlock
+    RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 
     /* MOUSE */
     struct {

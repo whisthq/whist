@@ -527,8 +527,8 @@ typedef struct FractalTCPRecoveryMessage {
  */
 typedef struct FractalDiscoveryReplyMessage {
     int client_id;
-    int UDP_port;
-    int TCP_port;
+    int udp_port;
+    int tcp_port;
     int connection_id;
     int audio_sample_rate;
 } FractalDiscoveryReplyMessage;

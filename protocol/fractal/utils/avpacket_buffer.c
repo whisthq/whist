@@ -1,6 +1,6 @@
 #include "avpacket_buffer.h"
 
-void write_packets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
+void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
     /*
         Store the first num_packets AVPackets contained in packets into buf. buf will contain
         the following data: (number of packets)(size of each packet)(data of each packet).
@@ -23,7 +23,7 @@ void write_packets_to_buffer(int num_packets, AVPacket* packets, int* buf) {
     }
 }
 
-int extract_packets_from_buffer(void* buffer, int buffer_size, AVPacket* packets) {
+int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packets) {
     /*
         Read the encoded packets stored in buffer into packets. The buffer should have been filled
         using read_packets_into_buffer.

@@ -71,6 +71,15 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
 
 void fractal_sleep(uint32_t ms) { SDL_Delay(ms); }
 
+void fractal_usleep(uint32_t us) {
+#ifdef _WIN32
+    // Not sure if this is implemented on Windows, so just fall back to SDL_Delay.
+    fractal_sleep(us / 1000);
+#else
+    usleep(us);
+#endif  // _WIN32
+}
+
 FractalMutex fractal_create_mutex() {
     FractalMutex ret = SDL_CreateMutex();
     if (ret == NULL) {

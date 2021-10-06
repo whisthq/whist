@@ -245,7 +245,7 @@ void destroy_audio_decoder(AudioDecoder *decoder) {
 int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_size) {
     /*
         Send the packets stored in buffer to the decoder. The buffer format should be as described
-       in extract_packets_from_buffer.
+       in extract_avpackets_from_buffer.
 
         Arguments:
             decoder (AudioDecoder*): the decoder for decoding
@@ -256,7 +256,7 @@ int audio_decoder_send_packets(AudioDecoder *decoder, void *buffer, int buffer_s
             (int): 0 on success, negative error on failure
             */
 
-    int num_packets = extract_packets_from_buffer(buffer, buffer_size, decoder->packets);
+    int num_packets = extract_avpackets_from_buffer(buffer, buffer_size, decoder->packets);
 
     int res;
     for (int i = 0; i < num_packets; i++) {

@@ -41,20 +41,30 @@ int broadcast_ack(void);
  *                                 or MESSAGE
  * @param data                     A pointer to the data to be sent
  * @param len                      The number of bytes to send
- * @param id                       An ID for the UDP data.
- * @param burst_bitrate            The maximum bitrate that packets will be sent
- *                                 over. -1 will imply sending as fast as
- *                                 possible
- * @param packet_buffer            An array of RTPPacket's, each sub-packet of
- *                                 the UDPPacket will be stored in
- *                                 packet_buffer[i]
- * @param packet_len_buffer        An array of int's, defining the length of
- *                                 each sub-packet located in packet_buffer[i]
+ * @param packet_id                       An ID for the UDP data.
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, int burst_bitrate,
-                         FractalPacket *packet_buffer, int *packet_len_buffer);
+int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int len, int packet_id);
+
+/**
+ * @brief                          This will send a FractalPacket over UDP to
+ *                                 all active clients. This function does not
+ *                                 create the packet from raw data, but assumes
+ *                                 that the packet has been prepared by the
+ *                                 caller (e.g. fragmented into
+ *                                 appropriately-sized chunks by a fragmenter).
+ *                                 This function assumes and checks that the
+ *                                 packet is small enough to send without
+ *                                 further breaking into smaller packets.
+ *
+ * @param packet                   A pointer to the packet to be sent
+ * @param packet_size              The size of the packet to be sent
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int broadcast_udp_packet(FractalPacket *packet, size_t packet_size);
 
 /**
  * @brief                          Sends a FractalPacket and accompanying
@@ -68,7 +78,7 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_tcp_packet(FractalPacketType type, void *data, int len);
+int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len);
 
 /**
  * @brief                          Tries to read in next available TCP message
