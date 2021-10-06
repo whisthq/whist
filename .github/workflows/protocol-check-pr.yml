@@ -220,4 +220,4 @@ jobs:
       - name: Ensure CMake Files are Linted
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: pip install cmakelint && cmakelint **/**/CMakeLists.txt
+        run: pip install cmakelint && cmakelint --config=.cmakelintrc **/**/CMakeLists.txt
