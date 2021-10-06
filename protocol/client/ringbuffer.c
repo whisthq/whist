@@ -418,8 +418,8 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
                     assert(first_packet_to_nack == -1);
                     // Found first packet to NACK!
                     bit_arr = BitArrayCreate(index - i + 1);
-                    LOG_INFO("nack_missing_packets_up_to_index with index=%i", index);
-                    LOG_INFO("        Creating bit_arr of size %i", index - i + 1);
+                    // LOG_INFO("nack_missing_packets_up_to_index with index=%i", index);
+                    // LOG_INFO("        Creating bit_arr of size %i", index - i + 1);
                     BitArrayClearAll(bit_arr);
                     first_packet_to_nack = i;
                     BitArraySetBit(bit_arr, i);
@@ -439,17 +439,21 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 
         if (simple_nacking) {
             if (bit_arr) {
-                LOG_INFO(
-                    "\tbit_arr is non-NULL, and we are doing simple nacking, so we can destroy it "
-                    "now!");
+                // LOG_INFO(
+                //     "\tbit_arr is non-NULL, and we are doing simple nacking, so we can destroy it
+                //     " "now!");
                 BitArrayDestroy(bit_arr);
             }
             if (first_packet_to_nack != -1) {
-                LOG_INFO("\t Simple nacking packet from frame:%i and with id:%i", frame_data->id,
-                         first_packet_to_nack);
+                // LOG_INFO("\t Simple nacking packet from frame:%i and with id:%i", frame_data->id,
+                //          first_packet_to_nack);
                 frame_data->last_nacked_index =
                     max(frame_data->last_nacked_index, first_packet_to_nack);
                 frame_data->nacked_indices[first_packet_to_nack]++;
+                LOG_INFO("************NACKING %s PACKET %d %d (/%d), alive for %f MS",
+                         ((ring_buffer->type == FRAME_AUDIO) ? "AUDIO" : "VIDEO"), frame_data->id,
+                         first_packet_to_nack, frame_data->num_packets,
+                         get_timer(frame_data->frame_creation_timer) * MS_IN_SECOND);
                 nack_single_packet(ring_buffer, frame_data->id, first_packet_to_nack);
 
                 start_timer(&frame_data->last_nacked_timer);
@@ -457,7 +461,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
                // LOG_INFO("\t first_packet_to_nack==-1!");
             //}
         } else {
-            LOG_INFO("\t Nacking using bitarray!");
+            // LOG_INFO("\t Nacking using bitarray!");
             for (int i = 0; i < (int)bit_arr->numBits; i++) {
                 if (BitArrayTestBit(bit_arr, i)) {
                     frame_data->nacked_indices[first_packet_to_nack + i]++;
@@ -465,8 +469,13 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
                         max(frame_data->last_nacked_index, first_packet_to_nack + i);
                 }
             }
+
+            LOG_INFO("************NACKING %s PACKETS %d from %d to %d, alive for %f MS",
+                     ((ring_buffer->type == FRAME_AUDIO) ? "AUDIO" : "VIDEO"), frame_data->id,
+                     first_packet_to_nack, frame_data->num_packets,
+                     get_timer(frame_data->frame_creation_timer) * MS_IN_SECOND);
             nack_bitarray_packets(ring_buffer, frame_data->id, first_packet_to_nack, bit_arr);
-            LOG_INFO("Done nacking packets, destroying BitArray now!");
+            // LOG_INFO("Done nacking packets, destroying BitArray now!");
             BitArrayDestroy(bit_arr);
             start_timer(&frame_data->last_nacked_timer);
         }
