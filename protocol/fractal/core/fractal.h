@@ -88,6 +88,8 @@ Defines
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
 #define LOG_VIDEO false
+#define LOG_NETWORKING false
+#define ENCRYPTING_PACKETS true
 
 #define WINAPI_INPUT_DRIVER 1
 #define XTEST_INPUT_DRIVER 2

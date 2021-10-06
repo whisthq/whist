@@ -1744,7 +1744,7 @@ int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type,
     char* packet_buffer = allocate_region(sizeof(FractalPacket) + len + 64);
     char* encrypted_packet_buffer = allocate_region(sizeof(FractalPacket) + len + 128);
 
-    FractalPacket* packet = (FractalPacket*)packet_buffer;
+    FractalPacket* packet = (FractalPacket*)(sizeof(int) + packet_buffer);
 
     // Contruct packet metadata
     packet->id = -1;
@@ -1764,15 +1764,22 @@ int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type,
                                        (unsigned char*)context->binary_aes_private_key);
 
     // Pass the length of the packet as the first byte
+    *((int*)packet_buffer) = unencrypted_len;
     *((int*)encrypted_packet_buffer) = encrypted_len;
 
     // For now, the TCP network throttler is NULL, so this is a no-op.
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
 
+//#if LOG_NETWORKING
+    // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
+    LOG_INFO("Sending a FractalPacket of size %d over TCP", unencrypted_len);
+//#endif
     // Send the packet
-    LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
+    // Send unencrypted during dev mode, and encrypted otherwise
+    void* packet_to_send = ENCRYPTING_PACKETS ? encrypted_packet_buffer : packet_buffer;
+    int packet_to_send_len = ENCRYPTING_PACKETS ? encrypted_len : unencrypted_len;
     bool failed = false;
-    int ret = sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len);
+    int ret = sendp(context, packet_to_send, sizeof(int) + packet_to_send_len);
     if (ret < 0) {
         int error = get_last_network_error();
         LOG_WARNING("Unexpected TCP Packet Error: %d", error);
@@ -1822,7 +1829,17 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
                                                   (unsigned char*)context->binary_aes_private_key);
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
     fractal_lock_mutex(context->mutex);
-    int ret = sendp(context, &encrypted_packet, (int)encrypted_len);
+    int ret;
+#if LOG_NETWORKING
+    LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
+#endif
+    if (ENCRYPTING_PACKETS) {
+        // Send encrypted during normal usage
+        ret = sendp(context, &encrypted_packet, (int)encrypted_len);
+    } else {
+        // Send unencrypted during dev mode
+        ret = sendp(context, packet, (int)packet_size);
+    }
     fractal_unlock_mutex(context->mutex);
     if (ret < 0) {
         int error = get_last_network_error();
@@ -1956,11 +1973,21 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         // good to go
         if (target_len >= 0 && actual_len >= target_len) {
             FractalPacket* decrypted_packet_buffer = allocate_region(target_len);
-            // Decrypt it
-            int decrypted_len =
-                decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                                 target_len, decrypted_packet_buffer, target_len,
-                                 (unsigned char*)context->binary_aes_private_key);
+            int decrypted_len;
+            if (ENCRYPTING_PACKETS) {
+                // Decrypt the packet
+                decrypted_len =
+                    decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
+                                    target_len, decrypted_packet_buffer, target_len,
+                                    (unsigned char*)context->binary_aes_private_key);
+            } else {
+                // The decrypted packet is just the original packet, during dev mode
+                decrypted_len = target_len;
+                memcpy(decrypted_packet_buffer, (encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len);
+            }
+#if LOG_NETWORKING
+            LOG_INFO("Received a FractalPacket of size %d over TCP", decrypted_len);
+#endif
 
             // Move the rest of the read bytes to the beginning of the buffer to
             // continue
@@ -2008,7 +2035,7 @@ FractalPacket* read_udp_packet(SocketContext* context) {
         return NULL;
     }
 
-    // Wait to receive packet over TCP, until timing out
+    // Wait to receive packet over UDP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
 
@@ -2016,8 +2043,19 @@ FractalPacket* read_udp_packet(SocketContext* context) {
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
-        int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                           (unsigned char*)context->binary_aes_private_key);
+        int decrypted_len;
+        if (ENCRYPTING_PACKETS) {
+            // Decrypt the packet
+            decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                                            (unsigned char*)context->binary_aes_private_key);
+        } else {
+            // The decrypted packet is just the original packet, during dev mode
+            decrypted_len = encrypted_len;
+            memcpy(&decrypted_packet, &encrypted_packet, encrypted_len);
+        }
+#if LOG_NETWORKING
+        LOG_INFO("Received a FractalPacket of size %d over UDP", decrypted_len);
+#endif
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
