@@ -212,7 +212,9 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or
         endif()
 
         # Link to system libs
-        target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
+        target_link_libraries(${SERVER_TEST_BINARY}
+            ${WINDOWS_SPECIFIC_SERVER_LIBS}
+            )
     endif()
 
     add_custom_command(

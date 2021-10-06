@@ -24,7 +24,8 @@ add_custom_command(
         ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
         $<TARGET_FILE_DIR:FractalServer>)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"
+OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
