@@ -123,7 +123,10 @@ def terminate_instance(instance: InstanceInfo) -> None:
     if check_instance_exists(instance_id, instance.location):
         ec2_client = EC2Client(region_name=instance.location)
         resp = ec2_client.stop_instances([instance_id])
-        if resp.get('StoppingInstances', [{}])[0].get('CurrentState', {}).get('Name', '') != 'stopping':
+        if (
+            resp.get("StoppingInstances", [{}])[0].get("CurrentState", {}).get("Name", "")
+            != "stopping"
+        ):
             ec2_success = False
     if ec2_success:
         fractal_logger.info(f"instance {instance.instance_name} | deleting from db")

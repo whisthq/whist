@@ -23,7 +23,7 @@ def hijack_ec2_calls(
         call_list.append({"args": args, "kwargs": kwargs})
         return ["test_id"]
 
-    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> List[str]:
+    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
         call_list.append({"args": args, "kwargs": kwargs})
         return {}
 
