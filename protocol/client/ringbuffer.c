@@ -341,7 +341,7 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, bit
             bit_arr (bit_array_t): the bit array with the indexes of the packets to NACK.
             */
 
-    //LOG_INFO("entering nack_bitarray_packets, id:%i, start_index:%i", id, start_index);
+    // LOG_INFO("entering nack_bitarray_packets, id:%i, start_index:%i", id, start_index);
 
     FractalClientMessage fmsg = {0};
     if (ring_buffer->type == FRAME_AUDIO) {
@@ -365,7 +365,7 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, bit
     for (unsigned int i = 0; i < bit_arr->numBits; i++) {
         if (BitArrayTestBit(bit_arr, i)) {
             ring_buffer->num_packets_nacked++;
-            //LOG_INFO("Bitarray-NACKing for Packet ID %d, Index %d", id, start_index + i);
+            // LOG_INFO("Bitarray-NACKing for Packet ID %d, Index %d", id, start_index + i);
         }
     }
 
