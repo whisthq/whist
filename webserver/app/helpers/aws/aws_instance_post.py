@@ -124,8 +124,8 @@ def terminate_instance(instance: InstanceInfo) -> None:
         ec2_client = EC2Client(region_name=instance.location)
         resp = ec2_client.stop_instances([instance_id])
         if (
-            resp.get("StoppingInstances", [{}])[0].get("CurrentState", {}).get("Name", "")
-            != "stopping"
+            resp.get("TerminatingInstances", [{}])[0].get("CurrentState", {}).get("Name", "")
+            not in ['shutting-down', 'terminated', 'stopping', 'stopped']
         ):
             ec2_success = False
     if ec2_success:
