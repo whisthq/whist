@@ -407,8 +407,6 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
         // LOG_INFO("nack_missing_packets_up_to_index with index=%i", index);
 
-        int max_packet_nacks = MAX_PACKET_NACKS * (((ring_buffer->type == FRAME_AUDIO) ? 3 : 500));
-
         int first_packet_to_nack = -1;
         // Create the bitmap handle, we don't know the size yet
         bit_array_t* bit_arr = NULL;
@@ -416,7 +414,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 
         for (int i = max(0, frame_data->last_nacked_index + 1); i <= index; i++) {
             if (!frame_data->received_indices[i]) {
-                if (!bit_arr && frame_data->nacked_indices[i] < max_packet_nacks) {
+                if (!bit_arr && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
                     assert(first_packet_to_nack == -1);
                     // Found first packet to NACK!
                     bit_arr = BitArrayCreate(index - i + 1);
@@ -429,7 +427,7 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
                     assert(first_packet_to_nack != -1);
                     // We already have a candidate packet for NACKing. Check if we can NACK for more
                     // using the bitarray.
-                    if (frame_data->nacked_indices[i] < max_packet_nacks) {
+                    if (frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
                         BitArraySetBit(bit_arr, i);
                         simple_nacking = false;
                     } else {
