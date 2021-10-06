@@ -13,51 +13,30 @@ import (
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 
-// Run is responsible for starting the subscription client, as well as
-// subscribing to the subscriptions defined in queries.go
-func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, instanceName string, done chan bool) error {
-	// We set up the client with auth and logging parameters
-	client, err := SetUpHasuraClient()
-
-	if err != nil {
-		// Error creating the hasura client
-		return err
-	}
-
-	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
-	var subscriptionIDs []string
-
-	// Subscribe to the DRAINING status
-	id, err := SubscribeStatus(instanceName, "DRAINING", client, done)
-	if err != nil {
-		// handle subscription error
-		return err
-	}
-	subscriptionIDs = append(subscriptionIDs, id)
-
-	defer Close(client, subscriptionIDs, done)
-
-	// Start goroutine that shuts down hasura client if the global context gets
-	// cancelled.
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
-
-		// Listen for global context cancellation
-		<-globalCtx.Done()
-		Close(client, subscriptionIDs, done)
-	}()
-
-	// Run the client on a go routine to make sure it closes properly when we are done
-	go client.Run()
-
-	<-done
-	return nil
+// StatusSubscriptionEvent is the event received from the subscription to any
+// instance status changes.
+type StatusSubscriptionEvent struct {
+	InstanceInfo []Instance `json:"cloud_instance_info"`
+	resultChan   chan InstanceInfoResult
 }
 
-// SubscribeStatus handles the hasura subscription to detect changes on instance instanceName
-// to the given status in the database.
-func SubscribeStatus(instanceName string, status string, client *graphql.SubscriptionClient, done chan<- bool) (string, error) {
+// ReturnResult is called to pass the result of a subscription event back to the
+// subbscription handler.
+func (s *StatusSubscriptionEvent) ReturnResult(result interface{}, err error) {
+	s.resultChan <- InstanceInfoResult{result}
+}
+
+// createResultChan is called to create the Go channel to pass the Hasura
+// result back to the subscription handler.
+func (s *StatusSubscriptionEvent) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan InstanceInfoResult)
+	}
+}
+
+// StatusSubscriptionHandler handles events from the hasura subscription which
+// detects changes on instance instanceName to the given status in the database.
+func StatusSubscriptionHandler(instanceName string, status string, client *graphql.SubscriptionClient, subscriptionEvents chan<- SubscriptionEvent) (string, error) {
 	// variables holds the values needed to run the graphql subscription
 	variables := map[string]interface{}{
 		"instance_name": graphql.String(instanceName),
@@ -70,21 +49,22 @@ func SubscribeStatus(instanceName string, status string, client *graphql.Subscri
 			return nil
 		}
 
-		var result SubscriptionResult
+		var result StatusSubscriptionEvent
 		json.Unmarshal(*data, &result)
+		result.createResultChan()
 
 		var instance Instance
 		// If the result array returned by Hasura is not empty, it means
 		// there was a change in the database row
-		if len(result.CloudInstanceInfo) > 0 {
-			instance = result.CloudInstanceInfo[0]
+		if len(result.InstanceInfo) > 0 {
+			instance = result.InstanceInfo[0]
 		} else {
 			return nil
 		}
 
 		if (instance.InstanceName == instanceName) && (instance.Status == status) {
-			// We notify via the done channel to start the drain and shutdown process
-			done <- true
+			// We notify via the subscriptionsEvent channel to start the drain and shutdown process
+			subscriptionEvents <- &result
 		}
 
 		return nil
@@ -95,4 +75,43 @@ func SubscribeStatus(instanceName string, status string, client *graphql.Subscri
 	}
 
 	return id, nil
+}
+
+// Run is responsible for starting the subscription client, as well as
+// subscribing to the subscriptions defined in queries.go
+func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, instanceName string, subscriptionEvents chan SubscriptionEvent) error {
+	// We set up the client with auth and logging parameters
+	client, err := SetUpHasuraClient()
+
+	if err != nil {
+		// Error creating the hasura client
+		return err
+	}
+
+	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
+	var subscriptionIDs []string
+
+	// Here we run all subscriptions
+	id, err := StatusSubscriptionHandler(instanceName, "DRAINING", client, subscriptionEvents)
+	if err != nil {
+		// handle subscription error
+		return err
+	}
+	subscriptionIDs = append(subscriptionIDs, id)
+
+	// Start goroutine that shuts down hasura client if the global context gets
+	// cancelled.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+
+		// Listen for global context cancellation
+		<-globalCtx.Done()
+		Close(client, subscriptionIDs)
+	}()
+
+	// Run the client on a go routine to make sure it closes properly when we are done
+	go client.Run()
+
+	return nil
 }

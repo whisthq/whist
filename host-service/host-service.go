@@ -867,18 +867,19 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
+	// Start database subscriptions
 	instanceName, err = aws.GetInstanceName()
 	if err != nil {
-		logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+		logger.Errorf("Can't get AWS Instance name.")
 	}
-	subscriptionDone := make(chan bool, 1)
-	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionDone)
+	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
+	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
 	// needs to stay alive after the global context is cancelled, so we can
 	// process mandelbox death events.
-	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionDone)
+	go eventLoopGoroutine(globalCtx, globalCancel, &goroutineTracker, dockerClient, httpServerEvents, subscriptionEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -900,7 +901,7 @@ var eventLoopKeepalive = make(chan interface{}, 1)
 
 func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
 	goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client,
-	httpServerEvents <-chan ServerRequest, subscriptionDone <-chan bool) {
+	httpServerEvents <-chan ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
 	// Note that we don't use globalCtx for the docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
 	dockerContext, dockerContextCancel := context.WithCancel(context.Background())
@@ -978,8 +979,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				}
 			}
 
-		case <-subscriptionDone:
-			drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+		case subscriptionEvent := <-subscriptionEvents:
+			switch subscriptionEvent.(type) {
+
+			case *subscriptions.StatusSubscriptionEvent:
+				// Don't do this in a separate goroutine, since there's no reason to.
+				drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+			}
 		}
 	}
 }

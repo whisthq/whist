@@ -346,7 +346,7 @@ def do_scale_up_if_necessary(
     return new_instance_names
 
 
-def drain_instance(instance: InstanceInfo) -> bool:
+def drain_instance(instance: InstanceInfo) -> None:
     """
     Marks an instance as draining, removing from the database if the instance
     in question does not actually exist. Note that we will terminate instances
@@ -359,7 +359,7 @@ def drain_instance(instance: InstanceInfo) -> bool:
         instance: The instance to drain
 
     Returns:
-        True if the instance is marked for draining, else False.
+        None
 
     """
     old_status = instance.status
@@ -386,8 +386,6 @@ def drain_instance(instance: InstanceInfo) -> bool:
         # deadlock with host service where it tries to modify the instance_info row.
         instance.status = MandelboxHostState.DRAINING
         db.session.commit()
-
-    return True
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:

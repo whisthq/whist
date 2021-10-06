@@ -9,15 +9,22 @@ type HasuraParams struct {
 
 // Instance represents instance_info in the database.
 // These fields are defined in queries.go
-//nolint We need to use snake case so that Hasura finds the database fields.
 type Instance struct {
 	InstanceName string `json:"instance_name"`
 	Status       string `json:"status"`
 }
 
-// SubscriptionResult is a struct used to hold
-// the subscription results. Hasura always returns an array
-// as a result.
-type SubscriptionResult struct {
-	CloudInstanceInfo []Instance `json:"cloud_instance_info"`
+// InstanceInfoResult is a struct used to hold
+// results for any subscription to the "instance_info" table.
+// Hasura always returns an array as a result.
+type InstanceInfoResult struct {
+	CloudInstanceInfo interface{} `json:"cloud_instance_info"`
+}
+
+// SubscriptionEvent represents any event received from Hasura
+// subscriptions. It simply passes the result and any error message
+// via ReturnResult.
+type SubscriptionEvent interface {
+	ReturnResult(result interface{}, err error)
+	createResultChan()
 }
