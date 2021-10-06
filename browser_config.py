@@ -82,7 +82,27 @@ def encrypt(browser_name, value, encrypt_prefix):
     length = 16
     iterations = 1
 
-    my_pass = browser_cookie3.get_linux_pass(browser_name)
+    if sys.platform == "darwin":
+        if browser_name == "chrome":
+            osx_key_service = ("Chrome Safe Storage",)
+            osx_key_user = "Chrome"
+        elif browser_name == "chromium":
+            osx_key_service = ("Chromium Safe Storage",)
+            osx_key_user = "Chromium"
+        elif browser_name == "opera":
+            osx_key_service = ("Opera Safe Storage",)
+            osx_key_user = "Opera"
+        elif browser_name == "edge":
+            osx_key_service = ("Microsoft Edge Safe Storage",)
+            osx_key_user = "Microsoft Edge"
+        my_pass = keyring.get_password(osx_key_service, osx_key_user)
+    else:  # will assume it's linux for now
+        os_crypt_name = "chromium"
+        if browser_name == "chrome":
+            os_crypt_name = browser_name
+
+        my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
+
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
     aes_cbc_encrypt = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv=iv))
 
@@ -140,26 +160,29 @@ def get_cookie_file(browser_name):
         raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
 
 
-def set_browser_cookies(browser_name, cookies):
+def set_browser_cookies(from_browser_name, to_browser_name, cookies):
     """
-    Sets cookies to a given browser
+    Sets cookies from one browser to another
 
     Args:
-        browser_name (str): the name of the browser we got cookies from
+        from_browser_name (str): the name of the browser we got cookies from
+        to_browser_name (str): the name of the browser we will import cookies to
         cookies (arr): all information about the browser cookies
     """
-    browser = get_browser(browser_name)  # deal with error?
+    from_browser = get_browser(from_browser_name)  # deal with error?
 
     # Decrypt old cookie 'encrypted_values' and re-encrypt it
     for cookie in cookies:
         # Only decrypt if value is not empty
         if not cookie[4]:
-            decrypted_value = browser._decrypt(cookie[4], cookie[5])
-            cookie[5] = encrypt(browser_name, decrypted_value, cookie[5][:3])
+            decrypted_value = from_browser._decrypt(cookie[4], cookie[5])
+            cookie[5] = encrypt(to_browser_name, decrypted_value, cookie[5][:3])
 
-    cookie_file = browser.cookie_file
+    to_browser = get_browser(to_browser_name)
+
+    cookie_file = to_browser.cookie_file
     if cookie_file is None:
-        cookie_file = get_cookie_file(browser_name)
+        cookie_file = get_cookie_file(to_browser_name)
 
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
@@ -181,35 +204,5 @@ def set_browser_cookies(browser_name, cookies):
     con.commit()
     con.close()
 
-# browser_history.browsers import Chrome
 
-
-# print("========== Browser_History ==========")
-# f = Chrome()
-# outputs = f.fetch_history()
-
-# his = outputs.histories
-# from
-# print(his)
-
-
-# def load_cookies(cookies):
-
-
-# def load(self):
-#     con = sqlite3.connect(self.tmp_cookie_file)
-#     cur = con.cursor()
-#     # perform insert command instead
-#     cur.execute('select host, path, isSecure, expiry, name, value from moz_cookies '
-#                 'where host like "%{}%"'.format(self.domain_name))
-
-#     cj = http.cookiejar.CookieJar()
-#     for item in cur.fetchall():
-#         c = create_cookie(*item)
-#         cj.set_cookie(c)
-#     con.close()
-
-#     self.__add_session_cookies(cj)
-#     self.__add_session_cookies_lz4(cj)
-
-#     return cj
+# set_browser_cookies("chrome", "opera", get_browser_cookies("chrome"))
