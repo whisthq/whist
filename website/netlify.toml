@@ -1,4 +1,4 @@
 [build]
   publish = "build/"
   command = "yarn build:netlify"
-  # ignore =
+  ignore  = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
