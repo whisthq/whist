@@ -1,18 +1,19 @@
 #[[
-###################################### Fractal Protocol ######################################
-This is the root CmakeLists.txt for the protocol repository. We define various project level
-settings here as well as include the subdirectories of the repository. We also look for the
-protocol libraries needed here (FFmpeg, SDL, etc.).
+############################### Fractal Protocol ###############################
+This is the root CmakeLists.txt for the protocol repository. We define various
+project level settings here as well as include the subdirectories of the
+repository. We also look for the protocol libraries here (FFmpeg, SDL, etc.).
 
-To support WSL running with Ubuntu 18.04, which only has Cmake v3.10 in its repositories, manually
-set cmake_minimum_required(VERSION 3.10) and comment cmake_policy(SET CMP0091 NEW), which requires
-version 3.15.
+To support WSL running with Ubuntu 18.04, which only has Cmake v3.10 in its
+repositories, manually set cmake_minimum_required(VERSION 3.10) and comment
+cmake_policy(SET CMP0091 NEW), which requires version 3.15.
 
-If you want to compile on Windows with MSVC, set cmake_minimum_required(VERSION 3.15) and uncomment
-cmake_policy(SET CMP0091 NEW).
+To compile on Windows with MSVC, set cmake_minimum_required(VERSION 3.15)
+and uncomment cmake_policy(SET CMP0091 NEW).
 
-Additional VERBOSE message output is a feature of Cmake v3.15 and later. If you use an earlier version,
-the verbose messages will be printed regardless of whether verbose output is set to ON or OFF.
+Additional VERBOSE message output is a feature of Cmake v3.15 and later. If
+you use an earlier version, the verbose messages will be printed regardless
+of whether verbose output is set to ON or OFF.
 ]]
 
 # 3.15 required for CMP0091
@@ -27,11 +28,11 @@ include(CMakeDependentOption)
 
 project(FractalProtocol LANGUAGES C CXX)
 
-if (CMAKE_CONFIGURATION_TYPES)
+if(CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
-endif ()
+endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     check_language(CUDA)
     # CMAKE_CUDA_COMPILER will be set only if check_language(CUDA) succeeded
     if(CMAKE_CUDA_COMPILER)
@@ -54,14 +55,14 @@ endif()
 include(cmake/CompilerOptions.cmake)
 
 # Add rpath to look for shared libraries on linux
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_SKIP_BUILD_RPATH  FALSE)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
     set(CMAKE_INSTALL_RPATH $ORIGIN)
 endif()
 
 # Add rpath to look for shared libraries on mac
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SKIP_BUILD_RPATH  FALSE)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
     set(CMAKE_INSTALL_RPATH @executable_path)
@@ -86,7 +87,7 @@ include(cmake/clang-format.cmake)
 include(cmake/default-build.cmake)
 
 # For debug builds log every thing, for release builds log warnings or higher
-if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+if(${CMAKE_BUILD_TYPE} MATCHES Debug)
     add_definitions(-DLOG_LEVEL=5)
 elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     # For now, always show all logs
@@ -162,14 +163,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 message(STATUS "Exporting compile commands for clang-tidy - done")
 
 # detect if we are building 64bit or 32bit
-if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
+if(${CMAKE_SIZEOF_VOID_P} MATCHES "8")
     set(arch 64)
 else()
     set(arch 32)
 endif()
 
 # on macOS, detect if we are building arm64 or x86_64
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # should return "arm64" or "x86_64"
     execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE MACOS_ARCHITECTURE)
     message(STATUS "Detecting macOS Architecture: ${MACOS_ARCHITECTURE}")
@@ -179,7 +180,7 @@ endif()
 option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
 
 # Get Bash on all OSs
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # Find git
     find_program(GIT git REQUIRED)
     # Find git's path
@@ -188,7 +189,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
     find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH)
 
-    if (NOT BASH)
+    if(NOT BASH)
         if(EXISTS "C:\\Windows\\System32\\wsl.exe")
             set(WSL "C:\\Windows\\System32\\wsl.exe")
             set(BASH "/bin/bash")
@@ -202,9 +203,9 @@ endif()
 
 # Download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
-if (DOWNLOAD_BINARIES)
+if(DOWNLOAD_BINARIES)
     message(STATUS "Downloading Fractal Protocol binaries from AWS S3")
-    if (WSL)
+    if(WSL)
         set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_BINARY_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
         execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -215,13 +216,13 @@ if (DOWNLOAD_BINARIES)
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
     endif()
-    if (NOT ${download_result} EQUAL "0")
+    if(NOT ${download_result} EQUAL "0")
         message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_result}")
     endif()
 endif()
 
 # FFmpeg: Use the FFmpeg libs in /lib/${arch}/ffmpeg
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.4.dylib;libavcodec.59.dylib;libavdevice.59.dylib;libavfilter.8.dylib;
                     libavformat.59.dylib;libswscale.6.dylib;libavutil.57.dylib;libpostproc.56.dylib)
 else()
@@ -229,7 +230,7 @@ else()
 endif()
 
 set(FFMPEG_LIBS_PATHS "")
-FOREACH(LIB ${FFMPEG_LIBS})
+foreach(LIB ${FFMPEG_LIBS})
     message(STATUS "Looking for FFmpeg lib: ${LIB}")
     set(LIB_VAR "LIB_${LIB}")
     find_library(${LIB_VAR}
@@ -242,8 +243,8 @@ FOREACH(LIB ${FFMPEG_LIBS})
             NO_CMAKE_SYSTEM_PATH
             NO_CMAKE_FIND_ROOT_PATH)
     message(VERBOSE "Found FFmpeg lib: ${LIB_VAR}")
-    LIST(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
-endforeach(LIB)
+    list(APPEND FFMPEG_LIBS_PATHS ${${LIB_VAR}})
+endforeach()
 message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 
 
@@ -252,7 +253,7 @@ message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 ]]
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 # For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
@@ -261,7 +262,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             NO_CMAKE_SYSTEM_PATH
             NO_CMAKE_FIND_ROOT_PATH)
 
-    if (NOT LIB_OPENSSL)
+    if(NOT LIB_OPENSSL)
         message(FATAL_ERROR "Library openssl was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
     endif()
 else()
@@ -275,7 +276,7 @@ find_library(LIB_SENTRY NAMES sentry PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/sent
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
-if (NOT LIB_SENTRY)
+if(NOT LIB_SENTRY)
     message(FATAL_ERROR "Library Sentry was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}")
 endif()
 
@@ -286,7 +287,7 @@ find_library(STATIC_SDL2 NAMES SDL2 SDL2-static PATHS "${CMAKE_BINARY_DIR}/lib/$
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
-if (NOT STATIC_SDL2)
+if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
@@ -298,22 +299,22 @@ find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/$
         NO_CMAKE_SYSTEM_PATH
         NO_CMAKE_FIND_ROOT_PATH)
 
-if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
 # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
-FetchContent_Declare(
+fetchcontent_declare(
     googletest
     GIT_REPOSITORY "https://github.com/google/googletest.git"
     GIT_TAG "release-1.11.0"
 )
 # From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+fetchcontent_makeavailable(googletest)
 
 #Set OSX compiler and SDK globally
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_COMPILER clang)
     if(DEFINED ENV{FRACTAL_OSX_SYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{FRACTAL_OSX_SYSROOT})
@@ -361,7 +362,7 @@ set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
 )
 
 # MSVC C/C++ Standard Library linking, based on Debug/Release
-if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+if(${CMAKE_BUILD_TYPE} MATCHES Debug)
     set(WINDOWS_CORE_LIBS
         ucrtd
         libcmtd
@@ -417,7 +418,7 @@ set(WINDOWS_SPECIFIC_CLIENT_LIBS
 )
 
 add_subdirectory(client)
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "FractalServer")
     set(PLATFORM_INDEPENDENT_SERVER_LIBS
         fractalCore
@@ -451,7 +452,7 @@ endif()
 add_subdirectory(test)
 
 # Clang-tidy target
-if (WSL)
+if(WSL)
     message(STATUS "Native bash not found (only WSL), clang-tidy will not be an option")
 else()
     add_custom_target(clang-tidy
@@ -461,7 +462,7 @@ else()
 endif()
 
 # Documentation target
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target(docs
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs
