@@ -362,12 +362,7 @@ def drain_instance(instance: InstanceInfo) -> bool:
         True if the instance is marked for draining, else False.
 
     """
-    # We need to modify the status to DRAINING to ensure that we don't assign a new
-    # mandelbox to the instance. We need to commit here as we don't want to enter a
-    # deadlock with host service where it tries to modify the instance_info row.
     old_status = instance.status
-    instance.status = MandelboxHostState.DRAINING
-    db.session.commit()
     if (
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
@@ -385,6 +380,12 @@ def drain_instance(instance: InstanceInfo) -> bool:
             f" terminating instance | reasoning {why}"
         )
         terminate_instance(instance)
+    else:
+        # We need to modify the status to DRAINING to ensure that we don't assign a new
+        # mandelbox to the instance. We need to commit here as we don't want to enter a
+        # deadlock with host service where it tries to modify the instance_info row.
+        instance.status = MandelboxHostState.DRAINING
+        db.session.commit()
 
     return True
 
