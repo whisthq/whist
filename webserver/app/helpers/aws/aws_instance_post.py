@@ -132,6 +132,10 @@ def terminate_instance(instance: InstanceInfo) -> None:
         fractal_logger.info(f"instance {instance.instance_name} | deleting from db")
         db.session.delete(instance)
         db.session.commit()
+    else:
+        fractal_logger.error(
+            f"instance {instance.instance_name} | termination failed with resp {resp}"
+        )
 
 
 def find_enabled_regions() -> Any:
