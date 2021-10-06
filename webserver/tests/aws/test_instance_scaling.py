@@ -176,10 +176,7 @@ def test_terminate_single_ec2_fails(
     assert len(db_call_list) == 0  # Never call db since ec2 call unsuccessful
 
 
-@pytest.mark.parametrize(
-    "retval",
-    ['stopping', 'stopped', 'shutting-down', 'terminated']
-)
+@pytest.mark.parametrize("retval", ["stopping", "stopped", "shutting-down", "terminated"])
 def test_terminate_single_ec2_succeeds(
     monkeypatch: MonkeyPatch,
     mock_get_num_new_instances: Callable[[Any], None],
@@ -197,14 +194,13 @@ def test_terminate_single_ec2_succeeds(
     def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
         ec2_call_list.append({"args": args, "kwargs": kwargs})
         return {
-            'TerminatingInstances': [
+            "TerminatingInstances": [
                 {
-                    'CurrentState': {
-                        'Name': retval,
+                    "CurrentState": {
+                        "Name": retval,
                     },
                 },
             ],
-
         }
 
     def _get_state_helper(
