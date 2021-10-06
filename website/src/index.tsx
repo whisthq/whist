@@ -23,6 +23,7 @@ const RootComponent = () => (
     <Router history={history}>
       <MainProvider>
         <RootApp />
+        <div></div>
       </MainProvider>
     </Router>
   </Sentry.ErrorBoundary>
