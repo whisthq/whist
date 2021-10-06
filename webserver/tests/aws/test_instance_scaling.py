@@ -159,7 +159,6 @@ def test_terminate_single_ec2_fails(
 
     def _db_call(*args: Any, **kwargs: Any) -> None:
         db_call_list.append({"args": args, "kwargs": kwargs})
-        return
 
     monkeypatch.setattr(db.session, "delete", _db_call)
 
@@ -214,7 +213,6 @@ def test_terminate_single_ec2_succeeds(
 
     def _db_call(*args: Any, **kwargs: Any) -> None:
         db_call_list.append({"args": args, "kwargs": kwargs})
-        return
 
     monkeypatch.setattr(db.session, "delete", _db_call)
 
