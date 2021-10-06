@@ -23,6 +23,10 @@ def hijack_ec2_calls(
         call_list.append({"args": args, "kwargs": kwargs})
         return ["test_id"]
 
+    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> List[str]:
+        call_list.append({"args": args, "kwargs": kwargs})
+        return {}
+
     def _trivial_true(*args: Any, **kwargs: Any) -> bool:  # pylint: disable=unused-argument
         return True
 
@@ -33,7 +37,7 @@ def hijack_ec2_calls(
         return ["running"]
 
     monkeypatch.setattr(EC2Client, "start_instances", _set_state_helper)
-    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper)
+    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
     monkeypatch.setattr(EC2Client, "all_running", _trivial_true)
     monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
     yield call_list

@@ -119,12 +119,16 @@ def terminate_instance(instance: InstanceInfo) -> None:
 
     """
     instance_id = get_instance_id(instance)
+    ec2_success = True
     if check_instance_exists(instance_id, instance.location):
         ec2_client = EC2Client(region_name=instance.location)
-        ec2_client.stop_instances([instance_id])
-    fractal_logger.info(f"instance {instance.instance_name} | deleting from db")
-    db.session.delete(instance)
-    db.session.commit()
+        resp = ec2_client.stop_instances([instance_id])
+        if resp.get('StoppingInstances', [{}])[0].get('CurrentState', {}).get('Name', '') != 'stopping':
+            ec2_success = False
+    if ec2_success:
+        fractal_logger.info(f"instance {instance.instance_name} | deleting from db")
+        db.session.delete(instance)
+        db.session.commit()
 
 
 def find_enabled_regions() -> Any:
