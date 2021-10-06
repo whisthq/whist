@@ -1,4 +1,4 @@
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_library(fractalInput STATIC
                 input.c
                 input.h
@@ -7,7 +7,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                 keyboard_mapping.h
               )
 
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_sources(fractalInput PRIVATE
                 xtest_input_driver.c
                 xtest_input_driver.h
@@ -19,5 +19,5 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             winapi_input_driver.h)
         set_property(TARGET fractalInput PROPERTY
                 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    endif ()
+    endif()
 endif()

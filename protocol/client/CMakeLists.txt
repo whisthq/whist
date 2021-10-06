@@ -37,14 +37,14 @@ add_custom_command(
         ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
         $<TARGET_FILE_DIR:FractalClient>)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/client/fclient
             ${CMAKE_BINARY_DIR})
 endif()
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
@@ -54,14 +54,14 @@ endif()
 
 # Copy over FFmpeg shared libs (on all OSes) into the FractalClient dir
 add_custom_command(
-	TARGET FractalClient POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-	$<TARGET_FILE_DIR:FractalClient>)
+    TARGET FractalClient POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+    $<TARGET_FILE_DIR:FractalClient>)
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
@@ -85,11 +85,11 @@ message(VERBOSE "client C CI flags: ${CMAKE_C_FLAGS_CI}")
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for FractalClient: ${LIB}")
     target_link_libraries(FractalClient ${LIB})
-endforeach(LIB)
+endforeach()
 
 # Threading and Dynamic link for linux/macosx only
 # if we add other target platforms we may need to come back to this
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 #    set(THREADS_PREFER_PTHREAD_FLAG ON)
 #    find_package(Threads REQUIRED)
     target_link_libraries(FractalClient
@@ -106,7 +106,7 @@ target_link_libraries(FractalClient ${PLATFORM_INDEPENDENT_LIBS})
 #[[
 ################## LINUX ##################
 ]]
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     target_sources(FractalClient PRIVATE native_window_utils_x11.c)
 
@@ -114,7 +114,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(FractalClient 
+    target_link_libraries(FractalClient
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
@@ -125,7 +125,7 @@ endif()
 #[[
 ################## MACOS ##################
 ]]
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(FractalClient PRIVATE native_window_utils_mac.m)
 
     target_link_libraries(FractalClient ${MAC_SPECIFIC_CLIENT_LIBS})
@@ -134,10 +134,10 @@ endif()
 #[[
 ################## WINDOWS ##################
 ]]
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
-    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
+    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
     target_sources(FractalClient PRIVATE native_window_utils_windows.c)
 

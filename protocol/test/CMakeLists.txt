@@ -31,13 +31,13 @@ add_custom_command(
 
 # Copy the FFmpeg library to the build folder
 add_custom_command(
-	TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-	$<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
+    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+    $<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
 
 # Copy the OpenSSL/libcrypto libraries if we are on Windows
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET ${CLIENT_TEST_BINARY} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
@@ -49,11 +49,11 @@ endif()
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for ${CLIENT_TEST_BINARY}: ${LIB}")
     target_link_libraries(${CLIENT_TEST_BINARY} ${LIB})
-endforeach(LIB)
+endforeach()
 
 # Link the threading and dynamic link library if we are on Mac/Linx
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	target_link_libraries(${CLIENT_TEST_BINARY} ${CMAKE_DL_LIBS})
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_link_libraries(${CLIENT_TEST_BINARY} ${CMAKE_DL_LIBS})
 endif()
 
 # Link the remaining platform-independent libraries
@@ -62,32 +62,38 @@ target_link_libraries(${CLIENT_TEST_BINARY}
 )
 
 # Link more linux-specific libraries
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_sources(${CLIENT_TEST_BINARY} PRIVATE
+        ../client/native_window_utils_x11.c
+    )
 
-    find_package(X11 REQUIRED
-            Xfixes)
+    find_package(X11 REQUIRED Xfixes)
     find_package(ALSA REQUIRED)
     include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
     target_link_libraries(${CLIENT_TEST_BINARY} ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${ALSA_LIBRARIES}
             crypto
-            m)
+            m
+        )
 endif()
 
 # Link macOS-specific libs
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_mac.m)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_sources(${CLIENT_TEST_BINARY} PRIVATE
+        ../client/native_window_utils_mac.m
+    )
 
     target_link_libraries(${CLIENT_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
 
 # Finally, link Windows-specific libraries
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE ../client/native_window_utils_windows.c)
+    target_sources(${CLIENT_TEST_BINARY} PRIVATE
+        ../client/native_window_utils_windows.c
+)
     target_link_libraries(${CLIENT_TEST_BINARY} fractalInput ${LIBMFX})
 
     set_property(TARGET ${CLIENT_TEST_BINARY} PROPERTY
@@ -126,7 +132,7 @@ endif()
 ################## FractalServerUnitTests ##################
 ]]
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on macOS
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on macOS
 
     # Create the executable
     set(SERVER_TEST_BINARY FractalServerTest)
@@ -146,10 +152,10 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
     foreach(LIB ${FFMPEG_LIBS_PATHS})
         message(VERBOSE "linking lib for ${SERVER_TEST_BINARY}: ${LIB}")
         target_link_libraries(${SERVER_TEST_BINARY} ${LIB})
-    endforeach(LIB)
+    endforeach()
 
     # Link the threading and dynamic link library if we are on Mac/Linx
-    if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         target_link_libraries(${SERVER_TEST_BINARY} ${CMAKE_DL_LIBS})
     endif()
 
@@ -158,7 +164,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         ${PLATFORM_INDEPENDENT_SERVER_LIBS}
     )
 
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         find_package(X11 REQUIRED
                 Xfixes
                 Xdamage
@@ -191,13 +197,13 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
                 )
     endif()
 
-    if (${WIN32})
-        #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
+    if(${WIN32})
+        # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
         # this comes up when we used precompiled libraries which we do not have .pdb files for
         set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
-        #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
-        #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
+        #sets the MSVC runtime library as multithreaded and adds debug symbols
+        # if is a debug build, see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
         set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY
                 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -206,7 +212,9 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make o
         endif()
 
         # Link to system libs
-        target_link_libraries(${SERVER_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
+        target_link_libraries(${SERVER_TEST_BINARY}
+            ${WINDOWS_SPECIFIC_SERVER_LIBS}
+            )
     endif()
 
     add_custom_command(
@@ -235,9 +243,10 @@ endif()
 ################## FractalUnitTests ##################
 ]]
 
-# Include the GoogleTest library, and let gtest scan for the tests in the binary file
+# Include the GoogleTest library, and let gtest scan
+# for the tests in the binary file
 include(GoogleTest)
 gtest_discover_tests(${CLIENT_TEST_BINARY})
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     gtest_discover_tests(${SERVER_TEST_BINARY})
 endif()

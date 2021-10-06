@@ -216,3 +216,8 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: mandelboxes
         run: ./helper_scripts/copy_protocol_build.sh
+
+      - name: Ensure CMake Files are Linted
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: pip install cmakelint && cmakelint --config=.cmakelintrc **/**/CMakeLists.txt
