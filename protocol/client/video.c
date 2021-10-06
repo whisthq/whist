@@ -867,8 +867,27 @@ void update_video() {
                         ctx->num_times_nacked = 0;
                         ctx->last_nacked_index = -1;
                     }
-                    // Nack up to 1 time (either with a simple nack or bitarray nack)
-                    nack_missing_packets_up_to_index(video_ring_buffer, ctx, ctx->num_packets);
+                    int num_nacked = 0;
+                    for (int i = ctx->last_nacked_index + 1;
+                         i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
+                        if (!ctx->received_indices[i] &&
+                            ctx->nacked_indices[i] < MAX_PACKET_NACKS) {
+                            num_nacked++;
+                            LOG_INFO(
+                                "************NACKING VIDEO PACKET %d %d (/%d), "
+                                "alive for %f MS",
+                                ctx->id, i, ctx->num_packets,
+                                get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
+                            ctx->nacked_indices[i]++;
+                            nack_packet(video_ring_buffer, ctx->id, i);
+                        }
+                        ctx->last_nacked_index = i;
+                    }
+                    if (ctx->last_nacked_index == ctx->num_packets - 1) {
+                        ctx->last_nacked_index = -1;
+                        ctx->num_times_nacked++;
+                    }
+                    start_timer(&ctx->last_nacked_timer);
                 }
             }
         }
