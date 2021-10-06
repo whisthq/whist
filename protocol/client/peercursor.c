@@ -1,10 +1,3 @@
-/**
- * Copyright Fractal Computers, Inc. 2020
- * @file peercursor.c
- * @brief This file contains client-specific code to set and display 
- *        multiple cursors.
-*/
-
 #include <fractal/core/fractal.h>
 #include <fractal/logging/logging.h>
 #include "peercursor.h"

@@ -1,5 +1,7 @@
 # Fractal Application Streaming
 
+[![Fractal: Build & Deploy](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml/badge.svg)](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal)
+
 This repository contains the end-to-end code for the Fractal Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
 ## Table of Contents
