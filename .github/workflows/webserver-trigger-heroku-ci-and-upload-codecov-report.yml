@@ -11,9 +11,7 @@ name: "Webserver: Trigger Heroku CI & Upload Codecov Report"
 
 on:
   push:
-    # Trigger Heroku CI to run when commits that modify Webserver source files
-    # are pushed to `dev`, since we need to run Heroku CI in order to generate an
-    # updated test coverage report for the `dev` branch.
+    # Trigger runs on our default branch, `dev`, to upload code coverage reports to Codecov
     branches:
       - dev
     paths:
