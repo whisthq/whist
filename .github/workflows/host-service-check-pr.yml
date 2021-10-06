@@ -7,9 +7,7 @@ name: "Host Service: Check PR"
 
 on:
   push:
-    # Trigger Host Service CI to run when commits that modify Host Service source files
-    # are pushed to `dev`, since we need to run Host Service CI in order to generate an
-    # updated test coverage report for the `dev` branch.
+    # Trigger runs on our default branch, `dev`, to upload code coverage reports to Codecov
     branches:
       - dev
     paths:
