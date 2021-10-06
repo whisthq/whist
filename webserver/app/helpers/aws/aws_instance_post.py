@@ -362,7 +362,6 @@ def drain_instance(instance: InstanceInfo) -> None:
         None
 
     """
-    old_status = instance.status
     if (
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
