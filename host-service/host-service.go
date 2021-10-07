@@ -870,7 +870,7 @@ func main() {
 	// Start database subscriptions
 	instanceName, err = aws.GetInstanceName()
 	if err != nil {
-		logger.Errorf("Can't get AWS Instance name.")
+		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
@@ -985,6 +985,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			case *subscriptions.StatusSubscriptionEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.
 				drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
+
+			default:
+				if subscriptionEvent != nil {
+					err := utils.MakeError("Unimplemented handling of subscription event [type: %T]: %v", subscriptionEvent, subscriptionEvent)
+					logger.Error(err)
+					subscriptionEvent.ReturnResult("", err)
+				}
 			}
 		}
 	}
