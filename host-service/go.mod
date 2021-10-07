@@ -1,6 +1,6 @@
 module github.com/fractal/fractal/host-service
 
-go 1.16
+go 1.17
 
 require (
 	github.com/MicahParks/keyfunc v0.8.3
