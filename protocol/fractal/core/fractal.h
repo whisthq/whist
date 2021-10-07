@@ -150,7 +150,8 @@ Defines
 // this maxlen is the determined Fractal environment max length (the upper bound on all flags passed
 // into the protocol)
 #define FRACTAL_ARGS_MAXLEN 255
-
+// Maximum number of packets that can fit in a frame. These values mirror the ones defined at the
+// top of client/ringbuffer.c
 #define MAX_FRAME_VIDEO_PACKETS 500
 #define MAX_FRAME_AUDIO_PACKETS 3
 
