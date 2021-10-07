@@ -38,7 +38,7 @@ Includes
 #endif
 #include <time.h>
 
-#include <fractal/utils/window_name.h>
+#include <fractal/utils/x11_window_info.h>
 #include <fractal/core/fractalgetopt.h>
 #include <fractal/core/fractal.h>
 #include <fractal/input/input.h>

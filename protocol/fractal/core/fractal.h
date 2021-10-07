@@ -689,6 +689,7 @@ typedef enum FractalServerMessageType {
     SMESSAGE_WINDOW_TITLE = 5,
     MESSAGE_DISCOVERY_REPLY = 6,
     SMESSAGE_OPEN_URI = 7,
+    SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
@@ -701,6 +702,7 @@ typedef struct FractalServerMessage {
     union {
         int ping_id;
         int frequency;
+        int fullscreen;
     };
     union {
         ClipboardData clipboard;
