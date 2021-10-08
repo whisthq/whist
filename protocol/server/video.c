@@ -718,6 +718,12 @@ int32_t multithreaded_send_video(void* opaque) {
 #if LOG_VIDEO
                         LOG_INFO("Sent video packet %d (Size: %d) %s", id,
                                  encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" : "");
+#else
+                        // We should log I-Frames no matter what
+                        if (frame->is_iframe) {
+                            LOG_INFO("Sent I-Frame video packet with ID %d (Size: %d)", id,
+                                     encoder->encoded_frame_size);
+                        }
 #endif  // LOG_VIDEO
                         start_timer(&statistics_timer);
 

@@ -116,12 +116,20 @@ Defines
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200
 
+// Max/Min/Starting Bitrates/Burst Bitrates
+
 #define MAXIMUM_BITRATE 30000000
 #define MINIMUM_BITRATE 2000000
-#define ACK_REFRESH_MS 50
+#define STARTING_BITRATE_RAW 15400000
+#define STARTING_BITRATE (min(max(STARTING_BITRATE_RAW, MINIMUM_BITRATE), MAXIMUM_BITRATE))
 
-#define STARTING_BITRATE 15400000
-#define STARTING_BURST_BITRATE 100000000
+#define MAXIMUM_BURST_BITRATE 200000000
+#define MINIMUM_BURST_BITRATE 4000000
+#define STARTING_BURST_BITRATE_RAW 100000000
+#define STARTING_BURST_BITRATE \
+    (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
+
+#define ACK_REFRESH_MS 50
 
 // 16:10 is the Mac aspect ratio, but we set the minimum screen to
 // 500x500 since these are the Chrome minimum dimensions

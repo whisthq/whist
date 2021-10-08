@@ -1770,10 +1770,10 @@ int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type,
     // For now, the TCP network throttler is NULL, so this is a no-op.
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
 
-//#if LOG_NETWORKING
+    //#if LOG_NETWORKING
     // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
     LOG_INFO("Sending a FractalPacket of size %d over TCP", unencrypted_len);
-//#endif
+    //#endif
     // Send the packet
     // Send unencrypted during dev mode, and encrypted otherwise
     void* packet_to_send = ENCRYPTING_PACKETS ? encrypted_packet_buffer : packet_buffer;
@@ -1976,14 +1976,15 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             int decrypted_len;
             if (ENCRYPTING_PACKETS) {
                 // Decrypt the packet
-                decrypted_len =
-                    decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                                    target_len, decrypted_packet_buffer, target_len,
-                                    (unsigned char*)context->binary_aes_private_key);
+                decrypted_len = decrypt_packet_n(
+                    (FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len,
+                    decrypted_packet_buffer, target_len,
+                    (unsigned char*)context->binary_aes_private_key);
             } else {
                 // The decrypted packet is just the original packet, during dev mode
                 decrypted_len = target_len;
-                memcpy(decrypted_packet_buffer, (encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len);
+                memcpy(decrypted_packet_buffer, (encrypted_tcp_packet_buffer->buf + sizeof(int)),
+                       target_len);
             }
 #if LOG_NETWORKING
             LOG_INFO("Received a FractalPacket of size %d over TCP", decrypted_len);
@@ -2047,7 +2048,7 @@ FractalPacket* read_udp_packet(SocketContext* context) {
         if (ENCRYPTING_PACKETS) {
             // Decrypt the packet
             decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                            (unsigned char*)context->binary_aes_private_key);
+                                           (unsigned char*)context->binary_aes_private_key);
         } else {
             // The decrypted packet is just the original packet, during dev mode
             decrypted_len = encrypted_len;
