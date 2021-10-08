@@ -33,7 +33,7 @@ Defines
 #define KeyUp(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 0)
 #define KeyDown(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 1)
 
-unsigned int last_input_fmsg_id = 0;
+unsigned int last_input_fcmsg_id = 0;
 FractalOSType input_os_type = FRACTAL_UNKNOWN_OS;
 
 /*
@@ -50,91 +50,91 @@ void reset_input(FractalOSType os_type) {
     */
 
     input_os_type = os_type;
-    last_input_fmsg_id = 0;
+    last_input_fcmsg_id = 0;
 }
 
-void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg) {
+void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcmsg) {
     /*
         Updates the keyboard state on the server to match the client's
 
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            fmsg (FractalClientMessage*): The Fractal message packet, defining one
+            fcmsg (FractalClientMessage*): The Fractal message packet, defining one
                 keyboard event, to update the keyboard state
     */
 
-    if (fmsg->id <= last_input_fmsg_id) {
+    if (fcmsg->id <= last_input_fcmsg_id) {
         // Ignore Old FractalClientMessage
         return;
     }
-    last_input_fmsg_id = fmsg->id;
+    last_input_fcmsg_id = fcmsg->id;
 
-    if (fmsg->type != MESSAGE_KEYBOARD_STATE) {
+    if (fcmsg->type != MESSAGE_KEYBOARD_STATE) {
         LOG_WARNING(
-            "updateKeyboardState requires fmsg.type to be "
+            "updateKeyboardState requires fcmsg.type to be "
             "MESSAGE_KEYBOARD_STATE");
         return;
     }
 
-    update_mapped_keyboard_state(input_device, input_os_type, fmsg->keyboard_state);
+    update_mapped_keyboard_state(input_device, input_os_type, fcmsg->keyboard_state);
 }
 
-bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
+bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg) {
     /*
         Replayed a received user action on a server, by sending it to the OS
 
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            fmsg (FractalClientMessage*): The Fractal message packet, defining one user
+            fcmsg (FractalClientMessage*): The Fractal message packet, defining one user
                 action event, to replay on the computer
 
         Returns:
             (bool): True if it replayed the event, False otherwise
     */
 
-    if (fmsg->id <= last_input_fmsg_id) {
+    if (fcmsg->id <= last_input_fcmsg_id) {
         // Ignore Old FractalClientMessage
         return true;
     }
-    last_input_fmsg_id = fmsg->id;
+    last_input_fcmsg_id = fcmsg->id;
 
     int ret = 0;
-    switch (fmsg->type) {
+    switch (fcmsg->type) {
         case MESSAGE_KEYBOARD:
-            ret = emit_mapped_key_event(input_device, input_os_type, fmsg->keyboard.code,
-                                        fmsg->keyboard.pressed);
+            ret = emit_mapped_key_event(input_device, input_os_type, fcmsg->keyboard.code,
+                                        fcmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
-            ret = emit_mouse_motion_event(input_device, fmsg->mouseMotion.x, fmsg->mouseMotion.y,
-                                          fmsg->mouseMotion.relative);
+            ret = emit_mouse_motion_event(input_device, fcmsg->mouseMotion.x, fcmsg->mouseMotion.y,
+                                          fcmsg->mouseMotion.relative);
             break;
         case MESSAGE_MOUSE_BUTTON:
-            ret = emit_mouse_button_event(input_device, fmsg->mouseButton.button,
-                                          fmsg->mouseButton.pressed);
+            ret = emit_mouse_button_event(input_device, fcmsg->mouseButton.button,
+                                          fcmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
 #if INPUT_DRIVER == UINPUT_INPUT_DRIVER
-            ret = emit_high_res_mouse_wheel_event(input_device, fmsg->mouseWheel.precise_x,
-                                                  fmsg->mouseWheel.precise_y);
+            ret = emit_high_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.precise_x,
+                                                  fcmsg->mouseWheel.precise_y);
 #else
-            ret = emit_low_res_mouse_wheel_event(input_device, fmsg->mouseWheel.x,
-                                                 fmsg->mouseWheel.y);
+            ret = emit_low_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.x,
+                                                 fcmsg->mouseWheel.y);
 #endif  // INPUT_DRIVER
             break;
         case MESSAGE_MULTIGESTURE:
             ret = emit_multigesture_event(
-                input_device, fmsg->multigesture.d_theta, fmsg->multigesture.d_dist,
-                fmsg->multigesture.gesture_type, fmsg->multigesture.active_gesture);
+                input_device, fcmsg->multigesture.d_theta, fcmsg->multigesture.d_dist,
+                fcmsg->multigesture.gesture_type, fcmsg->multigesture.active_gesture);
             break;
         default:
-            LOG_ERROR("Unknown message type! %d", fmsg->type);
+            LOG_ERROR("Unknown message type! %d", fcmsg->type);
             break;
     }
 
     if (ret) {
-        LOG_WARNING("Failed to handle message of type %d", fmsg->type);
+        LOG_WARNING("Failed to handle message of type %d", fcmsg->type);
     }
 
     return true;

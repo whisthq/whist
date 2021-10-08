@@ -322,12 +322,12 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
             */
     ring_buffer->num_packets_nacked++;
     LOG_INFO("NACKing for Packet ID %d, Index %d", id, index);
-    FractalClientMessage fmsg = {0};
-    fmsg.type = ring_buffer->type == FRAME_AUDIO ? MESSAGE_AUDIO_NACK : MESSAGE_VIDEO_NACK;
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = ring_buffer->type == FRAME_AUDIO ? MESSAGE_AUDIO_NACK : MESSAGE_VIDEO_NACK;
 
-    fmsg.simple_nack.id = id;
-    fmsg.simple_nack.index = index;
-    send_fmsg(&fmsg);
+    fcmsg.simple_nack.id = id;
+    fcmsg.simple_nack.index = index;
+    send_fcmsg(&fcmsg);
 }
 
 void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, bit_array_t* bit_arr) {
@@ -342,23 +342,23 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, bit
             */
 
     LOG_INFO("NACKing with bit array for Packets with ID %d, Starting Index %d", id, start_index);
-    FractalClientMessage fmsg = {0};
+    FractalClientMessage fcmsg = {0};
     if (ring_buffer->type == FRAME_AUDIO) {
-        fmsg.type = MESSAGE_AUDIO_BITARRAY_NACK;
-        fmsg.bitarray_audio_nack.id = id;
-        fmsg.bitarray_audio_nack.index = start_index;
-        memset(fmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
-        memcpy(fmsg.bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
+        fcmsg.type = MESSAGE_AUDIO_BITARRAY_NACK;
+        fcmsg.bitarray_audio_nack.id = id;
+        fcmsg.bitarray_audio_nack.index = start_index;
+        memset(fcmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
+        memcpy(fcmsg.bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
                BITS_TO_CHARS(bit_arr->numBits));
-        fmsg.bitarray_audio_nack.numBits = bit_arr->numBits;
+        fcmsg.bitarray_audio_nack.numBits = bit_arr->numBits;
     } else {
-        fmsg.type = MESSAGE_VIDEO_BITARRAY_NACK;
-        fmsg.bitarray_video_nack.id = id;
-        fmsg.bitarray_video_nack.index = start_index;
-        memset(fmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
-        memcpy(fmsg.bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
+        fcmsg.type = MESSAGE_VIDEO_BITARRAY_NACK;
+        fcmsg.bitarray_video_nack.id = id;
+        fcmsg.bitarray_video_nack.index = start_index;
+        memset(fcmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
+        memcpy(fcmsg.bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
                BITS_TO_CHARS(bit_arr->numBits));
-        fmsg.bitarray_video_nack.numBits = bit_arr->numBits;
+        fcmsg.bitarray_video_nack.numBits = bit_arr->numBits;
     }
 
     for (unsigned int i = 0; i < bit_arr->numBits; i++) {
@@ -367,7 +367,7 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, bit
         }
     }
 
-    send_fmsg(&fmsg);
+    send_fcmsg(&fcmsg);
 }
 
 void nack_missing_frames(RingBuffer* ring_buffer, int start_id, int end_id) {

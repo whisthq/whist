@@ -10,7 +10,7 @@ discover_ports, connect_to_server, close_connections, and send_server_quit_messa
 start and end connections to the Fractal server. To connect, call discover_ports, then
 connect_to_server. To disconnect, send_server_quit_messages and then close_connections.
 
-To communicate with the server, use send_fmsg to send Fractal messages to the server. Large fmsg's
+To communicate with the server, use send_fcmsg to send Fractal messages to the server. Large fcmsg's
 (e.g. clipboard messages) are sent over TCP; otherwise, messages are sent over UDP. Use update_ping
 to ping the server at regular intervals, and receive_pong to receive pongs (ping acknowledgements)
 from the server.
@@ -177,12 +177,12 @@ void send_ping(int ping_id) {
         Arguments:
             ping_id (int): Ping ID to send to the server
     */
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_PING;
-    fmsg.ping_id = ping_id;
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_PING;
+    fcmsg.ping_id = ping_id;
 
     LOG_INFO("Ping! %d", ping_id);
-    if (send_fmsg(&fmsg) != 0) {
+    if (send_fcmsg(&fcmsg) != 0) {
         LOG_WARNING("Failed to ping server! (ID: %d)", ping_id);
     }
     last_ping_id = ping_id;
@@ -197,12 +197,12 @@ void send_tcp_ping(int ping_id) {
             ping_id (int): Ping ID to send to the server
     */
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_TCP_PING;
-    fmsg.ping_id = ping_id;
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_TCP_PING;
+    fcmsg.ping_id = ping_id;
 
     LOG_INFO("TCP Ping! %d", ping_id);
-    if (send_fmsg(&fmsg) != 0) {
+    if (send_fcmsg(&fcmsg) != 0) {
         LOG_WARNING("Failed to TCP ping server! (ID: %d)", ping_id);
     }
     last_tcp_ping_id = ping_id;
@@ -309,9 +309,9 @@ int send_tcp_reconnect_message(bool using_stun) {
             0 on success, -1 on failure
     */
 
-    FractalClientMessage fmsg;
-    fmsg.type = MESSAGE_TCP_RECOVERY;
-    fmsg.tcpRecovery.client_id = client_id;
+    FractalClientMessage fcmsg;
+    fcmsg.type = MESSAGE_TCP_RECOVERY;
+    fcmsg.tcpRecovery.client_id = client_id;
 
     SocketContext discovery_context;
     if (create_tcp_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
@@ -320,7 +320,7 @@ int send_tcp_reconnect_message(bool using_stun) {
         return -1;
     }
 
-    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fmsg, (int)sizeof(fmsg)) <
+    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) <
         0) {
         LOG_ERROR("Failed to send discovery request message.");
         closesocket(discovery_context.socket);
@@ -367,12 +367,12 @@ int send_server_quit_messages(int num_messages) {
             (int): 0 on success, -1 on failure
     */
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = CMESSAGE_QUIT;
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = CMESSAGE_QUIT;
     int retval = 0;
     for (; num_messages > 0; num_messages--) {
         SDL_Delay(50);
-        if (send_fmsg(&fmsg) != 0) {
+        if (send_fcmsg(&fcmsg) != 0) {
             retval = -1;
         }
     }
@@ -382,31 +382,31 @@ int send_server_quit_messages(int num_messages) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_fmsg(FractalClientMessage *fmsg) {
+int send_fcmsg(FractalClientMessage *fcmsg) {
     /*
-        We send large fmsg's over TCP. At the moment, this is only CLIPBOARD;
+        We send large fcmsg's over TCP. At the moment, this is only CLIPBOARD;
         Currently, sending FractalClientMessage packets over UDP that require multiple
         sub-packets to send is not supported (if low latency large
         FractalClientMessage packets are needed, then this will have to be
         implemented)
 
         Arguments:
-            fmsg (FractalClientMessage*): pointer to FractalClientMessage to be send
+            fcmsg (FractalClientMessage*): pointer to FractalClientMessage to be send
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    // Shouldn't overflow, will take 50 days at 1000 fmsg/second to overflow
-    static unsigned int fmsg_id = 0;
-    fmsg->id = fmsg_id;
-    fmsg_id++;
+    // Shouldn't overflow, will take 50 days at 1000 fcmsg/second to overflow
+    static unsigned int fcmsg_id = 0;
+    fcmsg->id = fcmsg_id;
+    fcmsg_id++;
 
-    if (fmsg->type == CMESSAGE_CLIPBOARD || fmsg->type == MESSAGE_DISCOVERY_REQUEST ||
-        fmsg->type == MESSAGE_TCP_PING) {
-        return send_tcp_packet(&packet_tcp_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg));
+    if (fcmsg->type == CMESSAGE_CLIPBOARD || fcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
+        fcmsg->type == MESSAGE_TCP_PING) {
+        return send_tcp_packet(&packet_tcp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg));
     } else {
-        if ((size_t)get_fmsg_size(fmsg) > MAX_PACKET_SIZE) {
+        if ((size_t)get_fcmsg_size(fcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
                 "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD, TIME, and "
                 "TCP_PING is "
@@ -415,7 +415,7 @@ int send_fmsg(FractalClientMessage *fmsg) {
         }
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return send_udp_packet(&packet_send_udp_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
-                               sent_packet_id, -1, NULL, NULL);
+        return send_udp_packet(&packet_send_udp_context, PACKET_MESSAGE, fcmsg,
+                               get_fcmsg_size(fcmsg), sent_packet_id, -1, NULL, NULL);
     }
 }

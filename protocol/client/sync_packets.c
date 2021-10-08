@@ -194,13 +194,13 @@ void try_update_bitrate() {
     */
     if (update_bitrate) {
         update_bitrate = false;
-        FractalClientMessage fmsg = {0};
-        fmsg.type = MESSAGE_MBPS;
-        fmsg.bitrate_data.bitrate = max_bitrate;
-        fmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
-        LOG_INFO("Asking for server MBPS to be %f/%f", fmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
-                 fmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
-        send_fmsg(&fmsg);
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = MESSAGE_MBPS;
+        fcmsg.bitrate_data.bitrate = max_bitrate;
+        fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
+        LOG_INFO("Asking for server MBPS to be %f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+        send_fcmsg(&fcmsg);
     }
 }
 
@@ -405,19 +405,19 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // GET CLIPBOARD HANDLER
         ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
         if (clipboard_chunk) {
-            // Alloc an fmsg
-            FractalClientMessage* fmsg_clipboard = allocate_region(
+            // Alloc an fcmsg
+            FractalClientMessage* fcmsg_clipboard = allocate_region(
                 sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
-            // Build the fmsg
+            // Build the fcmsg
             // Init metadata to 0 to prevent sending uninitialized packets over the network
-            memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
-            fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_clipboard->clipboard, clipboard_chunk,
+            memset(fcmsg_clipboard, 0, sizeof(*fcmsg_clipboard));
+            fcmsg_clipboard->type = CMESSAGE_CLIPBOARD;
+            memcpy(&fcmsg_clipboard->clipboard, clipboard_chunk,
                    sizeof(ClipboardData) + clipboard_chunk->size);
-            // Send the fmsg
-            send_fmsg(fmsg_clipboard);
-            // Free the fmsg
-            deallocate_region(fmsg_clipboard);
+            // Send the fcmsg
+            send_fcmsg(fcmsg_clipboard);
+            // Free the fcmsg
+            deallocate_region(fcmsg_clipboard);
             // Free the clipboard chunk
             deallocate_region(clipboard_chunk);
         }

@@ -178,9 +178,9 @@ int handle_mouse_left_window(SDL_Event *event) {
     */
 
     UNUSED(event);
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MOUSE_INACTIVE;
-    send_fmsg(&fmsg);
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_MOUSE_INACTIVE;
+    send_fcmsg(&fcmsg);
     return 0;
 }
 
@@ -227,32 +227,32 @@ int handle_key_up_down(SDL_Event *event) {
     }
 
     if (ctrl_pressed && alt_pressed && keycode == FK_B && is_pressed) {
-        FractalClientMessage fmsg = {0};
-        fmsg.type = CMESSAGE_INTERACTION_MODE;
-        fmsg.interaction_mode = SPECTATE;
-        send_fmsg(&fmsg);
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = CMESSAGE_INTERACTION_MODE;
+        fcmsg.interaction_mode = SPECTATE;
+        send_fcmsg(&fcmsg);
     }
 
     if (ctrl_pressed && alt_pressed && keycode == FK_G && is_pressed) {
-        FractalClientMessage fmsg = {0};
-        fmsg.type = CMESSAGE_INTERACTION_MODE;
-        fmsg.interaction_mode = CONTROL;
-        send_fmsg(&fmsg);
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = CMESSAGE_INTERACTION_MODE;
+        fcmsg.interaction_mode = CONTROL;
+        send_fcmsg(&fcmsg);
     }
 
     if (ctrl_pressed && alt_pressed && keycode == FK_M && is_pressed) {
-        FractalClientMessage fmsg = {0};
-        fmsg.type = CMESSAGE_INTERACTION_MODE;
-        fmsg.interaction_mode = EXCLUSIVE_CONTROL;
-        send_fmsg(&fmsg);
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = CMESSAGE_INTERACTION_MODE;
+        fcmsg.interaction_mode = EXCLUSIVE_CONTROL;
+        send_fcmsg(&fcmsg);
     }
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_KEYBOARD;
-    fmsg.keyboard.code = keycode;
-    fmsg.keyboard.pressed = is_pressed;
-    fmsg.keyboard.mod = event->key.keysym.mod;
-    send_fmsg(&fmsg);
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_KEYBOARD;
+    fcmsg.keyboard.code = keycode;
+    fcmsg.keyboard.pressed = is_pressed;
+    fcmsg.keyboard.mod = event->key.keysym.mod;
+    send_fcmsg(&fcmsg);
 
     return 0;
 }
@@ -307,15 +307,15 @@ int handle_mouse_button_up_down(SDL_Event *event) {
             (int): 0 on success
     */
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MOUSE_BUTTON;
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_MOUSE_BUTTON;
     // Record if left / right / middle button
-    fmsg.mouseButton.button = event->button.button;
-    fmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
-    if (fmsg.mouseButton.button == MOUSE_L) {
-        SDL_CaptureMouse(fmsg.mouseButton.pressed);
+    fcmsg.mouseButton.button = event->button.button;
+    fcmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    if (fcmsg.mouseButton.button == MOUSE_L) {
+        SDL_CaptureMouse(fcmsg.mouseButton.pressed);
     }
-    send_fmsg(&fmsg);
+    send_fcmsg(&fcmsg);
 
     return 0;
 }
@@ -351,13 +351,13 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MOUSE_WHEEL;
-    fmsg.mouseWheel.x = event->wheel.x;
-    fmsg.mouseWheel.y = event->wheel.y;
-    fmsg.mouseWheel.precise_x = event->wheel.preciseX;
-    fmsg.mouseWheel.precise_y = event->wheel.preciseY;
-    send_fmsg(&fmsg);
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_MOUSE_WHEEL;
+    fcmsg.mouseWheel.x = event->wheel.x;
+    fcmsg.mouseWheel.y = event->wheel.y;
+    fcmsg.mouseWheel.precise_x = event->wheel.preciseX;
+    fcmsg.mouseWheel.precise_y = event->wheel.preciseY;
+    send_fcmsg(&fcmsg);
 
     return 0;
 }
@@ -373,43 +373,43 @@ int handle_pinch(SDL_Event *event) {
             (int): 0 on success
     */
 
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MULTIGESTURE;
-    fmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
-                                                     .d_dist = event->pinch.scroll_amount,
-                                                     .x = 0,
-                                                     .y = 0,
-                                                     .num_fingers = 2,
-                                                     .active_gesture = active_pinch};
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_MULTIGESTURE;
+    fcmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
+                                                      .d_dist = event->pinch.scroll_amount,
+                                                      .x = 0,
+                                                      .y = 0,
+                                                      .num_fingers = 2,
+                                                      .active_gesture = active_pinch};
 
-    fmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
+    fcmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
     if (event->pinch.magnification < 0) {
-        fmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_CLOSE;
+        fcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_CLOSE;
         active_pinch = true;
     } else if (event->pinch.magnification > 0) {
-        fmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_OPEN;
+        fcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_OPEN;
         active_pinch = true;
     } else if (active_pinch) {
         // 0 magnification means that the pinch gesture is complete
-        fmsg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
+        fcmsg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
         active_pinch = false;
     }
 
-    send_fmsg(&fmsg);
+    send_fcmsg(&fcmsg);
 
     return 0;
 }
 
 int handle_multi_gesture(SDL_Event *event) {
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_MULTIGESTURE;
-    fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                     .d_dist = event->mgesture.dDist,
-                                                     .x = event->mgesture.x,
-                                                     .y = event->mgesture.y,
-                                                     .num_fingers = event->mgesture.numFingers,
-                                                     .gesture_type = MULTIGESTURE_NONE};
-    send_fmsg(&fmsg);
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_MULTIGESTURE;
+    fcmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
+                                                      .d_dist = event->mgesture.dDist,
+                                                      .x = event->mgesture.x,
+                                                      .y = event->mgesture.y,
+                                                      .num_fingers = event->mgesture.numFingers,
+                                                      .gesture_type = MULTIGESTURE_NONE};
+    send_fcmsg(&fcmsg);
 
     return 0;
 }
@@ -463,24 +463,24 @@ int handle_sdl_event(SDL_Event *event) {
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
-                FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_STOP_STREAMING;
+                FractalClientMessage fcmsg = {0};
+                fcmsg.type = MESSAGE_STOP_STREAMING;
                 fractal_sleep(100);
-                send_fmsg(&fmsg);
+                send_fcmsg(&fcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
-                FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_START_STREAMING;
-                send_fmsg(&fmsg);
+                FractalClientMessage fcmsg = {0};
+                fcmsg.type = MESSAGE_START_STREAMING;
+                send_fcmsg(&fcmsg);
             }
 #else
             else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-                FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_STOP_STREAMING;
-                send_fmsg(&fmsg);
+                FractalClientMessage fcmsg = {0};
+                fcmsg.type = MESSAGE_STOP_STREAMING;
+                send_fcmsg(&fcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
-                FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_START_STREAMING;
-                send_fmsg(&fmsg);
+                FractalClientMessage fcmsg = {0};
+                fcmsg.type = MESSAGE_START_STREAMING;
+                send_fcmsg(&fcmsg);
             }
 #endif
             break;

@@ -15,7 +15,7 @@ discover_ports, connect_to_server, close_connections, and send_server_quit_messa
 start and end connections to the Fractal server. To connect, call discover_ports, then
 connect_to_server. To disconnect, send_server_quit_messages and then close_connections.
 
-To communicate with the server, use send_fmsg to send Fractal messages to the server. Large fmsg's
+To communicate with the server, use send_fcmsg to send Fractal messages to the server. Large fcmsg's
 (e.g. clipboard messages) are sent over TCP; otherwise, messages are sent over UDP. Use update_ping
 to ping the server at regular intervals, and receive_pong to receive pongs (ping acknowledgements)
 from the server.
@@ -76,11 +76,11 @@ int send_server_quit_messages(int num_messages);
 /**
  * @brief                          Send a FractalMessage from client to server
  *
- * @param fmsg                     FractalMessage struct to send as packet
+ * @param fcmsg                     FractalMessage struct to send as packet
  *
  * @returns                        0 if succeeded, else -1
  */
-int send_fmsg(FractalClientMessage* fmsg);
+int send_fcmsg(FractalClientMessage* fcmsg);
 
 /**
  * @brief                           Send a ping with ID ping_id to the server

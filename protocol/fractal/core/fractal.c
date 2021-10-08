@@ -291,28 +291,28 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
     return true;
 }
 
-int get_fmsg_size(FractalClientMessage* fmsg) {
+int get_fcmsg_size(FractalClientMessage* fcmsg) {
     /*
         Calculate the size of a FractalClientMessage struct
 
         Arguments:
-            fmsg (FractalClientMessage*): The Fractal Client Message to find the size
+            fcmsg (FractalClientMessage*): The Fractal Client Message to find the size
 
         Returns:
             (int): The size of the Fractal Client Message struct
     */
 
-    if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
-        return sizeof(*fmsg);
-    } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
-        return sizeof(*fmsg) + fmsg->clipboard.size;
-    } else if (fmsg->type == MESSAGE_VIDEO_BITARRAY_NACK) {
+    if (fcmsg->type == MESSAGE_KEYBOARD_STATE || fcmsg->type == MESSAGE_DISCOVERY_REQUEST) {
+        return sizeof(*fcmsg);
+    } else if (fcmsg->type == CMESSAGE_CLIPBOARD) {
+        return sizeof(*fcmsg) + fcmsg->clipboard.size;
+    } else if (fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK) {
         // Send only the minimum amount of bytes needed to fit the largest element that could be
-        // used in each union in the fmsg struct.
-        return sizeof(fmsg->type) + 92;
+        // used in each union in the fcmsg struct.
+        return sizeof(fcmsg->type) + 92;
     } else {
-        // Send small fmsg's when we don't need unnecessarily large ones
-        return sizeof(fmsg->type) + 40;
+        // Send small fcmsg's when we don't need unnecessarily large ones
+        return sizeof(fcmsg->type) + 40;
     }
 }
 

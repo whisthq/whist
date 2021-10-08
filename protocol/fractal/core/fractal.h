@@ -786,11 +786,11 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  * @brief                          Calculate the size of a FractalClientMessage
  *                                 struct
  *
- * @param fmsg                     The Fractal Client Message to find the size
+ * @param fcmsg                     The Fractal Client Message to find the size
  *
  * @returns                        The size of the Fractal Client Message struct
  */
-int get_fmsg_size(FractalClientMessage* fmsg);
+int get_fcmsg_size(FractalClientMessage* fcmsg);
 
 /**
  * @brief                          Terminates the protocol

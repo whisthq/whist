@@ -623,13 +623,13 @@ int free_parsed_args(void) {
     return 0;
 }
 
-int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
+int prepare_init_to_server(FractalDiscoveryRequestMessage *fcmsg, char *email) {
     /*
         Prepare for initial request to server by setting
         user email and time data
 
         Arguments:
-            fmsg (FractalDiscoveryRequestMessage*): pointer to the discovery
+            fcmsg (FractalDiscoveryRequestMessage*): pointer to the discovery
                 request message packet to be sent to the server
             email (char*): user email
 
@@ -638,23 +638,23 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
     */
 
     // Copy email
-    if (!safe_strncpy(fmsg->user_email, email, sizeof(fmsg->user_email))) {
+    if (!safe_strncpy(fcmsg->user_email, email, sizeof(fcmsg->user_email))) {
         LOG_ERROR("User email is too long: %s.\n", email);
         return -1;
     }
     // Copy time
-    if (get_time_data(&(fmsg->time_data)) != 0) {
+    if (get_time_data(&(fcmsg->time_data)) != 0) {
         LOG_ERROR("Failed to get time data.");
         return -1;
     }
 
     // Let the server know what OS we are
 #ifdef _WIN32
-    fmsg->os = FRACTAL_WINDOWS;
+    fcmsg->os = FRACTAL_WINDOWS;
 #elif defined(__APPLE__)
-    fmsg->os = FRACTAL_APPLE;
+    fcmsg->os = FRACTAL_APPLE;
 #else
-    fmsg->os = FRACTAL_LINUX;
+    fcmsg->os = FRACTAL_LINUX;
 #endif
 
     return 0;
@@ -700,14 +700,14 @@ int update_mouse_motion() {
         }
 
         // Send new mouse locations to server
-        FractalClientMessage fmsg = {0};
-        fmsg.type = MESSAGE_MOUSE_MOTION;
-        fmsg.mouseMotion.relative = mouse_state.is_relative;
-        fmsg.mouseMotion.x = x;
-        fmsg.mouseMotion.y = y;
-        fmsg.mouseMotion.x_nonrel = x_nonrel;
-        fmsg.mouseMotion.y_nonrel = y_nonrel;
-        if (send_fmsg(&fmsg) != 0) {
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = MESSAGE_MOUSE_MOTION;
+        fcmsg.mouseMotion.relative = mouse_state.is_relative;
+        fcmsg.mouseMotion.x = x;
+        fcmsg.mouseMotion.y = y;
+        fcmsg.mouseMotion.x_nonrel = x_nonrel;
+        fcmsg.mouseMotion.y_nonrel = y_nonrel;
+        if (send_fcmsg(&fcmsg) != 0) {
             return -1;
         }
 
@@ -721,13 +721,13 @@ int update_mouse_motion() {
 void send_message_dimensions() {
     // Let the server know the new dimensions so that it
     // can change native dimensions for monitor
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_DIMENSIONS;
-    fmsg.dimensions.width = output_width;
-    fmsg.dimensions.height = output_height;
-    fmsg.dimensions.codec_type = output_codec_type;
-    fmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
-    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", fmsg.dimensions.width,
-             fmsg.dimensions.height, fmsg.dimensions.dpi, fmsg.dimensions.codec_type);
-    send_fmsg(&fmsg);
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_DIMENSIONS;
+    fcmsg.dimensions.width = output_width;
+    fcmsg.dimensions.height = output_height;
+    fcmsg.dimensions.codec_type = output_codec_type;
+    fcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
+    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", fcmsg.dimensions.width,
+             fcmsg.dimensions.height, fcmsg.dimensions.dpi, fcmsg.dimensions.codec_type);
+    send_fcmsg(&fcmsg);
 }

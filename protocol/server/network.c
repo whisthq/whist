@@ -403,7 +403,7 @@ int try_get_next_message_udp(int client_id, FractalClientMessage *fcmsg, size_t 
     FractalPacket *packet = read_udp_packet(&(clients[client_id].UDP_context));
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
-        if (packet->payload_size != get_fmsg_size(fcmsg)) {
+        if (packet->payload_size != get_fcmsg_size(fcmsg)) {
             LOG_WARNING("Packet is of the wrong size!: %d", packet->payload_size);
             LOG_WARNING("Type: %d", fcmsg->type);
             return -1;
