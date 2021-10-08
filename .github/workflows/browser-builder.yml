@@ -1,5 +1,5 @@
 # workflows/browser-builder.yml
-# 
+#
 # Browser Builder: Build Brave Browser
 # Spins up an AWS macOS EC2 instance to compile Brave Browser
 
@@ -28,6 +28,7 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
+        with:
           repository: brave/brave-browser
 
       # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
