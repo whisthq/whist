@@ -238,10 +238,10 @@ def test_drain_unreachable_does_not_exist(
     drain_instance(instance)
     # We should have still tried to drain
     # even though instance DNE according to ec2
-    a1, a2 = answer
-    assert len(post_list) == a1
-    assert len(db_call_list) == a2
-    if a2 == 0:
+    post_answer, db_answer = answer
+    assert len(post_list) == post_answer
+    assert len(db_call_list) == db_answer
+    if db_answer == 0:
         assert instance.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
 
 
