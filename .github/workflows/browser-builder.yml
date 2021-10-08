@@ -1,0 +1,53 @@
+# workflows/browser-builder.yml
+# 
+# Browser Builder: Build Brave Browser
+# Spins up an AWS macOS EC2 instance to compile Brave Browser
+
+name: "Browser Builder: Build Brave Browser"
+
+# Only run on workflow_dispatch and if a client-side piece of Fractal is modified
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "client-applications/**"
+      - "core-ts/**"
+      - "microservices/**"
+      - "protocol/**"
+  pull_request:
+    branches:
+      - dev # TODO: For testing, need to remove
+  workflow_dispatch:
+
+jobs:
+  build-brave-browser:
+    name: Compile Brave Browser on macOS
+    runs-on: macos-10.15
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+          repository: brave/brave-browser
+
+      # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
+      - name: Turn macOS Spotlight Off to Speed Up Build
+        run: touch folder/.metadata_never_index && killall Finder
+
+      - name: Run npm install
+        working-directory: brave-browser
+        run: npm install
+
+      # this takes 30-45 minutes to run
+      # the Chromium source is downloaded which has a large history
+      - name: Run npm init
+        working-directory: brave-browser
+        run: npm run init
+
+      # Other build options are:
+      # npm run build Static    --> statically linked build (takes longer to build, but starts faster)
+      # npm run build Debug     --> standard build with debug mode enabled
+      # npm run build Component --> standard build with component mode enabled
+      - name: Build Brave Browser in Release Mode
+        working-directory: brave-browser
+        run: npm run build Release
