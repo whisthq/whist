@@ -9,7 +9,7 @@
 import itertools
 import time
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import boto3
 
 from app.constants.ec2_instance_states import EC2InstanceState
@@ -92,7 +92,7 @@ class EC2Client(CloudClient):
 
         return instance_ids
 
-    def stop_instances(self, instance_ids: List[str]) -> None:
+    def stop_instances(self, instance_ids: List[str]) -> Any:
         """
         Turns off all instances passed in
         Args:
@@ -100,6 +100,7 @@ class EC2Client(CloudClient):
         """
         resp = self.ec2_client.terminate_instances(InstanceIds=instance_ids)
         fractal_logger.info(f"terminating instances {instance_ids} | response {resp}")
+        return resp
 
     def get_instance_states(self, instance_ids: List[str]) -> List[EC2InstanceState]:
         """
