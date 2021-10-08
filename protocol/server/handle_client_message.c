@@ -463,36 +463,19 @@ static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
         handle_nack_single_audio_packet(fmsg->simple_nack.id, fmsg->simple_nack.index, client_id);
     } else {
         // fmsg->type == MESSAGE_AUDIO_BITARRAY_NACK
-        LOG_INFO("Preparing a bit array with %i entries for handling audio nacking",
-                 fmsg->bitarray_audio_nack.numBits);
         bit_array_t *bit_arr = BitArrayCreate(fmsg->bitarray_audio_nack.numBits);
         BitArrayClearAll(bit_arr);
-
-        LOG_INFO("Copying audio nack data from raw arr %p to BitArray %p with %i entries (size %i)",
-                 fmsg->bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
-                 fmsg->bitarray_audio_nack.numBits,
-                 BITS_TO_CHARS(fmsg->bitarray_audio_nack.numBits));
 
         memcpy(BitArrayGetBits(bit_arr), fmsg->bitarray_audio_nack.ba_raw,
                BITS_TO_CHARS(fmsg->bitarray_audio_nack.numBits));
 
-        LOG_INFO(
-            "Done copying audio nack data from raw arr %p to BitArray %p with %i entries (size %i)",
-            fmsg->bitarray_audio_nack.ba_raw, BitArrayGetBits(bit_arr),
-            fmsg->bitarray_audio_nack.numBits, BITS_TO_CHARS(fmsg->bitarray_audio_nack.numBits));
-
         for (int i = 0; i < fmsg->bitarray_audio_nack.numBits; i++) {
-            LOG_INFO("Calling BitArrayTestBit on bit %i/%i", i, fmsg->bitarray_audio_nack.numBits);
             if (BitArrayTestBit(bit_arr, i)) {
                 handle_nack_single_audio_packet(fmsg->simple_nack.id, fmsg->simple_nack.index + i,
                                                 client_id);
             }
         }
-        LOG_INFO("About to destroy audio-nacking BitArray with %i entries (size %i)",
-                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
         BitArrayDestroy(bit_arr);
-        LOG_INFO("Destruction of audio-nacking BitArray with %i entries (size %i) COMPLETE!",
-                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
     }
     return 0;
 }
@@ -539,36 +522,19 @@ static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
         handle_nack_single_video_packet(fmsg->simple_nack.id, fmsg->simple_nack.index, client_id);
     } else {
         // fmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
-        LOG_INFO("Preparing a bit array with %i entries for handling video nacking",
-                 fmsg->bitarray_video_nack.numBits);
         bit_array_t *bit_arr = BitArrayCreate(fmsg->bitarray_video_nack.numBits);
         BitArrayClearAll(bit_arr);
-
-        LOG_INFO("Copying video nack data from raw arr %p to BitArray %p with %i entries (size %i)",
-                 fmsg->bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
-                 fmsg->bitarray_video_nack.numBits,
-                 BITS_TO_CHARS(fmsg->bitarray_video_nack.numBits));
 
         memcpy(BitArrayGetBits(bit_arr), fmsg->bitarray_video_nack.ba_raw,
                BITS_TO_CHARS(fmsg->bitarray_video_nack.numBits));
 
-        LOG_INFO(
-            "Done copying video nack data from raw arr %p to BitArray %p with %i entries (size %i)",
-            fmsg->bitarray_video_nack.ba_raw, BitArrayGetBits(bit_arr),
-            fmsg->bitarray_video_nack.numBits, BITS_TO_CHARS(fmsg->bitarray_video_nack.numBits));
-
         for (int i = 0; i < fmsg->bitarray_video_nack.numBits; i++) {
-            LOG_INFO("Calling BitArrayTestBit on bit %i/%i", i, fmsg->bitarray_video_nack.numBits);
             if (BitArrayTestBit(bit_arr, i)) {
                 handle_nack_single_video_packet(fmsg->simple_nack.id, fmsg->simple_nack.index + i,
                                                 client_id);
             }
         }
-        LOG_INFO("About to destroy video-nacking BitArray with %i entries (size %i)",
-                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
         BitArrayDestroy(bit_arr);
-        LOG_INFO("Destruction of video-nacking BitArray with %i entries (size %i) COMPLETE!",
-                 bit_arr->numBits, BITS_TO_CHARS(bit_arr->numBits));
     }
 
     return 0;
