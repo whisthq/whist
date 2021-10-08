@@ -175,6 +175,74 @@ def test_terminate_single_ec2_fails(
     assert len(db_call_list) == 0  # Never call db since ec2 call unsuccessful
 
 
+@pytest.mark.parametrize(
+    "status, answer, retval",
+    [[MandelboxHostState.ACTIVE, (1,1), "does_not_exist"],
+    [MandelboxHostState.ACTIVE, (1,0), "running"]],
+)
+def test_drain_unreachable_does_not_exist(
+    app: Flask,
+    monkeypatch: MonkeyPatch,
+    mock_get_num_new_instances: Callable[[Any], None],
+    bulk_instance: Callable[..., InstanceInfo],
+    status: MandelboxHostState,
+    answer: Tuple[int, int],
+    retval: str,
+    region_name: str,
+) -> None:
+    """
+    Tests that when we try and drain an instance, if it is
+    not in pre_condition, we always try to drain before
+    either terminating or marking unresponsive.
+    """
+    db_call_list = []
+    ec2_call_list = []
+    post_list = []
+
+    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
+        ec2_call_list.append({"args": args, "kwargs": kwargs})
+        return {}
+
+    def _get_state_helper(
+        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> List[str]:
+        # Pretend the instance is not running
+        return [retval]
+
+    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
+    monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
+
+    def _helper(*args: Any, **kwargs: Any) -> None:
+        nonlocal post_list
+        post_list.append({"args": args, "kwargs": kwargs})
+        raise requests.exceptions.RequestException()
+
+    monkeypatch.setattr(requests, "post", _helper)
+
+    def _db_call(*args: Any, **kwargs: Any) -> None:
+        db_call_list.append({"args": args, "kwargs": kwargs})
+
+    monkeypatch.setattr(db.session, "delete", _db_call)
+
+    app.config["FRACTAL_ACCESS_TOKEN"] = "dummy-access-token"
+
+    instance = bulk_instance(
+        aws_ami_id="test-AMI",
+        location=region_name,
+        status=status,
+    )
+    assert instance.status != MandelboxHostState.DRAINING.value
+    mock_get_num_new_instances(-1)
+    drain_instance(instance)
+    # We should have still tried to drain
+    # even though instance DNE according to ec2
+    a1, a2 = answer
+    assert len(post_list) == a1
+    assert len(db_call_list) == a2
+    if a2 == 0:
+        assert instance.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
+
+
 @pytest.mark.parametrize("retval", ["stopping", "stopped", "shutting-down", "terminated"])
 def test_terminate_single_ec2_succeeds(
     monkeypatch: MonkeyPatch,
