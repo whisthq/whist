@@ -177,8 +177,10 @@ def test_terminate_single_ec2_fails(
 
 @pytest.mark.parametrize(
     "status, answer, retval",
-    [[MandelboxHostState.ACTIVE, (1,1), "does_not_exist"],
-    [MandelboxHostState.ACTIVE, (1,0), "running"]],
+    [
+        [MandelboxHostState.ACTIVE, (1, 1), "does_not_exist"],
+        [MandelboxHostState.ACTIVE, (1, 0), "running"],
+    ],
 )
 def test_drain_unreachable_does_not_exist(
     app: Flask,
