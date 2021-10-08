@@ -30,6 +30,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: brave/brave-browser
+          path: brave-browser
 
       # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
       # - name: Turn macOS Spotlight Off to Speed Up Build
