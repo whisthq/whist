@@ -1,7 +1,7 @@
 # workflows/client-applications-check-pr.yml
 #
 # Client Applications: Check PR
-# Checks a client-applications PR for linting and building success on X86_64 systems.
+# Checks a client-applications PR for linting and building success
 
 name: "Client Applications: Check PR"
 
@@ -105,7 +105,7 @@ jobs:
   # Check that the macOS client application builds
   client-applications-check-pr-building:
     name: Building on ${{ matrix.config.name }}
-    needs: [config]
+    needs: config
     runs-on: ${{ matrix.config.os }}
 
     strategy:
@@ -299,8 +299,7 @@ jobs:
 
       - name: Log macOS Configuration
         shell: python3 {0}
-        run: |
-          print(r"""${{ steps.config-macos.outputs.config }}""")
+        run: print(r"""${{ steps.config-macos.outputs.config }}""")
 
   # Building
   # Check that the macOS client application builds
@@ -371,7 +370,7 @@ jobs:
           aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
 
       # If you get the "unable to find utility "altool", not a developer tool or in PATH" error, VNC into the
-      # M1 runner and run `sudo xcode-select -r` and provide the password
+      # M1 runner, run `sudo xcode-select -r` and provide the password
 
       ############################# Unix Configuration Steps END #############################
 
