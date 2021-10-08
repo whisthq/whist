@@ -307,9 +307,9 @@ int get_fcmsg_size(FractalClientMessage* fcmsg) {
     } else if (fcmsg->type == CMESSAGE_CLIPBOARD) {
         return sizeof(*fcmsg) + fcmsg->clipboard.size;
     } else if (fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK) {
-        // Send only the minimum amount of bytes needed to fit the largest element that could be
-        // used in each union in the fcmsg struct.
-        return sizeof(fcmsg->type) + 92;
+        // Send only the minimum amount of bytes needed to fit the bitarray_video_nack + 16 bits for
+        // max possible padding
+        return sizeof(fcmsg->type) + sizeof(fcmsg->id) + sizeof(fcmsg->bitarray_video_nack) + 16;
     } else {
         // Send small fcmsg's when we don't need unnecessarily large ones
         return sizeof(fcmsg->type) + 40;
