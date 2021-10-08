@@ -6,13 +6,15 @@ from datetime import date
 
 import requests
 
-
 from flask import Flask
 from pytest import MonkeyPatch
+import pytest
+
 from app.database.models.cloud import db, RegionToAmi, InstanceInfo
 import app.helpers.aws.aws_instance_post as aws_funcs
-
 from app.constants.mandelbox_host_states import MandelboxHostState
+from app.utils.aws.base_ec2_client import EC2Client
+from app.helpers.aws.aws_instance_post import drain_instance
 
 from tests.helpers.utils import get_allowed_regions, update_status_change_time
 
@@ -127,6 +129,104 @@ def test_terminate_single_available(
     assert len(post_list) == 0
     assert len(call_list) == 1
     assert call_list[0]["args"][1][0] == instance.instance_name
+
+
+def test_terminate_single_ec2_fails(
+    monkeypatch: MonkeyPatch,
+    mock_get_num_new_instances: Callable[[Any], None],
+    bulk_instance: Callable[..., InstanceInfo],
+    region_name: str,
+) -> None:
+    """
+    Tests that when we try and terminate an instance,
+    we do not delete from the db if the ec2 call is unsuccessfull.
+    """
+    db_call_list = []
+    ec2_call_list = []
+
+    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
+        ec2_call_list.append({"args": args, "kwargs": kwargs})
+        return {}
+
+    def _get_state_helper(
+        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> List[str]:
+        # Pretend the instance is running when we call get_instance_states!
+        return ["running"]
+
+    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
+    monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
+
+    def _db_call(*args: Any, **kwargs: Any) -> None:
+        db_call_list.append({"args": args, "kwargs": kwargs})
+
+    monkeypatch.setattr(db.session, "delete", _db_call)
+
+    instance = bulk_instance(
+        instance_name="bad_instance",
+        aws_ami_id="bad-AMI",
+        location=region_name,
+        status=MandelboxHostState.PRE_CONNECTION,
+    )
+    assert instance.status != MandelboxHostState.DRAINING.value
+    mock_get_num_new_instances(-1)
+    drain_instance(instance)
+    assert len(ec2_call_list) == 1
+    assert len(db_call_list) == 0  # Never call db since ec2 call unsuccessful
+
+
+@pytest.mark.parametrize("retval", ["stopping", "stopped", "shutting-down", "terminated"])
+def test_terminate_single_ec2_succeeds(
+    monkeypatch: MonkeyPatch,
+    mock_get_num_new_instances: Callable[[Any], None],
+    bulk_instance: Callable[..., InstanceInfo],
+    retval: str,
+    region_name: str,
+) -> None:
+    """
+    Tests that when we try and terminate an instance,
+    we delete from the db when the response is successful.
+    """
+    db_call_list = []
+    ec2_call_list = []
+
+    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
+        ec2_call_list.append({"args": args, "kwargs": kwargs})
+        return {
+            "TerminatingInstances": [
+                {
+                    "CurrentState": {
+                        "Name": retval,
+                    },
+                },
+            ],
+        }
+
+    def _get_state_helper(
+        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+    ) -> List[str]:
+        # Pretend the instance is running when we call get_instance_states!
+        return ["running"]
+
+    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
+    monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
+
+    def _db_call(*args: Any, **kwargs: Any) -> None:
+        db_call_list.append({"args": args, "kwargs": kwargs})
+
+    monkeypatch.setattr(db.session, "delete", _db_call)
+
+    instance = bulk_instance(
+        instance_name="good_instances-" + retval,
+        aws_ami_id="good-AMIs",
+        location=region_name,
+        status=MandelboxHostState.PRE_CONNECTION,
+    )
+    assert instance.status != MandelboxHostState.DRAINING.value
+    mock_get_num_new_instances(-1)
+    aws_funcs.drain_instance(instance)
+    assert len(ec2_call_list) == 1
+    assert len(db_call_list) == 1
 
 
 def test_scale_down_single_unavailable(
