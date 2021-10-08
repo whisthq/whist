@@ -62,7 +62,8 @@ typedef enum FractalCursorID {
     FRACTAL_CURSOR_SIZENS,
     FRACTAL_CURSOR_SIZEALL,
     FRACTAL_CURSOR_NO,
-    FRACTAL_CURSOR_HAND
+    FRACTAL_CURSOR_HAND,
+    INVALID
 } FractalCursorID;
 
 /**
