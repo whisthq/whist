@@ -21,28 +21,54 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-brave-browser:
-    name: Compile Brave Browser on macOS
-    runs-on: macos-10.15
+  build-and-publish-brave-browser:
+    name: Compile Brave Browser on ${{ matrix.runners.name }}
+    runs-on: ${{ matrix.runners.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.runners.shell }}
+
+    strategy:
+      matrix:
+        runners:
+          # - name: macOS (X86_64)
+          #   os: [self-hosted, macOS, X64] # MacStadium Intel i7 3.2GHz 6-cores 32GB RAM
+          #   shell: bash --noprofile --norc -eo pipefail {0}
+          # - name: macOS (ARM64)
+          #   os: [self-hosted, macOS, ARM64] # MacStadium Apple Silicon M1 8GB RAM
+          #   shell: /usr/bin/arch -arch arm64e /bin/bash {0}
+          - name: macOS (GHA) # TODO: For testing in GHA, need to remove
+            os: macos-10.15
+            shell: bash --noprofile --norc -eo pipefail {0}
+      
+    # Environment variable(s) necessary for building Brave, even if not hooking up
+    # to Brave's internal services
+    env:
+      brave_services_key: "FRACTAL_DUMMY_BRAVE_SERVICES_KEY"
 
     steps:
+      ##################################### CONFIG STEPS START ###################################
+
       - name: Checkout Git Repository
         uses: actions/checkout@v2
         with:
           repository: brave/brave-browser
           path: brave-browser
 
-      # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
-      # - name: Turn macOS Spotlight Off to Speed Up Build
-      #   working-directory: brave-browser
-      #   run: touch .metadata_never_index && killall Finder
+      # Speed up npm: https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
+      - name: Turn macOS Spotlight Off to Speed Up Build
+        working-directory: brave-browser
+        run: touch .metadata_never_index && killall Finder
 
       - name: Run npm install
         working-directory: brave-browser
         run: npm install
 
-      # this takes 30-45 minutes to run
-      # the Chromium source is downloaded which has a large history
+      ############################################################################################
+      #################################### BUILDING STEPS START ##################################
+
+      # This takes 30-45 minutes to run
+      # The Chromium source is downloaded, which has a large history
       - name: Run npm init
         working-directory: brave-browser
         run: npm run init
@@ -54,3 +80,68 @@ jobs:
       - name: Build Brave Browser in Release Mode
         working-directory: brave-browser
         run: npm run build Release
+
+      ############################################################################################
+      ################################### PUBLISHING STEPS START #################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ############################################################################################
+      ################################# NOTIFICATIONS STEPS START ################################
+
+      - name: Checkout Fractal Git Repository
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based Notifications
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Failure (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          BODY = f"@releases :rotating_light: Failed to build and deploy Brave Browser for ${{ matrix.runners.os }} to AWS S3, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  ################################################################################################
+  ################################################################################################
+
+  notify-slack:
+    name: Notify Slack on Workflow Success
+    needs: [build-and-publish-brave-browser]
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based Notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Success (Only on Push/Workflow_dispatch Events)
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-prod"
+          TITLE = ":brave: Fractal Brave Browser Built and Deployed :brave:"
+          BODY = f"Fractal Brave Browser for macOS build and deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
