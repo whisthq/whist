@@ -32,9 +32,9 @@ jobs:
           repository: brave/brave-browser
 
       # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
-      - name: Turn macOS Spotlight Off to Speed Up Build
-        working-directory: brave-browser
-        run: touch .metadata_never_index
+      # - name: Turn macOS Spotlight Off to Speed Up Build
+      #   working-directory: brave-browser
+      #   run: touch .metadata_never_index && killall Finder
 
       - name: Run npm install
         working-directory: brave-browser
