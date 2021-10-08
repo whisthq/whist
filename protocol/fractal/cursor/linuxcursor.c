@@ -27,7 +27,7 @@ Includes
 /*
         These are the cursor hashes of corresponding Fractal Cursors
         (from cursor.h) returned from ::hash from ../utils/aes.c found
-        expirementally
+        experimentally
 */
 #define ARROW_CURSOR_HASH 3933283985
 #define IBEAM_CURSOR_HASH 2687203118
