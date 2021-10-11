@@ -373,16 +373,13 @@ def drain_instance(instance: InstanceInfo) -> bool:
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
         or str(instance.ip) == ""
-        or not check_instance_exists(get_instance_id(instance), instance.location)
     ):
         if instance.status == MandelboxHostState.PRE_CONNECTION:
             why = "status pre_condition"
         elif instance.ip is None:
             why = "instance_ip is None"
-        elif str(instance.ip) == "":
-            why = "instance_ip is empty string"
         else:
-            why = "check_instance_exists failed"
+            why = "instance_ip is empty string"
 
         fractal_logger.info(
             f"instance {instance.instance_name} | status {instance.status} |"
@@ -391,7 +388,7 @@ def drain_instance(instance: InstanceInfo) -> bool:
         terminate_instance(instance)
         job_status = True
     else:
-        # If the instance exists, tell it to drain
+        # Try to drain the instance
         try:
             base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
             resp = requests.post(
@@ -408,12 +405,20 @@ def drain_instance(instance: InstanceInfo) -> bool:
             db.session.commit()
             job_status = True
         except requests.exceptions.RequestException as error:
+            # If the instance does not exist, we terminate, else we mark it as unresponsive
             fractal_logger.error(
                 "Unable to send drain_and_shutdown request to host service"
                 f" on instance {instance.instance_name}: {error}"
             )
-            instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
-            db.session.commit()
+            if not check_instance_exists(get_instance_id(instance), instance.location):
+                fractal_logger.error(
+                    f"Check instance exists failed for {instance.instance_name}"
+                    " | terminating instance"
+                )
+                terminate_instance(instance)
+            else:
+                instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
+                db.session.commit()
     return job_status
 
 
