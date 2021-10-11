@@ -76,8 +76,7 @@ jobs:
       - name: Downgrade Python to 3.6
         run: |
           # downgrade to Python 3.6.x
-          brew unlink python
-          brew link python@3.6
+          brew install python@3.6
 
           # verify version
           python --version
