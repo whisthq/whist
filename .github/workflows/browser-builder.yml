@@ -55,6 +55,11 @@ jobs:
         working-directory: brave-browser
         run: touch .metadata_never_index && killall Finder
 
+      # Brave needs to be built with NodeJS 12.x and npm 6.x, as per:
+      # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
+      - name: Downgrade to NodeJS 12
+        run: brew install node@12
+        
       - name: Run npm install
         working-directory: brave-browser
         run: npm install
@@ -69,13 +74,13 @@ jobs:
         run: npm run init
 
       # Build options are:
+      # npm run build           --> standard build with Chromium components mode enabled
       # npm run build Release   --> standard build for production use, without debug symbols
       # npm run build Static    --> statically linked build (takes longer to build, but starts faster)
       # npm run build Debug     --> standard build with debug mode enabled
-      # npm run build Component --> standard build with component mode enabled
       - name: Build Brave Browser in Debug Mode
         working-directory: brave-browser
-        run: npm run build Debug
+        run: npm run build
 
       ############################################################################################
       ################################### PUBLISHING STEPS START #################################
