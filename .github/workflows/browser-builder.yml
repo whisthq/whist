@@ -71,12 +71,17 @@ jobs:
           node -v
           npm -v
 
+      # This is necessary to solve this issue in building:
+      # https://stackoverflow.com/questions/52176570/deprecationwarning-with-readplist-attributeerror
       - name: Downgrade Python to 3.6
         run: |
+          # downgrade to Python 3.6.x
           brew unlink python
-          brew install --ignore-dependencies https://raw.githubusercontent.com/Homebrew/homebrew-core/e128fa1bce3377de32cbf11bd8e46f7334dfd7a6/Formula/python.rb
           brew switch python 3.6.5
 
+          # verify version
+          python --version
+          python3 --version
 
       - name: Run npm install
         working-directory: brave-browser
