@@ -58,8 +58,19 @@ jobs:
       # Brave needs to be built with NodeJS 12.x and npm 6.x, as per:
       # https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
       - name: Downgrade to NodeJS 12
-        run: brew install node@12
-        
+        run: |
+          # downgrade to NodeJS 12.x and npm 6.x for Brave requirements
+          brew install node@12
+
+          # link new NodeJS version with the compilers
+          echo 'export PATH="/usr/local/opt/node@12/bin:$PATH"' >> /Users/runner/.bash_profile
+          export LDFLAGS="-L/usr/local/opt/node@12/lib"
+          export CPPFLAGS="-I/usr/local/opt/node@12/include"
+
+          # verifiy versions
+          node -v
+          npm -v
+
       - name: Run npm install
         working-directory: brave-browser
         run: npm install
