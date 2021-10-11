@@ -77,7 +77,7 @@ jobs:
         run: |
           # downgrade to Python 3.6.x
           brew unlink python
-          brew switch python 3.6.5
+          brew link python@3.6
 
           # verify version
           python --version
