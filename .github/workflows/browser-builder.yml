@@ -71,6 +71,13 @@ jobs:
           node -v
           npm -v
 
+      - name: Downgrade Python to 3.6
+        run: |
+          brew unlink python
+          brew install --ignore-dependencies https://raw.githubusercontent.com/Homebrew/homebrew-core/e128fa1bce3377de32cbf11bd8e46f7334dfd7a6/Formula/python.rb
+          brew switch python 3.6.5
+
+
       - name: Run npm install
         working-directory: brave-browser
         run: npm install
