@@ -236,8 +236,8 @@ def test_drain_unreachable_does_not_exist(
     assert instance.status != MandelboxHostState.DRAINING.value
     mock_get_num_new_instances(-1)
     drain_instance(instance)
-    # We should have still tried to drain
-    # even though instance DNE according to ec2
+    # We should have still tried to drain even though instance does not exist
+    # according to ec2
     post_answer, db_answer = answer
     assert len(post_list) == post_answer
     assert len(db_call_list) == db_answer
