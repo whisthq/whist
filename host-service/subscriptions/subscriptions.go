@@ -109,10 +109,11 @@ func (s *MandelboxInfoEvent) createResultChan() {
 
 // mandelboxInfoHandler handles events from the hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
-func mandelboxInfoHandler(instanceName string, client *graphql.SubscriptionClient, subscriptionEvents chan<- SubscriptionEvent) (string, error) {
+func mandelboxInfoHandler(instanceName string, status string, client *graphql.SubscriptionClient, subscriptionEvents chan<- SubscriptionEvent) (string, error) {
 	// variables holds the values needed to run the graphql subscription
 	variables := map[string]interface{}{
 		"instance_name": graphql.String(instanceName),
+		"status":        graphql.String(status),
 	}
 	// This subscriptions fires when the running instance status changes to draining on the database
 	id, err := client.Subscribe(MandelboxInfoSubscription, variables, func(data *json.RawMessage, err error) error {
@@ -177,7 +178,7 @@ func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTr
 	}
 	subscriptionIDs = append(subscriptionIDs, id)
 
-	id, err = mandelboxInfoHandler(instanceName, client, subscriptionEvents)
+	id, err = mandelboxInfoHandler(instanceName, "ALLOCATED", client, subscriptionEvents)
 	if err != nil {
 		// handle subscription error
 		return err

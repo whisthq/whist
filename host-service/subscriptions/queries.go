@@ -20,5 +20,6 @@ var MandelboxInfoSubscription struct {
 		MandelboxID  graphql.String `graphql:"mandelbox_id"`
 		SessionID    graphql.String `graphql:"session_id"`
 		UserID       graphql.String `graphql:"user_id"`
-	} `graphql:"cloud_mandelbox_info(where: {instance_name: {_eq: $instance_name}})"`
+		Status       graphql.String `graphql:"status"`
+	} `graphql:"cloud_mandelbox_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
 }
