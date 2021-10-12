@@ -526,8 +526,7 @@ static int handle_video_nack_message(FractalClientMessage *fcmsg, int client_id,
 
         for (int i = 0; i < fcmsg->bitarray_video_nack.numBits; i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                handle_nack_single_video_packet(fcmsg->simple_nack.id, fcmsg->simple_nack.index + i,
-                                                client_id);
+                handle_nack_single_video_packet(fcmsg->simple_nack.id, i, client_id);
             }
         }
         bit_array_free(bit_arr);
