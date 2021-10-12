@@ -65,8 +65,6 @@ Includes
 #include <fractal/utils/clock.h>
 #include <fractal/logging/logging.h>
 
-#include <lib/bitarray/bitarray.h>
-
 #ifdef _WIN32
 #pragma warning(disable : 4200)
 #endif
@@ -593,10 +591,12 @@ typedef struct {
     bool active_pinch;
 } FractalKeyboardState;
 
-#ifndef CHAR_BIT
-#warning CHAR_BIT not defined.  Assuming 8 bits.
-#define CHAR_BIT 8
-#endif
+/* position of bit within character */
+#define BIT_CHAR(bit) ((bit) / CHAR_BIT)
+
+/* array index for character containing bit */
+#define BIT_IN_CHAR(bit) (1 << (CHAR_BIT - 1 - ((bit) % CHAR_BIT)))
+
 /* number of characters required to contain number of bits */
 #define BITS_TO_CHARS(bits) ((((bits)-1) / CHAR_BIT) + 1)
 #define MAX_VIDEO_PACKETS 500
@@ -731,6 +731,14 @@ typedef struct FractalDestination {
     int port;
 } FractalDestination;
 
+/* @brief   Bit array object.
+ * @details Number of bits in the bitarray and bitarray in unsigned char format.
+ */
+typedef struct BitArray {
+    unsigned char* array;  // pointer to array containing bits
+    unsigned int numBits;  // number of bits in array
+} BitArray;
+
 /*
 ============================
 Public Functions
@@ -827,6 +835,89 @@ bool safe_strncpy(char* destination, const char* source, size_t num);
  * @param ...                      The rest of the arguments
  */
 #define safe_printf UNINITIALIZED_LOG
+
+// All bit array functions below are acknowledged to https://github.com/MichaelDipperstein/bitarray
+/**
+ * @brief                          Allocate a BitArray object
+ *
+ * @details                        This function allocates a bit array large enough to
+ *                                 contain the specified number of bits.  The contents of the
+ *                                 array are not initialized.
+ *
+ * @param bits                     The number of bits in the array to be allocated.
+ *
+ * @returns                        A pointer to allocated bit array or NULL if array may not
+ *                                 be allocated.  errno will be set in the event that the
+ *                                 array may not be allocated.
+ */
+BitArray* bit_array_create(const unsigned int bits);
+
+/**
+ * @brief                          This function frees the memory allocated for a bit array.
+ *
+ * @param ba                       The pointer to bit array to be freed
+ */
+void bit_array_free(BitArray* ba);
+
+/**
+ * @brief                          This function sets every bit to 0 in the bit array passed
+ *                                 as a parameter.
+ *
+ * @param ba                       The pointer to bit array
+ */
+void bit_array_clear_all(const BitArray* const ba);
+
+/**
+ * @brief                          This function sets every bit to 1 in the bit array passed
+ *                                 as a parameter.
+ *
+ * @details                        Each of the bits used in the bit array are set to 1.
+ *                                 Unused (spare) bits are set to 0. This is function uses
+ *                                 UCHAR_MAX, so it is crucial that the machine implementation
+ *                                 of unsigned char utilizes all the bits in the memory allocated
+ *                                 for an unsigned char.
+ *
+ * @param ba                       The pointer to bit array
+ */
+void bit_array_set_all(const BitArray* const ba);
+
+/**
+ * @brief                          This function sets the specified bit to 1 in the bit array
+ *                                 passed as a parameter.
+ *
+ * @param ba                       The pointer to the bit array
+ *
+ * @param bit                      The index of the bit to set
+ *
+ * @returns                        0 for success, -1 for failure.  errno will be set in the
+ *                                 event of a failure.
+ */
+int bit_array_set_bit(const BitArray* const ba, const unsigned int bit);
+
+/**
+ * @brief                          This function returns a pointer to the array of unsigned
+ *                                 char containing actual bits.
+ *
+ * @param ba                       The pointer to bit array
+ *
+ * @returns                        A pointer to array containing bits
+ */
+void* bit_array_get_bits(const BitArray* const ba);
+
+/**
+ * @brief                          This function tests the specified bit in the bit array
+ *                                 passed as a parameter. A non-zero will be returned if the
+ *                                 tested bit is set.
+ *
+ * @param ba                       The pointer to bit array
+ *
+ * @param bit                      The index of the bit to set
+ *
+ * @returns                        Non-zero if bit is set, otherwise 0.  This function does
+ *                                 not check the input.  Tests on invalid input will produce
+ *                                 unknown results.
+ */
+int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
 
 /**
  * @brief                          Returns a short string representing the current git commit

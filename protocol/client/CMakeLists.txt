@@ -16,7 +16,6 @@ add_executable(FractalClient
         ringbuffer.c
         sync_packets.c
         bitrate.c
-        ../lib/bitarray/bitarray.c
         )
 
 # On Windows during client app packaging, FractalClient should have icon set

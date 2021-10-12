@@ -2,15 +2,9 @@
 #include "gtest/gtest.h"
 
 extern "C" {
+    #include <fractal/core/fractal.h>
     #include "client/client_utils.h"
     #include "fractal/utils/color.h"
-    #include <lib/bitarray/bitarray.h>
-
-    struct bit_array_t
-{
-    unsigned char *array;       /* pointer to array containing bits */
-    unsigned int numBits;       /* number of bits in array */
-};
 }
 // Include paths should be relative to the protocol folder
 //      Examples:
@@ -99,12 +93,12 @@ TEST(ClientTest, BitArrayMemCpyTest) {
     std::vector<int> bitarray_sizes {1, 2, 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
 
     for (auto test_size : bitarray_sizes) {
-        bit_array_t *bit_arr = BitArrayCreate(test_size);
+        BitArray *bit_arr = bit_array_create(test_size);
         EXPECT_TRUE(bit_arr);
 
-        BitArrayClearAll(bit_arr);
+        bit_array_clear_all(bit_arr);
         for (int i=0; i<test_size; i++) {
-            EXPECT_EQ(BitArrayTestBit(bit_arr, i), 0);
+            EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
         }
 
         std::vector<bool>bits_arr_check;
@@ -114,34 +108,34 @@ TEST(ClientTest, BitArrayMemCpyTest) {
             EXPECT_TRUE(coin_toss == 0 || coin_toss == 1);
             if (coin_toss) {
                 bits_arr_check.push_back(true);
-                BitArraySetBit(bit_arr, i);
+                bit_array_set_bit(bit_arr, i);
             } else {
                 bits_arr_check.push_back(false);
             }
         }
 
         unsigned char ba_raw[BITS_TO_CHARS(MAX_RING_BUFFER_SIZE)];
-        memcpy(ba_raw, BitArrayGetBits(bit_arr), BITS_TO_CHARS(test_size));
-        BitArrayDestroy(bit_arr);
+        memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
+        bit_array_free(bit_arr);
 
-        bit_array_t *bit_arr_recovered = BitArrayCreate(test_size);
+        BitArray *bit_arr_recovered = bit_array_create(test_size);
         EXPECT_TRUE(bit_arr_recovered);
 
         EXPECT_TRUE(bit_arr_recovered->array);
         EXPECT_TRUE(bit_arr_recovered->array != NULL);
         EXPECT_TRUE(ba_raw);
         EXPECT_TRUE(ba_raw != NULL);
-        memcpy(BitArrayGetBits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
+        memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
 
         for (int i=0; i<test_size; i++) {
             if (bits_arr_check[i]) {
-                EXPECT_GE(BitArrayTestBit(bit_arr_recovered, i), 1);
+                EXPECT_GE(bit_array_test_bit(bit_arr_recovered, i), 1);
             } else {
-                EXPECT_EQ(BitArrayTestBit(bit_arr_recovered, i), 0);
+                EXPECT_EQ(bit_array_test_bit(bit_arr_recovered, i), 0);
             }   
         }
 
-        BitArrayDestroy(bit_arr_recovered);
+        bit_array_free(bit_arr_recovered);
     }
 }
 

@@ -17,7 +17,6 @@ add_executable(${CLIENT_TEST_BINARY} ClientTest.cpp
     ../client/ringbuffer.c
     ../client/sync_packets.c
     ../client/bitrate.c
-    ../lib/bitarray/bitarray.c
 )
 
 # Link the GoogleTest library

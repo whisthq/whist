@@ -10,7 +10,6 @@ add_executable(FractalServer
         main.c
         handle_client_message.c
         network.c
-        ../lib/bitarray/bitarray.c
         )
 
 set_target_properties(FractalServer PROPERTIES
