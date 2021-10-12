@@ -24,41 +24,41 @@ var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
 // StatusSubscriptionEvent is the event received from the subscription to any
 // instance status changes.
-type StatusSubscriptionEvent struct {
+type InstanceStatusEvent struct {
 	InstanceInfo []Instance `json:"cloud_instance_info"`
 	resultChan   chan InstanceInfoResult
 }
 
 // ReturnResult is called to pass the result of a subscription event back to the
-// subbscription handler.
-func (s *StatusSubscriptionEvent) ReturnResult(result interface{}, err error) {
+// subscription handler.
+func (s *InstanceStatusEvent) ReturnResult(result interface{}, err error) {
 	s.resultChan <- InstanceInfoResult{result}
 }
 
 // createResultChan is called to create the Go channel to pass the Hasura
 // result back to the subscription handler.
-func (s *StatusSubscriptionEvent) createResultChan() {
+func (s *InstanceStatusEvent) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan InstanceInfoResult)
 	}
 }
 
-// StatusSubscriptionHandler handles events from the hasura subscription which
+// instanceStatusHandler handles events from the hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
-func StatusSubscriptionHandler(instanceName string, status string, client *graphql.SubscriptionClient, subscriptionEvents chan<- SubscriptionEvent) (string, error) {
+func instanceStatusHandler(instanceName string, status string, client *graphql.SubscriptionClient, subscriptionEvents chan<- SubscriptionEvent) (string, error) {
 	// variables holds the values needed to run the graphql subscription
 	variables := map[string]interface{}{
 		"instance_name": graphql.String(instanceName),
 		"status":        graphql.String(status),
 	}
 	// This subscriptions fires when the running instance status changes to draining on the database
-	id, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
+	id, err := client.Subscribe(InstanceStatusSubscription, variables, func(data *json.RawMessage, err error) error {
 
 		if err != nil {
 			return err
 		}
 
-		var result StatusSubscriptionEvent
+		var result InstanceStatusEvent
 		json.Unmarshal(*data, &result)
 		result.createResultChan()
 
@@ -73,6 +73,69 @@ func StatusSubscriptionHandler(instanceName string, status string, client *graph
 
 		if (instance.InstanceName == instanceName) && (instance.Status == status) {
 			// We notify via the subscriptionsEvent channel to start the drain and shutdown process
+			subscriptionEvents <- &result
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+// InstanceStatusEvent is the event received from the subscription to any
+// instance status changes.
+type MandelboxInfoEvent struct {
+	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
+	resultChan    chan InstanceInfoResult
+}
+
+// ReturnResult is called to pass the result of a subscription event back to the
+// subscription handler.
+func (s *MandelboxInfoEvent) ReturnResult(result interface{}, err error) {
+	s.resultChan <- InstanceInfoResult{result}
+}
+
+// createResultChan is called to create the Go channel to pass the Hasura
+// result back to the subscription handler.
+func (s *MandelboxInfoEvent) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan InstanceInfoResult)
+	}
+}
+
+// mandelboxInfoHandler handles events from the hasura subscription which
+// detects changes on instance instanceName to the given status in the database.
+func mandelboxInfoHandler(instanceName string, client *graphql.SubscriptionClient, subscriptionEvents chan<- SubscriptionEvent) (string, error) {
+	// variables holds the values needed to run the graphql subscription
+	variables := map[string]interface{}{
+		"instance_name": graphql.String(instanceName),
+	}
+	// This subscriptions fires when the running instance status changes to draining on the database
+	id, err := client.Subscribe(MandelboxInfoSubscription, variables, func(data *json.RawMessage, err error) error {
+
+		if err != nil {
+			return nil
+		}
+
+		var result MandelboxInfoEvent
+		json.Unmarshal(*data, &result)
+		result.createResultChan()
+
+		var mandelbox Mandelbox
+		// If the result array returned by Hasura is not empty, it means
+		// there was a change in the database row
+		if len(result.MandelboxInfo) > 0 {
+			mandelbox = result.MandelboxInfo[0]
+		} else {
+			return nil
+		}
+
+		if mandelbox.InstanceName == instanceName {
+			// We notify via the subscriptionsEvent channel to spin up the mandelbox
 			subscriptionEvents <- &result
 		}
 
@@ -107,7 +170,14 @@ func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTr
 	var subscriptionIDs []string
 
 	// Here we run all subscriptions
-	id, err := StatusSubscriptionHandler(instanceName, "DRAINING", client, subscriptionEvents)
+	id, err := instanceStatusHandler(instanceName, "DRAINING", client, subscriptionEvents)
+	if err != nil {
+		// handle subscription error
+		return err
+	}
+	subscriptionIDs = append(subscriptionIDs, id)
+
+	id, err = mandelboxInfoHandler(instanceName, client, subscriptionEvents)
 	if err != nil {
 		// handle subscription error
 		return err
