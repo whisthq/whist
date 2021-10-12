@@ -465,9 +465,10 @@ static int handle_audio_nack_message(FractalClientMessage *fcmsg, int client_id,
         memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_audio_nack.ba_raw,
                BITS_TO_CHARS(fcmsg->bitarray_audio_nack.numBits));
 
-        for (int i = 0; i < fcmsg->bitarray_audio_nack.numBits; i++) {
+        for (int i = fcmsg->bitarray_audio_nack.index; i < fcmsg->bitarray_audio_nack.numBits;
+             i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                handle_nack_single_audio_packet(fcmsg->simple_nack.id, i, client_id);
+                handle_nack_single_audio_packet(fcmsg->bitarray_audio_nack.id, i, client_id);
             }
         }
         bit_array_free(bit_arr);
@@ -523,9 +524,10 @@ static int handle_video_nack_message(FractalClientMessage *fcmsg, int client_id,
         memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_video_nack.ba_raw,
                BITS_TO_CHARS(fcmsg->bitarray_video_nack.numBits));
 
-        for (int i = 0; i < fcmsg->bitarray_video_nack.numBits; i++) {
+        for (int i = fcmsg->bitarray_video_nack.index; i < fcmsg->bitarray_video_nack.numBits;
+             i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                handle_nack_single_video_packet(fcmsg->simple_nack.id, i, client_id);
+                handle_nack_single_video_packet(fcmsg->bitarray_video_nack.id, i, client_id);
             }
         }
         bit_array_free(bit_arr);
