@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import Any, Callable, Dict, List
 import random
-import requests
 
 from flask import Flask
 from pytest import MonkeyPatch
@@ -181,14 +180,6 @@ def test_perform_ami_upgrade(
     # instances returned are being passed to drain_and_shutdown.
     monkeypatch.setattr(ami_upgrade, "fetch_current_running_instances", _mock_instance_info_query)
 
-    drain_and_shutdown_call_list = []
-
-    def _helper(*args: Any, **kwargs: Any) -> None:
-        drain_and_shutdown_call_list.append({"args": args, "kwargs": kwargs})
-        raise requests.exceptions.RequestException()
-
-    monkeypatch.setattr(requests, "post", _helper)
-
     # The following make instances appear active so that we can attempt to drain them.
     def _active_instances(*args: Any, **kwargs: Any) -> str:  # pylint: disable=unused-argument
         return EC2InstanceState.RUNNING
@@ -222,9 +213,6 @@ def test_perform_ami_upgrade(
         assert region_current_active_ami_map[upgraded_region].ami_active is False
         # Checking that newer AMI is being marked as active.
         assert region_wise_new_amis_added_to_db_session[upgraded_region].ami_active is True
-
-    # Checking if all the running instances with older AMIs are being marked for draining.
-    assert len(drain_and_shutdown_call_list) == num_running_instances
 
     for region, new_ami, launch_new_ami_buffer_call in zip(
         regions_to_upgrade, new_ami_list, launch_new_ami_buffer_calls

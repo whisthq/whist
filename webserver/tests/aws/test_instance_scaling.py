@@ -91,9 +91,8 @@ def test_scale_down_single_available(
     assert instance.status != MandelboxHostState.DRAINING.value
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    assert post_list[0]["args"][0] == "https://123.456.789:4678/drain_and_shutdown"
     db.session.refresh(instance)
-    assert instance.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
+    assert instance.status == MandelboxHostState.DRAINING.value
 
 
 def test_terminate_single_available(
@@ -178,8 +177,8 @@ def test_terminate_single_ec2_fails(
 @pytest.mark.parametrize(
     "status, answer, retval",
     [
-        [MandelboxHostState.ACTIVE, (1, 1), "does_not_exist"],
-        [MandelboxHostState.ACTIVE, (1, 0), "running"],
+        [MandelboxHostState.ACTIVE, 1, "does_not_exist"],
+        [MandelboxHostState.ACTIVE, 0, "running"],
     ],
 )
 def test_drain_unreachable_does_not_exist(
@@ -188,7 +187,7 @@ def test_drain_unreachable_does_not_exist(
     mock_get_num_new_instances: Callable[[Any], None],
     bulk_instance: Callable[..., InstanceInfo],
     status: MandelboxHostState,
-    answer: Tuple[int, int],
+    answer: int,
     retval: str,
     region_name: str,
 ) -> None:
@@ -197,9 +196,7 @@ def test_drain_unreachable_does_not_exist(
     not in pre_condition, we always try to drain before
     either terminating or marking unresponsive.
     """
-    db_call_list = []
     ec2_call_list = []
-    post_list = []
 
     def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
         ec2_call_list.append({"args": args, "kwargs": kwargs})
@@ -214,18 +211,6 @@ def test_drain_unreachable_does_not_exist(
     monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
     monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
 
-    def _helper(*args: Any, **kwargs: Any) -> None:
-        nonlocal post_list
-        post_list.append({"args": args, "kwargs": kwargs})
-        raise requests.exceptions.RequestException()
-
-    monkeypatch.setattr(requests, "post", _helper)
-
-    def _db_call(*args: Any, **kwargs: Any) -> None:
-        db_call_list.append({"args": args, "kwargs": kwargs})
-
-    monkeypatch.setattr(db.session, "delete", _db_call)
-
     app.config["FRACTAL_ACCESS_TOKEN"] = "dummy-access-token"
 
     instance = bulk_instance(
@@ -238,11 +223,8 @@ def test_drain_unreachable_does_not_exist(
     drain_instance(instance)
     # We should have still tried to drain even though instance does not exist
     # according to ec2
-    post_answer, db_answer = answer
-    assert len(post_list) == post_answer
-    assert len(db_call_list) == db_answer
-    if db_answer == 0:
-        assert instance.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
+    if answer == 0:
+        assert instance.status == MandelboxHostState.DRAINING.value
 
 
 @pytest.mark.parametrize("retval", ["stopping", "stopped", "shutting-down", "terminated"])
@@ -402,7 +384,7 @@ def test_scale_down_multiple_available(
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     for instance in instance_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
+        assert instance_info.status == MandelboxHostState.DRAINING.value
 
 
 def test_scale_down_multiple_partial_available(
@@ -443,7 +425,7 @@ def test_scale_down_multiple_partial_available(
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     for instance in instance_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value
+        assert instance_info.status == MandelboxHostState.DRAINING.value
     for instance in active_list:
         instance_info = InstanceInfo.query.get(instance)
         assert instance_info.status == MandelboxHostState.ACTIVE.value

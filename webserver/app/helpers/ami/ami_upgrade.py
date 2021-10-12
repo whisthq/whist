@@ -251,17 +251,9 @@ def swapover_amis(new_amis_str: List[str]) -> None:
         active_instance.status = MandelboxHostState.DRAINING
     db.session.commit()
 
-    mark_instance_for_draining_failures = []
     for active_instance in current_running_instances:
-        # At this point, the instance is marked as DRAINING in the database. But we need
-        # to inform the HOST_SERVICE that we have marked the instance as draining.
-        active_instance_draining_status = drain_instance(active_instance)
-        if active_instance_draining_status is False:
-            # Mark the status for draining all instances as False when marking any instance draining fails.
-            fractal_logger.error(
-                f"Failed to mark instance: {active_instance.instance_name} for draining through host service."
-            )
-            mark_instance_for_draining_failures.append(active_instance.instance_name)
+        # At this point, the instance is marked as DRAINING in the database.
+        drain_instance(active_instance)
 
     for new_ami in new_amis:
         new_ami.protected_from_scale_down = False
@@ -273,9 +265,3 @@ def swapover_amis(new_amis_str: List[str]) -> None:
     db.session.commit()
 
     fractal_logger.info("Finished performing AMI upgrade.")
-    if len(mark_instance_for_draining_failures) > 0 and not current_app.testing:
-        for failed_instance in mark_instance_for_draining_failures:
-            fractal_logger.error(
-                f"Failed to mark instance: {failed_instance} as draining through host service"
-            )
-        sys.exit(1)
