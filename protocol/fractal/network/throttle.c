@@ -1,6 +1,7 @@
 #include <fractal/core/fractal.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/threads.h>
+#include <fractal/logging/log_statistic.h>
 #include "throttle.h"
 
 // The coin bucket should never fill up more than
@@ -135,10 +136,11 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     // coin bucket at a rate of `burst_bitrate` bytes per second.
     // Once there are enough coins in the bucket, we can actually
     // send the packet.
-
-    // TODO: Add some LOG_STATISTIC calls to this function to see
-    // the distribution for wait times, queue sizes (in bytes), etc.
+    clock start;
+    start_timer(&start);
+    int loops = 0;
     while (true) {
+        ++loops;
         if (INTERNAL(ctx)->destroying) {
             // If we are in destruction mode, simply break
             break;
@@ -166,6 +168,13 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     }
 
     // Wake up the next waiter in the queue.
+    double time = get_timer(start);
+    log_double_statistic("throttled packet delay (ms)", time * MS_IN_SECOND);
+    log_double_statistic("throttled packet delay rate (ms/byte)",
+                         time * MS_IN_SECOND / (double)bytes);
+    log_double_statistic("throttled packet delay loops (count)", (double)loops);
     ++INTERNAL(ctx)->current_queue_id;
+    fractal_lock_mutex(INTERNAL(ctx)->queue_lock);
     fractal_broadcast_cond(INTERNAL(ctx)->queue_cond);
+    fractal_unlock_mutex(INTERNAL(ctx)->queue_lock);
 }
