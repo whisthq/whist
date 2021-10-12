@@ -398,6 +398,10 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
 
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
         int start_index = max(0, frame_data->last_nacked_index + 1);
+        if (start_index > index) {
+            return;
+        }
+
         // Create the bitmap handle, we don't know the size yet
         BitArray* bit_arr = bit_array_create(index - start_index + 1);
         bit_array_clear_all(bit_arr);
