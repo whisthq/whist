@@ -51,7 +51,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/hasura/go-graphql-client v0.3.0
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -89,3 +88,32 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+<<<<<<< HEAD
+=======
+
+require (
+	github.com/bmatcuk/doublestar v1.3.4 // indirect
+	github.com/emirpasic/gods v1.12.0 // indirect
+	github.com/go-git/gcfg v1.5.0 // indirect
+	github.com/go-git/go-billy/v5 v5.0.0 // indirect
+	github.com/go-git/go-git/v5 v5.0.0 // indirect
+	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+	github.com/johnstarich/go/gopages v0.1.8 // indirect
+	github.com/johnstarich/go/pipe v0.2.0 // indirect
+	github.com/jschaf/pggen v0.0.0-20210907022937-7f878880d5f9 // indirect
+	github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd // indirect
+	github.com/klauspost/compress v1.11.13 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/peterbourgon/ff/v3 v3.0.0 // indirect
+	github.com/sergi/go-diff v1.1.0 // indirect
+	github.com/xanzy/ssh-agent v0.2.1 // indirect
+	go.uber.org/multierr v1.5.0 // indirect
+	go.uber.org/zap v1.13.0 // indirect
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/mod v0.3.0 // indirect
+	golang.org/x/tools v0.0.0-20210106214847-113979e3529a // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	gopkg.in/warnings.v0 v0.1.2 // indirect
+	nhooyr.io/websocket v1.8.6 // indirect
+)
+>>>>>>> 2820480d7 (Fix dependencies in go.mod)
