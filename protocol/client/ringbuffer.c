@@ -397,66 +397,23 @@ void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_
     */
 
     if (index > 0 && get_timer(frame_data->last_nacked_timer) > 6.0 / 1000) {
-        int first_packet_to_nack = -1;
+        int start_index = max(0, frame_data->last_nacked_index + 1);
         // Create the bitmap handle, we don't know the size yet
-        BitArray* bit_arr = NULL;
-        bool simple_nacking = true;
-
-        for (int i = max(0, frame_data->last_nacked_index + 1); i <= index; i++) {
-            if (!frame_data->received_indices[i]) {
-                if (!bit_arr && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
-                    assert(first_packet_to_nack == -1);
-                    // Found first packet to NACK!
-                    bit_arr = bit_array_create(index - i + 1);
-                    bit_array_clear_all(bit_arr);
-                    first_packet_to_nack = i;
-                    bit_array_set_bit(bit_arr, i);
-                } else if (bit_arr) {
-                    assert(first_packet_to_nack != -1);
-                    // We already have a candidate packet for NACKing. Check if we can NACK for more
-                    // using the bitarray.
-                    if (frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
-                        bit_array_set_bit(bit_arr, i);
-                        simple_nacking = false;
-                    } else {
-                        break;
-                    }
-                }
+        BitArray* bit_arr = bit_array_create(index - start_index + 1);
+        bit_array_clear_all(bit_arr);
+        
+        for (int i = start_index; i <= index; i++) {
+            if (!frame_data->received_indices[i] && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {   
+                bit_array_set_bit(bit_arr, i);
+                frame_data->nacked_indices[i]++;
+                frame_data->last_nacked_index = max(frame_data->last_nacked_index, i);
             }
         }
-
-        if (simple_nacking) {
-            if (bit_arr) {
-                bit_array_free(bit_arr);
-            }
-            if (first_packet_to_nack != -1) {
-                frame_data->last_nacked_index =
-                    max(frame_data->last_nacked_index, first_packet_to_nack);
-                frame_data->nacked_indices[first_packet_to_nack]++;
-                LOG_INFO("************NACKING %s PACKET %d %d (/%d), alive for %f MS",
-                         ((ring_buffer->type == FRAME_AUDIO) ? "AUDIO" : "VIDEO"), frame_data->id,
-                         first_packet_to_nack, frame_data->num_packets,
-                         get_timer(frame_data->frame_creation_timer) * MS_IN_SECOND);
-                nack_single_packet(ring_buffer, frame_data->id, first_packet_to_nack);
-
-                start_timer(&frame_data->last_nacked_timer);
-            }
-        } else {
-            for (int i = 0; i < (int)bit_arr->numBits; i++) {
-                if (bit_array_test_bit(bit_arr, i)) {
-                    frame_data->nacked_indices[first_packet_to_nack + i]++;
-                    frame_data->last_nacked_index =
-                        max(frame_data->last_nacked_index, first_packet_to_nack + i);
-                }
-            }
-            LOG_INFO("************NACKING %s PACKETS %d from %d to %d, alive for %f MS",
-                     ((ring_buffer->type == FRAME_AUDIO) ? "AUDIO" : "VIDEO"), frame_data->id,
-                     first_packet_to_nack, frame_data->num_packets,
-                     get_timer(frame_data->frame_creation_timer) * MS_IN_SECOND);
-            nack_bitarray_packets(ring_buffer, frame_data->id, first_packet_to_nack, bit_arr);
-            bit_array_free(bit_arr);
-            start_timer(&frame_data->last_nacked_timer);
-        }
+        LOG_INFO("************NACKING %s PACKETS %d from %d to %d, alive for %f MS", ((ring_buffer->type == FRAME_AUDIO) ? "AUDIO" : "VIDEO"), frame_data->id,
+                     start_index, index, get_timer(frame_data->frame_creation_timer) * MS_IN_SECOND);
+        nack_bitarray_packets(ring_buffer, frame_data->id, start_index, bit_arr);
+        bit_array_free(bit_arr);
+        start_timer(&frame_data->last_nacked_timer);
     }
 }
 
