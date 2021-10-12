@@ -4,7 +4,6 @@ import time
 from collections import defaultdict
 from sys import maxsize
 from typing import Any, DefaultDict, List, Optional
-import requests
 from flask import current_app
 from app.database.models.cloud import (
     db,
@@ -347,28 +346,22 @@ def do_scale_up_if_necessary(
     return new_instance_names
 
 
-def drain_instance(instance: InstanceInfo) -> bool:
+def drain_instance(instance: InstanceInfo) -> None:
     """
-    Attempts to drain an instance, logging an error and marking unresponsive
-    if it cannot be drained, and removing from the database if the instance
+    Marks an instance as draining, removing from the database if the instance
     in question does not actually exist. Note that we will terminate instances
     that do not have a valid IP (since host service is not up/connected yet).
 
-    Note that we should not call this function multiple times on a single host
-    since subsequent calls will fail and we will unfairly mark the host
-    service as unresponsive.
+    After marking the instance as draining, the host service should react to this
+    change and terminate itself.
 
     Args:
         instance: The instance to drain
 
     Returns:
-        True if the instance is marked for draining, else False.
+        None
 
     """
-    # We need to modify the status to DRAINING to ensure that we don't assign a new
-    # mandelbox to the instance. We need to commit here as we don't want to enter a
-    # deadlock with host service where it tries to modify the instance_info row.
-    job_status = False
     if (
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
@@ -386,40 +379,12 @@ def drain_instance(instance: InstanceInfo) -> bool:
             f" terminating instance | reasoning {why}"
         )
         terminate_instance(instance)
-        job_status = True
     else:
-        # Try to drain the instance
-        try:
-            base_url = f"https://{instance.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-            resp = requests.post(
-                f"{base_url}/drain_and_shutdown",
-                json={"auth_secret": current_app.config["FRACTAL_ACCESS_TOKEN"]},
-                verify=False,
-            )
-            resp.raise_for_status()
-            fractal_logger.info(
-                f"instance {instance.instance_name} | status {instance.status} |"
-                " successfully called drain_and_shutdown, marking draining in db"
-            )
-            instance.status = MandelboxHostState.DRAINING
-            db.session.commit()
-            job_status = True
-        except requests.exceptions.RequestException as error:
-            # If the instance does not exist, we terminate, else we mark it as unresponsive
-            fractal_logger.error(
-                "Unable to send drain_and_shutdown request to host service"
-                f" on instance {instance.instance_name}: {error}"
-            )
-            if not check_instance_exists(get_instance_id(instance), instance.location):
-                fractal_logger.error(
-                    f"Check instance exists failed for {instance.instance_name}"
-                    " | terminating instance"
-                )
-                terminate_instance(instance)
-            else:
-                instance.status = MandelboxHostState.HOST_SERVICE_UNRESPONSIVE
-                db.session.commit()
-    return job_status
+        # We need to modify the status to DRAINING to ensure that we don't assign a new
+        # mandelbox to the instance. We need to commit here as we don't want to enter a
+        # deadlock with host service where it tries to modify the instance_info row.
+        instance.status = MandelboxHostState.DRAINING
+        db.session.commit()
 
 
 def try_scale_down_if_necessary(region: str, ami: str) -> None:

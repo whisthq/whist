@@ -133,48 +133,6 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 	res.send(w)
 }
 
-// DrainAndShutdownRequest defines the (unauthenticated) drain_and_shutdown
-// endpoint, called by the webserver as part of scaling down an instance.
-type DrainAndShutdownRequest struct {
-	resultChan chan requestResult // Channel to pass the request result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *DrainAndShutdownRequest) ReturnResult(result interface{}, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *DrainAndShutdownRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// processDrainAndShutdownRequest processes an HTTP request to drain and
-// shutdown the host service. It is handled in host-service.go.
-func processDrainAndShutdownRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is an POST request
-	if verifyRequestType(w, r, http.MethodPost) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata DrainAndShutdownRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
 // Helper functions
 
 // Function to verify the type (method) of a request
@@ -291,7 +249,6 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
-	mux.HandleFunc("/drain_and_shutdown", createHandler(processDrainAndShutdownRequest))
 
 	// Create the server itself
 	server := &http.Server{

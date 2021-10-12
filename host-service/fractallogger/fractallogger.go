@@ -63,6 +63,17 @@ func Close() {
 	stopAndDrainLogzio()
 }
 
+// Print logs an interface + timestamp, but does not send it to Sentry.
+func Print(v ...interface{}) {
+	str := fmt.Sprint(v...)
+
+	log.Print(str)
+	if logzioTransport != nil {
+		timestamp := fmt.Sprintf("time=%s", time.Now().String())
+		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
+	}
+}
+
 // Info logs some info + timestamp, but does not send it to Sentry.
 func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
