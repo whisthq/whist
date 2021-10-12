@@ -25,5 +25,3 @@ sentry-native/
 build/
 build-*/
 
-# bitarray library
-*bitarray*
