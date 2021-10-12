@@ -29,54 +29,55 @@ Includes
         (from cursor.h) returned from ::hash from ../utils/aes.c found
         experimentally
 */
-#define ARROW_CURSOR_HASH 3933283985
-#define IBEAM_CURSOR_HASH 2687203118
-#define WAIT_PROGRESS_CURSOR_HASH 635125873
+typedef enum ChromeCursorHash {
+    ARROW_CURSOR_HASH = 3933283985,
+    IBEAM_CURSOR_HASH = 2687203118,
+    WAIT_PROGRESS_CURSOR_HASH = 635125873,
 
-/*
+    /*
         The wait cursor in Ubuntu is a spinning wheel. This is
         just a combination of a bunch of different wheel images.
 
         All these macros define all the hash various wait wheel cursor images
 */
-#define WAIT_CURSOR_HASH1 4281051011
-#define WAIT_CURSOR_HASH2 1219385211
-#define WAIT_CURSOR_HASH3 2110653072
-#define WAIT_CURSOR_HASH4 2645617132
-#define WAIT_CURSOR_HASH5 4109023132
-#define WAIT_CURSOR_HASH6 3564201703
-#define WAIT_CURSOR_HASH7 3062356816
-#define WAIT_CURSOR_HASH8 162297790
-#define WAIT_CURSOR_HASH9 1891884989
-#define WAIT_CURSOR_HASH10 3681403656
-#define WAIT_CURSOR_HASH11 3510490915
-#define WAIT_CURSOR_HASH12 980730422
-#define WAIT_CURSOR_HASH13 3351284218
-#define WAIT_CURSOR_HASH14 453843329
-#define WAIT_CURSOR_HASH15 3351284218
-#define WAIT_CURSOR_HASH16 1330002778
-#define WAIT_CURSOR_HASH17 2194145305
-#define WAIT_CURSOR_HASH18 3827791507
-#define WAIT_CURSOR_HASH19 627807385
-#define WAIT_CURSOR_HASH20 3578467491
-#define WAIT_CURSOR_HASH21 2358572147
-#define WAIT_CURSOR_HASH22 2200949727
-#define WAIT_CURSOR_HASH23 66480096
-#define WAIT_CURSOR_HASH24 3167854604
+    WAIT_CURSOR_HASH1 = 4281051011,
+    WAIT_CURSOR_HASH2 = 1219385211,
+    WAIT_CURSOR_HASH3 = 2110653072,
+    WAIT_CURSOR_HASH4 = 2645617132,
+    WAIT_CURSOR_HASH5 = 4109023132,
+    WAIT_CURSOR_HASH6 = 3564201703,
+    WAIT_CURSOR_HASH7 = 3062356816,
+    WAIT_CURSOR_HASH8 = 162297790,
+    WAIT_CURSOR_HASH9 = 1891884989,
+    WAIT_CURSOR_HASH10 = 3681403656,
+    WAIT_CURSOR_HASH11 = 3510490915,
+    WAIT_CURSOR_HASH12 = 980730422,
+    WAIT_CURSOR_HASH13 = 3351284218,
+    WAIT_CURSOR_HASH14 = 453843329,
+    WAIT_CURSOR_HASH15 = 1330002778,
+    WAIT_CURSOR_HASH16 = 2194145305,
+    WAIT_CURSOR_HASH17 = 3827791507,
+    WAIT_CURSOR_HASH18 = 627807385,
+    WAIT_CURSOR_HASH19 = 3578467491,
+    WAIT_CURSOR_HASH20 = 2358572147,
+    WAIT_CURSOR_HASH21 = 2200949727,
+    WAIT_CURSOR_HASH22 = 66480096,
+    WAIT_CURSOR_HASH23 = 3167854604,
 
-#define NWSE_CURSOR_HASH 2133544106
-#define NW_CURSOR_HASH 1977751514
-#define SE_CURSOR_HASH 3001669061
-#define NESW_CURSOR_HASH 303720310
-#define SW_CURSOR_HASH 3760849629
-#define NE_CURSOR_HASH 3504429407
-#define EW_CURSOR_HASH 1098442634
-#define NS_CURSOR_HASH 1522636070
-#define NOT_ALLOWED_CURSOR_HASH 1482285723
-#define HAND_POINT_CURSOR_HASH 2478081084
-#define HAND_GRAB_CURSOR_HASH 3452761364
-#define HAND_GRABBING_CURSOR_HASH 3674173946
-#define CROSSHAIR_CURSOR_HASH 1236176635
+    NWSE_CURSOR_HASH = 2133544106,
+    NW_CURSOR_HASH = 1977751514,
+    SE_CURSOR_HASH = 3001669061,
+    NESW_CURSOR_HASH = 303720310,
+    SW_CURSOR_HASH = 3760849629,
+    NE_CURSOR_HASH = 3504429407,
+    EW_CURSOR_HASH = 1098442634,
+    NS_CURSOR_HASH = 1522636070,
+    NOT_ALLOWED_CURSOR_HASH = 1482285723,
+    HAND_POINT_CURSOR_HASH = 2478081084,
+    HAND_GRAB_CURSOR_HASH = 3452761364,
+    HAND_GRABBING_CURSOR_HASH = 3674173946,
+    CROSSHAIR_CURSOR_HASH = 1236176635
+} ChromeCursorHash;
 
 static Display* disp;
 /*
@@ -110,42 +111,68 @@ FractalCursorID get_cursor_id(XFixesCursorImage* ci) {
     // Need to multiply the size by 4, as the width*height describes
     // number of pixels, which are 32 bit, so 4 bytes each.
     uint32_t cursor_hash = hash(ci->pixels, 4 * ci->width * ci->height);
-    if (cursor_hash == ARROW_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_ARROW;
-    } else if (cursor_hash == IBEAM_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_IBEAM;
-    } else if (cursor_hash == WAIT_PROGRESS_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_WAITARROW;
-    } else if (cursor_hash == WAIT_CURSOR_HASH1 || cursor_hash == WAIT_CURSOR_HASH2 ||
-               cursor_hash == WAIT_CURSOR_HASH3 || cursor_hash == WAIT_CURSOR_HASH4 ||
-               cursor_hash == WAIT_CURSOR_HASH5 || cursor_hash == WAIT_CURSOR_HASH6 ||
-               cursor_hash == WAIT_CURSOR_HASH7 || cursor_hash == WAIT_CURSOR_HASH8 ||
-               cursor_hash == WAIT_CURSOR_HASH9 || cursor_hash == WAIT_CURSOR_HASH10 ||
-               cursor_hash == WAIT_CURSOR_HASH11 || cursor_hash == WAIT_CURSOR_HASH12 ||
-               cursor_hash == WAIT_CURSOR_HASH13 || cursor_hash == WAIT_CURSOR_HASH14 ||
-               cursor_hash == WAIT_CURSOR_HASH15 || cursor_hash == WAIT_CURSOR_HASH16 ||
-               cursor_hash == WAIT_CURSOR_HASH17 || cursor_hash == WAIT_CURSOR_HASH18 ||
-               cursor_hash == WAIT_CURSOR_HASH19 || cursor_hash == WAIT_CURSOR_HASH20 ||
-               cursor_hash == WAIT_CURSOR_HASH21 || cursor_hash == WAIT_CURSOR_HASH22 ||
-               cursor_hash == WAIT_CURSOR_HASH23 || cursor_hash == WAIT_CURSOR_HASH24) {
-        id = FRACTAL_CURSOR_WAIT;
-    } else if (cursor_hash == NWSE_CURSOR_HASH || cursor_hash == NW_CURSOR_HASH ||
-               cursor_hash == SE_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_SIZENWSE;
-    } else if (cursor_hash == NESW_CURSOR_HASH || cursor_hash == NE_CURSOR_HASH ||
-               cursor_hash == SW_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_SIZENESW;
-    } else if (cursor_hash == EW_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_SIZEWE;
-    } else if (cursor_hash == NS_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_SIZENS;
-    } else if (cursor_hash == NOT_ALLOWED_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_NO;
-    } else if (cursor_hash == CROSSHAIR_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_CROSSHAIR;
-    } else if (cursor_hash == HAND_POINT_CURSOR_HASH || cursor_hash == HAND_GRAB_CURSOR_HASH ||
-               cursor_hash == HAND_GRABBING_CURSOR_HASH) {
-        id = FRACTAL_CURSOR_HAND;
+    switch (cursor_hash) {
+        case ARROW_CURSOR_HASH:
+            id = FRACTAL_CURSOR_ARROW;
+            break;
+        case IBEAM_CURSOR_HASH:
+            id = FRACTAL_CURSOR_IBEAM;
+            break;
+        case WAIT_PROGRESS_CURSOR_HASH:
+            id = FRACTAL_CURSOR_WAITARROW;
+            break;
+        case WAIT_CURSOR_HASH1:
+        case WAIT_CURSOR_HASH2:
+        case WAIT_CURSOR_HASH3:
+        case WAIT_CURSOR_HASH4:
+        case WAIT_CURSOR_HASH5:
+        case WAIT_CURSOR_HASH6:
+        case WAIT_CURSOR_HASH7:
+        case WAIT_CURSOR_HASH8:
+        case WAIT_CURSOR_HASH9:
+        case WAIT_CURSOR_HASH10:
+        case WAIT_CURSOR_HASH11:
+        case WAIT_CURSOR_HASH12:
+        case WAIT_CURSOR_HASH13:
+        case WAIT_CURSOR_HASH14:
+        case WAIT_CURSOR_HASH15:
+        case WAIT_CURSOR_HASH16:
+        case WAIT_CURSOR_HASH17:
+        case WAIT_CURSOR_HASH18:
+        case WAIT_CURSOR_HASH19:
+        case WAIT_CURSOR_HASH20:
+        case WAIT_CURSOR_HASH21:
+        case WAIT_CURSOR_HASH22:
+        case WAIT_CURSOR_HASH23:
+            id = FRACTAL_CURSOR_WAIT;
+            break;
+        case NWSE_CURSOR_HASH:
+        case NW_CURSOR_HASH:
+        case SE_CURSOR_HASH:
+            id = FRACTAL_CURSOR_SIZENWSE;
+            break;
+        case NESW_CURSOR_HASH:
+        case NE_CURSOR_HASH:
+        case SW_CURSOR_HASH:
+            id = FRACTAL_CURSOR_SIZENESW;
+            break;
+        case EW_CURSOR_HASH:
+            id = FRACTAL_CURSOR_SIZEWE;
+            break;
+        case NS_CURSOR_HASH:
+            id = FRACTAL_CURSOR_SIZENS;
+            break;
+        case NOT_ALLOWED_CURSOR_HASH:
+            id = FRACTAL_CURSOR_NO;
+            break;
+        case CROSSHAIR_CURSOR_HASH:
+            id = FRACTAL_CURSOR_CROSSHAIR;
+            break;
+        case HAND_POINT_CURSOR_HASH:
+        case HAND_GRAB_CURSOR_HASH:
+        case HAND_GRABBING_CURSOR_HASH:
+            id = FRACTAL_CURSOR_HAND;
+            break;
     }
 
     return id;
