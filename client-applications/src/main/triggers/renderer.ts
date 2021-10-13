@@ -22,6 +22,7 @@ const filterByName = (
   TRIGGER.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
   TRIGGER.onboardingTypeformSubmitted,
   TRIGGER.emitIPC,
+  TRIGGER.importerSubmitted,
 ].forEach((trigger: string) => {
   createTrigger(
     trigger,

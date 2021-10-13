@@ -20,8 +20,8 @@ export const WindowHashBugTypeform = "BUG_TYPEFORM"
 export const WindowHashOnboardingTypeform = "ONBOARDING_TYPEFORM"
 export const WindowHashSpeedtest = "SPEEDTEST"
 export const WindowHashSleep = "SLEEP"
-export const WindowHashLoading = "LOADING"
 export const WindowHashUpdate = "UPDATE"
+export const WindowHashImporter = "IMPORTER"
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 

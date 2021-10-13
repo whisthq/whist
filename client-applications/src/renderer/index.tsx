@@ -10,15 +10,15 @@ import ReactDOM from "react-dom"
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
-import Loading from "@app/renderer/pages/loading"
+import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 
 import {
   WindowHashSignout,
   WindowHashBugTypeform,
   WindowHashOnboardingTypeform,
-  WindowHashLoading,
   WindowHashUpdate,
+  WindowHashImporter,
   allowPayments,
 } from "@app/utils/constants"
 import {
@@ -71,6 +71,11 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
+  const handleImporterSubmit = (browser: string) =>
+    setMainState({
+      trigger: { name: TRIGGER.importerSubmitted, payload: { browser } },
+    })
+
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
     // useMainState() only subscribes to state updates after the function is
@@ -81,8 +86,14 @@ const RootComponent = () => {
   }, [])
 
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
-  if (show === WindowHashLoading) return <Loading />
   if (show === WindowHashUpdate) return <Update />
+  if (show === WindowHashImporter)
+    return (
+      <Importer
+        browsers={mainState.browsers ?? []}
+        onSubmit={(browser: string) => handleImporterSubmit(browser)}
+      />
+    )
   if (show === WindowHashOnboardingTypeform) {
     return (
       <Typeform

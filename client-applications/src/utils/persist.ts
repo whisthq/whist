@@ -11,13 +11,11 @@
 
 import { app } from "electron"
 import Store from "electron-store"
-import events from "events"
 import { loggingBaseFilePath } from "@app/config/environment"
 
 app.setPath("userData", loggingBaseFilePath)
 
 export const store = new Store({ watch: true })
-export const persisted = new events.EventEmitter()
 
 interface Cache {
   [k: string]: string | boolean

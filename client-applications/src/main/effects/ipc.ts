@@ -12,6 +12,7 @@ import mapValues from "lodash.mapvalues"
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
 import { appEnvironment } from "../../../config/configs"
+import { getInstalledBrowsers } from "@app/utils/importer"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -42,6 +43,7 @@ const subscribed = combineLatest(
       updateInfo: fromTrigger("downloadProgress").pipe(
         map((obj) => JSON.stringify(obj))
       ),
+      browsers: of(getInstalledBrowsers()),
     },
     (obs) => concat(of(undefined), obs)
   )

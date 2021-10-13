@@ -28,6 +28,7 @@ import {
   WindowHashBugTypeform,
   WindowHashSpeedtest,
   WindowHashUpdate,
+  WindowHashImporter,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
@@ -408,4 +409,18 @@ export const createUpdateWindow = () =>
     hash: WindowHashUpdate,
     closeElectronWindows: true,
     closeProtocolWindow: true,
+  })
+
+export const createImporterWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+      frame: false,
+      titleBarStyle: "hidden",
+      transparent: true,
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashImporter,
+    closeElectronWindows: true,
   })

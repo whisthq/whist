@@ -7,13 +7,11 @@
 import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
-import isEmpty from "lodash.isempty"
-import pickBy from "lodash.pickby"
 import Sentry from "@sentry/electron"
+import { zip } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
-  createAuthWindow,
   createSignoutWindow,
   relaunch,
   createPaymentWindow,
@@ -22,32 +20,12 @@ import {
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
-import {
-  persist,
-  persistGet,
-  persistClear,
-  store,
-  persistedAuth,
-} from "@app/utils/persist"
+import { persist, persistGet, persistClear, store } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
 
 fromTrigger("appReady").subscribe(() => {
   createTray(createMenu(false))
-})
-
-fromTrigger("appReady").subscribe(() => {
-  const authCache = {
-    accessToken: (persistedAuth?.accessToken ?? "") as string,
-    refreshToken: (persistedAuth?.refreshToken ?? "") as string,
-    userEmail: (persistedAuth?.userEmail ?? "") as string,
-    configToken: (persistedAuth?.configToken ?? "") as string,
-  }
-
-  if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
-    app?.dock?.show()
-    createAuthWindow()
-  }
 })
 
 // If we have have successfully authorized, close the existing windows.

@@ -26,6 +26,9 @@ export default {
   updateChecking: "updateChecking",
   downloadProgress: "downloadProgress",
 
+  // Importer triggers
+  cookiesImported: "cookiesImported",
+
   // IPC triggers
   eventIPC: "eventIPC",
   emitIPC: "emitIPC",
@@ -41,6 +44,7 @@ export default {
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
   onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
+  importerSubmitted: "importerSubmitted",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",

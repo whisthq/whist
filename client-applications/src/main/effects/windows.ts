@@ -8,12 +8,19 @@ import {
 } from "rxjs/operators"
 import { interval, of } from "rxjs"
 import Sentry from "@sentry/electron"
+import isEmpty from "lodash.isempty"
+import pickBy from "lodash.pickby"
 
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
-import { createProtocolWindow } from "@app/utils/windows"
+import {
+  createProtocolWindow,
+  createImporterWindow,
+  createAuthWindow,
+} from "@app/utils/windows"
+import { persistGet, persistedAuth } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import TRIGGER from "@app/utils/triggers"
@@ -126,3 +133,21 @@ fromTrigger("networkUnstable")
       warningWindowOpen = false
     }
   })
+
+fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
+  createImporterWindow()
+})
+
+fromTrigger("appReady").subscribe(() => {
+  const authCache = {
+    accessToken: (persistedAuth?.accessToken ?? "") as string,
+    refreshToken: (persistedAuth?.refreshToken ?? "") as string,
+    userEmail: (persistedAuth?.userEmail ?? "") as string,
+    configToken: (persistedAuth?.configToken ?? "") as string,
+  }
+
+  if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
+    app?.dock?.show()
+    createAuthWindow()
+  }
+})
