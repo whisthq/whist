@@ -1,3 +1,8 @@
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file browsers.ts
+ * @brief This file contains support to get cookies from browser.
+ */
 import {
   ALGORITHM_PLAIN,
   BraveLinuxCookieFiles,
@@ -29,6 +34,14 @@ interface Cookie {
 }
 
 const bus = dbus.sessionBus()
+
+
+const test = async (): Promise<void> => {
+  console.log(await getCookies("chrome"))
+  
+}
+
+test()
 
 const getCookies = async (browser: string): Promise<Cookie[]> => {
   const encryptedCookies = await getCookiesFromFile(browser)
@@ -118,6 +131,7 @@ const getExpandedCookieFilePath = (browser: string): string => {
 
 const getCookieEncryptionKey = async (browser: string): Promise<string> => {
   const salt: Buffer = Buffer.from("saltysalt", "base64")
+  const length = 16
   switch (process.platform) {
     case "darwin": {
       let myPass = await keytar.getPassword(
