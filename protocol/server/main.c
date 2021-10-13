@@ -326,13 +326,16 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Receiving packets...");
 
-    init_window_name_getter();
+    init_x11_window_info_getter();
 
     clock ack_timer;
     start_timer(&ack_timer);
 
     clock window_name_timer;
     start_timer(&window_name_timer);
+
+    clock window_fullscreen_timer;
+    start_timer(&window_fullscreen_timer);
 
 #ifndef _WIN32
     clock uri_handler_timer;
@@ -350,6 +353,35 @@ int main(int argc, char* argv[]) {
                 read_unlock(&is_active_rwlock);
             }
             start_timer(&ack_timer);
+        }
+
+        if (get_timer(window_fullscreen_timer) > 0.1) {
+            // This is the cached fullscreen state. We only send state change events
+            // to the client if the fullscreen value has changed.
+            static bool cur_fullscreen = false;
+            bool fullscreen = is_focused_window_fullscreen();
+            if (fullscreen != cur_fullscreen) {
+                if (fullscreen) {
+                    LOG_INFO("Window is now fullscreen. Broadcasting fullscreen message.");
+                } else {
+                    LOG_INFO("Window is no longer fullscreen. Broadcasting fullscreen message.");
+                }
+                FractalServerMessage* fsmsg = safe_malloc(sizeof(FractalServerMessage));
+                memset(fsmsg, 0, sizeof(FractalServerMessage));
+                fsmsg->type = SMESSAGE_FULLSCREEN;
+                fsmsg->fullscreen = (int)fullscreen;
+                read_lock(&is_active_rwlock);
+                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg,
+                                         sizeof(FractalServerMessage)) < 0) {
+                    LOG_ERROR("Failed to broadcast fullscreen message.");
+                } else {
+                    LOG_INFO("Sent fullscreen message!");
+                    cur_fullscreen = fullscreen;
+                }
+                read_unlock(&is_active_rwlock);
+                free(fsmsg);
+            }
+            start_timer(&window_fullscreen_timer);
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
@@ -438,7 +470,7 @@ int main(int argc, char* argv[]) {
     }
 
     destroy_input_device(input_device);
-    destroy_window_name_getter();
+    destroy_x11_window_info_getter();
 
     fractal_wait_thread(send_video_thread, NULL);
     fractal_wait_thread(send_audio_thread, NULL);

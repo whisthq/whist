@@ -81,6 +81,8 @@ extern volatile double latency;
 
 extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
+extern volatile bool fullscreen_trigger;
+extern volatile bool fullscreen_value;
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -507,6 +509,15 @@ int main(int argc, char* argv[]) {
                     LOG_ERROR("Window Title should not be null!");
                 }
                 should_update_window_title = false;
+            }
+
+            if (fullscreen_trigger) {
+                if (fullscreen_value) {
+                    SDL_SetWindowFullscreen((SDL_Window*)window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                } else {
+                    SDL_SetWindowFullscreen((SDL_Window*)window, 0);
+                }
+                fullscreen_trigger = false;
             }
 
             if (native_window_color_update && native_window_color) {
