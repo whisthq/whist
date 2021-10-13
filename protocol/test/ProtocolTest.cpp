@@ -5,25 +5,21 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "client/client_utils.h"
-#include "client/ringbuffer.h"
-#include "fractal/utils/color.h"
-#include "server/main.h"
-#include "server/parse_args.h"
-#include "client/client_utils.h"
-#include "fractal/utils/aes.h"
-#include "fractal/utils/png.h"
-#include "fractal/utils/avpacket_buffer.h"
+    #include "client/client_utils.h"
+    #include "client/ringbuffer.h"
+    #include "fractal/utils/color.h"
+    #include "server/main.h"
+    #include "server/parse_args.h"
+    #include "client/client_utils.h"
+    #include "fractal/utils/aes.h"
+    #include "fractal/utils/png.h"
+    #include "fractal/utils/avpacket_buffer.h"
 }
 // Include paths should be relative to the protocol folder
 //      Examples:
 //      - To include file.h in protocol folder, use #include "file.h"
 //      - To include file2.h in protocol/client folder, use #include "client/file.h"
 // To include a C source file, you need to wrap the include statement in extern "C" {}.
-
-// Constants for ringbuffer tests
-#define NUM_AUDIO_TEST_FRAMES 25
-#define MAX_RING_BUFFER_SIZE 500
 
 // Example of a test using a function from the client module
 TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
@@ -85,6 +81,10 @@ TEST(ProtocolTest, TimersTest) {
 }
 
 /** ringbuffer.c **/
+
+// Constants for ringbuffer tests
+#define NUM_AUDIO_TEST_FRAMES 25
+#define MAX_RING_BUFFER_SIZE 500
 
 // Tests that an initialized ring buffer is correct size and has
 // frame IDs initialized to -1
@@ -175,29 +175,30 @@ TEST(ProtocolTest, SetRenderingTest) {
 
 
 /** Server Tests **/
+
+#ifdef __linux__ // Server tests only compile on Linux
+
+    // Testing that good values passed into server_parse_args returns success
+    TEST(ProtocolTest, ArgParsingUsageArgTest) {
+        int argc = 2;
+
+        char argv0[] = "./server/build64/FractalServer";
+        char argv1[] = "--help";
+        char *argv[] = {argv0, argv1, NULL};
+
+        int ret_val = server_parse_args(argc, argv);
+        EXPECT_EQ(ret_val, 1);
+    }
+
+#endif
+
+/** Fractal Lib Tests **/
+
+// Constants used for testing encryption
 #define DEFAULT_BINARY_PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 #define SECOND_BINARY_PRIVATE_KEY "\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED"
 
-// Include paths should be relative to the protocol folder
-//      Examples:
-//      - To include file.h in protocol folder, use #include "file.h"
-//      - To include file2.h in protocol/server folder, use #include "server/file.h"
-// To include a C source file, you need to wrap the include statement in extern "C" {}.
-
-// Example of a test using a function from the client module
-TEST(ProtocolTest, ArgParsingUsageArgTest) {
-    int argc = 2;
-
-    char argv0[] = "./server/build64/FractalServer";
-    char argv1[] = "--help";
-    char *argv[] = {argv0, argv1, NULL};
-
-    int ret_val = server_parse_args(argc, argv);
-    EXPECT_EQ(ret_val, 1);
-}
-
-/** Fractal Lib Tests **/
 /** Testing aes.c/h **/
 
 // This test makes a packet, encrypts it, decrypts it, and confirms the latter is
@@ -273,8 +274,6 @@ TEST(ProtocolTest, BadDecrypt) {
 
     EXPECT_EQ(decrypted_len, -1);
 }
-
-/** Testing png.c/h **/
 
 // Tests that by converting a PNG to a BMP then converting that back
 // to a PNG returns the original image
@@ -353,8 +352,7 @@ TEST(ProtocolTest, PacketsToBuffer) {
     EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
 }
 
-
-
+// Runs the tests
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

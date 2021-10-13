@@ -1,7 +1,7 @@
 
 
 # #[[
-################## FractalServerUnitTests ##################
+################## FractalProtocolUnitTests ##################
 #]]
 
     # Create the executable
@@ -385,12 +385,35 @@ endif()
 >>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
     endif()
 
+<<<<<<< HEAD
     add_custom_command(
         TARGET ${SERVER_TEST_BINARY} POST_BUILD
         COMMAND ./${SERVER_TEST_BINARY}
     )
 
     if (GENERATE_COVERAGE)
+=======
+
+    if (GENERATE_COVERAGE)
+        add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
+            COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
+            COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
+        )
+    endif()
+
+    if (UPLOAD_COVERAGE)
+        add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+        )
+    endif()
+
+    # Run the tests if we're running in CI for testing
+    if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        # On Linux, we run tests with code coverage and upload the report to Codecov
+>>>>>>> Formatting, comments, and added ifdef statements for server tests
         add_custom_command(
 <<<<<<< HEAD
             TARGET ${SERVER_TEST_BINARY} POST_BUILD
@@ -436,7 +459,11 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 =======
 gtest_discover_tests(${PROTOCOL_TEST_BINARY})
+<<<<<<< HEAD
 # if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 #     gtest_discover_tests(${PROTOCOL_TEST_BINARY})
 # endif()
 >>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
+=======
+
+>>>>>>> Formatting, comments, and added ifdef statements for server tests
