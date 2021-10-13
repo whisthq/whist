@@ -36,13 +36,6 @@ interface Cookie {
 const bus = dbus.sessionBus()
 
 
-const test = async (): Promise<void> => {
-  console.log(await getCookies("chrome"))
-  
-}
-
-test()
-
 const getCookies = async (browser: string): Promise<Cookie[]> => {
   const encryptedCookies = await getCookiesFromFile(browser)
   const encryptKey = await getCookieEncryptionKey(browser)
