@@ -56,6 +56,9 @@ func (c *mandelboxData) getResourceMappingDir() string {
 }
 
 func (c *mandelboxData) createResourceMappingDir() error {
+	c.fslock.Lock()
+	c.fslock.Unlock()
+
 	err := os.MkdirAll(c.getResourceMappingDir(), 0777)
 	if err != nil {
 		return utils.MakeError("Failed to create dir %s. Error: %s", c.getResourceMappingDir(), err)
@@ -64,6 +67,9 @@ func (c *mandelboxData) createResourceMappingDir() error {
 }
 
 func (c *mandelboxData) cleanResourceMappingDir() {
+	c.fslock.Lock()
+	defer c.fslock.Unlock()
+
 	err := os.RemoveAll(c.getResourceMappingDir())
 	if err != nil {
 		logger.Errorf("Failed to remove dir %s. Error: %s", c.getResourceMappingDir(), err)
@@ -71,6 +77,9 @@ func (c *mandelboxData) cleanResourceMappingDir() {
 }
 
 func (c *mandelboxData) writeResourceMappingToFile(filename, data string) (err error) {
+	c.fslock.Lock()
+	defer c.fslock.Unlock()
+
 	file, err := os.OpenFile(c.getResourceMappingDir()+filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
 		return utils.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)

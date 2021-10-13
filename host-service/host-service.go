@@ -40,6 +40,7 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
@@ -392,6 +393,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 
 	fc.AssignToUser(userID)
+	fc.SetAppName(req.AppName)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
 
 	// Begin populating user configs at the same time as other setup is being done
@@ -403,48 +405,68 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		err := fc.PopulateUserConfigs()
 		if err != nil {
 			logger.Warningf("Error populating user configs: %v", err)
+			return
 		}
 		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", req.MandelboxID)
 	}()
 
-	// Request port bindings for the mandelbox.
-	if err := fc.AssignPortBindings([]portbindings.PortBinding{
-		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
-		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
-		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
-	}); err != nil {
-		logAndReturnError("Error assigning port bindings: %s", err)
-		return
-	}
-	logger.Infof("SpinUpMandelbox(): successfully assigned port bindings %v", fc.GetPortBindings())
+	// Do startup in parallel, stopping at the first error encountered
+	errGroup, _ := errgroup.WithContext(globalCtx)
 
-	hostPortForTCP32262, err32262 := fc.GetHostPort(32262, portbindings.TransportProtocolTCP)
-	hostPortForUDP32263, err32263 := fc.GetHostPort(32263, portbindings.TransportProtocolUDP)
-	hostPortForTCP32273, err32273 := fc.GetHostPort(32273, portbindings.TransportProtocolTCP)
-	if err32262 != nil || err32263 != nil || err32273 != nil {
-		logAndReturnError("Couldn't return host port bindings.")
-		return
-	}
+	// Request port bindings for the mandelbox.
+	var hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
+	errGroup.Go(func() error {
+		if err := fc.AssignPortBindings([]portbindings.PortBinding{
+			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		}); err != nil {
+			return utils.MakeError("Error assigning port bindings: %s", err)
+		}
+		logger.Infof("SpinUpMandelbox(): successfully assigned port bindings %v", fc.GetPortBindings())
+
+		var err32262, err32263, err32273 error
+		hostPortForTCP32262, err32262 = fc.GetHostPort(32262, portbindings.TransportProtocolTCP)
+		hostPortForUDP32263, err32263 = fc.GetHostPort(32263, portbindings.TransportProtocolUDP)
+		hostPortForTCP32273, err32273 = fc.GetHostPort(32273, portbindings.TransportProtocolTCP)
+		if err32262 != nil || err32263 != nil || err32273 != nil {
+			return utils.MakeError("Couldn't return host port bindings.")
+		}
+
+		return nil
+	})
 
 	// Initialize Uinput devices for the mandelbox
-	if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
-		logAndReturnError("Error initializing uinput devices: %s", err)
-		return
-	}
-	logger.Infof("SpinUpMandelbox(): successfully initialized uinput devices.")
-	devices := fc.GetDeviceMappings()
+	var devices []dockercontainer.DeviceMapping
+	errGroup.Go(func() error {
+		if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
+			return utils.MakeError("Error initializing uinput devices: %s", err)
+		}
 
-	// Allocate a TTY for the mandelbox
-	if err := fc.InitializeTTY(); err != nil {
-		logAndReturnError("Error initializing TTY: %s", err)
+		logger.Infof("SpinUpMandelbox(): successfully initialized uinput devices.")
+		devices = fc.GetDeviceMappings()
+		return nil
+	})
+
+	// Allocate a TTY and GPU for the mandelbox
+	errGroup.Go(func() error {
+		if err := fc.InitializeTTY(); err != nil {
+			return utils.MakeError("Error initializing TTY: %s", err)
+		}
+
+		if err := fc.AssignGPU(); err != nil {
+			return utils.MakeError("Error assigning GPU: %s", err)
+		}
+		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
+
+		return nil
+	})
+
+	err = errGroup.Wait()
+	if err != nil {
+		logAndReturnError(err.Error())
 		return
 	}
-	// Assign a GPU to the mandelbox
-	if err := fc.AssignGPU(); err != nil {
-		logAndReturnError("Error assigning GPU: %s", err)
-		return
-	}
-	logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
 
 	// We need to compute the docker image to use for this mandelbox. In local
 	// development, we want to accept any string so that we can run arbitrary
@@ -565,9 +587,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID)
 
-	err = fc.RegisterCreation(dockerID, req.AppName)
+	err = fc.RegisterCreation(dockerID)
 	if err != nil {
-		logAndReturnError("Error registering mandelbox creation with runtime ID %s and AppName %s: %s", dockerID, req.AppName, err)
+		logAndReturnError("Error registering mandelbox creation with runtime ID %s: %s", dockerID, err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, req.AppName)

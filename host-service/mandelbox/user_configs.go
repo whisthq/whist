@@ -21,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
@@ -41,19 +42,17 @@ const (
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
-	c.rwlock.RLock()
 	// If userID is not set, then we don't retrieve configs from s3
-	if len(c.userID) == 0 {
+	if len(c.GetUserID()) == 0 {
 		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", c.mandelboxID)
 		return nil
 	}
 
-	if len(c.configEncryptionToken) == 0 {
+	if len(c.GetConfigEncryptionToken()) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
 
 	s3ConfigKey := c.getS3ConfigKey()
-	c.rwlock.RUnlock()
 
 	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
 
@@ -73,12 +72,12 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		Key:    aws.String(s3ConfigKey),
 	})
 
-	var noSuchKeyErr *types.NoSuchKey
+	var apiErr smithy.APIError
 	if err != nil {
 		// If aws s3 errors out due to the file not existing, don't log an error because
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
-		if errors.As(err, &noSuchKeyErr) {
+		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "404" {
 			logger.Infof("Could not get head object because config does not exist for user %s", c.userID)
 			return nil
 		}
@@ -93,6 +92,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(s3ConfigKey),
 	})
+
+	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
 			logger.Infof("Could not download user config because config does not exist for user %s", c.userID)
@@ -112,7 +113,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
 	}
 
-	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.configEncryptionToken), salt)
+	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.GetConfigEncryptionToken()), salt)
 	err = decryptAES256CBC(key, iv, data)
 	if err != nil {
 		return utils.MakeError("failed to decrypt user config: %v", err)
@@ -121,10 +122,9 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	logger.Infof("Finished decrypting user config for mandelbox %s", c.mandelboxID)
 	logger.Infof("Decompressing user config for mandelbox %s", c.mandelboxID)
 
-	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
-	// from under us.
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
+	// Lock directory to avoid cleanup
+	c.fslock.Lock()
+	defer c.fslock.Unlock()
 
 	// Make directory for user configs
 	configDir := c.getUserConfigDir()
@@ -222,6 +222,9 @@ func (c *mandelboxData) backupUserConfigs() error {
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
 	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
 
+	c.fslock.Lock()
+	defer c.fslock.Unlock()
+
 	tarConfigCmd := exec.Command(
 		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
 		".")
@@ -279,6 +282,9 @@ func (c *mandelboxData) backupUserConfigs() error {
 // This function requires that `c.rwlock()` is locked. It cleans up the user
 // config directory for a mandelbox.
 func (c *mandelboxData) cleanUserConfigDir() {
+	c.fslock.Lock()
+	defer c.fslock.Unlock()
+
 	err := os.RemoveAll(c.getUserConfigDir())
 	if err != nil {
 		logger.Errorf("Failed to remove dir %s. Error: %s", c.getUserConfigDir(), err)
@@ -297,7 +303,7 @@ func (c *mandelboxData) getS3ConfigPath() string {
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (c *mandelboxData) getS3ConfigKey() string {
-	return utils.Sprintf("%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
+	return utils.Sprintf("%s/%s/%s/%s", c.GetUserID(), metadata.GetAppEnvironmentLowercase(), c.GetAppName(), c.getEncryptedArchiveFilename())
 }
 
 // getEncryptedArchiveFilename returns the name of the encrypted user config file.
