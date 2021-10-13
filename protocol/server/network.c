@@ -90,11 +90,8 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
         case MESSAGE_DISCOVERY_REQUEST: {
             int user_id = fcmsg->discoveryRequest.user_id;
 
-            read_lock(&is_active_rwlock);
-
             if (!client.is_active) {
                 client.user_id = user_id;
-                LOG_INFO("Found ID for client.");
 
                 if (do_discovery_handshake(context, fcmsg) != 0) {
                     LOG_WARNING("Discovery handshake failed.");
