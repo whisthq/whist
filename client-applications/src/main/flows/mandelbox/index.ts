@@ -27,7 +27,7 @@ export default flow(
           config_encryption_token: t.configToken,
           jwt_access_token: t.accessToken,
           mandelbox_id: c.mandelboxID,
-          json_data: JSON.stringify({}) //Any configs to send to the host service go
+          json_data: JSON.stringify({}), // Any configs to send to the host service go here
         }))
       )
     )
