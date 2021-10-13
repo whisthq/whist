@@ -459,7 +459,7 @@ void destroy_ring_buffer(RingBuffer* ring_buffer) {
 
     // if the ringbuffer is already NULL, nothing for us to do. Simply exit
     if (!ring_buffer) {
-        LOG_ERROR("Attemp to deallocate a NULL ring buffer was made");
+        LOG_ERROR("Attempt to deallocate a NULL ring buffer was made");
         return;
     }
 

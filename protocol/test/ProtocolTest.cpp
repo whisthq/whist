@@ -21,6 +21,7 @@ extern "C" {
 //      - To include file2.h in protocol/client folder, use #include "client/file.h"
 // To include a C source file, you need to wrap the include statement in extern "C" {}.
 
+// Constants for ringbuffer tests
 #define NUM_AUDIO_TEST_FRAMES 25
 #define MAX_RING_BUFFER_SIZE 500
 
@@ -319,6 +320,9 @@ TEST(ProtocolTest, BmpToPngToBmp) {
         EXPECT_EQ(bmp_buffer[index], new_bmp_data[index]);
 }
 
+
+// Adds AVPackets to an buffer via write_packets_to_buffer and 
+// confirms that buffer structure is correct
 TEST(ProtocolTest, PacketsToBuffer) {
     // Make some dummy packets
 
