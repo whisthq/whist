@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -205,8 +206,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	return nil
 }
 
-// This function requires that `c.rwlock()` is locked. It backs up the user
-// config to s3.
+// backupUserConfigs compresses, encrypts, and then uploads user config files to S3.
 func (c *mandelboxData) backupUserConfigs() error {
 	if len(c.userID) == 0 {
 		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", c.mandelboxID)
@@ -279,8 +279,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 	return nil
 }
 
-// This function requires that `c.rwlock()` is locked. It cleans up the user
-// config directory for a mandelbox.
+// cleanUserConfigDir removes all user config related files and directories from the host.
 func (c *mandelboxData) cleanUserConfigDir() {
 	c.fslock.Lock()
 	defer c.fslock.Unlock()
@@ -293,17 +292,18 @@ func (c *mandelboxData) cleanUserConfigDir() {
 
 // getUserConfigDir returns the absolute path to the user config directory.
 func (c *mandelboxData) getUserConfigDir() string {
-	return utils.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.mandelboxID)
+	return path.Join(utils.FractalDir, string(c.GetMandelboxID()), "userConfigs")
 }
 
 // getS3ConfigPath returns the s3 URL to the encrypted user config file.
 func (c *mandelboxData) getS3ConfigPath() string {
-	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
+	return path.Join("s3://", userConfigS3Bucket, string(c.GetUserID()), metadata.GetAppEnvironmentLowercase(),
+		string(c.GetAppName()), c.getEncryptedArchiveFilename())
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (c *mandelboxData) getS3ConfigKey() string {
-	return utils.Sprintf("%s/%s/%s/%s", c.GetUserID(), metadata.GetAppEnvironmentLowercase(), c.GetAppName(), c.getEncryptedArchiveFilename())
+	return path.Join(string(c.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(c.GetAppName()), c.getEncryptedArchiveFilename())
 }
 
 // getEncryptedArchiveFilename returns the name of the encrypted user config file.

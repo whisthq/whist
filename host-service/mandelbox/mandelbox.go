@@ -138,7 +138,6 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully untracked mandelbox %s", c.mandelboxID)
 
 		c.rwlock.Lock()
-		defer c.rwlock.Unlock()
 
 		// Free port bindings
 		portbindings.Free(c.portBindings)
@@ -161,6 +160,8 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		} else {
 			logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
 		}
+
+		c.rwlock.Unlock()
 
 		// Clean resource mappings
 		c.cleanResourceMappingDir()
