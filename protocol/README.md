@@ -30,13 +30,13 @@ The same process is used for audio capture, encoding, decoding, and playing. See
 
 Throughout the life of the protocol, various messages will be send to and from the client and server. For example, if the client and server are of different resolution, the image will appear stretched, so to fix this the client will send a message to server to ask the server to change resolutions to match the client.
 
-- To send a message from client to server, call `send_fmsg`. See `./client/main.c` for usage.
+- To send a message from client to server, call `send_fcmsg`. See `./client/main.c` for usage.
 - To send a message from server to client, create a `FractalServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
 - To handle a server message on the client, see `./client/handle_server_message.c`
 - To handle a client message on the server, see `./server/handle_client_message.c`
 - See `./fractal/core/fractal.h` for struct definitions.
 
-Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
+Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fcmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fcmsg`. This additionally handles the initial sync by-default.
 
 ### Current Encoding Status
 
@@ -53,9 +53,9 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 ├── client
 │   ├── audio.c <- Handle and play audio packets
 │   ├── client_utils.c <- cmdline options, among others
-│   ├── handle_server_message.c <- Handle server fmsg's
-│   ├── main.c <- SDL Event loop, receive and categorize packets as fmsg/audio/video
-│   ├── network.c <- Functions to connect to server, and send_fmsg
+│   ├── handle_server_message.c <- Handle server fcmsg's
+│   ├── main.c <- SDL Event loop, receive and categorize packets as fcmsg/audio/video
+│   ├── network.c <- Functions to connect to server, and send_fcmsg
 │   ├── sdl_event_handler.c <- Handle SDL Events
 │   ├── sdl_utils.c <- Set window icon, resize handler
 │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
@@ -114,7 +114,7 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │       └── x11nvidiacapture.c <- Capture h264/h265 compressed screen with NvidiaCaptureSDK
 └── server
     ├── client.c <- Handle multiclient messages
-    ├── handle_client_message.c <- Handle client fmsg's
+    ├── handle_client_message.c <- Handle client fsmsg's
     ├── main.c <- Initialize server, receive packets and pass to where it needs to go
     ├── network.c <- Networking code for multiclient
 ```

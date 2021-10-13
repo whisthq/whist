@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
+    #include <fractal/core/fractal.h>
     #include "client/client_utils.h"
     #include "fractal/utils/color.h"
 }
@@ -83,6 +84,59 @@ TEST(ClientTest, TimersTest) {
     // elapsed = get_timer(timer);
     // EXPECT_GE(elapsed, 0.100);
     // EXPECT_LE(elapsed, 0.110);
+}
+
+
+TEST(ClientTest, BitArrayMemCpyTest) {
+    #define MAX_RING_BUFFER_SIZE 300
+    // A bunch of prime numbers + {10,100,200,250,299,300}
+    std::vector<int> bitarray_sizes {1, 2, 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
+
+    for (auto test_size : bitarray_sizes) {
+        BitArray *bit_arr = bit_array_create(test_size);
+        EXPECT_TRUE(bit_arr);
+
+        bit_array_clear_all(bit_arr);
+        for (int i=0; i<test_size; i++) {
+            EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
+        }
+
+        std::vector<bool>bits_arr_check;
+
+        for (int i=0; i<test_size; i++) {
+            int coin_toss = rand() % 2;
+            EXPECT_TRUE(coin_toss == 0 || coin_toss == 1);
+            if (coin_toss) {
+                bits_arr_check.push_back(true);
+                bit_array_set_bit(bit_arr, i);
+            } else {
+                bits_arr_check.push_back(false);
+            }
+        }
+
+        unsigned char ba_raw[BITS_TO_CHARS(MAX_RING_BUFFER_SIZE)];
+        memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
+        bit_array_free(bit_arr);
+
+        BitArray *bit_arr_recovered = bit_array_create(test_size);
+        EXPECT_TRUE(bit_arr_recovered);
+
+        EXPECT_TRUE(bit_arr_recovered->array);
+        EXPECT_TRUE(bit_arr_recovered->array != NULL);
+        EXPECT_TRUE(ba_raw);
+        EXPECT_TRUE(ba_raw != NULL);
+        memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
+
+        for (int i=0; i<test_size; i++) {
+            if (bits_arr_check[i]) {
+                EXPECT_GE(bit_array_test_bit(bit_arr_recovered, i), 1);
+            } else {
+                EXPECT_EQ(bit_array_test_bit(bit_arr_recovered, i), 0);
+            }   
+        }
+
+        bit_array_free(bit_arr_recovered);
+    }
 }
 
 int main(int argc, char **argv) {

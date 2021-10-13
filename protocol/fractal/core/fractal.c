@@ -24,7 +24,7 @@ Private Function Implementations
 ============================
 */
 
-int multithreaded_print_system_info(void* opaque) {
+int multithreaded_print_system_info(void *opaque) {
     /*
         Thread function to print system info to log
     */
@@ -59,7 +59,7 @@ void print_system_info() {
     fractal_detach_thread(sysinfo_thread);
 }
 
-int runcmd(const char* cmdline, char** response) {
+int runcmd(const char *cmdline, char **response) {
     /*
         Run a system command via command prompt or terminal
 
@@ -129,7 +129,7 @@ int runcmd(const char* cmdline, char** response) {
         cmdline++;
     }
 
-    if (strlen((const char*)cmdline) + 1 > sizeof(cmd_buf)) {
+    if (strlen((const char *)cmdline) + 1 > sizeof(cmd_buf)) {
         LOG_WARNING("runcmd cmdline too long!");
         if (response) {
             *response = NULL;
@@ -137,7 +137,7 @@ int runcmd(const char* cmdline, char** response) {
         return -1;
     }
 
-    memcpy(cmd_buf, cmdline, strlen((const char*)cmdline) + 1);
+    memcpy(cmd_buf, cmdline, strlen((const char *)cmdline) + 1);
 
     if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si,
                        &pi)) {
@@ -159,7 +159,7 @@ int runcmd(const char* cmdline, char** response) {
         CHAR ch_buf[2048];
         BOOL b_success = FALSE;
 
-        DynamicBuffer* db = init_dynamic_buffer(false);
+        DynamicBuffer *db = init_dynamic_buffer(false);
         for (;;) {
             b_success = ReadFile(h_child_std_out_rd, ch_buf, sizeof(ch_buf), &dw_read, NULL);
             if (!b_success || dw_read == 0) break;
@@ -198,14 +198,14 @@ int runcmd(const char* cmdline, char** response) {
         system(cmdline);
         return 0;
     } else {
-        FILE* p_pipe;
+        FILE *p_pipe;
 
         /* Run DIR so that it writes its output to a pipe. Open this
          * pipe with read text attribute so that we can read it
          * like a text file.
          */
 
-        char* cmd = safe_malloc(strlen(cmdline) + 128);
+        char *cmd = safe_malloc(strlen(cmdline) + 128);
         snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
 
         if ((p_pipe = popen(cmd, "r")) == NULL) {
@@ -218,7 +218,7 @@ int runcmd(const char* cmdline, char** response) {
         /* Read pipe until end of file, or an error occurs. */
 
         int current_len = 0;
-        DynamicBuffer* db = init_dynamic_buffer(false);
+        DynamicBuffer *db = init_dynamic_buffer(false);
 
         while (true) {
             char c = (char)fgetc(p_pipe);
@@ -252,8 +252,8 @@ int runcmd(const char* cmdline, char** response) {
 #endif
 }
 
-bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
-                                  char* hex_private_key) {
+bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key,
+                                  char *hex_private_key) {
     /*
         Reads a 16-byte hexadecimal string and copies it into private_key
 
@@ -283,32 +283,36 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
     }
 
     snprintf(hex_private_key, 33, "%08X%08X%08X%08X",
-             (unsigned int)htonl(*((uint32_t*)(binary_private_key))),
-             (unsigned int)htonl(*((uint32_t*)(binary_private_key + 4))),
-             (unsigned int)htonl(*((uint32_t*)(binary_private_key + 8))),
-             (unsigned int)htonl(*((uint32_t*)(binary_private_key + 12))));
+             (unsigned int)htonl(*((uint32_t *)(binary_private_key))),
+             (unsigned int)htonl(*((uint32_t *)(binary_private_key + 4))),
+             (unsigned int)htonl(*((uint32_t *)(binary_private_key + 8))),
+             (unsigned int)htonl(*((uint32_t *)(binary_private_key + 12))));
 
     return true;
 }
 
-int get_fmsg_size(FractalClientMessage* fmsg) {
+int get_fcmsg_size(FractalClientMessage *fcmsg) {
     /*
         Calculate the size of a FractalClientMessage struct
 
         Arguments:
-            fmsg (FractalClientMessage*): The Fractal Client Message to find the size
+            fcmsg (FractalClientMessage*): The Fractal Client Message to find the size
 
         Returns:
             (int): The size of the Fractal Client Message struct
     */
 
-    if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
-        return sizeof(*fmsg);
-    } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
-        return sizeof(*fmsg) + fmsg->clipboard.size;
+    if (fcmsg->type == MESSAGE_KEYBOARD_STATE || fcmsg->type == MESSAGE_DISCOVERY_REQUEST) {
+        return sizeof(*fcmsg);
+    } else if (fcmsg->type == CMESSAGE_CLIPBOARD) {
+        return sizeof(*fcmsg) + fcmsg->clipboard.size;
+    } else if (fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK) {
+        // Send only the minimum amount of bytes needed to fit the bitarray_video_nack + 16 bits for
+        // max possible padding
+        return sizeof(fcmsg->type) + sizeof(fcmsg->id) + sizeof(fcmsg->bitarray_video_nack) + 16;
     } else {
-        // Send small fmsg's when we don't need unnecessarily large ones
-        return sizeof(fmsg->type) + 40;
+        // Send small fcmsg's when we don't need unnecessarily large ones
+        return sizeof(fcmsg->type) + 40;
     }
 }
 
@@ -327,7 +331,7 @@ void terminate_protocol(FractalExitCode exit_code) {
     exit(exit_code);
 }
 
-bool safe_strncpy(char* destination, const char* source, size_t num) {
+bool safe_strncpy(char *destination, const char *source, size_t num) {
     /*
         Safely copy a string from source to destination.
 
@@ -357,12 +361,115 @@ bool safe_strncpy(char* destination, const char* source, size_t num) {
     return false;
 }
 
+/* position of bit within character */
+#define BIT_CHAR(bit) ((bit) / CHAR_BIT)
+
+/* array index for character containing bit */
+#define BIT_IN_CHAR(bit) (1 << (CHAR_BIT - 1 - ((bit) % CHAR_BIT)))
+
+/* number of characters required to contain number of bits */
+#define BITS_TO_CHARS(bits) ((((bits)-1) / CHAR_BIT) + 1)
+
+BitArray *bit_array_create(const unsigned int bits) {
+    BitArray *ba;
+
+    if (bits == 0) {
+        errno = EDOM;
+        return NULL;
+    }
+
+    /* allocate structure */
+    ba = (BitArray *)malloc(sizeof(BitArray));
+
+    if (ba == NULL) {
+        /* malloc failed */
+        errno = ENOMEM;
+    } else {
+        ba->numBits = bits;
+
+        /* allocate array */
+        ba->array = (unsigned char *)malloc(sizeof(unsigned char) * BITS_TO_CHARS(bits));
+
+        if (ba->array == NULL) {
+            /* malloc failed */
+            errno = ENOMEM;
+            free(ba);
+            ba = NULL;
+        }
+    }
+
+    return ba;
+}
+
+void bit_array_free(BitArray *ba) {
+    if (ba != NULL) {
+        if (ba->array != NULL) {
+            free(ba->array);
+        }
+        free(ba);
+    }
+}
+
+void bit_array_set_all(const BitArray *const ba) {
+    unsigned bits;
+    unsigned char mask;
+
+    if (ba == NULL) {
+        return; /* nothing to set */
+    }
+
+    /* set bits in all bytes to 1 */
+    memset((void *)(ba->array), UCHAR_MAX, BITS_TO_CHARS(ba->numBits));
+
+    /* zero any spare bits so increment and decrement are consistent */
+    bits = ba->numBits % CHAR_BIT;
+    if (bits != 0) {
+        mask = UCHAR_MAX << (CHAR_BIT - bits);
+        ba->array[BIT_CHAR(ba->numBits - 1)] = mask;
+    }
+}
+
+void bit_array_clear_all(const BitArray *const ba) {
+    if (ba == NULL) {
+        return; /* nothing to clear */
+    }
+
+    /* set bits in all bytes to 0 */
+    memset((void *)(ba->array), 0, BITS_TO_CHARS(ba->numBits));
+}
+
+int bit_array_set_bit(const BitArray *const ba, const unsigned int bit) {
+    if (ba == NULL) {
+        return 0; /* no bit to set */
+    }
+
+    if (ba->numBits <= bit) {
+        errno = ERANGE;
+        return -1; /* bit out of range */
+    }
+
+    ba->array[BIT_CHAR(bit)] |= BIT_IN_CHAR(bit);
+    return 0;
+}
+
+void *bit_array_get_bits(const BitArray *const ba) {
+    if (NULL == ba) {
+        return NULL;
+    }
+
+    return ((void *)(ba->array));
+}
+
+int bit_array_test_bit(const BitArray *const ba, const unsigned int bit) {
+    return ((ba->array[BIT_CHAR(bit)] & BIT_IN_CHAR(bit)) != 0);
+}
+
 // Include FRACTAL_GIT_REVISION
 #include <fractal.v>
 // Defines to stringize a macro
 #define xstr(s) str(s)
 #define str(s) #s
-char* fractal_git_revision() {
+char *fractal_git_revision() {
     /*
         Returns git revision if found
 
