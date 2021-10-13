@@ -33,7 +33,7 @@ bool lgui_pressed = false;
 bool rgui_pressed = false;
 
 // Main state variables
-extern bool exiting;
+extern bool client_exiting;
 
 SDL_mutex *window_resize_mutex;
 extern const float window_resize_interval;
@@ -223,7 +223,7 @@ int handle_key_up_down(SDL_Event *event) {
 
     if (ctrl_pressed && alt_pressed && keycode == FK_F4) {
         LOG_INFO("Quitting...");
-        exiting = true;
+        client_exiting = true;
     }
 
     if (ctrl_pressed && alt_pressed && keycode == FK_B && is_pressed) {
@@ -531,7 +531,7 @@ int handle_sdl_event(SDL_Event *event) {
         }
         case SDL_QUIT: {
             LOG_INFO("The user triggered a Quit event! FractalClient is now Quitting...");
-            exiting = true;
+            client_exiting = true;
             break;
         }
     }

@@ -1,66 +1,97 @@
-#[[
-################## FractalLibraryUnitTests ##################
-]]
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on MacOS
+
+# #[[
+################## FractalServerUnitTests ##################
+#]]
+
     # Create the executable
-    set(FRACTAL_LIBRARY_TEST_BINARY FractalLibraryTest)
-    add_executable(${FRACTAL_LIBRARY_TEST_BINARY} FractalLibraryTest.cpp
+    set(PROTOCOL_TEST_BINARY FractalProtocolTest)
+    add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+        #Files needed for Server unit tests
+        ../server/client.c
+        ../server/video.c
+        ../server/audio.c
+        ../server/parse_args.c
+        ../server/handle_client_message.c
+        ../server/network.c
+
+        #Files needed for Fractal Lib unit tests 
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
+
+        #Files needed for Client unit tests (NOTE: multiple defn errors occur when adding this)
+        ../client/audio.c
+        ../client/client_utils.c
+        ../client/network.c
+        ../client/sdl_event_handler.c
+        ../client/sdl_utils.c
+        ../client/handle_server_message.c
+        ../client/video.c
+        ../client/sdlscreeninfo.c
+        ../client/peercursor.c
+        ../client/ringbuffer.c
+        ../client/sync_packets.c
+        ../client/bitrate.c
     )
 
     # Link the GoogleTest library
-    target_link_libraries(${FRACTAL_LIBRARY_TEST_BINARY} gtest)
+    target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
 
     # Link the FFmpeg libraries
     foreach(LIB ${FFMPEG_LIBS_PATHS})
-        message(VERBOSE "linking lib for ${FRACTAL_LIBRARY_TEST_BINARY}: ${LIB}")
-        target_link_libraries(${FRACTAL_LIBRARY_TEST_BINARY} ${LIB})
+        message(VERBOSE "linking lib for ${PROTOCOL_TEST_BINARY}: ${LIB}")
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${LIB})
     endforeach(LIB)
 
     # Link the threading and dynamic link library if we are on Mac/Linx
     if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        target_link_libraries(${FRACTAL_LIBRARY_TEST_BINARY} ${CMAKE_DL_LIBS})
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${CMAKE_DL_LIBS})
     endif()
 
     # Link the remaining platform-independent libraries
-    target_link_libraries(${FRACTAL_LIBRARY_TEST_BINARY}
+    target_link_libraries(${PROTOCOL_TEST_BINARY}
         ${PLATFORM_INDEPENDENT_SERVER_LIBS}
+        ${PLATFORM_INDEPENDENT_LIBS}
     )
-
+    
+    # Link more linux-specific libraries    
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
         find_package(X11 REQUIRED
                 Xfixes
                 Xdamage
                 Xext
                 Xtst)
-        include_directories(${X11_INCLUDE_DIR})
-        if (NOT X11_LIBRARIES)
+        find_package(ALSA REQUIRED)
+        include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
+        if(NOT X11_LIBRARIES)
             message(FATAL_ERROR "Library X11_LIBRARIES was not found!")
         endif()
-        if (NOT X11_Xfixes_LIB)
+        if(NOT X11_Xfixes_LIB)
             message(FATAL_ERROR "Library X11_Xfixes_LIB was not found!")
         endif()
-        if (NOT X11_Xdamage_LIB)
+        if(NOT X11_Xdamage_LIB)
             message(FATAL_ERROR "Library X11_Xdamage_LIB was not found!")
         endif()
-        if (NOT X11_Xext_LIB)
+        if(NOT X11_Xext_LIB)
             message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
         endif()
 
-        target_link_libraries(${FRACTAL_LIBRARY_TEST_BINARY}
+        target_link_libraries(${PROTOCOL_TEST_BINARY}
                 ${X11_LIBRARIES}
                 ${X11_Xfixes_LIB}
                 ${X11_Xdamage_LIB}
                 ${X11_Xext_LIB}
                 ${X11_Xtst_LIB}
+                ${ALSA_LIBRARIES}
                 GL
                 asound
                 m
                 OpenSSL::Crypto
                 )
+<<<<<<< HEAD
     endif()
 
     if (${WIN32})
@@ -202,11 +233,25 @@ if (GENERATE_COVERAGE)
         COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
         COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
         COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
+=======
+# Run the tests if we're running in CI for testing
+if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # On macOS and Linux CI, we run tests with code coverage and upload the report to Codecov
+    add_custom_command(
+        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        COMMAND ./${PROTOCOL_TEST_BINARY}
+        COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+        COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
+        COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
+        COMMAND lcov --list coverage.info # Print verbose debug info
+        COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
     )
 endif()
 
 if (UPLOAD_COVERAGE)
     add_custom_command(
+<<<<<<< HEAD
         TARGET ${CLIENT_TEST_BINARY} POST_BUILD
         COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
     )
@@ -267,20 +312,21 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or
         if(NOT X11_Xext_LIB)
             message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
         endif()
+=======
+        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        COMMAND ./${PROTOCOL_TEST_BINARY}
+    )
+endif()
 
-        target_link_libraries(${SERVER_TEST_BINARY}
-                ${X11_LIBRARIES}
-                ${X11_Xfixes_LIB}
-                ${X11_Xdamage_LIB}
-                ${X11_Xext_LIB}
-                ${X11_Xtst_LIB}
-                GL
-                asound
-                m
-                OpenSSL::Crypto
-                )
+    # # Link macOS-specific libs
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ../client/native_window_utils_mac.m)
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
+
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
     endif()
 
+<<<<<<< HEAD
     if(${WIN32})
         # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
         # this comes up when we used precompiled libraries which we do not have .pdb files for
@@ -289,16 +335,31 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or
         #sets the MSVC runtime library as multithreaded and adds debug symbols
         # if is a debug build, see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
         set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY
+=======
+    # # Finally, link Windows-specific libraries
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        #Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
+        # this comes up when we used precompiled libraries which we do not have .pdb files for
+        set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ../client/native_window_utils_windows.c)
+        #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
+        #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
+        set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
                 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
         if(CMAKE_CUDA_COMPILER)
-            set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
+            set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
         endif()
 
         # Link to system libs
+<<<<<<< HEAD
         target_link_libraries(${SERVER_TEST_BINARY}
             ${WINDOWS_SPECIFIC_SERVER_LIBS}
             )
+=======
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${WINDOWS_SPECIFIC_SERVER_LIBS})
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
     endif()
 
     add_custom_command(
@@ -308,17 +369,32 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or
 
     if (GENERATE_COVERAGE)
         add_custom_command(
+<<<<<<< HEAD
             TARGET ${SERVER_TEST_BINARY} POST_BUILD
             COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
             COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
             COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
+=======
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ./${PROTOCOL_TEST_BINARY}
+            COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+            COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal macOS files
+            COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
+            COMMAND lcov --list coverage.info # Print verbose debug info
+            COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
         )
     endif()
 
     if (UPLOAD_COVERAGE)
         add_custom_command(
+<<<<<<< HEAD
             TARGET ${SERVER_TEST_BINARY} POST_BUILD
             COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+=======
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ./${PROTOCOL_TEST_BINARY}
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
         )
     endif()
 endif()
@@ -330,7 +406,14 @@ endif()
 # Include the GoogleTest library, and let gtest scan
 # for the tests in the binary file
 include(GoogleTest)
+<<<<<<< HEAD
 gtest_discover_tests(${CLIENT_TEST_BINARY})
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     gtest_discover_tests(${SERVER_TEST_BINARY})
 endif()
+=======
+gtest_discover_tests(${PROTOCOL_TEST_BINARY})
+# if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#     gtest_discover_tests(${PROTOCOL_TEST_BINARY})
+# endif()
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts

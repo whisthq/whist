@@ -124,7 +124,7 @@ extern SocketContext packet_receive_udp_context;
 extern SocketContext packet_tcp_context;
 
 extern volatile bool connected;
-extern volatile bool exiting;
+extern volatile bool client_exiting;
 volatile int try_amount;
 
 // Defines
@@ -347,7 +347,7 @@ int main(int argc, char* argv[]) {
     print_system_info();
     LOG_INFO("Fractal client revision %s", fractal_git_revision());
 
-    exiting = false;
+    client_exiting = false;
     FractalExitCode exit_code = FRACTAL_EXIT_SUCCESS;
 
     // While showing the SDL loading screen, read in any piped arguments
@@ -366,7 +366,7 @@ int main(int argc, char* argv[]) {
             if (SDL_PollEvent(&event)) {
                 switch (event.type) {
                     case SDL_QUIT: {
-                        exiting = true;
+                        client_exiting = true;
                         keep_piping = false;
                         break;
                     }
@@ -394,11 +394,11 @@ int main(int argc, char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
-    for (try_amount = 0;
-         try_amount < max_connection_attempts && !exiting && exit_code == FRACTAL_EXIT_SUCCESS;
+    for (try_amount = 0; try_amount < max_connection_attempts && !client_exiting &&
+                         exit_code == FRACTAL_EXIT_SUCCESS;
          try_amount++) {
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            exiting = true;
+            client_exiting = true;
         }
 
         if (try_amount > 0) {
@@ -407,7 +407,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            exiting = true;
+            client_exiting = true;
         }
 
         if (discover_ports(&using_stun) != 0) {
@@ -421,7 +421,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
-            exiting = true;
+            client_exiting = true;
         }
 
         connected = true;
@@ -474,7 +474,7 @@ int main(int argc, char* argv[]) {
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
-        while (connected && !exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
+        while (connected && !client_exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
             // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
             // and then check again.
             // NOTE: internally within SDL, the window flags are maintained and updated upon
@@ -585,7 +585,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (exiting || exit_code != FRACTAL_EXIT_SUCCESS ||
+        if (client_exiting || exit_code != FRACTAL_EXIT_SUCCESS ||
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 

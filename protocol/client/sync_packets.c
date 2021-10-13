@@ -49,8 +49,8 @@ volatile int last_tcp_pong_id;
 clock tcp_latency_timer;
 extern volatile double latency;
 // MBPS variables
-extern volatile int max_bitrate;
-extern volatile int max_burst_bitrate;
+extern volatile int client_max_bitrate;
+extern volatile int client_max_burst_bitrate;
 extern volatile bool update_bitrate;
 // dimension variables
 extern volatile int server_width;
@@ -194,6 +194,7 @@ void try_update_bitrate() {
     */
     if (update_bitrate) {
         update_bitrate = false;
+<<<<<<< HEAD
         FractalClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_MBPS;
         fcmsg.bitrate_data.bitrate = max_bitrate;
@@ -201,6 +202,15 @@ void try_update_bitrate() {
         LOG_INFO("Asking for server MBPS to be %f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
                  fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
         send_fcmsg(&fcmsg);
+=======
+        FractalClientMessage fmsg = {0};
+        fmsg.type = MESSAGE_MBPS;
+        fmsg.bitrate_data.bitrate = client_max_bitrate;
+        fmsg.bitrate_data.burst_bitrate = client_max_burst_bitrate;
+        LOG_INFO("Asking for server MBPS to be %f/%f", fmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+        send_fmsg(&fmsg);
+>>>>>>> Consolidated all protocol unit tests into a single executable. Modified variable names in protocol/client to satisfy naming conflicts
     }
 }
 
