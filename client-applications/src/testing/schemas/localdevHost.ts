@@ -20,7 +20,7 @@ const localdevHost: MockSchema = {
   mandelboxCreateFlow: (trigger) => ({
     success: trigger.pipe(
       tap(() => {
-        if (!process.env?.TESTING_LOCALDEV_HOST_IP) {
+        if (process.env?.TESTING_LOCALDEV_HOST_IP == null) {
           const message =
             "Host IP address not set! Set the `TESTING_LOCALDEV_HOST_IP` environment variable to use this schema."
           throw new Error(message)
