@@ -162,7 +162,7 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
                     (unsigned char*)encrypted_packet->iv, (unsigned char*)plaintext_buf);
     decrypt_len += CRYPTO_HEADER_LEN;
 
-    int expected_len = PACKET_HEADER_SIZE + plaintext_packet->payload_size;
+    int expected_len = get_packet_size(plaintext_packet);
     if (expected_len != decrypt_len) {
         LOG_WARNING(
             "Packet length is incorrect! Expected %d with payload %d, but got "

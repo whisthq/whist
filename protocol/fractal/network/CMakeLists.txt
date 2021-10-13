@@ -1,6 +1,6 @@
 add_library(fractalNetwork STATIC
         network.c
-        network.h)
+        throttle.c)
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(fractalNetwork curl)

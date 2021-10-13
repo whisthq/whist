@@ -141,14 +141,14 @@ int handle_discovery_port_message(SocketContext *context, int *client_id, bool *
             // We wouldn't have called closesocket on this socket before, so we can safely call
             //     close regardless of what caused the socket failure without worrying about
             //     undefined behavior.
-            fractal_lock_mutex(clients[*client_id].TCP_lock);
-            closesocket(clients[*client_id].TCP_context.socket);
-            if (create_tcp_context(&(clients[*client_id].TCP_context), NULL,
-                                   clients[*client_id].TCP_port, 1, TCP_CONNECTION_WAIT,
+            write_lock(&clients[*client_id].tcp_rwlock);
+            closesocket(clients[*client_id].tcp_context.socket);
+            if (create_tcp_context(&(clients[*client_id].tcp_context), NULL,
+                                   clients[*client_id].tcp_port, 1, TCP_CONNECTION_WAIT,
                                    get_using_stun(), binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client (ID: %d)", *client_id);
             }
-            fractal_unlock_mutex(clients[*client_id].TCP_lock);
+            write_unlock(&clients[*client_id].tcp_rwlock);
 
             break;
         }
@@ -185,8 +185,8 @@ int do_discovery_handshake(SocketContext *context, int client_id, FractalClientM
         (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     reply_msg->client_id = client_id;
-    reply_msg->UDP_port = clients[client_id].UDP_port;
-    reply_msg->TCP_port = clients[client_id].TCP_port;
+    reply_msg->udp_port = clients[client_id].udp_port;
+    reply_msg->tcp_port = clients[client_id].tcp_port;
 
     // Set connection ID in error monitor.
     error_monitor_set_connection_id(connection_id);
@@ -197,7 +197,8 @@ int do_discovery_handshake(SocketContext *context, int client_id, FractalClientM
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_tcp_packet(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size) < 0) {
+    if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size) <
+        0) {
         LOG_ERROR("Failed to send send discovery reply message.");
         closesocket(context->socket);
         free(fsmsg);
@@ -218,24 +219,25 @@ Public Function Implementations
 */
 
 int connect_client(int id, bool using_stun, char *binary_aes_private_key_input) {
-    if (create_udp_context(&(clients[id].UDP_context), NULL, clients[id].UDP_port, 1,
+    if (create_udp_context(&(clients[id].udp_context), NULL, clients[id].udp_port, 1,
                            UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
         LOG_ERROR("Failed UDP connection with client (ID: %d)", id);
         return -1;
     }
 
-    if (create_tcp_context(&(clients[id].TCP_context), NULL, clients[id].TCP_port, 1,
+    if (create_tcp_context(&(clients[id].tcp_context), NULL, clients[id].tcp_port, 1,
                            TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
         LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
-        closesocket(clients[id].UDP_context.socket);
+        closesocket(clients[id].udp_context.socket);
         return -1;
     }
     return 0;
 }
 
 int disconnect_client(int id) {
-    closesocket(clients[id].UDP_context.socket);
-    closesocket(clients[id].TCP_context.socket);
+    closesocket(clients[id].udp_context.socket);
+    network_throttler_destroy(clients[id].udp_context.network_throttler);
+    closesocket(clients[id].tcp_context.socket);
     return 0;
 }
 
@@ -258,113 +260,58 @@ int broadcast_ack(void) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
-                ack(&(clients[id].TCP_context));
-                ack(&(clients[id].UDP_context));
+            read_lock(&clients[id].tcp_rwlock);
+            ack(&(clients[id].tcp_context));
+            ack(&(clients[id].udp_context));
+            read_unlock(&clients[id].tcp_rwlock);
+        }
+    }
+    return ret;
+}
 
-                fractal_unlock_mutex(clients[id].TCP_lock);
+int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
+    int ret = 0;
+    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
+        if (clients[id].is_active) {
+            if (send_udp_packet(&(clients[id].udp_context), packet, packet_size) < 0) {
+                LOG_ERROR("Failed to send UDP packet to client (ID: %d)", id);
+                ret = -1;
             }
         }
     }
     return ret;
 }
 
-int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, int burst_bitrate,
-                         FractalPacket *packet_buffer, int *packet_len_buffer) {
-    if (id <= 0) {
-        LOG_WARNING("IDs must be positive!");
+int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int len, int packet_id) {
+    if (packet_id <= 0) {
+        LOG_WARNING("Packet IDs must be positive!");
         return -1;
     }
 
-    int payload_size;
-    int curr_index = 0, i = 0;
-
-    int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
-
-    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
-
-    clock packet_timer;
-    start_timer(&packet_timer);
-
-    while (curr_index < len) {
-        // Delay distribution of packets as needed
-        while (burst_bitrate > 0 &&
-               curr_index - 5000 > get_timer(packet_timer) * max_bytes_per_second) {
-            fractal_sleep(1);
-        }
-
-        // local packet and len for when nack buffer isn't needed
-        FractalPacket l_packet = {0};
-        int l_len = 0;
-
-        int *packet_len = &l_len;
-        FractalPacket *packet = &l_packet;
-
-        // Based on packet type, the packet to one of the buffers to serve later
-        // nacks
-        if (packet_buffer) {
-            packet = &packet_buffer[i];
-        }
-
-        if (packet_len_buffer) {
-            packet_len = &packet_len_buffer[i];
-        }
-
-        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
-
-        // Construct packet
-        packet->type = type;
-        memcpy(packet->data, (uint8_t *)data + curr_index, payload_size);
-        packet->index = (short)i;
-        packet->payload_size = payload_size;
-        packet->id = id;
-        packet->num_indices = (short)num_indices;
-        packet->is_a_nack = false;
-        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-        // Save the len to nack buffer lens
-        *packet_len = packet_size;
-
-        // Send it off
-        for (int j = 0; j < MAX_NUM_CLIENTS; j++) {
-            if (clients[j].is_active) {
-                // Encrypt the packet with AES
-                FractalPacket encrypted_packet;
-                int encrypt_len =
-                    encrypt_packet(packet, packet_size, &encrypted_packet,
-                                   (unsigned char *)clients[j].UDP_context.binary_aes_private_key);
-
-                fractal_lock_mutex(clients[j].UDP_context.mutex);
-                int sent_size = sendp(&(clients[j].UDP_context), &encrypted_packet, encrypt_len);
-                fractal_unlock_mutex(clients[j].UDP_context.mutex);
-                if (sent_size < 0) {
-                    int error = get_last_network_error();
-                    LOG_INFO("Unexpected Packet Error: %d", error);
-                    LOG_WARNING("Failed to send UDP packet to client id: %d", j);
-                }
+    int ret = 0;
+    for (int j = 0; j < MAX_NUM_CLIENTS; ++j) {
+        if (clients[j].is_active) {
+            if (send_udp_packet_from_payload(&(clients[j].udp_context), type, data, len,
+                                             packet_id) < 0) {
+                LOG_WARNING("Failed to send UDP packet to client id: %d", j);
+                ret = -1;
             }
         }
-
-        i++;
-        curr_index += payload_size;
     }
-
-    // LOG_INFO( "Packet Time: %f", get_timer( packet_timer ) );
-
-    return 0;
+    return ret;
 }
 
-int broadcast_tcp_packet(FractalPacketType type, void *data, int len) {
+int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
-            if (fractal_try_lock_mutex(clients[id].TCP_lock) == 0) {
-                if (send_tcp_packet(&(clients[id].TCP_context), type, (uint8_t *)data, len) < 0) {
-                    LOG_WARNING("Failed to send TCP packet to client id: %d", id);
-                    if (ret == 0) ret = -1;
-                }
-                fractal_unlock_mutex(clients[id].TCP_lock);
+            read_lock(&clients[id].tcp_rwlock);
+            if (send_tcp_packet_from_payload(&(clients[id].tcp_context), type, (uint8_t *)data,
+                                             len) < 0) {
+                LOG_WARNING("Failed to send TCP packet to client id: %d", id);
+                ret = -1;
             }
+            read_unlock(&clients[id].tcp_rwlock);
         }
     }
     return ret;
@@ -383,15 +330,13 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    if (fractal_try_lock_mutex(clients[client_id].TCP_lock) == 0) {
-        FractalPacket *tcp_packet =
-            read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
-        if (tcp_packet) {
-            LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
-            *p_tcp_packet = tcp_packet;
-        }
-        fractal_unlock_mutex(clients[client_id].TCP_lock);
+    read_lock(&clients[client_id].tcp_rwlock);
+    FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].tcp_context), should_recvp);
+    if (tcp_packet) {
+        LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
+        *p_tcp_packet = tcp_packet;
     }
+    read_unlock(&clients[client_id].tcp_rwlock);
     return 0;
 }
 
@@ -400,7 +345,7 @@ int try_get_next_message_udp(int client_id, FractalClientMessage *fcmsg, size_t 
 
     memset(fcmsg, 0, sizeof(*fcmsg));
 
-    FractalPacket *packet = read_udp_packet(&(clients[client_id].UDP_context));
+    FractalPacket *packet = read_udp_packet(&(clients[client_id].udp_context));
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_fcmsg_size(fcmsg)) {

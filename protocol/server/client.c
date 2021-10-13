@@ -50,10 +50,10 @@ int init_clients(void) {
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         clients[id].is_active = false;
 
-        clients[id].UDP_port = BASE_UDP_PORT + id;
-        clients[id].TCP_port = BASE_TCP_PORT + id;
+        clients[id].udp_port = BASE_UDP_PORT + id;
+        clients[id].tcp_port = BASE_TCP_PORT + id;
 
-        clients[id].TCP_lock = fractal_create_mutex();
+        init_rw_lock(&clients[id].tcp_rwlock);
 
         memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(FractalRGBColor));
     }
@@ -72,6 +72,9 @@ int destroy_clients(void) {
             (int): -1 on failure, 0 on success
     */
 
+    for (int id = 0; id < MAX_NUM_CLIENTS; ++id) {
+        destroy_rw_lock(&clients[id].tcp_rwlock);
+    }
     fractal_destroy_mutex(state_lock);
     destroy_rw_lock(&is_active_rwlock);
     return 0;

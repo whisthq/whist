@@ -102,7 +102,8 @@ int discover_ports(bool *using_stun) {
 
     prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
 
-    if (send_tcp_packet(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) < 0) {
+    if (send_tcp_packet_from_payload(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
+                                     (int)sizeof(fcmsg)) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         closesocket(context.socket);
         return -1;
@@ -156,8 +157,8 @@ int discover_ports(bool *using_stun) {
 
     client_id = reply_msg->client_id;
     set_audio_frequency(reply_msg->audio_sample_rate);
-    udp_port = reply_msg->UDP_port;
-    tcp_port = reply_msg->TCP_port;
+    udp_port = reply_msg->udp_port;
+    tcp_port = reply_msg->tcp_port;
     LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d. Audio frequency: %d.", client_id,
              udp_port, tcp_port, reply_msg->audio_sample_rate);
 
@@ -320,8 +321,8 @@ int send_tcp_reconnect_message(bool using_stun) {
         return -1;
     }
 
-    if (send_tcp_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) <
-        0) {
+    if (send_tcp_packet_from_payload(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
+                                     (int)sizeof(fcmsg)) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         closesocket(discovery_context.socket);
         return -1;
@@ -404,7 +405,8 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
 
     if (fcmsg->type == CMESSAGE_CLIPBOARD || fcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
         fcmsg->type == MESSAGE_TCP_PING) {
-        return send_tcp_packet(&packet_tcp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg));
+        return send_tcp_packet_from_payload(&packet_tcp_context, PACKET_MESSAGE, fcmsg,
+                                            get_fcmsg_size(fcmsg));
     } else {
         if ((size_t)get_fcmsg_size(fcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
@@ -415,7 +417,8 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
         }
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return send_udp_packet(&packet_send_udp_context, PACKET_MESSAGE, fcmsg,
-                               get_fcmsg_size(fcmsg), sent_packet_id, -1, NULL, NULL);
+
+        return send_udp_packet_from_payload(&packet_send_udp_context, PACKET_MESSAGE, fcmsg,
+                                            get_fcmsg_size(fcmsg), sent_packet_id);
     }
 }

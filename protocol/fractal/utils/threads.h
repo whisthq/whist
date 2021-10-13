@@ -33,6 +33,7 @@ void fractal_wait_thread(FractalThread thread, int* ret);
 void fractal_set_thread_priority(FractalThreadPriority priority);
 
 void fractal_sleep(uint32_t ms);
+void fractal_usleep(uint32_t us);
 
 FractalMutex fractal_create_mutex();
 void fractal_lock_mutex(FractalMutex mutex);

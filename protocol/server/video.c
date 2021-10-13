@@ -61,7 +61,6 @@ Includes
 extern volatile bool exiting;
 
 extern volatile int max_bitrate;
-extern volatile int max_burst_bitrate;
 volatile int client_width = -1;
 volatile int client_height = -1;
 volatile int client_dpi = -1;
@@ -69,9 +68,8 @@ volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 
 #define VIDEO_BUFFER_SIZE 25
-#define MAX_VIDEO_INDEX 500
-FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
-int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
+#define MAX_NUM_VIDEO_INDICES 500
+FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_NUM_VIDEO_INDICES];
 
 extern volatile bool stop_streaming;
 extern volatile bool wants_iframe;
@@ -85,10 +83,9 @@ static int encoder_factory_server_w;
 static int encoder_factory_server_h;
 static int encoder_factory_client_w;
 static int encoder_factory_client_h;
-static int encoder_factory_current_bitrate;
+static int encoder_factory_bitrate;
 static CodecType encoder_factory_codec_type;
 
-static int current_bitrate;
 static bool transfer_context_active;
 
 /*
@@ -110,7 +107,7 @@ int32_t multithreaded_encoder_factory(void* opaque) {
     UNUSED(opaque);
     encoder_factory_result = create_video_encoder(
         encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
-        encoder_factory_client_h, encoder_factory_current_bitrate, encoder_factory_codec_type);
+        encoder_factory_client_h, encoder_factory_bitrate, encoder_factory_codec_type);
     if (encoder_factory_result == NULL) {
         LOG_FATAL("Could not create an encoder, giving up!");
     }
@@ -143,13 +140,14 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
     // First, try to simply reconfigure the encoder to
     // handle the update_encoder event
     if (encoder != NULL) {
-        if (reconfigure_encoder(encoder, device->width, device->height, max_bitrate,
+        // store it to prevent race conditions if bitrate is updated
+        int new_bitrate = max_bitrate;
+        if (reconfigure_encoder(encoder, device->width, device->height, new_bitrate,
                                 (CodecType)client_codec_type)) {
             // If we could update the encoder in-place, then we're done updating the encoder
             LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
-                     device->width, device->height, current_bitrate, max_bitrate / 1024.0 / 1024.0,
+                     device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
                      client_codec_type);
-            current_bitrate = max_bitrate;
             update_encoder = false;
         } else {
             // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
@@ -181,19 +179,19 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
         } else {
             // Starting making new encoder. This will set pending_encoder=true, but won't
             // actually update it yet, we'll still use the old one for a bit
+            int new_bitrate = max_bitrate;
             LOG_INFO(
                 "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
                 "Codec %d",
-                device->width, device->height, current_bitrate, max_bitrate / 1024.0 / 1024.0,
+                device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
                 (int)client_codec_type);
-            current_bitrate = max_bitrate;
             encoder_finished = false;
             encoder_factory_server_w = device->width;
             encoder_factory_server_h = device->height;
             encoder_factory_client_w = (int)client_width;
             encoder_factory_client_h = (int)client_height;
             encoder_factory_codec_type = (CodecType)client_codec_type;
-            encoder_factory_current_bitrate = current_bitrate;
+            encoder_factory_bitrate = new_bitrate;
 
             // If using nvidia, then we must destroy the existing encoder first
             // We can't have two nvidia encoders active or the 2nd attempt to
@@ -250,22 +248,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
     init_cursors();
 
-    // Init FFMPEG Encoder
-    current_bitrate = STARTING_BITRATE;
     VideoEncoder* encoder = NULL;
-
-    double worst_fps = 40.0;
-    int ideal_bitrate = current_bitrate;
-    int bitrate_tested_frames = 0;
-    int bytes_tested_frames = 0;
-
-    clock previous_frame_time;
-    start_timer(&previous_frame_time);
-    int previous_frame_size = 0;
-
-    // int consecutive_capture_screen_errors = 0;
-
-    //    int defaultCounts = 1;
 
     clock world_timer;
     start_timer(&world_timer);
@@ -487,57 +470,8 @@ int32_t multithreaded_send_video(void* opaque) {
                 }
                 log_double_statistic("Video encode time (ms)",
                                      get_timer(statistics_timer) * MS_IN_SECOND);
-                bitrate_tested_frames++;
-                bytes_tested_frames += encoder->encoded_frame_size;
 
                 if (encoder->encoded_frame_size != 0) {
-                    double delay = -1.0;
-
-                    if (previous_frame_size > 0) {
-                        double frame_time = get_timer(previous_frame_time);
-                        start_timer(&previous_frame_time);
-                        // double mbps = previous_frame_size * 8.0 / 1024.0 /
-                        // 1024.0 / frame_time; TODO: bitrate throttling alg
-                        // previousFrameSize * 8.0 / 1024.0 / 1024.0 / IdealTime
-                        // = max_mbps previousFrameSize * 8.0 / 1024.0 / 1024.0
-                        // / max_mbps = IdealTime
-                        double transmit_time =
-                            ((double)previous_frame_size) * BITS_IN_BYTE / max_bitrate;
-
-                        // double average_frame_size = 1.0 * bytes_tested_frames
-                        // / bitrate_tested_frames;
-                        double current_trasmit_time =
-                            ((double)previous_frame_size) * BITS_IN_BYTE / max_bitrate;
-                        double current_fps = 1.0 / current_trasmit_time;
-
-                        delay = transmit_time - frame_time;
-                        delay = min(delay, 0.004);
-
-                        // LOG_INFO("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
-                        // %f, Transmit Time: %f, Delay: %f",
-                        // previous_frame_size, mbps, max_bitrate, frame_time,
-                        // transmit_time, delay);
-
-                        if ((current_fps < worst_fps || ideal_bitrate > current_bitrate) &&
-                            bitrate_tested_frames > 20) {
-                            // Rather than having lower than the worst
-                            // acceptable fps, find the ratio for what the
-                            // bitrate should be
-                            double ratio_bitrate = current_fps / worst_fps;
-                            int new_bitrate = (int)(ratio_bitrate * current_bitrate);
-                            if (abs(new_bitrate - current_bitrate) / new_bitrate > 0.05) {
-                                // LOG_INFO("Updating bitrate from %d to %d",
-                                //        current_bitrate, new_bitrate);
-                                // TODO: Analyze bitrate handling with GOP size
-                                // current_bitrate = new_bitrate;
-                                // update_encoder = true;
-
-                                bitrate_tested_frames = 0;
-                                bytes_tested_frames = 0;
-                            }
-                        }
-                    }
-
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                     } else {
@@ -580,8 +514,8 @@ int32_t multithreaded_send_video(void* opaque) {
 
                         frame->videodata_length = encoder->encoded_frame_size;
 
-                        write_packets_to_buffer(encoder->num_packets, encoder->packets,
-                                                (void*)get_frame_videodata(frame));
+                        write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
+                                                  (void*)get_frame_videodata(frame));
 
 #if LOG_VIDEO
                         LOG_INFO("Sent video packet %d (Size: %d) %s", id,
@@ -601,15 +535,44 @@ int32_t multithreaded_send_video(void* opaque) {
 
                         start_timer(&statistics_timer);
 
-                        // Send video packet to client
-                        if (broadcast_udp_packet(
-                                PACKET_VIDEO, (uint8_t*)frame, get_total_frame_size(frame), id,
-                                max_burst_bitrate, video_buffer[id % VIDEO_BUFFER_SIZE],
-                                video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
-                            LOG_WARNING("Could not broadcast video frame ID %d", id);
+                        // Packetize the frame
+                        int num_packets = write_payload_to_packets(
+                            (uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
+                            video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+
+                        if (num_packets < 0) {
+                            LOG_WARNING("Failed to write video packet to buffer");
                         } else {
-                            // Only increment ID if the send succeeded
-                            id++;
+                            // Send the packets to the client
+                            bool failed = false;
+                            for (int i = 0; i < num_packets; ++i) {
+                                if (broadcast_udp_packet(
+                                        &video_buffer[id % VIDEO_BUFFER_SIZE][i],
+                                        get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) <
+                                    0) {
+                                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d",
+                                                id, i);
+                                    failed = true;
+                                }
+                            }
+// (Disable this logic for now).
+#define MOD 0
+                            for (int j = 0; j < MOD; ++j) {
+                                for (int i = j; i < num_packets; i += MOD) {
+                                    if (broadcast_udp_packet(
+                                            &video_buffer[id % VIDEO_BUFFER_SIZE][i],
+                                            get_packet_size(
+                                                &video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
+                                        LOG_WARNING(
+                                            "Failed to broadcast video packet: id %d, index %d", id,
+                                            i);
+                                        failed = true;
+                                    }
+                                }
+                            }
+                            if (!failed) {
+                                ++id;
+                            }
                         }
                         fractal_unlock_mutex(state_lock);
                         read_unlock(&is_active_rwlock);
@@ -617,8 +580,6 @@ int32_t multithreaded_send_video(void* opaque) {
                         log_double_statistic("Video frame send time (ms)",
                                              get_timer(statistics_timer) * MS_IN_SECOND);
                         log_double_statistic("Video frame size", encoder->encoded_frame_size);
-
-                        previous_frame_size = encoder->encoded_frame_size;
                         log_double_statistic("Video frame processing time (ms)",
                                              get_timer(server_frame_timer) * 1000);
                     }
@@ -634,13 +595,27 @@ int32_t multithreaded_send_video(void* opaque) {
                 // We don't need to fill out the rest of the fields of the VideoFrame because
                 // is_empty_frame is true, so it will just be ignored by the client.
 
-                if (broadcast_udp_packet(PACKET_VIDEO, (uint8_t*)frame, sizeof(VideoFrame), id,
-                                         max_burst_bitrate, video_buffer[id % VIDEO_BUFFER_SIZE],
-                                         video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
-                    LOG_WARNING("Could not broadcast video frame ID %d", id);
+                int num_packets = write_payload_to_packets(
+                    (uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
+                    video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+
+                if (num_packets < 0) {
+                    LOG_WARNING("Failed to write video packet to buffer");
                 } else {
-                    // Only increment ID if the send succeeded
-                    id++;
+                    bool failed = false;
+                    for (int i = 0; i < num_packets; ++i) {
+                        read_lock(&is_active_rwlock);
+                        if (broadcast_udp_packet(
+                                &video_buffer[id % VIDEO_BUFFER_SIZE][i],
+                                get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
+                            LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
+                            failed = true;
+                        }
+                        read_unlock(&is_active_rwlock);
+                    }
+                    if (!failed) {
+                        ++id;
+                    }
                 }
             }
             log_double_statistic("Whole send video loop time (ms)",

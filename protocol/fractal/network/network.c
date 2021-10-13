@@ -964,6 +964,7 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
     context->reading_packet_len = 0;
     context->encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
     resize_dynamic_buffer(context->encrypted_tcp_packet_buffer, 0);
+    context->network_throttler = NULL;
 
     int ret;
 
@@ -1620,6 +1621,14 @@ int create_udp_context(SocketContext* context, char* destination, int port, int 
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
 
+    if (destination == NULL) {
+        // On the server, we create a network throttler to limit the
+        // outgoing bitrate.
+        context->network_throttler = network_throttler_create();
+    } else {
+        context->network_throttler = NULL;
+    }
+
     if (using_stun) {
         if (destination == NULL)
             return create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
@@ -1636,13 +1645,83 @@ int create_udp_context(SocketContext* context, char* destination, int port, int 
     }
 }
 
+int get_packet_size(FractalPacket* packet) {
+    /*
+        Get the size of a FractalPacket
+
+        Arguments:
+            packet (FractalPacket*): The packet to get the size of.
+
+        Returns:
+            (int): The size of the packet, or -1 on error.
+    */
+
+    if (packet == NULL) {
+        LOG_ERROR("Packet is NULL");
+        return -1;
+    }
+
+    return PACKET_HEADER_SIZE + packet->payload_size;
+}
+
+int write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length) {
+    /*
+        Split a payload into several packets approprately-sized
+        for UDP transport, and write those files to a buffer.
+
+        Arguments:
+            payload (uint8_t*): The payload data to be split into packets
+            payload_size (size_t): The size of the payload, in bytes
+            payload_id (int): An ID for the UDP data (must be positive)
+            packet_type (FractalPacketType): The FractalPacketType (video, audio, or message)
+            packet_buffer (FractalPacket*): The buffer to write the packets to
+            packet_buffer_length (size_t): The length of the packet buffer
+
+        Returns:
+            (int): The number of packets that were written to the buffer,
+                or -1 on failure
+
+        Note:
+            This function should be removed and replaced with
+            a more general packet splitter/joiner context, which
+            will enable us to use forward error correction, etc.
+    */
+    size_t current_position = 0;
+
+    // Calculate number of packets needed to send the payload, rounding up.
+    int num_indices =
+        (int)(payload_size / MAX_PAYLOAD_SIZE + (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
+
+    if ((size_t)num_indices > packet_buffer_length) {
+        LOG_ERROR("Too many packets needed to send payload");
+        return -1;
+    }
+
+    for (int packet_index = 0; packet_index < num_indices; ++packet_index) {
+        FractalPacket* packet = &packet_buffer[packet_index];
+        packet->type = packet_type;
+        packet->payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
+        packet->index = (short)packet_index;
+        packet->id = payload_id;
+        packet->num_indices = (short)num_indices;
+        packet->is_a_nack = false;
+        memcpy(packet->data, &payload[current_position], packet->payload_size);
+        current_position += packet->payload_size;
+    }
+
+    return num_indices;
+}
+
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len) {
+int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                 int len) {
     /*
-        This will send a FractalPacket over TCP to the SocketContext context. A
-        FractalPacketType is also provided to describe the packet
+        This will send a FractalPacket over TCP to the SocketContext context containing
+        the specified payload. A FractalPacketType is also provided to describe the packet.
 
         Arguments:
             context (SocketContext*): The socket context
@@ -1679,7 +1758,7 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
     memcpy(packet->data, data, len);
 
     // Encrypt the packet using aes encryption
-    int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
+    int unencrypted_len = get_packet_size(packet);
     int encrypted_len = encrypt_packet(packet, unencrypted_len,
                                        (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
                                        (unsigned char*)context->binary_aes_private_key);
@@ -1687,11 +1766,16 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
     // Pass the length of the packet as the first byte
     *((int*)encrypted_packet_buffer) = encrypted_len;
 
+    // For now, the TCP network throttler is NULL, so this is a no-op.
+    network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
+
     // Send the packet
     LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
     bool failed = false;
-    if (sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len) < 0) {
-        LOG_WARNING("Failed to send packet!");
+    int ret = sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len);
+    if (ret < 0) {
+        int error = get_last_network_error();
+        LOG_WARNING("Unexpected TCP Packet Error: %d", error);
         failed = true;
     }
 
@@ -1705,176 +1789,92 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
-                    int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer) {
+int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
+    /*
+        This will send a FractalPacket over UDP to the SocketContext context. This
+        function does not create the packet from raw data, but assumes that the
+        packet has been prepared by the caller (e.g. fragmented into appropriately-sized)
+        chunks by a fragmenter). This function assumes and checks that the packet is
+        small enough to send without further breaking into smaller packets.
+
+        Arguments:
+            context (SocketContext*): The socket context
+            packet (FractalPacket*): A pointer to the packet to be sent
+            packet_size (size_t): The size of the packet to be sent
+
+        Returns:
+            (int): Will return -1 on failure, will return 0 on success
+    */
+
+    if (context == NULL) {
+        LOG_WARNING("SocketContext is NULL");
+        return -1;
+    }
+
+    // Use MAX_PACKET_SIZE here since we are checking the size of the packet itself.
+    if (packet_size > MAX_PACKET_SIZE) {
+        LOG_ERROR("Packet too large to send over UDP: %d", packet_size);
+        return -1;
+    }
+
+    FractalPacket encrypted_packet;
+    size_t encrypted_len = (size_t)encrypt_packet(packet, (int)packet_size, &encrypted_packet,
+                                                  (unsigned char*)context->binary_aes_private_key);
+    network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
+    fractal_lock_mutex(context->mutex);
+    int ret = sendp(context, &encrypted_packet, (int)encrypted_len);
+    fractal_unlock_mutex(context->mutex);
+    if (ret < 0) {
+        int error = get_last_network_error();
+        LOG_WARNING("Unexpected UDP Packet Error: %d", error);
+        return -1;
+    }
+    return 0;
+}
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+int send_udp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                 int len, int id) {
     /*
         This will send a FractalPacket over UDP to the SocketContext context. A
-        FractalPacketType is also provided to the receiving end.
+        FractalPacketType is also provided to the receiving end. This function
+        assumes and checks that the packet is small enough to send without breaking
+        into smaller packets.
 
         Arguments:
             context (SocketContext*): The socket context
             type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
             data (void*): A pointer to the data to be sent
             len (int): The number of bytes to send
-            id (int): An ID for the UDP data.
-            burst_bitrate (int): The maximum bitrate that packets will be sent over.
-                -1 will imply sending as fast as possible
-            packet_buffer (FractalPacket*): An array of RTPPacket's, each sub-packet of
-                the UDPPacket will be stored in packet_buffer[i]
-            packet_len_buffer (int*): An array of int's, defining the length of each
-                sub-packet located in packet_buffer[i]
+            id (int): An ID for the UDP data
 
         Returns:
             (int): Will return -1 on failure, will return 0 on success
     */
 
-    if (id <= 0) {
-        LOG_WARNING("IDs must be positive!");
-        return -1;
-    }
     if (context == NULL) {
-        LOG_WARNING("Context is NULL");
+        LOG_WARNING("SocketContext is NULL");
         return -1;
     }
 
-    int payload_size;
-    int curr_index = 0, i = 0;
-
-    int num_indices = len / MAX_PAYLOAD_SIZE + (len % MAX_PAYLOAD_SIZE == 0 ? 0 : 1);
-
-    double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
-
-    /*
-    if (type == PACKET_AUDIO) {
-        static int ddata = 0;
-        static clock last_timer;
-        if( ddata == 0 )
-        {
-            start_timer( &last_timer );
-        }
-        ddata += len;
-        get_timer( last_timer );
-        if( get_timer( last_timer ) > 5.0 )
-        {
-            LOG_INFO( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
-    last_timer ) / 1024 ); ddata = 0;
-        }
-        // LOG_INFO("Video ID %d (Packets: %d)", id, num_indices);
-    }
-    */
-
-    clock packet_timer;
-    start_timer(&packet_timer);
-
-    while (curr_index < len) {
-        // Delay distribution of packets as needed
-        while (burst_bitrate > 0 &&
-               curr_index - 5000 > get_timer(packet_timer) * max_bytes_per_second) {
-            fractal_sleep(1);
-        }
-
-        // local packet and len for when nack buffer isn't needed
-        FractalPacket l_packet = {0};
-        int l_len = 0;
-
-        int* packet_len = &l_len;
-        FractalPacket* packet = &l_packet;
-
-        // Based on packet type, the packet to one of the buffers to serve later
-        // nacks
-        if (packet_buffer) {
-            packet = &packet_buffer[i];
-        }
-
-        if (packet_len_buffer) {
-            packet_len = &packet_len_buffer[i];
-        }
-
-        payload_size = min(MAX_PAYLOAD_SIZE, (len - curr_index));
-
-        // Construct packet
-        packet->type = type;
-        memcpy(packet->data, (uint8_t*)data + curr_index, payload_size);
-        packet->index = (short)i;
-        packet->payload_size = payload_size;
-        packet->id = id;
-        packet->num_indices = (short)num_indices;
-        packet->is_a_nack = false;
-        int packet_size = PACKET_HEADER_SIZE + packet->payload_size;
-
-        // Save the len to nack buffer lens
-        *packet_len = packet_size;
-
-        // Encrypt the packet with AES
-        FractalPacket encrypted_packet;
-        int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char*)context->binary_aes_private_key);
-
-        // Send it off
-        fractal_lock_mutex(context->mutex);
-        // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
-        int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        fractal_unlock_mutex(context->mutex);
-
-        if (sent_size < 0) {
-            int error = get_last_network_error();
-            LOG_WARNING("Unexpected Packet Error: %d", error);
-            return -1;
-        }
-
-        i++;
-        curr_index += payload_size;
-    }
-
-    // LOG_INFO( "Packet Time: %f\n", get_timer( packet_timer ) );
-
-    return 0;
-}
-
-int replay_packet(SocketContext* context, FractalPacket* packet, size_t len) {
-    /*
-        Replay the sending of a packet that has already been sent by the network
-        protocol. (Via a packet_buffer write from SendUDPPacket)
-
-        Arguments:
-            context (SocketContext*): The socket context
-            packet (FractalPacket*): The packet to resend
-            len (size_t): The length of the packet to resend
-
-        Returns:
-            (int): Will return -1 on failure, will return 0 on success
-    */
-
-    if (len > sizeof(FractalPacket)) {
-        LOG_WARNING("Len too long!");
-        return -1;
-    }
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-    if (packet == NULL) {
-        LOG_WARNING("packet is NULL");
+    // Use MAX_PAYLOAD_SIZE here since we are checking the size of the packet's
+    // payload data.
+    if ((size_t)len > MAX_PAYLOAD_SIZE) {
+        LOG_ERROR("Payload too large to send over UDP: %d", len);
         return -1;
     }
 
-    packet->is_a_nack = true;
-
-    FractalPacket encrypted_packet;
-    int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char*)context->binary_aes_private_key);
-
-    fractal_lock_mutex(context->mutex);
-    LOG_INFO("Replay Packet of length %d", encrypt_len);
-    int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-    fractal_unlock_mutex(context->mutex);
-
-    if (sent_size < 0) {
-        LOG_WARNING("Could not replay packet!");
-        return -1;
-    }
-
-    return 0;
+    FractalPacket packet;
+    packet.id = id;
+    packet.type = type;
+    packet.index = 0;
+    packet.payload_size = len;
+    packet.num_indices = 1;
+    packet.is_a_nack = false;
+    memcpy(packet.data, data, len);
+    size_t packet_size = (size_t)get_packet_size(&packet);
+    return send_udp_packet(context, &packet, packet_size);
 }
 
 int ack(SocketContext* context) {
