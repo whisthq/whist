@@ -10,8 +10,17 @@ import (
 	"encoding/json"
 	"sync"
 
+	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/metadata"
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
+
+// `enabled` is a flag denoting whether the functions in this package should do
+// anything, or simply be no-ops. This is necessary, since we want the subscription
+// operations to be meaningful in environments where we can expect the database
+// guarantees to hold (e.g. `metadata.EnvLocalDevWithDB` or `metadata.EnvDev`)
+// but no-ops in other environments.
+var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
 // StatusSubscriptionEvent is the event received from the subscription to any
 // instance status changes.
@@ -80,6 +89,10 @@ func StatusSubscriptionHandler(instanceName string, status string, client *graph
 // Run is responsible for starting the subscription client, as well as
 // subscribing to the subscriptions defined in queries.go
 func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, instanceName string, subscriptionEvents chan SubscriptionEvent) error {
+	if !enabled {
+		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
+		return nil
+	}
 	// We set up the client with auth and logging parameters
 	client, err := SetUpHasuraClient()
 
