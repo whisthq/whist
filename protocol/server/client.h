@@ -60,15 +60,14 @@ Public Functions
 */
 
 /**
- * @brief                          Initializes all clients objects in the client
- *                                 buffer.
+ * @brief                          Initializes client object.
  *
- * @details                        Must be called before the client buffer
+ * @details                        Must be called before the client object
  *                                 can be used.
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int init_clients(void);
+int init_client(void);
 
 /**
  * @brief                          De-initializes all clients objects in the

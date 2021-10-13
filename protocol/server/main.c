@@ -276,8 +276,8 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    if (init_clients() != 0) {
-        LOG_FATAL("Failed to initialize client objects.");
+    if (init_client() != 0) {
+        LOG_FATAL("Failed to initialize client object.");
     }
 
 #ifdef __linux__

@@ -35,8 +35,8 @@ Public Functions
 
 int init_client(void) {
     /*
-        Initializes the client objects in the client buffer.
-        Must be called before the client buffer can be used.
+        Initializes the client object.
+        Must be called before the client object can be used.
 
         NOTE: Locks shouldn't matter. They are getting created.
 
