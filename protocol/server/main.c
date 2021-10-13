@@ -122,10 +122,7 @@ void handle_fractal_client_message(FractalClientMessage* fcmsg) {
     fractal_lock_mutex(state_lock);
     fractal_unlock_mutex(state_lock);
     if (handle_client_message(fcmsg) != 0) {
-        LOG_ERROR(
-            "Failed to handle message from client. "
-            "(ID: %d)",
-            id);
+        LOG_ERROR("Failed to handle message from client.");
     }
 }
 
