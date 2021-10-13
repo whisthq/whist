@@ -1,4 +1,4 @@
-import { merge, Observable, of, zip } from "rxjs"
+import { merge, Observable, of } from "rxjs"
 import { map, take, filter } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -37,18 +37,15 @@ if (isEmpty(pickBy(authCache, (x) => x === ""))) {
 }
 
 const onboarded = fromSignal(
-  zip(
-    merge(
-      of(persistGet("onboardingTypeformSubmitted", "data")).pipe(
-        filter((onboarded) => onboarded as boolean)
-      ),
-      fromTrigger("onboardingTypeformSubmitted")
-    ),
+  merge(
     merge(
       fromTrigger("cookiesImported"),
       fromTrigger("importerSubmitted").pipe(
         filter((payload) => payload.browser === "None")
       )
+    ),
+    of(persistGet("onboardingTypeformSubmitted", "data")).pipe(
+      filter((onboarded) => onboarded as boolean)
     )
   ),
   fromTrigger(TRIGGER.authFlowSuccess)
