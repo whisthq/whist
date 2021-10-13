@@ -143,7 +143,7 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
             (int): 0 on success, -1 on failure
     */
 
-    handle_client_message(fcmsg, true);
+    handle_client_message(fcmsg);
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
@@ -187,17 +187,17 @@ Public Function Implementations
 ============================
 */
 
-int connect_client(int id, bool using_stun, char *binary_aes_private_key_input) {
-    if (create_udp_context(&(clients[id].udp_context), NULL, clients[id].udp_port, 1,
+int connect_client(bool using_stun, char *binary_aes_private_key_input) {
+    if (create_udp_context(&(client.udp_context), NULL, client.udp_port, 1,
                            UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
-        LOG_ERROR("Failed UDP connection with client (ID: %d)", id);
+        LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
 
-    if (create_tcp_context(&(clients[id].tcp_context), NULL, clients[id].tcp_port, 1,
+    if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1,
                            TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
-        LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
-        closesocket(clients[id].udp_context.socket);
+        LOG_WARNING("Failed TCP connection with client");
+        closesocket(client.udp_context.socket);
         return -1;
     }
     return 0;
@@ -211,20 +211,25 @@ int disconnect_client() {
 }
 
 int broadcast_ack(void) {
+    int ret = 0;
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        ack(&(client.tcp_context));
-        ack(&(client.udp_context));
+        if (ack(&(client.tcp_context)) < 0) {
+            ret = -1;
+        }
+        if (ack(&(client.udp_context)) < 0) {
+            ret = -1;
+        }
         read_unlock(&client.tcp_rwlock);
     }
     return ret;
 }
 
 int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
-    if (clients[id].is_active) {
+    if (client.is_active) {
         if (send_udp_packet(&(client.udp_context), packet, packet_size) < 0) {
             LOG_ERROR("Failed to send UDP packet to client (ID: %d)", id);
-            return -1
+            return -1;
         }
     }
     return 0;
@@ -247,7 +252,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
 }
 
 int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
-    if (clients[id].is_active) {
+    if (client.is_active) {
         read_lock(&client.tcp_rwlock);
         if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data,
                                          len) < 0) {
@@ -356,8 +361,8 @@ int multithreaded_manage_client(void *opaque) {
             connection_id = rand();
 
             // container exit logic -
-            //  * clients have connected before but now none are connected
-            //  * no clients have connected in `begin_time_to_exit` secs of server being up
+            //  * client has connected before but now none are connected
+            //  * client has not connected in `begin_time_to_exit` secs of server being up
             // We don't place this in a lock because:
             //  * if the first client connects right on the threshold of begin_time_to_exit, it
             //  doesn't matter if we disconnect
