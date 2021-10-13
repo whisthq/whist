@@ -73,8 +73,8 @@ void graceful_exit() {
     // Kick all clients
     write_lock(&is_active_rwlock);
     fractal_lock_mutex(state_lock);
-    if (quit_clients() != 0) {
-        LOG_ERROR("Failed to quit clients.");
+    if (quit_client() != 0) {
+        LOG_ERROR("Failed to quit client.");
     }
     fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
@@ -140,34 +140,32 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
     */
 
     read_lock(&is_active_rwlock);
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (!clients[id].is_active) continue;
+    if (!client.is_active) return;
 
-        // Get packet(s)!
-        if (get_udp) {
-            FractalClientMessage* fcmsg = NULL;
-            FractalClientMessage local_fcmsg;
-            size_t fcmsg_size;
+    // Get packet(s)!
+    if (get_udp) {
+        FractalClientMessage* fcmsg = NULL;
+        FractalClientMessage local_fcmsg;
+        size_t fcmsg_size;
 
-            // If received a UDP message
-            if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
-                fcmsg = &local_fcmsg;
-                handle_fractal_client_message(fcmsg, id);
-            }
+        // If received a UDP message
+        if (try_get_next_message_udp(&local_fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
+            fcmsg = &local_fcmsg;
+            handle_fractal_client_message(fcmsg);
         }
+    }
 
-        if (get_tcp) {
-            FractalPacket* tcp_packet = NULL;
-            // If received a TCP message
-            if (try_get_next_message_tcp(id, &tcp_packet) == 0 && tcp_packet != NULL) {
-                FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
-                LOG_INFO("TCP Packet type: %d", fcmsg->type);
-                handle_fractal_client_message(fcmsg, id);
-            }
-            // Free the tcp packet if we received one
-            if (tcp_packet) {
-                free_tcp_packet(tcp_packet);
-            }
+    if (get_tcp) {
+        FractalPacket* tcp_packet = NULL;
+        // If received a TCP message
+        if (try_get_next_message_tcp(&tcp_packet) == 0 && tcp_packet != NULL) {
+            FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
+            LOG_INFO("TCP Packet type: %d", fcmsg->type);
+            handle_fractal_client_message(fcmsg);
+        }
+        // Free the tcp packet if we received one
+        if (tcp_packet) {
+            free_tcp_packet(tcp_packet);
         }
     }
     read_unlock(&is_active_rwlock);
@@ -306,7 +304,7 @@ int main(int argc, char* argv[]) {
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
 
     FractalThread manage_clients_thread =
-        fractal_create_thread(multithreaded_manage_clients, "multithreaded_manage_clients", NULL);
+        fractal_create_thread(multithreaded_manage_client, "multithreaded_manage_client", NULL);
 
     FractalThread sync_tcp_packets_thread = fractal_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
@@ -481,7 +479,7 @@ int main(int argc, char* argv[]) {
 
     write_lock(&is_active_rwlock);
     fractal_lock_mutex(state_lock);
-    if (quit_clients() != 0) {
+    if (quit_client() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
     fractal_unlock_mutex(state_lock);

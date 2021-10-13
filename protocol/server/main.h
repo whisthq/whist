@@ -61,7 +61,7 @@ Includes
 #endif
 // Linux shouldn't have this
 
-extern Client clients[MAX_NUM_CLIENTS];
+extern Client client;
 
 volatile FractalOSType client_os;
 char binary_aes_private_key[16];

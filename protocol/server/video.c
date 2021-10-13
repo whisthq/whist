@@ -522,16 +522,9 @@ int32_t multithreaded_send_video(void* opaque) {
                                  encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" : "");
 #endif  // LOG_VIDEO
 
-                        PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
-
                         size_t num_msgs;
                         read_lock(&is_active_rwlock);
                         fractal_lock_mutex(state_lock);
-
-                        if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
-                            LOG_ERROR("Failed to copy peer update messages.");
-                        }
-                        frame->num_peer_update_msgs = (int)num_msgs;
 
                         start_timer(&statistics_timer);
 

@@ -78,7 +78,6 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   └── fractalgetopt.c <- Cross-platform getopt
 │   ├── cursor
 │   │   ├── linuxcursor.c <- get_current_cursor for Linux
-│   │   ├── peercursor.c <- Helper functions for multiclient cursors
 │   │   └── windowscursor.c <- get_current_cursor for Windows
 │   ├── input
 │   │   ├── input.c <- Trigger keyboard/mouse press and sync, wraps raw input_driver.h calls
@@ -96,7 +95,6 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   ├── lodepng.c <- LodePNG external dependency
 │   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc.
 │   │   ├── mac_utils.c <- Mac wrappers
-│   │   ├── mouse.c <- Multiclient cursor colors
 │   │   ├── png.c <- Functions to encode/decode bitmap's as png's
 │   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
 │   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes

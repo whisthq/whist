@@ -97,7 +97,6 @@ extern bool using_stun;
 // for UDP and TCP communications.
 extern int udp_port;
 extern int tcp_port;
-extern int client_id;
 extern int uid;
 
 // Keyboard state variables

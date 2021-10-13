@@ -28,7 +28,6 @@ Includes
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
 #include <fractal/logging/log_statistic.h>
-#include "peercursor.h"
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
@@ -43,8 +42,6 @@ extern volatile SDL_Window* window;
 extern volatile int server_width;
 extern volatile int server_height;
 extern volatile CodecType server_codec_type;
-
-extern int client_id;
 
 // Keeping track of max mbps
 extern volatile int max_bitrate;
@@ -176,7 +173,6 @@ void update_sws_context();
 void update_sws_pixel_format();
 void finalize_video_context_data();
 void replace_texture();
-static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
 void clear_sdl(SDL_Renderer* renderer);
 void calculate_statistics();
 void skip_to_next_iframe();
@@ -671,39 +667,6 @@ void replace_texture() {
     video_context.texture = texture;
 }
 
-static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
-    /*
-        Render peer cursors for multiclient
-
-        Arguments:
-            renderer (SDL_Renderer*): the video renderer
-            msgs (PeerUpdateMessage*): array of peer update message packets
-            num_msgs (size_t): how many peer update messages there are in `msgs`
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    int ret = 0;
-
-    int window_width, window_height;
-    SDL_GetWindowSize((SDL_Window*)window, &window_width, &window_height);
-    int x = msgs->x * window_width / (int32_t)MOUSE_SCALING_FACTOR;
-    int y = msgs->y * window_height / (int32_t)MOUSE_SCALING_FACTOR;
-
-    for (; num_msgs > 0; msgs++, num_msgs--) {
-        if (client_id == msgs->peer_id) {
-            continue;
-        }
-        if (draw_peer_cursor(renderer, x, y, msgs->color.red, msgs->color.green,
-                             msgs->color.blue) != 0) {
-            LOG_ERROR("Failed to draw spectator cursor.");
-            ret = -1;
-        }
-    }
-    return ret;
-}
-
 void clear_sdl(SDL_Renderer* renderer) {
     /*
         Clear the SDL renderer
@@ -952,10 +915,6 @@ int init_video_renderer() {
             (int): 0 on success, -1 on failure
     */
 
-    if (init_peer_cursors() != 0) {
-        LOG_WARNING("Failed to init peer cursors.");
-    }
-
     can_render = true;
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
@@ -1154,9 +1113,6 @@ int render_video() {
         }
         safe_SDL_UnlockMutex(render_mutex);
 
-        PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
-        size_t num_peer_update_msgs = frame->num_peer_update_msgs;
-
         log_frame_statistics(frame);
 
         sync_decoder_parameters(frame);
@@ -1241,9 +1197,6 @@ int render_video() {
                 SDL_Rect output_rect = get_true_render_rect();
                 SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
 
-                if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
-                    LOG_ERROR("Failed to render peers.");
-                }
                 // If we're rendering something, then they might be watching something,,
                 // so we'll declare this user activity in order to reset
                 // the timer for the client's screensaver/sleepmode
@@ -1307,9 +1260,6 @@ void destroy_video() {
         // SDL_DestroyTexture(videoContext.texture); is not needed,
         // the renderer destroys it
         av_freep(&video_context.data[0]);
-        if (destroy_peer_cursors() != 0) {
-            LOG_ERROR("Failed to destroy peer cursors.");
-        }
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);
     }

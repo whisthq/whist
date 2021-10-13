@@ -90,14 +90,12 @@ int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int le
  *                                 pointer to the next available TCP message.
  *                                 Remember to free with free_tcp_packet
  *
- * @param client_id                Client ID of an active client
- *
  * @param p_tcp_packet             Where to write the tcp_packet
  *
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet);
+int try_get_next_message_tcp(FractalPacket **p_tcp_packet);
 
 /**
  * @brief                          Tries to read in next available UDP message
@@ -111,7 +109,6 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet);
  *                                 message. The message need not be freed.
  *                                 Failure here
  *
- * @param client_id                Client ID of an active client
  * @param fcmsg                    Pointer to field which is to be populated
  *                                 with pointer to next available message
  * @param fcmsg_size               Pointer to field which is to be populated
@@ -120,7 +117,7 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet);
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int try_get_next_message_udp(int client_id, FractalClientMessage *fcmsg, size_t *fcmsg_size);
+int try_get_next_message_udp(FractalClientMessage *fcmsg, size_t *fcmsg_size);
 
 /**
  * @brief                          Establishes UDP and TCP connection to client.
@@ -133,32 +130,21 @@ int try_get_next_message_udp(int client_id, FractalClientMessage *fcmsg, size_t 
  *                                 message. The message need not be freed.
  *                                 Failure here
  *
- * @param id                       Client ID of an active client
  * @param using_stun               True if we are running a stun server
- * @param binary_aes_private_key          Key used to encrypt and decrypt communication
+ * @param binary_aes_private_key   Key used to encrypt and decrypt communication
  *                                 with the client.
  *
  * @returns                        Returns -1 if either UDP or TCP connection
  *                                 fails or another error occurs, 0 on success.
  */
-int connect_client(int id, bool using_stun, char *binary_aes_private_key);
+int connect_client(bool using_stun, char *binary_aes_private_key);
 
 /**
  * @brief                          Closes client's UDP and TCP sockets.
  *
- * @param id                       Client ID of an active client
- *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int disconnect_client(int id);
-
-/**
- * @brief                          Closes UDP and TCP sockets for all active
- *                                 clients.
- *
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int disconnect_clients(void);
+int disconnect_client();
 
 /**
  * @brief                          Decides whether the server is using stun.
@@ -171,10 +157,10 @@ bool get_using_stun();
 /**
  * @brief                          Should be run in its own thread. Loops
  *                                 and manages connecting to/maintaining client
- *                                 connections
+ *                                 connection and recovery.
  *
  * @returns                        Returns 0 on completion.
  */
-int multithreaded_manage_clients(void *opaque);
+int multithreaded_manage_client(void *opaque);
 
 #endif  // SERVER_NETWORK_H

@@ -9,7 +9,6 @@ add_library(fractalUtils STATIC
         sysinfo.c
         png.c
         lodepng.c
-        mouse.c
         rwlock.c
         color.c
         threads.c

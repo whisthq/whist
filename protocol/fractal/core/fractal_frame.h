@@ -11,14 +11,12 @@
  *          This includes:
  *              - The videodata buffer consisting of compressed h264 videodata
  *              - The new cursor image if the cursor has just changed
- *              - The PeerUpdateMessage's that are a part of this frame, for multi-cursor support
  */
 typedef struct VideoFrame {
     int width;
     int height;
     CodecType codec_type;
     bool is_iframe;
-    int num_peer_update_msgs;
 
     bool has_cursor;
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
@@ -45,7 +43,7 @@ typedef struct AudioFrame {
 
 // The maximum frame size, excluding the embedded videodata
 #define MAX_VIDEOFRAME_METADATA_SIZE \
-    (sizeof(VideoFrame) + sizeof(FractalCursorImage) + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS)
+    (sizeof(VideoFrame) + sizeof(FractalCursorImage))
 
 // The maximum allowed videodata size that can be embedded in a VideoFrame*
 // Setting frame->videodata_length to anything larger than this is invalid and will cause problems
@@ -92,20 +90,6 @@ FractalCursorImage* get_frame_cursor_image(VideoFrame* frame);
  * @returns                        The videodata buffer that is stored in this VideoFrame
  */
 unsigned char* get_frame_videodata(VideoFrame* frame);
-
-/**
- * @brief                          Get a pointer to the PeerUpdateMessage inside of the VideoFrame*
- *                                 Prerequisites for writing to the returned PeerUpdateMessage
- *                                 pointer: frame->videodata_length must be set
- *                                 set_frame_cursor_image must be called. After writing to
- *                                 the returned PeerUpdateMessage*, please update
- *                                 frame->num_peer_update_msgs
- *
- * @param frame                    The VideoFrame who's data buffer is being used
- *
- * @returns                        A pointer to the internal PeerUpdateMessage buffer
- */
-PeerUpdateMessage* get_frame_peer_messages(VideoFrame* frame);
 
 /**
  * @brief                          Get the total VideoFrame size, including all of the data embedded

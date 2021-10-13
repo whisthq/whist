@@ -29,8 +29,6 @@ Custom types
 typedef struct Client {
     /* ACTIVE */
     bool is_active;       // protected by global is_active_rwlock
-    bool is_controlling;  // protected by state lock
-    bool is_host;         // protected by state lock
 
     /* USER INFO */
     int user_id;  // not lock protected
@@ -42,18 +40,6 @@ typedef struct Client {
     int tcp_port;               // protected by global is_active_rwlock
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 
-    /* MOUSE */
-    struct {
-        int x;
-        int y;
-        struct {
-            int r;
-            int g;
-            int b;
-        } color;
-        bool is_active;
-    } mouse;  // protected by state lock
-
     /* PING */
     clock last_ping;      // not lock protected
     clock last_tcp_ping;  // not lock protected
@@ -63,10 +49,8 @@ typedef struct Client {
 extern FractalMutex state_lock;
 extern RWLock is_active_rwlock;
 
-extern Client clients[MAX_NUM_CLIENTS];
+extern Client client;
 
-extern int num_controlling_clients;
-extern int num_active_clients;
 extern int host_id;
 
 /*
@@ -107,23 +91,10 @@ int destroy_clients(void);
 *                                 not destroyed and may be made active in the
 *                                 future.
 
-* @param id                       Client ID of active client to deactivate
 *
 * @returns                        Returns -1 on failure, 0 on success
 */
-int quit_client(int id);
-
-/**
- * @brief                          Deactivates all active clients.
- *
- * @details                        Disconnects client. Updates count of active
- *                                 clients. The associated client objects are
- *                                 not destroyed and may be made active in the
- *                                 future.
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int quit_clients(void);
+int quit_client();
 
 /**
  * @brief                          Determines if any active client has timed out.
@@ -169,47 +140,10 @@ int reap_timed_out_clients(double timeout);
  * @param found                    Populated with true if an associated client ID
  *                                 is found, false otherwise.
  *
- * @param id                       Populated with found client ID, if one is
- *                                 found.
- *
  * @returns                        Returns -1 on failure, 0 on success. Not
  *                                 finding an associated ID does not mean
  *                                 failure.
  */
-int try_find_client_id_by_user_id(int user_id, bool *found, int *id);
-
-/**
- * @brief                          Finds an available client ID.
- *
- * @details                        If a client object is inactive, that object
- *                                 and the associated client ID are
- *                                 available for re-use. Function fails if no
- *                                 client ID is available.
- *
- * @param id                       Points to field which function populates
- *                                 with available client ID.
- *
- * @returns                        Returns -1 on failure (including no
- *                                 client IDs are available), 0 on success.
- */
-int get_available_client_id(int *id);
-
-/**
- * @brief                          Fills buffer with status info for every
- *                                 active client.
- *
- * @details                        Status info includes mouse position,
- *                                 interaction mode, and more.
- *
- * @param msgs                     Buffer to be filled with peer update info.
- *                                 Must be at least as large as the number
- *                                 of presently active clients times the size of
- *                                 each PeerUpdateMessage.
- *
- * @param num_msgs                 Number of messages filled by function.
- *
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs);
+int does_client_match_user_id(int user_id, bool *found);
 
 #endif  // SERVER_CLIENT_H

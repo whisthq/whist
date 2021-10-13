@@ -35,14 +35,10 @@ Public Functions
  *                                 appropriate in handling message from client.
  *                                 Logs errors.
  *
- * @param fcmsg                     Message from client
- * @param client_id                Client ID of client from whom message was
- *                                 received
- * @param is_controlling           True is the client from whom the message was
- *                                 received is controlling, not spectating
+ * @param fcmsg                    Message from client
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_client_message(FractalClientMessage *fcmsg, int client_id, bool is_controlling);
+int handle_client_message(FractalClientMessage *fcmsg);
 
 #endif  // HANDLE_CLIENT_MESSAGE_H

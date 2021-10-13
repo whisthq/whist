@@ -37,7 +37,6 @@ extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 extern volatile char binary_aes_private_key[16];
 int udp_port = -1;
 int tcp_port = -1;
-int client_id = -1;
 SocketContext packet_send_udp_context = {0};
 SocketContext packet_receive_udp_context = {0};
 SocketContext packet_tcp_context = {0};
@@ -149,17 +148,11 @@ int discover_ports(bool *using_stun) {
     // Create and send discovery reply message
     FractalDiscoveryReplyMessage *reply_msg =
         (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
-    if (reply_msg->client_id == -1) {
-        LOG_ERROR("Not awarded a client id from server.");
-        free_tcp_packet(tcp_packet);
-        return -1;
-    }
 
-    client_id = reply_msg->client_id;
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
     tcp_port = reply_msg->tcp_port;
-    LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d. Audio frequency: %d.", client_id,
+    LOG_INFO("Using UDP Port: %d, TCP Port: %d. Audio frequency: %d.",
              udp_port, tcp_port, reply_msg->audio_sample_rate);
 
     error_monitor_set_connection_id(reply_msg->connection_id);
@@ -312,7 +305,6 @@ int send_tcp_reconnect_message(bool using_stun) {
 
     FractalClientMessage fcmsg;
     fcmsg.type = MESSAGE_TCP_RECOVERY;
-    fcmsg.tcpRecovery.client_id = client_id;
 
     SocketContext discovery_context;
     if (create_tcp_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
