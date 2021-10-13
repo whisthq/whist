@@ -41,9 +41,12 @@
     "history": "^5.0.1",
     "json-stringify-safe": "^5.0.1",
     "jwt-decode": "^3.1.2",
+    "keytar": "^7.7.0",
     "lodash": "^4.17.21",
     "logzio-nodejs": "^2.0.2",
+    "os": "^0.1.2",
     "path": "^0.12.7",
+    "pbkdf2": "^3.1.2",
     "prop-types": "^15.7.2",
     "rc-progress": "^3.1.4",
     "react": "^17.0.2",
@@ -52,6 +55,7 @@
     "react-icons": "^4.2.0",
     "react-router": "^5.2.0",
     "rxjs": "^7.3.0",
+    "tempfile": "^4.0.0",
     "ts-toolbelt": "^9.6.0"
   },
   "devDependencies": {
@@ -67,6 +71,7 @@
     "@types/react": "^17.0.13",
     "@types/react-dom": "^17.0.5",
     "@types/snowpack-env": "^2.3.3",
+    "@types/tempfile": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
     "autoprefixer": "^10.3.1",
