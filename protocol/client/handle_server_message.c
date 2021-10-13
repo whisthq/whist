@@ -24,7 +24,7 @@ Includes
 #include <fractal/core/fractal.h>
 #include <fractal/utils/clock.h>
 #include <fractal/logging/logging.h>
-#include <fractal/utils/window_name.h>
+#include <fractal/utils/x11_window_info.h>
 #include "client_utils.h"
 #include "audio.h"
 #include "network.h"
@@ -35,6 +35,8 @@ bool exiting = false;
 extern int audio_frequency;
 extern volatile double latency;
 extern volatile int try_amount;
+volatile bool fullscreen_trigger;
+volatile bool fullscreen_value;
 volatile char *window_title;
 volatile bool should_update_window_title;
 
@@ -51,6 +53,7 @@ static int handle_audio_frequency_message(FractalServerMessage *fsmsg, size_t fs
 static int handle_clipboard_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
 static int handle_window_title_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
 static int handle_open_uri_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_fullscreen_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
 
 /*
 ============================
@@ -88,6 +91,8 @@ int handle_server_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
             return handle_window_title_message(fsmsg, fsmsg_size);
         case SMESSAGE_OPEN_URI:
             return handle_open_uri_message(fsmsg, fsmsg_size);
+        case SMESSAGE_FULLSCREEN:
+            return handle_fullscreen_message(fsmsg, fsmsg_size);
         default:
             LOG_WARNING("Unknown FractalServerMessage Received (type: %d)", fsmsg->type);
             return -1;
@@ -276,5 +281,25 @@ static int handle_open_uri_message(FractalServerMessage *fsmsg, size_t fsmsg_siz
     snprintf(cmd, cmd_len, OPEN_URI_CMD " \"%s\"", uri);
     runcmd(cmd, NULL);
     free(cmd);
+    return 0;
+}
+
+static int handle_fullscreen_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+    /*
+        Handle server fullscreen message (enter or exit events)
+
+        Arguments:
+            fsmsg (FractalServerMessage*): server fullscreen message
+            fsmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    LOG_INFO("Received fullscreen message from the server! Value: %d", fmsg->fullscreen);
+
+    fullscreen_trigger = true;
+    fullscreen_value = fmsg->fullscreen;
+
     return 0;
 }

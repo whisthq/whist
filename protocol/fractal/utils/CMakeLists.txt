@@ -2,11 +2,10 @@ add_library(fractalUtils STATIC
         aes.h
         clock.h
         avpacket_buffer.h
-        window_name.h
         aes.c
         clock.c
         avpacket_buffer.c
-        window_name.c
+        x11_window_info.c
         sysinfo.c
         png.c
         lodepng.c
