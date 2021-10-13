@@ -37,15 +37,12 @@ extern Client clients[MAX_NUM_CLIENTS];
 #define VIDEO_BUFFER_SIZE 25
 #define MAX_VIDEO_INDEX 500
 extern FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
-extern int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 
 #define AUDIO_BUFFER_SIZE 100
 #define MAX_NUM_AUDIO_INDICES 3
 extern FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
-extern int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 extern volatile int max_bitrate;
-extern volatile int max_burst_bitrate;
 extern volatile int client_width;
 extern volatile int client_height;
 extern volatile int client_dpi;
@@ -141,11 +138,9 @@ int handle_client_message(FractalClientMessage *fcmsg, int client_id, bool is_co
         case CMESSAGE_CLIPBOARD:
             return handle_clipboard_message(fcmsg, client_id, is_controlling);
         case MESSAGE_AUDIO_NACK:
-            return handle_audio_nack_message(fcmsg, client_id, is_controlling);
         case MESSAGE_AUDIO_BITARRAY_NACK:
             return handle_audio_nack_message(fcmsg, client_id, is_controlling);
         case MESSAGE_VIDEO_NACK:
-            return handle_video_nack_message(fcmsg, client_id, is_controlling);
         case MESSAGE_VIDEO_BITARRAY_NACK:
             return handle_video_nack_message(fcmsg, client_id, is_controlling);
         case MESSAGE_IFRAME_REQUEST:
@@ -277,13 +272,17 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg, int client_id, bo
             (int): Returns -1 on failure, 0 on success
     */
 
-    UNUSED(client_id);
-    if (!is_controlling) return 0;
     LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
              fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
-    // Get the new bitrate data
-    max_bitrate = max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
-    max_burst_bitrate = fcmsg->bitrate_data.burst_bitrate;
+    if (is_controlling) {
+        // Set the new bitrate data (for the video encoder)
+        max_bitrate = max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
+    }
+
+    // Use the burst bitrate to update the client's UDP packet throttle context
+    network_throttler_set_burst_bitrate(clients[client_id].udp_context.network_throttler,
+                                        fcmsg->bitrate_data.burst_bitrate);
+
     // Update the encoder using the new bitrate
     update_encoder = true;
     return 0;
@@ -313,9 +312,9 @@ static int handle_ping_message(FractalClientMessage *fcmsg, int client_id, bool 
     fsmsg_response.type = MESSAGE_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
     int ret = 0;
-    if (send_udp_packet(&(clients[client_id].UDP_context), PACKET_MESSAGE,
-                        (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), 1, max_burst_bitrate,
-                        NULL, NULL) < 0) {
+
+    if (send_udp_packet_from_payload(&(clients[client_id].udp_context), PACKET_MESSAGE,
+                                     (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), 1) < 0) {
         LOG_WARNING("Could not send Ping to Client ID: %d", client_id);
         ret = -1;
     }
@@ -348,8 +347,9 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg, int client_id,
     fsmsg_response.type = MESSAGE_TCP_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
     int ret = 0;
-    if (send_tcp_packet(&(clients[client_id].TCP_context), PACKET_MESSAGE,
-                        (uint8_t *)&fsmsg_response, sizeof(fsmsg_response)) < 0) {
+
+    if (send_tcp_packet_from_payload(&(clients[client_id].tcp_context), PACKET_MESSAGE,
+                                     (uint8_t *)&fsmsg_response, sizeof(fsmsg_response)) < 0) {
         LOG_WARNING("Could not send TCP Ping to Client ID: %d", client_id);
         ret = -1;
     }
@@ -422,13 +422,14 @@ static void handle_nack_single_audio_packet(int packet_id, int packet_index, int
     // LOG_INFO("Audio NACK requested for: ID %d Index %d",
     // packet_id, packet_index);
     FractalPacket *audio_packet = &audio_buffer[packet_id % AUDIO_BUFFER_SIZE][packet_index];
-    int len = audio_buffer_packet_len[packet_id % AUDIO_BUFFER_SIZE][packet_index];
+    int len = get_packet_size(audio_packet);
     if (audio_packet->id == packet_id) {
         LOG_INFO(
             "NACKed audio packet %d found of length %d. "
             "Relaying!",
             packet_id, len);
-        replay_packet(&(clients[client_id].UDP_context), audio_packet, len);
+        audio_packet->is_a_nack = true;
+        send_udp_packet(&(clients[client_id].udp_context), audio_packet, len);
     }
     // If we were asked for an invalid index, just ignore it
     else if (packet_index < audio_packet->num_indices) {
@@ -480,13 +481,13 @@ static void handle_nack_single_video_packet(int packet_id, int packet_index, int
     // LOG_INFO("Video NACK requested for: ID %d Index %d",
     // fcmsg->nack_data.simple_nack.id, fcmsg->nack_data.simple_nack.index);
     FractalPacket *video_packet = &video_buffer[packet_id % VIDEO_BUFFER_SIZE][packet_index];
-    int len = video_buffer_packet_len[packet_id % VIDEO_BUFFER_SIZE][packet_index];
+    int len = get_packet_size(video_packet);
     if (video_packet->id == packet_id) {
         LOG_INFO(
             "NACKed video packet ID %d Index %d found of "
             "length %d. Relaying!",
             packet_id, packet_index, len);
-        replay_packet(&(clients[client_id].UDP_context), video_packet, len);
+        send_udp_packet(&(clients[client_id].udp_context), video_packet, len);
     }
 
     // If we were asked for an invalid index, just ignore it

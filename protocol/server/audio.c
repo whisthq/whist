@@ -52,13 +52,11 @@ Includes
 #endif
 // Linux shouldn't have this
 
-extern volatile int max_burst_bitrate;
 extern volatile bool exiting;
 
 #define AUDIO_BUFFER_SIZE 100
 #define MAX_NUM_AUDIO_INDICES 3
 FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
-int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
 extern int sample_rate;
 
@@ -130,34 +128,51 @@ int32_t multithreaded_send_audio(void* opaque) {
                         AudioFrame* frame = (AudioFrame*)buf;
                         frame->data_length = audio_encoder->encoded_frame_size;
 
-                        write_packets_to_buffer(audio_encoder->num_packets, audio_encoder->packets,
-                                                (void*)frame->data);
-                        // LOG_INFO("we got a packet of size %d",
-                        //         audio_encoder->encoded_frame_size);
+                        write_avpackets_to_buffer(audio_encoder->num_packets,
+                                                  audio_encoder->packets, (void*)frame->data);
 
-                        // Send packet
-                        read_lock(&is_active_rwlock);
-                        if (broadcast_udp_packet(
-                                PACKET_AUDIO, (uint8_t*)frame,
-                                audio_encoder->encoded_frame_size + sizeof(int), id,
-                                max_burst_bitrate, audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
-                            LOG_WARNING("Could not send audio frame");
+                        int num_packets = write_payload_to_packets(
+                            (uint8_t*)frame, audio_encoder->encoded_frame_size + sizeof(int), id,
+                            PACKET_AUDIO, audio_buffer[id % AUDIO_BUFFER_SIZE],
+                            MAX_NUM_AUDIO_INDICES);
+
+                        if (num_packets < 0) {
+                            LOG_WARNING("Failed to write audio packet to buffer");
+                        } else {
+                            for (int i = 0; i < num_packets; ++i) {
+                                read_lock(&is_active_rwlock);
+                                if (broadcast_udp_packet(
+                                        &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
+                                        get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) <
+                                    0) {
+                                    LOG_WARNING("Failed to broadcast audio packet");
+                                }
+                                read_unlock(&is_active_rwlock);
+                            }
                         }
-                        read_unlock(&is_active_rwlock);
-                        // LOG_INFO("sent audio frame %d", id);
+
                         id++;
                     }
                 }
 #else
-                read_lock(&is_active_rwlock);
-                if (broadcast_udp_packet(PACKET_AUDIO, audio_device->buffer,
-                                         audio_device->buffer_size, id, max_burst_bitrate,
-                                         audio_buffer[id % AUDIO_BUFFER_SIZE],
-                                         audio_buffer_packet_len[id % AUDIO_BUFFER_SIZE]) < 0) {
-                    LOG_WARNING("Could not send audio frame\n");
+                int num_packets = write_payload_to_packets(
+                    (uint8_t*)audio_device->buffer, audio_device->buffer_size, id, PACKET_AUDIO,
+                    audio_buffer[id % AUDIO_BUFFER_SIZE], MAX_NUM_AUDIO_INDICES);
+
+                if (num_packets < 0) {
+                    LOG_WARNING("Failed to write audio packet to buffer");
+                } else {
+                    for (int i = 0; i < num_packets; ++i) {
+                        read_lock(&is_active_rwlock);
+                        if (broadcast_udp_packet(
+                                &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
+                                get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) < 0) {
+                            LOG_WARNING("Failed to broadcast audio packet");
+                        }
+                        read_unlock(&is_active_rwlock);
+                    }
                 }
-                read_unlock(&is_active_rwlock);
+
                 id++;
 #endif
             }

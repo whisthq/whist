@@ -76,7 +76,6 @@ volatile bool exiting;
 int sample_rate = -1;
 
 volatile int max_bitrate = STARTING_BITRATE;
-volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
 InputDevice* input_device = NULL;
 
 volatile bool stop_streaming;

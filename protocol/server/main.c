@@ -64,8 +64,8 @@ void graceful_exit() {
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = SMESSAGE_QUIT;
     read_lock(&is_active_rwlock);
-    if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
-                             sizeof(FractalServerMessage), 1, max_burst_bitrate, NULL, NULL) != 0) {
+    if (broadcast_udp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
+                                          sizeof(FractalServerMessage), 1) != 0) {
         LOG_WARNING("Could not send Quit Message");
     }
     read_unlock(&is_active_rwlock);
@@ -212,8 +212,9 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                    sizeof(ClipboardData) + clipboard_chunk->size);
             // Send fsmsg
             read_lock(&is_active_rwlock);
-            if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                                     sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
+            if (broadcast_tcp_packet_from_payload(
+                    PACKET_MESSAGE, (uint8_t*)fsmsg_response,
+                    sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
                 LOG_WARNING("Failed to broadcast clipboard message.");
             }
             read_unlock(&is_active_rwlock);
@@ -294,7 +295,6 @@ int main(int argc, char* argv[]) {
     start_timer(&startup_time);
 
     max_bitrate = STARTING_BITRATE;
-    max_burst_bitrate = STARTING_BURST_BITRATE;
     stop_streaming = false;
     wants_iframe = false;
     update_encoder = false;
@@ -364,8 +364,8 @@ int main(int argc, char* argv[]) {
                     fsmsg_response->type = SMESSAGE_WINDOW_TITLE;
                     memcpy(&fsmsg_response->window_title, name, sizeof(name));
                     read_lock(&is_active_rwlock);
-                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                                             (int)fsmsg_size) < 0) {
+                    if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
+                                                          (int)fsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast window title message.");
                     } else {
                         LOG_INFO("Sent window title message!");
@@ -395,8 +395,8 @@ int main(int argc, char* argv[]) {
                     fsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&fsmsg->requested_uri, handled_uri, sizeof(handled_uri));
                     read_lock(&is_active_rwlock);
-                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) <
-                        0) {
+                    if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg,
+                                                          (int)fsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
                         LOG_INFO("Sent open URI message!");

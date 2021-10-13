@@ -9,8 +9,8 @@
 Usage
 ============================
 
-Use extract_packets_from_buffer to read packets from a buffer which has been filled using
-write_packets_to_buffer.
+Use extract_avpackets_from_buffer to read packets from a buffer which has been filled using
+write_avpackets_to_buffer.
 */
 
 /*
@@ -40,7 +40,7 @@ Public Functions
  *
  * @returns                     0 on success, -1 on failure
  */
-int extract_packets_from_buffer(void* buffer, int buffer_size, AVPacket* packets);
+int extract_avpackets_from_buffer(void* buffer, int buffer_size, AVPacket* packets);
 
 /**
  * @brief                       Store num_packets AVPackets, found in packets, into
@@ -53,6 +53,6 @@ int extract_packets_from_buffer(void* buffer, int buffer_size, AVPacket* packets
  * @param buf                   Buffer to store packets in. Format: (number of packets)(size
  * 								of each packet)(data of each packet)
  */
-void write_packets_to_buffer(int num_packets, AVPacket* packets, int* buf);
+void write_avpackets_to_buffer(int num_packets, AVPacket* packets, int* buf);
 
 #endif  // DECODE_H

@@ -89,6 +89,7 @@ Includes
 #endif
 
 #include <fractal/core/fractal.h>
+#include <fractal/network/throttle.h>
 
 /*
 ============================
@@ -147,6 +148,7 @@ typedef struct SocketContext {
     // Used for reading TCP packets
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
+    NetworkThrottleContext* network_throttler;
 } SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
@@ -270,6 +272,37 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
                        int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /**
+ * @brief                          Split a payload into several packets approprately-sized
+ *                                 for UDP transport, and write those files to a buffer.
+ *
+ * @param payload                  The payload data to be split into packets
+ * @param payload_size             The size of the payload, in bytes
+ * @param payload_id               An ID for the UDP data (must be positive)
+ * @param packet_type              The FractalPacketType (video, audio, or message)
+ * @param packet_buffer            The buffer to write the packets to
+ * @param packet_buffer_length     The length of the packet buffer
+ *
+ * @returns                        The number of packets that were written to the buffer,
+ *                                 or -1 on failure
+ *
+ * @note                           This function should be removed and replaced with
+ *                                 a more general packet splitter/joiner context, which
+ *                                 will enable us to use forward error correction, etc.
+ */
+int write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length);
+
+/**
+ * @brief                          Get the size of a FractalPacket
+ *
+ * @param packet                   The packet to get the size of
+ *
+ * @returns                        The size of the packet, or -1 on error
+ */
+int get_packet_size(FractalPacket* packet);
+
+/**
  * @brief                          This will send a FractalPacket over TCP to
  *                                 the SocketContext context. A
  *                                 FractalPacketType is also provided to
@@ -284,7 +317,8 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len);
+int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                 int len);
 
 /**
  * @brief                          This will send a FractalPacket over UDP to
@@ -298,35 +332,32 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
  * @param data                     A pointer to the data to be sent
  * @param len                      The number of bytes to send
  * @param id                       An ID for the UDP data.
- * @param burst_bitrate            The maximum bitrate that packets will be sent
- *                                 over. -1 will imply sending as fast as
- *                                 possible
- * @param packet_buffer            An array of RTPPacket's, each sub-packet of
- *                                 the UDPPacket will be stored in
- *                                 packet_buffer[i]
- * @param packet_len_buffer        An array of int's, defining the length of
- *                                 each sub-packet located in packet_buffer[i]
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
-                    int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer);
+int send_udp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                 int len, int id);
 
 /**
- * @brief                          Replay the sending of a packet that has
- *                                 already been sent by the network protocol.
- *                                 (Via a packet_buffer write from
- *                                 SendUDPPacket)
+ * @brief                          This will send a FractalPacket over UDP to
+ *                                 the SocketContext context. This function does
+ *                                 not create the packet from raw data, but
+ *                                 assumes that the packet has been prepared by
+ *                                 the caller (e.g. fragmented into
+ *                                 appropriately-sized chunks by a fragmenter).
+ *                                 This function assumes and checks that the
+ *                                 packet is small enough to send without
+ *                                 further breaking into smaller packets.
  *
  * @param context                  The socket context
- * @param packet                   The packet to resend
- * @param len                      The length of the packet to resend
+ * @param packet                   A pointer to the packet to be sent
+ * @param packet_size              The size of the packet to be sent
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int replay_packet(SocketContext* context, FractalPacket* packet, size_t len);
+int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
 
 /**
  * @brief                          Send a 0-length packet over the socket. Used
