@@ -441,21 +441,11 @@ int main(int argc, char* argv[]) {
 #endif  // ! _WIN32
 
         if (get_timer(last_ping_check) > 20.0) {
-            read_lock(&is_active_rwlock);
-            bool exists, should_reap = false;
-            if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
-                LOG_ERROR("Failed to find if a client has timed out.");
-            } else {
-                should_reap = exists;
+            write_lock(&is_active_rwlock);
+            if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
+                LOG_ERROR("Failed to reap timed out clients.");
             }
-            read_unlock(&is_active_rwlock);
-            if (should_reap) {
-                write_lock(&is_active_rwlock);
-                if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
-                    LOG_ERROR("Failed to reap timed out clients.");
-                }
-                write_unlock(&is_active_rwlock);
-            }
+            write_unlock(&is_active_rwlock);
             start_timer(&last_ping_check);
         }
 

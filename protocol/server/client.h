@@ -97,29 +97,6 @@ int destroy_clients(void);
 int quit_client();
 
 /**
- * @brief                          Determines if any active client has timed out.
- *
- * @details                        Checks the time of the last received ping for
- *                                 each active client. If the time since the
- *                                 server has received a ping from a client
- *                                 equals or exceeds the timeout threshold, the
- *                                 client is considered to have timed out.
- *
- * @param timeout                  Duration (in seconds) after which an active
- *                                 client is deemed timed out if the server has
- *                                 not received a ping from the client.
- *
- * @param exists                   The field pointed to by exists is set to true
- *                                 if one or more clients are timed out client
- *                                 and false otherwise.
- *
- * @returns                        Returns -1 on failure, 0 on success. Whether
- *                                 or not there exists a timed out client does
- *                                 not mean failure.
- */
-int exists_timed_out_client(double timeout, bool *exists);
-
-/**
  * @brief                          Quits all timed out clients.
  *
  * @param timeout                  Duration (in seconds) after which a client
