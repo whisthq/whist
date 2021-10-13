@@ -38,7 +38,30 @@
     # Link the GoogleTest library
     target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
 
-    # Link the FFmpeg libraries
+    # Copy the Sentry library to the build folder
+    add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
+            $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>)
+
+    # Copy the FFmpeg library to the build folder
+    add_custom_command(
+        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+        $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>)
+
+    # Copy the OpenSSL/libcrypto libraries if we are on Windows
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        add_custom_command(
+                TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
+                $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>)
+    endif()
+
+    # Link the FFmpeg libraries 
     foreach(LIB ${FFMPEG_LIBS_PATHS})
         message(VERBOSE "linking lib for ${PROTOCOL_TEST_BINARY}: ${LIB}")
         target_link_libraries(${PROTOCOL_TEST_BINARY} ${LIB})
