@@ -539,9 +539,8 @@ typedef enum FractalClientMessageType {
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
 
-    MESSAGE_MOUSE_INACTIVE = 6,
-    MESSAGE_MULTIGESTURE = 7,       ///< Gesture Event
-    MESSAGE_RELEASE = 8,            ///< Message instructing the host to release all input
+    MESSAGE_MULTIGESTURE = 6,       ///< Gesture Event
+    MESSAGE_RELEASE = 7,            ///< Message instructing the host to release all input
                                     ///< that is currently pressed.
     MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
@@ -556,9 +555,8 @@ typedef enum FractalClientMessageType {
     MESSAGE_AUDIO_BITARRAY_NACK = 114,
     CMESSAGE_CLIPBOARD = 115,
     MESSAGE_IFRAME_REQUEST = 116,
-    CMESSAGE_INTERACTION_MODE = 117,
-    MESSAGE_DISCOVERY_REQUEST = 118,
-    MESSAGE_TCP_RECOVERY = 119,
+    MESSAGE_DISCOVERY_REQUEST = 117,
+    MESSAGE_TCP_RECOVERY = 118,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -607,9 +605,6 @@ typedef struct FractalClientMessage {
 
         // MESSAGE_MULTIGESTURE
         FractalMultigestureMessage multigesture;  ///< Multigesture message.
-
-        // CMESSAGE_INTERACTION_MODE
-        InteractionMode interaction_mode;
 
         // MESSAGE_MBPS
         struct {

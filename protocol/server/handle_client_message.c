@@ -74,10 +74,8 @@ static int handle_clipboard_message(FractalClientMessage *fcmsg);
 static int handle_audio_nack_message(FractalClientMessage *fcmsg);
 static int handle_video_nack_message(FractalClientMessage *fcmsg);
 static int handle_iframe_request_message(FractalClientMessage *fcmsg);
-static int handle_interaction_mode_message(FractalClientMessage *fcmsg);
 static int handle_quit_message(FractalClientMessage *fcmsg);
 static int handle_init_message(FractalClientMessage *fcmsg);
-static int handle_mouse_inactive_message(FractalClientMessage *fcmsg);
 
 /*
 ============================
@@ -133,14 +131,10 @@ int handle_client_message(FractalClientMessage *fcmsg) {
             return handle_video_nack_message(fcmsg);
         case MESSAGE_IFRAME_REQUEST:
             return handle_iframe_request_message(fcmsg);
-        case CMESSAGE_INTERACTION_MODE:
-            return handle_interaction_mode_message(fcmsg);
         case CMESSAGE_QUIT:
             return handle_quit_message(fcmsg);
         case MESSAGE_DISCOVERY_REQUEST:
             return handle_init_message(fcmsg);
-        case MESSAGE_MOUSE_INACTIVE:
-            return handle_mouse_inactive_message(fcmsg);
         default:
             LOG_WARNING(
                 "Unknown FractalClientMessage Received. "
@@ -239,10 +233,8 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
 
     LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
              fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
-    if (is_controlling) {
-        // Set the new bitrate data (for the video encoder)
-        max_bitrate = max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
-    }
+    // Set the new bitrate data (for the video encoder)
+    max_bitrate = max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
 
     // Use the burst bitrate to update the client's UDP packet throttle context
     network_throttler_set_burst_bitrate(client.udp_context.network_throttler,
@@ -481,7 +473,6 @@ static int handle_iframe_request_message(FractalClientMessage *fcmsg) {
 
         Arguments:
             fcmsg (FractalClientMessage*): message package from client
-            is_controlling (bool): whether the client is controlling, not spectating
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -505,7 +496,6 @@ static int handle_quit_message(FractalClientMessage *fcmsg) {
 
         Arguments:
             fcmsg (FractalClientMessage*): message package from client
-            is_controlling (bool): whether the client is controlling, not spectating
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -535,7 +525,6 @@ static int handle_init_message(FractalClientMessage *cfcmsg) {
 
         Arguments:
             fcmsg (FractalClientMessage*): message package from client
-            is_controlling (bool): whether the client is controlling, not spectating
 
         Returns:
             (int): Returns -1 on failure, 0 on success

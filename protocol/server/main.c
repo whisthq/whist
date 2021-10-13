@@ -110,7 +110,7 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_fractal_client_message(FractalClientMessage* fcmsg, int id) {
+void handle_fractal_client_message(FractalClientMessage* fcmsg) {
     /*
         Handles a Fractal client message
 
@@ -120,9 +120,8 @@ void handle_fractal_client_message(FractalClientMessage* fcmsg, int id) {
     */
 
     fractal_lock_mutex(state_lock);
-    bool is_controlling = clients[id].is_controlling;
     fractal_unlock_mutex(state_lock);
-    if (handle_client_message(fcmsg, id, is_controlling) != 0) {
+    if (handle_client_message(fcmsg) != 0) {
         LOG_ERROR(
             "Failed to handle message from client. "
             "(ID: %d)",

@@ -228,7 +228,7 @@ int broadcast_ack(void) {
 int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
     if (client.is_active) {
         if (send_udp_packet(&(client.udp_context), packet, packet_size) < 0) {
-            LOG_ERROR("Failed to send UDP packet to client (ID: %d)", id);
+            LOG_ERROR("Failed to send UDP packet to client");
             return -1;
         }
     }
