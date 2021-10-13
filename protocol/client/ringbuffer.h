@@ -10,7 +10,7 @@ Usage
 ============================
 Initialize a ring buffer for audio or video using init_ring_buffer. When new packets arrive, call
 receive_packet to process the packet and modify or create ring buffer entries as needed. To nack a
-packet, call nack_packet.
+packet, call nack_single_packet.
 */
 
 #include <fractal/core/fractal.h>
@@ -133,7 +133,7 @@ void destroy_ring_buffer(RingBuffer* ring_buffer);
  *
  * @param index Packet index
  */
-void nack_packet(RingBuffer* ring_buffer, int id, int index);
+void nack_single_packet(RingBuffer* ring_buffer, int id, int index);
 
 /**
  * @brief Nack 1 missing packet of frame_data up to index.

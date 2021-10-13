@@ -37,12 +37,12 @@ Public Functions
  *                                 or performs whatever side-effects appropriate
  *                                 in handling message from server. Logs errors.
  *
- * @param fmsg                     Message from server
- * @param fmsg_size                The size (in bytes) of the message, including
+ * @param fsmsg                     Message from server
+ * @param fsmsg_size                The size (in bytes) of the message, including
  *                                 any buffer considered part of the message
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size);
+int handle_server_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
 
 #endif  // SERVER_MESSAGE_HANDLER_H

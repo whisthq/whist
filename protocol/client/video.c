@@ -555,12 +555,12 @@ bool request_iframe() {
     */
 
     if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
-        FractalClientMessage fmsg = {0};
-        fmsg.type = MESSAGE_IFRAME_REQUEST;
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = MESSAGE_IFRAME_REQUEST;
         // This should give us a full IDR frame,
         // which includes PPS/SPS data
-        fmsg.reinitialize_encoder = false;
-        send_fmsg(&fmsg);
+        fcmsg.reinitialize_encoder = false;
+        send_fcmsg(&fcmsg);
         start_timer(&video_data.last_iframe_request_timer);
         video_data.is_waiting_for_iframe = true;
         return true;
@@ -879,7 +879,7 @@ void update_video() {
                                 ctx->id, i, ctx->num_packets,
                                 get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
                             ctx->nacked_indices[i]++;
-                            nack_packet(video_ring_buffer, ctx->id, i);
+                            nack_single_packet(video_ring_buffer, ctx->id, i);
                         }
                         ctx->last_nacked_index = i;
                     }
@@ -1134,9 +1134,9 @@ int render_video() {
                 // correct it.
                 // NOTE: Most of the time, this is just because there was a delay between the window
                 // losing visibility and the server reacting.
-                FractalClientMessage fmsg = {0};
-                fmsg.type = MESSAGE_START_STREAMING;
-                send_fmsg(&fmsg);
+                FractalClientMessage fcmsg = {0};
+                fcmsg.type = MESSAGE_START_STREAMING;
+                send_fcmsg(&fcmsg);
             }
             return -1;
         }

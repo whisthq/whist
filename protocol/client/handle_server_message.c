@@ -44,13 +44,13 @@ Private Functions
 ============================
 */
 
-static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handle_tcp_pong_message(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_size);
-static int handle_open_uri_message(FractalServerMessage *fmsg, size_t fmsg_size);
+static int handle_pong_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_tcp_pong_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_quit_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_audio_frequency_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_clipboard_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_window_title_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_open_uri_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
 
 /*
 ============================
@@ -61,97 +61,97 @@ Private Function Implementations
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+int handle_server_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle message packets from the server
 
         Arguments:
-            fmsg (FractalServerMessage*): server message packet
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server message packet
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    switch (fmsg->type) {
+    switch (fsmsg->type) {
         case MESSAGE_PONG:
-            return handle_pong_message(fmsg, fmsg_size);
+            return handle_pong_message(fsmsg, fsmsg_size);
         case MESSAGE_TCP_PONG:
-            return handle_tcp_pong_message(fmsg, fmsg_size);
+            return handle_tcp_pong_message(fsmsg, fsmsg_size);
         case SMESSAGE_QUIT:
-            return handle_quit_message(fmsg, fmsg_size);
+            return handle_quit_message(fsmsg, fsmsg_size);
         case MESSAGE_AUDIO_FREQUENCY:
-            return handle_audio_frequency_message(fmsg, fmsg_size);
+            return handle_audio_frequency_message(fsmsg, fsmsg_size);
         case SMESSAGE_CLIPBOARD:
-            return handle_clipboard_message(fmsg, fmsg_size);
+            return handle_clipboard_message(fsmsg, fsmsg_size);
         case SMESSAGE_WINDOW_TITLE:
-            return handle_window_title_message(fmsg, fmsg_size);
+            return handle_window_title_message(fsmsg, fsmsg_size);
         case SMESSAGE_OPEN_URI:
-            return handle_open_uri_message(fmsg, fmsg_size);
+            return handle_open_uri_message(fsmsg, fsmsg_size);
         default:
-            LOG_WARNING("Unknown FractalServerMessage Received (type: %d)", fmsg->type);
+            LOG_WARNING("Unknown FractalServerMessage Received (type: %d)", fsmsg->type);
             return -1;
     }
 }
 
-static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_pong_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server pong message
 
         Arguments:
-            fmsg (FractalServerMessage*): server pong message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server pong message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fmsg_size != sizeof(FractalServerMessage)) {
+    if (fsmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: pong message)!");
         return -1;
     }
-    receive_pong(fmsg->ping_id);
+    receive_pong(fsmsg->ping_id);
     return 0;
 }
 
-static int handle_tcp_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_tcp_pong_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server TCP pong message
 
         Arguments:
-            fmsg (FractalServerMessage*): server TCP pong message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server TCP pong message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fmsg_size != sizeof(FractalServerMessage)) {
+    if (fsmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: TCP pong message)!");
         return -1;
     }
-    receive_tcp_pong(fmsg->ping_id);
+    receive_tcp_pong(fsmsg->ping_id);
     return 0;
 }
 
-static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_quit_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server quit message
 
         Arguments:
-            fmsg (FractalServerMessage*): server quit message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server quit message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    UNUSED(fmsg);
-    if (fmsg_size != sizeof(FractalServerMessage)) {
+    UNUSED(fsmsg);
+    if (fsmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: quit message)!");
@@ -162,58 +162,58 @@ static int handle_quit_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     return 0;
 }
 
-static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_audio_frequency_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server audio frequency message
 
         Arguments:
-            fmsg (FractalServerMessage*): server audio frequency message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server audio frequency message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fmsg_size != sizeof(FractalServerMessage)) {
+    if (fsmsg_size != sizeof(FractalServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: audio frequency message)!");
         return -1;
     }
-    LOG_INFO("Changing audio frequency to %d", fmsg->frequency);
-    set_audio_frequency(fmsg->frequency);
+    LOG_INFO("Changing audio frequency to %d", fsmsg->frequency);
+    set_audio_frequency(fsmsg->frequency);
     return 0;
 }
 
-static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_clipboard_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server clipboard message
 
         Arguments:
-            fmsg (FractalServerMessage*): server clipboard message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server clipboard message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fmsg_size != sizeof(FractalServerMessage) + fmsg->clipboard.size) {
+    if (fsmsg_size != sizeof(FractalServerMessage) + fsmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: clipboard message)! Expected %d, but received %d",
-            sizeof(FractalServerMessage) + fmsg->clipboard.size, fmsg_size);
+            sizeof(FractalServerMessage) + fsmsg->clipboard.size, fsmsg_size);
         return -1;
     }
-    LOG_INFO("Received %d byte clipboard message from server!", fmsg_size);
+    LOG_INFO("Received %d byte clipboard message from server!", fsmsg_size);
     // Known to run in less than ~100 assembly instructions
-    if (!clipboard_synchronizer_set_clipboard_chunk(&fmsg->clipboard)) {
+    if (!clipboard_synchronizer_set_clipboard_chunk(&fsmsg->clipboard)) {
         LOG_ERROR("Failed to set local clipboard from server message.");
         return -1;
     }
     return 0;
 }
 
-static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_window_title_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server window title message
         Since only the main thread is allowed to perform UI functionality on MacOS, instead of
@@ -222,8 +222,8 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
         window title.
 
         Arguments:
-            fmsg (FractalServerMessage*): server window title message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalServerMessage*): server window title message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
@@ -236,7 +236,7 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
         return -1;
     }
 
-    char *title = (char *)&fmsg->window_title;
+    char *title = (char *)&fsmsg->window_title;
     size_t len = strlen(title) + 1;
     char *new_window_title = safe_malloc(len);
     safe_strncpy(new_window_title, title, strlen(title) + 1);
@@ -246,13 +246,13 @@ static int handle_window_title_message(FractalServerMessage *fmsg, size_t fmsg_s
     return 0;
 }
 
-static int handle_open_uri_message(FractalServerMessage *fmsg, size_t fmsg_size) {
+static int handle_open_uri_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
     /*
         Handle server open URI message by launching the relevant URI locally
 
         Arguments:
-            fmsg (FractalerverMessage*): server open uri message
-            fmsg_size (size_t): size of the packet message contents
+            fsmsg (FractalerverMessage*): server open uri message
+            fsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
@@ -269,7 +269,7 @@ static int handle_open_uri_message(FractalServerMessage *fmsg, size_t fmsg_size)
 // just to be safe from off-by-1 errors
 #define OPEN_URI_CMD_MAXLEN 30
 
-    const char *uri = (const char *)&fmsg->requested_uri;
+    const char *uri = (const char *)&fsmsg->requested_uri;
     const int cmd_len = (int)strlen(uri) + OPEN_URI_CMD_MAXLEN + 1;
     char *cmd = safe_malloc(cmd_len);
     memset(cmd, 0, cmd_len);
