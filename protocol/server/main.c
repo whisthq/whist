@@ -371,8 +371,8 @@ int main(int argc, char* argv[]) {
                 fsmsg->type = SMESSAGE_FULLSCREEN;
                 fsmsg->fullscreen = (int)fullscreen;
                 read_lock(&is_active_rwlock);
-                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                         sizeof(FractalServerMessage)) < 0) {
+                if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg,
+                                                      sizeof(FractalServerMessage)) < 0) {
                     LOG_ERROR("Failed to broadcast fullscreen message.");
                 } else {
                     LOG_INFO("Sent fullscreen message!");
