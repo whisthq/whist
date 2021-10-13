@@ -21,7 +21,7 @@ export const hostSpinUp = async ({
   config_encryption_token,
   jwt_access_token,
   mandelbox_id,
-  json_data
+  json_data,
 }: {
   ip: string
   config_encryption_token: string
@@ -37,7 +37,7 @@ export const hostSpinUp = async ({
       config_encryption_token,
       jwt_access_token,
       mandelbox_id,
-      json_data
+      json_data,
     },
     true
   )) as {
