@@ -97,7 +97,7 @@ int destroy_clients(void);
 int quit_client();
 
 /**
- * @brief                          Quits all timed out clients.
+ * @brief                          Quit client if timed out.
  *
  * @param timeout                  Duration (in seconds) after which a client
  *                                 is deemed timed out if the server has not
@@ -105,7 +105,7 @@ int quit_client();
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int reap_timed_out_clients(double timeout);
+int reap_timed_out_client(double timeout);
 
 /**
  * @brief                          Finds the client ID of the active client
