@@ -270,6 +270,9 @@ int32_t multithreaded_send_video(void* opaque) {
     bool assuming_client_active = false;
     while (!exiting) {
         update_client_active_status(&assuming_client_active);
+        if (assuming_client_active) {
+            LOG_INFO("CLIENT ACTIVE VIDEO");
+        }
 
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
