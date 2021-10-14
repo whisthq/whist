@@ -39,6 +39,14 @@ Public Functions
 void hide_native_window_taskbar();
 
 /**
+ * @brief                          Initialize the customized native window. This is called from
+ *                                 the main thread right after the window finishes loading.
+ *
+ * @param window                   The SDL window wrapper for the NSWindow to customize.
+ */
+void init_native_window_options(SDL_Window* window);
+
+/**
  * @brief                          Set the color of the titlebar of the provided window, and
  *                                 the corresponding titlebar text as well.
  *
