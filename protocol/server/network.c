@@ -165,7 +165,7 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
     if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size) <
         0) {
-        LOG_ERROR("Failed to send send discovery reply message.");
+        LOG_ERROR("Failed to send discovery reply message.");
         closesocket(context->socket);
         free(fsmsg);
         return -1;
@@ -354,7 +354,7 @@ int multithreaded_manage_client(void *opaque) {
 
         LOG_INFO("Is a client connected? %s", client.is_active ? "yes" : "no");
 
-        if (client.is_active == 0) {
+        if (!client.is_active) {
             connection_id = rand();
 
             // container exit logic -
