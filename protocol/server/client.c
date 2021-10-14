@@ -162,6 +162,10 @@ void reset_threads_holding_active_count() {
     client_deactivating = false;
 }
 
+bool threads_still_holding_active() {
+    return threads_holding_active > 0;
+}
+
 void update_client_active_status(bool* thread_holding_active) {
     if (client_deactivating) {
         if (thread_holding_active) {

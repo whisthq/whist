@@ -437,7 +437,7 @@ int multithreaded_manage_client(void *opaque) {
         }
 
         // If all threads have stopped using the active client, we can finally quit it
-        if (client_deactivating && threads_holding_active == 0) {
+        if (client_deactivating && !threads_still_holding_active()) {
             if (quit_client() != 0) {
                 LOG_ERROR("Failed to quit client.");
             } else {
