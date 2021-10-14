@@ -356,6 +356,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 		userID = types.UserID(claims.Subject)
 	} else {
+		// CI doesn't run in AWS so we need to set a custom name
+		if metadata.IsRunningInCI() {
+			userID = "localdev_host_service_CI"
+			return
+		}
+
 		instanceName, err := aws.GetInstanceName()
 		if err != nil {
 			logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
