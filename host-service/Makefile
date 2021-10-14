@@ -81,7 +81,7 @@ test: build
 	# We need to run some tests as root since the host service init() checks for root perms.
 	# Set CI flag in test environment so we can properly skip metrics collection in CI
 	# Set AWS credentials to allow user config integration tests to run
-	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test ./... -race -covermode=atomic -coverprofile=coverage.out
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v ./... -race -covermode=atomic -coverprofile=coverage.out
 
 	# Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov

@@ -106,7 +106,7 @@ func createDockerClient() (*dockerclient.Client, error) {
 
 // Given a list of regexes, find a docker image whose name matches the earliest
 // possible regex in the list.
-func dockerImageFromRegexes(globalCtx context.Context, dockerClient *dockerclient.Client, regexes []string) string {
+func dockerImageFromRegexes(globalCtx context.Context, dockerClient dockerclient.CommonAPIClient, regexes []string) string {
 	imageFilters := dockerfilters.NewArgs(
 		dockerfilters.KeyValuePair{Key: "dangling", Value: "false"},
 	)
@@ -142,7 +142,7 @@ func dockerImageFromRegexes(globalCtx context.Context, dockerClient *dockerclien
 // duplication between this function and SpinUpMandelbox. It doesn't make sense
 // to pollute the code in that function with a flag for warming up, so we have
 // to live with this duplication until we can find and solve the root cause.
-func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, client *dockerclient.Client) error {
+func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, client dockerclient.CommonAPIClient) error {
 	// We've gotta find a suitable image to use for warming up the client. We
 	// prefer images that are most alike to those the host service will actually
 	// be launching, so we use a list of regexes. We prefer matches for earlier
@@ -330,7 +330,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 // ------------------------------------
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
-func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *SpinUpMandelboxRequest) {
+func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, req *SpinUpMandelboxRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
@@ -398,7 +398,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	fc.SetAppName(req.AppName)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
 
-	// Begin populating user configs at the same time as other setup is being done
+	// Begin populating user configs at the same time as other setup is being done.
+	// This is done separately from the rest of the startup goroutines since the user
+	// config download is a potentially long-running process that other pieces do not
+	// depend on.
+	userConfigDownloadComplete := make(chan bool)
 	go func() {
 		// User config errors aren't fatal --- we still want to spin up a mandelbox,
 		// and we will just use the provided encryption token to save configs when
@@ -407,8 +411,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		err := fc.PopulateUserConfigs()
 		if err != nil {
 			logger.Warningf("Error populating user configs: %v", err)
+			userConfigDownloadComplete <- true
 			return
 		}
+
+		userConfigDownloadComplete <- true
 		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", req.MandelboxID)
 	}()
 
@@ -649,6 +656,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError(err.Error())
 		return
 	}
+
+	<-userConfigDownloadComplete
 
 	err = fc.MarkReady()
 	if err != nil {
@@ -951,7 +960,7 @@ func main() {
 var eventLoopKeepalive = make(chan interface{}, 1)
 
 func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFunc,
-	goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client,
+	goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
 	httpServerEvents <-chan ServerRequest, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
 	// Note that we don't use globalCtx for the docker Context, since we still
 	// wish to process Docker events after the global context is cancelled.
