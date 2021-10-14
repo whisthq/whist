@@ -1235,6 +1235,9 @@ int render_video() {
                 log_double_statistic("Write to SDL texture time in ms",
                                      get_timer(latency_clock) * 1000);
 
+                // double mu1 = get_avg_stat_value("video_decoder_send_packets time in ms");
+                // double mu2 = get_avg_stat_value("Write to SDL texture time in ms");
+
                 // Subsection of texture that should be rendered to screen.
 
                 start_timer(&latency_clock);
@@ -1255,10 +1258,10 @@ int render_video() {
 
             safe_SDL_UnlockMutex(render_mutex);
 
-#if LOG_VIDEO
+            //#if LOG_VIDEO
             LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", render_context.id,
                       render_context.frame_size, get_timer(render_context.frame_creation_timer));
-#endif
+            //#endif
 
             // Clean up: set global variables and free the frame buffer
             if (frame->is_iframe) {
@@ -1267,6 +1270,7 @@ int render_video() {
 
             video_data.last_rendered_id = render_context.id;
         }
+
         has_video_rendered_yet = true;
         // rendering = false is set to false last,
         // since that can trigger the next frame render

@@ -140,6 +140,30 @@ void log_double_statistic(const char* key, double val) {
     fractal_unlock_mutex(log_statistic_mutex);
 }
 
+double get_cumulative_avg_stat_value(int num_keys, ...) {
+    fractal_lock_mutex(log_statistic_mutex);
+    va_list valist;
+    va_start(valist, num_keys);
+
+    double avg_sum = 0;
+
+    for (int i = 0; i < num_keys; i++) {
+        const char* key = va_arg(valist, const char*);
+        for (int i = 0; i < MAX_DIFFERENT_STATISTICS; i++) {
+            if (strcmp(all_statistics[i].key, key) == 0) {
+                avg_sum += (all_statistics[i].sum / all_statistics[i].count);
+                break;
+            } else if (all_statistics[i].count == 0) {
+                LOG_ERROR("Could not get average value for statistic %s, because key is invalid",
+                          key);
+                return -1;
+            }
+        }
+    }
+
+    return avg_sum;
+}
+
 void print_statistics() {
     fractal_lock_mutex(log_statistic_mutex);
     unsafe_print_statistics();
