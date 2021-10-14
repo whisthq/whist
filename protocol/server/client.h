@@ -122,5 +122,6 @@ int does_client_match_user_id(int user_id, bool *found);
 void add_thread_to_client_active_dependents();
 void reset_threads_holding_active_count();
 void update_client_active_status(bool* thread_holding_active);
+int start_quitting_client();
 
 #endif  // SERVER_CLIENT_H

@@ -429,7 +429,7 @@ int multithreaded_manage_client(void *opaque) {
         reset_threads_holding_active_count();
         client.is_active = true;
 
-        if (client.is_active && !deactivating_client && get_timer(last_ping_check) > 20.0) {
+        if (client.is_active && !client_deactivating && get_timer(last_ping_check) > 20.0) {
             if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
                 LOG_ERROR("Failed to reap timed out clients.");
             }
@@ -437,7 +437,7 @@ int multithreaded_manage_client(void *opaque) {
         }
 
         // If all threads have stopped using the active client, we can finally quit it
-        if (deactivating_client && threads_holding_active == 0) {
+        if (client_deactivating && threads_holding_active == 0) {
             if (quit_client() != 0) {
                 LOG_ERROR("Failed to quit client.");
             } else {
