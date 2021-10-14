@@ -22,7 +22,7 @@ import (
 // but no-ops in other environments.
 var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
-// StatusSubscriptionEvent is the event received from the subscription to any
+// InstanceStatusEvent is the event received from the subscription to any
 // instance status changes.
 type InstanceStatusEvent struct {
 	InstanceInfo []Instance `json:"cloud_instance_info"`
@@ -86,7 +86,7 @@ func instanceStatusHandler(instanceName string, status string, client *graphql.S
 	return id, nil
 }
 
-// InstanceStatusEvent is the event received from the subscription to any
+// MandelboxInfoEvent is the event received from the subscription to any
 // instance status changes.
 type MandelboxInfoEvent struct {
 	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
