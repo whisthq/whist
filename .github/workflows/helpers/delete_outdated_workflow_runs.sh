@@ -1,11 +1,24 @@
 #!/bin/bash
 
-# Running this script will delete all workflow runs from outdated workflows no longer in `dev`
-# on the fractal/fractal repository
+# Running this script will delete all workflow runs from outdated workflows that have been marked 
+# as `manually disabled` on the GitHub Actions page on the fractal/fractal repository
 
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-user=fractal repo=fractal; gh api repos/$user/$repo/actions/runs \
---paginate -q '.workflow_runs[] | select(.head_branch != "dev") | "\(.id)"' | \
-xargs -n1 -I % gh api repos/$user/$repo/actions/runs/% -X DELETE
+org=fractal
+repo=fractal
+
+# Get workflow IDs with status "disabled_manually"
+workflow_ids=($(gh api repos/$org/$repo/actions/workflows | jq '.workflows[] | select(.["state"] | contains("disabled_manually")) | .id'))
+
+for workflow_id in "${workflow_ids[@]}"
+do
+  echo "Listing runs for the workflow ID $workflow_id"
+  run_ids=( $(gh api repos/$org/$repo/actions/workflows/$workflow_id/runs --paginate | jq '.workflow_runs[].id') )
+  for run_id in "${run_ids[@]}"
+  do
+    echo "Deleting Run ID $run_id"
+    gh api repos/$org/$repo/actions/runs/$run_id -X DELETE >/dev/null
+  done
+done
