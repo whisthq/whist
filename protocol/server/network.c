@@ -230,8 +230,6 @@ int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
             packet (FractalPacket*): packet to be broadcast
             packet_size (size_t): size of the packet to be broadcast
 
-        NOTE: Neads read `is_active_rwlock`
-
         Returns:
             (int): 0 on success, -1 on failure
     */
@@ -358,6 +356,9 @@ int multithreaded_manage_client(void *opaque) {
     clock first_client_timer;  // start this now and then discard when first client has connected
     start_timer(&first_client_timer);
 
+    clock last_ping_check;
+    start_timer(&last_ping_check);
+
     while (!exiting) {
         if (sample_rate == -1) {
             // If audio hasn't initialized yet, let's wait a bit.
@@ -410,8 +411,6 @@ int multithreaded_manage_client(void *opaque) {
             continue;
         }
 
-        write_lock(&is_active_rwlock);
-
         LOG_INFO("Client connected.");
 
         if (!client.is_active) {
@@ -426,9 +425,25 @@ int multithreaded_manage_client(void *opaque) {
 
         start_timer(&(client.last_ping));
 
+        // When a new client has been connected, we want all threads to hold client active again
+        reset_threads_holding_active_count();
         client.is_active = true;
 
-        write_unlock(&is_active_rwlock);
+        if (client.is_active && !deactivating_client && get_timer(last_ping_check) > 20.0) {
+            if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
+                LOG_ERROR("Failed to reap timed out clients.");
+            }
+            start_timer(&last_ping_check);
+        }
+
+        // If all threads have stopped using the active client, we can finally quit it
+        if (deactivating_client && threads_holding_active == 0) {
+            if (quit_client() != 0) {
+                LOG_ERROR("Failed to quit client.");
+            } else {
+                LOG_INFO("Successfully quit client.");
+            }
+        }
     }
 
     return 0;

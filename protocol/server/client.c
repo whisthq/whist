@@ -18,13 +18,12 @@ Includes
 #include "client.h"
 #include "network.h"
 
-RWLock is_active_rwlock;
+volatile int threads_needing_active = 0; // Threads dependent on client being active
+volatile int threads_holding_active = 0; // Threads currently assuming client is active
+
 
 Client client;
-
-int num_controlling_clients = 0;
-int num_active_clients = 0;
-int host_id = -1;
+volatile bool client_deactivating = false; // Should only be set in `multithreaded_manage_client`
 
 /*
 ============================
@@ -42,8 +41,6 @@ int init_client(void) {
         Returns:
             (int): -1 on failure, 0 on success
     */
-
-    init_rw_lock(&is_active_rwlock);
 
     client.is_active = false;
     client.udp_port = BASE_UDP_PORT;
@@ -66,7 +63,16 @@ int destroy_clients(void) {
     */
 
     destroy_rw_lock(&client.tcp_rwlock);
-    destroy_rw_lock(&is_active_rwlock);
+    return 0;
+}
+
+int start_quitting_client() {
+    /*
+        Begins deactivating client, but does not clean up its
+        resources yet. Must be called before `quit_client`.
+    */
+
+    client_deactivating = true;
     return 0;
 }
 
@@ -75,8 +81,6 @@ int quit_client() {
         Deactivates active client. Disconnects client. Updates count of active
         clients. May only be called on an active client. The associated client
         object is not destroyed and may be made active in the future.
-
-        NOTE: Needs write lock is_active_rwlock
 
         Arguments:
             id (int): Client ID of active client to deactivate
@@ -95,9 +99,7 @@ int quit_client() {
 
 int reap_timed_out_client(double timeout) {
     /*
-        Quits client if timed out.
-
-        NOTE: Needs write is_active_rwlock
+        Sets client to quit if timed out.
 
         Arguments:
             timeout (double): Duration (in seconds) after which a
@@ -110,10 +112,11 @@ int reap_timed_out_client(double timeout) {
 
     if (client.is_active && get_timer(client.last_ping) > timeout) {
         LOG_INFO("Dropping timed out client");
-        if (quit_client() != 0) {
-            LOG_ERROR("Failed to quit client.");
-            return -1;
-        }
+        // if (quit_client() != 0) {
+        //     LOG_ERROR("Failed to quit client.");
+        //     return -1;
+        // }
+        start_quitting_client();
     }
     return 0;
 }
@@ -122,14 +125,12 @@ int does_client_match_user_id(int user_id, bool *found) {
     /*
         Finds out whether the client is associated with the `user_id`.
 
-        NOTES: Needs read is_active_rwlock
-
         Arguments:
             user_id (int): User ID to be searched for.
             found (bool*): Populated with true if the active client
                 matches the user_id
 
-        Retrurns:
+        Returns:
             (int): Returns -1 on failure, 0 on success. Not matching
                 the client does not mean failure.
     */
@@ -140,4 +141,33 @@ int does_client_match_user_id(int user_id, bool *found) {
         return 0;
     }
     return 0;
+}
+
+void add_thread_to_client_active_dependents() {
+    // Add thread to those dependent on client being active
+    threads_needing_active++;
+}
+
+void remove_thread_from_holding_active_count() {
+    // Remove thread from those currently assuming that client is active
+    threads_holding_active--;
+}
+
+void reset_threads_holding_active_count() {
+    /*
+        NOTE: Should only be called from `multithreaded_manage_client`
+    */
+
+    threads_holding_active = threads_needing_active;
+    client_deactivating = false;
+}
+
+void update_client_active_status(bool* thread_holding_active) {
+    if (client_deactivating) {
+        if (thread_holding_active) {
+            remove_thread_from_holding_active_count();
+        }
+    } else if (client.is_active && !thread_holding_active) {
+        *thread_holding_active = true;
+    }
 }

@@ -28,16 +28,16 @@ Custom types
 
 typedef struct Client {
     /* ACTIVE */
-    bool is_active;       // protected by global is_active_rwlock
+    bool is_active;       // "protected" by global `client_deactivating`
 
     /* USER INFO */
     int user_id;  // not lock protected
 
     /* NETWORK */
-    SocketContext udp_context;  // protected by global is_active_rwlock
-    SocketContext tcp_context;  // protected by global is_active_rwlock
-    int udp_port;               // protected by global is_active_rwlock
-    int tcp_port;               // protected by global is_active_rwlock
+    SocketContext udp_context;  // "protected" by global `client_deactivating`
+    SocketContext tcp_context;  // "protected" by global `client_deactivating`
+    int udp_port;               // "protected" by global `client_deactivating`
+    int tcp_port;               // "protected" by global `client_deactivating`
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 
     /* PING */
@@ -46,11 +46,9 @@ typedef struct Client {
 
 } Client;
 
-extern RWLock is_active_rwlock;
+extern volatile bool client_deactivating;
 
 extern Client client;
-
-extern int host_id;
 
 /*
 ============================
@@ -120,5 +118,9 @@ int reap_timed_out_client(double timeout);
  *                                 failure.
  */
 int does_client_match_user_id(int user_id, bool *found);
+
+void add_thread_to_client_active_dependents();
+void reset_threads_holding_active_count();
+void update_client_active_status(bool* thread_holding_active);
 
 #endif  // SERVER_CLIENT_H

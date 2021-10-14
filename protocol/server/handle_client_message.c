@@ -87,8 +87,6 @@ int handle_client_message(FractalClientMessage *fcmsg) {
     /*
         Handle message from the client.
 
-        NOTE: Needs read is_active_rwlock
-
         Arguments:
             fcmsg (FractalClientMessage*): message package from client
 
@@ -502,19 +500,12 @@ static int handle_quit_message(FractalClientMessage *fcmsg) {
     */
 
     UNUSED(fcmsg);
-    int ret = 0;
-    read_unlock(&is_active_rwlock);
-    write_lock(&is_active_rwlock);
-    if (quit_client() != 0) {
-        LOG_ERROR("Failed to quit client.");
-        ret = -1;
+    if (start_quitting_client() != 0) {
+        LOG_ERROR("Failed to start quitting client.");
+        return -1;
     }
-    write_unlock(&is_active_rwlock);
-    read_lock(&is_active_rwlock);
-    if (ret == 0) {
-        LOG_INFO("Client successfully quit.");
-    }
-    return ret;
+    LOG_INFO("Client successfully started quitting.");
+    return 0;
 }
 
 static int handle_init_message(FractalClientMessage *cfcmsg) {
