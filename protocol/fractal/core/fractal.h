@@ -569,6 +569,7 @@ typedef enum FractalClientMessageType {
     CMESSAGE_INTERACTION_MODE = 117,
     MESSAGE_DISCOVERY_REQUEST = 118,
     MESSAGE_TCP_RECOVERY = 119,
+    MESSAGE_ADJUST_FPS = 120,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -666,6 +667,9 @@ typedef struct FractalClientMessage {
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
+
+        // MESSAGE_ADJUST_FPS
+        int fps;
     };
 
     // Any type of message that has an additional `data[]` member at the end
