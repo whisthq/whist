@@ -895,7 +895,7 @@ def test_get_num_mandelboxes() -> None:
     # Ensures our get_num_mandelboxes utility works as expected
     assert aws_funcs.get_base_free_mandelboxes("g4dn.xlarge") == 1
     assert aws_funcs.get_base_free_mandelboxes("g4dn.2xlarge") == 2
-    assert aws_funcs.get_base_free_mandelboxes("g4dn.4xlarge") == 2
-    assert aws_funcs.get_base_free_mandelboxes("g4dn.8xlarge") == 2
-    assert aws_funcs.get_base_free_mandelboxes("g4dn.16xlarge") == 2
-    assert aws_funcs.get_base_free_mandelboxes("g4dn.12xlarge") == 8
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.4xlarge") == 3
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.8xlarge") == 3
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.16xlarge") == 3
+    assert aws_funcs.get_base_free_mandelboxes("g4dn.12xlarge") == 12

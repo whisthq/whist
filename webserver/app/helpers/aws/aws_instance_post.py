@@ -54,7 +54,7 @@ instance_type_to_vcpu_map = {
 # (which we set to 4 here). This determines a very simple
 # allocation setup that we can flesh out later.
 
-HOST_SERVICE_MANDELBOXES_PER_GPU = 2
+HOST_SERVICE_MANDELBOXES_PER_GPU = 3
 VCPUS_PER_MANDELBOX = 4
 
 type_to_number_map = {
