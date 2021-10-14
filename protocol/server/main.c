@@ -72,11 +72,9 @@ void graceful_exit() {
 
     // Kick all clients
     write_lock(&is_active_rwlock);
-    fractal_lock_mutex(state_lock);
     if (quit_client() != 0) {
         LOG_ERROR("Failed to quit client.");
     }
-    fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
 }
 
@@ -119,8 +117,6 @@ void handle_fractal_client_message(FractalClientMessage* fcmsg) {
             id (int): the client ID
     */
 
-    fractal_lock_mutex(state_lock);
-    fractal_unlock_mutex(state_lock);
     if (handle_client_message(fcmsg) != 0) {
         LOG_ERROR("Failed to handle message from client.");
     }
@@ -136,7 +132,10 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
     */
 
     read_lock(&is_active_rwlock);
-    if (!client.is_active) return;
+    if (!client.is_active) {
+        read_unlock(&is_active_rwlock);
+        return;
+    }
 
     // Get packet(s)!
     if (get_udp) {
@@ -464,11 +463,9 @@ int main(int argc, char* argv[]) {
     fractal_destroy_mutex(packet_mutex);
 
     write_lock(&is_active_rwlock);
-    fractal_lock_mutex(state_lock);
     if (quit_client() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
-    fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
 
 #ifdef _WIN32

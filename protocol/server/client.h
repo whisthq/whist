@@ -46,7 +46,6 @@ typedef struct Client {
 
 } Client;
 
-extern FractalMutex state_lock;
 extern RWLock is_active_rwlock;
 
 extern Client client;

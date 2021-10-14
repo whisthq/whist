@@ -505,12 +505,10 @@ static int handle_quit_message(FractalClientMessage *fcmsg) {
     int ret = 0;
     read_unlock(&is_active_rwlock);
     write_lock(&is_active_rwlock);
-    fractal_lock_mutex(state_lock);
     if (quit_client() != 0) {
         LOG_ERROR("Failed to quit client.");
         ret = -1;
     }
-    fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
     read_lock(&is_active_rwlock);
     if (ret == 0) {

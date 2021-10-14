@@ -139,16 +139,16 @@ int32_t multithreaded_send_audio(void* opaque) {
                         if (num_packets < 0) {
                             LOG_WARNING("Failed to write audio packet to buffer");
                         } else {
+                            read_lock(&is_active_rwlock);
                             for (int i = 0; i < num_packets; ++i) {
-                                read_lock(&is_active_rwlock);
                                 if (broadcast_udp_packet(
                                         &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
                                         get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) <
                                     0) {
                                     LOG_WARNING("Failed to broadcast audio packet");
                                 }
-                                read_unlock(&is_active_rwlock);
                             }
+                            read_unlock(&is_active_rwlock);
                         }
 
                         id++;
@@ -162,15 +162,15 @@ int32_t multithreaded_send_audio(void* opaque) {
                 if (num_packets < 0) {
                     LOG_WARNING("Failed to write audio packet to buffer");
                 } else {
+                    read_lock(&is_active_rwlock);
                     for (int i = 0; i < num_packets; ++i) {
-                        read_lock(&is_active_rwlock);
                         if (broadcast_udp_packet(
                                 &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
                                 get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) < 0) {
                             LOG_WARNING("Failed to broadcast audio packet");
                         }
-                        read_unlock(&is_active_rwlock);
                     }
+                    read_unlock(&is_active_rwlock);
                 }
 
                 id++;

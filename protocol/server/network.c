@@ -223,6 +223,19 @@ int broadcast_ack(void) {
 }
 
 int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
+    /*
+        Broadcasts UDP packet `packet` of size `packet_size` to client
+
+        Arguments:
+            packet (FractalPacket*): packet to be broadcast
+            packet_size (size_t): size of the packet to be broadcast
+
+        NOTE: Neads read `is_active_rwlock`
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
     if (client.is_active) {
         if (send_udp_packet(&(client.udp_context), packet, packet_size) < 0) {
             LOG_ERROR("Failed to send UDP packet to client");

@@ -18,7 +18,6 @@ Includes
 #include "client.h"
 #include "network.h"
 
-FractalMutex state_lock;
 RWLock is_active_rwlock;
 
 Client client;
@@ -44,7 +43,6 @@ int init_client(void) {
             (int): -1 on failure, 0 on success
     */
 
-    state_lock = fractal_create_mutex();
     init_rw_lock(&is_active_rwlock);
 
     client.is_active = false;
@@ -68,7 +66,6 @@ int destroy_clients(void) {
     */
 
     destroy_rw_lock(&client.tcp_rwlock);
-    fractal_destroy_mutex(state_lock);
     destroy_rw_lock(&is_active_rwlock);
     return 0;
 }
@@ -79,7 +76,7 @@ int quit_client() {
         clients. May only be called on an active client. The associated client
         object is not destroyed and may be made active in the future.
 
-        NOTE: Needs write lock is_active_rwlock and (write) state_lock
+        NOTE: Needs write lock is_active_rwlock
 
         Arguments:
             id (int): Client ID of active client to deactivate
@@ -100,7 +97,7 @@ int reap_timed_out_client(double timeout) {
     /*
         Quits client if timed out.
 
-        NOTE: Needs write is_active_rwlock and (write) state_lock
+        NOTE: Needs write is_active_rwlock
 
         Arguments:
             timeout (double): Duration (in seconds) after which a
