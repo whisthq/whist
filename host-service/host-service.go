@@ -1093,7 +1093,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, <-httpServerEvents, subscriptionEvent.(*subscriptions.MandelboxInfoEvent))
+				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, httpServerEvents, subscriptionEvent.(*subscriptions.MandelboxInfoEvent))
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.
