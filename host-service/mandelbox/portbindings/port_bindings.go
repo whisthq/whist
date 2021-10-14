@@ -28,8 +28,14 @@ type portStatus byte
 
 const (
 	// Obtained from reading though Docker daemon source code
-	MinAllowedPort = 1025  // inclusive
-	MaxAllowedPort = 49151 // exclusive
+
+	// MinAllowedPort is the minimum (inclusive) port number
+	// allowed by the Docker daemon.
+	MinAllowedPort = 1025
+
+	// MaxAllowedPort is the maximum (exclusive) port number
+	// allowed by the Docker daemon.
+	MaxAllowedPort = 49151
 
 	reserved portStatus = iota
 	inUse
