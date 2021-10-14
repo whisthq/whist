@@ -204,6 +204,9 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         // this effectively waits for window load on Mac
     }
 
+    // Only after the window finishes loading is it safe to initialize native options.
+    init_native_window_options(sdl_window);
+
     // After creating the window, we will grab DPI-adjusted dimensions in real
     // pixels
     output_width = get_window_pixel_width((SDL_Window*)sdl_window);
