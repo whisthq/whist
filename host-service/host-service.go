@@ -359,15 +359,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// CI doesn't run in AWS so we need to set a custom name
 		if metadata.IsRunningInCI() {
 			userID = "localdev_host_service_CI"
-			return
+		} else {
+			instanceName, err := aws.GetInstanceName()
+			if err != nil {
+				logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
+				return
+			}
+			userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
 		}
-
-		instanceName, err := aws.GetInstanceName()
-		if err != nil {
-			logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
-			return
-		}
-		userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
 	}
 
 	// Then, verify that we are expecting this user to request a mandelbox.
