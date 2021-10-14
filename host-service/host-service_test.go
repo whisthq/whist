@@ -89,6 +89,8 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// We always want to start with a clean slate
+	uninitializeFilesystem()
 	initializeFilesystem(cancel)
 	defer uninitializeFilesystem()
 

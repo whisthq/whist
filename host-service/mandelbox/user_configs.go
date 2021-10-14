@@ -133,7 +133,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
-	unpackedConfigDir := configDir + c.getUnpackedConfigsDirectoryName()
+	unpackedConfigDir := path.Join(configDir, c.getUnpackedConfigsDirectoryName())
 	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
@@ -218,9 +218,9 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 
 	configDir := c.getUserConfigDir()
-	encTarPath := configDir + c.getEncryptedArchiveFilename()
-	decTarPath := configDir + c.getDecryptedArchiveFilename()
-	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
+	encTarPath := path.Join(configDir, c.getEncryptedArchiveFilename())
+	decTarPath := path.Join(configDir, c.getDecryptedArchiveFilename())
+	unpackedConfigPath := path.Join(configDir, c.getUnpackedConfigsDirectoryName())
 
 	c.fslock.Lock()
 	defer c.fslock.Unlock()
