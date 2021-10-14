@@ -373,7 +373,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
-		req.ReturnResult("", err)
+		sub.ReturnResult("", err)
 	}
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", req.MandelboxID)
@@ -698,6 +698,23 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	<-userConfigDownloadComplete
+
+	event := <-serverevent
+	req := event.(*SpinUpMandelboxRequest)
+	// Verify that this user sent in a (nontrivial) config encryption token
+	if len(req.ConfigEncryptionToken) < 10 {
+		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
+		return
+	}
+	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
+
+	fc.SetArbitraryUserConfig(req.JSONData)
+
+	// Decrypt the previously downloaded user configs using the encryption token
+	err = fc.DecryptUserConfigs()
+	if err != nil {
+		logAndReturnError("Unable to spin up mandelbox: error decrypting config token.", err)
+	}
 
 	err = fc.MarkReady()
 	if err != nil {
@@ -1076,7 +1093,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, subscriptionEvent.(*subscriptions.MandelboxInfoEvent))
+				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, <-httpServerEvents, subscriptionEvent.(*subscriptions.MandelboxInfoEvent))
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.

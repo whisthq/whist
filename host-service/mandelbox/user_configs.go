@@ -88,8 +88,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
-	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(context.Background(), buf, &s3.GetObjectInput{
+	c.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
+	numBytes, err := downloader.Download(context.Background(), c.configBuffer, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(s3ConfigKey),
 	})
@@ -105,10 +105,24 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	}
 
 	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, c.mandelboxID)
+
+	return nil
+}
+
+func (c *mandelboxData) DecryptUserConfigs() error {
+	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
+	// from under us.
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	if len(c.configEncryptionToken) == 0 {
+		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
+	}
+
 	logger.Infof("Decrypting user config for mandelbox %s", c.mandelboxID)
 
 	// Decrypt the downloaded archive directly from memory
-	encryptedFile := buf.Bytes()
+	encryptedFile := c.configBuffer.Bytes()
 	salt, data, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
 	if err != nil {
 		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
@@ -176,7 +190,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 			break
 		}
 
-		path := filepath.Join(unpackedConfigDir, header.Name)
+		path := filepath.Join(c.unpackedConfigDir, header.Name)
 		info := header.FileInfo()
 
 		// Create directory if it doesn't exist, otherwise go next

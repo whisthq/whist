@@ -19,24 +19,17 @@ import { HostServicePort } from "@app/utils/constants"
 export const hostSpinUp = async ({
   ip,
   config_encryption_token,
-  jwt_access_token,
-  mandelbox_id,
   json_data,
 }: {
   ip: string
   config_encryption_token: string
-  jwt_access_token: string
-  mandelbox_id: string
   json_data: string
 }) =>
   (await apiPut(
     "/spin_up_mandelbox",
     `https://${ip}:${HostServicePort}`,
     {
-      app_name: `browsers/chrome`,
       config_encryption_token,
-      jwt_access_token,
-      mandelbox_id,
       json_data,
     },
     true
