@@ -168,15 +168,11 @@ bool threads_still_holding_active() {
 
 void update_client_active_status(bool* thread_holding_active) {
     if (client_deactivating) {
-        if (thread_holding_active) {
-            LOG_INFO("client_deactiving and thread_holding_active");
+        if (*thread_holding_active) {
             *thread_holding_active = false;
             remove_thread_from_holding_active_count();
         }
-    } else if (client.is_active && !thread_holding_active) {
-        LOG_INFO("client.is_active and not thread_holding_active");
+    } else if (client.is_active && !*thread_holding_active) {
         *thread_holding_active = true;
-    } else {
-        LOG_INFO("nothing");
     }
 }

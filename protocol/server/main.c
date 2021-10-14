@@ -182,9 +182,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     bool assuming_client_active = false;
     while (!exiting) {
         update_client_active_status(&assuming_client_active);
-        if (assuming_client_active) {
-            LOG_INFO("CLIENT ACTIVE TCP");
-        }
 
         // RECEIVE TCP PACKET HANDLER
         get_fractal_client_messages(true, false);
@@ -332,9 +329,6 @@ int main(int argc, char* argv[]) {
     bool assuming_client_active = false;
     while (!exiting) {
         update_client_active_status(&assuming_client_active);
-        if (assuming_client_active) {
-            LOG_INFO("CLIENT ACTIVE MAIN");
-        }
 
         // Get UDP messages
         get_fractal_client_messages(false, true);

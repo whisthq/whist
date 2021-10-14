@@ -91,9 +91,6 @@ int32_t multithreaded_send_audio(void* opaque) {
     bool assuming_client_active = false;
     while (!exiting) {
         update_client_active_status(&assuming_client_active);
-        if (assuming_client_active) {
-            LOG_INFO("CLIENT ACTIVE AUDIO");
-        }
 
         // for each available packet
         for (get_next_packet(audio_device); packet_available(audio_device);
