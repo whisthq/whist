@@ -18,14 +18,14 @@ import {
   OperaLinuxCookieFiles,
   OperaOSXCookieFiles,
   SecretServiceName,
-} from "./constants"
-import * as keytar from "keytar"
-import * as dbus from "dbus-next"
-import * as fs from "fs"
+} from "@app/utils/constants"
+import keytar from "keytar"
+import dbus from "dbus-next"
+import fs from "fs"
 import tempfile from "tempfile"
 import { homedir } from "os"
 import { dirname } from "path"
-import * as pbkdf2 from "pbkdf2"
+import pbkdf2 from "pbkdf2"
 import Database from "better-sqlite3"
 import { AES, enc } from "crypto-js"
 
