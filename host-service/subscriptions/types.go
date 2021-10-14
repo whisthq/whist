@@ -21,7 +21,7 @@ type Instance struct {
 type Mandelbox struct {
 	InstanceName string            `json:"instance_name"`
 	MandelboxID  types.MandelboxID `json:"mandelbox_id"`
-	SessionID    string            `json:"session_id"`
+	SessionID    uint64            `json:"session_id"`
 	UserID       types.UserID      `json:"user_id"`
 	AppName      types.AppName
 }

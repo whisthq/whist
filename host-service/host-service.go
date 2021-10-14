@@ -699,6 +699,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	<-userConfigDownloadComplete
 
+	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
+	// Receive the config encryption token from the client via the httpserver
 	event := <-serverevent
 	req := event.(*SpinUpMandelboxRequest)
 	// Verify that this user sent in a (nontrivial) config encryption token

@@ -293,9 +293,13 @@ func (c *mandelboxData) SetArbitraryUserConfig(jsonData string) {
 	// specific configs will go here and that's why we use interface{}.
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
+
 	var arbitraryConfig interface{}
 	json.Unmarshal([]byte(jsonData), arbitraryConfig)
-	c.arbitraryUserConfig = arbitraryConfig.(map[string]interface{})
+
+	if arbitraryConfig != nil {
+		c.arbitraryUserConfig = arbitraryConfig.(map[string]interface{})
+	}
 }
 
 func (c *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error) {
