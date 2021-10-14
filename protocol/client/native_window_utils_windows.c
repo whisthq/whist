@@ -34,6 +34,8 @@ HWND get_native_window(SDL_Window* window) {
 
 void hide_native_window_taskbar() { LOG_INFO("Not implemented on Windows."); }
 
+void init_native_window_options(SDL_Window* window) { return; }
+
 int set_native_window_color(SDL_Window* window, FractalRGBColor color) {
     LOG_INFO("Not implemented on Windows.");
     return 0;

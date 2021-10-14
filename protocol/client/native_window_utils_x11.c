@@ -31,6 +31,8 @@ int set_native_window_color(SDL_Window* window, FractalRGBColor color) {
     return 0;
 }
 
+void init_native_window_options(SDL_Window* window) { return; }
+
 int get_native_window_dpi(SDL_Window* window) {
     /*
         Get the DPI for the display of the provided window.

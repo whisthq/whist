@@ -54,6 +54,23 @@ NSWindow *get_native_window(SDL_Window *window) {
     return sys_info.info.cocoa.window;
 }
 
+void init_native_window_options(SDL_Window *window) {
+    /*
+        Initialize the customized native window. This is called from the main thread
+        right after the window finishes loading.
+
+        Arguments:
+            window (SDL_Window*): The SDL window wrapper for the NSWindow to customize.
+    */
+    NSWindow *native_window = get_native_window(window);
+
+    // Hide the titlebar
+    [native_window setTitlebarAppearsTransparent:true];
+
+    // Hide the title itself
+    [native_window setTitleVisibility:NSWindowTitleHidden];
+}
+
 int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
     /*
         Set the color of the titlebar of the native macOS window, and the corresponding
@@ -80,9 +97,6 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
     // RGBA; in this case, alpha is just 1.0.
     const CGFloat components[4] = {(float)color.red / 255., (float)color.green / 255.,
                                    (float)color.blue / 255., 1.0};
-
-    // We technically only need to set this the first time
-    [native_window setTitlebarAppearsTransparent:true];
 
     // Use color space for current monitor for perfect color matching
     [native_window
