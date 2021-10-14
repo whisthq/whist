@@ -12,6 +12,7 @@ import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz } from "@app/utils/logging"
+import { persistGet } from "@app/utils/persist"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -43,6 +44,8 @@ export const writeStream = (
 // Spawn the child process with the initial arguments passed in
 export const protocolLaunch = async () => {
   if (childProcess !== undefined) return childProcess
+
+  const userEmail = persistGet("userEmail") ?? ""
 
   // Protocol arguments
   // We send the environment so that the protocol can init sentry if necessary
@@ -108,13 +111,13 @@ export const protocolLaunch = async () => {
     // Leave the last line in the buffer to be appended to later
     stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
     // Print the rest of the lines
-    lines.forEach((line: string) => protocolToLogz(line))
+    lines.forEach((line: string) => protocolToLogz(line, userEmail as string))
   })
   // When the datastream ends, send the last line out
   protocol.stdout.on("end", () => {
     // Send the last line, so long as it's not empty
     if (stdoutBuffer.buffer !== "") {
-      protocolToLogz(stdoutBuffer.buffer)
+      protocolToLogz(stdoutBuffer.buffer, userEmail as string)
       stdoutBuffer.buffer = ""
     }
   })

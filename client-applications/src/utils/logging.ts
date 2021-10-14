@@ -129,7 +129,7 @@ export const logBase = (
   if (app.isPackaged) amplitudeLog(title, data, userEmail as string, msElapsed)
 }
 
-export const protocolToLogz = (line: string) => {
+export const protocolToLogz = (line: string, userEmail: string) => {
   // This function will push to logz.io on each log line received from the protocol
   const match = line.match(/^[\d:.]*\s*\|\s*(?<level>\w+)\s*\|/)
   const level = match?.groups?.level ?? "INFO"
@@ -139,5 +139,6 @@ export const protocolToLogz = (line: string) => {
     message: line,
     session_id: sessionID,
     component: "clientapp",
+    user_id: userEmail,
   })
 }
