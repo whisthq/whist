@@ -922,6 +922,7 @@ jobs:
 
   # Client Applications: Retrieve Version Number
   # Retrieve the current Fractal version number from our configuration database, through Hasura
+  # This is the first step in the client-applications deployment jobs
   client-applications-retrieve-version-number:
     name: "Client Applications: Retrieve Current Version Number from Config Database"
     runs-on: ubuntu-20.04
@@ -937,6 +938,20 @@ jobs:
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
+
+    # Only run client-applications deployment if none of the previous steps failed
+
+
+
+    if: |
+      always() &&
+      ((contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
+      (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
+      (needs.webserver-deploy-heroku.result == 'success') &&
+      (needs.webserver-spin-up-new-buffer.result == 'success') &&
+      (needs.microservices-deploy-auth0-rules.result == 'success') &&
+      (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+
 
 
     steps:
@@ -1066,10 +1081,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) &&
-      (needs.webserver-deploy-heroku.result == 'success') &&
-      (needs.webserver-spin-up-new-buffer.result == 'success') &&
-      (needs.microservices-deploy-auth0-rules.result == 'success') &&
-      (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+      (needs.client-applications-retrieve-version-number.result == 'success') &&
 
     strategy:
       matrix:
@@ -1216,10 +1228,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|')) &&
-      (needs.webserver-deploy-heroku.result == 'success') &&
-      (needs.webserver-spin-up-new-buffer.result == 'success') &&
-      (needs.microservices-deploy-auth0-rules.result == 'success') &&
-      (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
+      (needs.client-applications-retrieve-version-number.result == 'success') &&
 
     steps:
       - name: Checkout Git Repository
@@ -1314,7 +1323,12 @@ jobs:
         client-applications-publish-build-arm64-s3,
       ]
 
-
+    # Only run client-apps deployment if none of the previous steps failed
+    if: |
+      always() &&
+      ((contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
+      (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
+      (needs.client-applications-retrieve-version-number.result == 'success')
 
 
 
