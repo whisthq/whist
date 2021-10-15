@@ -104,6 +104,15 @@
         ${PLATFORM_INDEPENDENT_LIBS}
     )
     
+    # Link macOS-specific libs
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
+            ../client/native_window_utils_mac.m
+        )
+
+        target_link_libraries(${PROTCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
+    endif()
+
     # Link more linux-specific libraries    
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
