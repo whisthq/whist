@@ -233,7 +233,7 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: protocol
         run: pip install cmakelint && cmakelint --config=.cmakelintrc **/**/CMakeLists.txt
-        
+
   #######################################################################################
   #######################################################################################
 
