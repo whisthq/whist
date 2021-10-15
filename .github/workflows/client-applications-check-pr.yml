@@ -192,6 +192,9 @@ jobs:
       ###################################################################################
       ################################# MACOS STEPS START ###############################
 
+      - name: Install Docker
+        run: brew install docker
+
       - name: Install macOS Codesigning Certificates on macOS GHA Machine
         if: runner.os == 'macOS'
         uses: apple-actions/import-codesign-certs@v1
