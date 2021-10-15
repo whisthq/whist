@@ -940,9 +940,6 @@ jobs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
 
     # Only run client-applications deployment if none of the previous steps failed
-
-
-
     if: |
       always() &&
       ((contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
@@ -951,8 +948,6 @@ jobs:
       (needs.webserver-spin-up-new-buffer.result == 'success') &&
       (needs.microservices-deploy-auth0-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
-
-
 
     steps:
       - name: Checkout Git Repository
@@ -1053,13 +1048,6 @@ jobs:
           # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
           echo "::set-output name=release_version::${NEW_VERSION}"
 
-
-
-  # TODO: split job to retrieve version here
-
-
-
-
   #######################################################################################
   #######################################################################################
 
@@ -1071,7 +1059,7 @@ jobs:
     name: "Client Applications: Build & Deploy ${{ matrix.config.name }} (X86_64)"
     runs-on: ${{ matrix.config.os }}
     concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
-    needs: 
+    needs:
       [
         fractal-publish-build-config,
         client-applications-retrieve-version-number,
@@ -1330,8 +1318,6 @@ jobs:
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
       (needs.client-applications-retrieve-version-number.result == 'success')
 
-
-
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -1377,6 +1363,8 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
+        client-applications-publish-build-x64-s3,
+        client-applications-publish-build-arm64-s3,
         client-applications-update-version-number-in-config-db,
       ]
     # run if client-applications-publish-build-[x64/arm64]-s3 succeeds or fails (but not skipped or cancelled)
@@ -1500,13 +1488,14 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
-        webserver-deploy-heroku,
-        microservices-deploy-auth0-rules,
         mandelboxes-and-amis-publish-ghcr-and-aws,
+        webserver-deploy-heroku,
         webserver-spin-up-new-buffer,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
+        client-applications-update-version-number-in-config-db,
         webserver-swap-active-amis,
+        microservices-deploy-auth0-rules,
       ]
     if: needs.fractal-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
     steps:
@@ -1523,7 +1512,7 @@ jobs:
       - name: Create GitHub Tag
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }}
+          tag_name: v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}
           body: Fractal Production Release on ${{ env.date }}
           draft: false
         env:
@@ -1537,7 +1526,7 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":github: Fractal GitHub Release Completed :github:"
-          BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Deployment of Fractal Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
