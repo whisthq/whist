@@ -110,7 +110,7 @@ FractalCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
 
     // Need to multiply the size by 4, as the width*height describes
     // number of pixels, which are 32 bit, so 4 bytes each.
-    uint32_t cursor_hash = 
+    uint32_t cursor_hash =
         hash(cursor_image->pixels, 4 * cursor_image->width * cursor_image->height);
     switch (cursor_hash) {
         case ARROW_CURSOR_HASH:
