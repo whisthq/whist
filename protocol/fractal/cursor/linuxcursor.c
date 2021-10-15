@@ -6,7 +6,7 @@
 Usage
 ============================
 
-Use InitCursor to load the appropriate cursor images for a specific OS, and then
+Use InitCursor to load the appropriate cursor images for a specursor_imagefic OS, and then
 GetCurrentCursor to retrieve what the cursor shold be on the OS (drag-window,
 arrow, etc.).
 */
@@ -100,17 +100,18 @@ void init_cursors() {
  * TODO: (abecohen) X11 cursor fonts are overridden by the running application.
  * In this case, chrome will override the cursor library and use its own. If
  * we can find where that cursor file is located, get X11 to use that as its theme,
- * we may be able to just match the cursor via the name parameter in ci.
+ * we may be able to just match the cursor via the name parameter in cursor_image.
  *
- * @param ci the cursor image from XFixesGetCursorImage
+ * @param cursor_image the cursor image from XFixesGetCursorImage
  * @return FractalCursorID, INVALID when no matching FractalCursorID found
  */
-FractalCursorID get_cursor_id(XFixesCursorImage* ci) {
+FractalCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
     FractalCursorID id = INVALID;
 
     // Need to multiply the size by 4, as the width*height describes
     // number of pixels, which are 32 bit, so 4 bytes each.
-    uint32_t cursor_hash = hash(ci->pixels, 4 * ci->width * ci->height);
+    uint32_t cursor_hash = 
+        hash(cursor_image->pixels, 4 * cursor_image->width * cursor_image->height);
     switch (cursor_hash) {
         case ARROW_CURSOR_HASH:
             id = FRACTAL_CURSOR_ARROW;
@@ -190,29 +191,29 @@ void get_current_cursor(FractalCursorImage* image) {
     image->cursor_id = FRACTAL_CURSOR_ARROW;
     image->cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {
-        XFixesCursorImage* ci = XFixesGetCursorImage(disp);
+        XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
 
-        if (ci->width > MAX_CURSOR_WIDTH || ci->height > MAX_CURSOR_HEIGHT) {
+        if (cursor_image->width > MAX_CURSOR_WIDTH || cursor_image->height > MAX_CURSOR_HEIGHT) {
             LOG_WARNING(
                 "fractal/cursor/linuxcursor.c::GetCurrentCursor(): cursor width or height exceeds "
                 "maximum dimensions. Truncating cursor from %hu by %hu to %hu by %hu.",
-                ci->width, ci->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
+                cursor_image->width, cursor_image->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
         }
 
-        if (INVALID == (image->cursor_id = get_cursor_id(ci))) {
+        if (INVALID == (image->cursor_id = get_cursor_id(cursor_image))) {
             image->using_bmp = true;
-            image->bmp_width = min(MAX_CURSOR_WIDTH, ci->width);
-            image->bmp_height = min(MAX_CURSOR_HEIGHT, ci->height);
-            image->bmp_hot_x = ci->xhot;
-            image->bmp_hot_y = ci->yhot;
+            image->bmp_width = min(MAX_CURSOR_WIDTH, cursor_image->width);
+            image->bmp_height = min(MAX_CURSOR_HEIGHT, cursor_image->height);
+            image->bmp_hot_x = cursor_image->xhot;
+            image->bmp_hot_y = cursor_image->yhot;
 
             for (int k = 0; k < image->bmp_width * image->bmp_height; ++k) {
-                // we need to do this in case ci->pixels uses 8 bytes per pixel
-                uint32_t argb = (uint32_t)ci->pixels[k];
+                // we need to do this in case cursor_image->pixels uses 8 bytes per pixel
+                uint32_t argb = (uint32_t)cursor_image->pixels[k];
                 image->bmp[k] = argb;
             }
         }
 
-        XFree(ci);
+        XFree(cursor_image);
     }
 }
