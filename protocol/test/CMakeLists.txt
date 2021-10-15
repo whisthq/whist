@@ -110,7 +110,7 @@
             ../client/native_window_utils_mac.m
         )
 
-        target_link_libraries(${PROTCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
     endif()
 
     # Link more linux-specific libraries    
