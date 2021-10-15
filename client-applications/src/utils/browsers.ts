@@ -22,7 +22,7 @@ import {
 import keytar from "keytar"
 import dbus from "dbus-next"
 import fs from "fs"
-import tempfile from "tempfile"
+import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
 import pbkdf2 from "pbkdf2"
@@ -38,9 +38,14 @@ const bus = dbus.sessionBus()
 
 const getCookies = async (browser: string): Promise<Cookie[]> => {
   const encryptedCookies = await getCookiesFromFile(browser)
+  console.log(`Encrypted Cookies ${encryptedCookies}`);
+  
   const encryptKey = await getCookieEncryptionKey(browser)
+  console.log(`Encrypted Key  ${encryptKey}`);
 
   const cookies = decryptCookies(encryptedCookies, encryptKey)
+
+  console.log(`Cookies ${cookies}`)
 
   return await cookies
 }
@@ -84,10 +89,17 @@ const decryptCookie = async (
 }
 
 const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
+  console.log(`In getCookiesFromFile with the browser ${browser}`);
+  
   const cookieFile = getExpandedCookieFilePath(browser)
-  const tempFile = createLocalCopy(cookieFile)
-  const db = new Database(tempFile, { verbose: console.log })
+  console.log(`The cookieFile is ${cookieFile}`)
 
+  const tempFile = createLocalCopy(cookieFile)
+  console.log(`The tempfile is located at ${tempFile}`);
+
+
+  const db = new Database(tempFile, { fileMustExist: true, verbose: console.log })
+  
   let rows: Cookie[]
   try {
     const query = await db.prepare(
@@ -100,26 +112,24 @@ const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
     )
     rows = query.all()
   }
-
+  console.log(`The rows from SQL we got is ${rows}`);
+  
   return rows
 }
 
 const getExpandedCookieFilePath = (browser: string): string => {
-  let os = ""
+  console.log(`The platform we are on is ${process.platform}`);
+  
   switch (process.platform) {
     case "darwin": {
-      os = "osx"
-      break
+      return expandPaths(getCookieFilePath(browser), "osx")
     }
     case "linux": {
-      os = "linux"
-      break
+      return expandPaths(getCookieFilePath(browser), "linux")
     }
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
   }
-
-  return expandPaths(getCookieFilePath(browser), os)
 }
 
 const getCookieEncryptionKey = async (browser: string): Promise<string> => {
@@ -142,9 +152,12 @@ const getCookieEncryptionKey = async (browser: string): Promise<string> => {
     }
     case "linux": {
       const myPass = await getLinuxCookieEncryptionKey(getOsCryptName(browser))
-
+      console.log(`My pass is ${myPass} given the os crypt name ${getOsCryptName(browser)}`)
       const iterations = 1
       const key = pbkdf2.pbkdf2Sync(myPass, salt, iterations, length)
+      console.log(`My key after pbkdf2sync is ${key} and to string ${key.toString()}`);
+      
+
       return key.toString()
     }
     default:
@@ -154,32 +167,43 @@ const getCookieEncryptionKey = async (browser: string): Promise<string> => {
 
 const createLocalCopy = (cookieFile: string): string => {
   if (fs.existsSync(cookieFile)) {
-    const tmpFile = tempfile(".sqlite")
-    fs.readFile(cookieFile, (err: Error | null, data: Buffer): void => {
-      if (err != null) throw err
-      fs.writeFile(tmpFile, data, (err) => {
-        if (err != null) throw err
-      })
-    })
-    return tmpFile
+    const tmpFile = tmp.fileSync({postfix: ".sqlite"})
+    console.log(`New tempfile named ${tmpFile.name}`);
+    
+    const data = fs.readFileSync(cookieFile)
+    fs.writeFileSync(tmpFile.name, data)
+
+    return tmpFile.name
   } else {
     throw Error(`Can not find cookie file at: ${cookieFile}`)
   }
 }
 
 const expanduser = (text: string): string => {
-  return text.replace(/^~([a-z]+|\/)/, (_, $1: string) =>
-    $1 === "/" ? homedir() : `${dirname(homedir())}/${$1}`
+  console.log(`The homedir is ${homedir()}, text is ${text}, dir home is ${dirname(homedir())},`);
+  
+  return text.replace(/^~([a-z]+|\/)/, (_, $1: string) => {
+    console.log(`1 is ${$1} and _ is ${_}`);
+    
+    return $1 === "/" ? `${homedir()}/` : `${dirname(homedir())}/${$1}`}
   )
 }
 
 const expandPaths = (paths: string[], osName: string): string => {
   osName = osName.toLowerCase()
+  console.log(`Os Name passed to expand paths is ${osName}`);
+  
 
+  console.log(`Paths before ${paths}`);
   // expand the path of file and remove invalid files
   paths = paths.map(expanduser)
+
+  console.log(`Paths after expanding user ${paths}`);
+
   paths = paths.filter(fs.existsSync)
 
+
+  console.log(`Paths after ${paths}`);
   // Get the first valid path for now
   return paths.length > 0 ? paths[0] : ""
 }
@@ -333,3 +357,12 @@ const getCookieFilePath = (browser: string): string[] => {
 
   return []
 }
+
+
+const test = async (): Promise<void> => {
+  console.log(await getCookies("chrome"))
+  console.log('DONE');
+  
+}
+
+test()
