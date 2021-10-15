@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Dependency #1 -- OpenSSL X86_64
+  # Dependency #1 -- OpenSSL (X64)
   build-and-publish-openssl-x64:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -95,7 +95,7 @@ jobs:
           make -j
 
       ###################################################################################
-      ############################# LINUX UBUNTU STEPS START ############################
+      ################################# LINUX STEPS START ###############################
 
       - name: Build Fractal OpenSSL on Linux Ubuntu
         if: runner.os == 'Linux'
@@ -167,7 +167,7 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #2 -- OpenSSL ARM64
+  # Dependency #2 -- OpenSSL (ARM64)
   build-and-publish-openssl-arm64:
     name: "OpenSSL (macOS ARM64)"
     runs-on: [self-hosted, macOS, ARM64]
@@ -182,11 +182,6 @@ jobs:
 
     steps:
       ################################# CONFIG STEPS START ###############################
-
-      - name: Check M1 Runner Status
-        run: |
-          clang --version
-          uname -a
 
       - name: Checkout openssl Git Repository
         uses: actions/checkout@v2
@@ -251,7 +246,7 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #3 -- Sentry X86_64
+  # Dependency #3 -- Sentry (X64)
   build-and-publish-sentry-x64:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -350,7 +345,7 @@ jobs:
           mv libsentry.dylib ..
 
       ###################################################################################
-      ############################# LINUX UBUNTU STEPS START ############################
+      ################################# LINUX STEPS START ###############################
 
       - name: Build Sentry Native on Linux Ubuntu
         if: runner.os == 'Linux'
@@ -430,7 +425,7 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #2 -- Sentry
+  # Dependency #3 -- Sentry (ARM64)
   build-and-publish-sentry-arm64:
     name: "Sentry (macOS ARM64)"
     runs-on: [self-hosted, macOS, ARM64]
@@ -445,11 +440,6 @@ jobs:
 
     steps:
       ################################# CONFIG STEPS START ###############################
-
-      - name: Check M1 Runner Status
-        run: |
-          clang --version
-          uname -a
 
       - name: Checkout sentry-native Git Repository
         uses: actions/checkout@v2
@@ -525,7 +515,13 @@ jobs:
 
   notify-slack:
     name: Notify Slack
-    needs: [build-and-publish-openssl-x64, build-and-publish-openssl-arm64, build-and-publish-sentry-x64, build-and-publish-sentry-arm64]
+    needs:
+      [
+        build-and-publish-openssl-x64,
+        build-and-publish-openssl-arm64,
+        build-and-publish-sentry-x64,
+        build-and-publish-sentry-arm64,
+      ]
     if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
     runs-on: ubuntu-20.04
     steps:
@@ -543,48 +539,7 @@ jobs:
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-prod"
-          TITLE = ":sentry: Sentry `sentry-native` Shared Library Deployed :sentry:"
-          BODY = f"Fractal Sentry X86_64 `sentry-native` Static Library deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  notify-slack-sentry:
-    name: Notify Slack for Sentry Build
-    needs: [build-and-publish-sentry]
-    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Notify Slack on Success
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-          SLACK_CHANNEL = "#alerts-prod"
-          TITLE = ":sentry: Sentry `sentry-native` Shared Library Deployed :sentry:"
-          BODY = f"Fractal Sentry `sentry-native` Shared Library deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":openssl: Fractal Protocol Dependency Deployed :openssl:"
+          BODY = f"Fractal Sentry & OpenSSL Libraries deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
