@@ -144,12 +144,21 @@ jobs:
           # Store job dependency files
           declare -A job_dependencies
           # If "" is given, then the whole repo will be a dependency
+
+          # TODO: ADD MISSING JOBS HERE
+
+          # jobs fractal-publish-build-config, fractal-build-monorepo-config, client-applications-notify-slack, fractal-create-github-release-tag
+
           job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelboxes"
-          job_dependencies[webserver-update-fractal-services]=" "
+          job_dependencies[webserver-spin-up-new-buffer]="TODO"
+          job_dependencies[webserver-swap-active-amis]="TODO"
           job_dependencies[webserver-deploy-heroku]="webserver"
+          job_dependencies[client-applications-update-version-number]="TODO"
           job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
           job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
+          job_dependencies[client-applications-retrieve-version-number]="TODO"
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
+
           # Files that all jobs depend on
           universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -1295,7 +1304,7 @@ jobs:
 
   # Client Applications: Update Version Number
   # Set the New Fractal version number in our configuration database, through Hasura
-  client-applications-update-version-number-in-config-db:
+  client-applications-update-version:
     name: "Client Applications: Set New Version Number in Config Database"
     runs-on: ubuntu-20.04
     concurrency: client-applications-publish-build-x64-s3-${{ github.ref }}
