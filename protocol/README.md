@@ -113,22 +113,13 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │       ├── x11capture.c <- Capture screen using X11
 │       └── x11nvidiacapture.c <- Capture h264/h265 compressed screen with NvidiaCaptureSDK
 └── server
-<<<<<<< HEAD
-    ├── client.c <- Handle multiclient messages
-    ├── handle_client_message.c <- Handle client fsmsg's
-    ├── main.c <- Initialize server, receive packets and pass to where it needs to go
-    ├── network.c <- Networking code for multiclient
-=======
 |    ├── client.c <- Handle multiclient messages
 |    ├── handle_client_message.c <- Handle client fmsg's
 |    ├── main.c <- Initialize server, receive packets and pass to where it needs to go
 |    ├── network.c <- Networking code for multiclient
 └── test
     ├── images <- images for unit testing
-    ├── ClientTest.cpp <- tests code in client module
-    ├── ServerTest.cpp <- tests code in server module
-    └── FractalLibraryTest.cpp <- tests code in fractal module
->>>>>>> Adding unit tests to ClientTest.cpp for ringbuffer.c, modifying unit tests to FractalLibraryTest.cpp, updating CMakeList.txt to create FractalLibrary unit test executable, update README to include unit testing information, fixing absence of null-check for destroy_ring_buffer, adding negative size check for init_ring_buffer
+    └── ProtocolTest.cpp <- tests code in fractal module
 ```
 
 The above files are fairly static. If you add or remove a file, or change what a file does, please update this directory so we can keep track of it all!
@@ -273,14 +264,14 @@ To see the warnings in context go to the Actions tab, click on your PR/push that
 
 #### Unit Testing
 
-The protocol currently uses gtest to create and execute unit tests for the `protocol` repository.
-To add tests for the `protocol/client` module, add tests to the `ClientTest.cp`p file in the test folder.
-To add tests for the `protocol/server` module, add tests to the `ServerTest.cpp` file in the test folder.
-To add tests for the `protocol/fractal` module, add tests to the `FractalLibraryTest.cpp` file in the test folder.
+The protocol currently uses gtest to create and execute unit tests for the `protocol` repository. 
+To add tests for the `protocol/client` module, add tests to the `ClientTest.cp`p file in the test folder. 
+To add tests for the `protocol/server` module, add tests to the `ServerTest.cpp` file in the test folder. 
+To add tests for the `protocol/fractal` module, add tests to the `FractalLibraryTest.cpp` file in the test folder. 
 
-To run all unit tests, recompile the protocol by going into the `protocol/build` directory and
-running `make -j`. This is assuming you have already ran `cmake -S .. -B .` from the Building the Protocol
-section. If you have not done that, do so before running `make -j`.
+To run all unit tests, recompile the protocol by going into the `protocol/build` directory and 
+running `make -j`. This is assuming you have already ran `cmake -S .. -B .` from the Building the Protocol 
+section. If you have not done that, do so before running  `make -j`.
 
 Next, run `cd test`. Now:
 

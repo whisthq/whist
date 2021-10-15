@@ -344,7 +344,7 @@ TEST(ProtocolTest, PacketsToBuffer) {
 
     // create buffer and add them to a buffer
     int buffer[28];
-    write_packets_to_buffer(1, packets, buffer);
+    write_avpackets_to_buffer(1, packets, buffer);
 
     // Confirm buffer creation was successful
     EXPECT_EQ(*buffer, 1);
