@@ -7,7 +7,7 @@
     # Create the executable
     set(PROTOCOL_TEST_BINARY FractalProtocolTest)
     add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
-        #Files needed for Server unit tests
+        # Files needed for Server unit tests
         ../server/client.c
         ../server/video.c
         ../server/audio.c
@@ -20,7 +20,7 @@
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
 
-        #Files needed for Client unit tests (NOTE: multiple defn errors occur when adding this)
+        # Files needed for Client unit tests
         ../client/audio.c
         ../client/client_utils.c
         ../client/network.c
@@ -114,6 +114,7 @@
                 m
                 OpenSSL::Crypto
                 )
+<<<<<<< HEAD
 <<<<<<< HEAD
     endif()
 
@@ -394,6 +395,30 @@ endif()
     if (GENERATE_COVERAGE)
 =======
 
+=======
+    endif()
+
+
+    # Run the tests if we're running in CI for testing
+    if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        # On macOS and Linux CI, we run tests with code coverage and upload the report to Codecov
+        add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ./${PROTOCOL_TEST_BINARY}
+            COMMAND lcov --capture --directory . --output-file coverage.info # Generate code coverage from gcc/clang `--coverage` flag
+            COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
+            COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
+            COMMAND lcov --list coverage.info # Print verbose debug info
+            COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+        )
+    else()
+        add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ./${PROTOCOL_TEST_BINARY}
+        )
+    endif()
+
+>>>>>>> Changing protocol-check-pr.yml to accomodate for new protocl test target and general formatting
     if (GENERATE_COVERAGE)
         add_custom_command(
             TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
@@ -410,6 +435,7 @@ endif()
         )
     endif()
 
+<<<<<<< HEAD
     # Run the tests if we're running in CI for testing
     if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         # On Linux, we run tests with code coverage and upload the report to Codecov
@@ -445,6 +471,8 @@ endif()
     endif()
 endif()
 
+=======
+>>>>>>> Changing protocol-check-pr.yml to accomodate for new protocl test target and general formatting
 #[[
 ################## FractalUnitTests ##################
 ]]

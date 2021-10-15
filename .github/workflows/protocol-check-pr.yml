@@ -134,9 +134,15 @@ jobs:
         run: |
           mkdir build
           cd build
+<<<<<<< HEAD
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -G "Ninja" || EXIT /B 1
           ninja FractalClient FractalClientTest || EXIT /B 1
           ninja FractalServer FractalServerTest || EXIT /B 1
+=======
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "Ninja" || EXIT /B 1
+          ninja FractalClient FractalProtocolTest || EXIT /B 1
+          ninja FractalServer FractalProtocolTest || EXIT /B 1
+>>>>>>> Changing protocol-check-pr.yml to accomodate for new protocl test target and general formatting
 
       - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
@@ -147,8 +153,13 @@ jobs:
           # Build the protocol and its test suite
           mkdir build
           cd build
+<<<<<<< HEAD
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
           make FractalClient FractalClientTest -j
+=======
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+          make FractalClient FractalProtocolTest -j
+>>>>>>> Changing protocol-check-pr.yml to accomodate for new protocl test target and general formatting
 
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
