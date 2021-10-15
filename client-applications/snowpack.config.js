@@ -41,6 +41,8 @@ const esbuildCommand = [
   "--external:electron",
   "--external:x11",
   "--external:node:path",
+  "--external:keytar",
+  "--external:better-sqlite3",
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {
@@ -159,9 +161,9 @@ module.exports = {
       "events",
       "punycode",
       "querystring",
-      "tempfile",
       "keytar",
       "x11",
+      "node:path",
     ],
     // We ask Snowpack to polyfill and NodeJS APIs that it can, so that we can
     // still make some use of the NodeJS standard library. It cannot polyfill
