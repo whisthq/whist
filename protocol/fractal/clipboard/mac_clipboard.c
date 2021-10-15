@@ -152,9 +152,7 @@ ClipboardData* unsafe_get_clipboard() {
             free(filenames[i]);
         }
     } else if (clipboard_has_string) {
-        // get the string
         const char* clipboard_string = clipboard_get_string();
-        // int data_size = strlen(clipboard_string) + 1;  // for null terminator
         int data_size = strlen(clipboard_string);
         cb = realloc_region(cb, sizeof(ClipboardData) + data_size);
         // Copy the text data
