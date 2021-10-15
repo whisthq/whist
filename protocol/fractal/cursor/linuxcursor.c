@@ -199,8 +199,8 @@ void get_current_cursor(FractalCursorImage* image) {
                 "maximum dimensions. Truncating cursor from %hu by %hu to %hu by %hu.",
                 cursor_image->width, cursor_image->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
         }
-
-        if (INVALID == (image->cursor_id = get_cursor_id(cursor_image))) {
+        image->cursor_id = get_cursor_id(cursor_image);
+        if (image->cursor_id == INVALID) {
             image->using_bmp = true;
             image->bmp_width = min(MAX_CURSOR_WIDTH, cursor_image->width);
             image->bmp_height = min(MAX_CURSOR_HEIGHT, cursor_image->height);
