@@ -79,9 +79,16 @@ const decryptCookie = async (
 
   cookie.encrypted_prefix = encryptionPrefix
 
+  console.log(`${encryptionPrefix.toString()}`);
+  
+
   const encryptedValue = cookie.encrypted_value.toString().substring(3)
+  console.log(`Before: ${cookie.encrypted_value.toString()} AND After: ${encryptedValue}`);
+  
   const bytes = AES.decrypt(encryptedValue, encryptKey)
-  const originalText = bytes.toString(enc.Utf8)
+  console.log(`The bytes are ${bytes}, encrypted val ${encryptedValue}, and key ${encryptKey}`);
+  
+  const originalText = bytes.toString()
 
   cookie.encrypted_value = originalText
 
@@ -133,7 +140,7 @@ const getExpandedCookieFilePath = (browser: string): string => {
 }
 
 const getCookieEncryptionKey = async (browser: string): Promise<string> => {
-  const salt: Buffer = Buffer.from("saltysalt", "base64")
+  const salt = "saltysalt"
   const length = 16
   switch (process.platform) {
     case "darwin": {
@@ -154,10 +161,13 @@ const getCookieEncryptionKey = async (browser: string): Promise<string> => {
       const myPass = await getLinuxCookieEncryptionKey(getOsCryptName(browser))
       console.log(`My pass is ${myPass} given the os crypt name ${getOsCryptName(browser)}`)
       const iterations = 1
-      const key = pbkdf2.pbkdf2Sync(myPass, salt, iterations, length)
-      console.log(`My key after pbkdf2sync is ${key} and to string ${key.toString()}`);
-      
 
+      console.log(`Input to pbkdf2: pass ${myPass}, salt ${salt}, iterations ${iterations}, length ${length}`);
+      
+      const key = pbkdf2.pbkdf2Sync(myPass, salt, iterations, length, 'sha256')
+      console.log(`My key after pbkdf2sync is ${key} and to string ${JSON.stringify({key})}`);
+      
+      
       return key.toString()
     }
     default:
