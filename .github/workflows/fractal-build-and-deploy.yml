@@ -320,8 +320,8 @@ jobs:
   mandelboxes-and-amis-publish-ghcr-and-aws:
     name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
-    needs: [fractal-publish-build-config]
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
+    needs: [fractal-publish-build-config]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
@@ -549,13 +549,13 @@ jobs:
   webserver-spin-up-new-buffer:
     name: "Create buffers for new AMIs using Webserver"
     runs-on: ubuntu-20.04
+    concurrency: webserver-spin-up-new-buffer-${{ github.ref }}
     needs:
       [
         fractal-publish-build-config,
         webserver-deploy-heroku,
         mandelboxes-and-amis-publish-ghcr-and-aws,
       ]
-    concurrency: webserver-spin-up-new-buffer-${{ github.ref }}
     outputs:
       new_amis_str: ${{ steps.run-webserver-cli-ami-upgrade.outputs.new_amis}}
     if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success')
@@ -678,6 +678,7 @@ jobs:
   webserver-swap-active-amis:
     name: "Swap over active AMIs using webserver"
     runs-on: ubuntu-20.04
+    concurrency: webserver-swap-active-amis-${{ github.ref }}
     needs:
       [
         client-applications-publish-build-x64-s3,
@@ -685,7 +686,6 @@ jobs:
         webserver-spin-up-new-buffer,
         fractal-publish-build-config,
       ]
-    concurrency: webserver-swap-active-amis-${{ github.ref }}
     if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
     env:
       TOKEN_FILE: .access_token
@@ -800,8 +800,8 @@ jobs:
   webserver-deploy-heroku:
     name: "Webserver: Deploy to Heroku"
     runs-on: ubuntu-20.04
-    needs: [fractal-publish-build-config]
     concurrency: webserver-deploy-heroku-${{ github.ref }}
+    needs: [fractal-publish-build-config]
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|webserver-deploy-heroku|')
 
     steps:
@@ -912,13 +912,12 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-
-
+  # Client Applications: Retrieve Version Number
+  # Retrieve the current Fractal version number from our configuration database, through Hasura
   client-applications-retrieve-version-number:
     name: "Client Applications: Retrieve Current Version Number from Config Database"
     runs-on: ubuntu-20.04
-    outputs:
-      release_version: 
+    concurrency: client-applications-retrieve-version-number-${{ github.ref }}
     needs:
       [
         fractal-build-monorepo-config,
@@ -928,7 +927,9 @@ jobs:
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-spin-up-new-buffer,
       ]
-    concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
+    outputs:
+      release_version: ${{ steps.generate-release-version.outputs.release_version }}
+
 
     steps:
       - name: Checkout Git Repository
@@ -1046,10 +1047,12 @@ jobs:
   client-applications-publish-build-x64-s3:
     name: "Client Applications: Build & Deploy ${{ matrix.config.name }} (X86_64)"
     runs-on: ${{ matrix.config.os }}
-    outputs:
-      release_version: ${{ steps.generate-release-version.outputs.release_version }}
-    needs: [client-applications-retrieve-version-number]
     concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
+    needs: 
+      [
+        fractal-publish-build-config,
+        client-applications-retrieve-version-number,
+      ]
 
     # Only run client-apps deployment if none of the previous steps failed
     if: |
@@ -1129,7 +1132,7 @@ jobs:
         run: |
           mv package.json packageOld.json
           # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
-          cat packageOld.json | jq '.version = "${{ needs.client-applications-publish-build-x64-s3.outputs.release_version }}"' > package.json
+          cat packageOld.json | jq '.version = "${{ needs.client-applications-retrieve-version-number.outputs.release_version }}"' > package.json
           rm packageOld.json
 
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
@@ -1187,6 +1190,7 @@ jobs:
   client-applications-publish-build-arm64-s3:
     name: "Client Applications: Build & Deploy macOS Desktop Application (ARM64)"
     runs-on: [self-hosted, macOS, ARM64]
+    concurrency: client-applications-publish-build-arm64-s3-${{ github.ref }}
     defaults:
       run:
         shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
@@ -1199,7 +1203,6 @@ jobs:
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-spin-up-new-buffer,
       ]
-    concurrency: client-applications-publish-build-arm64-s3-${{ matrix.config.os }}-${{ github.ref }}
 
     # Only run client-apps deployment if none of the previous steps failed
     if: |
@@ -1261,7 +1264,7 @@ jobs:
         run: |
           mv package.json packageOld.json
           # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
-          cat packageOld.json | jq '.version = "${{ env.desktop_app_new_version }}"' > package.json
+          cat packageOld.json | jq '.version = "${{ needs.client-applications-retrieve-version-number.outputs.release_version }}"' > package.json
           rm packageOld.json
 
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
@@ -1287,33 +1290,32 @@ jobs:
           --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
-
-
   #######################################################################################
   #######################################################################################
 
-
-
-  # TODO: split job to update version here
-
+  # Client Applications: Update Version Number
+  # Set the New Fractal version number in our configuration database, through Hasura
   client-applications-update-version-number-in-config-db:
     name: "Client Applications: Set New Version Number in Config Database"
     runs-on: ubuntu-20.04
+    concurrency: client-applications-publish-build-x64-s3-${{ github.ref }}
     needs:
       [
+        fractal-publish-build-config,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
       ]
-    concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
+
+
+
+
 
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
-      # Update hasura version
-      # Run only on Mac, to prevent updating the database multiple times
       - name: Update Config Database version with the new version
-        if: needs.fractal-publish-build-config.outputs.publish == 'true' && runner.os == 'macOS'
+        if: needs.fractal-publish-build-config.outputs.publish == 'true'
         run: |
           BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
           ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
@@ -1339,11 +1341,6 @@ jobs:
             https://config-database.fractal.co/v1/graphql
           fi
 
-
-
-
-
-
   #######################################################################################
   #######################################################################################
 
@@ -1358,8 +1355,7 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
-        client-applications-publish-build-x64-s3,
-        client-applications-publish-build-arm64-s3,
+        client-applications-update-version-number-in-config-db,
       ]
     # run if client-applications-publish-build-[x64/arm64]-s3 succeeds or fails (but not skipped or cancelled)
     if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' || needs.client-applications-publish-build-x64-s3.result == 'failure' ) && (needs.client-applications-publish-build-arm64-s3.result == 'success' || needs.client-applications-publish-build-arm64-s3.result == 'failure' )
@@ -1415,8 +1411,8 @@ jobs:
   microservices-deploy-auth0-rules:
     name: "Deploy Auth0 Rules"
     runs-on: ubuntu-20.04
-    needs: [fractal-publish-build-config]
     concurrency: microservices-deploy-auth0-rules-${{ github.ref }}
+    needs: [fractal-publish-build-config]
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-rules|')
 
     steps:
