@@ -119,13 +119,13 @@ TEST(ProtocolTest, AddingPacketsToRingBuffer) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
 
     // setup packets to add to ringbuffer
-    FractalPacket pkt1;
+    FractalPacket pkt1 = {0};
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
     pkt1.index = 0;
     pkt1.is_a_nack = false;
 
-    FractalPacket pkt2;
+    FractalPacket pkt2 = {0};
     pkt2.type = PACKET_VIDEO;
     pkt2.id = 1;
     pkt2.index = 0;
