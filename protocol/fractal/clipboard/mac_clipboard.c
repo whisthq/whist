@@ -156,7 +156,7 @@ ClipboardData* unsafe_get_clipboard() {
         const char* clipboard_string = clipboard_get_string();
         // int data_size = strlen(clipboard_string) + 1;  // for null terminator
         int data_size = strlen(clipboard_string);
-        cb = realloc_region(cb, data_size);
+        cb = realloc_region(cb, sizeof(ClipboardData) + data_size);
         // Copy the text data
         cb->type = CLIPBOARD_TEXT;
         cb->size = data_size;

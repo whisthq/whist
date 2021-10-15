@@ -333,7 +333,7 @@ int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet) {
     read_lock(&clients[client_id].tcp_rwlock);
     FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].tcp_context), should_recvp);
     if (tcp_packet) {
-        LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
+        LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
     }
     read_unlock(&clients[client_id].tcp_rwlock);

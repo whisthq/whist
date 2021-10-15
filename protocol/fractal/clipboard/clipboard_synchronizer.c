@@ -201,7 +201,7 @@ bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk) {
 
     // If the clipboard is currently being updated and the received chunk is a
     //     START chunk, then abort the active action
-    if (updating_clipboard && cb_chunk->chunk_type == CLIPBOARD_START) {
+    if (is_clipboard_synchronizing() && cb_chunk->chunk_type == CLIPBOARD_START) {
         clipboard_synchronizer_abort_active_clipboard_action();
     }
 
@@ -253,7 +253,7 @@ ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
 
     // If clipboard has updated - if is currently being updated, abort that action
     if (has_clipboard_updated()) {
-        if (updating_clipboard) {
+        if (is_clipboard_synchronizing()) {
             clipboard_synchronizer_abort_active_clipboard_action();
         }
         LOG_INFO("Pushing update to clipboard");

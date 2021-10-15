@@ -30,6 +30,7 @@ Includes
 // A Mutex to ensure unsafe commands don't overlap
 FractalMutex clipboard_mutex;
 bool preserve_local_clipboard = false;
+bool skip_next_has_updated = false;
 
 /*
 ============================
@@ -122,8 +123,10 @@ void set_clipboard(ClipboardData* cb) {
 
     fractal_lock_mutex(clipboard_mutex);
     unsafe_set_clipboard(cb);
-    // clear out update from filling clipboard
-    unsafe_has_clipboard_updated();
+    // Can't clear out update from filling clipboard here
+    //     because X11 might not send the event fast enough, causing
+    //     a send-back. We set this flag instead.
+    skip_next_has_updated = true;
     fractal_unlock_mutex(clipboard_mutex);
 }
 
@@ -160,6 +163,12 @@ bool has_clipboard_updated() {
 
     if (fractal_try_lock_mutex(clipboard_mutex) == 0) {
         bool has_clipboard_updated = unsafe_has_clipboard_updated();
+        // After setting, we don't want to propagate the next update
+        //     because it will just play back the set
+        if (has_clipboard_updated && skip_next_has_updated) {
+            has_clipboard_updated = false;
+            skip_next_has_updated = true;
+        }
         fractal_unlock_mutex(clipboard_mutex);
         return has_clipboard_updated;
     } else {
