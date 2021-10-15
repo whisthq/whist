@@ -8,8 +8,13 @@ extern "C" {
     #include "client/client_utils.h"
     #include "client/ringbuffer.h"
     #include "fractal/utils/color.h"
-    #include "server/main.h"
-    #include "server/parse_args.h"
+
+    #ifndef __APPLE__
+        #include "server/main.h"
+        #include "server/parse_args.h"
+    #endif
+    
+    
     #include "client/client_utils.h"
     #include "fractal/utils/aes.h"
     #include "fractal/utils/png.h"
@@ -176,7 +181,7 @@ TEST(ProtocolTest, SetRenderingTest) {
 
 /** Server Tests **/
 
-#ifdef __linux__ // Server tests only compile on Linux
+#ifndef __APPLE__ // Server tests do not compile on Macs
 
     // Testing that good values passed into server_parse_args returns success
     TEST(ProtocolTest, ArgParsingUsageArgTest) {

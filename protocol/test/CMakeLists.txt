@@ -4,7 +4,33 @@
 
     # Create the executable
     set(PROTOCOL_TEST_BINARY FractalProtocolTest)
-    add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+
+    # Server source files do not compile on Mac
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+
+            #Files needed for Fractal Lib unit tests 
+            ../fractal/utils/aes.c
+            ../fractal/utils/png.c
+            ../fractal/utils/avpacket_buffer.c
+
+            # Files needed for Client unit tests
+            ../client/audio.c
+            ../client/client_utils.c
+            ../client/network.c
+            ../client/sdl_event_handler.c
+            ../client/sdl_utils.c
+            ../client/handle_server_message.c
+            ../client/video.c
+            ../client/sdlscreeninfo.c
+            ../client/peercursor.c
+            ../client/ringbuffer.c
+            ../client/sync_packets.c
+            ../client/bitrate.c
+        )
+    endif()
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
         # Files needed for Server unit tests
         ../server/client.c
         ../server/video.c
@@ -32,6 +58,8 @@
         ../client/sync_packets.c
         ../client/bitrate.c
     )
+    endif()
+
 
     # Link the GoogleTest library
     target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
