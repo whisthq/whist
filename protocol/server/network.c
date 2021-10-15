@@ -368,6 +368,16 @@ int multithreaded_manage_client(void *opaque) {
 
         LOG_INFO("Is a client connected? %s", client.is_active ? "yes" : "no");
 
+        // If all threads have stopped using the active client, we can finally quit it
+        if (client.is_deactivating && !threads_still_holding_active()) {
+            if (quit_client() != 0) {
+                LOG_ERROR("Failed to quit client.");
+            } else {
+                client.is_deactivating = false;
+                LOG_INFO("Successfully quit client.");
+            }
+        }
+
         if (!client.is_active) {
             connection_id = rand();
 
@@ -429,20 +439,13 @@ int multithreaded_manage_client(void *opaque) {
         reset_threads_holding_active_count();
         client.is_active = true;
 
-        if (client.is_active && !client_deactivating && get_timer(last_ping_check) > 20.0) {
+        // If there is an active client that is not actively deactivating that hasn't pinged
+        //     in a while, we should reap it.
+        if (client.is_active && !client.is_deactivating && get_timer(last_ping_check) > 20.0) {
             if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
                 LOG_ERROR("Failed to reap timed out clients.");
             }
             start_timer(&last_ping_check);
-        }
-
-        // If all threads have stopped using the active client, we can finally quit it
-        if (client_deactivating && !threads_still_holding_active()) {
-            if (quit_client() != 0) {
-                LOG_ERROR("Failed to quit client.");
-            } else {
-                LOG_INFO("Successfully quit client.");
-            }
         }
     }
 

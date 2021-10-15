@@ -23,7 +23,6 @@ volatile int threads_holding_active = 0; // Threads currently assuming client is
 
 
 Client client;
-volatile bool client_deactivating = false; // Should only be set in `multithreaded_manage_client`
 
 /*
 ============================
@@ -72,14 +71,14 @@ int start_quitting_client() {
         resources yet. Must be called before `quit_client`.
     */
 
-    client_deactivating = true;
+    client.is_deactivating = true;
     return 0;
 }
 
 int quit_client() {
     /*
         Deactivates active client. Disconnects client. Updates count of active
-        clients. May only be called on an active client. The associated client
+        clients. Only does anything on an active client. The associated client
         object is not destroyed and may be made active in the future.
 
         Arguments:
@@ -89,11 +88,17 @@ int quit_client() {
             (int): -1 on failure, 0 on success
     */
 
+    // If client is not active, just return
+    if (!client.is_active) {
+        return 0;
+    }
+
     client.is_active = false;
     if (disconnect_client() != 0) {
         LOG_ERROR("Failed to disconnect client.");
         return -1;
     }
+    client.is_deactivating = false;
     return 0;
 }
 
@@ -112,67 +117,77 @@ int reap_timed_out_client(double timeout) {
 
     if (client.is_active && get_timer(client.last_ping) > timeout) {
         LOG_INFO("Dropping timed out client");
-        // if (quit_client() != 0) {
-        //     LOG_ERROR("Failed to quit client.");
-        //     return -1;
-        // }
-        start_quitting_client();
-    }
-    return 0;
-}
-
-int does_client_match_user_id(int user_id, bool *found) {
-    /*
-        Finds out whether the client is associated with the `user_id`.
-
-        Arguments:
-            user_id (int): User ID to be searched for.
-            found (bool*): Populated with true if the active client
-                matches the user_id
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success. Not matching
-                the client does not mean failure.
-    */
-
-    *found = false;
-    if (client.is_active && client.user_id == user_id) {
-        *found = true;
-        return 0;
+        if (start_quitting_client() != 0) {
+            LOG_ERROR("Failed to start quitting client.");
+            return -1;
+        }
     }
     return 0;
 }
 
 void add_thread_to_client_active_dependents() {
-    // Add thread to those dependent on client being active
+    /*
+        Add thread to count of those dependent on client being active
+    */
+
     threads_needing_active++;
 }
 
 void remove_thread_from_holding_active_count() {
-    // Remove thread from those currently assuming that client is active
+    /*
+        Remove thread from those currently assuming that client is active
+    */
+
     threads_holding_active--;
 }
 
 void reset_threads_holding_active_count() {
     /*
+        Set the thread count regarding a client as active to the full
+        dependent thread count again. This is needed when a new client
+        is made active after the previous one has been deactivated
+        and quit.
+
         NOTE: Should only be called from `multithreaded_manage_client`
     */
 
     threads_holding_active = threads_needing_active;
-    client_deactivating = false;
+    client.is_deactivating = false;
+}
+
+void update_client_active_status(bool* is_thread_assuming_active) {
+    /*
+        Allows a thread to update its status on whether it believes
+        the client is active or not. If a client is deactivating,
+        we want the thread to stop believing that the client is active,
+        but otherwise will leave the status as is.
+
+        Arguments:
+            is_thread_assuming_active (bool*): pointer to the boolean
+                that the thread is using to indicate whether it believes
+                the client is currently active.
+                >> If the client should change its belief, this pointer
+                is populated with the new value.
+    */
+
+    if (client.is_deactivating) {
+        if (*is_thread_assuming_active) {
+            *is_thread_assuming_active = false;
+            remove_thread_from_holding_active_count();
+        }
+    } else if (client.is_active && !*is_thread_assuming_active) {
+        *is_thread_assuming_active = true;
+    }
 }
 
 bool threads_still_holding_active() {
-    return threads_holding_active > 0;
-}
+    /*
+        Whether there remain any threads that are assuming that
+        the client is active.
 
-void update_client_active_status(bool* thread_holding_active) {
-    if (client_deactivating) {
-        if (*thread_holding_active) {
-            *thread_holding_active = false;
-            remove_thread_from_holding_active_count();
-        }
-    } else if (client.is_active && !*thread_holding_active) {
-        *thread_holding_active = true;
-    }
+        Returns:
+            (bool): whether any threads need the client to still be active
+    */
+
+    return threads_holding_active > 0;
 }

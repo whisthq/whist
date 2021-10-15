@@ -330,12 +330,12 @@ int main(int argc, char* argv[]) {
     while (!exiting) {
         update_client_active_status(&assuming_client_active);
 
-        // Get UDP messages
-        get_fractal_client_messages(false, true);
-
         if (!assuming_client_active) {
             continue;
         }
+
+        // Get UDP messages
+        get_fractal_client_messages(false, true);
 
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {

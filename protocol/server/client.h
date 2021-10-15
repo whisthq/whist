@@ -28,16 +28,17 @@ Custom types
 
 typedef struct Client {
     /* ACTIVE */
-    bool is_active;       // "protected" by global `client_deactivating`
+    bool is_active;       // "protected" by `is_deactivating`
+    bool is_deactivating; // whether a client is in the process of deactivating
 
     /* USER INFO */
     int user_id;  // not lock protected
 
     /* NETWORK */
-    SocketContext udp_context;  // "protected" by global `client_deactivating`
-    SocketContext tcp_context;  // "protected" by global `client_deactivating`
-    int udp_port;               // "protected" by global `client_deactivating`
-    int tcp_port;               // "protected" by global `client_deactivating`
+    SocketContext udp_context;  // "protected" by global `is_deactivating`
+    SocketContext tcp_context;  // "protected" by global `is_deactivating`
+    int udp_port;               // "protected" by global `is_deactivating`
+    int tcp_port;               // "protected" by global `is_deactivating`
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 
     /* PING */
@@ -45,8 +46,6 @@ typedef struct Client {
     clock last_tcp_ping;  // not lock protected
 
 } Client;
-
-extern volatile bool client_deactivating;
 
 extern Client client;
 
@@ -79,6 +78,12 @@ int init_client(void);
 int destroy_clients(void);
 
 /**
+ * @brief                          Begins deactivating client, but does not clean up
+ *                                 its resources yet. Must be called before `quit_client`.
+ */
+int start_quitting_client();
+
+/**
 * @brief                          Deactivates active client.
 *
 * @details                        Disconnects client. Updates count of active
@@ -104,25 +109,37 @@ int quit_client();
 int reap_timed_out_client(double timeout);
 
 /**
- * @brief                          Finds the client ID of the active client
- *                                 object associated with a user ID, if there is
- *                                 one.
- *
- * @param user_id                  User ID to be searched for.
- *
- * @param found                    Populated with true if an associated client ID
- *                                 is found, false otherwise.
- *
- * @returns                        Returns -1 on failure, 0 on success. Not
- *                                 finding an associated ID does not mean
- *                                 failure.
+ * @brief                          Add thread to count of those dependent on
+ *                                 client being active.
  */
-int does_client_match_user_id(int user_id, bool *found);
-
 void add_thread_to_client_active_dependents();
+
+/**
+ * @brief                          Set the thread count regarding a client as
+ *                                 active to the full dependent thread count
+ *                                 again. This is needed when a new client is
+ *                                 made active after the previous one has been
+ *                                 deactivated and quit.
+ */
 void reset_threads_holding_active_count();
-void update_client_active_status(bool* thread_holding_active);
+
+/**
+ * @brief                          Allows a thread to update its status on
+ *                                 whether it believes the client is active or
+ *                                 not. If a client is deactivating, we want the
+ *                                 thread to stop believing that the client is
+ *                                 active, but otherwise will leave the status as is.
+ *
+ * @param is_thread_assuming_active Pointer to the boolean that the thread is using
+ *                                  to indicate whether it believes the client is
+ *                                  currently active
+ */
+void update_client_active_status(bool* is_thread_assuming_active);
+
+/**
+ * @brief                          Whether there remain any threads that are assuming
+ *                                 that the client is active.
+ */
 bool threads_still_holding_active();
-int start_quitting_client();
 
 #endif  // SERVER_CLIENT_H
