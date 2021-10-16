@@ -4,7 +4,7 @@
 
     # Create the executable
     set(PROTOCOL_TEST_BINARY FractalProtocolTest)
-
+    
     # Server source files do not compile on Mac
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
@@ -151,7 +151,9 @@
                 )
     endif()
 
-
+    # Add necessary flags for code coverage
+    set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+    
     # Run the tests if we're running in CI for testing
     if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         # On macOS and Linux CI, we run tests with code coverage and upload the report to Codecov
