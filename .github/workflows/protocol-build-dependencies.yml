@@ -539,7 +539,7 @@ jobs:
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-prod"
-          TITLE = ":openssl: Fractal Protocol Dependency Deployed :openssl:"
-          BODY = f"Fractal Sentry & OpenSSL Libraries deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":openssl: Fractal Protocol Dependencies Deployed :openssl:"
+          BODY = f"Fractal `Sentry` & `OpenSSL` Libraries deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

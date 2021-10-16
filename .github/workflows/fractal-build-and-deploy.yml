@@ -686,6 +686,7 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
+        fractal-build-monorepo-config,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
       ]
@@ -815,6 +816,7 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
+        fractal-build-monorepo-config,
         webserver-spin-up-new-buffer,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
@@ -938,12 +940,10 @@ jobs:
     concurrency: client-applications-retrieve-version-number-${{ github.ref }}
     needs:
       [
-        fractal-build-monorepo-config,
         fractal-publish-build-config,
-        webserver-deploy-heroku,
-        microservices-deploy-auth0-rules,
-        mandelboxes-and-amis-publish-ghcr-and-aws,
+        fractal-build-monorepo-config,
         webserver-spin-up-new-buffer,
+        microservices-deploy-auth0-rules,
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
@@ -1314,6 +1314,7 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
+        fractal-build-monorepo-config,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
       ]
@@ -1328,6 +1329,10 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
 
       - name: Update Config Database version with the new version
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
@@ -1356,35 +1361,7 @@ jobs:
             https://config-database.fractal.co/v1/graphql
           fi
 
-  #######################################################################################
-  #######################################################################################
-
-  # Client Applications: Notify Slack
-  # Notify Slack after building and publishing the client applications for all supported OSes.
-  # Runs if client-applications-publish-build-s3 runs. We keep this separate from the
-  # client-applications-publish-build-s3 job because it is a matrix job. If any matrix iteration
-  # fails, client-applications-publish-build-s3 is marked as failed.
-  client-applications-notify-slack:
-    name: "Client Applications: Notify Slack"
-    runs-on: ubuntu-20.04
-    needs:
-      [
-        fractal-publish-build-config,
-        client-applications-publish-build-x64-s3,
-        client-applications-publish-build-arm64-s3,
-        client-applications-update-version-number,
-      ]
-    # run if client-applications-publish-build-[x64/arm64]-s3 succeeds or fails (but not skipped or cancelled)
-    if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' || needs.client-applications-publish-build-x64-s3.result == 'failure' ) && (needs.client-applications-publish-build-arm64-s3.result == 'success' || needs.client-applications-publish-build-arm64-s3.result == 'failure' )
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      - name: Setup Python-based notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Notify Slack on Job Success
+      - name: Notify Slack on Publishing Client Applications Success
         shell: python3 {0}
         if: needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success'
         run: |
@@ -1406,7 +1383,7 @@ jobs:
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
-      - name: Notify Slack on Job Error
+      - name: Notify Slack on Publishing Client Applications Error
         if: needs.client-applications-publish-build-x64-s3.result == 'failure' || needs.client-applications-publish-build-arm64-s3.result == 'failure'
         shell: python3 {0}
         run: |
@@ -1499,6 +1476,7 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
+        fractal-build-monorepo-config,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
         webserver-spin-up-new-buffer,
