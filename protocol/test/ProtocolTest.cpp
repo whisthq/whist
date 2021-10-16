@@ -291,15 +291,18 @@ TEST(ProtocolTest, PngToBmpToPng) {
     char* png_buffer = (char*)&png_vec[0];
 
     // Convert to BMP
-    char bmp_buffer[img_size];
+    char* bmp_buffer = new char[img_size];
     png_to_bmp(png_buffer, img_size, (char**)&bmp_buffer, &img_size);
     // Convert back to PNG
-    char new_png_data[img_size];
+    char* new_png_data = new char[img_size];
     bmp_to_png(bmp_buffer, img_size, (char**)&new_png_data, &img_size);
 
     // compare for equality
     for (int index = 0; index < img_size; index++)
         EXPECT_EQ(png_buffer[index], new_png_data[index]);
+
+    delete bmp_buffer;
+    delete png_buffer;
 }
 
 // Tests that by converting a PNG to a BMP then converting that back
