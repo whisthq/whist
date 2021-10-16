@@ -154,7 +154,7 @@ jobs:
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
 
           # The jobs `fractal-publish-build-config`, `fractal-build-monorepo-config`,
-          # `client-applications-retrieve-version-nubmer`, `client-applications-update-version-number`,
+          # `client-applications-retrieve-version-number`, `client-applications-update-version-number`,
           # `client-applications-notify-slack`, and `fractal-create-github-release-tag`
           # are not set above as workflow_dispatch-able since they don't make when run on their own
 
@@ -1365,7 +1365,7 @@ jobs:
         fractal-publish-build-config,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
-        client-applications-update-version-number-in-config-db,
+        client-applications-update-version,
       ]
     # run if client-applications-publish-build-[x64/arm64]-s3 succeeds or fails (but not skipped or cancelled)
     if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' || needs.client-applications-publish-build-x64-s3.result == 'failure' ) && (needs.client-applications-publish-build-arm64-s3.result == 'success' || needs.client-applications-publish-build-arm64-s3.result == 'failure' )
@@ -1493,7 +1493,7 @@ jobs:
         webserver-spin-up-new-buffer,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
-        client-applications-update-version-number-in-config-db,
+        client-applications-update-version,
         webserver-swap-active-amis,
         microservices-deploy-auth0-rules,
       ]
