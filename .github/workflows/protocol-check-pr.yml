@@ -262,8 +262,14 @@ jobs:
       ###################################################################################
       ################################# MACOS STEPS START ###############################
 
-      - name: Install clang-tidy
-        run: brew install llvm clang-format
+      - name: Install macOS Client Protocol Dependencies
+        if: runner.os == 'macOS'
+        working-directory: protocol
+        run: |
+          # llvm for clang-tidy, coreutils for realpath, lcov for codecov
+          brew install llvm coreutils perl doxygen lcov
+          ln -s "/opt/homebrew/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+          ln -s "/opt/homebrew/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
       - name: Build and Test Protocol Client
         working-directory: protocol
