@@ -193,6 +193,7 @@ jobs:
       ################################# MACOS STEPS START ###############################
 
       - name: Install Docker
+        if: runner.os == 'macOS'
         run: brew install docker
 
       - name: Install macOS Codesigning Certificates on macOS GHA Machine
