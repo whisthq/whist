@@ -27,6 +27,7 @@ const packageNotarize = (env, config, version, environment, commit) => {
     "AWS_ACCESS_KEY",
     "AWS_SECRET_KEY",
     "AMPLITUDE_KEY",
+    "MACOS_ARCH",
   ])
 
   helpers.snowpackBuild({
@@ -41,11 +42,13 @@ const packageNotarize = (env, config, version, environment, commit) => {
     switch (process.platform) {
       case "darwin":
         // on macOS, we have buckets for Intel silicon (X86_64) and Apple silicon (ARM64)
-        switch (process.env.MACOS_ARCH) {
+        switch (config.keys.MACOS_ARCH) {
           case "x64":
             bucketName = `fractal-chromium-macos-${environment}`
+            break
           case "arm64":
             bucketName = `fractal-chromium-macos-arm64-${environment}`
+            break
         }
         break
       case "win32":
