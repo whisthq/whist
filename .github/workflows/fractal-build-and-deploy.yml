@@ -1069,7 +1069,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) &&
-      (needs.client-applications-retrieve-version-number.result == 'success') &&
+      (needs.client-applications-retrieve-version-number.result == 'success')
 
     strategy:
       matrix:
@@ -1216,7 +1216,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|')) &&
-      (needs.client-applications-retrieve-version-number.result == 'success') &&
+      (needs.client-applications-retrieve-version-number.result == 'success')
 
     steps:
       - name: Checkout Git Repository
