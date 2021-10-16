@@ -97,7 +97,7 @@ TEST(ProtocolTest, InitRingBuffer) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_AUDIO_TEST_FRAMES);
 
     EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
-    EXPECT_EQ(rb->currently_rendering_id, -1);
+    // EXPECT_EQ(rb->currently_rendering_id, -1);
     EXPECT_EQ(rb->currently_rendering_frame.id, get_frame_at_id(rb, -1)->id);
 
     for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
