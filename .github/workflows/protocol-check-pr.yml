@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
-        
+
       # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
