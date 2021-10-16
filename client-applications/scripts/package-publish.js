@@ -37,19 +37,25 @@ const packageNotarize = (env, config, version, environment, commit) => {
   })
 
   const getBucketName = () => {
-    let osStr
+    let bucketName
     switch (process.platform) {
       case "darwin":
-        osStr = "macos"
+        // on macOS, we have buckets for Intel silicon (X86_64) and Apple silicon (ARM64)
+        switch (process.env.MACOS_ARCH) {
+          case "x64":
+            bucketName = `fractal-chromium-macos-${environment}`
+          case "arm64":
+            bucketName = `fractal-chromium-macos-arm64-${environment}`
+        }
         break
       case "win32":
-        osStr = "windows"
+        bucketName = `fractal-chromium-windows-${environment}`
         break
       case "linux":
-        osStr = "ubuntu"
+        bucketName = `fractal-chromium-ubuntu-${environment}`
         break
     }
-    return `fractal-chromium-${osStr}-${environment}`
+    return bucketName
   }
 
   helpers.electronPublish(getBucketName())
