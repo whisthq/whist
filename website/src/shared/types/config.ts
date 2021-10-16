@@ -4,7 +4,8 @@ export interface FractalConfig {
   }
   sentry_env: string
   client_download_urls: {
-    macOS: string
+    macOS_x64: string
+    macOS_arm64: string
     Windows: string
   }
 }
