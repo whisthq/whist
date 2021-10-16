@@ -301,8 +301,8 @@ TEST(ProtocolTest, PngToBmpToPng) {
     for (int index = 0; index < img_size; index++)
         EXPECT_EQ(png_buffer[index], new_png_data[index]);
 
-    delete bmp_buffer;
-    delete png_buffer;
+    delete[] bmp_buffer;
+    delete[] png_buffer;
 }
 
 // Tests that by converting a PNG to a BMP then converting that back
@@ -326,8 +326,8 @@ TEST(ProtocolTest, BmpToPngToBmp) {
     for (int index = 0; index < img_size; index++)
         EXPECT_EQ(bmp_buffer[index], new_bmp_data[index]);
     
-    delete png_buffer;
-    delete new_bmp_data;
+    delete[] png_buffer;
+    delete[] new_bmp_data;
 }
 
 
