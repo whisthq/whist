@@ -153,12 +153,12 @@ jobs:
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalProtocolTest
 
       - name: Build and Test Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer FractalServerTest
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer FractalProtocolTest
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
