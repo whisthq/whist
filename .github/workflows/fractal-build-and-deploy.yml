@@ -329,7 +329,11 @@ jobs:
     name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
-    needs: [fractal-publish-build-config]
+    needs: 
+      [
+        fractal-publish-build-config,
+        fractal-build-monorepo-config,
+      ]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
@@ -559,7 +563,11 @@ jobs:
     name: "Webserver: Deploy to Heroku"
     runs-on: ubuntu-20.04
     concurrency: webserver-deploy-heroku-${{ github.ref }}
-    needs: [fractal-publish-build-config]
+    needs: 
+      [
+        fractal-publish-build-config,
+        fractal-build-monorepo-config,
+      ]
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|webserver-deploy-heroku|')
 
     steps:
@@ -1421,7 +1429,11 @@ jobs:
     name: "Deploy Auth0 Rules"
     runs-on: ubuntu-20.04
     concurrency: microservices-deploy-auth0-rules-${{ github.ref }}
-    needs: [fractal-publish-build-config]
+    needs: 
+      [
+        fractal-publish-build-config,
+        fractal-build-monorepo-config,
+      ]
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-rules|')
 
     steps:
