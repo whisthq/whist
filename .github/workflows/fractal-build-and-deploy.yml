@@ -801,7 +801,7 @@ jobs:
 
   # Uses webserver's cli command to update AMIs if new AMIs have been built
   webserver-swap-active-amis:
-    name: "Swap over active AMIs using webserver"
+    name: "Swap over active AMIs using Webserver"
     runs-on: ubuntu-20.04
     concurrency: webserver-swap-active-amis-${{ github.ref }}
     needs:
@@ -810,6 +810,7 @@ jobs:
         webserver-spin-up-new-buffer,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
+        client-applications-update-version-number,
       ]
     if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
     env:
@@ -1062,6 +1063,7 @@ jobs:
     needs:
       [
         fractal-publish-build-config,
+        fractal-build-monorepo-config,
         client-applications-retrieve-version-number,
       ]
 
@@ -1204,12 +1206,9 @@ jobs:
         shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
     needs:
       [
-        fractal-build-monorepo-config,
         fractal-publish-build-config,
-        webserver-deploy-heroku,
-        microservices-deploy-auth0-rules,
-        mandelboxes-and-amis-publish-ghcr-and-aws,
-        webserver-spin-up-new-buffer,
+        fractal-build-monorepo-config,
+        client-applications-retrieve-version-number,
       ]
 
     # Only run client-apps deployment if none of the previous steps failed
@@ -1300,7 +1299,7 @@ jobs:
 
   # Client Applications: Update Version Number
   # Set the New Fractal version number in our configuration database, through Hasura
-  client-applications-update-version:
+  client-applications-update-version-number:
     name: "Client Applications: Set New Version Number in Config Database"
     runs-on: ubuntu-20.04
     concurrency: client-applications-publish-build-x64-s3-${{ github.ref }}
@@ -1365,7 +1364,7 @@ jobs:
         fractal-publish-build-config,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
-        client-applications-update-version,
+        client-applications-update-version-number,
       ]
     # run if client-applications-publish-build-[x64/arm64]-s3 succeeds or fails (but not skipped or cancelled)
     if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' || needs.client-applications-publish-build-x64-s3.result == 'failure' ) && (needs.client-applications-publish-build-arm64-s3.result == 'success' || needs.client-applications-publish-build-arm64-s3.result == 'failure' )
@@ -1493,7 +1492,7 @@ jobs:
         webserver-spin-up-new-buffer,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
-        client-applications-update-version,
+        client-applications-update-version-number,
         webserver-swap-active-amis,
         microservices-deploy-auth0-rules,
       ]
