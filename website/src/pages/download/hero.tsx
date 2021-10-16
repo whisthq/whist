@@ -38,13 +38,25 @@ const Hero = (props: { allowDownloads: boolean }) => {
           <>
             {props.allowDownloads ? (
               <div className="flex justify-center">
-                <a href={config.client_download_urls.macOS} download>
+                <a href={config.client_download_urls.macOS_x64} download>
                   <FractalButton
                     className="mt-12 mx-2"
                     contents={
                       <div className="flex">
                         <FaApple className="relative mr-3 top-0.5" />
-                        macOS
+                        macOS (Intel)
+                      </div>
+                    }
+                    state={FractalButtonState.DEFAULT}
+                  />
+                </a>
+                <a href={config.client_download_urls.macOS_arm64} download>
+                  <FractalButton
+                    className="mt-12 mx-2"
+                    contents={
+                      <div className="flex">
+                        <FaApple className="relative mr-3 top-0.5" />
+                        macOS (M1)
                       </div>
                     }
                     state={FractalButtonState.DEFAULT}
