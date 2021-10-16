@@ -153,7 +153,7 @@
 
     # Add necessary flags for code coverage
     set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
-    
+
     # Run the tests if we're running in CI for testing
     if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         # On macOS and Linux CI, we run tests with code coverage and upload the report to Codecov
@@ -164,6 +164,7 @@
             COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
             COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
             COMMAND lcov --list coverage.info # Print verbose debug info
+            COMMAND ls ..
             COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
     else()
