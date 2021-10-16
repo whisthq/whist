@@ -219,7 +219,7 @@ TEST(ProtocolTest, EncryptAndDecrpt) {
     original_packet.id = -1;
     original_packet.type = PACKET_MESSAGE;
     original_packet.index = 0;
-    original_packet.payload_size = len;
+    original_packet.payload_size = (int) len;
     original_packet.num_indices = 1;
     original_packet.is_a_nack = false;
 
@@ -257,7 +257,7 @@ TEST(ProtocolTest, BadDecrypt) {
     original_packet.id = -1;
     original_packet.type = PACKET_MESSAGE;
     original_packet.index = 0;
-    original_packet.payload_size = len;
+    original_packet.payload_size = (int) len;
     original_packet.num_indices = 1;
     original_packet.is_a_nack = false;
 
@@ -287,7 +287,7 @@ TEST(ProtocolTest, PngToBmpToPng) {
     std::ifstream png_image("images/image.png", std::ios::binary);
     // copies all data into buffer
     std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
-    int img_size = png_vec.size();
+    int img_size = (int) png_vec.size();
     char* png_buffer = (char*)&png_vec[0];
 
     // Convert to BMP
@@ -309,19 +309,22 @@ TEST(ProtocolTest, BmpToPngToBmp) {
     std::ifstream bmp_image("images/image.bmp", std::ios::binary);
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
-    int img_size = bmp_vec.size();
+    int img_size = (int) bmp_vec.size();
     char* bmp_buffer = (char*)&bmp_vec[0];
 
     // Convert to PNG
-    char png_buffer[img_size];
+    char* png_buffer = new char[img_size];
     bmp_to_png(bmp_buffer, img_size, (char**)&png_buffer, &img_size);
     // Convert back to BMP
-    char new_bmp_data[img_size];
+    char* new_bmp_data = new char[img_size];
     png_to_bmp(png_buffer, img_size, (char**)&new_bmp_data, &img_size);
 
     // compare for equality
     for (int index = 0; index < img_size; index++)
         EXPECT_EQ(bmp_buffer[index], new_bmp_data[index]);
+    
+    delete png_buffer;
+    delete new_bmp_data;
 }
 
 
