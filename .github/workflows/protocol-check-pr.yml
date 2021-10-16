@@ -262,6 +262,9 @@ jobs:
       ###################################################################################
       ################################# MACOS STEPS START ###############################
 
+      - name: Install clang-tidy
+        run: brew install llvm clang-format
+
       - name: Build and Test Protocol Client
         working-directory: protocol
         env:
