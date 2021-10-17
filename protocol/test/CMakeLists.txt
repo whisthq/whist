@@ -9,7 +9,7 @@
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
 
-            #Files needed for Fractal Lib unit tests 
+            # Files needed for Fractal Lib unit tests 
             ../fractal/utils/aes.c
             ../fractal/utils/png.c
             ../fractal/utils/avpacket_buffer.c
@@ -39,7 +39,7 @@
         ../server/handle_client_message.c
         ../server/network.c
 
-        #Files needed for Fractal Lib unit tests 
+        # Files needed for Fractal Lib unit tests 
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
@@ -150,10 +150,6 @@
                 OpenSSL::Crypto
                 )
     endif()
-
-    # Add necessary flags for code coverage
-    set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
-
     # Run the tests if we're running in CI for testing
     if (${CI} MATCHES "TRUE" AND ${CMAKE_BUILD_TYPE} MATCHES Debug AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         # On macOS and Linux CI, we run tests with code coverage and upload the report to Codecov
