@@ -165,7 +165,9 @@ module.exports = {
   electronBuild: () => {
     console.log("Running 'electron-builder build'...")
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish never ${(process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""}`,
+      `electron-builder build --config electron-builder.config.js --publish never ${
+        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+      }`,
       "."
     )
   },
