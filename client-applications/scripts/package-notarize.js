@@ -32,7 +32,6 @@ const packageNotarize = (env, config, version, commit) => {
     "AWS_ACCESS_KEY",
     "AWS_SECRET_KEY",
     "AMPLITUDE_KEY",
-    "MACOS_ARCH",
   ])
 
   helpers.snowpackBuild({
