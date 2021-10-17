@@ -47,6 +47,7 @@ const packageNotarize = (env, config, version, environment, commit) => {
           case "arm64":
             return `fractal-chromium-macos-arm64-${environment}`
         }
+      break
       case "win32":
         return `fractal-chromium-windows-${environment}`
       case "linux":
