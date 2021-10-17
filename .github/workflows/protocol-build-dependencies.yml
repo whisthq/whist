@@ -142,7 +142,7 @@ jobs:
 
       ###################################################################################
 
-      - name: Checkout Fractal Git Repository
+      - name: Checkout fractal/fractal Git Repository
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         uses: actions/checkout@v2
 
@@ -222,7 +222,7 @@ jobs:
 
       ###################################################################################
 
-      - name: Checkout fractal Git Repository
+      - name: Checkout fractal/fractal Git Repository
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         uses: actions/checkout@v2
 
@@ -400,7 +400,7 @@ jobs:
 
       ###################################################################################
 
-      - name: Checkout Fractal Git Repository
+      - name: Checkout fractal/fractal Git Repository
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         uses: actions/checkout@v2
 
@@ -489,7 +489,7 @@ jobs:
 
       ###################################################################################
 
-      - name: Checkout Fractal Git Repository
+      - name: Checkout fractal/fractal Git Repository
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         uses: actions/checkout@v2
 
