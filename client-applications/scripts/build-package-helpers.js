@@ -160,10 +160,12 @@ module.exports = {
   },
 
   // Build via electron-build
+  // We add `--arm64` to the electron-builder command if running on a macOS ARM64 machine,
+  // as per: https://www.electron.build/cli.html
   electronBuild: () => {
     console.log("Running 'electron-builder build'...")
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish never`,
+      `electron-builder build --config electron-builder.config.js --publish never ${(process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""}`,
       "."
     )
   },
