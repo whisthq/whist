@@ -214,6 +214,7 @@ jobs:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          MACOS_ARCH: "x64"
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
@@ -308,6 +309,7 @@ jobs:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
+          MACOS_ARCH: "arm64"
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
