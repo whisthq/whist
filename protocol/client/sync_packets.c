@@ -194,13 +194,13 @@ void try_update_bitrate() {
     */
     if (update_bitrate) {
         update_bitrate = false;
-        FractalClientMessage fmsg = {0};
-        fmsg.type = MESSAGE_MBPS;
-        fmsg.bitrate_data.bitrate = client_max_bitrate;
-        fmsg.bitrate_data.burst_bitrate = client_max_burst_bitrate;
-        LOG_INFO("Asking for server MBPS to be %f/%f", fmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
-                 fmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
-        send_fcmsg(&fmsg);
+        FractalClientMessage fcmsg = {0};
+        fcmsg.type = MESSAGE_MBPS;
+        fcmsg.bitrate_data.bitrate = client_max_bitrate;
+        fcmsg.bitrate_data.burst_bitrate = client_max_burst_bitrate;
+        LOG_INFO("Asking for server MBPS to be %f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+        send_fcmsg(&fcmsg);
     }
 }
 
