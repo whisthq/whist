@@ -288,7 +288,7 @@ int try_get_next_message_tcp(FractalPacket **p_tcp_packet) {
     read_lock(&client.tcp_rwlock);
     FractalPacket *tcp_packet = read_tcp_packet(&(client.tcp_context), should_recvp);
     if (tcp_packet) {
-        LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
+        LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
     }
     read_unlock(&client.tcp_rwlock);
@@ -378,6 +378,15 @@ int multithreaded_manage_client(void *opaque) {
             }
         }
 
+        // If there is an active client that is not actively deactivating that hasn't pinged
+        //     in a while, we should reap it.
+        if (client.is_active && !client.is_deactivating && get_timer(last_ping_check) > 20.0) {
+            if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
+                LOG_ERROR("Failed to reap timed out clients.");
+            }
+            start_timer(&last_ping_check);
+        }
+
         if (!client.is_active) {
             connection_id = rand();
 
@@ -430,23 +439,15 @@ int multithreaded_manage_client(void *opaque) {
         }
         client_joined_after_window_name_broadcast = true;
 
-        // use this?
-        // reset_input(client_os);
+        // We reset the input tracker when a new client connects
+        reset_input(client_os);
 
+        // A client has connected and we want to start the ping timer
         start_timer(&(client.last_ping));
 
         // When a new client has been connected, we want all threads to hold client active again
         reset_threads_holding_active_count();
         client.is_active = true;
-
-        // If there is an active client that is not actively deactivating that hasn't pinged
-        //     in a while, we should reap it.
-        if (client.is_active && !client.is_deactivating && get_timer(last_ping_check) > 20.0) {
-            if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
-                LOG_ERROR("Failed to reap timed out clients.");
-            }
-            start_timer(&last_ping_check);
-        }
     }
 
     return 0;
