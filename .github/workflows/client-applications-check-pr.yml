@@ -225,7 +225,7 @@ jobs:
           yarn config set network-timeout 600000
           yarn cache clean
           yarn install
-          yarn package:notarize --config $CONFIG --version 1.0.0 --commit=${{ github.sha }}
+          yarn package:notarize --config $CONFIG --version 1.0.0 --commit ${{ github.sha }}
 
   #######################################################################################
   #######################################################################################
@@ -254,12 +254,6 @@ jobs:
         uses: actions/setup-node@v2.4.0
         with:
           node-version: "16"
-
-      # We need to do this since we're on a self-hosted runner
-      # Note: We also install and start the Docker daemon manually via VNC, if it
-      # hasn't been done already on the self-hosted runner
-      - name: Install Yarn
-        run: brew install yarn
 
       # To retrieve Fractal protocol libraries from AWS S3
       - name: Configure AWS S3 CLI
@@ -302,7 +296,6 @@ jobs:
       # M1 runner, and run `sudo xcode-select -r`
 
       - name: Build the macOS Electron Application
-        if: runner.os == 'macOS'
         working-directory: client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
