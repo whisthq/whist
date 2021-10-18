@@ -996,7 +996,7 @@ jobs:
   # from which Electron-Updater pulls them for auto-updating
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
   client-applications-publish-build-x64-s3:
-    name: "Client Applications: Build & Deploy ${{ matrix.config.name }} (X86_64)"
+    name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
     runs-on: ${{ matrix.config.os }}
     concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
     needs:
