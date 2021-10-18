@@ -286,7 +286,7 @@ TEST(ProtocolTest, BadDecrypt) {
 TEST(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
     #ifdef WIN32
-        std::ifstream png_image("images\\image.png", std::ios::binary);
+        std::ifstream png_image("..\\..\\test\\images\\image.png", std::ios::binary);
     #else
         std::ifstream png_image("images/image.png", std::ios::binary);
     #endif
@@ -315,7 +315,7 @@ TEST(ProtocolTest, PngToBmpToPng) {
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
     #ifdef _WIN32
-        std::ifstream bmp_image("..\\..\\test\\images\\image.png", std::ios::binary);
+        std::ifstream bmp_image("..\\..\\test\\images\\image.bmp", std::ios::binary);
     #else
         std::ifstream bmp_image("images/image.bmp", std::ios::binary);
     #endif
