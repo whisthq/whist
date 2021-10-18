@@ -315,9 +315,9 @@ TEST(ProtocolTest, PngToBmpToPng) {
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
     #ifdef _WIN32
-        std::ifstream png_image("images\\image.bmp", std::ios::binary);
+        std::ifstream bmp_image("images\\image.bmp", std::ios::binary);
     #else
-        std::ifstream png_image("images/image.bmp", std::ios::binary);
+        std::ifstream bmp_image("images/image.bmp", std::ios::binary);
     #endif
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
