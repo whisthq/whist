@@ -14,19 +14,14 @@ Includes
 ============================
 */
 
-#include <fractal/utils/mouse.h>
 #include <fractal/utils/rwlock.h>
 #include "client.h"
 #include "network.h"
 
-FractalMutex state_lock;
-RWLock is_active_rwlock;
+volatile int threads_needing_active = 0;  // Threads dependent on client being active
+volatile int threads_holding_active = 0;  // Threads currently assuming client is active
 
-Client clients[MAX_NUM_CLIENTS];
-
-int num_controlling_clients = 0;
-int num_active_clients = 0;
-int host_id = -1;
+Client client;
 
 /*
 ============================
@@ -34,10 +29,10 @@ Public Functions
 ============================
 */
 
-int init_clients(void) {
+int init_client(void) {
     /*
-        Initializes all clients objects in the client buffer.
-        Must be called before the client buffer can be used.
+        Initializes the client object.
+        Must be called before the client object can be used.
 
         NOTE: Locks shouldn't matter. They are getting created.
 
@@ -45,18 +40,11 @@ int init_clients(void) {
             (int): -1 on failure, 0 on success
     */
 
-    state_lock = fractal_create_mutex();
-    init_rw_lock(&is_active_rwlock);
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        clients[id].is_active = false;
+    client.is_active = false;
+    client.udp_port = BASE_UDP_PORT;
+    client.tcp_port = BASE_TCP_PORT;
+    init_rw_lock(&client.tcp_rwlock);
 
-        clients[id].udp_port = BASE_UDP_PORT + id;
-        clients[id].tcp_port = BASE_TCP_PORT + id;
-
-        init_rw_lock(&clients[id].tcp_rwlock);
-
-        memcpy(&(clients[id].mouse.color), &(mouse_colors[id]), sizeof(FractalRGBColor));
-    }
     return 0;
 }
 
@@ -72,21 +60,25 @@ int destroy_clients(void) {
             (int): -1 on failure, 0 on success
     */
 
-    for (int id = 0; id < MAX_NUM_CLIENTS; ++id) {
-        destroy_rw_lock(&clients[id].tcp_rwlock);
-    }
-    fractal_destroy_mutex(state_lock);
-    destroy_rw_lock(&is_active_rwlock);
+    destroy_rw_lock(&client.tcp_rwlock);
     return 0;
 }
 
-int quit_client(int id) {
+int start_quitting_client() {
+    /*
+        Begins deactivating client, but does not clean up its
+        resources yet. Must be called before `quit_client`.
+    */
+
+    client.is_deactivating = true;
+    return 0;
+}
+
+int quit_client() {
     /*
         Deactivates active client. Disconnects client. Updates count of active
-        clients. May only be called on an active client. The associated client
+        clients. Only does anything on an active client. The associated client
         object is not destroyed and may be made active in the future.
-
-        NOTE: Needs write lock is_active_rwlock and (write) state_lock
 
         Arguments:
             id (int): Client ID of active client to deactivate
@@ -95,81 +87,23 @@ int quit_client(int id) {
             (int): -1 on failure, 0 on success
     */
 
-    clients[id].is_active = false;
-    clients[id].mouse.is_active = false;
-    num_active_clients--;
-    if (clients[id].is_controlling) num_controlling_clients--;
-    if (disconnect_client(id) != 0) {
-        LOG_ERROR("Failed to disconnect client. (ID: %d)", id);
+    // If client is not active, just return
+    if (!client.is_active) {
+        return 0;
+    }
+
+    client.is_active = false;
+    if (disconnect_client() != 0) {
+        LOG_ERROR("Failed to disconnect client.");
         return -1;
     }
+    client.is_deactivating = false;
     return 0;
 }
 
-int quit_clients(void) {
+int reap_timed_out_client(double timeout) {
     /*
-        Deactivates all active clients. Disconnects client. Updates count
-        of active clients. The associated client objects are not destroyed
-        and may be made active in the future.
-
-        NOTE: Needs write is_active_rwlock and (write) state_lock
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
-    int ret = 0;
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active) {
-            if (quit_client(id) != 0) {
-                LOG_ERROR("Failed to quit client. (ID: %d)", id);
-                ret = -1;
-            }
-        }
-    }
-    return ret;
-}
-
-int exists_timed_out_client(double timeout, bool *exists) {
-    /*
-        Determines if any active client has timed out. Checks the time
-        of the last received ping for each active client. If the time
-        since the server has received a ping from a client equals or
-        exceeds the timeout threshold, the client is considered to have
-        timed out.
-
-        NOTE: Needs read is_active_rwlock
-
-        Arguments:
-            timeout (double): Duration (in seconds) after which an active
-                client is deemed timed out if the server has not received
-                a ping from the client.
-            exists (bool*): The field pointed to by exists is set to true
-                if one or more clients are timed out client and false
-                otherwise.
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success. Whether or not
-                there exists a timed out client does not mean failure.
-    */
-
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active) {
-            if (get_timer(clients[id].last_ping) > timeout) {
-                *exists = true;
-                return 0;
-            }
-        }
-    }
-    *exists = false;
-    return 0;
-}
-
-int reap_timed_out_clients(double timeout) {
-    /*
-        Quits all timed out clients.
-
-        NOTE: Needs write is_active_rwlock and (write) state_lock
+        Sets client to quit if timed out.
 
         Arguments:
             timeout (double): Duration (in seconds) after which a
@@ -180,105 +114,79 @@ int reap_timed_out_clients(double timeout) {
             (int): Returns -1 on failure, 0 on success.
     */
 
-    int ret = 0;
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active && get_timer(clients[id].last_ping) > timeout) {
-            LOG_INFO("Dropping client ID: %d", id);
-            if (quit_client(id) != 0) {
-                LOG_ERROR("Failed to quit client. (ID: %d)", id);
-                ret = -1;
-            }
-        }
-    }
-    return ret;
-}
-
-int try_find_client_id_by_user_id(int user_id, bool *found, int *id) {
-    /*
-        Finds the client ID of the active client object associated with
-        a user_id, if there is one. Only searches currently active clients.
-
-        NOTES: Needs read is_active_rwlock
-
-        Arguments:
-            user_id (int): User ID to be searched for.
-            found (bool*): Populated with true if an associated client
-                ID is found, false otherwise.
-            id (int*): Populated with found client ID, if one is found.
-
-        Retrurns:
-            (int): Returns -1 on failure, 0 on success. Not finding an
-                associated ID does not mean failure.
-    */
-
-    *found = false;
-    for (int i = 0; i < MAX_NUM_CLIENTS; i++) {
-        if (clients[i].is_active && clients[i].user_id == user_id) {
-            *id = i;
-            *found = true;
-            return 0;
+    if (client.is_active && get_timer(client.last_ping) > timeout) {
+        LOG_INFO("Dropping timed out client");
+        if (start_quitting_client() != 0) {
+            LOG_ERROR("Failed to start quitting client.");
+            return -1;
         }
     }
     return 0;
 }
 
-int get_available_client_id(int *id) {
+void add_thread_to_client_active_dependents() {
     /*
-        Finds an available client ID. If a client object is inactive,
-        that object and the associated client ID are available for
-        re-use. Function fails if no client ID is available.
-
-        NOTES: Needs read is_active_rwlock
-               Does not set up the client or make it active
-
-        Arguments:
-            id (int*): Points to field which function populates
-                with available client ID.
-
-        Returns:
-            (int): Returns -1 on failure (including no client IDs
-                are available), 0 on success.
+        Add thread to count of those dependent on client being active
     */
 
-    for (int i = 0; i < MAX_NUM_CLIENTS; i++) {
-        if (!clients[i].is_active) {
-            *id = i;
-            return 0;
-        }
-    }
-    LOG_WARNING("No available client slots.");
-    return -1;
+    threads_needing_active++;
 }
 
-int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs) {
+void remove_thread_from_holding_active_count() {
     /*
-        Fills buffer with status info for every active client. Status
-        info includes mouse position, interaction mode, and more.
-
-        NOTE: Needs read is_active_rwlock and (read) state_lock
-
-        Arguments:
-            msgs (PeerUpdateMessage*): Buffer to be filled with peer
-                update info. Must be at least as large as the number
-                of presently active clients times the size of
-                each PeerUpdateMessage.
-            num_msgs (size_t*): Number of messages filled by function.
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success.
+        Remove thread from those currently assuming that client is active
     */
 
-    *num_msgs = 0;
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (clients[id].is_active && clients[id].mouse.is_active) {
-            msgs->peer_id = id;
-            msgs->x = clients[id].mouse.x;
-            msgs->y = clients[id].mouse.y;
-            msgs->is_controlling = clients[id].is_controlling;
-            memcpy(&(msgs->color), &(clients[id].mouse.color), sizeof(FractalRGBColor));
-            msgs++;
-            (*num_msgs)++;
+    threads_holding_active--;
+}
+
+void reset_threads_holding_active_count() {
+    /*
+        Set the thread count regarding a client as active to the full
+        dependent thread count again. This is needed when a new client
+        is made active after the previous one has been deactivated
+        and quit.
+
+        NOTE: Should only be called from `multithreaded_manage_client`
+    */
+
+    threads_holding_active = threads_needing_active;
+    client.is_deactivating = false;
+}
+
+void update_client_active_status(bool* is_thread_assuming_active) {
+    /*
+        Allows a thread to update its status on whether it believes
+        the client is active or not. If a client is deactivating,
+        we want the thread to stop believing that the client is active,
+        but otherwise will leave the status as is.
+
+        Arguments:
+            is_thread_assuming_active (bool*): pointer to the boolean
+                that the thread is using to indicate whether it believes
+                the client is currently active.
+                >> If the client should change its belief, this pointer
+                is populated with the new value.
+    */
+
+    if (client.is_deactivating) {
+        if (*is_thread_assuming_active) {
+            *is_thread_assuming_active = false;
+            remove_thread_from_holding_active_count();
         }
+    } else if (client.is_active && !*is_thread_assuming_active) {
+        *is_thread_assuming_active = true;
     }
-    return 0;
+}
+
+bool threads_still_holding_active() {
+    /*
+        Whether there remain any threads that are assuming that
+        the client is active.
+
+        Returns:
+            (bool): whether any threads need the client to still be active
+    */
+
+    return threads_holding_active > 0;
 }

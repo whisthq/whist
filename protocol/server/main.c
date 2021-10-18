@@ -67,21 +67,17 @@ void graceful_exit() {
     // Broadcast client quit message
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = SMESSAGE_QUIT;
-    read_lock(&is_active_rwlock);
-    if (broadcast_udp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
-                                          sizeof(FractalServerMessage), 1) != 0) {
-        LOG_WARNING("Could not send Quit Message");
+    if (client.is_active) {
+        if (broadcast_udp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
+                                              sizeof(FractalServerMessage), 1) != 0) {
+            LOG_WARNING("Could not send Quit Message");
+        }
     }
-    read_unlock(&is_active_rwlock);
 
     // Kick all clients
-    write_lock(&is_active_rwlock);
-    fractal_lock_mutex(state_lock);
-    if (quit_clients() != 0) {
-        LOG_ERROR("Failed to quit clients.");
+    if (start_quitting_client() != 0) {
+        LOG_ERROR("Failed to start quitting client.");
     }
-    fractal_unlock_mutex(state_lock);
-    write_unlock(&is_active_rwlock);
 }
 
 #ifdef __linux__
@@ -114,7 +110,7 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_fractal_client_message(FractalClientMessage* fcmsg, int id) {
+void handle_fractal_client_message(FractalClientMessage* fcmsg) {
     /*
         Handles a Fractal client message
 
@@ -123,14 +119,8 @@ void handle_fractal_client_message(FractalClientMessage* fcmsg, int id) {
             id (int): the client ID
     */
 
-    fractal_lock_mutex(state_lock);
-    bool is_controlling = clients[id].is_controlling;
-    fractal_unlock_mutex(state_lock);
-    if (handle_client_message(fcmsg, id, is_controlling) != 0) {
-        LOG_ERROR(
-            "Failed to handle message from client. "
-            "(ID: %d)",
-            id);
+    if (handle_client_message(fcmsg) != 0) {
+        LOG_ERROR("Failed to handle message from client.");
     }
 }
 
@@ -143,38 +133,36 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
             get_udp (bool): true if we want to get UDP, false otherwise
     */
 
-    read_lock(&is_active_rwlock);
-    for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
-        if (!clients[id].is_active) continue;
+    if (!client.is_active) {
+        return;
+    }
 
-        // Get packet(s)!
-        if (get_udp) {
-            FractalClientMessage* fcmsg = NULL;
-            FractalClientMessage local_fcmsg;
-            size_t fcmsg_size;
+    // Get packet(s)!
+    if (get_udp) {
+        FractalClientMessage* fcmsg = NULL;
+        FractalClientMessage local_fcmsg;
+        size_t fcmsg_size;
 
-            // If received a UDP message
-            if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
-                fcmsg = &local_fcmsg;
-                handle_fractal_client_message(fcmsg, id);
-            }
-        }
-
-        if (get_tcp) {
-            FractalPacket* tcp_packet = NULL;
-            // If received a TCP message
-            if (try_get_next_message_tcp(id, &tcp_packet) == 0 && tcp_packet != NULL) {
-                FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
-                LOG_INFO("TCP Packet type: %d", fcmsg->type);
-                handle_fractal_client_message(fcmsg, id);
-            }
-            // Free the tcp packet if we received one
-            if (tcp_packet) {
-                free_tcp_packet(tcp_packet);
-            }
+        // If received a UDP message
+        if (try_get_next_message_udp(&local_fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
+            fcmsg = &local_fcmsg;
+            handle_fractal_client_message(fcmsg);
         }
     }
-    read_unlock(&is_active_rwlock);
+
+    if (get_tcp) {
+        FractalPacket* tcp_packet = NULL;
+        // If received a TCP message
+        if (try_get_next_message_tcp(&tcp_packet) == 0 && tcp_packet != NULL) {
+            FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
+            LOG_INFO("TCP Packet type: %d", fcmsg->type);
+            handle_fractal_client_message(fcmsg);
+        }
+        // Free the tcp packet if we received one
+        if (tcp_packet) {
+            free_tcp_packet(tcp_packet);
+        }
+    }
 }
 
 int multithreaded_sync_tcp_packets(void* opaque) {
@@ -194,7 +182,11 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     // TODO: compartmentalize each part into its own function
     init_clipboard_synchronizer(false);
 
+    add_thread_to_client_active_dependents();
+    bool assuming_client_active = false;
     while (!exiting) {
+        update_client_active_status(&assuming_client_active);
+
         // RECEIVE TCP PACKET HANDLER
         get_fractal_client_messages(true, false);
 
@@ -205,25 +197,25 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // client
         ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
         if (clipboard_chunk) {
-            LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
-            // Alloc fsmsg
-            FractalServerMessage* fsmsg_response =
-                allocate_region(sizeof(FractalServerMessage) + clipboard_chunk->size);
-            // Build fsmsg
-            memset(fsmsg_response, 0, sizeof(*fsmsg_response));
-            fsmsg_response->type = SMESSAGE_CLIPBOARD;
-            memcpy(&fsmsg_response->clipboard, clipboard_chunk,
-                   sizeof(ClipboardData) + clipboard_chunk->size);
-            // Send fsmsg
-            read_lock(&is_active_rwlock);
-            if (broadcast_tcp_packet_from_payload(
-                    PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                    sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
-                LOG_WARNING("Failed to broadcast clipboard message.");
+            if (assuming_client_active) {
+                LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
+                // Alloc fsmsg
+                FractalServerMessage* fsmsg_response =
+                    allocate_region(sizeof(FractalServerMessage) + clipboard_chunk->size);
+                // Build fsmsg
+                memset(fsmsg_response, 0, sizeof(*fsmsg_response));
+                fsmsg_response->type = SMESSAGE_CLIPBOARD;
+                memcpy(&fsmsg_response->clipboard, clipboard_chunk,
+                       sizeof(ClipboardData) + clipboard_chunk->size);
+                // Send fsmsg
+                if (broadcast_tcp_packet_from_payload(
+                        PACKET_MESSAGE, (uint8_t*)fsmsg_response,
+                        sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
+                    LOG_WARNING("Failed to broadcast clipboard message.");
+                }
+                // Free fsmsg
+                deallocate_region(fsmsg_response);
             }
-            read_unlock(&is_active_rwlock);
-            // Free fsmsg
-            deallocate_region(fsmsg_response);
             // Free clipboard chunk
             deallocate_region(clipboard_chunk);
         }
@@ -286,8 +278,8 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    if (init_clients() != 0) {
-        LOG_FATAL("Failed to initialize client objects.");
+    if (init_client() != 0) {
+        LOG_FATAL("Failed to initialize client object.");
     }
 
 #ifdef __linux__
@@ -310,7 +302,7 @@ int main(int argc, char* argv[]) {
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
 
     FractalThread manage_clients_thread =
-        fractal_create_thread(multithreaded_manage_clients, "multithreaded_manage_clients", NULL);
+        fractal_create_thread(multithreaded_manage_client, "multithreaded_manage_client", NULL);
 
     FractalThread sync_tcp_packets_thread = fractal_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
@@ -318,15 +310,6 @@ int main(int argc, char* argv[]) {
 
     clock totaltime;
     start_timer(&totaltime);
-
-    clock last_exit_check;
-    start_timer(&last_exit_check);
-
-    clock last_ping_check;
-    start_timer(&last_ping_check);
-
-    clock last_tcp_ping_check;
-    start_timer(&last_tcp_ping_check);
 
     LOG_INFO("Receiving packets...");
 
@@ -348,15 +331,24 @@ int main(int argc, char* argv[]) {
     start_timer(&uri_handler_timer);
 #endif  // ! _WIN32
 
+    add_thread_to_client_active_dependents();
+    bool assuming_client_active = false;
     while (!exiting) {
+        update_client_active_status(&assuming_client_active);
+
+        if (!assuming_client_active) {
+            continue;
+        }
+
+        // Get UDP messages
+        get_fractal_client_messages(false, true);
+
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
                 // Broadcast ack
-                read_lock(&is_active_rwlock);
                 if (broadcast_ack() != 0) {
                     LOG_ERROR("Failed to broadcast acks.");
                 }
-                read_unlock(&is_active_rwlock);
             }
             start_timer(&ack_timer);
         }
@@ -379,7 +371,6 @@ int main(int argc, char* argv[]) {
                 memset(fsmsg, 0, sizeof(FractalServerMessage));
                 fsmsg->type = SMESSAGE_FULLSCREEN;
                 fsmsg->fullscreen = (int)fullscreen;
-                read_lock(&is_active_rwlock);
                 if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg,
                                                       sizeof(FractalServerMessage)) < 0) {
                     LOG_ERROR("Failed to broadcast fullscreen message.");
@@ -387,7 +378,6 @@ int main(int argc, char* argv[]) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
                 }
-                read_unlock(&is_active_rwlock);
                 free(fsmsg);
             }
             start_timer(&window_fullscreen_timer);
@@ -397,14 +387,13 @@ int main(int argc, char* argv[]) {
             char name[WINDOW_NAME_MAXLEN + 1];
             if (get_focused_window_name(name) == 0) {
                 if (client_joined_after_window_name_broadcast ||
-                    (num_active_clients > 0 && strcmp(name, cur_window_name) != 0)) {
+                    (assuming_client_active && strcmp(name, cur_window_name) != 0)) {
                     LOG_INFO("Window title changed. Broadcasting window title message.");
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
                     FractalServerMessage* fsmsg_response = safe_malloc(fsmsg_size);
                     memset(fsmsg_response, 0, sizeof(*fsmsg_response));
                     fsmsg_response->type = SMESSAGE_WINDOW_TITLE;
                     memcpy(&fsmsg_response->window_title, name, sizeof(name));
-                    read_lock(&is_active_rwlock);
                     if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
                                                           (int)fsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast window title message.");
@@ -413,7 +402,6 @@ int main(int argc, char* argv[]) {
                         safe_strncpy(cur_window_name, name, sizeof(cur_window_name));
                         client_joined_after_window_name_broadcast = false;
                     }
-                    read_unlock(&is_active_rwlock);
                     free(fsmsg_response);
                 }
             }
@@ -436,14 +424,12 @@ int main(int argc, char* argv[]) {
                     memset(fsmsg, 0, sizeof(*fsmsg));
                     fsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&fsmsg->requested_uri, handled_uri, sizeof(handled_uri));
-                    read_lock(&is_active_rwlock);
                     if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg,
                                                           (int)fsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
                         LOG_INFO("Sent open URI message!");
                     }
-                    read_unlock(&is_active_rwlock);
                     free(fsmsg);
                 } else {
                     LOG_WARNING("Unable to read URI handler file: %d", errno);
@@ -455,28 +441,6 @@ int main(int argc, char* argv[]) {
             start_timer(&uri_handler_timer);
         }
 #endif  // ! _WIN32
-
-        if (get_timer(last_ping_check) > 20.0) {
-            read_lock(&is_active_rwlock);
-            bool exists, should_reap = false;
-            if (exists_timed_out_client(CLIENT_PING_TIMEOUT_SEC, &exists) != 0) {
-                LOG_ERROR("Failed to find if a client has timed out.");
-            } else {
-                should_reap = exists;
-            }
-            read_unlock(&is_active_rwlock);
-            if (should_reap) {
-                write_lock(&is_active_rwlock);
-                if (reap_timed_out_clients(CLIENT_PING_TIMEOUT_SEC) != 0) {
-                    LOG_ERROR("Failed to reap timed out clients.");
-                }
-                write_unlock(&is_active_rwlock);
-            }
-            start_timer(&last_ping_check);
-        }
-
-        // Get UDP messages
-        get_fractal_client_messages(false, true);
     }
 
     destroy_input_device(input_device);
@@ -492,13 +456,10 @@ int main(int argc, char* argv[]) {
 
     fractal_destroy_mutex(packet_mutex);
 
-    write_lock(&is_active_rwlock);
-    fractal_lock_mutex(state_lock);
-    if (quit_clients() != 0) {
+    // This is safe to call here because all other threads have been waited and destroyed
+    if (quit_client() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
-    fractal_unlock_mutex(state_lock);
-    write_unlock(&is_active_rwlock);
 
 #ifdef _WIN32
     WSACleanup();
