@@ -28,8 +28,8 @@ Custom types
 
 typedef struct Client {
     /* ACTIVE */
-    bool is_active;       // "protected" by `is_deactivating`
-    bool is_deactivating; // whether a client is in the process of deactivating
+    bool is_active;        // "protected" by `is_deactivating`
+    bool is_deactivating;  // whether a client is in the process of deactivating
 
     /* USER INFO */
     int user_id;  // not lock protected
@@ -139,6 +139,9 @@ void update_client_active_status(bool* is_thread_assuming_active);
 /**
  * @brief                          Whether there remain any threads that are assuming
  *                                 that the client is active.
+ *
+ * @returns                        Whether any threads need the client to still be
+ *                                 active
  */
 bool threads_still_holding_active();
 

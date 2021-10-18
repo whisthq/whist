@@ -18,9 +18,8 @@ Includes
 #include "client.h"
 #include "network.h"
 
-volatile int threads_needing_active = 0; // Threads dependent on client being active
-volatile int threads_holding_active = 0; // Threads currently assuming client is active
-
+volatile int threads_needing_active = 0;  // Threads dependent on client being active
+volatile int threads_holding_active = 0;  // Threads currently assuming client is active
 
 Client client;
 

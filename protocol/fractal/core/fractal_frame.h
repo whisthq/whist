@@ -42,8 +42,7 @@ typedef struct AudioFrame {
 #define LARGEST_AUDIOFRAME_SIZE 9000
 
 // The maximum frame size, excluding the embedded videodata
-#define MAX_VIDEOFRAME_METADATA_SIZE \
-    (sizeof(VideoFrame) + sizeof(FractalCursorImage))
+#define MAX_VIDEOFRAME_METADATA_SIZE (sizeof(VideoFrame) + sizeof(FractalCursorImage))
 
 // The maximum allowed videodata size that can be embedded in a VideoFrame*
 // Setting frame->videodata_length to anything larger than this is invalid and will cause problems

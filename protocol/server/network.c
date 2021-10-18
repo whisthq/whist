@@ -111,9 +111,9 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
             //     undefined behavior.
             write_lock(&client.tcp_rwlock);
             closesocket(client.tcp_context.socket);
-            if (create_tcp_context(&(client.tcp_context), NULL,
-                                   client.tcp_port, 1, TCP_CONNECTION_WAIT,
-                                   get_using_stun(), binary_aes_private_key) < 0) {
+            if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1,
+                                   TCP_CONNECTION_WAIT, get_using_stun(),
+                                   binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&client.tcp_rwlock);
@@ -185,14 +185,14 @@ Public Function Implementations
 */
 
 int connect_client(bool using_stun, char *binary_aes_private_key_input) {
-    if (create_udp_context(&(client.udp_context), NULL, client.udp_port, 1,
-                           UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
+    if (create_udp_context(&(client.udp_context), NULL, client.udp_port, 1, UDP_CONNECTION_WAIT,
+                           using_stun, binary_aes_private_key_input) < 0) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
 
-    if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1,
-                           TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input) < 0) {
+    if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1, TCP_CONNECTION_WAIT,
+                           using_stun, binary_aes_private_key_input) < 0) {
         LOG_WARNING("Failed TCP connection with client");
         closesocket(client.udp_context.socket);
         return -1;
@@ -250,8 +250,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
     }
 
     if (client.is_active) {
-        if (send_udp_packet_from_payload(&(client.udp_context), type, data, len,
-                                         packet_id) < 0) {
+        if (send_udp_packet_from_payload(&(client.udp_context), type, data, len, packet_id) < 0) {
             LOG_WARNING("Failed to send UDP packet to client");
             return -1;
         }
@@ -262,8 +261,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
 int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data,
-                                         len) < 0) {
+        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }
@@ -425,8 +423,7 @@ int multithreaded_manage_client(void *opaque) {
         // Client is not in use so we don't need to worry about anyone else
         // touching it
         if (connect_client(get_using_stun(), binary_aes_private_key) != 0) {
-            LOG_WARNING(
-                "Failed to establish connection with client.");
+            LOG_WARNING("Failed to establish connection with client.");
             continue;
         }
 
