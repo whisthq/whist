@@ -208,7 +208,7 @@ TEST(ProtocolTest, SetRenderingTest) {
 
 // This test makes a packet, encrypts it, decrypts it, and confirms the latter is
 // the original packet
-TEST(ProtocolTest, EncryptAndDecrpt) {
+TEST(ProtocolTest, EncryptAndDecrypt) {
     const char* data = "testing...testing";
     size_t len = strlen(data);
 
@@ -241,7 +241,8 @@ TEST(ProtocolTest, EncryptAndDecrpt) {
 
     // compare original and decrypted packet
     EXPECT_EQ(decrypted_len, original_len);
-    EXPECT_EQ(strcmp((char*)decrypted_packet.data, (char*)original_packet.data), 0);
+    EXPECT_EQ(decrypted_packet.payload_size, len);
+    EXPECT_EQ(strncmp((char*)decrypted_packet.data, (char*)original_packet.data, len), 0);
 }
 
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
