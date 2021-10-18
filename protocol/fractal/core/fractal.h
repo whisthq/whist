@@ -587,7 +587,7 @@ typedef struct {
     short num_keycodes;
     bool caps_lock;
     bool num_lock;
-    char keyboard_state[KEYCODE_UPPERBOUND];
+    char state[KEYCODE_UPPERBOUND];
     bool active_pinch;
 } FractalKeyboardState;
 
