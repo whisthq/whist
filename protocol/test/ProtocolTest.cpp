@@ -281,15 +281,19 @@ TEST(ProtocolTest, BadDecrypt) {
     EXPECT_EQ(decrypted_len, -1);
 }
 
+/**
+ *  Only run on Mac and Linux for 2 reaons:
+ *  1) There is an encoding difference on Windows that causes the 
+ *  images to be read differently 
+ *  2) These tests on Windows add an additional 3-5 minutes for the Workflow 
+ */
+#ifndef _WIN32 
 // Tests that by converting a PNG to a BMP then converting that back
 // to a PNG returns the original image
 TEST(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
-    #ifdef WIN32
-        std::ifstream png_image("..\\..\\test\\images\\image.png", std::ios::binary);
-    #else
-        std::ifstream png_image("images/image.png", std::ios::binary);
-    #endif
+    std::ifstream png_image("images/image.png", std::ios::binary);
+
     // copies all data into buffer
     std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
     int img_size = (int) png_vec.size();
@@ -338,6 +342,8 @@ TEST(ProtocolTest, BmpToPngToBmp) {
     delete[] png_buffer;
     delete[] new_bmp_data;
 }
+
+#endif
 
 
 // Adds AVPackets to an buffer via write_packets_to_buffer and 
