@@ -1,7 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <iterator>
-#include <algorithm>
 #include "gtest/gtest.h"
 
 extern "C" {
