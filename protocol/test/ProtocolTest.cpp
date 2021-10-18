@@ -315,7 +315,7 @@ TEST(ProtocolTest, PngToBmpToPng) {
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
     #ifdef _WIN32
-        std::ifstream bmp_image("images\\image.bmp", std::ios::binary);
+        std::ifstream bmp_image("..\\..\\test\\images\\image.png", std::ios::binary);
     #else
         std::ifstream bmp_image("images/image.bmp", std::ios::binary);
     #endif
