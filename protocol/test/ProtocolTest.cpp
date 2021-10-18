@@ -8,6 +8,7 @@ extern "C" {
     #include "client/client_utils.h"
     #include "client/ringbuffer.h"
     #include "fractal/utils/color.h"
+    #include <fractal/core/fractal.h>
 
     #ifndef __APPLE__
         #include "server/main.h"
@@ -97,8 +98,8 @@ TEST(ProtocolTest, InitRingBuffer) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_AUDIO_TEST_FRAMES);
 
     EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
-    // EXPECT_EQ(rb->currently_rendering_id, -1);
-    // EXPECT_EQ(rb->currently_rendering_frame.id, get_frame_at_id(rb, -1)->id);
+    EXPECT_EQ(rb->currently_rendering_id, -1);
+    EXPECT_EQ(rb->currently_rendering_frame.id, get_frame_at_id(rb, -1)->id);
 
     for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
         EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
@@ -284,7 +285,7 @@ TEST(ProtocolTest, BadDecrypt) {
 /**
  *  Only run on Mac and Linux for 2 reaons:
  *  1) There is an encoding difference on Windows that causes the 
- *  images to be read differently 
+ *  images to be read differently, thus causing them to fail 
  *  2) These tests on Windows add an additional 3-5 minutes for the Workflow 
  */
 #ifndef _WIN32 
@@ -318,11 +319,8 @@ TEST(ProtocolTest, PngToBmpToPng) {
 // to a PNG returns the original image
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
-    #ifdef _WIN32
-        std::ifstream bmp_image("..\\..\\test\\images\\image.bmp", std::ios::binary);
-    #else
-        std::ifstream bmp_image("images/image.bmp", std::ios::binary);
-    #endif
+    std::ifstream bmp_image("images/image.bmp", std::ios::binary);
+
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
     int img_size = (int) bmp_vec.size();
@@ -376,6 +374,58 @@ TEST(ProtocolTest, PacketsToBuffer) {
     EXPECT_EQ(*buffer, 1);
     EXPECT_EQ(*(buffer + 1), (int) strlen(data1));
     EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
+}
+
+TEST(ClientTest, BitArrayMemCpyTest) {
+    #define MAX_RING_BUFFER_SIZE 300
+    // A bunch of prime numbers + {10,100,200,250,299,300}
+    std::vector<int> bitarray_sizes {1, 2, 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
+
+    for (auto test_size : bitarray_sizes) {
+        BitArray *bit_arr = bit_array_create(test_size);
+        EXPECT_TRUE(bit_arr);
+
+        bit_array_clear_all(bit_arr);
+        for (int i=0; i<test_size; i++) {
+            EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
+        }
+
+        std::vector<bool>bits_arr_check;
+
+        for (int i=0; i<test_size; i++) {
+            int coin_toss = rand() % 2;
+            EXPECT_TRUE(coin_toss == 0 || coin_toss == 1);
+            if (coin_toss) {
+                bits_arr_check.push_back(true);
+                bit_array_set_bit(bit_arr, i);
+            } else {
+                bits_arr_check.push_back(false);
+            }
+        }
+
+        unsigned char ba_raw[BITS_TO_CHARS(MAX_RING_BUFFER_SIZE)];
+        memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
+        bit_array_free(bit_arr);
+
+        BitArray *bit_arr_recovered = bit_array_create(test_size);
+        EXPECT_TRUE(bit_arr_recovered);
+
+        EXPECT_TRUE(bit_arr_recovered->array);
+        EXPECT_TRUE(bit_arr_recovered->array != NULL);
+        EXPECT_TRUE(ba_raw);
+        EXPECT_TRUE(ba_raw != NULL);
+        memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
+
+        for (int i=0; i<test_size; i++) {
+            if (bits_arr_check[i]) {
+                EXPECT_GE(bit_array_test_bit(bit_arr_recovered, i), 1);
+            } else {
+                EXPECT_EQ(bit_array_test_bit(bit_arr_recovered, i), 0);
+            }   
+        }
+
+        bit_array_free(bit_arr_recovered);
+    }
 }
 
 // Runs the tests
