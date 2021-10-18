@@ -164,11 +164,8 @@
             COMMAND lcov --remove coverage.info -o coverage.info '/Users/runner/work/fractal/fractal/protocol/build/*' '/Applications/*' # Remove non-Fractal files
             COMMAND lcov --remove coverage.info -o coverage.info '/workdir/protocol/build-docker/*' '/usr/include/c++/9/*' # Remove non-Fractal Linux files
             COMMAND lcov --list coverage.info # Print verbose debug info
-            COMMAND echo "Trying current directory"
-            COMMAND echo "CURRENT DIR" && pwd 
-            COMMAND ls . 
-            COMMAND echo "UPPER DIR" && pwd 
-            COMMAND ls .. 
+            COMMAND echo "Trying to find codecov"
+            COMMAND find / -name codecov.sh
 
             COMMAND ./../codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
