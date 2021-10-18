@@ -5,8 +5,9 @@
  */
 
 import React, { useEffect } from "react"
-import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
+
+const keys = require("lodash.keys")
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
@@ -41,14 +42,8 @@ import TRIGGER from "@app/utils/triggers"
 
 // If no query parameter match is found, we default to a
 // generic navigation error window.
-const show = chain(window.location.search.substring(1))
-  .split("=")
-  .chunk(2)
-  .fromPairs()
-  .get("show")
-  .value()
-
-console.log("here!!", show)
+const show =
+  new URL(window.location.search.substring(1)).searchParams.get("show") ?? ""
 
 const RootComponent = () => {
   const [mainState, setMainState] = useMainState()

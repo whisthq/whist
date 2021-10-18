@@ -11,7 +11,13 @@
 // Here, we import from src/testing/schemas/index.ts, so don't forget to
 // first import your schema file there when add new schema files.
 import { Observable, NEVER } from "rxjs"
-import { get, set, keys, isEmpty, negate } from "lodash"
+
+const get = require("lodash.get")
+const set = require("lodash.set")
+const keys = require("lodash.keys")
+const isEmpty = require("lodash.isempty")
+const negate = require("lodash.negate")
+
 import * as schemas from "@app/testing/schemas"
 
 // Arguments are passed through environment varialbes as positional arguments

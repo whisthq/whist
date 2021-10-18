@@ -7,7 +7,9 @@
 import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
-import { isEmpty, pickBy } from "lodash"
+
+const isEmpty = require("lodash.isempty")
+const pickBy = require("lodash.pickby")
 
 import { AWSRegion } from "@app/@types/aws"
 import {

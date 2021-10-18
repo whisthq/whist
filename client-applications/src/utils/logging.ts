@@ -5,11 +5,12 @@
  */
 
 import { app } from "electron"
-import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
+
+const truncate = require("lodash.truncate")
 
 import config, {
   loggingBaseFilePath,

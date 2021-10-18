@@ -1,6 +1,8 @@
 import { merge, Observable, of } from "rxjs"
 import { map, take, filter } from "rxjs/operators"
-import { isEmpty, pickBy } from "lodash"
+
+const isEmpty = require("lodash.isempty")
+const pickBy = require("lodash.pickby")
 
 import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"

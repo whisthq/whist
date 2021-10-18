@@ -7,7 +7,6 @@
 
 import events from "events"
 import { Menu, Tray, nativeImage } from "electron"
-import { values, endsWith } from "lodash"
 
 import { trayIconPath } from "@app/config/files"
 import { AWSRegion } from "@app/@types/aws"
@@ -15,6 +14,8 @@ import { defaultAllowedRegions, allowPayments } from "@app/utils/constants"
 import { MenuItem } from "electron/main"
 import { persistGet } from "./persist"
 import { createSpeedtestWindow } from "@app/utils/windows"
+
+const values = require("lodash.values")
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -120,7 +121,7 @@ export const createMenu = (signedIn: boolean, userEmail?: string) =>
   Menu.buildFromTemplate([
     ...(signedIn ? [accountMenu] : []),
     ...[settingsMenu, feedbackMenu],
-    ...(signedIn && endsWith(userEmail ?? "", "@fractal.co")
+    ...(signedIn && (userEmail ?? "").endsWith("@fractal.co")
       ? [regionMenu]
       : []),
   ])

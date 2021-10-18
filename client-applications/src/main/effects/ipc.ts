@@ -8,9 +8,10 @@ import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
 
+const mapValues = require("lodash.mapvalues")
+
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
-import { mapValues } from "lodash"
 import { appEnvironment } from "../../../config/configs"
 
 // This file is responsible for broadcasting state to all renderer windows.

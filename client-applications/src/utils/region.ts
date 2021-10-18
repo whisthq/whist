@@ -4,11 +4,11 @@
  * @brief This file contains utility functions for finding the closest AWS region.
  */
 
-import { values } from "lodash"
-
 import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/utils/logging"
 import fetch from "node-fetch"
+
+const values = require("lodash.values")
 
 const fractalPingTime = async (host: string, numberPings: number) => {
   /*

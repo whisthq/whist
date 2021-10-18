@@ -6,10 +6,13 @@
 
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, take } from "rxjs/operators"
-import { mapValues, values, omit } from "lodash"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
+
+const mapValues = require("lodash.mapvalues")
+const values = require("lodash.values")
+const omit = require("lodash.omit")
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
 export interface Trigger {
