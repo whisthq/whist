@@ -88,6 +88,7 @@ jobs:
           } else {
             exit 1
           }
+
       - name: Verify that NVCC is Installed on GHA Windows Machine
         if: runner.os == 'Windows' && matrix.config.cuda
         shell: powershell
@@ -96,6 +97,7 @@ jobs:
           ls $env:CUDA_PATH
           ls $env:CUDA_PATH\bin
           ls $env:CUDA_PATH\include
+
       - name: Register OS Compiler Matchers
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
@@ -110,6 +112,7 @@ jobs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
               echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           fi
+
       - name: Build and Test Protocol Client and Server on Windows
         if: runner.os == 'Windows'
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
@@ -120,6 +123,7 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -G "Ninja" || EXIT /B 1
           ninja FractalClient FractalProtocolTest || EXIT /B 1
           ninja FractalServer FractalProtocolTest || EXIT /B 1
+
       - name: Verify builds with clang-tidy on Windows
         if: runner.os == 'Windows'
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
@@ -129,6 +133,7 @@ jobs:
           echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           cd build
           ninja clang-tidy || EXIT /B 1
+
       ###################################################################################
       ################################# MACOS STEPS START ###############################
 
@@ -140,6 +145,7 @@ jobs:
           brew install llvm coreutils perl doxygen lcov
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+
       - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
@@ -151,6 +157,7 @@ jobs:
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
           make FractalClient FractalProtocolTest -j
+
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
@@ -164,6 +171,7 @@ jobs:
           echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           cd build
           make clang-tidy -j
+
       ###################################################################################
       ################################# LINUX STEPS START ###############################
 
@@ -191,6 +199,7 @@ jobs:
           git diff HEAD --
           # This will return an error if there is a non-empty diff
           git diff-index --quiet HEAD --
+
       - name: Verify Builds with clang-tidy on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
@@ -198,6 +207,7 @@ jobs:
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           ./build_protocol_targets.sh clang-tidy
+
       # This tests building the protocol in a container, the same way we do it in production
       - name: Build Protocol Server in Docker Container
         if: runner.os == 'Linux'
@@ -271,6 +281,7 @@ jobs:
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
           # Upload coverage report to Codecov
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
+          
       - name: Verify Builds with clang-tidy on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
