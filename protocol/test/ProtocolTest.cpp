@@ -285,7 +285,11 @@ TEST(ProtocolTest, BadDecrypt) {
 // to a PNG returns the original image
 TEST(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
-    std::ifstream png_image("images/image.png", std::ios::binary);
+    #ifdef WIN32
+        std::ifstream png_image("images\\image.png", std::ios::binary);
+    #else
+        std::ifstream png_image("images/image.png", std::ios::binary);
+    #endif
     // copies all data into buffer
     std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
     int img_size = (int) png_vec.size();
@@ -310,7 +314,11 @@ TEST(ProtocolTest, PngToBmpToPng) {
 // to a PNG returns the original image
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
-    std::ifstream bmp_image("images/image.bmp", std::ios::binary);
+    #ifdef _WIN32
+        std::ifstream png_image("images\\image.bmp", std::ios::binary);
+    #else
+        std::ifstream png_image("images/image.bmp", std::ios::binary);
+    #endif
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
     int img_size = (int) bmp_vec.size();
