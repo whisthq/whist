@@ -178,7 +178,9 @@ module.exports = {
       `Running 'electron-builder publish' and uploading to S3 bucket ${bucket}...`
     )
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish always`,
+      `electron-builder build --config electron-builder.config.js --publish always ${
+        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+      }`,
       ".",
       { S3_BUCKET: bucket }
     )

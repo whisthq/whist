@@ -313,4 +313,4 @@ jobs:
           yarn config set network-timeout 600000
           yarn cache clean
           yarn install
-          yarn package:notarize --config $CONFIG --version 1.0.0 --commit=${{ github.sha }}
+          yarn package:notarize --config $CONFIG --version 1.0.0 --commit ${{ github.sha }}
