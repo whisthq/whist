@@ -259,8 +259,8 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
     bool server_caps_lock = get_keyboard_modifier_state(input_device, FK_CAPSLOCK);
     bool server_num_lock = get_keyboard_modifier_state(input_device, FK_NUMLOCK);
 
-    bool client_caps_lock_holding = keyboard_state.keyboard_state[FK_CAPSLOCK];
-    bool client_num_lock_holding = keyboard_state.keyboard_state[FK_NUMLOCK];
+    bool client_caps_lock_holding = keyboard_state.state[FK_CAPSLOCK];
+    bool client_num_lock_holding = keyboard_state.state[FK_NUMLOCK];
 
     // Modmap all keycode values
     bool mapped_keys[KEYCODE_UPPERBOUND] = {0};
@@ -273,7 +273,7 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
         }
         // If any origin key is pressed, then the modmap'ed key is considered pressed
         mapped_keys[mapped_key] |= fractal_keycode < keyboard_state.num_keycodes
-            && (bool)keyboard_state.keyboard_state[fractal_keycode];
+            && (bool)keyboard_state.state[fractal_keycode];
         if (mapped_keys[mapped_key]) {
             LOG_INFO("Syncing with %d pressed! From %d origin!", mapped_key, fractal_keycode);
         }
