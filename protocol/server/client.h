@@ -28,31 +28,18 @@ Custom types
 
 typedef struct Client {
     /* ACTIVE */
-    bool is_active;       // protected by global is_active_rwlock
-    bool is_controlling;  // protected by state lock
-    bool is_host;         // protected by state lock
+    bool is_active;        // "protected" by `is_deactivating`
+    bool is_deactivating;  // whether a client is in the process of deactivating
 
     /* USER INFO */
     int user_id;  // not lock protected
 
     /* NETWORK */
-    SocketContext udp_context;  // protected by global is_active_rwlock
-    SocketContext tcp_context;  // protected by global is_active_rwlock
-    int udp_port;               // protected by global is_active_rwlock
-    int tcp_port;               // protected by global is_active_rwlock
+    SocketContext udp_context;  // "protected" by global `is_deactivating`
+    SocketContext tcp_context;  // "protected" by global `is_deactivating`
+    int udp_port;               // "protected" by global `is_deactivating`
+    int tcp_port;               // "protected" by global `is_deactivating`
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
-
-    /* MOUSE */
-    struct {
-        int x;
-        int y;
-        struct {
-            int r;
-            int g;
-            int b;
-        } color;
-        bool is_active;
-    } mouse;  // protected by state lock
 
     /* PING */
     clock last_ping;      // not lock protected
@@ -60,14 +47,7 @@ typedef struct Client {
 
 } Client;
 
-extern FractalMutex state_lock;
-extern RWLock is_active_rwlock;
-
-extern Client clients[MAX_NUM_CLIENTS];
-
-extern int num_controlling_clients;
-extern int num_active_clients;
-extern int host_id;
+extern Client client;
 
 /*
 ============================
@@ -76,15 +56,14 @@ Public Functions
 */
 
 /**
- * @brief                          Initializes all clients objects in the client
- *                                 buffer.
+ * @brief                          Initializes client object.
  *
- * @details                        Must be called before the client buffer
+ * @details                        Must be called before the client object
  *                                 can be used.
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int init_clients(void);
+int init_client(void);
 
 /**
  * @brief                          De-initializes all clients objects in the
@@ -99,6 +78,12 @@ int init_clients(void);
 int destroy_clients(void);
 
 /**
+ * @brief                          Begins deactivating client, but does not clean up
+ *                                 its resources yet. Must be called before `quit_client`.
+ */
+int start_quitting_client();
+
+/**
 * @brief                          Deactivates active client.
 *
 * @details                        Disconnects client. Updates count of active
@@ -107,49 +92,13 @@ int destroy_clients(void);
 *                                 not destroyed and may be made active in the
 *                                 future.
 
-* @param id                       Client ID of active client to deactivate
 *
 * @returns                        Returns -1 on failure, 0 on success
 */
-int quit_client(int id);
+int quit_client();
 
 /**
- * @brief                          Deactivates all active clients.
- *
- * @details                        Disconnects client. Updates count of active
- *                                 clients. The associated client objects are
- *                                 not destroyed and may be made active in the
- *                                 future.
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int quit_clients(void);
-
-/**
- * @brief                          Determines if any active client has timed out.
- *
- * @details                        Checks the time of the last received ping for
- *                                 each active client. If the time since the
- *                                 server has received a ping from a client
- *                                 equals or exceeds the timeout threshold, the
- *                                 client is considered to have timed out.
- *
- * @param timeout                  Duration (in seconds) after which an active
- *                                 client is deemed timed out if the server has
- *                                 not received a ping from the client.
- *
- * @param exists                   The field pointed to by exists is set to true
- *                                 if one or more clients are timed out client
- *                                 and false otherwise.
- *
- * @returns                        Returns -1 on failure, 0 on success. Whether
- *                                 or not there exists a timed out client does
- *                                 not mean failure.
- */
-int exists_timed_out_client(double timeout, bool *exists);
-
-/**
- * @brief                          Quits all timed out clients.
+ * @brief                          Quit client if timed out.
  *
  * @param timeout                  Duration (in seconds) after which a client
  *                                 is deemed timed out if the server has not
@@ -157,59 +106,43 @@ int exists_timed_out_client(double timeout, bool *exists);
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int reap_timed_out_clients(double timeout);
+int reap_timed_out_client(double timeout);
 
 /**
- * @brief                          Finds the client ID of the active client
- *                                 object associated with a user ID, if there is
- *                                 one.
- *
- * @param user_id                  User ID to be searched for.
- *
- * @param found                    Populated with true if an associated client ID
- *                                 is found, false otherwise.
- *
- * @param id                       Populated with found client ID, if one is
- *                                 found.
- *
- * @returns                        Returns -1 on failure, 0 on success. Not
- *                                 finding an associated ID does not mean
- *                                 failure.
+ * @brief                          Add thread to count of those dependent on
+ *                                 client being active.
  */
-int try_find_client_id_by_user_id(int user_id, bool *found, int *id);
+void add_thread_to_client_active_dependents();
 
 /**
- * @brief                          Finds an available client ID.
- *
- * @details                        If a client object is inactive, that object
- *                                 and the associated client ID are
- *                                 available for re-use. Function fails if no
- *                                 client ID is available.
- *
- * @param id                       Points to field which function populates
- *                                 with available client ID.
- *
- * @returns                        Returns -1 on failure (including no
- *                                 client IDs are available), 0 on success.
+ * @brief                          Set the thread count regarding a client as
+ *                                 active to the full dependent thread count
+ *                                 again. This is needed when a new client is
+ *                                 made active after the previous one has been
+ *                                 deactivated and quit.
  */
-int get_available_client_id(int *id);
+void reset_threads_holding_active_count();
 
 /**
- * @brief                          Fills buffer with status info for every
- *                                 active client.
+ * @brief                          Allows a thread to update its status on
+ *                                 whether it believes the client is active or
+ *                                 not. If a client is deactivating, we want the
+ *                                 thread to stop believing that the client is
+ *                                 active, but otherwise will leave the status as is.
  *
- * @details                        Status info includes mouse position,
- *                                 interaction mode, and more.
- *
- * @param msgs                     Buffer to be filled with peer update info.
- *                                 Must be at least as large as the number
- *                                 of presently active clients times the size of
- *                                 each PeerUpdateMessage.
- *
- * @param num_msgs                 Number of messages filled by function.
- *
- * @returns                        Returns -1 on failure, 0 on success.
+ * @param is_thread_assuming_active Pointer to the boolean that the thread is using
+ *                                  to indicate whether it believes the client is
+ *                                  currently active
  */
-int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs);
+void update_client_active_status(bool* is_thread_assuming_active);
+
+/**
+ * @brief                          Whether there remain any threads that are assuming
+ *                                 that the client is active.
+ *
+ * @returns                        Whether any threads need the client to still be
+ *                                 active
+ */
+bool threads_still_holding_active();
 
 #endif  // SERVER_CLIENT_H

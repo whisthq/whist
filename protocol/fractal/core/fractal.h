@@ -81,10 +81,9 @@ Defines
 
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
-#define MAX_NUM_CLIENTS 10
 #define PORT_DISCOVERY 32262
 #define BASE_UDP_PORT 32263
-#define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
+#define BASE_TCP_PORT 32273
 
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
@@ -514,19 +513,10 @@ typedef struct FractalDiscoveryRequestMessage {
 } FractalDiscoveryRequestMessage;
 
 /**
- * @brief   TCP recovery message.
- * @details Client message to ask the server to restart the TCP connection.
- */
-typedef struct FractalTCPRecoveryMessage {
-    int client_id;
-} FractalTCPRecoveryMessage;
-
-/**
  * @brief   Discovery reply message.
  * @details Message sent by server in response to a FractalDiscoveryRequestMessage.
  */
 typedef struct FractalDiscoveryReplyMessage {
-    int client_id;
     int udp_port;
     int tcp_port;
     int connection_id;
@@ -549,9 +539,8 @@ typedef enum FractalClientMessageType {
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
 
-    MESSAGE_MOUSE_INACTIVE = 6,
-    MESSAGE_MULTIGESTURE = 7,       ///< Gesture Event
-    MESSAGE_RELEASE = 8,            ///< Message instructing the host to release all input
+    MESSAGE_MULTIGESTURE = 6,       ///< Gesture Event
+    MESSAGE_RELEASE = 7,            ///< Message instructing the host to release all input
                                     ///< that is currently pressed.
     MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
@@ -566,9 +555,8 @@ typedef enum FractalClientMessageType {
     MESSAGE_AUDIO_BITARRAY_NACK = 114,
     CMESSAGE_CLIPBOARD = 115,
     MESSAGE_IFRAME_REQUEST = 116,
-    CMESSAGE_INTERACTION_MODE = 117,
-    MESSAGE_DISCOVERY_REQUEST = 118,
-    MESSAGE_TCP_RECOVERY = 119,
+    MESSAGE_DISCOVERY_REQUEST = 117,
+    MESSAGE_TCP_RECOVERY = 118,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -614,13 +602,9 @@ typedef struct FractalClientMessage {
         FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
         FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
-        FractalTCPRecoveryMessage tcpRecovery;            ///< TCP recovery message.
 
         // MESSAGE_MULTIGESTURE
         FractalMultigestureMessage multigesture;  ///< Multigesture message.
-
-        // CMESSAGE_INTERACTION_MODE
-        InteractionMode interaction_mode;
 
         // MESSAGE_MBPS
         struct {
@@ -712,18 +696,6 @@ typedef struct FractalServerMessage {
         char requested_uri[0];
     };
 } FractalServerMessage;
-
-/**
- * @brief   Peer update message.
- * @details Message sent when a client peer has updated.
- */
-typedef struct PeerUpdateMessage {
-    int peer_id;
-    int x;
-    int y;
-    bool is_controlling;    // whether this is the controlling client
-    FractalRGBColor color;  // client cursor color
-} PeerUpdateMessage;
 
 /* @brief   Packet destination. (unused)
  * @details Host and port of a message destination.

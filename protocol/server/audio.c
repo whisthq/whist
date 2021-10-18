@@ -85,9 +85,13 @@ int32_t multithreaded_send_audio(void* opaque) {
     sample_rate = audio_device->sample_rate;
     LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
 
-    // setup
+    add_thread_to_client_active_dependents();
 
+    // setup
+    bool assuming_client_active = false;
     while (!exiting) {
+        update_client_active_status(&assuming_client_active);
+
         // for each available packet
         for (get_next_packet(audio_device); packet_available(audio_device);
              get_next_packet(audio_device)) {
@@ -138,16 +142,14 @@ int32_t multithreaded_send_audio(void* opaque) {
 
                         if (num_packets < 0) {
                             LOG_WARNING("Failed to write audio packet to buffer");
-                        } else {
+                        } else if (assuming_client_active) {
                             for (int i = 0; i < num_packets; ++i) {
-                                read_lock(&is_active_rwlock);
                                 if (broadcast_udp_packet(
                                         &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
                                         get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) <
                                     0) {
                                     LOG_WARNING("Failed to broadcast audio packet");
                                 }
-                                read_unlock(&is_active_rwlock);
                             }
                         }
 
@@ -161,15 +163,13 @@ int32_t multithreaded_send_audio(void* opaque) {
 
                 if (num_packets < 0) {
                     LOG_WARNING("Failed to write audio packet to buffer");
-                } else {
+                } else if (assuming_client_actives) {
                     for (int i = 0; i < num_packets; ++i) {
-                        read_lock(&is_active_rwlock);
                         if (broadcast_udp_packet(
                                 &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
                                 get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) < 0) {
                             LOG_WARNING("Failed to broadcast audio packet");
                         }
-                        read_unlock(&is_active_rwlock);
                     }
                 }
 

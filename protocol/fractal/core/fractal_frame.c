@@ -62,25 +62,6 @@ unsigned char* get_frame_videodata(VideoFrame* frame) {
     return ret;
 }
 
-PeerUpdateMessage* get_frame_peer_messages(VideoFrame* frame) {
-    /*
-        Get a pointer to the PeerUpdateMessage inside of the VideoFrame*
-
-        NOTES: Prerequisites for writing to the returned PeerUpdateMessage
-        pointer: frame->videodata_length must be set set_frame_cursor_image
-        must be called. After writing to the returned PeerUpdateMessage*,
-        please update frame->num_peer_update_msgs.
-
-        Arguments:
-            frame (Frame*): The VideoFrame who's data buffer is being used
-
-        Returns:
-            (PeerUpdateMessage*): A pointer to the internal PeerUpdateMessage buffer
-    */
-
-    return (PeerUpdateMessage*)(get_frame_videodata(frame) + frame->videodata_length);
-}
-
 int get_total_frame_size(VideoFrame* frame) {
     /*
         Get the total VideoFrame size, including all of the data embedded in
@@ -97,5 +78,5 @@ int get_total_frame_size(VideoFrame* frame) {
     if (frame->has_cursor) {
         ret += sizeof(FractalCursorImage);
     }
-    return sizeof(VideoFrame) + ret + sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs;
+    return sizeof(VideoFrame) + ret;
 }

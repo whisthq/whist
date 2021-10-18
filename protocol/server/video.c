@@ -265,7 +265,12 @@ int32_t multithreaded_send_video(void* opaque) {
     encoder_finished = false;
     transfer_context_active = false;
 
+    add_thread_to_client_active_dependents();
+
+    bool assuming_client_active = false;
     while (!exiting) {
+        update_client_active_status(&assuming_client_active);
+
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
         if (client_width < 0 || client_height < 0 || client_dpi < 0) {
@@ -522,17 +527,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                  encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" : "");
 #endif  // LOG_VIDEO
 
-                        PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
-
                         size_t num_msgs;
-                        read_lock(&is_active_rwlock);
-                        fractal_lock_mutex(state_lock);
-
-                        if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
-                            LOG_ERROR("Failed to copy peer update messages.");
-                        }
-                        frame->num_peer_update_msgs = (int)num_msgs;
-
                         start_timer(&statistics_timer);
 
                         // Packetize the frame
@@ -542,7 +537,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
                         if (num_packets < 0) {
                             LOG_WARNING("Failed to write video packet to buffer");
-                        } else {
+                        } else if (assuming_client_active) {
                             // Send the packets to the client
                             bool failed = false;
                             for (int i = 0; i < num_packets; ++i) {
@@ -574,8 +569,6 @@ int32_t multithreaded_send_video(void* opaque) {
                                 ++id;
                             }
                         }
-                        fractal_unlock_mutex(state_lock);
-                        read_unlock(&is_active_rwlock);
 
                         log_double_statistic("Video frame send time (ms)",
                                              get_timer(statistics_timer) * MS_IN_SECOND);
@@ -601,17 +594,15 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 if (num_packets < 0) {
                     LOG_WARNING("Failed to write video packet to buffer");
-                } else {
+                } else if (assuming_client_active) {
                     bool failed = false;
                     for (int i = 0; i < num_packets; ++i) {
-                        read_lock(&is_active_rwlock);
                         if (broadcast_udp_packet(
                                 &video_buffer[id % VIDEO_BUFFER_SIZE][i],
                                 get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
                             LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
                             failed = true;
                         }
-                        read_unlock(&is_active_rwlock);
                     }
                     if (!failed) {
                         ++id;

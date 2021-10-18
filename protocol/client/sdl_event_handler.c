@@ -68,7 +68,6 @@ Private Functions
 */
 
 int handle_window_size_changed(SDL_Event *event);
-int handle_mouse_left_window(SDL_Event *event);
 int handle_key_up_down(SDL_Event *event);
 int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
@@ -166,24 +165,6 @@ int handle_window_size_changed(SDL_Event *event) {
     return 0;
 }
 
-int handle_mouse_left_window(SDL_Event *event) {
-    /*
-        Handle the SDL event for mouse leaving window
-
-        Arguments:
-            event (SDL_Event*): SDL event for mouse leaving window
-
-        Return:
-            (int): 0 on success
-    */
-
-    UNUSED(event);
-    FractalClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_MOUSE_INACTIVE;
-    send_fcmsg(&fcmsg);
-    return 0;
-}
-
 int handle_key_up_down(SDL_Event *event) {
     /*
         Handle the SDL key press or release event
@@ -224,27 +205,6 @@ int handle_key_up_down(SDL_Event *event) {
     if (ctrl_pressed && alt_pressed && keycode == FK_F4) {
         LOG_INFO("Quitting...");
         exiting = true;
-    }
-
-    if (ctrl_pressed && alt_pressed && keycode == FK_B && is_pressed) {
-        FractalClientMessage fcmsg = {0};
-        fcmsg.type = CMESSAGE_INTERACTION_MODE;
-        fcmsg.interaction_mode = SPECTATE;
-        send_fcmsg(&fcmsg);
-    }
-
-    if (ctrl_pressed && alt_pressed && keycode == FK_G && is_pressed) {
-        FractalClientMessage fcmsg = {0};
-        fcmsg.type = CMESSAGE_INTERACTION_MODE;
-        fcmsg.interaction_mode = CONTROL;
-        send_fcmsg(&fcmsg);
-    }
-
-    if (ctrl_pressed && alt_pressed && keycode == FK_M && is_pressed) {
-        FractalClientMessage fcmsg = {0};
-        fcmsg.type = CMESSAGE_INTERACTION_MODE;
-        fcmsg.interaction_mode = EXCLUSIVE_CONTROL;
-        send_fcmsg(&fcmsg);
     }
 
     FractalClientMessage fcmsg = {0};
@@ -454,10 +414,6 @@ int handle_sdl_event(SDL_Event *event) {
         case SDL_WINDOWEVENT: {
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                 if (handle_window_size_changed(event) != 0) {
-                    return -1;
-                }
-            } else if (event->window.event == SDL_WINDOWEVENT_LEAVE) {
-                if (handle_mouse_left_window(event) != 0) {
                     return -1;
                 }
             }
