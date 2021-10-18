@@ -29,7 +29,11 @@ Includes
 
 // A Mutex to ensure unsafe commands don't overlap
 FractalMutex clipboard_mutex;
+// Whether to send the local clipboard contents on startup
 bool preserve_local_clipboard = false;
+// Whether to skip the synchronization for the next clipboard update
+//     This is to prevent Peer 2 from sending a copy event back to
+//     Peer 1 when Peer 1 sends an updated clipboard to Peer 2
 bool skip_next_has_updated = false;
 
 /*
