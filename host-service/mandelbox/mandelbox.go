@@ -283,8 +283,6 @@ func (c *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken
 }
 
 func (c *mandelboxData) GetJSONData() interface{} {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
 	return c.JSONData
 }
 
