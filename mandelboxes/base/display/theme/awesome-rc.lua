@@ -388,6 +388,9 @@ client.connect_signal("manage", function (c)
     -- i.e. put it at the end of others instead of setting it master.
     if not awesome.startup then awful.client.setslave(c) end
 
+    -- set rounded corners, to conform with macOS design
+    c.shape = gears.shape.rounded_rect
+
     manage_taskbar_visibility()
     awful.placement.no_offscreen(c, {honor_workarea=true})
 
