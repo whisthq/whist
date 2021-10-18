@@ -258,11 +258,9 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `fractal-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -361,12 +359,10 @@ jobs:
         run: |
           import os
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":auth0: Auth0 Rules Deployed :auth0:"
           BODY = f"Auth0 Rules deployed to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -374,11 +370,9 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -595,12 +589,10 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":whale: Mandelboxes & AMIs Deployed :whale:"
           BODY = "Mandelboxes & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -608,11 +600,9 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelboxes and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -711,13 +701,11 @@ jobs:
         run: |
           import os
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
           TITLE = ":heroku: Webserver Deployed :heroku:"
           BODY = f"Webserver deployed to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -725,11 +713,9 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -838,14 +824,12 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":package: Webserver Successfully Created Buffer of New AMIs :package:"
           BODY = f"Webserver at {WEBSERVER_URL} created buffers for new AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack that AMI upgrade has failed
@@ -853,13 +837,11 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to create buffers for AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -881,6 +863,9 @@ jobs:
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
+      new_micro_version: ${{ steps.generate-release-version.outputs.new_micro_version }}
+      new_staging_rc_version: ${{ steps.generate-release-version.outputs.new_staging_rc_version }}
+      new_dev_rc_version: ${{ steps.generate-release-version.outputs.new_dev_rc_version }}
 
     # Only run client-applications deployment if none of the previous steps failed
     if: |
@@ -946,9 +931,9 @@ jobs:
             NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
 
             # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
-            echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
-            echo "new_staging_rc_version=0" >> $GITHUB_ENV
-            echo "new_dev_rc_version=0" >> $GITHUB_ENV
+            echo "::set-output name=new_micro_version::${NEW_MICRO}"
+            echo "::set-output name=new_staging_rc_version::0"
+            echo "::set-output name=new_dev_rc_version::0"
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
             echo 'Using staging configuration...'
             # increment version by staging-rc.1
@@ -963,7 +948,7 @@ jobs:
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-staging-rc.${NEW_STAGING_RC}"
 
             # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
-            echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
+            echo "::set-output name=new_staging_rc_version::${NEW_STAGING_RC}"
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
             echo 'Using dev configuration...'
             # increment version by dev-rc.1
@@ -978,14 +963,13 @@ jobs:
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
 
             # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
-            echo "new_dev_rc_version=${NEW_DEV_RC}" >> $GITHUB_ENV
+            echo "::set-output name=new_dev_rc_version::${NEW_DEV_RC}"
           else
             echo 'Error: Invalid branch' && false
           fi
 
-          echo "New $BRANCH_NAME version: ${NEW_VERSION}"
-
           # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
+          echo "New $BRANCH_NAME version: ${NEW_VERSION}"
           echo "::set-output name=release_version::${NEW_VERSION}"
 
   #######################################################################################
@@ -1248,6 +1232,7 @@ jobs:
       [
         fractal-publish-build-config,
         fractal-build-monorepo-config,
+        client-applications-retrieve-version-number,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
       ]
@@ -1278,19 +1263,19 @@ jobs:
             curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ needs.client-applications-retrieve-version-number.outputs.new_micro_version }}, staging_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_staging_rc_version }}, dev_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_dev_rc_version }}, prod_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
             https://config-database.fractal.co/v1/graphql
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
             curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_staging_rc_version }}, staging_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
             https://config-database.fractal.co/v1/graphql
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
             curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
-            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ env.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
+            --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ needs.client-applications-retrieve-version-number.outputs.new_dev_rc_version }}, dev_commit_hash: \\\"${{ github.sha }}\\\"}) { id } }\" }" \
             https://config-database.fractal.co/v1/graphql
           fi
 
@@ -1321,11 +1306,9 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-x64-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -1425,14 +1408,12 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":bezos: Webserver Successfully Swapped to New AMIs :bezos:"
           BODY = f"Webserver at {WEBSERVER_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack that AMI upgrade has failed
@@ -1440,13 +1421,11 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to swap over active AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -1497,12 +1476,10 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":github: Fractal GitHub Release Completed :github:"
           BODY = "Deployment of Fractal Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -1510,9 +1487,7 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `fractal-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
