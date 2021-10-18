@@ -22,14 +22,9 @@ func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
 				"x-hasura-admin-secret": params.AccessKey,
 			},
 		}).WithLog(logger.Print).
-		// Disable logging when initially connecting to the server
-		// because we don't want to expose our Hasura Admin Secret.
-		WithoutLogTypes(
-			graphql.GQL_CONNECTION_INIT,
-			graphql.GQL_DATA,
-			graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
 			log.Print("err", err)
+			logger.Errorf("Error initializing Hasura client: %v", err)
 			return err
 		})
 
