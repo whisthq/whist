@@ -296,7 +296,7 @@ func (c *mandelboxData) SetJSONData(jsonData string) {
 	defer c.rwlock.RUnlock()
 
 	var JSONData interface{}
-	json.Unmarshal([]byte(jsonData), JSONData)
+	json.Unmarshal([]byte(jsonData), &JSONData)
 
 	if JSONData != nil {
 		c.JSONData = JSONData.(map[string]interface{})
