@@ -1828,24 +1828,33 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
     size_t encrypted_len = (size_t)encrypt_packet(packet, (int)packet_size, &encrypted_packet,
                                                   (unsigned char*)context->binary_aes_private_key);
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
-    fractal_lock_mutex(context->mutex);
-    int ret;
+
+#define RETRIES_ON_BUFFER_FULL 5
+    for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
+        fractal_lock_mutex(context->mutex);
+        int ret;
 #if LOG_NETWORKING
-    LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
+        LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
 #endif
-    if (ENCRYPTING_PACKETS) {
-        // Send encrypted during normal usage
-        ret = sendp(context, &encrypted_packet, (int)encrypted_len);
-    } else {
-        // Send unencrypted during dev mode
-        ret = sendp(context, packet, (int)packet_size);
+        if (ENCRYPTING_PACKETS) {
+            // Send encrypted during normal usage
+            ret = sendp(context, &encrypted_packet, (int)encrypted_len);
+        } else {
+            // Send unencrypted during dev mode
+            ret = sendp(context, packet, (int)packet_size);
+        }
+        fractal_unlock_mutex(context->mutex);
+        if (ret < 0) {
+            int error = get_last_network_error();
+            LOG_WARNING("Unexpected UDP Packet Error: %d", error);
+            if (error == 55) {
+                fractal_sleep(100);
+                continue;
+            }
+            return -1;
+        }
     }
-    fractal_unlock_mutex(context->mutex);
-    if (ret < 0) {
-        int error = get_last_network_error();
-        LOG_WARNING("Unexpected UDP Packet Error: %d", error);
-        return -1;
-    }
+
     return 0;
 }
 // NOTE that this function is in the hotpath.
