@@ -748,7 +748,7 @@ jobs:
         webserver-deploy-heroku,
       ]
     outputs:
-      new_amis_str: ${{ steps.run-webserver-cli-ami-upgrade.outputs.new_amis}}
+      new_amis_str: ${{ steps.run-webserver-cli-ami-upgrade.outputs.new_amis }}
     if: always() && (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success') && (needs.webserver-deploy-heroku.result == 'success')
     env:
       TOKEN_FILE: .access_token
@@ -781,7 +781,7 @@ jobs:
         id: get-token
         run: '[ -f "$TOKEN_FILE" ] && echo ::set-output name=access-token::$(cat "$TOKEN_FILE")'
 
-      - name: Set heroku app name and DB URLs
+      - name: Set Heroku app name and DB URLs
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
@@ -809,7 +809,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run flask cli to create new instance buffers
-        id: run-webserver-cli-ami-upgradeZ
+        id: run-webserver-cli-ami-upgrade
         working-directory: webserver
         env:
           AUTH0_DOMAIN: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
