@@ -1090,7 +1090,7 @@ jobs:
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the Windows Electron Application
         if: false && runner.os == 'Windows'
-        working-directory: client-applicationsp
+        working-directory: client-applications
         env:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
@@ -1104,7 +1104,7 @@ jobs:
           call yarn install
           call yarn package:publish \
           --config='${{ needs.fractal-build-monorepo-config.outputs.win32 }}' \
-          --version='${{ env.desktop_app_new_version }}' \
+          --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
@@ -1129,7 +1129,7 @@ jobs:
           yarn install
           yarn package:publish \
           --config='${{ needs.fractal-build-monorepo-config.outputs.macos }}' \
-          --version='${{ env.desktop_app_new_version }}' \
+          --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
@@ -1234,7 +1234,7 @@ jobs:
           yarn install
           yarn package:publish \
           --config='${{ needs.fractal-build-monorepo-config.outputs.macos }}' \
-          --version='${{ env.desktop_app_new_version }}' \
+          --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.fractal-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
