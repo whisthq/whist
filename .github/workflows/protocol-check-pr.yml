@@ -1,7 +1,7 @@
 # workflows/protocol-check-pr.yml
 #
 # Protocol: Check PR
-# Checks a protocol PR for building, linting, and clang standards success
+# Checks a protocol PR for linting, clang standards and building success.
 
 name: "Protocol: Check PR"
 
@@ -24,11 +24,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Check Protocol PR on Intel X86_64 systems (via GHA runners)
-  protocol-check-pr-x64:
+  protocol-check-pr-building-linting:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
+    # Platforms to build on/for
     strategy:
       matrix:
         config:
@@ -37,15 +37,13 @@ jobs:
             cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
           - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
             os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
-          - name: "Build and Check Protocol on macOS X64 (clang)"
+          - name: "Build and Check Protocol on macOS (clang)"
             os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
 
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
-      ################################## CONFIG STEPS START ##############################
-
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
@@ -57,8 +55,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      ###################################################################################
-      ################################ WINDOWS STEPS START ##############################
+      ############################# Windows Configuration Steps START #############################
 
       - name: Install Chocolatey dependencies on Windows GHA Machine
         if: runner.os == 'Windows'
@@ -72,11 +69,11 @@ jobs:
 
       - name: Install CUDA on Windows GHA Machine
         if: runner.os == 'Windows' && matrix.config.cuda
-        working-directory: .github\workflows\helpers\protocol
         env:
           visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
           cuda: "11.0.167" # Imported from env in the .ps1 script, we use CUDA 11.0
         shell: powershell
+        working-directory: .github\workflows\helpers\protocol
         run: |
           .\install_cuda_windows.ps1
 
@@ -115,30 +112,9 @@ jobs:
               echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
           fi
 
-      - name: Build and Test Protocol Client and Server on Windows
-        if: runner.os == 'Windows'
-        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-        working-directory: protocol
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -G "Ninja" || EXIT /B 1
-          ninja FractalClient FractalClientTest || EXIT /B 1
-          ninja FractalServer FractalServerTest || EXIT /B 1
+      ############################# Windows Configuration Steps END #############################
 
-      - name: Verify builds with clang-tidy on Windows
-        if: runner.os == 'Windows'
-        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-        working-directory: protocol
-        run: |
-          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
-
-          cd build
-          ninja clang-tidy || EXIT /B 1
-
-      ###################################################################################
-      ################################# MACOS STEPS START ###############################
+      ############################# Unix Configuration Steps START #############################
 
       - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
         if: runner.os == 'macOS'
@@ -149,45 +125,40 @@ jobs:
           ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
+      ############################# Unix Configuration Steps END #############################
+
+      - name: Build and Test Protocol Client and Server on Windows
+        if: runner.os == 'Windows'
+        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+        working-directory: protocol
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "Ninja" || EXIT /B 1
+          ninja FractalClient FractalProtocolTest || EXIT /B 1
+          ninja FractalServer FractalProtocolTest || EXIT /B 1
+
       - name: Build and Test Protocol Client on macOS
         if: runner.os == 'macOS'
-        working-directory: protocol
         env:
-          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
+        working-directory: protocol
         run: |
           # Build the protocol and its test suite
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
-          make FractalClient FractalClientTest -j
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+          make FractalClient FractalProtocolTest -j
 
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalProtocolTest
 
-      - name: Verify Builds with clang-tidy on macOS
-        if: runner.os == 'macOS'
-        working-directory: protocol
-        run: |
-          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
-
-          cd build
-          make clang-tidy -j
-
-      ###################################################################################
-      ################################# LINUX STEPS START ###############################
-
-      - name: Build and Test Protocol Client on Linux Ubuntu
+      - name: Build and Test Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient FractalClientTest
-
-      - name: Build Protocol Server on Linux Ubuntu
-        if: runner.os == 'Linux'
-        working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer FractalServerTest
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer FractalProtocolTest
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
@@ -217,11 +188,26 @@ jobs:
 
           ./build_protocol_targets.sh clang-tidy
 
-      # This tests building the protocol in a container, the same way we do it in production
-      - name: Build Protocol Server in Docker Container
-        if: runner.os == 'Linux'
+      - name: Verify Builds with clang-tidy on MacOS
+        if: runner.os == 'macOS'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Release FractalServer FractalServerTest
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          cd build
+          make clang-tidy -j
+
+      - name: Verify builds with clang-tidy on Windows
+        if: runner.os == 'Windows'
+        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+        working-directory: protocol
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          cd build
+          ninja clang-tidy || EXIT /B 1
 
       # This ensures that all the build files from build_protocol_targets.sh have actually been generated
       - name: Ensure that all protocol build files are present
@@ -233,73 +219,3 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: protocol
         run: pip install cmakelint && cmakelint --config=.cmakelintrc **/**/CMakeLists.txt
-
-  #######################################################################################
-  #######################################################################################
-
-  # Check Protocol PR on ARM64 systems (via self-hosted MacStadium M1 runner)
-  protocol-check-pr-arm64:
-    name: Build and Test Protocol on macOS ARM64 (clang)
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-
-    steps:
-      ################################## CONFIG STEPS START ##############################
-
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      ###################################################################################
-      ################################# MACOS STEPS START ###############################
-
-      # These commands must be run with sudo, which requires entering the password. They need
-      # to be run via VNC directly in the terminal, so that the password can be provided. They
-      # are left here, commented out, for reference
-      # - name: Install macOS Client Protocol Dependencies
-      #   if: runner.os == 'macOS'
-      #   working-directory: protocol
-      #   run: |
-      #     # llvm for clang-tidy, coreutils for realpath, lcov for codecov
-      #     brew install llvm coreutils perl doxygen lcov
-      #     sudo ln -s "/opt/homebrew/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
-      #     sudo ln -s "/opt/homebrew/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-
-      - name: Build and Test Protocol Client
-        working-directory: protocol
-        env:
-          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
-          make FractalClient FractalClientTest -j
-
-          # Generate code coverage report from .gcno/.gcda files generated by `clang --coverage`
-          lcov --capture --directory . --output-file coverage.info
-          lcov --list coverage.info # debug info
-
-          # Download the Codecov uploader
-          curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
-
-          # Upload coverage report to Codecov
-          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
-
-      - name: Verify Builds with clang-tidy on macOS
-        if: runner.os == 'macOS'
-        working-directory: protocol
-        run: |
-          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
-
-          cd build
-          make clang-tidy -j
