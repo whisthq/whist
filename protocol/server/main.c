@@ -26,7 +26,11 @@ Globals
 */
 
 static FractalMutex packet_mutex;
+
+// only implemented for Linux servers currently
+#ifdef __linux__
 static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
+#endif
 
 /*
 ============================
@@ -326,7 +330,9 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Receiving packets...");
 
+#ifdef __linux__
     init_x11_window_info_getter();
+#endif
 
     clock ack_timer;
     start_timer(&ack_timer);
@@ -355,6 +361,9 @@ int main(int argc, char* argv[]) {
             start_timer(&ack_timer);
         }
 
+        // only poll for window name and if it's full-screen if
+        // we're running on a Linux server, as Windows window title is not implemented
+#ifdef __linux__
         if (get_timer(window_fullscreen_timer) > 0.1) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.
@@ -410,6 +419,7 @@ int main(int argc, char* argv[]) {
             }
             start_timer(&window_name_timer);
         }
+#endif
 
 #ifndef _WIN32
 #define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
@@ -470,7 +480,10 @@ int main(int argc, char* argv[]) {
     }
 
     destroy_input_device(input_device);
+
+#ifdef __linux__
     destroy_x11_window_info_getter();
+#endif
 
     fractal_wait_thread(send_video_thread, NULL);
     fractal_wait_thread(send_audio_thread, NULL);

@@ -38,7 +38,6 @@ Includes
 #endif
 #include <time.h>
 
-#include <fractal/utils/x11_window_info.h>
 #include <fractal/core/fractalgetopt.h>
 #include <fractal/core/fractal.h>
 #include <fractal/input/input.h>
@@ -51,6 +50,10 @@ Includes
 #include "network.h"
 #include "video.h"
 #include "audio.h"
+
+#ifdef __linux__
+#include <fractal/utils/x11_window_info.h>
+#endif
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
