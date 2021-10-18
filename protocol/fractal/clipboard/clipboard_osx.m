@@ -88,8 +88,8 @@ const char *clipboard_get_string() {
     if ([pasteboard canReadObjectForClasses:class_array options:options]) {
         NSArray *objects_to_paste = [pasteboard readObjectsForClasses:class_array options:options];
 
-        // Sometimes if the contents are really large, it takes time for the clipboard contents to be
-        //     found
+        // Sometimes if the contents are really large, it takes time for the clipboard contents
+        //     to be found
         clock wait_for_contents_timer;
         start_timer(&wait_for_contents_timer);
         while ([objects_to_paste count] == 0 && get_timer(wait_for_contents_timer) < 2) {
