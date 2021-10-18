@@ -386,6 +386,8 @@ int main(int argc, char* argv[]) {
             start_timer(&window_fullscreen_timer);
         }
 
+        // only poll for window name if we're running on a Linux server, as Windows window title is not implemented
+#ifdef __linux__
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
             char name[WINDOW_NAME_MAXLEN + 1];
             if (get_focused_window_name(name) == 0) {
@@ -412,6 +414,7 @@ int main(int argc, char* argv[]) {
             }
             start_timer(&window_name_timer);
         }
+#endif
 
 #ifndef _WIN32
 #define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
