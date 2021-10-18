@@ -180,8 +180,10 @@ Custom Types
 ============================
 */
 
-// This is not because of limitations of TCP, but rather to keep the TCP thread from hanging
-#define CHUNK_SIZE 524288
+// Limit chunk size to 1 megabyte.
+//     This is not because of limitations of TCP, but rather to
+//     keep the TCP thread from hanging
+#define CHUNK_SIZE 1000000
 
 /**
  * @brief   Codec types.
