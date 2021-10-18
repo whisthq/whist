@@ -22,6 +22,7 @@ func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
 				"x-hasura-admin-secret": params.AccessKey,
 			},
 		}).WithLog(logger.Print).
+		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
 			log.Print("err", err)
 			logger.Errorf("Error initializing Hasura client: %v", err)
