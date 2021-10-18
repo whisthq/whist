@@ -1,3 +1,7 @@
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <iterator>
 #include "gtest/gtest.h"
 
 extern "C" {
@@ -278,7 +282,6 @@ TEST(ProtocolTest, BadDecrypt) {
 
 // Tests that by converting a PNG to a BMP then converting that back
 // to a PNG returns the original image
-/*
 TEST(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
     std::ifstream png_image("images/image.png", std::ios::binary);
@@ -301,11 +304,9 @@ TEST(ProtocolTest, PngToBmpToPng) {
     delete[] bmp_buffer;
     delete[] png_buffer;
 }
-*/
 
 // Tests that by converting a PNG to a BMP then converting that back
 // to a PNG returns the original image
-/*
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
     std::ifstream bmp_image("images/image.bmp", std::ios::binary);
@@ -328,7 +329,6 @@ TEST(ProtocolTest, BmpToPngToBmp) {
     delete[] png_buffer;
     delete[] new_bmp_data;
 }
-*/
 
 
 // Adds AVPackets to an buffer via write_packets_to_buffer and 
