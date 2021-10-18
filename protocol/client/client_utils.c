@@ -66,24 +66,25 @@ volatile SDL_Window *window;
 extern unsigned short port_mappings[USHRT_MAX];
 
 volatile bool using_piped_arguments;
-const struct option client_cmd_options[] = {{"width", required_argument, NULL, 'w'},
-                                     {"height", required_argument, NULL, 'h'},
-                                     {"bitrate", required_argument, NULL, 'b'},
-                                     {"codec", required_argument, NULL, 'c'},
-                                     {"private-key", required_argument, NULL, 'k'},
-                                     {"user", required_argument, NULL, 'u'},
-                                     {"environment", required_argument, NULL, 'e'},
-                                     {"icon", required_argument, NULL, 'i'},
-                                     {"ports", required_argument, NULL, 'p'},
-                                     {"name", required_argument, NULL, 'n'},
-                                     {"read-pipe", no_argument, NULL, 'r'},
-                                     {"loading", required_argument, NULL, 'l'},
-                                     {"skip-taskbar", no_argument, NULL, 's'},
-                                     // these are standard for POSIX programs
-                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
-                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
-                                     // end with NULL-termination
-                                     {0, 0, 0, 0}};
+const struct option client_cmd_options[] = {
+    {"width", required_argument, NULL, 'w'},
+    {"height", required_argument, NULL, 'h'},
+    {"bitrate", required_argument, NULL, 'b'},
+    {"codec", required_argument, NULL, 'c'},
+    {"private-key", required_argument, NULL, 'k'},
+    {"user", required_argument, NULL, 'u'},
+    {"environment", required_argument, NULL, 'e'},
+    {"icon", required_argument, NULL, 'i'},
+    {"ports", required_argument, NULL, 'p'},
+    {"name", required_argument, NULL, 'n'},
+    {"read-pipe", no_argument, NULL, 'r'},
+    {"loading", required_argument, NULL, 'l'},
+    {"skip-taskbar", no_argument, NULL, 's'},
+    // these are standard for POSIX programs
+    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+    // end with NULL-termination
+    {0, 0, 0, 0}};
 const char *usage;
 
 #define INCOMING_MAXLEN 127
@@ -317,7 +318,8 @@ int client_parse_args(int argc, char *argv[]) {
     // Initialize private key to default
     memcpy((char *)&client_binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
            sizeof(client_binary_aes_private_key));
-    memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(client_hex_aes_private_key));
+    memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
+           sizeof(client_hex_aes_private_key));
 
     // default user email
     safe_strncpy(user_email, "None", sizeof(user_email));
