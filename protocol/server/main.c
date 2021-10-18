@@ -26,7 +26,11 @@ Globals
 */
 
 static FractalMutex packet_mutex;
-static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
+
+// only implemented for Linux servers currently
+#ifdef __linux__
+    static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
+#endif
 
 /*
 ============================
@@ -357,6 +361,9 @@ int main(int argc, char* argv[]) {
             start_timer(&ack_timer);
         }
 
+        // only poll for window name and if it's full-screen if
+        // we're running on a Linux server, as Windows window title is not implemented
+#ifdef __linux__
         if (get_timer(window_fullscreen_timer) > 0.1) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.
@@ -386,8 +393,6 @@ int main(int argc, char* argv[]) {
             start_timer(&window_fullscreen_timer);
         }
 
-        // only poll for window name if we're running on a Linux server, as Windows window title is not implemented
-#ifdef __linux__
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
             char name[WINDOW_NAME_MAXLEN + 1];
             if (get_focused_window_name(name) == 0) {
