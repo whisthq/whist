@@ -98,9 +98,6 @@ TEST(ProtocolTest, InitRingBuffer) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_AUDIO_TEST_FRAMES);
 
     EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
-    EXPECT_EQ(rb->currently_rendering_id, -1);
-    EXPECT_EQ(rb->currently_rendering_frame.id, get_frame_at_id(rb, -1)->id);
-
     for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
         EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
 
@@ -376,8 +373,7 @@ TEST(ProtocolTest, PacketsToBuffer) {
     EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
 }
 
-TEST(ClientTest, BitArrayMemCpyTest) {
-    #define MAX_RING_BUFFER_SIZE 300
+TEST(ProtocolTest, BitArrayMemCpyTest) {
     // A bunch of prime numbers + {10,100,200,250,299,300}
     std::vector<int> bitarray_sizes {1, 2, 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
 
