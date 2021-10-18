@@ -167,7 +167,7 @@ bool has_clipboard_updated() {
         //     because it will just play back the set
         if (has_clipboard_updated && skip_next_has_updated) {
             has_clipboard_updated = false;
-            skip_next_has_updated = true;
+            skip_next_has_updated = false;
         }
         fractal_unlock_mutex(clipboard_mutex);
         return has_clipboard_updated;
