@@ -281,7 +281,7 @@ jobs:
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
           # Upload coverage report to Codecov
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
-          
+
       - name: Verify Builds with clang-tidy on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
