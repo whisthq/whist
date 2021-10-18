@@ -1,8 +1,6 @@
 package subscriptions
 
 import (
-	"log"
-
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	graphql "github.com/hasura/go-graphql-client"
 )
@@ -24,8 +22,7 @@ func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
 		}).WithLog(logger.Print).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
 		OnError(func(sc *graphql.SubscriptionClient, err error) error {
-			log.Print("err", err)
-			logger.Errorf("Error initializing Hasura client: %v", err)
+			logger.Errorf("Error received from Hasura client: %v", err)
 			return err
 		})
 

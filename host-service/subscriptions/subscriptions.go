@@ -110,7 +110,6 @@ func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTr
 	id, err := StatusSubscriptionHandler(instanceName, "DRAINING", client, subscriptionEvents)
 	if err != nil {
 		// handle subscription error
-		logger.Errorf("Error starting subscription with id: %v, error: %v", id, err)
 		return err
 	}
 	subscriptionIDs = append(subscriptionIDs, id)
