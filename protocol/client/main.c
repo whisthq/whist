@@ -159,15 +159,15 @@ int sync_keyboard_state(void) {
     for (int i = 0; i < fcmsg.keyboard_state.num_keycodes; i++) {
         if (state[i]) {
             int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
-            if (0 <= scancode && scancode < (int)sizeof(fcmsg.keyboard_state.keyboard_state)) {
-                fcmsg.keyboard_state.keyboard_state[scancode] = 1;
+            if (0 <= scancode && scancode < (int)sizeof(fcmsg.keyboard_state.state)) {
+                fcmsg.keyboard_state.state[scancode] = 1;
             }
         }
     }
 
     // Also send caps lock and num lock status for syncronization
-    fcmsg.keyboard_state.keyboard_state[FK_LGUI] = lgui_pressed;
-    fcmsg.keyboard_state.keyboard_state[FK_RGUI] = rgui_pressed;
+    fcmsg.keyboard_state.state[FK_LGUI] = lgui_pressed;
+    fcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
 
     fcmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
     fcmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
