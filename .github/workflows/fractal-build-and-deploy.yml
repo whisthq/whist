@@ -1340,6 +1340,7 @@ jobs:
       [
         fractal-publish-build-config,
         fractal-build-monorepo-config,
+        webserver-spin-up-new-buffer,
         client-applications-update-version-number,
       ]
     if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
