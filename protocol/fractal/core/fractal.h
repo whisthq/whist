@@ -181,7 +181,7 @@ Custom Types
 */
 
 // This is not because of limitations of TCP, but rather to keep the TCP thread from hanging
-#define CHUNK_SIZE 65536
+#define CHUNK_SIZE 524288
 
 /**
  * @brief   Codec types.
