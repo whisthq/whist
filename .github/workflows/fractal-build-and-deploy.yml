@@ -823,7 +823,7 @@ jobs:
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
           FRACTAL_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
-          # Tell the webserver (factory.py) to consider this dev/staging/prod rather
+          # Tell the webserver (factory.py) to consider this dev/stamging/prod rather
           # than a local webserver instance. This allows us to easily use the right
           # config database table to retrieve things like instance type for deployment.
           # I (@rpadaki) have currently commented this out, because our webserver
@@ -984,9 +984,6 @@ jobs:
           fi
 
           echo "New $BRANCH_NAME version: ${NEW_VERSION}"
-
-          # store new desktop app version as GitHub env to substitute in client-apps package.json
-          echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
 
           # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
           echo "::set-output name=release_version::${NEW_VERSION}"
@@ -1161,12 +1158,12 @@ jobs:
       (needs.client-applications-retrieve-version-number.result == 'success')
 
     steps:
+      # Get the whole git history. We must do this because the
+      # client app calls `git describe` in order to bake the
+      # version number into the React frontend.
       - name: Checkout Git Repository
         uses: actions/checkout@v2
         with:
-          # Get the whole git history. We must do this because the
-          # client app calls `git describe` in order to bake the
-          # version number into the react frontend.
           fetch-depth: 0
 
       - name: Install Node.js 16
