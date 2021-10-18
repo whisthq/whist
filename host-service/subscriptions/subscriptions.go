@@ -55,7 +55,7 @@ func StatusSubscriptionHandler(instanceName string, status string, client *graph
 	id, err := client.Subscribe(SubscriptionInstanceStatus, variables, func(data *json.RawMessage, err error) error {
 
 		if err != nil {
-			return nil
+			return err
 		}
 
 		var result StatusSubscriptionEvent
@@ -93,11 +93,13 @@ func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTr
 		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
 		return nil
 	}
+	logger.Infof("Setting up Hasura subscriptions...")
 	// We set up the client with auth and logging parameters
 	client, err := SetUpHasuraClient()
 
 	if err != nil {
 		// Error creating the hasura client
+		logger.Errorf("Error starting Hasura client: %v", err)
 		return err
 	}
 
