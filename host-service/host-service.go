@@ -49,6 +49,7 @@ import (
 	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/metrics"
@@ -175,7 +176,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		// At this point, we've found an image, so we just need to start the container.
 
 		containerName := "host-service-warmup"
-		fc := mandelbox.New(context.Background(), goroutineTracker, types.MandelboxID(containerName))
+		fc := mandelbox.New(context.Background(), goroutineTracker, mandelboxtypes.MandelboxID(containerName))
 		defer fc.Close()
 
 		// Do all startup tasks that can be done before Docker container creation in
@@ -640,7 +641,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	logger.Infof("SpinUpMandelbox(): Value returned from ContainerCreate: %#v", dockerBody)
-	dockerID := types.DockerID(dockerBody.ID)
+	dockerID := mandelboxtypes.DockerID(dockerBody.ID)
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID)
 
@@ -700,22 +701,29 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	<-userConfigDownloadComplete
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
+
 	// Receive the config encryption token from the client via the httpserver
 	event := <-serverevent
-	req := event.(*SpinUpMandelboxRequest)
+	req := event.(*JSONTransportRequest)
+
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
 		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
 		return
 	}
 	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
-
-	fc.SetArbitraryUserConfig(req.JSONData)
+	fc.SetJSONData(req.JSONData)
 
 	// Decrypt the previously downloaded user configs using the encryption token
 	err = fc.DecryptUserConfigs()
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: error decrypting config token.", err)
+	}
+
+	// Decrypt the previously downloaded user configs using the encryption token
+	err = fc.WriteJSONData()
+	if err != nil {
+		logger.Errorf("Error writing config.json file for protocol: %v", err)
 	}
 
 	err = fc.MarkReady()
@@ -760,7 +768,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 func mandelboxDieHandler(id string) {
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
-	fc, err := mandelbox.LookUpByDockerID(types.DockerID(id))
+	fc, err := mandelbox.LookUpByDockerID(mandelboxtypes.DockerID(id))
 	if err != nil {
 		logger.Infof("mandelboxDieHandler(): %s", err)
 		return

@@ -60,8 +60,9 @@ type Mandelbox interface {
 	GetConfigEncryptionToken() types.ConfigEncryptionToken
 	SetConfigEncryptionToken(types.ConfigEncryptionToken)
 
-	GetArbitraryUserConfig() interface{}
-	SetArbitraryUserConfig(string)
+	GetJSONData() interface{}
+	SetJSONData(string)
+	WriteJSONData() error
 
 	// Decrypts the config encryption token and writes the user configs
 	DecryptUserConfigs() error
@@ -230,9 +231,9 @@ type mandelboxData struct {
 
 	// We use this to apply any additional configs the user
 	// might have (dark mode, location, etc.)
-	arbitraryUserConfig interface{}
+	JSONData interface{}
 
-	// We use this to download an decrypt the user configs
+	// We use these to download an decrypt the user configs
 	// from s3.
 	unpackedConfigDir string
 	configBuffer      *manager.WriteAtBuffer
@@ -281,24 +282,24 @@ func (c *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken
 	c.clientAppAccessToken = token
 }
 
-func (c *mandelboxData) GetArbitraryUserConfig() interface{} {
+func (c *mandelboxData) GetJSONData() interface{} {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
-	return c.arbitraryUserConfig
+	return c.JSONData
 }
 
-func (c *mandelboxData) SetArbitraryUserConfig(jsonData string) {
-	// TODO: change decoding an empty interface to a decoding a struct
-	// containing the arbitrary configs. Right now we don't know what
-	// specific configs will go here and that's why we use interface{}.
+func (c *mandelboxData) SetJSONData(jsonData string) {
+	// TODO: analyze if it's best to decode to a struct
+	// instead of an empty interface. Right now we don't know what
+	// specific data will go here and that's why we use interface{}.
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 
-	var arbitraryConfig interface{}
-	json.Unmarshal([]byte(jsonData), arbitraryConfig)
+	var JSONData interface{}
+	json.Unmarshal([]byte(jsonData), JSONData)
 
-	if arbitraryConfig != nil {
-		c.arbitraryUserConfig = arbitraryConfig.(map[string]interface{})
+	if JSONData != nil {
+		c.JSONData = JSONData.(map[string]interface{})
 	}
 }
 

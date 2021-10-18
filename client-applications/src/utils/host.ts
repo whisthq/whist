@@ -26,7 +26,7 @@ export const hostSpinUp = async ({
   json_data: string
 }) =>
   (await apiPut(
-    "/spin_up_mandelbox",
+    "/json_transport",
     `https://${ip}:${HostServicePort}`,
     {
       config_encryption_token,

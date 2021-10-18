@@ -19,7 +19,7 @@ import (
 )
 
 type SpinUpResult struct {
-	Result SpinUpMandelboxRequestResult `json:"result"`
+	Result JSONTransportRequestResult `json:"result"`
 }
 
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
@@ -42,7 +42,7 @@ func TestSpinUpHandler(t *testing.T) {
 		t.Fatalf("error creating spin up request: %v", err)
 	}
 
-	testResult := SpinUpMandelboxRequestResult{
+	testResult := JSONTransportRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
@@ -56,7 +56,7 @@ func TestSpinUpHandler(t *testing.T) {
 		receivedRequest <- request
 	}()
 
-	processSpinUpMandelboxRequest(res, httpRequest, testServerQueue)
+	processJSONDataRequest(res, httpRequest, testServerQueue)
 	gotRequest := <-receivedRequest
 
 	var gotResult SpinUpResult
@@ -135,7 +135,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		Transport: tr,
 	}
 
-	testResult := SpinUpMandelboxRequestResult{
+	testResult := JSONTransportRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,

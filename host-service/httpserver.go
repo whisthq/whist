@@ -12,7 +12,7 @@ import (
 	"github.com/fractal/fractal/host-service/auth"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	"github.com/fractal/fractal/host-service/mandelbox/types"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 )
@@ -77,17 +77,17 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-// SpinUpMandelboxRequest defines the (unauthenticated) `spin_up_mandelbox`
+// JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
-type SpinUpMandelboxRequest struct {
-	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
-	JSONData              string                      `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
-	resultChan            chan requestResult          // Channel to pass the request result between goroutines
+type JSONTransportRequest struct {
+	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JSONData              string                               `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
+	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 
-// SpinUpMandelboxRequestResult defines the data returned by the
-// `spin_up_mandelbox` endpoint.
-type SpinUpMandelboxRequestResult struct {
+// JSONTransportRequestResult defines the data returned by the
+// `json_transport` endpoint.
+type JSONTransportRequestResult struct {
 	HostPortForTCP32262 uint16 `json:"port_32262"`
 	HostPortForUDP32263 uint16 `json:"port_32263"`
 	HostPortForTCP32273 uint16 `json:"port_32273"`
@@ -96,13 +96,13 @@ type SpinUpMandelboxRequestResult struct {
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler.
-func (s *SpinUpMandelboxRequest) ReturnResult(result interface{}, err error) {
+func (s *JSONTransportRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass the request
 // result back to the HTTP request handler via ReturnResult.
-func (s *SpinUpMandelboxRequest) createResultChan() {
+func (s *JSONTransportRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
@@ -110,14 +110,14 @@ func (s *SpinUpMandelboxRequest) createResultChan() {
 
 // processSpinUpMandelboxRequest processes an HTTP request to spin up a
 // mandelbox. It is handled in host-service.go
-func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
 		return
 	}
 
 	// Verify authorization and unmarshal into the right object type
-	var reqdata SpinUpMandelboxRequest
+	var reqdata JSONTransportRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
@@ -245,7 +245,7 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
+	mux.HandleFunc("/json_transport", createHandler(processJSONDataRequest))
 
 	// Create the server itself
 	server := &http.Server{
