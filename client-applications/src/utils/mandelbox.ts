@@ -3,14 +3,15 @@
  * @file mandelbox.ts
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
+
+import isEmpty from "lodash.isempty"
+
 import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
 import { sessionID } from "@app/utils/constants"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import config from "@app/config/environment"
-
-const isEmpty = require("lodash.isempty")
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
 

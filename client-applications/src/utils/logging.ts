@@ -10,8 +10,6 @@ import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
 
-const truncate = require("lodash.truncate")
-
 import config, {
   loggingBaseFilePath,
   loggingFiles,
@@ -57,12 +55,7 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
     data
   )}`
 
-  const debugLog = truncate(template, {
-    length: 5000,
-    omission: "...**logBase only prints 5000 characters per log**",
-  })
-
-  return `${util.format(debugLog)} \n`
+  return `${util.format(template)} \n`
 }
 
 const localLog = (

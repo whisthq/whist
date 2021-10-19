@@ -10,9 +10,8 @@ import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
 
-const mapValues = require("lodash.mapvalues")
-const values = require("lodash.values")
-const omit = require("lodash.omit")
+import mapValues from "lodash.mapvalues"
+import omit from "lodash.omit"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
 export interface Trigger {
@@ -129,7 +128,7 @@ export const fromTrigger = (name: string): Observable<any> => {
       Observable
   */
 
-  if (!values(TRIGGER).includes(name))
+  if (!Object.values(TRIGGER).includes(name))
     throw new Error(`Trigger ${name} does not exist`)
 
   return TriggerChannel.pipe(

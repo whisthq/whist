@@ -1,6 +1,5 @@
 import { merge } from "rxjs"
-
-const toPairs = require("lodash.topairs")
+import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/utils/flows"
 import { persist } from "@app/utils/persist"

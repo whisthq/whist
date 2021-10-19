@@ -8,8 +8,6 @@ import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/utils/logging"
 import fetch from "node-fetch"
 
-const values = require("lodash.values")
-
 const fractalPingTime = async (host: string, numberPings: number) => {
   /*
     Description:
@@ -61,7 +59,7 @@ const pingLoop = (regions: AWSRegion[]) => {
 }
 
 const getRegionFromArgv = (argv: string[]) => {
-  return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
+  return (Object.values(AWSRegion) as string[]).includes(argv[argv.length - 1])
     ? argv[argv.length - 1]
     : undefined
 }

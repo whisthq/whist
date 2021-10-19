@@ -1,5 +1,7 @@
 import { from, merge, zip } from "rxjs"
 import { switchMap, map, filter } from "rxjs/operators"
+import has from "lodash.has"
+
 import { fork, flow } from "@app/utils/flows"
 import {
   authInfoRefreshRequest,
@@ -8,8 +10,6 @@ import {
   refreshToken,
   accessToken,
 } from "@fractal/core-ts"
-
-const has = require("lodash.has")
 
 export const authRefreshFlow = flow<refreshToken>(
   "authRefreshFlow",

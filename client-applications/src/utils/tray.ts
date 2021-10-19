@@ -15,8 +15,6 @@ import { MenuItem } from "electron/main"
 import { persistGet } from "./persist"
 import { createSpeedtestWindow } from "@app/utils/windows"
 
-const values = require("lodash.values")
-
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
 export const trayEvent = new events.EventEmitter()
@@ -53,7 +51,7 @@ const feedbackMenu = new MenuItem({
 
 const regionMenu = new MenuItem({
   label: "(Admin Only)",
-  submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
+  submenu: Object.values(defaultAllowedRegions).map((region: AWSRegion) => ({
     label: region,
     type: "radio",
     click: () => {

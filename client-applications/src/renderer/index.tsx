@@ -7,8 +7,6 @@
 import React, { useEffect } from "react"
 import ReactDOM from "react-dom"
 
-const keys = require("lodash.keys")
-
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
@@ -42,8 +40,7 @@ import TRIGGER from "@app/utils/triggers"
 
 // If no query parameter match is found, we default to a
 // generic navigation error window.
-const show =
-  new URL(window.location.search.substring(1)).searchParams.get("show") ?? ""
+const show = window.location.search.split("show=")[1]
 
 const RootComponent = () => {
   const [mainState, setMainState] = useMainState()
@@ -137,7 +134,7 @@ const RootComponent = () => {
         onPrimaryClick={showSignoutWindow}
       />
     )
-  if (keys(fractalError).includes(show))
+  if (Object.keys(fractalError).includes(show))
     return (
       <TwoButtonError
         title={fractalError[show].title}
