@@ -18,7 +18,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type SpinUpResult struct {
+type JSONTransportResult struct {
 	Result JSONTransportRequestResult `json:"result"`
 }
 
@@ -26,20 +26,17 @@ type SpinUpResult struct {
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
 	testRequest := map[string]interface{}{
-		"app_name":                "test_app",
 		"config_encryption_token": "test_token",
-		"jwt_access_token":        "test_jwt_token",
-		"mandelbox_id":            "test_mandelbox",
-		"session_id":              float64(1234),
+		"json_data":               "test_json_data",
 	}
 
 	testServerQueue := make(chan ServerRequest)
 	receivedRequest := make(chan ServerRequest)
 
 	res := httptest.NewRecorder()
-	httpRequest, err := generateTestSpinUpRequest(testRequest)
+	httpRequest, err := generateTestJSONTransportRequest(testRequest)
 	if err != nil {
-		t.Fatalf("error creating spin up request: %v", err)
+		t.Fatalf("error creating json transport request: %v", err)
 	}
 
 	testResult := JSONTransportRequestResult{
@@ -59,7 +56,7 @@ func TestSpinUpHandler(t *testing.T) {
 	processJSONDataRequest(res, httpRequest, testServerQueue)
 	gotRequest := <-receivedRequest
 
-	var gotResult SpinUpResult
+	var gotResult JSONTransportResult
 	resBody, err := io.ReadAll(res.Result().Body)
 	if err != nil {
 		t.Fatalf("error reading result body: %v", resBody)
@@ -111,15 +108,12 @@ func TestHttpServerIntegration(t *testing.T) {
 	time.Sleep(5 * time.Second)
 
 	testRequest := map[string]interface{}{
-		"app_name":                "test_app",
 		"config_encryption_token": "test_token",
-		"jwt_access_token":        "test_jwt_token",
-		"mandelbox_id":            "test_mandelbox",
-		"session_id":              float64(1234),
+		"json_data":               "test_json_data",
 	}
-	req, err := generateTestSpinUpRequest(testRequest)
+	req, err := generateTestJSONTransportRequest(testRequest)
 	if err != nil {
-		t.Fatalf("error creating spin up request: %v", err)
+		t.Fatalf("error creating json transport request: %v", err)
 	}
 
 	// Disable certificate verification on client for testing
@@ -176,7 +170,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	}
 
 	// Check that we are successfully receiving replies on the result channel
-	var gotResult SpinUpResult
+	var gotResult JSONTransportResult
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -197,16 +191,16 @@ func TestHttpServerIntegration(t *testing.T) {
 	t.Log("server goroutine ended")
 }
 
-// generateTestSpinUpRequest takes a request body and creates an
-// HTTP PUT request for /spin_up_mandelbox
-func generateTestSpinUpRequest(requestBody map[string]interface{}) (*http.Request, error) {
+// generateTestJSONTransportRequest takes a request body and creates an
+// HTTP PUT request for /json_transport
+func generateTestJSONTransportRequest(requestBody map[string]interface{}) (*http.Request, error) {
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, utils.MakeError("error marshalling json: %v", err)
 	}
 
 	httpRequest, err := http.NewRequest(http.MethodPut,
-		utils.Sprintf("https://localhost:%d/spin_up_mandelbox", PortToListen),
+		utils.Sprintf("https://localhost:%d/json_transport", PortToListen),
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {

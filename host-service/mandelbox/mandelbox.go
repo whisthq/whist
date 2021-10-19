@@ -11,7 +11,6 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"sync"
 
@@ -60,7 +59,7 @@ type Mandelbox interface {
 	GetConfigEncryptionToken() types.ConfigEncryptionToken
 	SetConfigEncryptionToken(types.ConfigEncryptionToken)
 
-	GetJSONData() interface{}
+	GetJSONData() string
 	SetJSONData(string)
 	WriteJSONData() error
 
@@ -231,7 +230,7 @@ type mandelboxData struct {
 
 	// We use this to apply any additional configs the user
 	// might have (dark mode, location, etc.)
-	JSONData interface{}
+	JSONData string
 
 	// We use these to download an decrypt the user configs
 	// from s3.
@@ -282,23 +281,17 @@ func (c *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken
 	c.clientAppAccessToken = token
 }
 
-func (c *mandelboxData) GetJSONData() interface{} {
+func (c *mandelboxData) GetJSONData() string {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
 	return c.JSONData
 }
 
-func (c *mandelboxData) SetJSONData(jsonData string) {
-	// TODO: analyze if it's best to decode to a struct
-	// instead of an empty interface. Right now we don't know what
-	// specific data will go here and that's why we use interface{}.
+func (c *mandelboxData) SetJSONData(JSONData string) {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 
-	var JSONData interface{}
-	json.Unmarshal([]byte(jsonData), &JSONData)
-
-	if JSONData != nil {
-		c.JSONData = JSONData.(map[string]interface{})
-	}
+	c.JSONData = JSONData
 }
 
 func (c *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error) {

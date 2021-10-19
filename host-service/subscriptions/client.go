@@ -41,7 +41,7 @@ func Close(client *graphql.SubscriptionClient, subscriptionIDs []string) error {
 		err := client.Unsubscribe(id)
 
 		if err != nil {
-			logger.Errorf("Failed to unsubscribe from:%v", id)
+			logger.Errorf("Failed to unsubscribe from:%v, %v", id, err)
 			return err
 		}
 	}
@@ -51,7 +51,7 @@ func Close(client *graphql.SubscriptionClient, subscriptionIDs []string) error {
 	logger.Infof("Closing connection to Hasura server...")
 	err := client.Close()
 	if err != nil {
-		logger.Errorf("Error closing connection with Hasura server.")
+		logger.Errorf("Error closing connection with Hasura server: %v", err)
 		return err
 	}
 
