@@ -690,13 +690,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return nil
 	})
 
-	result := SpinUpMandelboxRequestResult{
-		HostPortForTCP32262: hostPortForTCP32262,
-		HostPortForUDP32263: hostPortForUDP32263,
-		HostPortForTCP32273: hostPortForTCP32273,
-		AesKey:              aesKey,
-	}
-
 	// Mark as ready only when all startup tasks have completed
 	err = postCreateGroup.Wait()
 	if err != nil {
@@ -734,6 +727,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// termination.
 	createFailed = false
 
+	result := SpinUpMandelboxRequestResult{
+		HostPortForTCP32262: hostPortForTCP32262,
+		HostPortForUDP32263: hostPortForUDP32263,
+		HostPortForTCP32273: hostPortForTCP32273,
+		AesKey:              aesKey,
+	}
 	req.ReturnResult(result, nil)
 	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", fc.GetMandelboxID())
 }
