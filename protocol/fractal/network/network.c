@@ -1833,6 +1833,7 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
                                                   (unsigned char*)context->binary_aes_private_key);
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
 
+    // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
         fractal_lock_mutex(context->mutex);
         int ret;
@@ -1850,7 +1851,7 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
         if (ret < 0) {
             int error = get_last_network_error();
             LOG_WARNING("Unexpected UDP Packet Error: %d", error);
-            if (error == 55) {
+            if (error == ENOBUFS) {
                 fractal_sleep(100);
                 continue;
             }
