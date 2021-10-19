@@ -264,7 +264,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 	defer encryptedConfig.Close()
 
-	_, err = uploader.Upload(context.Background(), &s3.PutObjectInput{
+	numBytes, err := uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKeyWithoutLocking()),
 		Body:   encryptedConfig,
@@ -273,7 +273,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
 
-	logger.Infof("Ran \"aws s3 cp\" save config command with output")
+	logger.Infof("Saved user config for mandelbox %s: wrote %d bytes", c.mandelboxID, numBytes)
 
 	return nil
 }
