@@ -82,7 +82,7 @@ Private Functions
 ============================
 */
 
-void destroy_audio_device();
+void client_destroy_audio_device();
 void reinit_audio_device();
 void audio_nack(int id, int index);
 void nack_missing_packets();
@@ -97,7 +97,7 @@ Private Function Implementations
 ============================
 */
 
-void destroy_audio_device() {
+void client_destroy_audio_device() {
     /*
         Destroys the audio device
     */
@@ -117,7 +117,7 @@ void reinit_audio_device() {
         to open a new audio device.
     */
     LOG_INFO("Reinitializing audio device");
-    destroy_audio_device();
+    client_destroy_audio_device();
 
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
@@ -380,7 +380,7 @@ void destroy_audio() {
     while (rendering_audio) {
         SDL_Delay(5);
     }
-    destroy_audio_device();
+    client_destroy_audio_device();
 }
 
 void enable_audio_refresh() { audio_refresh = true; }

@@ -44,7 +44,7 @@ extern volatile int server_height;
 extern volatile CodecType server_codec_type;
 
 // Keeping track of max mbps
-extern volatile int max_bitrate;
+extern volatile int client_max_bitrate;
 extern volatile int max_burst_bitrate;
 extern volatile bool update_bitrate;
 
@@ -706,9 +706,9 @@ void calculate_statistics() {
             video_ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
 
         new_bitrates = calculate_new_bitrate(stats);
-        if (new_bitrates.bitrate != max_bitrate ||
+        if (new_bitrates.bitrate != client_max_bitrate ||
             new_bitrates.burst_bitrate != max_burst_bitrate) {
-            max_bitrate = max(min(new_bitrates.bitrate, MAXIMUM_BITRATE), MINIMUM_BITRATE);
+            client_max_bitrate = max(min(new_bitrates.bitrate, MAXIMUM_BITRATE), MINIMUM_BITRATE);
             max_burst_bitrate = new_bitrates.burst_bitrate;
             update_bitrate = true;
         }
@@ -967,7 +967,7 @@ int init_video_renderer() {
     sws_input_fmt = AV_PIX_FMT_NONE;
     video_context.sws = NULL;
 
-    max_bitrate = STARTING_BITRATE;
+    client_max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
     video_data.pending_ctx = NULL;
     video_data.frames_received = 0;

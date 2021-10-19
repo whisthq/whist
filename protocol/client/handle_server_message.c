@@ -31,7 +31,7 @@ Includes
 
 #include <stddef.h>
 
-bool exiting = false;
+bool client_exiting = false;
 extern int audio_frequency;
 extern volatile double latency;
 extern volatile int try_amount;
@@ -163,7 +163,7 @@ static int handle_quit_message(FractalServerMessage *fsmsg, size_t fsmsg_size) {
         return -1;
     }
     LOG_INFO("Server signaled a quit!");
-    exiting = true;
+    client_exiting = true;
     return 0;
 }
 
