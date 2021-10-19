@@ -25,16 +25,14 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
-import pbkdf2 from "pbkdf2"
 import Database from "better-sqlite3"
-import { AES, enc } from "crypto-js"
+import CryptoJS, { enc } from "crypto-js"
+import crypto from 'crypto'
+import { PBKDF2 } from "crypto-js"
 
 interface Cookie {
   [key: string]: Buffer | string | number
 }
-
-const bus = dbus.sessionBus()
-
 
 const getCookies = async (browser: string): Promise<Cookie[]> => {
   const encryptedCookies = await getCookiesFromFile(browser)
@@ -43,16 +41,17 @@ const getCookies = async (browser: string): Promise<Cookie[]> => {
   const encryptKey = await getCookieEncryptionKey(browser)
   console.log(`Encrypted Key  ${encryptKey}`);
 
-  const cookies = decryptCookies(encryptedCookies, encryptKey)
-
+  const cookies = await decryptCookies(encryptedCookies, encryptKey)
+  console.log(`aassadasdasdasd`);
+  
   console.log(`Cookies ${cookies}`)
 
-  return await cookies
+  return cookies
 }
 
 const decryptCookies = async (
   encryptedCookies: Cookie[],
-  encryptKey: string
+  encryptKey: Buffer
 ): Promise<Cookie[]> => {
   const cookies: Cookie[] = []
 
@@ -66,7 +65,7 @@ const decryptCookies = async (
 
 const decryptCookie = async (
   cookie: Cookie,
-  encryptKey: string
+  encryptKey: Buffer
 ): Promise<Cookie> => {
   if (typeof cookie.value === "string" && cookie.value.length > 0) {
     return cookie
@@ -79,30 +78,44 @@ const decryptCookie = async (
 
   cookie.encrypted_prefix = encryptionPrefix
 
-  console.log(`${encryptionPrefix.toString()}`);
-  
+  const iv = Buffer.from(Array(17).join(' '), 'binary');
 
-  const encryptedValue = cookie.encrypted_value.toString().substring(3)
-  console.log(`Before: ${cookie.encrypted_value.toString()} AND After: ${encryptedValue}`);
-  
-  const bytes = AES.decrypt(encryptedValue, encryptKey)
-  console.log(`The bytes are ${bytes}, encrypted val ${encryptedValue}, and key ${encryptKey}`);
-  
-  const originalText = bytes.toString()
+  const decipher = crypto.createDecipheriv('aes-128-cbc', encryptKey, iv);
+  decipher.setAutoPadding(false);
 
-  cookie.encrypted_value = originalText
+  let encryptedData: Buffer = Buffer.from("")
+  if (typeof cookie.encrypted_value != 'number' && typeof cookie.encrypted_value != 'string') {
+    encryptedData = cookie.encrypted_value.slice(3)
+  }
 
+  let decoded = decipher.update(encryptedData);
+
+  const final = decipher.final();
+  final.copy(decoded, decoded.length - 1);
+
+  const padding = decoded[decoded.length - 1];
+  if (padding) {
+    decoded = decoded.slice(0, decoded.length - padding);
+  }
+
+  const decodedBuffer = decoded.toString('utf8');
+
+  
+  const originalText = decodedBuffer
+  console.log(`Original text is ${originalText}`);
+    
+  cookie.decrypted_value = originalText
   return cookie
 }
 
 const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
-  console.log(`In getCookiesFromFile with the browser ${browser}`);
+  // console.log(`In getCookiesFromFile with the browser ${browser}`);
   
   const cookieFile = getExpandedCookieFilePath(browser)
-  console.log(`The cookieFile is ${cookieFile}`)
+  // console.log(`The cookieFile is ${cookieFile}`)
 
   const tempFile = createLocalCopy(cookieFile)
-  console.log(`The tempfile is located at ${tempFile}`);
+  // console.log(`The tempfile is located at ${tempFile}`);
 
 
   const db = new Database(tempFile, { fileMustExist: true, verbose: console.log })
@@ -119,7 +132,7 @@ const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
     )
     rows = query.all()
   }
-  console.log(`The rows from SQL we got is ${rows}`);
+  // console.log(`The rows from SQL we got is ${rows}`);
   
   return rows
 }
@@ -139,7 +152,7 @@ const getExpandedCookieFilePath = (browser: string): string => {
   }
 }
 
-const getCookieEncryptionKey = async (browser: string): Promise<string> => {
+const getCookieEncryptionKey = async (browser: string): Promise<Buffer> => {
   const salt = "saltysalt"
   const length = 16
   switch (process.platform) {
@@ -154,21 +167,18 @@ const getCookieEncryptionKey = async (browser: string): Promise<string> => {
       }
 
       const iterations = 1003 // number of pbkdf2 iterations on mac
-      const key = await pbkdf2.pbkdf2Sync(myPass, salt, iterations, length)
-      return key.toString()
+      const key = crypto.pbkdf2Sync(myPass, salt, iterations, length, 'sha1')
+      return key
     }
     case "linux": {
       const myPass = await getLinuxCookieEncryptionKey(getOsCryptName(browser))
       console.log(`My pass is ${myPass} given the os crypt name ${getOsCryptName(browser)}`)
       const iterations = 1
 
-      console.log(`Input to pbkdf2: pass ${myPass}, salt ${salt}, iterations ${iterations}, length ${length}`);
-      
-      const key = pbkdf2.pbkdf2Sync(myPass, salt, iterations, length, 'sha256')
-      console.log(`My key after pbkdf2sync is ${key} and to string ${JSON.stringify({key})}`);
-      
-      
-      return key.toString()
+      const key = await crypto.pbkdf2Sync(myPass, salt, iterations, length, 'sha1')
+
+      return key
+    
     }
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
@@ -221,6 +231,9 @@ const expandPaths = (paths: string[], osName: string): string => {
 const getLinuxCookieEncryptionKey = async (
   browser: string
 ): Promise<string> => {
+
+  const bus = dbus.sessionBus()
+
   const osCryptName = getOsCryptName(browser)
 
   const proxyToSecret = await bus.getProxyObject(BusSecretName, BusSecretPath)
