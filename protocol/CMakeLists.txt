@@ -96,7 +96,7 @@ endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
 option(CHECK_CI "Run checks for the CI environment" OFF)
-if (CHECK_CI)
+if(CHECK_CI)
     message(STATUS "Automatically enabling checks for the CI environment")
     cmake_dependent_option(RUN_CPPCHECK "Run cppcheck" ON "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
     cmake_dependent_option(GENERATE_COVERAGE "Generate code coverage with lcov" ON "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
@@ -108,18 +108,18 @@ else()
 endif()
 
 # We configure coverage here, since we don't want this flag to be passed to gtest.
-if (GENERATE_COVERAGE)
+if(GENERATE_COVERAGE)
     message(STATUS "Enabling code coverage generation.")
     set(CMAKE_C_FLAGS --coverage)
     set(CMAKE_CXX_FLAGS --coverage)
 endif()
 
-if (UPLOAD_COVERAGE)
+if(UPLOAD_COVERAGE)
     message(STATUS "Enabling code coverage uploading.")
     message(STATUS "Downloading Codecov to ${CMAKE_BINARY_DIR}/codecov")
 
     # Download Codecov
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         execute_process(COMMAND curl -s https://uploader.codecov.io/latest/macos/codecov -o ${CMAKE_BINARY_DIR}/codecov)
     else()
         execute_process(COMMAND curl -s https://uploader.codecov.io/latest/linux/codecov -o ${CMAKE_BINARY_DIR}/codecov)
@@ -131,15 +131,15 @@ if (UPLOAD_COVERAGE)
     message(STATUS "Downloading Codecov - done")
 endif()
 
-if (RUN_CPPCHECK)
+if(RUN_CPPCHECK)
     find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
-    if (CPPCHECK)
+    if(CPPCHECK)
         message(STATUS "Detecting cppcheck - found: ${CPPCHECK}")
     else()
         message(STATUS "Detecting cppcheck - not found")
     endif()
 
-    if (CPPCHECK)
+    if(CPPCHECK)
         message(STATUS "Detecting cppcheck status - active")
         set(CMAKE_C_CPPCHECK "${CPPCHECK}"
                 "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
