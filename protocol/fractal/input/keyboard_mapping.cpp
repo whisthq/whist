@@ -125,6 +125,11 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
         {FK_LGUI, FK_LSHIFT, FK_TAB},
         {FK_LCTRL, FK_LSHIFT, FK_TAB},
     },
+    // Press Enter on "submission" button with Ctrl+Enter
+    {
+        {FK_LGUI, FK_ENTER},
+        {FK_LCTRL, FK_ENTER},
+    },
 };
 
 auto key_sorter = [](const FractalKeycode& a, const FractalKeycode& b) -> bool {
