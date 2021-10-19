@@ -20,8 +20,6 @@ import {
   createBugTypeform,
   createOnboardingTypeform,
   closeAllWindows,
-  closeElectronWindows,
-  getElectronWindows,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
@@ -153,7 +151,6 @@ withAppReady(fromTrigger("exitTypeformSubmitted")).subscribe(() => {
 
 withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
   persist("onboardingTypeformSubmitted", true, "data")
-  closeElectronWindows(getElectronWindows())
 })
 
 fromTrigger("appReady").subscribe(() => {

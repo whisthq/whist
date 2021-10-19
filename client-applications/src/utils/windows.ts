@@ -397,6 +397,9 @@ export const createProtocolWindow = async () => {
         event: "open",
         hash: WindowHashProtocol,
       })
+
+      closeElectronWindows(getElectronWindows())
+
       app?.dock?.hide()
     }
   })

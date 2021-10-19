@@ -159,7 +159,9 @@ const RootComponent = () => {
 
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
-  return <div className="relative w-full h-full">{props.children}</div>
+  return (
+    <div className="relative w-full h-full bg-opacity-0">{props.children}</div>
+  )
 }
 
 ReactDOM.render(
