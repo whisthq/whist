@@ -109,6 +109,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	return nil
 }
 
+// DecryptUserConfigs decrypts and unpacks the previously downloaded
+// s3 config using the encryption token received through JSON transport.
 func (c *mandelboxData) DecryptUserConfigs() error {
 	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
 	// from under us.

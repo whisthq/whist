@@ -25,7 +25,7 @@ export default flow(
         map(([t, c]) => ({
           ip: c.ip,
           config_encryption_token: t.configToken,
-          json_data: JSON.stringify({}), // Any data to send directly to the host service goes here
+          json_data: JSON.stringify({}), // Data to send through the JSON transport
         }))
       )
     )
