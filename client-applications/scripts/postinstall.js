@@ -29,8 +29,8 @@ const postInstall = (_env, ..._args) => {
   const maxRetries = 5
   const oldContents = fs.readFileSync(appBuilderLibS3Publisher, "utf8")
   const newContents = oldContents.replaceAll(
-    "builder_util_1.executeAppBuilder",
-    `(async (a, p, o={}, m=${maxRetries}) => await builder_util_1.executeAppBuilder(a, p, o, m))`
+    "builder_util_1.executeAppBuilder(",
+    `(async (a, p, o={}, m=${maxRetries}) => await builder_util_1.executeAppBuilder(a, p, o, m))(`
   )
   fs.writeFileSync(appBuilderLibS3Publisher, newContents, "utf8")
   console.log("Success patching `app-builder-lib`!")
