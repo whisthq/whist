@@ -79,9 +79,14 @@ test: build
 	echo "Running go tests..."
 
 	# We need to run some tests as root since the host service init() checks for root perms.
+	#
 	# Set CI flag in test environment so we can properly skip metrics collection in CI
+	#
+	# -p 1 flag ensures that tests run in series instead of parallel
+	# This ensures that tests that use the file system do not conflict or race with each other
+	#
 	# Set AWS credentials to allow user config integration tests to run
-	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v ./... -race -covermode=atomic -coverprofile=coverage.out
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
 
 	# Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
