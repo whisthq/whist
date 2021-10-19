@@ -1,7 +1,5 @@
 import React, { FC } from "react"
 import classNames from "classnames"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 /*
     Prop declarations
@@ -93,11 +91,9 @@ export const FractalButton: FC<FractalButtonProps> = (
         className: disabledClassName,
         contents: (
           <>
-            <FontAwesomeIcon
-              icon={faCircleNotch}
-              spin
-              className="text-white mt-1"
-            />
+            <div className="flex justify-center items-center mt-1">
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gray-100"></div>
+            </div>
           </>
         ),
         onClick: doNothing,

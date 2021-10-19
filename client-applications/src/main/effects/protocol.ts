@@ -4,7 +4,6 @@
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
 
-import { app } from "electron"
 import { fromTrigger } from "@app/utils/flows"
 import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
 import {
@@ -40,6 +39,5 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
       protocolStreamInfo(info)
     }
     closeElectronWindows(getElectronWindows())
-    app?.dock?.hide()
   }
 )

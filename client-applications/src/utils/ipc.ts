@@ -7,10 +7,9 @@
  */
 
 import { useEffect, useState } from "react"
-import { every } from "lodash"
 import { IpcRendererEvent, BrowserWindow } from "electron"
 import { StateIPC } from "@app/@types/state"
-import { ErrorIPC, StateChannel } from "@app/utils/constants"
+import { StateChannel } from "@app/utils/constants"
 
 // This function should only be called from the renderer process. It's a React
 // hook that simplifies our IPC coordination with the main process.
@@ -22,13 +21,6 @@ export const useMainState = ():
   // so we ignore the type error in the next line
   // @ts-expect-error
   const ipc = window.ipcRenderer
-
-  // We're going to make sure that the ipc object has been shared correctly
-  // with the renderer thread before we proceed. The renderer thread will be
-  // quite useless without it, so if we're missing any required methods
-  // then we'll throw a helpful error message to let the developer know
-  // what's going on.
-  if (!every([ipc, ipc.on, ipc.send])) throw new Error(ErrorIPC)
 
   // Things are looking good! We'll proceed by making a standard "state" React
   // Effect, which will perform the ipc communication that we need.

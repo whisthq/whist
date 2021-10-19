@@ -7,10 +7,10 @@ import { combineLatest, concat, of, merge } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
+import mapValues from "lodash.mapvalues"
 
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
-import { mapValues } from "lodash"
 import { appEnvironment } from "../../../config/configs"
 
 // This file is responsible for broadcasting state to all renderer windows.

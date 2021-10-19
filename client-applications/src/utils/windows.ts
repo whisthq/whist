@@ -32,7 +32,6 @@ import {
 } from "@app/utils/constants"
 import {
   protocolLaunch,
-  childProcess,
   protocolStreamKill,
   isNetworkUnstable,
 } from "@app/utils/protocol"
@@ -47,6 +46,10 @@ const { buildRoot } = config
 // module, we create our own event emitter to handle things like keeping track of how many
 // windows we have open. This is used in effects/app.ts to decide when to close the application.
 export const windowMonitor = new events.EventEmitter()
+
+// Because we launch the protocol at start but keep it hidden, we need to keep track of if it's
+// running
+let protocolRunning = false
 
 const emitWindowInfo = (args: {
   crashed: boolean
@@ -95,7 +98,7 @@ export const getElectronWindows = () => BrowserWindow.getAllWindows()
 
 export const getNumberWindows = () => {
   const numElectronWindows = getElectronWindows().length
-  const numProtocolWindows = childProcess === undefined ? 0 : 1
+  const numProtocolWindows = protocolRunning ? 1 : 0
   return numElectronWindows + numProtocolWindows
 }
 
@@ -371,18 +374,11 @@ export const createSpeedtestWindow = () =>
 export const createProtocolWindow = async () => {
   const protocol = await protocolLaunch()
 
-  protocol.on("spawn", () => {
-    emitWindowInfo({
-      crashed: false,
-      event: "open",
-      hash: WindowHashProtocol,
-    })
-  })
-
   protocol.on("close", (code: number) => {
     // Javascript's EventEmitter is synchronous, so we emit the number of windows and
     // crash status in a single event to so that the listener can consume both pieces of
     // information simultaneously
+    protocolRunning = false
     emitWindowInfo({
       crashed: (code ?? 0) === 1,
       event: "close",
@@ -390,9 +386,19 @@ export const createProtocolWindow = async () => {
     })
   })
 
-  protocol?.stdout?.on("data", (message) => {
+  protocol?.stdout?.on("data", (message: string) => {
     const unstable = isNetworkUnstable(message)
     windowMonitor.emit("network-is-unstable", unstable)
+
+    if (message.includes("Connected on")) {
+      protocolRunning = true
+      emitWindowInfo({
+        crashed: false,
+        event: "open",
+        hash: WindowHashProtocol,
+      })
+      app?.dock?.hide()
+    }
   })
 }
 

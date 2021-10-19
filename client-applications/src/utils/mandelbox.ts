@@ -3,7 +3,9 @@
  * @file mandelbox.ts
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */
-import { isEmpty } from "lodash"
+
+import isEmpty from "lodash.isempty"
+
 import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
 import { sessionID } from "@app/utils/constants"
