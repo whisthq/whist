@@ -1855,6 +1855,8 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
                 continue;
             }
             return -1;
+        } else {
+            break;
         }
     }
 
