@@ -121,9 +121,10 @@ Defines
 #define STARTING_BITRATE 15400000
 #define STARTING_BURST_BITRATE 100000000
 
-// 16:10 aspect ratio for minimum screen, which is the Mac aspect ratio
-#define MIN_SCREEN_WIDTH 480
-#define MIN_SCREEN_HEIGHT 300
+// 16:10 is the Mac aspect ratio, but we set the minimum screen to
+// 500x500 since these are the Chrome minimum dimensions
+#define MIN_SCREEN_WIDTH 500
+#define MIN_SCREEN_HEIGHT 500
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
 
