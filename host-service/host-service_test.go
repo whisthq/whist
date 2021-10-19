@@ -105,6 +105,8 @@ func TestSpinUpMandelbox(t *testing.T) {
 	dockerClient := mockClient{}
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testReq)
 
+	goroutineTracker.Wait()
+
 	// Check that response is as expected
 	result := <-testReq.resultChan
 	if result.Err != nil {

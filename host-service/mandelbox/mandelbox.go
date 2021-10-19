@@ -16,6 +16,7 @@ import (
 
 	"github.com/fractal/fractal/host-service/dbdriver"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 
 	"github.com/fractal/fractal/host-service/mandelbox/gpus"
@@ -138,6 +139,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully untracked mandelbox %s", c.mandelboxID)
 
 		c.rwlock.Lock()
+		defer c.rwlock.Unlock()
 
 		// Free port bindings
 		portbindings.Free(c.portBindings)
@@ -155,13 +157,14 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully freed TTY %v for mandelbox %s", c.tty, c.mandelboxID)
 		c.tty = 0
 
-		if err := gpus.Free(c.gpuIndex, c.mandelboxID); err != nil {
-			logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", c.gpuIndex, c.mandelboxID, err)
-		} else {
-			logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
+		// CI does not have GPUs
+		if !metadata.IsRunningInCI() {
+			if err := gpus.Free(c.gpuIndex, c.mandelboxID); err != nil {
+				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", c.gpuIndex, c.mandelboxID, err)
+			} else {
+				logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
+			}
 		}
-
-		c.rwlock.Unlock()
 
 		// Clean resource mappings
 		c.cleanResourceMappingDir()
@@ -202,12 +205,6 @@ type mandelboxData struct {
 
 	// We use rwlock to protect all the below fields.
 	rwlock sync.RWMutex
-
-	// We use fslock to protect the file system
-	// Reads and writes to the mandelbox directory should
-	// utilize this lock to directories from being
-	// cleaned up during writes.
-	fslock sync.RWMutex
 
 	dockerID types.DockerID
 	appName  types.AppName

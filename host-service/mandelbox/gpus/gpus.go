@@ -9,7 +9,6 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/utils"
 )
@@ -50,12 +49,6 @@ var usageLock = new(sync.Mutex)
 
 // Allocate allocates a GPU with room for a mandelbox and returns its index.
 func Allocate(mandelboxID types.MandelboxID) (Index, error) {
-	// CI currently doesn't run on containers with GPUs, so we need
-	// to manually bypass.
-	if metadata.IsRunningInCI() {
-		return -1, nil
-	}
-
 	usageLock.Lock()
 	defer usageLock.Unlock()
 

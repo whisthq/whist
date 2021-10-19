@@ -35,12 +35,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/sync/errgroup"
+
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry. For the same reason, we make sure not
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
@@ -62,8 +64,6 @@ import (
 	dockernat "github.com/docker/go-connections/nat"
 	dockerunits "github.com/docker/go-units"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
@@ -426,7 +426,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
-	preCreateGroup, _ := errgroup.WithContext(globalCtx)
+	preCreateGroup, _ := errgroup.WithContext(fc.GetContext())
 
 	// Request port bindings for the mandelbox.
 	var hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
@@ -469,11 +469,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			return utils.MakeError("Error initializing TTY: %s", err)
 		}
 
-		if err := fc.AssignGPU(); err != nil {
-			return utils.MakeError("Error assigning GPU: %s", err)
+		// CI does not have GPUs
+		if !metadata.IsRunningInCI() {
+			if err := fc.AssignGPU(); err != nil {
+				return utils.MakeError("Error assigning GPU: %s", err)
+			}
 		}
-		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
 
+		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
 		return nil
 	})
 
@@ -602,7 +605,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID %s", dockerID)
 
-	postCreateGroup, _ := errgroup.WithContext(globalCtx)
+	postCreateGroup, _ := errgroup.WithContext(fc.GetContext())
 
 	// Register docker ID in mandelbox object
 	postCreateGroup.Go(func() error {
@@ -778,6 +781,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 // TTYs) on disk, as well as the directory used to store the SSL certificate we
 // use for the httpserver, and our temporary directory.
 func uninitializeFilesystem() {
+	logger.Infof("removing all files")
 	err := os.RemoveAll(utils.FractalDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.FractalDir, err)
