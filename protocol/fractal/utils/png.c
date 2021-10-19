@@ -186,8 +186,9 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     unsigned int w, h;
 
     int num_channels = 4;
-    if (lodepng_decode32(&lodepng_data, &w, &h, (unsigned char*)png, png_size) != 0) {
-        LOG_WARNING("Failed to decode PNG");
+    int ret = lodepng_decode32(&lodepng_data, &w, &h, (unsigned char*)png, png_size);
+    if (ret) {
+        LOG_ERROR("lodepng decoder error %u: %s\n", ret, lodepng_error_text(ret));
         return -1;
     }
 
@@ -226,10 +227,10 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     *((uint32_t*)(&bmp[30])) = 0;
     // Size of the pixel data array
     *((uint32_t*)(&bmp[34])) = h * scanline_bytes;
-    // horizontal DPI in pixels/meter
-    *((uint32_t*)(&bmp[38])) = 2835;
-    // vertical DPI in pixels/meter
-    *((uint32_t*)(&bmp[42])) = 2835;
+    // horizontal DPI in pixels/meter (we set this to 0 to match what ffmpeg does)
+    *((uint32_t*)(&bmp[38])) = 0;
+    // vertical DPI in pixels/meter (we set this to 0 to match what ffmpeg does)
+    *((uint32_t*)(&bmp[42])) = 0;
     // Must be 0, no palette
     *((uint32_t*)(&bmp[46])) = 0;
     // Must be 0, no palette

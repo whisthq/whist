@@ -339,55 +339,75 @@ TEST(ProtocolTest, BadDecrypt) {
  */
 #ifndef _WIN32
 // Tests that by converting a PNG to a BMP then converting that back
-// to a PNG returns the original image
+// to a PNG returns the original image. Note that the test image
+// must be the output of a lodepng encode, as other PNG encoders
+// (including FFmpeg) may produce different results (lossiness,
+// different interpolation, etc.).
 TEST(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
-    std::ifstream png_image("images/image.png", std::ios::binary);
+    std::ifstream png_image("assets/image.png", std::ios::binary);
 
     // copies all data into buffer
     std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
-    int img_size = (int)png_vec.size();
+    int png_buffer_size = (int)png_vec.size();
     char* png_buffer = (char*)&png_vec[0];
 
     // Convert to BMP
-    char* bmp_buffer = new char[img_size];
-    EXPECT_FALSE(png_to_bmp(png_buffer, img_size, (char**)&bmp_buffer, &img_size));
+    char* bmp_buffer;
+    int bmp_buffer_size;
+    ASSERT_FALSE(png_to_bmp(png_buffer, png_buffer_size, &bmp_buffer, &bmp_buffer_size));
+
     // Convert back to PNG
-    char* new_png_data = new char[img_size];
-    EXPECT_FALSE(bmp_to_png(bmp_buffer, img_size, (char**)&new_png_data, &img_size));
+    char* new_png_buffer;
+    int new_png_buffer_size;
+    ASSERT_FALSE(bmp_to_png(bmp_buffer, bmp_buffer_size, &new_png_buffer, &new_png_buffer_size));
+
+    free_bmp(bmp_buffer);
 
     // compare for equality
-    for (int index = 0; index < img_size; index++)
-        EXPECT_EQ(png_buffer[index], new_png_data[index]);
+    EXPECT_EQ(png_buffer_size, new_png_buffer_size);
+    for (int i = 0; i < png_buffer_size; i++) {
+        EXPECT_EQ(png_buffer[i], new_png_buffer[i]);
+    }
 
-    delete[] bmp_buffer;
-    delete[] png_buffer;
+    free_png(new_png_buffer);
+    png_image.close();
 }
 
 // Tests that by converting a PNG to a BMP then converting that back
-// to a PNG returns the original image
+// to a PNG returns the original image. Note that the test image
+// must be a BMP of the BITMAPINFOHEADER specification, where the
+// now-optional paramters for x/y pixel resolutions are set to 0.
+// `ffmpeg -i input-image.{ext} output.bmp` will generate such a BMP.
 TEST(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
-    std::ifstream bmp_image("images/image.bmp", std::ios::binary);
+    std::ifstream bmp_image("assets/image.bmp", std::ios::binary);
 
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
-    int img_size = (int)bmp_vec.size();
+    int bmp_buffer_size = (int)bmp_vec.size();
     char* bmp_buffer = (char*)&bmp_vec[0];
 
     // Convert to PNG
-    char* png_buffer = new char[img_size];
-    EXPECT_FALSE(bmp_to_png(bmp_buffer, img_size, (char**)&png_buffer, &img_size));
+    char* png_buffer;
+    int png_buffer_size;
+    ASSERT_FALSE(bmp_to_png(bmp_buffer, bmp_buffer_size, &png_buffer, &png_buffer_size));
+
     // Convert back to BMP
-    char* new_bmp_data = new char[img_size];
-    EXPECT_FALSE(png_to_bmp(png_buffer, img_size, (char**)&new_bmp_data, &img_size));
+    char* new_bmp_buffer;
+    int new_bmp_buffer_size;
+    ASSERT_FALSE(png_to_bmp(png_buffer, png_buffer_size, &new_bmp_buffer, &new_bmp_buffer_size));
+
+    free_png(png_buffer);
 
     // compare for equality
-    for (int index = 0; index < img_size; index++)
-        EXPECT_EQ(bmp_buffer[index], new_bmp_data[index]);
+    EXPECT_EQ(bmp_buffer_size, new_bmp_buffer_size);
+    for (int i = 0; i < bmp_buffer_size; i++) {
+        EXPECT_EQ(bmp_buffer[i], new_bmp_buffer[i]);
+    }
 
-    delete[] png_buffer;
-    delete[] new_bmp_data;
+    free_bmp(new_bmp_buffer);
+    bmp_image.close();
 }
 #endif
 
