@@ -123,7 +123,7 @@ Defines
 
 // 16:10 aspect ratio for minimum screen, which is the Mac aspect ratio
 #define MIN_SCREEN_WIDTH 800
-#define MIN_SCREEN_HEIGHT 500 // Chrome as a minimum dimension of 500x500 pixels
+#define MIN_SCREEN_HEIGHT 500 // Chrome has a minimum dimension of 500x500 pixels
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
 
