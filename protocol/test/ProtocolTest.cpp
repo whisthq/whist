@@ -28,20 +28,20 @@ Includes
 #include "gtest/gtest.h"
 
 extern "C" {
-    #include "client/client_utils.h"
-    #include "client/ringbuffer.h"
-    #include "fractal/utils/color.h"
-    #include <fractal/core/fractal.h>
+#include "client/client_utils.h"
+#include "client/ringbuffer.h"
+#include "fractal/utils/color.h"
+#include <fractal/core/fractal.h>
 
-    #ifndef __APPLE__
-        #include "server/main.h"
-        #include "server/parse_args.h"
-    #endif
-    
-    #include "client/client_utils.h"
-    #include "fractal/utils/aes.h"
-    #include "fractal/utils/png.h"
-    #include "fractal/utils/avpacket_buffer.h"
+#ifndef __APPLE__
+#include "server/main.h"
+#include "server/parse_args.h"
+#endif
+
+#include "client/client_utils.h"
+#include "fractal/utils/aes.h"
+#include "fractal/utils/png.h"
+#include "fractal/utils/avpacket_buffer.h"
 }
 
 /*
@@ -67,9 +67,9 @@ Client Tests
 ============================
 */
 
-/** 
- * client/ringbuffer.c 
-**/
+/**
+ * client/ringbuffer.c
+ **/
 
 // Constants for ringbuffer tests
 #define NUM_AUDIO_TEST_FRAMES 25
@@ -165,11 +165,11 @@ Server Tests
 ============================
 */
 
-#ifndef __APPLE__ // Server tests do not compile on macOS
+#ifndef __APPLE__  // Server tests do not compile on macOS
 
-/** 
- * server/main.c 
-**/
+/**
+ * server/main.c
+ **/
 
 // Testing that good values passed into server_parse_args returns success
 TEST(ProtocolTest, ArgParsingUsageArgTest) {
@@ -177,7 +177,7 @@ TEST(ProtocolTest, ArgParsingUsageArgTest) {
 
     char argv0[] = "./server/build64/FractalServer";
     char argv1[] = "--help";
-    char *argv[] = {argv0, argv1, NULL};
+    char* argv[] = {argv0, argv1, NULL};
 
     int ret_val = server_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 1);
@@ -196,9 +196,9 @@ Fractal Library Tests
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 #define SECOND_BINARY_PRIVATE_KEY "\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED"
 
-/** 
- * utils/color.c 
-**/
+/**
+ * utils/color.c
+ **/
 
 TEST(ProtocolTest, FractalColorTest) {
     FractalRGBColor cyan = {0, 255, 255};
@@ -228,9 +228,9 @@ TEST(ProtocolTest, FractalColorTest) {
     EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
 }
 
-/** 
- * utils/clock.c 
-**/
+/**
+ * utils/clock.c
+ **/
 
 TEST(ProtocolTest, TimersTest) {
     // Note: This test is currently a no-op, as the GitHub Actions runner is too slow for
@@ -252,9 +252,9 @@ TEST(ProtocolTest, TimersTest) {
     // EXPECT_LE(elapsed, 0.110);
 }
 
-/** 
+/**
  * utils/aes.c
-**/
+ **/
 
 // This test makes a packet, encrypts it, decrypts it, and confirms the latter is
 // the original packet
@@ -269,7 +269,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     original_packet.id = -1;
     original_packet.type = PACKET_MESSAGE;
     original_packet.index = 0;
-    original_packet.payload_size = (int) len;
+    original_packet.payload_size = (int)len;
     original_packet.num_indices = 1;
     original_packet.is_a_nack = false;
 
@@ -308,7 +308,7 @@ TEST(ProtocolTest, BadDecrypt) {
     original_packet.id = -1;
     original_packet.type = PACKET_MESSAGE;
     original_packet.index = 0;
-    original_packet.payload_size = (int) len;
+    original_packet.payload_size = (int)len;
     original_packet.num_indices = 1;
     original_packet.is_a_nack = false;
 
@@ -333,11 +333,11 @@ TEST(ProtocolTest, BadDecrypt) {
 
 /**
  *  Only run on macOS and Linux for 2 reaons:
- *  1) There is an encoding difference on Windows that causes the 
- *  images to be read differently, thus causing them to fail 
- *  2) These tests on Windows add an additional 3-5 minutes for the Workflow 
+ *  1) There is an encoding difference on Windows that causes the
+ *  images to be read differently, thus causing them to fail
+ *  2) These tests on Windows add an additional 3-5 minutes for the Workflow
  */
-#ifndef _WIN32 
+#ifndef _WIN32
 // Tests that by converting a PNG to a BMP then converting that back
 // to a PNG returns the original image
 TEST(ProtocolTest, PngToBmpToPng) {
@@ -346,7 +346,7 @@ TEST(ProtocolTest, PngToBmpToPng) {
 
     // copies all data into buffer
     std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
-    int img_size = (int) png_vec.size();
+    int img_size = (int)png_vec.size();
     char* png_buffer = (char*)&png_vec[0];
 
     // Convert to BMP
@@ -372,7 +372,7 @@ TEST(ProtocolTest, BmpToPngToBmp) {
 
     // copies all data into buffer
     std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
-    int img_size = (int) bmp_vec.size();
+    int img_size = (int)bmp_vec.size();
     char* bmp_buffer = (char*)&bmp_vec[0];
 
     // Convert to PNG
@@ -385,13 +385,13 @@ TEST(ProtocolTest, BmpToPngToBmp) {
     // compare for equality
     for (int index = 0; index < img_size; index++)
         EXPECT_EQ(bmp_buffer[index], new_bmp_data[index]);
-    
+
     delete[] png_buffer;
     delete[] new_bmp_data;
 }
 #endif
 
-// Adds AVPackets to an buffer via write_packets_to_buffer and 
+// Adds AVPackets to an buffer via write_packets_to_buffer and
 // confirms that buffer structure is correct
 TEST(ProtocolTest, PacketsToBuffer) {
     // Make some dummy packets
@@ -419,16 +419,17 @@ TEST(ProtocolTest, PacketsToBuffer) {
 
     // Confirm buffer creation was successful
     EXPECT_EQ(*buffer, 1);
-    EXPECT_EQ(*(buffer + 1), (int) strlen(data1));
+    EXPECT_EQ(*(buffer + 1), (int)strlen(data1));
     EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
 }
 
 TEST(ProtocolTest, BitArrayMemCpyTest) {
     // A bunch of prime numbers + {10,100,200,250,299,300}
-    std::vector<int> bitarray_sizes {1, 2, 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
+    std::vector<int> bitarray_sizes{1,  2,  3,  5,  7,  10, 11,  13,  17,  19, 23,
+                                    29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
 
     for (auto test_size : bitarray_sizes) {
-        BitArray *bit_arr = bit_array_create(test_size);
+        BitArray* bit_arr = bit_array_create(test_size);
         EXPECT_TRUE(bit_arr);
 
         bit_array_clear_all(bit_arr);
@@ -436,7 +437,7 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
             EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
         }
 
-        std::vector<bool>bits_arr_check;
+        std::vector<bool> bits_arr_check;
 
         for (int i = 0; i < test_size; i++) {
             int coin_toss = rand() % 2;
@@ -453,7 +454,7 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
         memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
         bit_array_free(bit_arr);
 
-        BitArray *bit_arr_recovered = bit_array_create(test_size);
+        BitArray* bit_arr_recovered = bit_array_create(test_size);
         EXPECT_TRUE(bit_arr_recovered);
 
         EXPECT_TRUE(bit_arr_recovered->array);
@@ -462,12 +463,12 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
         EXPECT_TRUE(ba_raw != NULL);
         memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
 
-        for (int i=0; i<test_size; i++) {
+        for (int i = 0; i < test_size; i++) {
             if (bits_arr_check[i]) {
                 EXPECT_GE(bit_array_test_bit(bit_arr_recovered, i), 1);
             } else {
                 EXPECT_EQ(bit_array_test_bit(bit_arr_recovered, i), 0);
-            }   
+            }
         }
 
         bit_array_free(bit_arr_recovered);
