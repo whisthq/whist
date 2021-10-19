@@ -351,10 +351,10 @@ TEST(ProtocolTest, PngToBmpToPng) {
 
     // Convert to BMP
     char* bmp_buffer = new char[img_size];
-    png_to_bmp(png_buffer, img_size, (char**)&bmp_buffer, &img_size);
+    EXPECT_FALSE(png_to_bmp(png_buffer, img_size, (char**)&bmp_buffer, &img_size));
     // Convert back to PNG
     char* new_png_data = new char[img_size];
-    bmp_to_png(bmp_buffer, img_size, (char**)&new_png_data, &img_size);
+    EXPECT_FALSE(bmp_to_png(bmp_buffer, img_size, (char**)&new_png_data, &img_size));
 
     // compare for equality
     for (int index = 0; index < img_size; index++)
@@ -377,10 +377,10 @@ TEST(ProtocolTest, BmpToPngToBmp) {
 
     // Convert to PNG
     char* png_buffer = new char[img_size];
-    bmp_to_png(bmp_buffer, img_size, (char**)&png_buffer, &img_size);
+    EXPECT_FALSE(bmp_to_png(bmp_buffer, img_size, (char**)&png_buffer, &img_size));
     // Convert back to BMP
     char* new_bmp_data = new char[img_size];
-    png_to_bmp(png_buffer, img_size, (char**)&new_bmp_data, &img_size);
+    EXPECT_FALSE(png_to_bmp(png_buffer, img_size, (char**)&new_bmp_data, &img_size));
 
     // compare for equality
     for (int index = 0; index < img_size; index++)
