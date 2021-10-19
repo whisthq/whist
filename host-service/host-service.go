@@ -410,7 +410,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// Then, verify that we are expecting this user to request a mandelbox.
-	err := dbdriver.VerifyAllocatedMandelbox(minfo.UserID, minfo.MandelboxID)
+	err := dbdriver.VerifyAllocatedMandelbox(mandelboxInfo.UserID, mandelboxInfo.MandelboxID)
 
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
@@ -418,7 +418,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// If so, create the mandelbox object.
-	fc := mandelbox.New(context.Background(), goroutineTracker, minfo.MandelboxID)
+	fc := mandelbox.New(context.Background(), goroutineTracker, mandelboxInfo.MandelboxID)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetMandelboxID())
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
@@ -582,7 +582,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", fc.GetMandelboxID()),
 			utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, fc.GetMandelboxID()),
-			utils.Sprintf("%slogs/%s/%d:/var/log/fractal", utils.TempDir, fc.GetMandelboxID(), minfo.SessionID),
+			utils.Sprintf("%slogs/%s/%d:/var/log/fractal", utils.TempDir, fc.GetMandelboxID(), mandelboxInfo.SessionID),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetMandelboxID()),
 		},
@@ -630,7 +630,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"apparmor:mandelbox-apparmor-profile",
 		},
 	}
-	mandelboxName := utils.Sprintf("%s-%s", AppName, minfo.MandelboxID)
+	mandelboxName := utils.Sprintf("%s-%s", AppName, mandelboxInfo.MandelboxID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	mandelboxName = re.ReplaceAllString(mandelboxName, "-")
 
@@ -703,8 +703,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
 	// Receive the config encryption token from the client via the httpserver
-	event := <-serverevent
-	req := event.(*JSONTransportRequest)
+	req := <-jsonchan
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
@@ -728,27 +727,27 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	err = fc.MarkReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready: %s", minfo.MandelboxID, err)
+		logAndReturnError("Error marking mandelbox %s as ready: %s", mandelboxInfo.MandelboxID, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", minfo.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxInfo.MandelboxID)
 
 	// Don't wait for fractal application to start up in local environment
 	if !metadata.IsLocalEnv() {
-		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s fractal application to start up...", minfo.MandelboxID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", minfo.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s fractal application to start up...", mandelboxInfo.MandelboxID)
+		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", mandelboxInfo.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
 			logAndReturnError("Error warming up fractal application: %s", err)
 			return
 		}
-		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s fractal application to start up", minfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s fractal application to start up", mandelboxInfo.MandelboxID)
 	}
 
-	err = dbdriver.WriteMandelboxStatus(minfo.MandelboxID, dbdriver.MandelboxStatusRunning)
+	err = dbdriver.WriteMandelboxStatus(mandelboxInfo.MandelboxID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as running", minfo.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as running", mandelboxInfo.MandelboxID)
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
@@ -1048,6 +1047,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		Filters: filters,
 	}
 
+	jsonchan := make(chan *JSONTransportRequest, 100)
+
 	// In the following loop, this var determines whether to re-initialize the
 	// Docker event stream. This is necessary because the Docker event stream
 	// needs to be reopened after any error is sent over the error channel.
@@ -1096,14 +1097,29 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			}
 
 		// It may seem silly to just launch goroutines to handle these
-		// subscriptionevents, but we aim to keep the high-level flow control and handling
+		// serverevents, but we aim to keep the high-level flow control and handling
 		// in this package, and the low-level authentication, parsing, etc. of
-		// requests in `subscriptions`.
+		// requests in `httpserver`.
+		case serverevent := <-httpServerEvents:
+			switch serverevent.(type) {
+			// TODO: actually handle panics in these goroutines
+			case *JSONTransportRequest:
+				req := serverevent.(*JSONTransportRequest)
+				jsonchan <- req
+
+			default:
+				if serverevent != nil {
+					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+					logger.Error(err)
+					serverevent.ReturnResult("", err)
+				}
+			}
+
 		case subscriptionEvent := <-subscriptionEvents:
 			switch subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, httpServerEvents, subscriptionEvent.(*subscriptions.MandelboxInfoEvent))
+				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, httpServerEvents, subscriptionEvent.(*subscriptions.MandelboxInfoEvent), jsonchan)
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.
