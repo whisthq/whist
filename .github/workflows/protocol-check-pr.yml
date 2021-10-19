@@ -233,10 +233,15 @@ jobs:
         working-directory: mandelboxes
         run: ./helper_scripts/copy_protocol_build.sh
 
-      - name: Ensure CMake Files are Linted
+      - name: Lint CMake Files
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: pip install cmakelint && cmakelint --config=.cmakelintrc **/**/CMakeLists.txt
+        run: |
+          pip install cmakelint
+          sudo apt-get install fd-find
+          # Ubuntu-specific PATH fix for `fd`
+          ln -s $(which fdfind) ~/.local/bin/fd
+          ./lint-cmake.sh
 
   #######################################################################################
   #######################################################################################

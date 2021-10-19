@@ -37,7 +37,7 @@ else()
         ../server/handle_client_message.c
         ../server/network.c
 
-        # Files needed for Fractal Lib unit tests 
+        # Files needed for Fractal Lib unit tests
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
@@ -86,11 +86,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     )
 endif()
 
-# Link the FFmpeg libraries 
+# Link the FFmpeg libraries
 foreach(LIB ${FFMPEG_LIBS_PATHS})
     message(VERBOSE "linking lib for ${PROTOCOL_TEST_BINARY}: ${LIB}")
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${LIB})
-endforeach(LIB)
+endforeach()
 
 # Link the threading and dynamic link library if we are on macOS/Linx
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -111,8 +111,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
 
-# Link more Linux-specific libraries    
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+# Link more Linux-specific libraries
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
     find_package(X11 REQUIRED
         Xfixes
@@ -180,7 +180,7 @@ add_custom_command(
 )
 
 # Generate code coverage
-if (GENERATE_COVERAGE)
+if(GENERATE_COVERAGE)
     add_custom_command(
         TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
         COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
@@ -190,7 +190,7 @@ if (GENERATE_COVERAGE)
 endif()
 
 # Upload code coverage to Codecov
-if (UPLOAD_COVERAGE)
+if(UPLOAD_COVERAGE)
     add_custom_command(
         TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
         COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
