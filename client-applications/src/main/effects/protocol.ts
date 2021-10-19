@@ -6,11 +6,7 @@
 
 import { fromTrigger } from "@app/utils/flows"
 import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
-import {
-  closeElectronWindows,
-  createProtocolWindow,
-  getElectronWindows,
-} from "@app/utils/windows"
+import { createProtocolWindow } from "@app/utils/windows"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -38,6 +34,5 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
     } else {
       protocolStreamInfo(info)
     }
-    closeElectronWindows(getElectronWindows())
   }
 )
