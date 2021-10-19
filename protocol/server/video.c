@@ -526,8 +526,6 @@ int32_t multithreaded_send_video(void* opaque) {
                         LOG_INFO("Sent video packet %d (Size: %d) %s", id,
                                  encoder->encoded_frame_size, frame->is_iframe ? "(I-frame)" : "");
 #endif  // LOG_VIDEO
-
-                        size_t num_msgs;
                         start_timer(&statistics_timer);
 
                         // Packetize the frame
