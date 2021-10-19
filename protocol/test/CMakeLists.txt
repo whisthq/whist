@@ -22,7 +22,6 @@
             ../client/handle_server_message.c
             ../client/video.c
             ../client/sdlscreeninfo.c
-            ../client/peercursor.c
             ../client/ringbuffer.c
             ../client/sync_packets.c
             ../client/bitrate.c
@@ -52,7 +51,6 @@
             ../client/handle_server_message.c
             ../client/video.c
             ../client/sdlscreeninfo.c
-            ../client/peercursor.c
             ../client/ringbuffer.c
             ../client/sync_packets.c
             ../client/bitrate.c

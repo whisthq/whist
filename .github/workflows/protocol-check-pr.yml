@@ -201,6 +201,8 @@ jobs:
 
           # Print clang-format version for local comparison
           clang-format --version
+
+          # Run clang-format
           ./build_protocol_targets.sh clang-format
 
           # Show diff in GitHub Actions logs
@@ -215,6 +217,8 @@ jobs:
         run: |
           # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          # Run clang-tidy
           ./build_protocol_targets.sh clang-tidy
 
       # This tests building the protocol in a container, the same way we do it in production
@@ -290,7 +294,7 @@ jobs:
 
           # Download the Codecov uploader
           curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
-          
+
           # Upload coverage report to Codecov
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
 

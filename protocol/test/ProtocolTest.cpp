@@ -1,3 +1,26 @@
+
+
+/**
+ * Copyright Fractal Computers, Inc. 2021
+ * @file ProtocolTest.cpp
+ * @brief This file contains all the uni tests for the /protocol codebase code f
+============================
+Usage
+============================
+
+Include paths should be relative to the protocol folder
+Examples:
+  - To include file.h in protocol folder, use #include "file.h"
+  - To include file2.h in protocol/client folder, use #include "client/file.h"
+To include a C source file, you need to wrap the include statement in extern "C" {}.
+*/
+
+/*
+============================
+Includes
+============================
+*/
+
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -20,11 +43,12 @@ extern "C" {
     #include "fractal/utils/png.h"
     #include "fractal/utils/avpacket_buffer.h"
 }
-// Include paths should be relative to the protocol folder
-// Examples:
-//   - To include file.h in protocol folder, use #include "file.h"
-//   - To include file2.h in protocol/client folder, use #include "client/file.h"
-// To include a C source file, you need to wrap the include statement in extern "C" {}.
+
+/*
+============================
+Example Test
+============================
+*/
 
 // Example of a test using a function from the client module
 TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
@@ -37,55 +61,15 @@ TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
     EXPECT_EQ(ret_val, -1);
 }
 
-TEST(ProtocolTest, FractalColorTest) {
-    FractalRGBColor cyan = {0, 255, 255};
-    FractalRGBColor magenta = {255, 0, 255};
-    FractalRGBColor dark_gray = {25, 25, 25};
-    FractalRGBColor light_gray = {150, 150, 150};
-    FractalRGBColor fractal_purple_rgb = {79, 53, 222};
-    FractalYUVColor fractal_purple_yuv = {85, 198, 127};
+/*
+============================
+Client Tests
+============================
+*/
 
-    // equality works
-    EXPECT_EQ(rgb_compare(cyan, cyan), 0);
-    EXPECT_EQ(rgb_compare(magenta, magenta), 0);
-
-    // inequality works
-    EXPECT_EQ(rgb_compare(cyan, magenta), 1);
-    EXPECT_EQ(rgb_compare(magenta, cyan), 1);
-
-    // dark color wants light text
-    EXPECT_FALSE(color_requires_dark_text(dark_gray));
-
-    // light color wants dark text
-    EXPECT_TRUE(color_requires_dark_text(light_gray));
-
-    // yuv conversion works (with some fuzz)
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).red, fractal_purple_rgb.red, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).green, fractal_purple_rgb.green, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
-}
-
-TEST(ProtocolTest, TimersTest) {
-    // Note: This test is currently a no-op, as the GitHub Actions runner is too slow for
-    // sleep/timer to work properly. Uncomment the code to run it locally.
-
-    // Note that this test will detect if either the timer or the sleep function
-    // is broken, but not necessarily if both are broken.
-    // clock timer;
-    // start_timer(&timer);
-    // fractal_sleep(25);
-    // double elapsed = get_timer(timer);
-    // EXPECT_GE(elapsed, 0.025);
-    // EXPECT_LE(elapsed, 0.035);
-
-    // start_timer(&timer);
-    // fractal_sleep(100);
-    // elapsed = get_timer(timer);
-    // EXPECT_GE(elapsed, 0.100);
-    // EXPECT_LE(elapsed, 0.110);
-}
-
-/** ringbuffer.c **/
+/** 
+ * client/ringbuffer.c 
+**/
 
 // Constants for ringbuffer tests
 #define NUM_AUDIO_TEST_FRAMES 25
@@ -175,33 +159,102 @@ TEST(ProtocolTest, SetRenderingTest) {
     EXPECT_EQ(rb->currently_rendering_id, -5);
 }
 
+/*
+============================
+Server Tests
+============================
+*/
 
-/** Server Tests **/
+#ifndef __APPLE__ // Server tests do not compile on macOS
 
-#ifndef __APPLE__ // Server tests do not compile on Macs
+/** 
+ * server/main.c 
+**/
 
-    // Testing that good values passed into server_parse_args returns success
-    TEST(ProtocolTest, ArgParsingUsageArgTest) {
-        int argc = 2;
+// Testing that good values passed into server_parse_args returns success
+TEST(ProtocolTest, ArgParsingUsageArgTest) {
+    int argc = 2;
 
-        char argv0[] = "./server/build64/FractalServer";
-        char argv1[] = "--help";
-        char *argv[] = {argv0, argv1, NULL};
+    char argv0[] = "./server/build64/FractalServer";
+    char argv1[] = "--help";
+    char *argv[] = {argv0, argv1, NULL};
 
-        int ret_val = server_parse_args(argc, argv);
-        EXPECT_EQ(ret_val, 1);
-    }
+    int ret_val = server_parse_args(argc, argv);
+    EXPECT_EQ(ret_val, 1);
+}
 
 #endif
 
-/** Fractal Lib Tests **/
+/*
+============================
+Fractal Library Tests
+============================
+*/
 
 // Constants used for testing encryption
 #define DEFAULT_BINARY_PRIVATE_KEY \
     "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 #define SECOND_BINARY_PRIVATE_KEY "\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED"
 
-/** Testing aes.c/h **/
+/** 
+ * utils/color.c 
+**/
+
+TEST(ProtocolTest, FractalColorTest) {
+    FractalRGBColor cyan = {0, 255, 255};
+    FractalRGBColor magenta = {255, 0, 255};
+    FractalRGBColor dark_gray = {25, 25, 25};
+    FractalRGBColor light_gray = {150, 150, 150};
+    FractalRGBColor fractal_purple_rgb = {79, 53, 222};
+    FractalYUVColor fractal_purple_yuv = {85, 198, 127};
+
+    // equality works
+    EXPECT_EQ(rgb_compare(cyan, cyan), 0);
+    EXPECT_EQ(rgb_compare(magenta, magenta), 0);
+
+    // inequality works
+    EXPECT_EQ(rgb_compare(cyan, magenta), 1);
+    EXPECT_EQ(rgb_compare(magenta, cyan), 1);
+
+    // dark color wants light text
+    EXPECT_FALSE(color_requires_dark_text(dark_gray));
+
+    // light color wants dark text
+    EXPECT_TRUE(color_requires_dark_text(light_gray));
+
+    // yuv conversion works (with some fuzz)
+    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).red, fractal_purple_rgb.red, 2);
+    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).green, fractal_purple_rgb.green, 2);
+    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
+}
+
+/** 
+ * utils/clock.c 
+**/
+
+TEST(ProtocolTest, TimersTest) {
+    // Note: This test is currently a no-op, as the GitHub Actions runner is too slow for
+    // sleep/timer to work properly. Uncomment the code to run it locally.
+
+    // Note that this test will detect if either the timer or the sleep function
+    // is broken, but not necessarily if both are broken.
+    // clock timer;
+    // start_timer(&timer);
+    // fractal_sleep(25);
+    // double elapsed = get_timer(timer);
+    // EXPECT_GE(elapsed, 0.025);
+    // EXPECT_LE(elapsed, 0.035);
+
+    // start_timer(&timer);
+    // fractal_sleep(100);
+    // elapsed = get_timer(timer);
+    // EXPECT_GE(elapsed, 0.100);
+    // EXPECT_LE(elapsed, 0.110);
+}
+
+/** 
+ * utils/aes.c
+**/
 
 // This test makes a packet, encrypts it, decrypts it, and confirms the latter is
 // the original packet
@@ -279,7 +332,7 @@ TEST(ProtocolTest, BadDecrypt) {
 }
 
 /**
- *  Only run on Mac and Linux for 2 reaons:
+ *  Only run on macOS and Linux for 2 reaons:
  *  1) There is an encoding difference on Windows that causes the 
  *  images to be read differently, thus causing them to fail 
  *  2) These tests on Windows add an additional 3-5 minutes for the Workflow 
@@ -336,9 +389,7 @@ TEST(ProtocolTest, BmpToPngToBmp) {
     delete[] png_buffer;
     delete[] new_bmp_data;
 }
-
 #endif
-
 
 // Adds AVPackets to an buffer via write_packets_to_buffer and 
 // confirms that buffer structure is correct
@@ -381,13 +432,13 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
         EXPECT_TRUE(bit_arr);
 
         bit_array_clear_all(bit_arr);
-        for (int i=0; i<test_size; i++) {
+        for (int i = 0; i < test_size; i++) {
             EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
         }
 
         std::vector<bool>bits_arr_check;
 
-        for (int i=0; i<test_size; i++) {
+        for (int i = 0; i < test_size; i++) {
             int coin_toss = rand() % 2;
             EXPECT_TRUE(coin_toss == 0 || coin_toss == 1);
             if (coin_toss) {
@@ -423,7 +474,12 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
     }
 }
 
-// Runs the tests
+/*
+============================
+Run Tests
+============================
+*/
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
