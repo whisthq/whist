@@ -178,29 +178,53 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		fc := mandelbox.New(context.Background(), goroutineTracker, types.MandelboxID(containerName))
 		defer fc.Close()
 
+		// Do all startup tasks that can be done before Docker container creation in
+		// parallel, stopping at the first error encountered
+		preCreateGroup, _ := errgroup.WithContext(fc.GetContext())
+
 		// Assign port bindings for the mandelbox (necessary for
 		// `fc.WriteMandelboxParams()`, though we don't need to actually pass them
 		// into the mandelbox)
-		if err := fc.AssignPortBindings([]portbindings.PortBinding{
-			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
-			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
-			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
-		}); err != nil {
-			return utils.MakeError("Error assigning port bindings: %s", err)
-		}
+		preCreateGroup.Go(func() error {
+			if err := fc.AssignPortBindings([]portbindings.PortBinding{
+				{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+				{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+				{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
+			}); err != nil {
+				return utils.MakeError("Error assigning port bindings: %s", err)
+			}
+
+			return nil
+		})
 
 		// Initialize Uinput devices for the mandelbox (necessary for the `update-xorg-conf` service to work)
-		if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
-			return utils.MakeError("Error initializing uinput devices: %s", err)
-		}
-		devices := fc.GetDeviceMappings()
+		var devices []dockercontainer.DeviceMapping
+		preCreateGroup.Go(func() error {
+			if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
+				return utils.MakeError("Error initializing uinput devices: %s", err)
+			}
+			devices = fc.GetDeviceMappings()
+			return nil
+		})
 
 		// Allocate a TTY and GPU
-		if err := fc.InitializeTTY(); err != nil {
-			return utils.MakeError("Error initializing TTY: %s", err)
-		}
-		if err := fc.AssignGPU(); err != nil {
-			return utils.MakeError("Error assigning GPU: %s", err)
+		preCreateGroup.Go(func() error {
+			if err := fc.InitializeTTY(); err != nil {
+				return utils.MakeError("Error initializing TTY: %s", err)
+			}
+
+			// CI does not have GPUs
+			if !metadata.IsRunningInCI() {
+				if err := fc.AssignGPU(); err != nil {
+					return utils.MakeError("Error assigning GPU: %s", err)
+				}
+			}
+			return nil
+		})
+
+		err := preCreateGroup.Wait()
+		if err != nil {
+			return utils.MakeError("Error warming up host service: %v", err)
 		}
 
 		aesKey := utils.RandHex(16)
@@ -277,19 +301,34 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 		logger.Infof("warmUpDockerClient(): Created container %s with image %s", containerName, image)
 
-		if err := fc.WriteMandelboxParams(); err != nil {
-			return utils.MakeError("Error writing parameters for mandelbox: %s", err)
+		postCreateGroup, _ := errgroup.WithContext(fc.GetContext())
+
+		postCreateGroup.Go(func() error {
+			if err := fc.WriteMandelboxParams(); err != nil {
+				return utils.MakeError("Error writing parameters for mandelbox: %s", err)
+			}
+			return nil
+		})
+
+		postCreateGroup.Go(func() error {
+			err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
+			if err != nil {
+				return utils.MakeError("Error running `start` for %s:\n%s", containerName, err)
+			}
+
+			logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
+			return nil
+		})
+
+		err = postCreateGroup.Wait()
+		if err != nil {
+			return utils.MakeError("Error warming up host service: %v", err)
 		}
+
 		err = fc.MarkReady()
 		if err != nil {
 			return utils.MakeError("Error marking mandelbox as ready: %s", err)
 		}
-
-		err = client.ContainerStart(globalCtx, createBody.ID, dockertypes.ContainerStartOptions{})
-		if err != nil {
-			return utils.MakeError("Error running `start` for %s:\n%s", containerName, err)
-		}
-		logger.Infof("warmUpDockerClient(): Started container %s with image %s", containerName, image)
 
 		logger.Infof("Waiting for fractal application to warm up...")
 		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
