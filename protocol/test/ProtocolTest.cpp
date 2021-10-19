@@ -15,16 +15,15 @@ extern "C" {
         #include "server/parse_args.h"
     #endif
     
-    
     #include "client/client_utils.h"
     #include "fractal/utils/aes.h"
     #include "fractal/utils/png.h"
     #include "fractal/utils/avpacket_buffer.h"
 }
 // Include paths should be relative to the protocol folder
-//      Examples:
-//      - To include file.h in protocol folder, use #include "file.h"
-//      - To include file2.h in protocol/client folder, use #include "client/file.h"
+// Examples:
+//   - To include file.h in protocol folder, use #include "file.h"
+//   - To include file2.h in protocol/client folder, use #include "client/file.h"
 // To include a C source file, you need to wrap the include statement in extern "C" {}.
 
 // Example of a test using a function from the client module
