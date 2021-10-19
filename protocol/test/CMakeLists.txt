@@ -187,7 +187,6 @@ if (GENERATE_COVERAGE)
         COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
         COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info # print verbose coverage information
     )
-endif()
 
 # Upload code coverage to Codecov
 if (UPLOAD_COVERAGE)
