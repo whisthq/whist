@@ -77,6 +77,18 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
+// ImportBrowserConfigRequest defines the (unauthenticated) `import_browser_config`
+// endpoint
+type ImportBrowserConfigRequest struct {
+	AppName               types.AppName               `json:"app_name"`                // The app name to spin up (in localdev, this can be an arbitrary container image, but in deployment it must be a mandelbox image name).
+	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JwtAccessToken        string                      `json:"jwt_access_token"`        // User's JWT access token
+	MandelboxID           types.MandelboxID           `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
+	SessionID             uint64                      `json:"session_id"`              // The sessionID provided by the client-app
+	Cookies 	   		  []map[string]string 		  `json:"browser_cookies"`		   // The cookies provided by the client-app
+}
+
+
 // SpinUpMandelboxRequest defines the (unauthenticated) `spin_up_mandelbox`
 // endpoint.
 type SpinUpMandelboxRequest struct {
@@ -121,6 +133,28 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SpinUpMandelboxRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
+// processImportBrowserConfigRequest processes an HTTP request to spin up a
+// mandelbox. It is handled in host-service.go
+func processImportBrowserConfigRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is an PUT request
+	if verifyRequestType(w, r, http.MethodPut) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata ImportBrowserConfigRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
@@ -249,6 +283,7 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
+	mux.HandleFunc("/import_browser_config", createHandler(processImportBrowserConfigRequest))
 
 	// Create the server itself
 	server := &http.Server{
