@@ -13,7 +13,7 @@
 // The implementation for this mocking is in src/testing/index.ts.
 
 const helpers = require("./build-package-helpers")
-const { isEmpty } = require("lodash")
+const isEmpty = require("lodash.isempty")
 const path = require("path")
 const { readdirSync } = require("fs")
 const start = require("./start")

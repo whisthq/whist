@@ -15,7 +15,8 @@ import {
   combineLatest,
 } from "rxjs"
 import { map, mapTo, switchMap, take } from "rxjs/operators"
-import { toPairs } from "lodash"
+import toPairs from "lodash.topairs"
+
 import { fromTrigger } from "@app/utils/flows"
 
 export const loadingFrom = (

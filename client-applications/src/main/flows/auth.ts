@@ -1,6 +1,7 @@
 import { from, merge, zip } from "rxjs"
-import { has } from "lodash"
 import { switchMap, map, filter } from "rxjs/operators"
+import has from "lodash.has"
+
 import { fork, flow } from "@app/utils/flows"
 import {
   authInfoRefreshRequest,

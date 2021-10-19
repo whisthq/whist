@@ -7,7 +7,6 @@
 
 import events from "events"
 import { Menu, Tray, nativeImage } from "electron"
-import { values, endsWith } from "lodash"
 
 import { trayIconPath } from "@app/config/files"
 import { AWSRegion } from "@app/@types/aws"
@@ -52,7 +51,7 @@ const feedbackMenu = new MenuItem({
 
 const regionMenu = new MenuItem({
   label: "(Admin Only)",
-  submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
+  submenu: Object.values(defaultAllowedRegions).map((region: AWSRegion) => ({
     label: region,
     type: "radio",
     click: () => {
@@ -120,7 +119,7 @@ export const createMenu = (signedIn: boolean, userEmail?: string) =>
   Menu.buildFromTemplate([
     ...(signedIn ? [accountMenu] : []),
     ...[settingsMenu, feedbackMenu],
-    ...(signedIn && endsWith(userEmail ?? "", "@fractal.co")
+    ...(signedIn && (userEmail ?? "").endsWith("@fractal.co")
       ? [regionMenu]
       : []),
   ])

@@ -5,7 +5,6 @@
  */
 
 import { app } from "electron"
-import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
@@ -56,12 +55,7 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
     data
   )}`
 
-  const debugLog = truncate(template, {
-    length: 5000,
-    omission: "...**logBase only prints 5000 characters per log**",
-  })
-
-  return `${util.format(debugLog)} \n`
+  return `${util.format(template)} \n`
 }
 
 const localLog = (
