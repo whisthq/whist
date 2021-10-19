@@ -1,175 +1,127 @@
-#[[
-################## FractalClientUnitTests ##################
-]]
-
-# Create the executable
-set(CLIENT_TEST_BINARY FractalClientTest)
-add_executable(${CLIENT_TEST_BINARY} ClientTest.cpp
-    ../client/audio.c
-    ../client/client_utils.c
-    ../client/network.c
-    ../client/sdl_event_handler.c
-    ../client/sdl_utils.c
-    ../client/handle_server_message.c
-    ../client/video.c
-    ../client/sdlscreeninfo.c
-    ../client/ringbuffer.c
-    ../client/sync_packets.c
-    ../client/bitrate.c
-)
-
-# Link the GoogleTest library
-target_link_libraries(${CLIENT_TEST_BINARY} gtest)
-
-# Copy the Sentry library to the build folder
-add_custom_command(
-        TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
-        $<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
-
-# Copy the FFmpeg library to the build folder
-add_custom_command(
-    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-    $<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
-
-# Copy the OpenSSL/libcrypto libraries if we are on Windows
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_command(
-            TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
-            $<TARGET_FILE_DIR:${CLIENT_TEST_BINARY}>)
-endif()
-
-# Link the FFmpeg libraries
-foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(VERBOSE "linking lib for ${CLIENT_TEST_BINARY}: ${LIB}")
-    target_link_libraries(${CLIENT_TEST_BINARY} ${LIB})
-endforeach()
-
-# Link the threading and dynamic link library if we are on Mac/Linx
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(${CLIENT_TEST_BINARY} ${CMAKE_DL_LIBS})
-endif()
-
-# Link the remaining platform-independent libraries
-target_link_libraries(${CLIENT_TEST_BINARY}
-    ${PLATFORM_INDEPENDENT_LIBS}
-)
-
-# Link more linux-specific libraries
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE
-        ../client/native_window_utils_x11.c
-    )
-
-    find_package(X11 REQUIRED Xfixes)
-    find_package(ALSA REQUIRED)
-    include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
-    target_link_libraries(${CLIENT_TEST_BINARY} ${X11_LIBRARIES}
-            ${X11_Xfixes_LIB}
-            ${ALSA_LIBRARIES}
-            crypto
-            m
-        )
-endif()
-
-# Link macOS-specific libs
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE
-        ../client/native_window_utils_mac.m
-    )
-
-    target_link_libraries(${CLIENT_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
-endif()
-
-# Finally, link Windows-specific libraries
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
-
-    target_sources(${CLIENT_TEST_BINARY} PRIVATE
-        ../client/native_window_utils_windows.c
-)
-    target_link_libraries(${CLIENT_TEST_BINARY} fractalInput ${LIBMFX})
-
-    set_property(TARGET ${CLIENT_TEST_BINARY} PROPERTY
-            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-    if(CMAKE_CUDA_COMPILER)
-        set_property(TARGET ${CLIENT_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
-    endif()
-
-    # Link to system libs
-    target_link_libraries(${CLIENT_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
-endif()
-
-add_custom_command(
-    TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-    COMMAND ./${CLIENT_TEST_BINARY}
-)
-
-if (GENERATE_COVERAGE)
-    add_custom_command(
-        TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-        COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-        COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
-        COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
-    )
-endif()
-
-if (UPLOAD_COVERAGE)
-    add_custom_command(
-        TARGET ${CLIENT_TEST_BINARY} POST_BUILD
-        COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
-    )
-endif()
-
-#[[
-################## FractalServerUnitTests ##################
-]]
-
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or compile on macOS
+# #[[
+################## FractalProtocolUnitTests ##################
+#]]
 
     # Create the executable
-    set(SERVER_TEST_BINARY FractalServerTest)
-    add_executable(${SERVER_TEST_BINARY} ServerTest.cpp
-        ../server/client.c
-        ../server/video.c
-        ../server/audio.c
-        ../server/parse_args.c
-        ../server/handle_client_message.c
-        ../server/network.c
+    set(PROTOCOL_TEST_BINARY FractalProtocolTest)
+    
+    # Client-only files, since macOS is only supported client-sides
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+            # Files needed for Fractal Lib unit tests 
+            ../fractal/utils/aes.c
+            ../fractal/utils/png.c
+            ../fractal/utils/avpacket_buffer.c
+
+            # Files needed for Client unit tests
+            ../client/audio.c
+            ../client/client_utils.c
+            ../client/network.c
+            ../client/sdl_event_handler.c
+            ../client/sdl_utils.c
+            ../client/handle_server_message.c
+            ../client/video.c
+            ../client/sdlscreeninfo.c
+            ../client/ringbuffer.c
+            ../client/sync_packets.c
+            ../client/bitrate.c
+        )
+    # Server & Client files, for Windows/Linux (supported on both client and server)
+    else()
+        add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+            # Files needed for Server unit tests
+            ../server/client.c
+            ../server/video.c
+            ../server/audio.c
+            ../server/parse_args.c
+            ../server/handle_client_message.c
+            ../server/network.c
+
+            # Files needed for Fractal Lib unit tests 
+            ../fractal/utils/aes.c
+            ../fractal/utils/png.c
+            ../fractal/utils/avpacket_buffer.c
+
+            # Files needed for Client unit tests
+            ../client/audio.c
+            ../client/client_utils.c
+            ../client/network.c
+            ../client/sdl_event_handler.c
+            ../client/sdl_utils.c
+            ../client/handle_server_message.c
+            ../client/video.c
+            ../client/sdlscreeninfo.c
+            ../client/ringbuffer.c
+            ../client/sync_packets.c
+            ../client/bitrate.c
     )
+    endif()
 
     # Link the GoogleTest library
-    target_link_libraries(${SERVER_TEST_BINARY} gtest)
+    target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
 
-    # Link the FFmpeg libraries
+    # Copy the Sentry library to the build folder
+    add_custom_command(
+        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
+        $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>
+    )
+
+    # Copy the FFmpeg library to the build folder
+    add_custom_command(
+        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
+        $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>
+    )
+
+    # Copy the OpenSSL/libcrypto libraries if we are on Windows
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
+            $<TARGET_FILE_DIR:${PROTOCOL_TEST_BINARY}>
+        )
+    endif()
+
+    # Link the FFmpeg libraries 
     foreach(LIB ${FFMPEG_LIBS_PATHS})
-        message(VERBOSE "linking lib for ${SERVER_TEST_BINARY}: ${LIB}")
-        target_link_libraries(${SERVER_TEST_BINARY} ${LIB})
-    endforeach()
+        message(VERBOSE "linking lib for ${PROTOCOL_TEST_BINARY}: ${LIB}")
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${LIB})
+    endforeach(LIB)
 
-    # Link the threading and dynamic link library if we are on Mac/Linx
+    # Link the threading and dynamic link library if we are on macOS/Linx
     if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        target_link_libraries(${SERVER_TEST_BINARY} ${CMAKE_DL_LIBS})
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${CMAKE_DL_LIBS})
     endif()
 
     # Link the remaining platform-independent libraries
-    target_link_libraries(${SERVER_TEST_BINARY}
+    target_link_libraries(${PROTOCOL_TEST_BINARY}
         ${PLATFORM_INDEPENDENT_SERVER_LIBS}
+        ${PLATFORM_INDEPENDENT_LIBS}
     )
+    
+    # Link macOS-specific files and libraries
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
+            ../client/native_window_utils_mac.m
+        )
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
+    endif()
 
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Link more Linux-specific libraries    
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
         find_package(X11 REQUIRED
-                Xfixes
-                Xdamage
-                Xext
-                Xtst)
-        include_directories(${X11_INCLUDE_DIR})
+            Xfixes
+            Xdamage
+            Xext
+            Xtst
+        )
+        find_package(ALSA REQUIRED)
+        include_directories(${X11_INCLUDE_DIR} ${ALSA_INCLUD_DIR})
         if(NOT X11_LIBRARIES)
             message(FATAL_ERROR "Library X11_LIBRARIES was not found!")
         endif()
@@ -183,69 +135,69 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server unit tests do not make or
             message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
         endif()
 
-        target_link_libraries(${SERVER_TEST_BINARY}
-                ${X11_LIBRARIES}
-                ${X11_Xfixes_LIB}
-                ${X11_Xdamage_LIB}
-                ${X11_Xext_LIB}
-                ${X11_Xtst_LIB}
-                GL
-                asound
-                m
-                OpenSSL::Crypto
-                )
+        target_link_libraries(${PROTOCOL_TEST_BINARY}
+            ${X11_LIBRARIES}
+            ${X11_Xfixes_LIB}
+            ${X11_Xdamage_LIB}
+            ${X11_Xext_LIB}
+            ${X11_Xtst_LIB}
+            ${ALSA_LIBRARIES}
+            GL
+            asound
+            m
+            OpenSSL::Crypto
+        )
     endif()
 
-    if(${WIN32})
-        # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
-        # this comes up when we used precompiled libraries which we do not have .pdb files for
+    # Finally, link Windows-specific libraries
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099  ")
 
-        #sets the MSVC runtime library as multithreaded and adds debug symbols
-        # if is a debug build, see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
-        set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY
-                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
+            ../client/native_window_utils_windows.c
+        )
+        target_link_libraries(${PROTOCOL_TEST_BINARY} fractalInput ${LIBMFX})
+
+        set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+        )
 
         if(CMAKE_CUDA_COMPILER)
-            set_property(TARGET ${SERVER_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
+            set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY CUDA_ARCHITECTURES OFF)
         endif()
 
         # Link to system libs
-        target_link_libraries(${SERVER_TEST_BINARY}
-            ${WINDOWS_SPECIFIC_SERVER_LIBS}
-            )
+        target_link_libraries(${PROTOCOL_TEST_BINARY} ${WINDOWS_SPECIFIC_CLIENT_LIBS})
     endif()
 
+    # Run the tests
     add_custom_command(
-        TARGET ${SERVER_TEST_BINARY} POST_BUILD
-        COMMAND ./${SERVER_TEST_BINARY}
+        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        COMMAND ./${PROTOCOL_TEST_BINARY}
     )
 
+    # Generate code coverage
     if (GENERATE_COVERAGE)
         add_custom_command(
-            TARGET ${SERVER_TEST_BINARY} POST_BUILD
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
             COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-            COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
-            COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info #  print verbose coverage information
+            COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
+            COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info # print verbose coverage information
         )
     endif()
 
+    # Upload code coverage to Codecov
     if (UPLOAD_COVERAGE)
         add_custom_command(
-            TARGET ${SERVER_TEST_BINARY} POST_BUILD
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
             COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
         )
     endif()
-endif()
 
 #[[
 ################## FractalUnitTests ##################
 ]]
 
-# Include the GoogleTest library, and let gtest scan
-# for the tests in the binary file
+# Include the GoogleTest library, and let gtest scan for the tests in the binary file
 include(GoogleTest)
-gtest_discover_tests(${CLIENT_TEST_BINARY})
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    gtest_discover_tests(${SERVER_TEST_BINARY})
-endif()
+gtest_discover_tests(${PROTOCOL_TEST_BINARY})

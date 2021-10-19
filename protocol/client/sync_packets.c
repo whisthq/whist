@@ -49,7 +49,7 @@ volatile int last_tcp_pong_id;
 clock tcp_latency_timer;
 extern volatile double latency;
 // MBPS variables
-extern volatile int max_bitrate;
+extern volatile int client_max_bitrate;
 extern volatile int max_burst_bitrate;
 extern volatile bool update_bitrate;
 // dimension variables
@@ -196,7 +196,7 @@ void try_update_bitrate() {
         update_bitrate = false;
         FractalClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_MBPS;
-        fcmsg.bitrate_data.bitrate = max_bitrate;
+        fcmsg.bitrate_data.bitrate = client_max_bitrate;
         fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
         LOG_INFO("Asking for server MBPS to be %f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
                  fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);

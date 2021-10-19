@@ -9,7 +9,7 @@ Usage
 Place to put any predictive/adaptive bitrate algorithms. In the current setup, each algorithm is a
 function that takes in inputs through a BitrateStatistics struct. The function is responsible for
 maintaining any internal state necessary for the algorithm (possibly through the use of custom types
-or helpers), and should update max_bitrate when necessary.
+or helpers), and should update client_max_bitrate when necessary.
 
 To change the algorithm the client uses, set `calculate_new_bitrate` to the desired algorithm.
 The function assigned to `calculate_new_bitrate` should have signature such that it takes
@@ -26,7 +26,7 @@ Includes
 */
 #include "bitrate.h"
 
-volatile int max_bitrate = STARTING_BITRATE;
+volatile int client_max_bitrate = STARTING_BITRATE;
 volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
 #define BAD_BITRATE 10400000
 #define BAD_BURST_BITRATE 31800000
@@ -55,11 +55,11 @@ Bitrates fallback_bitrate(BitrateStatistics stats) {
        since the last time this function was called
     */
     static Bitrates bitrates;
-    if (stats.num_nacks_per_second > 6 && max_bitrate != BAD_BITRATE) {
+    if (stats.num_nacks_per_second > 6 && client_max_bitrate != BAD_BITRATE) {
         bitrates.bitrate = BAD_BITRATE;
         bitrates.burst_bitrate = BAD_BURST_BITRATE;
     } else {
-        bitrates.bitrate = max_bitrate;
+        bitrates.bitrate = client_max_bitrate;
         bitrates.burst_bitrate = max_burst_bitrate;
     }
     return bitrates;

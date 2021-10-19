@@ -38,8 +38,8 @@ volatile int server_width = -1;
 volatile int server_height = -1;
 volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
 
-volatile char binary_aes_private_key[16];
-volatile char hex_aes_private_key[33];
+volatile char client_binary_aes_private_key[16];
+volatile char client_hex_aes_private_key[33];
 volatile char *server_ip;
 volatile int output_width;
 volatile int output_height;
@@ -47,7 +47,7 @@ volatile char *program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 extern volatile SDL_Window *window;
 
-extern volatile int max_bitrate;
+extern volatile int client_max_bitrate;
 
 // From main.c
 volatile bool update_bitrate = false;
@@ -66,24 +66,25 @@ volatile SDL_Window *window;
 extern unsigned short port_mappings[USHRT_MAX];
 
 volatile bool using_piped_arguments;
-const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
-                                     {"height", required_argument, NULL, 'h'},
-                                     {"bitrate", required_argument, NULL, 'b'},
-                                     {"codec", required_argument, NULL, 'c'},
-                                     {"private-key", required_argument, NULL, 'k'},
-                                     {"user", required_argument, NULL, 'u'},
-                                     {"environment", required_argument, NULL, 'e'},
-                                     {"icon", required_argument, NULL, 'i'},
-                                     {"ports", required_argument, NULL, 'p'},
-                                     {"name", required_argument, NULL, 'n'},
-                                     {"read-pipe", no_argument, NULL, 'r'},
-                                     {"loading", required_argument, NULL, 'l'},
-                                     {"skip-taskbar", no_argument, NULL, 's'},
-                                     // these are standard for POSIX programs
-                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
-                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
-                                     // end with NULL-termination
-                                     {0, 0, 0, 0}};
+const struct option client_cmd_options[] = {
+    {"width", required_argument, NULL, 'w'},
+    {"height", required_argument, NULL, 'h'},
+    {"bitrate", required_argument, NULL, 'b'},
+    {"codec", required_argument, NULL, 'c'},
+    {"private-key", required_argument, NULL, 'k'},
+    {"user", required_argument, NULL, 'u'},
+    {"environment", required_argument, NULL, 'e'},
+    {"icon", required_argument, NULL, 'i'},
+    {"ports", required_argument, NULL, 'p'},
+    {"name", required_argument, NULL, 'n'},
+    {"read-pipe", no_argument, NULL, 'r'},
+    {"loading", required_argument, NULL, 'l'},
+    {"skip-taskbar", no_argument, NULL, 's'},
+    // these are standard for POSIX programs
+    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
+    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+    // end with NULL-termination
+    {0, 0, 0, 0}};
 const char *usage;
 
 #define INCOMING_MAXLEN 127
@@ -158,7 +159,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
                 printf("%s", usage);
                 return -1;
             }
-            max_bitrate = (int)ret;
+            client_max_bitrate = (int)ret;
             break;
         }
         case 'c': {  // codec
@@ -174,8 +175,8 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'k': {  // private key
-            if (!read_hexadecimal_private_key(eval_optarg, (char *)binary_aes_private_key,
-                                              (char *)hex_aes_private_key)) {
+            if (!read_hexadecimal_private_key(eval_optarg, (char *)client_binary_aes_private_key,
+                                              (char *)client_hex_aes_private_key)) {
                 printf("Invalid hexadecimal string: %s\n", eval_optarg);
                 printf("%s", usage);
                 return -1;
@@ -315,9 +316,10 @@ int client_parse_args(int argc, char *argv[]) {
         "      --version  Output version information and exit\n";
 
     // Initialize private key to default
-    memcpy((char *)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
-           sizeof(binary_aes_private_key));
-    memcpy((char *)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
+    memcpy((char *)&client_binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
+           sizeof(client_binary_aes_private_key));
+    memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
+           sizeof(client_hex_aes_private_key));
 
     // default user email
     safe_strncpy(user_email, "None", sizeof(user_email));
@@ -330,7 +332,7 @@ int client_parse_args(int argc, char *argv[]) {
     using_piped_arguments = false;
 
     while (true) {
-        opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
+        opt = getopt_long(argc, argv, OPTION_STRING, client_cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
                    strlen(optarg), FRACTAL_ARGS_MAXLEN);
@@ -493,12 +495,12 @@ int read_piped_arguments(bool *keep_waiting) {
             arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
             arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
 
-            // Iterate through cmd_options to find the corresponding opt
+            // Iterate through client_cmd_options to find the corresponding opt
             int opt_index = -1;
-            for (int i = 0; cmd_options[i].name; i++) {
-                if (strncmp(arg_name, cmd_options[i].name, strlen(arg_name))) continue;
+            for (int i = 0; client_cmd_options[i].name; i++) {
+                if (strncmp(arg_name, client_cmd_options[i].name, strlen(arg_name))) continue;
 
-                if (strlen(cmd_options[i].name) == (unsigned)strlen(arg_name)) {
+                if (strlen(client_cmd_options[i].name) == (unsigned)strlen(arg_name)) {
                     opt_index = i;
                     break;
                 }
@@ -506,7 +508,7 @@ int read_piped_arguments(bool *keep_waiting) {
 
             if (opt_index >= 0) {
                 // Evaluate the passed argument, if a valid opt
-                if (evaluate_arg(cmd_options[opt_index].val, arg_value) < 0) {
+                if (evaluate_arg(client_cmd_options[opt_index].val, arg_value) < 0) {
                     LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name,
                               arg_value ? arg_value : "NULL");
                     return -1;
