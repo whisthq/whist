@@ -307,7 +307,6 @@ manage_taskbar_visibility = function ()
   end
 end
 
-
 show_master_window = function ()
   local m = awful.client.getmaster()
   if m ~= nil then
@@ -352,6 +351,7 @@ ensure_client_is_not_offscreen = function (c)
   -- make sure master takes up the whole screen
   if c == awful.client.getmaster() then
     awful.titlebar.hide(c)
+    c.shape = gears.shapes.rectangle
     c.border_width = 0
     c:geometry(awful.screen.focused().workarea)
     return
