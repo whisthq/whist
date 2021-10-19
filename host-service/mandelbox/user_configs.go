@@ -78,7 +78,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		// If aws s3 errors out due to the file not existing, don't log an error because
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
-		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "404" {
+		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NotFound" {
 			logger.Infof("Could not get head object because config does not exist for user %s", c.userID)
 			return nil
 		}
