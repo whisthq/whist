@@ -642,7 +642,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // if there was a failure
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     exiting = true;
-                    return -1;
+                    break;
                 }
                 log_double_statistic("Transfer capture time (ms)",
                                      get_timer(statistics_timer) * MS_IN_SECOND);
@@ -659,10 +659,10 @@ int32_t multithreaded_send_video(void* opaque) {
                     // bad boy error
                     LOG_ERROR("Error encoding video frame!");
                     exiting = true;
-                    return -1;
+                    break;
                 } else if (res > 0) {
                     // filter graph is empty
-                    return -1;
+                    break;
                 }
                 log_double_statistic("Video encode time (ms)",
                                      get_timer(statistics_timer) * MS_IN_SECOND);
