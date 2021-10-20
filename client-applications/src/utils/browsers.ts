@@ -67,10 +67,14 @@ const decryptCookie = async (
       return cookie
     }
 
+    if (cookie.encrypted_value.toString().length == 0) {
+      return cookie
+    }
+
     const encryptionPrefix = cookie.encrypted_value.toString().substring(0, 3)
-    // if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
-    //   return cookie
-    // }
+    if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
+      return cookie
+    }
 
     cookie.encrypted_prefix = encryptionPrefix
 
