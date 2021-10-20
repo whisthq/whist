@@ -6,6 +6,9 @@
 
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
+#define FRACTAL_PRESET NV_ENC_PRESET_P2_GUID
+#define FRACTAL_TUNING NV_ENC_TUNING_INFO_LOW_LATENCY
+
 int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
                              NV_ENC_PRESET_CONFIG* p_preset_config);
 GUID get_codec_guid(CodecType codec);
@@ -137,7 +140,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     NV_ENC_INITIALIZE_PARAMS init_params = {0};
     init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
     init_params.encodeGUID = get_codec_guid(encoder->codec_type);
-    init_params.presetGUID = NV_ENC_PRESET_LOW_LATENCY_HP_GUID;
+    init_params.presetGUID = FRACTAL_PRESET;
+    init_params.tuningInfo = FRACTAL_TUNING;
     init_params.encodeConfig = &preset_config.presetCfg;
     init_params.encodeWidth = out_width;
     init_params.encodeHeight = out_height;
@@ -463,6 +467,8 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     encoder->frame_size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;
     encoder->is_iframe = encoder->wants_iframe || encoder->frame_idx == 0;
+    // encoder->is_reference_frame = lock_params.pictureType != NV_ENC_PIC_TYPE_NONREF_P;
+    // LOG_INFO("Is Reference Frame: %d", lock_params.pictureType != NV_ENC_PIC_TYPE_NONREF_P);
 
     // Untrigger iframe
     encoder->wants_iframe = false;
@@ -507,26 +513,36 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
             (int): 0 on success, -1 on failure
     */
     memset(p_preset_config, 0, sizeof(*p_preset_config));
+    NVENCSTATUS status;
 
     p_preset_config->version = NV_ENC_PRESET_CONFIG_VER;
     p_preset_config->presetCfg.version = NV_ENC_CONFIG_VER;
     // fill the preset config with the low latency, high performance config
-    NVENCSTATUS status = encoder->p_enc_fn.nvEncGetEncodePresetConfig(
-        encoder->internal_nvidia_encoder, get_codec_guid(codec), NV_ENC_PRESET_LOW_LATENCY_HP_GUID,
-        p_preset_config);
+    status = encoder->p_enc_fn.nvEncGetEncodePresetConfigEx(encoder->internal_nvidia_encoder,
+                                                            get_codec_guid(codec), FRACTAL_PRESET,
+                                                            FRACTAL_TUNING, p_preset_config);
     // Check for bad status
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to obtain preset settings, status = %d", status);
         return -1;
     }
-    // modify iframes and bitrate
+
+    // Suggestions from
+    // https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#recommended-nvenc-settings
+    p_preset_config->presetCfg.rcParams.multiPass = NV_ENC_TWO_PASS_QUARTER_RESOLUTION;
+    p_preset_config->presetCfg.rcParams.enableAQ = 1;
+    // p_preset_config->presetCfg.rcParams.enableTemporalAQ = 1;
+    p_preset_config->presetCfg.rcParams.enableNonRefP = 1;
+    // Only create IDRs when we request them
     p_preset_config->presetCfg.gopLength = NVENC_INFINITE_GOPLENGTH;
     // LOWDELAY seems to have longer encode times, and the frames are about the same size. So we're
     // sticking with CBR.
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    p_preset_config->presetCfg.rcParams.maxBitRate = 4 * bitrate;
+    p_preset_config->presetCfg.rcParams.maxBitRate =
+        6 * bitrate;  // Set peak bitrate to 4x normal bitrate
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
-    p_preset_config->presetCfg.rcParams.vbvBufferSize = bitrate;
+    p_preset_config->presetCfg.rcParams.vbvBufferSize =
+        60 * bitrate / FPS;  // Set VBV to 30 frame's worth
 
     return 0;
 }
