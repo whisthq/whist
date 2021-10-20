@@ -29,6 +29,7 @@
     "@amplitude/node": "^1.8.0",
     "@fractal/core-ts": "file:../core-ts",
     "@sentry/electron": "^2.5.4",
+    "@m-lab/ndt7": "^0.0.5",
     "@typeform/embed-react": "^1.1.0",
     "@types/auto-launch": "^5.0.2",
     "@types/crypto-js": "^4.0.2",

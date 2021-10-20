@@ -44,6 +44,8 @@ const esbuildCommand = [
   "--external:node:path",
   "--external:keytar",
   "--external:knex",
+  "--external:workerjs",
+  "--external:@m-lab/ndt7",
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {

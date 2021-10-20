@@ -8,6 +8,7 @@ import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
+import ndt7 from "@m-lab/ndt7"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -133,3 +134,30 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
     e.preventDefault()
   })
 })
+
+ndt7
+  .test(
+    {
+      userAcceptedDataPolicy: true,
+    },
+    {
+      serverChosen: function (server: any) {
+        console.log("Testing to:", {
+          machine: server.machine,
+          locations: server.location,
+        })
+      },
+      downloadComplete: function (data: any) {
+        console.log(`Download test is complete`, data)
+      },
+      uploadComplete: function (data: any) {
+        console.log(`Upload test is complete`, data)
+      },
+      error: function (err: any) {
+        console.log("Error while running the test:", err.message)
+      },
+    }
+  )
+  .then(() => {
+    console.log("done!")
+  })
