@@ -1,0 +1,11 @@
+Package: libinput-fractal
+Version: 1.15.5-1
+Section: x11
+Priority: optional
+Architecture: all
+Depends: libevdev2, libmtdev1, libwacom2
+Provides: libinput10 (= 9.99.9), libinput-bin (= 9.99.9), libinput-tools (= 9.99.9), libinput (= 9.99.9)
+Maintainer: Fractal (developers@fractal.co)
+Description: Fractal provides our own, patched
+ build of libinput. Please contact us for more
+ details.
