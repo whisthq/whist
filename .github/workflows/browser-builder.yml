@@ -106,7 +106,7 @@ jobs:
       # https://stackoverflow.com/questions/65856300/wasm-code-commit-allocation-failed-process-out-of-memory
       # despite Brave saying you need Node 12
 
-      # You also need to have downloaded Xcode, accepted the terms/license, and 
+      # You also need to have downloaded Xcode, accepted the terms/license, and
       # installed Xcode CLI via `xcode-select --install` and then run
       # sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
