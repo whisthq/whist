@@ -29,10 +29,10 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
-      - name: Set up Python 3.9.5
+      - name: Set up Python 3.9.10
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9.5"
+          python-version: "3.9.10"
 
       - name: Install Dependencies
         working-directory: webserver
@@ -123,10 +123,10 @@ jobs:
           ${{ toJSON(matrix) }}
           """
 
-      - name: Set up Python 3.9.5
+      - name: Set up Python 3.9.10
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9.5"
+          python-version: "3.9.10"
 
       - name: Determine heroku app name
         run: |
