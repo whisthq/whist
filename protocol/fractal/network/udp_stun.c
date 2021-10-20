@@ -3,7 +3,7 @@
 NetworkContext* create_udp_stun_network_context(SocketContext* context, char* destination, int port,
                                                 int recvfrom_timeout_s, int connection_timeout_ms,
                                                 char* binary_aes_private_key) {
-    // Initialize the SocketContext with using_stun as false
+    // Initialize the SocketContext with using_stun as true
     if (create_udp_context(context, destination, port, recvfrom_timeout_s, connection_timeout_ms,
                            true, binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to create UDP STUN network context!");

@@ -196,6 +196,11 @@ typedef struct FractalPacket {
                                      // than the unencrypted packet
 } FractalPacket;
 
+/**
+ * @brief                       Interface describing the avaliable functions
+ *                              and socket context of a network protocol
+ * 
+ */
 typedef struct NetworkContext {
     // Attributes
     SocketContext* context;
