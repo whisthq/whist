@@ -81,8 +81,7 @@ def get_lingering_instances(database_url):
         arr: array of tuples (name, id)
     """
 
-    query = (
-        "SELECT instance_name, cloud_provider_id FROM lingering_instances;")
+    query = "SELECT instance_name, cloud_provider_id FROM lingering_instances;"
     instances = execute_db_query(database_url, "cloud", query)
 
     return instances
