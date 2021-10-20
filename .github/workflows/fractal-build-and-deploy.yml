@@ -963,7 +963,7 @@ jobs:
             # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
             UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
-            # set new desktop app version
+            # set new desktop app version [-x64/-arm64] gets appended depending on the OS architecture it is built on
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
 
             # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
