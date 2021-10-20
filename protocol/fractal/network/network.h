@@ -199,7 +199,7 @@ typedef struct FractalPacket {
 /**
  * @brief                       Interface describing the avaliable functions
  *                              and socket context of a network protocol
- * 
+ *
  */
 typedef struct NetworkContext {
     // Attributes
@@ -209,18 +209,10 @@ typedef struct NetworkContext {
     int (*sendp)(SocketContext* context, void* buf, int len);
     int (*recvp)(SocketContext* context, void* buf, int len);
     int (*ack)(SocketContext* context);
-
-    // For TCP only, NULL otherwise
-    FractalPacket* (*read_tcp_packet)(SocketContext* context, bool should_recvp);
-    int (*send_tcp_packet_from_payload)(SocketContext* context, FractalPacket* packet,
-                                        size_t packet_size);
-    void (*free_tcp_packet)(FractalPacket* tcp_packet);
-
-    // Only non-null for UDP connections, NULL otherwise
-    FractalPacket* (*read_udp_packet)(SocketContext* context);
-    int (*send_udp_packet_from_payload)(SocketContext* context, FractalPacketType type, void* data,
-                                        int len, int id);
-
+    FractalPacket* (*read_packet)(SocketContext* context, bool should_recvp);
+    int (*send_packet_from_payload)(SocketContext* context, FractalPacketType type,
+        void* data, int len, int id); // id only valid in UDP contexts
+    void (*free_packet)(FractalPacket* packet); //Only Non-NULL in TCP.
 } NetworkContext;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -406,7 +398,9 @@ int ack(SocketContext* context);
  *                                 if any such packet exists
  *
  * @param context                  The socket context
- * @param should_recvp             If false, this function will only pop buffered packets
+ * @param should_recvp             Only valid in TCP contexts. Adding in so that functions can
+ *                                 be generalized. 
+ *                                 If false, this function will only pop buffered packets
  *                                 If true, this function will pull data from the TCP socket,
  *                                 but that might take a while
  *
@@ -414,7 +408,7 @@ int ack(SocketContext* context);
  *                                 NULL on failure
  */
 FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
-FractalPacket* read_udp_packet(SocketContext* context);
+FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp);
 
 /**
  * @brief                          Frees a TCP packet created by read_tcp_packet

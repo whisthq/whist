@@ -19,13 +19,9 @@ NetworkContext* create_udp_stun_network_context(SocketContext* context, char* de
     network_context->ack = ack;
 
     // Funcitons common to only UDP contexts
-    network_context->read_udp_packet = read_udp_packet;
-    network_context->send_udp_packet_from_payload = send_udp_packet_from_payload;
-
-    // Explicitly NULL out TCP functions, they shouldn't be usable
-    network_context->read_tcp_packet = NULL;
-    network_context->send_tcp_packet_from_payload = NULL;
-    network_context->free_tcp_packet = NULL;
+    network_context->read_packet = read_udp_packet;
+    network_context->send_packet_from_payload = send_udp_packet_from_payload;
+    network_context->free_packet = NULL;
 
     // Add in the socket context
     network_context->context = context;

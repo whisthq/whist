@@ -2038,7 +2038,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
     return NULL;
 }
 
-FractalPacket* read_udp_packet(SocketContext* context) {
+FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp) {
     /*
         Receive a FractalPacket from a SocketContext, if any such packet exists
 
@@ -2054,7 +2054,12 @@ FractalPacket* read_udp_packet(SocketContext* context) {
         return NULL;
     }
 
-    // Wait to receive packet over UDP, until timing out
+    if (should_recvp == true) {
+        LOG_WARNING("should_recvp can only be true in TCP contexts");
+        return NULL;
+    }
+
+    // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
 
