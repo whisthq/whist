@@ -395,13 +395,12 @@ const getInstalledBrowsers = () => {
         [InstalledBrowser.BRAVE]: isBrowserInstalled(InstalledBrowser.BRAVE),
         [InstalledBrowser.OPERA]: isBrowserInstalled(InstalledBrowser.OPERA),
         [InstalledBrowser.CHROME]: isBrowserInstalled(InstalledBrowser.CHROME),
-        [InstalledBrowser.FIREFOX]: isBrowserInstalled(
-          InstalledBrowser.FIREFOX
-        ),
-        [InstalledBrowser.CHROMIUM]: isBrowserInstalled(
-          InstalledBrowser.CHROMIUM
-        ),
-        [InstalledBrowser.EDGE]: isBrowserInstalled(InstalledBrowser.EDGE),
+        [InstalledBrowser.FIREFOX]:
+          isBrowserInstalled(InstalledBrowser.FIREFOX) && false, // Firefox is not Chromium-based and not currently supported
+        [InstalledBrowser.CHROMIUM]:
+          isBrowserInstalled(InstalledBrowser.CHROMIUM) && false, // Chromium currently fails, so disabling
+        [InstalledBrowser.EDGE]:
+          isBrowserInstalled(InstalledBrowser.EDGE) && false, // Not tested
       },
       (v) => v
     )
