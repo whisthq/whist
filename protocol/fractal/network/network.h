@@ -337,7 +337,7 @@ int get_packet_size(FractalPacket* packet);
  *                                 success
  */
 int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len);
+                                 int len, int id);
 
 /**
  * @brief                          This will send a FractalPacket over UDP to
