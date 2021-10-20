@@ -36,6 +36,7 @@ typedef struct {
 } InternalKeyboardMapping;
 
 // Set of modifiers, for detecting if a key is a modifier
+// CTRL = control, SHIFT = shift, ALT = alt/option, GUI = windows/command
 set<FractalKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
                                  FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
 
@@ -110,11 +111,6 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
     {
         {FK_LALT, FK_DELETE},
         {FK_LCTRL, FK_DELETE},
-    },
-    // Open a new tab with the currently selected text
-    {
-        {FK_LCTRL, FK_ENTER},
-        {FK_LALT, FK_ENTER},
     },
     // Switch tabs with Ctrl+Tab/Ctrl+Shift+Tab
     {
