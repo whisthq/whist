@@ -44,11 +44,12 @@ jobs:
     steps:
       ##################################### CONFIG STEPS START ###################################
 
-      - name: Checkout Git Repository
+      - name: Checkout fractal/brave-browser Repository
         uses: actions/checkout@v2
         with:
-          repository: brave/brave-browser
+          repository: fractal/brave-browser
           path: brave-browser
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
       # Speed up npm: https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
       - name: Turn macOS Spotlight Off to Speed Up Build
