@@ -43,17 +43,17 @@ RUN su - fractal -c \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
     && xdg-mime default google-chrome.desktop x-scheme-handler/about"
 
-# Whitelist streamed URI protocols (zoommtg,slack.spotify,discord)
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
+    # Whitelist streamed URI protocols (zoommtg,slack.spotify,discord)
     | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
-    > /etc/opt/chrome/policies/managed/URLProtocolsWhitelist.json
-
-# Disable search suggestions (as a workaround to improve URL bar
-# keyboard input until we can fork the browser and fix it)
-RUN echo {} \
+    # Disable search suggestions (as a workaround to improve URL bar
+    # keyboard input until we can fork the browser and fix it)
     | jq '.SearchSuggestEnabled=false' \
-    > /etc/opt/chrome/policies/managed/SearchSuggestions.json
+    # Disable background apps (to prevent apps like Superhuman from
+    # indefinitely blocking mandelbox shutdown).
+    | jq '.BackgroundModeEnabled=false' \
+    > /etc/opt/chrome/policies/managed/FractalPolicies.json
 
 # Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
