@@ -135,8 +135,7 @@ fromTrigger("networkUnstable")
   })
 
 fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
-  const win = createImporterWindow()
-  win.webContents.toggleDevTools()
+  createImporterWindow()
 })
 
 fromTrigger("appReady").subscribe(() => {

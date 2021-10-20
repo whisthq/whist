@@ -45,7 +45,7 @@ interface Cookie {
 const getCookieFilePath = (browser: InstalledBrowser): string[] => {
   switch (process.platform) {
     case "darwin": {
-      switch (browser.toLowerCase()) {
+      switch (browser) {
         case InstalledBrowser.CHROME: {
           return ChromeOSXCookieFiles
         }
@@ -67,7 +67,7 @@ const getCookieFilePath = (browser: InstalledBrowser): string[] => {
       }
     }
     case "linux": {
-      switch (browser.toLowerCase()) {
+      switch (browser) {
         case InstalledBrowser.CHROME: {
           return ChromeLinuxCookieFiles
         }
@@ -95,7 +95,7 @@ const getCookieFilePath = (browser: InstalledBrowser): string[] => {
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
-  switch (browser.toLowerCase()) {
+  switch (browser) {
     case InstalledBrowser.CHROME: {
       return "chrome"
     }
@@ -116,7 +116,7 @@ const getOsCryptName = (browser: InstalledBrowser): string => {
 }
 
 const getKeyUser = (browser: InstalledBrowser): string => {
-  switch (browser.toLowerCase()) {
+  switch (browser) {
     case InstalledBrowser.CHROME: {
       return "Chrome"
     }
@@ -206,15 +206,7 @@ const getLinuxCookieEncryptionKey = async (
 }
 
 const expandUser = (text: string): string => {
-  console.log(
-    `The homedir is ${homedir()}, text is ${text}, dir home is ${dirname(
-      homedir()
-    )},`
-  )
-
   return text.replace(/^~([a-z]+|\/)/, (_, $1: string) => {
-    console.log(`1 is ${$1} and _ is ${_}`)
-
     return $1 === "/" ? `${homedir()}/` : `${dirname(homedir())}/${$1}`
   })
 }
@@ -242,8 +234,6 @@ const decryptCookies = async (
     const cookie = await decryptCookie(encryptedCookies[i], encryptKey)
     cookie !== undefined && cookies.push(cookie)
   }
-
-  console.log(cookies)
 
   return cookies
 }
@@ -338,12 +328,9 @@ const getCookiesFromFile = async (
 }
 
 const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
-  // console.log(`The platform we are on is ${process.platform}`);
-
+  f
   switch (process.platform) {
     case "darwin": {
-      console.log("cookie file path", getCookieFilePath(browser))
-      console.log("expanded", expandPaths(getCookieFilePath(browser), "osx"))
       return expandPaths(getCookieFilePath(browser), "osx")
     }
     case "linux": {
@@ -394,7 +381,6 @@ const getCookieEncryptionKey = async (
 const createLocalCopy = (cookieFile: string): string => {
   if (fs.existsSync(cookieFile)) {
     const tmpFile = tmp.fileSync({ postfix: ".sqlite" })
-    console.log(`New tempfile named ${tmpFile.name}`)
 
     const data = fs.readFileSync(cookieFile)
     fs.writeFileSync(tmpFile.name, data)
@@ -406,7 +392,7 @@ const createLocalCopy = (cookieFile: string): string => {
 }
 
 const isBrowserInstalled = (browser: InstalledBrowser) => {
-  return getCookieFilePath(browser).every(fs.existsSync)
+  return fs.existsSync(getExpandedCookieFilePath(browser))
 }
 
 const getInstalledBrowsers = () => {
@@ -439,6 +425,8 @@ const getDecryptedCookies = async (
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
   importEvent.emit("cookies-imported")
+
+  console.log(cookies)
 
   return cookies
 }

@@ -77,7 +77,7 @@ const localLog = (
     level
   )
 
-  if (!app.isPackaged) console.log(logs)
+  // if (!app.isPackaged) console.log(logs)
 
   logFile.write(logs)
 }
