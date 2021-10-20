@@ -35,10 +35,10 @@ jobs:
           #   os: [self-hosted, macOS, X64] # MacStadium Intel i7 3.2GHz 6-cores 32GB RAM
           #   arch: macos-x64
           #   shell: bash --noprofile --norc -eo pipefail {0}
-          # - name: macOS (ARM64)
-          #   os: [self-hosted, macOS, ARM64] # MacStadium Apple Silicon M1 8GB RAM
-          #   arch: macos-arm64
-          #   shell: /usr/bin/arch -arch arm64e /bin/bash {0}
+          - name: macOS (ARM64)
+            os: [self-hosted, macOS, ARM64] # MacStadium Apple Silicon M1 8GB RAM
+            arch: macos-arm64
+            shell: /usr/bin/arch -arch arm64e /bin/bash {0}
           - name: macOS (GHA) # TODO: For testing in GHA, need to remove
             os: macos-10.15
             arch: macos-x64
@@ -101,6 +101,21 @@ jobs:
 
       ############################################################################################
       #################################### BUILDING STEPS START ##################################
+
+      # Before this, you need Node 16 to avoid
+      # https://stackoverflow.com/questions/65856300/wasm-code-commit-allocation-failed-process-out-of-memory
+      # despite Brave saying you need Node 12
+
+      # You also need to have downloaded Xcode, accepted the terms/license, and 
+      # installed Xcode CLI via `xcode-select --install` and then run
+      # sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Configure depot_tools and vpython for ARM64
+        if: ${{ matrix.runners.arch }} == 'macos-arm64'
+        run: |
+          echo "mac-arm64" > .cipd_client_platform
+          echo "mac-arm64" > src/third_party/depot_tools/.cipd_client_platform
+          export VPYTHON_BYPASS="manually managed python not supported by chrome operations"
 
       - name: Run npm install
         working-directory: brave-browser
