@@ -15,6 +15,35 @@
 
 import "@app/config/environment"
 
-import "@app/main/triggers"
-import "@app/main/flows"
-import "@app/main/effects"
+// import "@app/main/triggers"
+// import "@app/main/flows"
+// import "@app/main/effects"
+
+import ndt7 from "@m-lab/ndt7"
+
+ndt7
+  .test(
+    {
+      userAcceptedDataPolicy: true,
+    },
+    {
+      serverChosen: function (server: any) {
+        console.log("Testing to:", {
+          machine: server.machine,
+          locations: server.location,
+        })
+      },
+      downloadComplete: function (data: any) {
+        console.log("download", data)
+      },
+      uploadComplete: function (data: any) {
+        console.log("upload", data)
+      },
+      error: function (err: any) {
+        console.log("Error while running the test:", err.message)
+      },
+    }
+  )
+  .then(() => {
+    console.log("DONE")
+  })
