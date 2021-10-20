@@ -61,7 +61,7 @@ const callbacks = {
   },
 }
 
-const networkTest = () => {
+const networkAnalyze = () => {
   const urlPromise = ndt7.discoverServerURLs(config, callbacks)
   ndt7.downloadTest(config, callbacks, urlPromise)
 
@@ -70,4 +70,4 @@ const networkTest = () => {
   }, TEST_DURATION_SECONDS)
 }
 
-export { networkTest }
+export { networkAnalysisEvent, networkAnalyze }
