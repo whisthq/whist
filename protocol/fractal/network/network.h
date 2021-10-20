@@ -196,6 +196,28 @@ typedef struct FractalPacket {
                                      // than the unencrypted packet
 } FractalPacket;
 
+typedef struct NetworkContext {
+    // Attributes
+    SocketContext* context;
+
+    // Functions common to all network connections
+    int (*sendp)(SocketContext* context, void* buf, int len);
+    int (*recvp)(SocketContext* context, void* buf, int len);
+    int (*ack)(SocketContext* context);
+
+    // For TCP only, NULL otherwise
+    FractalPacket* (*read_tcp_packet)(SocketContext* context, bool should_recvp);
+    int (*send_tcp_packet_from_payload)(SocketContext* context, FractalPacket* packet,
+                                        size_t packet_size);
+    void (*free_tcp_packet)(FractalPacket* tcp_packet);
+
+    // Only non-null for UDP connections, NULL otherwise
+    FractalPacket* (*read_udp_packet)(SocketContext* context);
+    int (*send_udp_packet_from_payload)(SocketContext* context, FractalPacketType type, void* data,
+                                        int len, int id);
+
+} NetworkContext;
+
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
 #define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
 // Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size (If
