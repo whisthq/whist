@@ -122,6 +122,268 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 }
 
 /**
+ * @brief                   Creates a new CaptureDevice
+ *
+ * @param statistics_timer  Pointer to statistics timer used for logging
+ * @param device            CaptureDevice pointer
+ * @param rdevice           CaptureDevice pointer
+ * @param encoder           VideoEncoder pointer
+ * @param true_width        True width of client screen
+ * @param true_height       True height of client screen
+ * @return                  On success, 0. On failure, -1.
+ */
+int32_t create_new_device(clock* statistics_timer, CaptureDevice** device, CaptureDevice* rdevice,
+                          VideoEncoder** encoder, uint32_t true_width, uint32_t true_height) {
+    start_timer(statistics_timer);
+    *device = rdevice;
+    if (create_capture_device(*device, true_width, true_height, client_dpi) < 0) {
+        LOG_WARNING("Failed to create capture device");
+        *device = NULL;
+        update_device = true;
+
+        fractal_sleep(100);
+        return -1;
+    }
+
+    LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", (*device)->width,
+             (*device)->height, client_dpi);
+
+    // If an encoder is pending, while capture_device is updating, then we should wait
+    // for it to be created
+    while (pending_encoder) {
+        if (encoder_finished) {
+            *encoder = encoder_factory_result;
+            pending_encoder = false;
+            break;
+        }
+        fractal_sleep(1);
+    }
+
+    // Next, we should update our ffmpeg encoder
+    update_encoder = true;
+
+    log_double_statistic("Create capture device time (ms)",
+                         get_timer(*statistics_timer) * MS_IN_SECOND);
+
+    return 0;
+}
+
+/**
+ * @brief                           Sends the populated video frames to the
+ *                                  client
+ *
+ * @param statistics_timer          Pointer to statistics timer used for logging
+ * @param server_frame_timer        Pointer to server_frame_timer
+ * @param device                    CaptureDevice pointer
+ * @param encoder                   VideoEncoder pointer
+ * @param assuming_client_active    Boolean describing whether we are assuming the
+ *                                  client is active
+ * @param id                        Pointer to frame id
+ */
+void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
+                           CaptureDevice* device, VideoEncoder* encoder,
+                           bool assuming_client_active, int* id) {
+    // transfer the capture of the latest frame from the device to
+    // the encoder,
+    // This function will try to CUDA/OpenGL optimize the transfer by
+    // only passing a GPU reference rather than copy to/from the CPU
+
+    // Create frame struct with compressed frame data and
+    // metadata
+    static char buf[LARGEST_VIDEOFRAME_SIZE];
+    VideoFrame* frame = (VideoFrame*)buf;
+    frame->width = encoder->out_width;
+    frame->height = encoder->out_height;
+    frame->codec_type = encoder->codec_type;
+    frame->is_empty_frame = false;
+    frame->is_window_visible = true;
+    frame->corner_color = device->corner_color;
+
+    static FractalCursorImage cursor_cache[2];
+    static int last_cursor_id = 0;
+    int current_cursor_id = (last_cursor_id + 1) % 2;
+
+    FractalCursorImage* last_cursor = &cursor_cache[last_cursor_id];
+    FractalCursorImage* current_cursor = &cursor_cache[current_cursor_id];
+
+    start_timer(statistics_timer);
+    get_current_cursor(current_cursor);
+    log_double_statistic("get_current_cursor time (ms)",
+                         get_timer(*statistics_timer) * MS_IN_SECOND);
+
+    // If the current cursor is the same as the last cursor,
+    // just don't send any cursor
+    if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
+        set_frame_cursor_image(frame, NULL);
+    } else {
+        set_frame_cursor_image(frame, current_cursor);
+    }
+
+    last_cursor_id = current_cursor_id;
+
+    // frame is an iframe if this frame does not require previous frames to
+    // render
+    frame->is_iframe = encoder->is_iframe;
+
+    frame->videodata_length = encoder->encoded_frame_size;
+
+    write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
+                              (void*)get_frame_videodata(frame));
+
+#if LOG_VIDEO
+    LOG_INFO("Sent video packet %d (Size: %d) %s", *id, encoder->encoded_frame_size,
+             frame->is_iframe ? "(I-frame)" : "");
+#endif  // LOG_VIDEO
+    start_timer(statistics_timer);
+
+    // Packetize the frame
+    int num_packets =
+        write_payload_to_packets((uint8_t*)frame, get_total_frame_size(frame), *id, PACKET_VIDEO,
+                                 video_buffer[(*id) % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+
+    if (num_packets < 0) {
+        LOG_WARNING("Failed to write video packet to buffer");
+    } else if (assuming_client_active) {
+        // Send the packets to the client
+        bool failed = false;
+        for (int i = 0; i < num_packets; ++i) {
+            if (broadcast_udp_packet(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
+                                     get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) <
+                0) {
+                LOG_WARNING("Failed to broadcast video packet: id %d, index %d", *id, i);
+                failed = true;
+            }
+        }
+// (Disable this logic for now).
+#define MOD 0
+        for (int j = 0; j < MOD; ++j) {
+            for (int i = j; i < num_packets; i += MOD) {
+                if (broadcast_udp_packet(
+                        &video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
+                        get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) < 0) {
+                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d", (*id), i);
+                    failed = true;
+                }
+            }
+        }
+        if (!failed) {
+            ++(*id);
+        }
+    }
+}
+
+/**
+ * @brief           Attempts to capture the screen. Afterwards sets update_device
+ *                  to true
+ *
+ * @param device    CaptureDevice pointer
+ * @param encoder   VideoEncoder pointer
+ */
+void retry_capture_screen(CaptureDevice* device, VideoEncoder* encoder) {
+    LOG_WARNING("Failed to capture screen");
+    transfer_context_active = false;
+    close_transfer_context(device, encoder);
+    // The Nvidia Encoder must be wrapped in the lifetime of the capture device
+    if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
+        multithreaded_destroy_encoder(encoder);
+        encoder = NULL;
+    }
+    destroy_capture_device(device);
+    device = NULL;
+    update_device = true;
+
+    fractal_sleep(100);
+}
+
+/**
+ * @brief                  Updates dimensions of capture device and sets
+ *                         update_encoder to true
+ *
+ * @param statistics_timer Pointer to the timer used for statistics logging
+ * @param device           CaptureDevice pointer
+ * @param encoder          VideoEncoder pointer
+ * @param true_width       True width of client screen
+ * @param true_height      True height of client screen
+ */
+void update_current_device(clock* statistics_timer, CaptureDevice* device, VideoEncoder* encoder,
+                           uint32_t true_width, uint32_t true_height) {
+    update_device = false;
+    start_timer(statistics_timer);
+
+    LOG_INFO("Received an update capture device request to dimensions %dx%d with DPI %d",
+             true_width, true_height, client_dpi);
+
+    // If a device already exists, we should reconfigure or destroy it
+    if (device != NULL) {
+        if (transfer_context_active) {
+            close_transfer_context(device, encoder);
+            transfer_context_active = false;
+        }
+
+        if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+            // Reconfigured the capture device!
+            // No need to recreate it, the device has now been updated
+            LOG_INFO("Successfully reconfigured the capture device");
+            // We should also update the encoder since the device has been reconfigured
+            update_encoder = true;
+        } else {
+            // Destroying the old capture device so that a new one can be recreated below
+            LOG_FATAL(
+                "Failed to reconfigure the capture device! We probably have a memory "
+                "leak!");
+            // "Destroying and recreating the capture device instead!");
+
+            // For the time being, we have disabled the reconfigure functionality because
+            // of some weirdness happening in vkCreateDevice()
+        }
+    } else {
+        LOG_INFO("No capture device exists yet, creating a new one.");
+    }
+    log_double_statistic("Update capture device time (ms)",
+                         get_timer(*statistics_timer) * MS_IN_SECOND);
+}
+
+/**
+ * @brief                         Sends an empty frame to the client
+ *
+ * @param id                      Pointer to the frame id
+ * @param assuming_client_active  Boolean describing whether we are assuming the
+ *                                client is active
+ */
+void send_empty_frame(int* id, bool assuming_client_active) {
+    // If we don't have a new frame to send, let's just send an empty one
+    static char mini_buf[sizeof(VideoFrame)];
+    VideoFrame* frame = (VideoFrame*)mini_buf;
+    frame->is_empty_frame = true;
+    // This signals that the screen hasn't changed, so don't bother rendering
+    // this frame and just keep showing the last one.
+    frame->is_window_visible = !stop_streaming;
+    // We don't need to fill out the rest of the fields of the VideoFrame because
+    // is_empty_frame is true, so it will just be ignored by the client.
+
+    int num_packets =
+        write_payload_to_packets((uint8_t*)frame, sizeof(VideoFrame), *id, PACKET_VIDEO,
+                                 video_buffer[(*id) % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+
+    if (num_packets < 0) {
+        LOG_WARNING("Failed to write video packet to buffer");
+    } else if (assuming_client_active) {
+        bool failed = false;
+        for (int i = 0; i < num_packets; ++i) {
+            if (broadcast_udp_packet(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
+                                     get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) <
+                0) {
+                LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
+                failed = true;
+            }
+        }
+        if (!failed) {
+            ++(*id);
+        }
+    }
+}
+
+/**
  * @brief           Updates the encoder upon request. Note that this function
  *                  _returns_ the updated encoder, due to the encoder factory.
  *
@@ -294,74 +556,15 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If we got an update device request, we should update the device
         if (update_device) {
-            update_device = false;
-            start_timer(&statistics_timer);
-
-            LOG_INFO("Received an update capture device request to dimensions %dx%d with DPI %d",
-                     true_width, true_height, client_dpi);
-
-            // If a device already exists, we should reconfigure or destroy it
-            if (device != NULL) {
-                if (transfer_context_active) {
-                    close_transfer_context(device, encoder);
-                    transfer_context_active = false;
-                }
-
-                if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
-                    // Reconfigured the capture device!
-                    // No need to recreate it, the device has now been updated
-                    LOG_INFO("Successfully reconfigured the capture device");
-                    // We should also update the encoder since the device has been reconfigured
-                    update_encoder = true;
-                } else {
-                    // Destroying the old capture device so that a new one can be recreated below
-                    LOG_FATAL(
-                        "Failed to reconfigure the capture device! We probably have a memory "
-                        "leak!");
-                    // "Destroying and recreating the capture device instead!");
-
-                    // For the time being, we have disabled the reconfigure functionality because
-                    // of some weirdness happening in vkCreateDevice()
-                }
-            } else {
-                LOG_INFO("No capture device exists yet, creating a new one.");
-            }
-            log_double_statistic("Update capture device time (ms)",
-                                 get_timer(statistics_timer) * MS_IN_SECOND);
+            update_current_device(&statistics_timer, device, encoder, true_width, true_height);
         }
 
         // If no device is set, we need to create one
         if (device == NULL) {
-            start_timer(&statistics_timer);
-            device = &rdevice;
-            if (create_capture_device(device, true_width, true_height, client_dpi) < 0) {
-                LOG_WARNING("Failed to create capture device");
-                device = NULL;
-                update_device = true;
-
-                fractal_sleep(100);
+            if (create_new_device(&statistics_timer, &device, &rdevice, &encoder, true_width,
+                                  true_height) < 0) {
                 continue;
             }
-
-            LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", device->width,
-                     device->height, client_dpi);
-
-            // If an encoder is pending, while capture_device is updating, then we should wait
-            // for it to be created
-            while (pending_encoder) {
-                if (encoder_finished) {
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    break;
-                }
-                fractal_sleep(1);
-            }
-
-            // Next, we should update our ffmpeg encoder
-            update_encoder = true;
-
-            log_double_statistic("Create capture device time (ms)",
-                                 get_timer(statistics_timer) * MS_IN_SECOND);
         }
 
         // Update encoder with new parameters
@@ -398,19 +601,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
-            LOG_WARNING("Failed to capture screen");
-            transfer_context_active = false;
-            close_transfer_context(device, encoder);
-            // The Nvidia Encoder must be wrapped in the lifetime of the capture device
-            if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
-                multithreaded_destroy_encoder(encoder);
-                encoder = NULL;
-            }
-            destroy_capture_device(device);
-            device = NULL;
-            update_device = true;
-
-            fractal_sleep(100);
+            retry_capture_screen(device, encoder);
             continue;
         }
 
@@ -451,7 +642,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     // if there was a failure
                     LOG_ERROR("transfer_capture failed! Exiting!");
                     exiting = true;
-                    break;
+                    return -1;
                 }
                 log_double_statistic("Transfer capture time (ms)",
                                      get_timer(statistics_timer) * MS_IN_SECOND);
@@ -468,10 +659,10 @@ int32_t multithreaded_send_video(void* opaque) {
                     // bad boy error
                     LOG_ERROR("Error encoding video frame!");
                     exiting = true;
-                    break;
+                    return -1;
                 } else if (res > 0) {
                     // filter graph is empty
-                    break;
+                    return -1;
                 }
                 log_double_statistic("Video encode time (ms)",
                                      get_timer(statistics_timer) * MS_IN_SECOND);
@@ -536,36 +727,8 @@ int32_t multithreaded_send_video(void* opaque) {
                         if (num_packets < 0) {
                             LOG_WARNING("Failed to write video packet to buffer");
                         } else if (assuming_client_active) {
-                            // Send the packets to the client
-                            bool failed = false;
-                            for (int i = 0; i < num_packets; ++i) {
-                                if (broadcast_udp_packet(
-                                        &video_buffer[id % VIDEO_BUFFER_SIZE][i],
-                                        get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) <
-                                    0) {
-                                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d",
-                                                id, i);
-                                    failed = true;
-                                }
-                            }
-// (Disable this logic for now).
-#define MOD 0
-                            for (int j = 0; j < MOD; ++j) {
-                                for (int i = j; i < num_packets; i += MOD) {
-                                    if (broadcast_udp_packet(
-                                            &video_buffer[id % VIDEO_BUFFER_SIZE][i],
-                                            get_packet_size(
-                                                &video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
-                                        LOG_WARNING(
-                                            "Failed to broadcast video packet: id %d, index %d", id,
-                                            i);
-                                        failed = true;
-                                    }
-                                }
-                            }
-                            if (!failed) {
-                                ++id;
-                            }
+                            send_populated_frames(&statistics_timer, &server_frame_timer, device,
+                                                  encoder, assuming_client_active, &id);
                         }
 
                         log_double_statistic("Video frame send time (ms)",
@@ -573,51 +736,11 @@ int32_t multithreaded_send_video(void* opaque) {
                         log_double_statistic("Video frame size", encoder->encoded_frame_size);
                         log_double_statistic("Video frame processing time (ms)",
                                              get_timer(server_frame_timer) * 1000);
-                    }
+                    }  // this one
                 }
             } else {
-                // If we don't have a new frame to send, let's just send an empty one
-                static char mini_buf[sizeof(VideoFrame)];
-                VideoFrame* frame = (VideoFrame*)mini_buf;
-                frame->is_empty_frame = true;
-                // This signals that the screen hasn't changed, so don't bother rendering
-                // this frame and just keep showing the last one.
-                frame->is_window_visible = !stop_streaming;
-                // We don't need to fill out the rest of the fields of the VideoFrame because
-                // is_empty_frame is true, so it will just be ignored by the client.
-
-                int num_packets = write_payload_to_packets(
-                    (uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
-                    video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
-
-                if (num_packets < 0) {
-                    LOG_WARNING("Failed to write video packet to buffer");
-                } else if (assuming_client_active) {
-                    bool failed = false;
-                    for (int i = 0; i < num_packets; ++i) {
-                        if (broadcast_udp_packet(
-                                &video_buffer[id % VIDEO_BUFFER_SIZE][i],
-                                get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
-                            LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
-                            failed = true;
-                        }
-                    }
-                    if (!failed) {
-                        ++id;
-                    }
-                }
+                send_empty_frame(&id, assuming_client_active);
             }
-            log_double_statistic("Whole send video loop time (ms)",
-                                 get_timer(send_video_loop_timer) * MS_IN_SECOND);
-            static clock time_between_frames;
-            static bool initialized_interframe_timing = false;
-            if (initialized_interframe_timing) {
-                log_double_statistic("Time between frames (ms)",
-                                     get_timer(time_between_frames) * MS_IN_SECOND);
-            } else {
-                initialized_interframe_timing = true;
-            }
-            start_timer(&time_between_frames);
         }
     }
 
