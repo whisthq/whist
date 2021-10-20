@@ -62,7 +62,8 @@ hmap<FractalKeycode, FractalKeycode> modmap = {
     {FK_RSHIFT, FK_LSHIFT}};
 
 // The full keyboard mapping
-// Note that the mapping is applied after modmap -- e.g. GUI and CTRL are already switched!
+// Note 1: The mapping is applied after modmap -- e.g. GUI and CTRL are already switched!
+// Note 2: LALT and RALT are the LCMD and RCMD keys on Mac keyboards
 hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
     // Access history with ctrl+y
@@ -125,9 +126,9 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
         {FK_LGUI, FK_LSHIFT, FK_TAB},
         {FK_LCTRL, FK_LSHIFT, FK_TAB},
     },
-    // Press Enter on a webpage's "submission" with Ctrl+Enter
+    // Press Enter on a webpage's "submission" with Cmd+Enter
     {
-        {FK_LGUI, FK_ENTER},
+        {FK_LALT, FK_ENTER},
         {FK_LCTRL, FK_ENTER},
     },
 };
