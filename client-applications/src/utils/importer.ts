@@ -342,6 +342,8 @@ const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
 
   switch (process.platform) {
     case "darwin": {
+      console.log("cookie file path", getCookieFilePath(browser))
+      console.log("expanded", expandPaths(getCookieFilePath(browser), "osx"))
       return expandPaths(getCookieFilePath(browser), "osx")
     }
     case "linux": {

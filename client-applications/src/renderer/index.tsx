@@ -71,10 +71,12 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
-  const handleImporterSubmit = (browser: string) =>
+  const handleImporterSubmit = (browser: string) => {
+    console.log("SELECTED BROWSER", browser)
     setMainState({
       trigger: { name: TRIGGER.importerSubmitted, payload: { browser } },
     })
+  }
 
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because

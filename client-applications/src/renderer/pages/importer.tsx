@@ -22,15 +22,12 @@ const SelectBrowser = (props: {
             name="browser"
             className="bg-gray-800 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
             defaultValue="Canada"
+            onChange={(evt: any) => props.onSelect(evt.target.value)}
           >
             {props.browsers.map((browser: string, index: number) => (
-              <option key={index} onClick={() => props.onSelect(browser)}>
-                {browser}
-              </option>
+              <option key={index}>{browser}</option>
             ))}
-            <option onClick={() => props.onSelect("None")}>
-              None, start from a clean slate
-            </option>
+            <option value="None">None, start from a clean slate</option>
           </select>
         </div>
       </div>
@@ -47,7 +44,13 @@ const Importer = (props: {
 
   const onSubmit = (browser: string) => {
     setProcessing(true)
+    console.log("THE BROWSER IS", browser)
     props.onSubmit(browser)
+  }
+
+  const onSelect = (browser: string) => {
+    console.log("SETTING BROWSER TO", browser)
+    setBrowser(browser)
   }
 
   return (
@@ -59,7 +62,7 @@ const Importer = (props: {
     >
       <SelectBrowser
         browsers={props.browsers}
-        onSelect={(browser: string) => setBrowser(browser)}
+        onSelect={(browser: string) => onSelect(browser)}
       />
       <div>
         <FractalButton
