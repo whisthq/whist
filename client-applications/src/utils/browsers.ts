@@ -26,7 +26,7 @@ import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
 import Database from "better-sqlite3"
-import crypto from 'crypto'
+import crypto from "crypto"
 
 interface Cookie {
   [key: string]: Buffer | string | number
@@ -35,7 +35,7 @@ interface Cookie {
 const getCookies = async (browser: string): Promise<Cookie[]> => {
   const encryptedCookies = await getCookiesFromFile(browser)
   // console.log(`Encrypted Cookies ${encryptedCookies}`);
-  
+
   const encryptKey = await getCookieEncryptionKey(browser)
   // console.log(`Encrypted Key `);
   // console.log(encryptKey);
@@ -68,33 +68,36 @@ const decryptCookie = async (
   }
 
   const encryptionPrefix = cookie.encrypted_value.toString().substring(0, 3)
-  if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
-    return cookie
-  }
+  // if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
+  //   return cookie
+  // }
 
   cookie.encrypted_prefix = encryptionPrefix
 
-  const iv = Buffer.from(Array(17).join(' '), 'binary');
+  const iv = Buffer.from(Array(17).join(" "), "binary")
 
-  const decipher = await crypto.createDecipheriv('aes-128-cbc', encryptKey, iv);
-  decipher.setAutoPadding(false);
+  const decipher = await crypto.createDecipheriv("aes-128-cbc", encryptKey, iv)
+  decipher.setAutoPadding(false)
 
   let encryptedData: Buffer = Buffer.from("")
-  if (typeof cookie.encrypted_value != 'number' && typeof cookie.encrypted_value != 'string') {
+  if (
+    typeof cookie.encrypted_value != "number" &&
+    typeof cookie.encrypted_value != "string"
+  ) {
     encryptedData = cookie.encrypted_value.slice(3)
   }
 
-  let decoded = decipher.update(encryptedData);
+  let decoded = decipher.update(encryptedData)
 
-  const final = decipher.final();
-  final.copy(decoded, decoded.length - 1);
+  const final = decipher.final()
+  final.copy(decoded, decoded.length - 1)
 
-  const padding = decoded[decoded.length - 1];
+  const padding = decoded[decoded.length - 1]
   if (padding) {
-    decoded = decoded.slice(0, decoded.length - padding);
+    decoded = decoded.slice(0, decoded.length - padding)
   }
 
-  const decodedBuffer = decoded.toString('utf8');
+  const decodedBuffer = decoded.toString("utf8")
 
   const originalText = decodedBuffer
   cookie.decrypted_value = originalText
@@ -102,13 +105,16 @@ const decryptCookie = async (
   return cookie
 }
 
-const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {  
+const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
   const cookieFile = getExpandedCookieFilePath(browser)
 
   const tempFile = createLocalCopy(cookieFile)
 
-  const db = new Database(tempFile, { fileMustExist: true, verbose: console.log })
-  
+  const db = new Database(tempFile, {
+    fileMustExist: true,
+    verbose: console.log,
+  })
+
   let rows: Cookie[]
   try {
     const query = await db.prepare(
@@ -121,13 +127,13 @@ const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
     )
     rows = query.all()
   }
-  
+
   return rows
 }
 
 const getExpandedCookieFilePath = (browser: string): string => {
   // console.log(`The platform we are on is ${process.platform}`);
-  
+
   switch (process.platform) {
     case "darwin": {
       return expandPaths(getCookieFilePath(browser), "osx")
@@ -155,17 +161,22 @@ const getCookieEncryptionKey = async (browser: string): Promise<Buffer> => {
       }
 
       const iterations = 1003 // number of pbkdf2 iterations on mac
-      const key = crypto.pbkdf2Sync(myPass, salt, iterations, length, 'sha1')
+      const key = crypto.pbkdf2Sync(myPass, salt, iterations, length, "sha1")
       return key
     }
     case "linux": {
       const myPass = await getLinuxCookieEncryptionKey(getOsCryptName(browser))
       const iterations = 1
 
-      const key = await crypto.pbkdf2Sync(myPass, salt, iterations, length, 'sha1')
+      const key = await crypto.pbkdf2Sync(
+        myPass,
+        salt,
+        iterations,
+        length,
+        "sha1"
+      )
 
       return key
-    
     }
     default:
       throw Error("OS not recognized. Works on OSX or linux.")
@@ -174,9 +185,9 @@ const getCookieEncryptionKey = async (browser: string): Promise<Buffer> => {
 
 const createLocalCopy = (cookieFile: string): string => {
   if (fs.existsSync(cookieFile)) {
-    const tmpFile = tmp.fileSync({postfix: ".sqlite"})
-    console.log(`New tempfile named ${tmpFile.name}`);
-    
+    const tmpFile = tmp.fileSync({ postfix: ".sqlite" })
+    console.log(`New tempfile named ${tmpFile.name}`)
+
     const data = fs.readFileSync(cookieFile)
     fs.writeFileSync(tmpFile.name, data)
 
@@ -187,13 +198,17 @@ const createLocalCopy = (cookieFile: string): string => {
 }
 
 const expanduser = (text: string): string => {
-  console.log(`The homedir is ${homedir()}, text is ${text}, dir home is ${dirname(homedir())},`);
-  
-  return text.replace(/^~([a-z]+|\/)/, (_, $1: string) => {
-    console.log(`1 is ${$1} and _ is ${_}`);
-    
-    return $1 === "/" ? `${homedir()}/` : `${dirname(homedir())}/${$1}`}
+  console.log(
+    `The homedir is ${homedir()}, text is ${text}, dir home is ${dirname(
+      homedir()
+    )},`
   )
+
+  return text.replace(/^~([a-z]+|\/)/, (_, $1: string) => {
+    console.log(`1 is ${$1} and _ is ${_}`)
+
+    return $1 === "/" ? `${homedir()}/` : `${dirname(homedir())}/${$1}`
+  })
 }
 
 const expandPaths = (paths: string[], osName: string): string => {
@@ -211,7 +226,6 @@ const expandPaths = (paths: string[], osName: string): string => {
 const getLinuxCookieEncryptionKey = async (
   browser: string
 ): Promise<string> => {
-
   const bus = dbus.sessionBus()
 
   const osCryptName = getOsCryptName(browser)
@@ -365,10 +379,8 @@ const getCookieFilePath = (browser: string): string[] => {
   return []
 }
 
-
 const test = async (): Promise<void> => {
-  console.log(await getCookies("brave"))
-  
+  await getCookies("brave")
 }
 
 test()
