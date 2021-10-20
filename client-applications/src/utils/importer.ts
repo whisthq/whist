@@ -243,18 +243,13 @@ const decryptCookie = async (
   encryptKey: Buffer
 ): Promise<Cookie | undefined> => {
   try {
-    if (typeof cookie.value === "string" && cookie.value.length > 0) {
+    if (typeof cookie.value === "string" && cookie.value.length > 0)
       return cookie
-    }
 
-    if (cookie.encrypted_value.toString().length == 0) {
-      return cookie
-    }
+    if (cookie.encrypted_value.toString().length === 0) return cookie
 
     const encryptionPrefix = cookie.encrypted_value.toString().substring(0, 3)
-    if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
-      return cookie
-    }
+    if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") return cookie
 
     cookie.encrypted_prefix = encryptionPrefix
 
@@ -270,8 +265,8 @@ const decryptCookie = async (
 
     let encryptedData: Buffer = Buffer.from("")
     if (
-      typeof cookie.encrypted_value != "number" &&
-      typeof cookie.encrypted_value != "string"
+      typeof cookie.encrypted_value !== "number" &&
+      typeof cookie.encrypted_value !== "string"
     ) {
       encryptedData = cookie.encrypted_value.slice(3)
     }
@@ -282,9 +277,7 @@ const decryptCookie = async (
     final.copy(decoded, decoded.length - 1)
 
     const padding = decoded[decoded.length - 1]
-    if (padding) {
-      decoded = decoded.slice(0, decoded.length - padding)
-    }
+    if (padding !== 0) decoded = decoded.slice(0, decoded.length - padding)
 
     const decodedBuffer = decoded.toString("utf8")
 
@@ -328,7 +321,6 @@ const getCookiesFromFile = async (
 }
 
 const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
-  f
   switch (process.platform) {
     case "darwin": {
       return expandPaths(getCookieFilePath(browser), "osx")
@@ -336,8 +328,9 @@ const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
     case "linux": {
       return expandPaths(getCookieFilePath(browser), "linux")
     }
-    default:
+    default: {
       throw Error("OS not recognized. Works on OSX or linux.")
+    }
   }
 }
 
