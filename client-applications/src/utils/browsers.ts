@@ -146,8 +146,8 @@ const getCookieEncryptionKey = async (browser: string): Promise<Buffer> => {
   switch (process.platform) {
     case "darwin": {
       let myPass = await keytar.getPassword(
-        getKeyUser(browser),
-        getOsCryptName(browser)
+        getKeyService(browser),
+        getKeyUser(browser)
       )
 
       if (myPass === null) {
@@ -291,6 +291,10 @@ const getKeyUser = (browser: string): string => {
     }
   }
   return ""
+}
+
+const getKeyService = (browser: string): string => {
+  return getKeyUser(browser) + " Safe Storage"
 }
 
 const getOsCryptName = (browser: string): string => {
