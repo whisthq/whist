@@ -411,10 +411,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Set up Python 3.9.5
-        uses: actions/setup-python@v2
+      - name: Set up Python 3.10.0
+        uses: actions/setup-python@v2.2.2
         with:
-          python-version: "3.9.5"
+          python-version: "3.10.0"
+
+      # For some reason, GitHub Actions was complaining abou this, even though it's their own runners
+      - name: Upgrade pip
+        run: /opt/hostedtoolcache/Python/3.10.0/x64/bin/python -m pip install --upgrade pip
 
       - name: Install webserver scripting dependencies
         working-directory: webserver
@@ -959,7 +963,7 @@ jobs:
             # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
             UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
-            # set new desktop app version
+            # set new desktop app version [-x64/-arm64] gets appended depending on the OS architecture it is built on
             NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
 
             # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
