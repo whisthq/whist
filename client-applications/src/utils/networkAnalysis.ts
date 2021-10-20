@@ -1,61 +1,73 @@
 import ndt7 from "@m-lab/ndt7"
+import events from "events"
 
 // Maximum amount of time we want the download test to take in seconds
-const MICROSECONDS_IN_SECOND = 1000 * 1000
-const TEST_DURATION_SECONDS = 5 * MICROSECONDS_IN_SECOND
+const MILLISECONDS = 1000
+const TEST_DURATION_SECONDS = 5 * MILLISECONDS
 
 // Config taken from @m-lab/ndt7 repo example
 const config = { userAcceptedDataPolicy: true }
+
 // The download test emits results over a period of time; create variables
 // to track those results
-let latencyJitterCount = 0
+let iterations = 0
 let results = {
   latency: 0,
   jitter: 0,
-  download_mbps: 0,
-  lost: 0,
+  downloadMbps: 0,
   progress: 0,
 }
+
 // Handles download measurements
-const handleDownloadMeasurements = (
-  results: any,
-  latencyJitterCount: number
-) => {
+const handleDownloadMeasurements = (results: any, iterations: number) => {
   return (measurement: any) => {
     if (measurement.Source === "client") {
-      results.download_mbps = measurement.Data.MeanClientMbps
+      results.downloadMbps = measurement.Data.MeanClientMbps
     } else {
-      console.log("Lost ", measurement.Data)
-      latencyJitterCount += 1
-      const phase_completed_percent =
-        (measurement.Data.TCPInfo.ElapsedTime / TEST_DURATION_SECONDS) * 100
-      results.progress = phase_completed_percent
-      const measurement_latency_in_ms = measurement.Data.TCPInfo.RTT / 1000
-      const measurement_jitter_in_ms = measurement.Data.TCPInfo.RTTVar / 1000
+      iterations += 1
+      results.progress =
+        (measurement.Data.TCPInfo.ElapsedTime /
+          (TEST_DURATION_SECONDS * 1000)) *
+        100
+      const latencyInMs = measurement.Data.TCPInfo.RTT / 1000
+      const jitterInMs = measurement.Data.TCPInfo.RTTVar / 1000
       results.latency =
-        (results.latency * (latencyJitterCount - 1) +
-          measurement_latency_in_ms) /
-        latencyJitterCount
+        (results.latency * (iterations - 1) + latencyInMs) / iterations
       results.jitter =
-        (results.jitter * (latencyJitterCount - 1) + measurement_jitter_in_ms) /
-        latencyJitterCount
-      results.lost += measurement.Data.TCPInfo.Lost
+        (results.jitter * (iterations - 1) + jitterInMs) / iterations
     }
+
+    // If enough time has passed but we aren't done with the test, emit what we have so far
     if (results.progress >= 100) {
-      console.log("Done!", results)
+      testComplete("success")
     }
   }
 }
+
+const networkAnalysisEvent = new events.EventEmitter()
+const testComplete = (status: string) => {
+  networkAnalysisEvent.emit(status, results)
+}
+
 // Callbacks to pass into download speed test
 const callbacks = {
-  downloadMeasurement: handleDownloadMeasurements(results, latencyJitterCount),
+  downloadMeasurement: handleDownloadMeasurements(results, iterations),
   downloadComplete: () => {
-    console.log("Done!", results)
+    testComplete("success")
   },
   error: (err: { message: string }) => {
     console.error(err.message)
+    testComplete("error")
   },
 }
 
-const urlPromise = ndt7.discoverServerURLs(config, callbacks)
-ndt7.downloadTest(config, callbacks, urlPromise)
+const networkTest = () => {
+  const urlPromise = ndt7.discoverServerURLs(config, callbacks)
+  ndt7.downloadTest(config, callbacks, urlPromise)
+
+  setTimeout(() => {
+    testComplete("success")
+  }, TEST_DURATION_SECONDS)
+}
+
+export { networkTest }
