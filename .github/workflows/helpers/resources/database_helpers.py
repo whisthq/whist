@@ -69,9 +69,9 @@ def get_host_service_unresponsive_instances(database_url, region):
     return instances
 
 
-def get_lingering_instances(database_url):
+def get_lingering_instances(database_url, region):
     """
-    Gets all lingering instances using the database url
+    Gets all lingering instances using the database url and region
 
     Args:
         database_url (str): current database url
@@ -81,7 +81,10 @@ def get_lingering_instances(database_url):
         arr: array of tuples (name, id)
     """
 
-    query = "SELECT instance_name, cloud_provider_id FROM lingering_instances;"
+    query = (
+        "SELECT instance_name, cloud_provider_id FROM lingering_instances WHERE instance_name IN (SELECT instance_name FROM instance_info WHERE location='%s');"
+        % region
+    )
     instances = execute_db_query(database_url, "cloud", query)
 
     return instances
