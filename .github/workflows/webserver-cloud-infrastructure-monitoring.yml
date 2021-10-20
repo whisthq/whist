@@ -88,8 +88,8 @@ jobs:
           echo "DATABASE_STAGING_URL=$DATABASE_STAGING_URL" >> $GITHUB_ENV
 
           DATABASE_PROD_URL=$(heroku config:get DATABASE_URL --app=fractal-prod-server)
-          echo "DATABASE_PROD_URL=$DATABASE_PROD_URL" >> $GITHUB_ENV      
-      
+          echo "DATABASE_PROD_URL=$DATABASE_PROD_URL" >> $GITHUB_ENV
+
       - name: List EC2 Instances that are considered lingering and Notify in Slack if They Exist
         shell: python3 {0}
         run: |
@@ -120,7 +120,6 @@ jobs:
                 BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining :\n%s" % msg
 
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
 
   # Find whether we have hanging EC2 instances, which are defined as resources that are
   # not in one of our databases, but still exist in AWS, and notify Slack
