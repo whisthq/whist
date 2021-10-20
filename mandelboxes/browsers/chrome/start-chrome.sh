@@ -25,5 +25,6 @@ exec google-chrome \
   --enable-features=VaapiVideoDecoder,Vulkan \
   --disable-smooth-scrolling \
   --disable-font-subpixel-positioning \
+  --force-color-profile=display-p3-d65 \
   --flag-switches-end \
   --restore-last-session
