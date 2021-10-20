@@ -37,8 +37,8 @@ const getCookies = async (browser: string): Promise<Cookie[]> => {
   // console.log(`Encrypted Cookies ${encryptedCookies}`);
 
   const encryptKey = await getCookieEncryptionKey(browser)
-  // console.log(`Encrypted Key `);
-  // console.log(encryptKey);
+  console.log(`Encrypted Key `)
+  console.log(encryptKey)
 
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
@@ -88,6 +88,7 @@ const decryptCookie = async (
   }
 
   let decoded = decipher.update(encryptedData)
+  console.log(decoded, decoded.length)
 
   const final = decipher.final()
   final.copy(decoded, decoded.length - 1)
@@ -159,6 +160,8 @@ const getCookieEncryptionKey = async (browser: string): Promise<Buffer> => {
       if (myPass === null) {
         myPass = "peanuts"
       }
+
+      console.log("my pass is", myPass)
 
       const iterations = 1003 // number of pbkdf2 iterations on mac
       const key = crypto.pbkdf2Sync(myPass, salt, iterations, length, "sha1")
