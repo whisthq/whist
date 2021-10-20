@@ -54,7 +54,7 @@ jobs:
       # The brave-browser scripts clone fractal/brave-core, so we need to configure git credentials
       # to be able to access that repository globally from the workflow runner
       - name: Configure Global git Credentials
-        run: git config credential.helper '!f() { printf "%s\n" "username=philippemnoel" "password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" "--timeout=600"; };f'
+        run: git config --global credential.helper '!f() { printf "%s\n" "username=philippemnoel" "password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" "--timeout=600"; };f'
 
       # Speed up npm: https://github.com/brave/brave-browser/wiki/macOS-Development-Environment
       - name: Turn macOS Spotlight Off to Speed Up Build
