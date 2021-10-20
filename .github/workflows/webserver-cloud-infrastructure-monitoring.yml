@@ -56,75 +56,13 @@ jobs:
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-  # Find if we have lingering EC2 instances, which are defined as resources that have
-  # updated their `last_update` value >2 min for running instances, 15 for preconnected instances or,
-  # instance draining for more than 2 minute without an associated mandelbox (`last_update` can be < 2 mins)
-  webserver-lingering-instances-notification:
-    name: Webserver Lingering Instances Notification
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-
-      - name: Set up Python-based helper Resources
-        working-directory: .github/workflows/helpers
-        run: ./resources/setup_resources.sh
-
-      - name: Setup Python-based Notifications
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Install boto3, python-dateutil and psycopg2
-        run: pip install boto3 python-dateutil psycopg2-binary
-
-      - name: Set DB URLs for DEV, STAGING, and PROD
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-        run: |
-          DATABASE_DEV_URL=$(heroku config:get DATABASE_URL --app=fractal-dev-server)
-          echo "DATABASE_DEV_URL=$DATABASE_DEV_URL" >> $GITHUB_ENV
-
-          DATABASE_STAGING_URL=$(heroku config:get DATABASE_URL --app=fractal-staging-server)
-          echo "DATABASE_STAGING_URL=$DATABASE_STAGING_URL" >> $GITHUB_ENV
-
-          DATABASE_PROD_URL=$(heroku config:get DATABASE_URL --app=fractal-prod-server)
-          echo "DATABASE_PROD_URL=$DATABASE_PROD_URL" >> $GITHUB_ENV
-
-      - name: List EC2 Instances that are considered lingering and Notify in Slack if They Exist
-        shell: python3 {0}
-        run: |
-          import os
-          from notifications.slack_bot import slack_post
-          from resources.database_helpers import get_lingering_instances
-
-          dev_instances = get_lingering_instances(os.environ['DATABASE_DEV_URL'])
-          staging_instances = get_lingering_instances(os.environ['DATABASE_STAGING_URL'])
-          prod_instances = get_lingering_instances(os.environ['DATABASE_PROD_URL'])
-
-          if dev_instances or staging_instances or prod_instances:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-            SLACK_CHANNEL = "#alerts-dev"
-
-            stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
-
-            for stage in stages:
-              if stages[stage]:
-                # Format message
-                msg = ""
-
-                for instance in stages[stage]:
-                  # Start at index 4 to remove prefix "aws-" from the id
-                  msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
-
-                BODY = "Lingering *Instances* in _%s_\n" % stage
-                BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining :\n%s" % msg
-
-                slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
   # Find whether we have hanging EC2 instances, which are defined as resources that are
   # not in one of our databases, but still exist in AWS, and notify Slack
-  webserver-hanging-resource-notification:
-    name: Webserver Hanging Resource Notification
+  # Also find wether we have lingering EC2 instances, which are defined as resources that have
+  # updated their `last_update` value >2 min for running instances, 15 for preconnected instances or,
+  # instance draining for more than 2 minute without an associated mandelbox (`last_update` can be < 2 mins)
+  webserver-hanging-lingering-resource-notification:
+    name: Webserver Hanging or Lingering Resource Notification
     runs-on: ubuntu-20.04
     needs: [webserver-enumerate-all-instances]
     strategy:
@@ -253,6 +191,36 @@ jobs:
                   msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
 
                 BODY = "Host service unresponsive *Instances* in _%s_ _${{ matrix.aws-region }}_:\n%s" % (stage, msg)
+
+                slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+      - name: List EC2 Instances that are considered lingering and Notify in Slack if They Exist
+        shell: python3 {0}
+        run: |
+          import os
+          from notifications.slack_bot import slack_post
+          from resources.database_helpers import get_lingering_instances
+
+          dev_instances = get_lingering_instances(os.environ['DATABASE_DEV_URL'], "${{ matrix.aws-region }}")
+          staging_instances = get_lingering_instances(os.environ['DATABASE_STAGING_URL'], "${{ matrix.aws-region }}")
+          prod_instances = get_lingering_instances(os.environ['DATABASE_PROD_URL'], "${{ matrix.aws-region }}")
+
+          if dev_instances or staging_instances or prod_instances:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_CHANNEL = "#alerts-dev"
+
+            stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
+
+            for stage in stages:
+              if stages[stage]:
+                # Format message
+                msg = ""
+
+                for instance in stages[stage]:
+                  # Start at index 4 to remove prefix "aws-" from the id
+                  msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
+
+                BODY = "Lingering *Instances* in _%s_ _${{ matrix.aws-region }}_\n" % stage
+                BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining :\n%s" % msg
 
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
