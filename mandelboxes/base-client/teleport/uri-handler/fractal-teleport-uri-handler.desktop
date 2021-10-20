@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=/opt/teleport/uri-handler %u
+Type=Application
+Name=Fractal Teleport
+Categories=Utility;
+StartupNotify=true
+# Handle zoommtg,slack,spotify,discord
+MimeType=x-scheme-handler/zoommtg;x-scheme-handler/slack;x-scheme-handler/spotify;x-scheme-handler/discord
