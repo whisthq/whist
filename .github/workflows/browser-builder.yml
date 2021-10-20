@@ -84,6 +84,7 @@ jobs:
           cargo install sccache
 
           # Export and link sccache
+          # For the self-hosted macOS M1 Runner, this is run manually with sudo via VNC due to permission issues
           export PATH="$PATH:$HOME/.cargo/bin"
           ln -s ~/.cargo/bin/sccache /usr/local/bin/sccache
 
