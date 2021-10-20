@@ -76,6 +76,8 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 4
 #define MAX_UNSYNCED_FRAMES_RENDER 6
+// If we want an iframe, this is how often we keep asking for it
+#define IFRAME_REQUEST_INTERVAL_MS (50)
 // control whether we ask for iframes on missing too many packets - turned off for now
 #define REQUEST_IFRAME_ON_MISSING_PACKETS false
 
@@ -550,7 +552,8 @@ bool request_iframe() {
             (bool): true if IFrame requested, false if not
     */
 
-    if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
+    // Only request an iframe once every `IFRAME_REQUEST_INTERVAL_MS` ms
+    if (get_timer(video_data.last_iframe_request_timer) > IFRAME_REQUEST_INTERVAL_MS / 1000.0) {
         FractalClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_IFRAME_REQUEST;
         // This should give us a full IDR frame,
