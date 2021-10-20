@@ -37,8 +37,6 @@ const getCookies = async (browser: string): Promise<Cookie[]> => {
   // console.log(`Encrypted Cookies ${encryptedCookies}`);
 
   const encryptKey = await getCookieEncryptionKey(browser)
-  console.log(`Encrypted Key `)
-  console.log(encryptKey)
 
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
@@ -53,7 +51,8 @@ const decryptCookies = async (
 
   const numOfCookise = encryptedCookies.length
   for (let i = 0; i < numOfCookise; i++) {
-    cookies.push(await decryptCookie(encryptedCookies[i], encryptKey))
+    const cookie = await decryptCookie(encryptedCookies[i], encryptKey)
+    cookie !== undefined && cookies.push(cookie)
   }
 
   return cookies
@@ -62,48 +61,58 @@ const decryptCookies = async (
 const decryptCookie = async (
   cookie: Cookie,
   encryptKey: Buffer
-): Promise<Cookie> => {
-  if (typeof cookie.value === "string" && cookie.value.length > 0) {
+): Promise<Cookie | undefined> => {
+  try {
+    if (typeof cookie.value === "string" && cookie.value.length > 0) {
+      return cookie
+    }
+
+    const encryptionPrefix = cookie.encrypted_value.toString().substring(0, 3)
+    // if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
+    //   return cookie
+    // }
+
+    cookie.encrypted_prefix = encryptionPrefix
+
+    const iv = Buffer.from(Array(17).join(" "), "binary")
+
+    const decipher = await crypto.createDecipheriv(
+      "aes-128-cbc",
+      encryptKey,
+      iv
+    )
+
+    decipher.setAutoPadding(false)
+
+    let encryptedData: Buffer = Buffer.from("")
+    if (
+      typeof cookie.encrypted_value != "number" &&
+      typeof cookie.encrypted_value != "string"
+    ) {
+      encryptedData = cookie.encrypted_value.slice(3)
+    }
+
+    let decoded = decipher.update(encryptedData)
+
+    const final = decipher.final()
+    final.copy(decoded, decoded.length - 1)
+
+    const padding = decoded[decoded.length - 1]
+    if (padding) {
+      decoded = decoded.slice(0, decoded.length - padding)
+    }
+
+    const decodedBuffer = decoded.toString("utf8")
+
+    const originalText = decodedBuffer
+    cookie.decrypted_value = originalText
+
     return cookie
+  } catch (err) {
+    console.error("Decrypt failed with error: ", err)
+    console.error("The cookie that failed was", cookie)
+    return undefined
   }
-
-  const encryptionPrefix = cookie.encrypted_value.toString().substring(0, 3)
-  // if (encryptionPrefix !== "v10" && encryptionPrefix !== "v11") {
-  //   return cookie
-  // }
-
-  cookie.encrypted_prefix = encryptionPrefix
-
-  const iv = Buffer.from(Array(17).join(" "), "binary")
-
-  const decipher = await crypto.createDecipheriv("aes-128-cbc", encryptKey, iv)
-  decipher.setAutoPadding(false)
-
-  let encryptedData: Buffer = Buffer.from("")
-  if (
-    typeof cookie.encrypted_value != "number" &&
-    typeof cookie.encrypted_value != "string"
-  ) {
-    encryptedData = cookie.encrypted_value.slice(3)
-  }
-
-  let decoded = decipher.update(encryptedData)
-  console.log(decoded, decoded.length)
-
-  const final = decipher.final()
-  final.copy(decoded, decoded.length - 1)
-
-  const padding = decoded[decoded.length - 1]
-  if (padding) {
-    decoded = decoded.slice(0, decoded.length - padding)
-  }
-
-  const decodedBuffer = decoded.toString("utf8")
-
-  const originalText = decodedBuffer
-  cookie.decrypted_value = originalText
-
-  return cookie
 }
 
 const getCookiesFromFile = async (browser: string): Promise<Cookie[]> => {
@@ -383,7 +392,7 @@ const getCookieFilePath = (browser: string): string[] => {
 }
 
 const test = async (): Promise<void> => {
-  await getCookies("brave")
+  await getCookies("chrome")
 }
 
 test()
