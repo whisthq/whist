@@ -64,7 +64,7 @@ jobs:
   #   Unresponsive EC2 instances are defined as resourced marked
   #     as state HOST_SERVICE_UNRESPONSIVE in one of our databases
   #   Lingering EC2 instances are defined as resources that have
-  #     updated their `last_update` value >2 mins for running instances, >15 mins 
+  #     updated their `last_update` value >2 mins for running instances, >15 mins
   #     for pre-connected instances, or have been in state DRAINING for more than
   #.    2 minutes without an associated mandelbox (`last_update` can be <2 mins)
   webserver-old-hanging-unresponsive-lingering-resource-notifications:
@@ -196,7 +196,7 @@ jobs:
 
                 BODY = "Host service unresponsive *Instances* in _%s_ _${{ matrix.aws-region }}_:\n%s" % (stage, msg)
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-                
+
       - name: List EC2 Instances that are considered lingering and Notify in Slack if They Exist
         shell: python3 {0}
         run: |
