@@ -1158,6 +1158,7 @@ jobs:
         uses: actions/setup-node@v2.4.0
         with:
           node-version: "16"
+          architecture: "arm64"
 
       # Necessary for Electron to upload packaged applications to AWS S3
       - name: Configure AWS S3 CLI
