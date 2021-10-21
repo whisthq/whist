@@ -16,6 +16,7 @@ import (
 
 	"github.com/fractal/fractal/host-service/dbdriver"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 
 	"github.com/fractal/fractal/host-service/mandelbox/gpus"
@@ -44,12 +45,13 @@ type Mandelbox interface {
 	AssignGPU() error
 	GetGPU() gpus.Index
 
-	// RegisterCreation is used to tell us the mapping between Docker IDs,
-	// AppNames, and MandelboxIDs (which are used to track mandelboxes before they
+	// RegisterCreation is used to tell us the mapping between Docker IDs
+	// and MandelboxIDs (which are used to track mandelboxes before they
 	// are actually started, and therefore assigned a Docker runtime ID).
 	// MandelboxIDs are also used to dynamically provide each mandelbox with a
 	// directory that only that mandelbox has access to).
-	RegisterCreation(types.DockerID, types.AppName) error
+	RegisterCreation(types.DockerID) error
+	SetAppName(types.AppName) error
 	GetDockerID() types.DockerID
 	GetAppName() types.AppName
 
@@ -155,10 +157,13 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully freed TTY %v for mandelbox %s", c.tty, c.mandelboxID)
 		c.tty = 0
 
-		if err := gpus.Free(c.gpuIndex, c.mandelboxID); err != nil {
-			logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", c.gpuIndex, c.mandelboxID, err)
-		} else {
-			logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
+		// CI does not have GPUs
+		if !metadata.IsRunningInCI() {
+			if err := gpus.Free(c.gpuIndex, c.mandelboxID); err != nil {
+				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", c.gpuIndex, c.mandelboxID, err)
+			} else {
+				logger.Infof("Successfully freed GPU %v for mandelbox %s", c.gpuIndex, c.mandelboxID)
+			}
 		}
 
 		// Clean resource mappings
@@ -242,8 +247,8 @@ func (c *mandelboxData) GetConfigEncryptionToken() types.ConfigEncryptionToken {
 }
 
 func (c *mandelboxData) SetConfigEncryptionToken(token types.ConfigEncryptionToken) {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
 	c.configEncryptionToken = token
 }
 
@@ -254,8 +259,8 @@ func (c *mandelboxData) GetClientAppAccessToken() types.ClientAppAccessToken {
 }
 
 func (c *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken) {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
 	c.clientAppAccessToken = token
 }
 
@@ -317,17 +322,27 @@ func (c *mandelboxData) GetTTY() ttys.TTY {
 	return c.tty
 }
 
-func (c *mandelboxData) RegisterCreation(d types.DockerID, name types.AppName) error {
+func (c *mandelboxData) RegisterCreation(d types.DockerID) error {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
-	if len(d) == 0 || len(name) == 0 {
-		return utils.MakeError("RegisterCreation: can't register mandelbox with an empty argument! mandelboxID: %s, dockerID: %s, name: %s", c.mandelboxID, d, name)
+	if len(d) == 0 {
+		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", c.mandelboxID)
 	}
 
 	c.dockerID = d
-	c.appName = name
+	return nil
+}
 
+func (c *mandelboxData) SetAppName(name types.AppName) error {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	if len(name) == 0 {
+		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", c.mandelboxID)
+	}
+
+	c.appName = name
 	return nil
 }
 

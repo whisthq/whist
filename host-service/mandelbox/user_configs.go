@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
@@ -41,41 +43,17 @@ const (
 )
 
 func (c *mandelboxData) PopulateUserConfigs() error {
-	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
-	// from under us.
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
-
-	// Make directory for user configs
-	configDir := c.getUserConfigDir()
-	if err := os.MkdirAll(configDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
-	}
-
-	unpackedConfigDir := configDir + c.getUnpackedConfigsDirectoryName()
-	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
-	}
-
-	// Once we've extracted everything, we open up permissions for the user
-	// config directory so it's accessible by the non-root user in the
-	// mandelboxes. We also are okay with setting executable bits here, since
-	// it's possible that some apps store executable scripts in their config.
-	defer func() {
-		cmd := exec.Command("chown", "-R", "ubuntu", configDir)
-		cmd.Run()
-		cmd = exec.Command("chmod", "-R", "777", configDir)
-		cmd.Run()
-	}()
-
 	// If userID is not set, then we don't retrieve configs from s3
-	if len(c.userID) == 0 {
+	if len(c.GetUserID()) == 0 {
+		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", c.mandelboxID)
 		return nil
 	}
 
-	if len(c.configEncryptionToken) == 0 {
+	if len(c.GetConfigEncryptionToken()) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
 	}
+
+	s3ConfigKey := c.getS3ConfigKey()
 
 	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
 
@@ -92,15 +70,15 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	// Fetch the HeadObject first to see how much memory we need to allocate
 	headObject, err := s3Client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(c.getS3ConfigKey()),
+		Key:    aws.String(s3ConfigKey),
 	})
 
-	var noSuchKeyErr *types.NoSuchKey
+	var apiErr smithy.APIError
 	if err != nil {
 		// If aws s3 errors out due to the file not existing, don't log an error because
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
-		if errors.As(err, &noSuchKeyErr) {
+		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NotFound" {
 			logger.Infof("Could not get head object because config does not exist for user %s", c.userID)
 			return nil
 		}
@@ -113,8 +91,10 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
 	numBytes, err := downloader.Download(context.Background(), buf, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(c.getS3ConfigKey()),
+		Key:    aws.String(s3ConfigKey),
 	})
+
+	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
 			logger.Infof("Could not download user config because config does not exist for user %s", c.userID)
@@ -134,7 +114,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
 	}
 
-	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.configEncryptionToken), salt)
+	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.GetConfigEncryptionToken()), salt)
 	err = decryptAES256CBC(key, iv, data)
 	if err != nil {
 		return utils.MakeError("failed to decrypt user config: %v", err)
@@ -142,6 +122,32 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	logger.Infof("Finished decrypting user config for mandelbox %s", c.mandelboxID)
 	logger.Infof("Decompressing user config for mandelbox %s", c.mandelboxID)
+
+	// Lock directory to avoid cleanup
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	// Make directory for user configs
+	configDir := c.getUserConfigDir()
+	if err := os.MkdirAll(configDir, 0777); err != nil {
+		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
+	}
+
+	unpackedConfigDir := path.Join(configDir, c.getUnpackedConfigsDirectoryName())
+	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+	}
+
+	// Once we've extracted everything, we open up permissions for the user
+	// config directory so it's accessible by the non-root user in the
+	// mandelboxes. We also are okay with setting executable bits here, since
+	// it's possible that some apps store executable scripts in their config.
+	defer func() {
+		cmd := exec.Command("chown", "-R", "ubuntu", configDir)
+		cmd.Run()
+		cmd = exec.Command("chmod", "-R", "777", configDir)
+		cmd.Run()
+	}()
 
 	// Unpacking the decrypted data involves:
 	// 1. Decompress the the lz4 file into a tar
@@ -200,8 +206,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	return nil
 }
 
-// This function requires that `c.rwlock()` is locked. It backs up the user
-// config to s3.
+// backupUserConfigs compresses, encrypts, and then uploads user config files to S3.
+// Requires `c.rwlock` to be locked.
 func (c *mandelboxData) backupUserConfigs() error {
 	if len(c.userID) == 0 {
 		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", c.mandelboxID)
@@ -213,9 +219,9 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 
 	configDir := c.getUserConfigDir()
-	encTarPath := configDir + c.getEncryptedArchiveFilename()
-	decTarPath := configDir + c.getDecryptedArchiveFilename()
-	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
+	encTarPath := path.Join(configDir, c.getEncryptedArchiveFilename())
+	decTarPath := path.Join(configDir, c.getDecryptedArchiveFilename())
+	unpackedConfigPath := path.Join(configDir, c.getUnpackedConfigsDirectoryName())
 
 	tarConfigCmd := exec.Command(
 		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
@@ -256,23 +262,24 @@ func (c *mandelboxData) backupUserConfigs() error {
 	if err != nil {
 		return utils.MakeError("failed to open encrypted config: %v", err)
 	}
+	defer encryptedConfig.Close()
 
 	_, err = uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(c.getS3ConfigKey()),
+		Key:    aws.String(c.getS3ConfigKeyWithoutLocking()),
 		Body:   encryptedConfig,
 	})
 	if err != nil {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
 
-	logger.Infof("Ran \"aws s3 cp\" save config command with output")
+	logger.Infof("Saved user config for mandelbox %s", c.mandelboxID)
 
 	return nil
 }
 
-// This function requires that `c.rwlock()` is locked. It cleans up the user
-// config directory for a mandelbox.
+// cleanUserConfigDir removes all user config related files and directories from the host.
+// Requires `c.rwlock` to be locked.
 func (c *mandelboxData) cleanUserConfigDir() {
 	err := os.RemoveAll(c.getUserConfigDir())
 	if err != nil {
@@ -282,17 +289,19 @@ func (c *mandelboxData) cleanUserConfigDir() {
 
 // getUserConfigDir returns the absolute path to the user config directory.
 func (c *mandelboxData) getUserConfigDir() string {
-	return utils.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.mandelboxID)
-}
-
-// getS3ConfigPath returns the s3 URL to the encrypted user config file.
-func (c *mandelboxData) getS3ConfigPath() string {
-	return utils.Sprintf("s3://fractal-user-app-configs/%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
+	return path.Join(utils.FractalDir, string(c.GetMandelboxID()), "userConfigs")
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (c *mandelboxData) getS3ConfigKey() string {
-	return utils.Sprintf("%s/%s/%s/%s", c.userID, metadata.GetAppEnvironmentLowercase(), c.appName, c.getEncryptedArchiveFilename())
+	return path.Join(string(c.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(c.GetAppName()), c.getEncryptedArchiveFilename())
+}
+
+// getS3ConfigKeyWithoutLocking returns the S3 key to the encrypted user config file
+// without locking the mandelbox. This is used when the enclosing function already
+// holds a lock.
+func (c *mandelboxData) getS3ConfigKeyWithoutLocking() string {
+	return path.Join(string(c.userID), metadata.GetAppEnvironmentLowercase(), string(c.appName), c.getEncryptedArchiveFilename())
 }
 
 // getEncryptedArchiveFilename returns the name of the encrypted user config file.
