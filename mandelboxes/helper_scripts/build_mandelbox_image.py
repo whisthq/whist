@@ -16,10 +16,10 @@ import time
 # Argument parser
 parser = argparse.ArgumentParser(description="Build Fractal mandelbox image(s).")
 parser.add_argument(
-    "-o",
-    "--show-output",
+    "-q",
+    "--quiet",
     action="store_true",
-    help="This flag will have docker build output print to stdout",
+    help="This flag will make the docker builds silent",
 )
 parser.add_argument(
     "--all",
@@ -30,7 +30,7 @@ parser.add_argument("image_paths", nargs="*", help="List of image paths to build
 args = parser.parse_args()
 
 # Input Variables
-show_output = args.show_output
+show_output = not args.quiet
 # Remove trailing slashes
 image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
