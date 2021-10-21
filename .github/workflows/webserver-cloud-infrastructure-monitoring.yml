@@ -301,7 +301,7 @@ jobs:
     needs:
       [
         webserver-enumerate-all-instances,
-        webserver-hanging-resource-notification,
+        webserver-old-hanging-unresponsive-lingering-resource-notifications,
         webserver-cleanup-lingering-packer-builders-and-ami-resources,
       ]
     if: failure()
