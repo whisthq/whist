@@ -43,7 +43,7 @@ const esbuildCommand = [
   "--external:x11",
   "--external:node:path",
   "--external:keytar",
-  "--external:better-sqlite3",
+  "--external:knex",
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {
