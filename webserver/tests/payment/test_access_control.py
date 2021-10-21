@@ -68,7 +68,7 @@ def test_get_missing_subscription_status() -> None:
         assert get_subscription_status() is None
 
 
-def test_get_no_subscription_status_stripe(monkeypatch):
+def test_get_no_subscription_status_stripe(monkeypatch) -> None:
     """Return None from get_subscription_status() if the subscription status claim is omitted."""
 
     monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
@@ -116,7 +116,7 @@ def test_get_subscription_status(subscription_status: str) -> None:
     "subscription_status",
     ("active", "past_due", "unpaid", "canceled", "incomplete", "incomplete_expired", "trialing"),
 )
-def test_get_stripe_subscription_status(subscription_status, monkeypatch):
+def test_get_stripe_subscription_status(subscription_status, monkeypatch) -> None:
     """Ensure that get_subscription_status() extracts the subscription status correctly."""
 
     monkeypatch.setattr(
