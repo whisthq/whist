@@ -855,6 +855,16 @@ void bit_array_free(BitArray* ba);
 void bit_array_clear_all(const BitArray* const ba);
 
 /**
+ * @brief                          This function takes a null-terminated string and modifies
+ *                                 it to remove any dangling unicode characters that may have
+ *                                 been left over from a previous truncation. This is necessary
+ *                                 because dangling unicode characters will cause horrible crashes
+ *                                 if they are not removed.
+ *
+ * @param str                      The utf8 string to be trimmed.
+ */
+void trim_utf8_string(char* str);
+/**
  * @brief                          This function sets every bit to 1 in the bit array passed
  *                                 as a parameter.
  *
