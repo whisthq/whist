@@ -14,7 +14,9 @@ import (
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/utils"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Constants for use in setting up the HTTPS server
@@ -129,6 +131,71 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	res := <-reqdata.resultChan
 
 	res.send(w)
+}
+
+func validateJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) {
+	// Receive the value of the `json_transport request`
+	req := serverevent.(*JSONTransportRequest)
+
+	// First we validate the JWT received from the `json_transport` endpoint
+	// Set up auth
+	claims := new(auth.FractalClaims)
+	parser := &jwt.Parser{SkipClaimsValidation: true}
+	var requestUserID mandelboxtypes.UserID
+
+	// Only verify auth in non-local environments
+	if !metadata.IsLocalEnv() {
+		// Decode the access token without validating any of its claims or
+		// verifying its signature because we've already done that in
+		// `authenticateAndParseRequest`. All we want to know is the value of the
+		// sub (subject) claim.
+		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
+			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
+			return
+		}
+		requestUserID = mandelboxtypes.UserID(claims.Subject)
+	} else {
+		// CI doesn't run in AWS so we need to set a custom name
+		if metadata.IsRunningInCI() {
+			requestUserID = "localdev_host_service_CI"
+		} else {
+			instanceName, err := aws.GetInstanceName()
+			if err != nil {
+				logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+				return
+			}
+			requestUserID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+		}
+	}
+
+	// If the jwt was valid, the next step is to verify if we have already received the JSONData from
+	// this specific user. In case we have, we ignore the request. Otherwise we add the request to the map.
+	// By performing this validation, we make the host service resistant to DDOS attacks, and by keeping track
+	// of each user's json data, we avoid any race condition that might corrupt other mandelboxes.
+
+	// Acquire lock on transport requests map
+	rwlock.Lock()
+	defer rwlock.Unlock()
+
+	if _, ok := transportRequestMap[requestUserID]; ok {
+		// JSONData already received from this user,
+		// so we ignore the request.
+		return
+	}
+
+	// We register the request on the transportRequestMap and send the
+	// JSONTranportRequest data through the channel.
+	transportRequestMap[requestUserID] = make(chan *JSONTransportRequest)
+	transportRequestMap[requestUserID] <- req
+}
+
+func getJSONTransportRequestForUser(UserID mandelboxtypes.UserID,
+	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) *JSONTransportRequest {
+	// Acquire lock on transport requests map
+	rwlock.Lock()
+	defer rwlock.Unlock()
+
+	return <-transportRequestMap[UserID]
 }
 
 // Helper functions

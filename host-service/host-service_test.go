@@ -16,6 +16,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -96,24 +97,32 @@ func TestSpinUpMandelbox(t *testing.T) {
 	defer uninitializeFilesystem()
 
 	testMandelboxInfo := subscriptions.Mandelbox{
-		InstanceName: "test-instance-name",
-		MandelboxID:  "test-mandelbox-id",
+		InstanceName: "test_instance_name",
+		MandelboxID:  "test_mandelbox_id",
 		SessionID:    1,
-		UserID:       "test-user-id",
+		UserID:       "test_user_id",
 	}
-	testReq := subscriptions.MandelboxInfoEvent{
+	testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
 		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
 	}
-	testJSONChan := make(chan *JSONTransportRequest)
+	testJSONTransportRequest := JSONTransportRequest{
+		ConfigEncryptionToken: "test_token",
+		JwtAccessToken:        "test_jwt_token",
+		JSONData:              "test_json_data",
+		resultChan:            make(chan requestResult),
+	}
+	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest, 1)
+	testTransportRequestMap[testMandelboxInfo.UserID] = make(chan *JSONTransportRequest)
+	testTransportRequestMap[testMandelboxInfo.UserID] <- &testJSONTransportRequest
+	testmux := &sync.Mutex{}
 
 	dockerClient := mockClient{}
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testReq, testJSONChan)
+	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
 	goroutineTracker.Wait()
 
 	// Check that response is as expected
-	req := <-testJSONChan
-	result := <-req.resultChan
+	result := <-testJSONTransportRequest.resultChan
 	if result.Err != nil {
 		t.Fatalf("SpinUpMandelbox returned with error: %v", result.Err)
 	}
