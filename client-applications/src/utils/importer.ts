@@ -6,7 +6,8 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
-import Database from "better-sqlite3"
+// import Database from "better-sqlite3"
+import knex from 'knex'
 import crypto from "crypto"
 
 import {
@@ -299,23 +300,14 @@ const getCookiesFromFile = async (
 
   const tempFile = createLocalCopy(cookieFile)
 
-  const db = new Database(tempFile, {
-    fileMustExist: true,
-    verbose: console.log,
+  const db = knex({
+    client: 'sqlite3',
+    connection: {
+      filename: tempFile,
+    }
   })
 
-  let rows: Cookie[]
-  try {
-    const query = await db.prepare(
-      "SELECT creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party FROM cookies;"
-    )
-    rows = query.all()
-  } catch {
-    const query = await db.prepare(
-      "SELECT creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party FROM cookies;"
-    )
-    rows = query.all()
-  }
+  let rows: Cookie[] = await db.select().from<Cookie>('cookies')
 
   return rows
 }
