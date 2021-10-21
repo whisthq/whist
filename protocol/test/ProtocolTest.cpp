@@ -39,9 +39,9 @@ extern "C" {
 #endif
 
 #include "client/client_utils.h"
-#include "fractal/utils/aes.h"
-#include "fractal/utils/png.h"
-#include "fractal/utils/avpacket_buffer.h"
+#include <fractal/utils/aes.h>
+#include <fractal/utils/png.h>
+#include <fractal/utils/avpacket_buffer.h>
 }
 
 /*
@@ -494,6 +494,51 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
         bit_array_free(bit_arr_recovered);
     }
 }
+
+#ifndef _WIN32
+// This test is disabled on Windows for the time being, since UTF-8
+// seems to behave differently in MSVC, which causes indefinite hanging
+// in our CI. See the implementation of `trim_utf8_string` for a bit
+// more context.
+TEST(ProtocolTest, Utf8Truncation) {
+    // Test that a string with a UTF-8 character that is truncated
+    // is fixed correctly.
+
+    // UTF-8 string:
+    char buf[] = {'\xe2', '\x88', '\xae', '\x20', '\x45', '\xe2', '\x8b', '\x85', '\x64',
+                  '\x61', '\x20', '\x3d', '\x20', '\x51', '\x2c', '\x20', '\x20', '\x6e',
+                  '\x20', '\xe2', '\x86', '\x92', '\x20', '\xe2', '\x88', '\x9e', '\x2c',
+                  '\x20', '\xf0', '\x90', '\x8d', '\x88', '\xe2', '\x88', '\x91', '\x20',
+                  '\x66', '\x28', '\x69', '\x29', '\x20', '\x3d', '\x20', '\xe2', '\x88',
+                  '\x8f', '\x20', '\x67', '\x28', '\x69', '\x29', '\0'};
+
+    // truncation boundaries that need to be trimmed
+    const int bad_utf8_tests[] = {2, 3, 30, 31, 32};
+    // truncation boundaries that are at legal positions
+    const int good_utf8_tests[] = {4, 29, 33, 42, 50, 100};
+
+    for (auto test : bad_utf8_tests) {
+        char* truncated_buf = (char*)malloc(test + 1);
+        char* fixed_buf = (char*)malloc(test + 1);
+        safe_strncpy(truncated_buf, buf, test);
+        safe_strncpy(fixed_buf, buf, test);
+        trim_utf8_string(fixed_buf);
+        EXPECT_TRUE(strncmp(truncated_buf, fixed_buf, test));
+        free(fixed_buf);
+        free(truncated_buf);
+    }
+    for (auto test : good_utf8_tests) {
+        char* truncated_buf = (char*)malloc(test + 1);
+        char* fixed_buf = (char*)malloc(test + 1);
+        safe_strncpy(truncated_buf, buf, test);
+        safe_strncpy(fixed_buf, buf, test);
+        trim_utf8_string(fixed_buf);
+        EXPECT_FALSE(strncmp(truncated_buf, fixed_buf, test));
+        free(fixed_buf);
+        free(truncated_buf);
+    }
+}
+#endif  // _WIN32
 
 /*
 ============================

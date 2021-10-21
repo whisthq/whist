@@ -58,15 +58,6 @@ Window get_focused_window() {
     return w;
 }
 
-/**
- * @brief                          Query whether the focused window is fullscreen or not.
- *
- * @returns                        0 if not fullscreen, 1 if fullscreen.
- *
- * @note                           By "fullscreen", we mean that the window is rendering directly
- *                                 to the screen, not through the window manager. Examples include
- *                                 fullscreen video playback in a browser, or fullscreen games.
- */
 bool is_focused_window_fullscreen() {
     /*
      * Query whether the focused window is fullscreen or not.
@@ -143,6 +134,8 @@ int get_focused_window_name(char* name_return) {
         }
         if (result == Success) {
             safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
+            // trim down any dangling utf8 multi-byte characters
+            trim_utf8_string(name_return);
             XFreeStringList(list);
             return 0;
         } else {
