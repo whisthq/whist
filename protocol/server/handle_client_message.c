@@ -231,8 +231,15 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
 
     LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
              fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+    // Clamp the bitrates, preferring to clamp at MAX
+    fcmsg->bitrate_data.bitrate =
+        min(max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
+    fcmsg->bitrate_data.burst_bitrate =
+        min(max(fcmsg->bitrate_data.burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
+    LOG_INFO("Clamped to %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
     // Set the new bitrate data (for the video encoder)
-    max_bitrate = max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE);
+    max_bitrate = fcmsg->bitrate_data.bitrate;
 
     // Use the burst bitrate to update the client's UDP packet throttle context
     network_throttler_set_burst_bitrate(client.udp_context.network_throttler,
