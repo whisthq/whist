@@ -26,6 +26,7 @@ def test_payment_portal_no_subscription(
     url = f"http://localhost/{os.urandom(8).hex()}"
     user = make_user()
 
+    monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
     monkeypatch.setattr(checkout_session, "url", url)
     monkeypatch.setattr(
         "app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status)
@@ -60,6 +61,7 @@ def test_create_billing_portal_unauthorized(
     url = f"http://localhost/{os.urandom(8).hex()}"
     user = make_user()
 
+    monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
     monkeypatch.setattr(portal_session, "url", url)
     monkeypatch.setattr(
         "app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status)

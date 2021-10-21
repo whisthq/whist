@@ -34,6 +34,7 @@ Example usage::
 
 import functools
 from typing import Any, Callable, Optional
+from time import time
 
 import stripe
 from flask import current_app, jsonify
@@ -105,7 +106,12 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
         # wrong.
         assert customer
 
-        if get_subscription_status() in (None, "canceled", "incomplete_expired", "unpaid"):
+        if get_stripe_subscription_status(customer) in (
+            None,
+            "canceled",
+            "incomplete_expired",
+            "unpaid",
+        ):
             # Any subscriptions that the user might have had are now in terminal states (e.g.
             # "canceled", "unpaid", or "incomplete_expired") and cannot be renewed. Create a
             # checkout session so the user can enroll in a new subscription.
@@ -147,6 +153,24 @@ def get_customer_id() -> Optional[str]:
     return get_jwt().get(  # type: ignore[no-any-return]
         current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]
     )
+
+
+def get_stripe_subscription_status(customer_id: Optional[str]) -> Optional[str]:
+    """Attempt to get subscription status from stripe but fallback to access token
+
+    Returns:
+        A string containing the value of the status attribute of the Stripe subscription record
+        representing the user's most recently created subscription or None if the user has no
+        non-cancelled subscriptions or the subscription status claim is missing. See
+        https://stripe.com/docs/api/subscriptions/object#subscription_object-status.
+    """
+    try:
+        customer = stripe.Subscription.list(
+            customer=customer_id, current_period_end={"gt": int(time())}
+        )
+        return str(customer["data"][0]["status"])
+    except:
+        return get_subscription_status()
 
 
 def get_subscription_status() -> Optional[str]:
