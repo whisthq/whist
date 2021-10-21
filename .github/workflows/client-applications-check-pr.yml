@@ -254,6 +254,7 @@ jobs:
         uses: actions/setup-node@v2.4.0
         with:
           node-version: "16"
+          architecture: "arm64"
 
       # To retrieve Fractal protocol libraries from AWS S3
       - name: Configure AWS S3 CLI
