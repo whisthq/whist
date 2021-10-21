@@ -516,6 +516,9 @@ int32_t multithreaded_send_video(void* opaque) {
     clock last_frame_capture;
     start_timer(&last_frame_capture);
 
+    clock last_frame_accumulation;
+    start_timer(&last_frame_accumulation);
+
     pending_encoder = false;
     encoder_finished = false;
     transfer_context_active = false;
@@ -589,8 +592,14 @@ int32_t multithreaded_send_video(void* opaque) {
         if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
+
             log_double_statistic("Capture screen time (ms)",
                                  get_timer(statistics_timer) * MS_IN_SECOND);
+
+            if (accumulated_frames >= 1) {
+                start_timer(&last_frame_accumulation);
+            }
+
 #if LOG_VIDEO
             if (accumulated_frames > 1) {
                 LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
@@ -623,16 +632,41 @@ int32_t multithreaded_send_video(void* opaque) {
             if (accumulated_frames > 1) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
-            // If 1/MIN_FPS has passed but no accumulated_frames have happened (or the client asked
-            // the server to stop encoding frames to save resources via `stop_streaming`), then we
-            // skip everything in here, and we just send an empty frame with is_empty_frame = true.
-            // NOTE: `accumulated_frames` is the number of new frames collected since the last frame
-            // sent. If this is 0, then this frame is just a repeat of the frame before it (which
-            // we're sending to keep the framerate above MIN_FPS).
-            // ADDITIONAL NOTE: If wants_iframe gets set to true when stop_streaming is true or
-            // accumulated_frames is 0 (which it ordinarily shouldn't), we HAVE TO render that frame
-            // or the server will spazz out and start sending 1000's of FPS.
-            if (accumulated_frames > 0 || wants_iframe) {
+
+            /*
+             * Here, `accumulated_frames` is the number of new frames collected since the last frame
+             * was sent to the client. If this is 0, then the frame we would send is just a repeat
+             * of the preceding frame, and we have the option of skipping the encoding and sending
+             * an empty frame via `send_empty_frame()`. We send these empty packets so that we
+             * maintain a nominal frame rate of at least `MIN_FPS` on the client. In practice, we
+             * can recover from poor image quality by encoding duplicate frames, so we still go
+             * through our regular encoding process for some subset of repeat frames, according to
+             * the `encode_repeat_frames_period` logic below.
+             *
+             * The other caveat here is I-frame requests. If an I-frame is requested, then we must
+             * generate that frame and send it to the client, whether or not the image is a repeat
+             * image. In the case that no accumulated frames have happened or the client asked the
+             * server to stop encoding and save resources via `stop_streaming`, then it is
+             * absolutely imperative that the I-frame actually gets rendered by the client; else, we
+             * run into a crazy loop here which causes the server to start spamming sends at 1000s
+             * of FPS. Note that this should not happen under ordinary circumstances, but it's
+             * possible that a wild edge case or a buggy commit could cause this to happen.
+             */
+
+            // By default, encode effectively no repeat frames.
+            int encode_repeat_frames_period = 10000;
+            if (get_timer(last_frame_accumulation) < 1.0) {
+                // Encode 100% of repeat frames for the first second.
+                encode_repeat_frames_period = 1;
+            } else if (get_timer(last_frame_accumulation) < 1.5) {
+                // Encode 1/3 of repeat frames for the next half-second.
+                encode_repeat_frames_period = 3;
+            } else if (get_timer(last_frame_accumulation) < 4.5) {
+                // Encode 1/10 of repeat frames for the next three seconds.
+                encode_repeat_frames_period = 10;
+            }
+
+            if (accumulated_frames > 0 || wants_iframe || id % encode_repeat_frames_period == 0) {
                 // transfer the capture of the latest frame from the device to
                 // the encoder,
                 // This function will try to CUDA/OpenGL optimize the transfer by
