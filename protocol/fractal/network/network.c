@@ -1850,12 +1850,14 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
         fractal_unlock_mutex(context->mutex);
         if (ret < 0) {
             int error = get_last_network_error();
-            LOG_WARNING("Unexpected UDP Packet Error: %d", error);
             if (error == ENOBUFS) {
-                fractal_sleep(100);
+                LOG_WARNING("Unexpected UDP Packet Error: %d, retrying to send packet in 5ms!", error);
+                fractal_sleep(5);
                 continue;
+            } else {
+                LOG_WARNING("Unexpected UDP Packet Error: %d", error);
+                return -1;
             }
-            return -1;
         } else {
             break;
         }
