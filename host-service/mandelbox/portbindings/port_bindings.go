@@ -28,8 +28,14 @@ type portStatus byte
 
 const (
 	// Obtained from reading though Docker daemon source code
-	minAllowedPort = 1025  // inclusive
-	maxAllowedPort = 49151 // exclusive
+
+	// MinAllowedPort is the minimum (inclusive) port number
+	// allowed by the Docker daemon.
+	MinAllowedPort = 1025
+
+	// MaxAllowedPort is the maximum (exclusive) port number
+	// allowed by the Docker daemon.
+	MaxAllowedPort = 49151
 
 	reserved portStatus = iota
 	inUse
@@ -181,12 +187,12 @@ func Allocate(desiredBinds []PortBinding) ([]PortBinding, error) {
 
 // Helper function to generate random port values in the allowed range
 func randomPortInAllowedRange() uint16 {
-	return uint16(minAllowedPort + rand.Intn(maxAllowedPort-minAllowedPort))
+	return uint16(MinAllowedPort + rand.Intn(MaxAllowedPort-MinAllowedPort))
 }
 
 // Helper function to determine whether a given port is in the allowed range, or not
 func isInAllowedRange(p uint16) bool {
-	return p >= minAllowedPort && p < maxAllowedPort
+	return p >= MinAllowedPort && p < MaxAllowedPort
 }
 
 // Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.

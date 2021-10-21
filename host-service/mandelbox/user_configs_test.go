@@ -31,13 +31,16 @@ func TestUserConfigIntegration(t *testing.T) {
 		configEncryptionToken: "testEncryptionToken",
 	}
 
+	// Start with a clean slate
+	os.RemoveAll(utils.FractalDir)
+
 	err := setupTestDirs(&testConfig)
 	if err != nil {
 		t.Fatalf("failed to set up test directories: %v", err)
 	}
 	defer cleanupTestDirs(&testConfig)
 
-	unpackedConfigPath := testConfig.getUserConfigDir() + testConfig.getUnpackedConfigsDirectoryName()
+	unpackedConfigPath := path.Join(testConfig.getUserConfigDir(), testConfig.getUnpackedConfigsDirectoryName())
 	if err := os.MkdirAll(unpackedConfigPath, 0777); err != nil {
 		t.Fatalf("failed to create config dir %s: %v", unpackedConfigPath, err)
 	}
