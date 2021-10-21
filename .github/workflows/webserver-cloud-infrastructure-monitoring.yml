@@ -224,6 +224,7 @@ jobs:
                   msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
 
                 BODY = "Lingering *Instances* in _%s_ _${{ matrix.aws-region }}_.\n" % stage
+                BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining: \n%s" % msg
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
