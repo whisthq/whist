@@ -276,10 +276,12 @@ int32_t multithreaded_send_video(void* opaque) {
         if (client_width < 0 || client_height < 0 || client_dpi < 0) {
             // if we've just started, capture at a common width, height, and DPI
             // when a client connects, they'll request a dimension change to the correct dimensions
-            // + DPI
-            client_width = 1920;
-            client_height = 1080;
-            client_dpi = 96;
+            // + DPI. The height, width, and DPI all match the default on a 2020 M1 MacBook Pro.
+            // A cross-platform default DPI would be 192; width and height depend on things like
+            // the Windows Start Bar, the macOS Dock and Menu Bar, and window controls.
+            client_width = 2880;
+            client_height = 1524;
+            client_dpi = 192;
             client_codec_type = CODEC_TYPE_H264;
         }
 
