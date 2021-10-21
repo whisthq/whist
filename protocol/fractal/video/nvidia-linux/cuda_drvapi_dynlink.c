@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 #include "cuda_drvapi_dynlink.h"
-#include <fractal/core/fractal.h>
 
 tcuInit                               *_cuInit;
 tcuDriverGetVersion                   *cuDriverGetVersion;
@@ -225,7 +224,7 @@ static CUresult LOAD_LIBRARY(CUDADRIVER *pInstance)
 
     if (*pInstance == NULL)
     {
-        LOG_ERROR("LoadLibrary \"%s\" failed!\n", __CudaLibName);
+        printf("LoadLibrary \"%s\" failed!\n", __CudaLibName);
         return CUDA_ERROR_UNKNOWN;
     }
 
@@ -235,7 +234,7 @@ static CUresult LOAD_LIBRARY(CUDADRIVER *pInstance)
 #define GET_PROC_EX(name, alias, required)                     \
     alias = (t##name *)GetProcAddress(CudaDrvLib, #name);               \
     if (alias == NULL && required) {                                    \
-        LOG_ERROR("Failed to find required function \"%s\" in %s\n",       \
+        printf("Failed to find required function \"%s\" in %s\n",       \
                #name, __CudaLibName);                                  \
         return CUDA_ERROR_UNKNOWN;                                      \
     }
@@ -243,7 +242,7 @@ static CUresult LOAD_LIBRARY(CUDADRIVER *pInstance)
 #define GET_PROC_EX_V2(name, alias, required)                           \
     alias = (t##name *)GetProcAddress(CudaDrvLib, STRINGIFY(name##_v2));\
     if (alias == NULL && required) {                                    \
-        LOG_ERROR("Failed to find required function \"%s\" in %s\n",       \
+        printf("Failed to find required function \"%s\" in %s\n",       \
                STRINGIFY(name##_v2), __CudaLibName);                       \
         return CUDA_ERROR_UNKNOWN;                                      \
     }
@@ -266,7 +265,7 @@ static CUresult LOAD_LIBRARY(CUDADRIVER *pInstance)
 
     if (*pInstance == NULL)
     {
-        LOG_ERROR("dlopen \"%s\" failed!\n", __CudaLibName);
+        printf("dlopen \"%s\" failed!\n", __CudaLibName);
         return CUDA_ERROR_UNKNOWN;
     }
 
@@ -276,7 +275,7 @@ static CUresult LOAD_LIBRARY(CUDADRIVER *pInstance)
 #define GET_PROC_EX(name, alias, required)                              \
     alias = (t##name *)dlsym(CudaDrvLib, #name);                        \
     if (alias == NULL && required) {                                    \
-        LOG_ERROR("Failed to find required function \"%s\" in %s\n",       \
+        printf("Failed to find required function \"%s\" in %s\n",       \
                #name, __CudaLibName);                                  \
         return CUDA_ERROR_UNKNOWN;                                      \
     }
@@ -284,7 +283,7 @@ static CUresult LOAD_LIBRARY(CUDADRIVER *pInstance)
 #define GET_PROC_EX_V2(name, alias, required)                           \
     alias = (t##name *)dlsym(CudaDrvLib, STRINGIFY(name##_v2));         \
     if (alias == NULL && required) {                                    \
-        LOG_ERROR("Failed to find required function \"%s\" in %s\n",       \
+        printf("Failed to find required function \"%s\" in %s\n",       \
                STRINGIFY(name##_v2), __CudaLibName);                    \
         return CUDA_ERROR_UNKNOWN;                                      \
     }
