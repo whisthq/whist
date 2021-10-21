@@ -361,6 +361,54 @@ bool safe_strncpy(char *destination, const char *source, size_t num) {
     return false;
 }
 
+void trim_utf8_string(char *str) {
+    /*
+     * This function takes a null-terminated string and modifies it to remove
+     * any dangling unicode characters that may have been left over from a
+     * previous truncation. This is necessary because dangling unicode characters
+     * will cause horrible crashes if they are not removed.
+     *
+     * Arguments:
+     *     str (char*): The utf8 string to be trimmed.
+     */
+
+    // On Windows, utf-8 seems to behave weirdly, causing major issues in the
+    // below codepath. Therefore, I've disabled this function on Windows.
+    // TODO: Fix this on Windows and re-enable the unit test.
+#ifndef _WIN32
+    // UTF-8 can use up to 4 bytes per character, so
+    // in the malformed case, we would at most need to
+    // trim 3 trailing bytes.
+
+    // b[0] = str[len - 3]
+    // b[1] = str[len - 2]
+    // b[2] = str[len - 1]
+    // b[3] = str[len] = '\0'
+    char *b = str + strlen(str) - 3;
+
+    // Does a 4-byte sequence start at b[0]?
+    if ((b[0] & 0xf0) == 0xf0) {
+        // Yes, so we need to trim 3 bytes.
+        b[0] = '\0';
+        return;
+    }
+
+    // Does a 3 or more byte sequence start at b[1]?
+    if ((b[1] & 0xe0) == 0xe0) {
+        // Yes, so we need to trim 2 bytes.
+        b[1] = '\0';
+        return;
+    }
+
+    // Does a 2 or more byte sequence start at b[2]?
+    if ((b[2] & 0xc0) == 0xc0) {
+        // Yes, so we need to trim 1 byte.
+        b[2] = '\0';
+        return;
+    }
+#endif  // _WIN32
+}
+
 /* position of bit within character */
 #define BIT_CHAR(bit) ((bit) / CHAR_BIT)
 
