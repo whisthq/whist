@@ -56,10 +56,19 @@ jobs:
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-  # Find whether we have hanging EC2 instances, which are defined as resources that are
-  # not in one of our databases, but still exist in AWS, and notify Slack
-  webserver-hanging-resource-notification:
-    name: Webserver Hanging Resource Notification
+  # Finds old, hanging, unresponsive, or lingering EC2 instances and notify Slack
+  #   Old EC2 instances are defined as resources that exist on AWS
+  #     but are created > 2 weeks ago and are not in a shutting down state
+  #   Hanging EC2 instances are defined as resources that are
+  #     not in one of our databases, but still exist in AWS
+  #   Unresponsive EC2 instances are defined as resourced marked
+  #     as state HOST_SERVICE_UNRESPONSIVE in one of our databases
+  #   Lingering EC2 instances are defined as resources that have
+  #     updated their `last_update` value >2 mins for running instances, >15 mins
+  #     for pre-connected instances, or have been in state DRAINING for more than
+  #.    2 minutes without an associated mandelbox (`last_update` can be <2 mins)
+  webserver-old-hanging-unresponsive-lingering-resource-notifications:
+    name: Webserver Old, Hanging, Unresponsive or Lingering Resource Notifications
     runs-on: ubuntu-20.04
     needs: [webserver-enumerate-all-instances]
     strategy:
@@ -110,7 +119,6 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
             SLACK_CHANNEL = "#alerts-dev"
             BODY = "Old *Instances* in _${{ matrix.aws-region }}_:\n%s" % resources
-
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
       - name: Set DB URLs for DEV, STAGING, and PROD
@@ -158,7 +166,6 @@ jobs:
               msg += f"     - `{instance[0]}` - id: `{instance[1]}`\n"
 
             BODY = "*Instances* in AWS but not in our databases in _${{ matrix.aws-region }}_:\n%s" % msg
-
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
       - name: List EC2 Instances that are marked as HOST_SERVICE_UNRESPONSIVE and Notify in Slack if They Exist
@@ -188,11 +195,39 @@ jobs:
                   msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
 
                 BODY = "Host service unresponsive *Instances* in _%s_ _${{ matrix.aws-region }}_:\n%s" % (stage, msg)
+                slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
+      - name: List EC2 Instances that are considered lingering and Notify in Slack if They Exist
+        shell: python3 {0}
+        run: |
+          import os
+          from notifications.slack_bot import slack_post
+          from resources.database_helpers import get_lingering_instances
+
+          dev_instances = get_lingering_instances(os.environ['DATABASE_DEV_URL'], "${{ matrix.aws-region }}")
+          staging_instances = get_lingering_instances(os.environ['DATABASE_STAGING_URL'], "${{ matrix.aws-region }}")
+          prod_instances = get_lingering_instances(os.environ['DATABASE_PROD_URL'], "${{ matrix.aws-region }}")
+
+          if dev_instances or staging_instances or prod_instances:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_CHANNEL = "#alerts-dev"
+
+            stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
+
+            for stage in stages:
+              if stages[stage]:
+                # Format message
+                msg = ""
+
+                for instance in stages[stage]:
+                  # Start at index 4 to remove prefix "aws-" from the id
+                  msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
+
+                BODY = "Lingering *Instances* in _%s_ _${{ matrix.aws-region }}_.\n" % stage
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
-  # EBS volumes from CI and old dev/staging/production AMIs
+  # EBS volumes from CI and old dev/staging/prod AMIs
   # The utilies we use to clean resources run per-region, so this job is run as a matrix over our AWS regions
   webserver-cleanup-lingering-packer-builders-and-ami-resources:
     name: Delete Lingering Packer Builder Instances, AMI Snapshots & EBS Volumes
@@ -283,9 +318,7 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-dev"
           BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
