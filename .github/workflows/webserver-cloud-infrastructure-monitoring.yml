@@ -56,13 +56,18 @@ jobs:
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-  # Find whether we have hanging EC2 instances, which are defined as resources that are
-  # not in one of our databases, but still exist in AWS, and notify Slack
-  # Also find wether we have lingering EC2 instances, which are defined as resources that have
-  # updated their `last_update` value >2 min for running instances, 15 for preconnected instances or,
-  # instance draining for more than 2 minute without an associated mandelbox (`last_update` can be < 2 mins)
-  webserver-hanging-lingering-resource-notification:
-    name: Webserver Hanging or Lingering Resource Notification
+  # Finds old, hanging, unresponsive, or lingering EC2 instances and notify Slack
+  #   Old EC2 instances are defined as resources that exist on AWS
+  #     but are created > 2 weeks ago and is not in a shutting down state
+  #   Hanging EC2 instances are defined as resources that are
+  #     not in one of our databases, but still exist in AWS
+  #   Unresponsive EC2 instances are defined as resourced marked
+  #     as host service unresponsive in the database
+  #   Lingering EC2 instances, which are defined as resources that have
+  #     updated their `last_update` value >2 min for running instances, 15 for preconnected instances or,
+  #     instance draining for more than 2 minute without an associated mandelbox (`last_update` can be < 2 mins)
+  webserver-old-hanging-unresponsive-lingering-resource-notification:
+    name: Webserver Old, Hanging, Unresponsive or Lingering Resource Notification
     runs-on: ubuntu-20.04
     needs: [webserver-enumerate-all-instances]
     strategy:
@@ -219,8 +224,8 @@ jobs:
                   # Start at index 4 to remove prefix "aws-" from the id
                   msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
 
-                BODY = "Lingering *Instances* in _%s_ _${{ matrix.aws-region }}_\n" % stage
-                BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining :\n%s" % msg
+                BODY = "Lingering *Instances* in _%s_ _${{ matrix.aws-region }}_.\n" % stage
+                BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining:\n%s" % msg
 
                 slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
