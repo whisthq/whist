@@ -49,10 +49,6 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return nil
 	}
 
-	if len(c.GetConfigEncryptionToken()) == 0 {
-		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
-	}
-
 	s3ConfigKey := c.getS3ConfigKey()
 
 	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
@@ -308,6 +304,18 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 
 	logger.Infof("Saved user config for mandelbox %s, version %s", c.mandelboxID, *uploadResult.VersionID)
+
+	return nil
+}
+
+// WriteJSONData writes the data received through JSON transport
+// to the config.json file located on the resourceMappingDir.
+func (c *mandelboxData) WriteJSONData() error {
+	logger.Infof("Writing JSON transport data to config.json file...")
+
+	if err := c.writeResourceMappingToFile("config.json", c.GetJSONData()); err != nil {
+		return err
+	}
 
 	return nil
 }

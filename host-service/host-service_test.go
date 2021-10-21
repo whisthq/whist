@@ -16,6 +16,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
+	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -94,25 +95,29 @@ func TestSpinUpMandelbox(t *testing.T) {
 	initializeFilesystem(cancel)
 	defer uninitializeFilesystem()
 
-	testReq := SpinUpMandelboxRequest{
-		AppName:               "testApp",
-		ConfigEncryptionToken: "testToken1234",
-		MandelboxID:           "testMandelbox",
-		SessionID:             1234,
-		resultChan:            make(chan requestResult),
+	testMandelboxInfo := subscriptions.Mandelbox{
+		InstanceName: "test-instance-name",
+		MandelboxID:  "test-mandelbox-id",
+		SessionID:    1,
+		UserID:       "test-user-id",
 	}
+	testReq := subscriptions.MandelboxInfoEvent{
+		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
+	}
+	testJSONChan := make(chan *JSONTransportRequest)
 
 	dockerClient := mockClient{}
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testReq)
+	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testReq, testJSONChan)
 
 	goroutineTracker.Wait()
 
 	// Check that response is as expected
-	result := <-testReq.resultChan
+	req := <-testJSONChan
+	result := <-req.resultChan
 	if result.Err != nil {
 		t.Fatalf("SpinUpMandelbox returned with error: %v", result.Err)
 	}
-	spinUpResult, ok := result.Result.(SpinUpMandelboxRequestResult)
+	spinUpResult, ok := result.Result.(JSONTransportRequestResult)
 	if !ok {
 		t.Fatalf("Expected instance of SpinUpMandelboxRequestResult, got: %v", result.Result)
 	}

@@ -81,6 +81,7 @@ func (r requestResult) send(w http.ResponseWriter) {
 // endpoint.
 type JSONTransportRequest struct {
 	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JwtAccessToken        string                               `json:"jwt_access_token"`        // User's JWT access token
 	JSONData              string                               `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }

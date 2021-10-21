@@ -23,7 +23,6 @@ type Mandelbox struct {
 	MandelboxID  types.MandelboxID `json:"mandelbox_id"`
 	SessionID    uint64            `json:"session_id"`
 	UserID       types.UserID      `json:"user_id"`
-	AppName      types.AppName
 }
 
 // InstanceInfoResult is a struct used to hold

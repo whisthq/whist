@@ -35,20 +35,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/sync/errgroup"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry. For the same reason, we make sure not
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
-	"github.com/fractal/fractal/host-service/auth"
+
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 
 	"github.com/fractal/fractal/host-service/dbdriver"
 	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	"github.com/fractal/fractal/host-service/mandelbox/types"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/metadata/aws"
@@ -370,44 +368,17 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 // ------------------------------------
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
-func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, req *SpinUpMandelboxRequest) {
+func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
+	dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxInfoEvent, jsonchan chan *JSONTransportRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		sub.ReturnResult("", err)
 	}
+	mandelboxInfo := sub.MandelboxInfo[0]
+	AppName := mandelboxtypes.AppName("browsers/chrome")
 
-	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", req.MandelboxID)
-
-	// Set up auth
-	claims := new(auth.FractalClaims)
-	parser := &jwt.Parser{SkipClaimsValidation: true}
-	var userID types.UserID
-
-	// Only verify auth in non-local environments
-	if !metadata.IsLocalEnv() {
-		// Decode the access token without validating any of its claims or
-		// verifying its signature because we've already done that in
-		// `authenticateAndParseRequest`. All we want to know is the value of the
-		// sub (subject) claim.
-		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
-			logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
-			return
-		}
-		userID = types.UserID(claims.Subject)
-	} else {
-		// CI doesn't run in AWS so we need to set a custom name
-		if metadata.IsRunningInCI() {
-			userID = "localdev_host_service_CI"
-		} else {
-			instanceName, err := aws.GetInstanceName()
-			if err != nil {
-				logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
-				return
-			}
-			userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
-		}
-	}
+	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxInfo.MandelboxID)
 
 	// Then, verify that we are expecting this user to request a mandelbox.
 	err := dbdriver.VerifyAllocatedMandelbox(mandelboxInfo.UserID, mandelboxInfo.MandelboxID)
@@ -432,16 +403,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}()
 
-	// Verify that this user sent in a (nontrivial) config encryption token
-	if len(req.ConfigEncryptionToken) < 10 {
-		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
-		return
-	}
-	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
-
-	fc.AssignToUser(userID)
-	fc.SetAppName(req.AppName)
-	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
+	fc.AssignToUser(mandelboxInfo.UserID)
+	fc.SetAppName(AppName)
+	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxInfo.MandelboxID, mandelboxInfo.UserID)
 
 	// Begin populating user configs at the same time as other setup is being done.
 	// This is done separately from the rest of the startup goroutines since the user
@@ -452,7 +416,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// User config errors aren't fatal --- we still want to spin up a mandelbox,
 		// and we will just use the provided encryption token to save configs when
 		// the mandelbox dies.
-		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxInfo.MandelboxID)
 		err := fc.PopulateUserConfigs()
 		if err != nil {
 			logger.Warningf("Error populating user configs: %v", err)
@@ -461,7 +425,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 
 		userConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", mandelboxInfo.MandelboxID)
 	}()
 
 	// Do all startup tasks that can be done before Docker container creation in
@@ -516,7 +480,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			}
 		}
 
-		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", fc.GetTTY(), fc.GetGPU(), mandelboxInfo.MandelboxID)
 		return nil
 	})
 
@@ -654,7 +618,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			return utils.MakeError("Error registering mandelbox creation with runtime ID %s: %s", dockerID, err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, req.AppName)
+		logger.Infof("SpinUpMandelbox(): Successfully registered mandelbox creation with runtime ID %s and AppName %s", dockerID, AppName)
 		return nil
 	})
 
@@ -676,7 +640,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			return utils.MakeError("Error writing protocol timeout: %s", err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", mandelboxInfo.MandelboxID)
 		return nil
 	})
 
@@ -684,10 +648,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	postCreateGroup.Go(func() error {
 		err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 		if err != nil {
-			return utils.MakeError("Error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, req.MandelboxID, err)
+			return utils.MakeError("Error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, mandelboxInfo.MandelboxID, err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, mandelboxInfo.MandelboxID)
 		return nil
 	})
 
@@ -753,7 +717,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// termination.
 	createFailed = false
 
-	result := SpinUpMandelboxRequestResult{
+	result := JSONTransportRequestResult{
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
@@ -1119,7 +1083,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, httpServerEvents, subscriptionEvent.(*subscriptions.MandelboxInfoEvent), jsonchan)
+				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, subscriptionEvent.(*subscriptions.MandelboxInfoEvent), jsonchan)
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.
