@@ -227,6 +227,24 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
 	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
 
+	// Collect cookies and insert them
+
+
+	// Get cookies from s3
+
+	// Extract cookies
+
+	// decrypt
+
+	// untar
+
+	// encrypt cookies decrypt values
+
+	// insert into cookies file
+
+
+	// Delete s3 file?
+
 	return nil
 }
 
@@ -247,17 +265,10 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	decTarPath := path.Join(configDir, mandelbox.getDecryptedArchiveFilename())
 	unpackedConfigPath := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
 
-	tarConfigCmd := exec.Command(
-		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
-		".")
-	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
-	// tar is only fatal when exit status is 2 -
-	//    exit status 1 just means that some files have changed while tarring,
-	//    which is an ignorable error
-	if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
-		return utils.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+	err = tarFile(unpackedConfigPath, decTarPath)
+	if err != nil {
+		return err
 	}
-	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	// At this point, config archive must exist: encrypt app config
 	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", getTokenHash(string(mandelbox.configEncryptionToken)), mandelbox.ID)
@@ -268,10 +279,8 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		"-pass", "pass:"+string(mandelbox.configEncryptionToken), "-pbkdf2")
 	encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 	if err != nil {
-		// If the config could not be encrypted, don't upload
-		return utils.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
+		return err
 	}
-	logger.Infof("Encrypted config to %s", encTarPath)
 
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
@@ -356,6 +365,11 @@ func (mandelbox *mandelboxData) getUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.FractalDir, mandelbox.GetID(), "userConfigs")
 }
 
+// getUserCookieDir returns the absolute path to the user config directory.
+func (c *mandelboxData) getUserCookieDir() string {
+	return path.Join(utils.FractalDir, string(c.GetMandelboxID()), "userCookies")
+}
+
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (mandelbox *mandelboxData) getS3ConfigKey() string {
 	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()), mandelbox.getEncryptedArchiveFilename())
@@ -373,10 +387,26 @@ func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4.enc"
 }
 
-// getDecryptedArchiveFilename returns the name of the
+// getDecryptedArchiveConfigFilename returns the name of the
 // decrypted (but still compressed) user config file.
 func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4"
+}
+
+// getEncryptedArchiveCookieFilename returns the name of the encrypted user cookie file.
+func (c *mandelboxData) getEncryptedArchiveCookieFilename() string {
+	return "fractal-app-cookie.tar.lz4.enc"
+}
+
+// getDecryptedArchiveCookieFilename returns the name of the
+// decrypted (but still compressed) user cookie file.
+func (c *mandelboxData) getDecryptedArchiveCookieFilename() string {
+	return "fractal-app-cookie.tar.lz4"
+}
+
+// getCookieFilename returns the name of the user cookie file
+func (c *mandelboxData) getCookieFilename() string {
+	return "fractal-app-cookie"
 }
 
 // getUnpackedConfigsDirectoryName returns the name of the
