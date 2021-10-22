@@ -122,11 +122,11 @@ allWindowsClosed
 fromTrigger("networkUnstable")
   .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
-    // Don't show the warning more than once within ten seconds
+    // Don't show the warning more than once per minute
     if (
       !warningWindowOpen &&
       unstable &&
-      Date.now() / 1000 - warningLastShown > 10
+      Date.now() / 1000 - warningLastShown > 60
     ) {
       warningWindowOpen = true
       internetNotification?.show()
