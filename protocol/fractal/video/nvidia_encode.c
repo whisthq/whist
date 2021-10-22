@@ -564,7 +564,7 @@ bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder) {
 
     NVENCSTATUS ret = NvEncInvalidateRefFrames(encoder->internal_nvidia_encoder, encoder->frame_idx);
     if (ret != NV_ENC_SUCCESS) {
-        LOG_ERROR("Failed to invalidate the last frame, status = %d", status);
+        LOG_ERROR("Failed to invalidate the last frame, status = %d", ret);
         return false;
     }
     return true;
