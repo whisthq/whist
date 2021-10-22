@@ -90,6 +90,10 @@ LOG_INFO("MESSAGE: %s", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
+// Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
+// current value (5) is an arbitrary choice that was found to work well in practice.
+#define RETRIES_ON_BUFFER_FULL 5
+
 // Global data
 unsigned short port_mappings[USHRT_MAX + 1];
 
@@ -1828,24 +1832,38 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
     size_t encrypted_len = (size_t)encrypt_packet(packet, (int)packet_size, &encrypted_packet,
                                                   (unsigned char*)context->binary_aes_private_key);
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
-    fractal_lock_mutex(context->mutex);
-    int ret;
+
+    // If sending fails because of no buffer space available on the system, retry a few times.
+    for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
+        fractal_lock_mutex(context->mutex);
+        int ret;
 #if LOG_NETWORKING
-    LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
+        LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
 #endif
-    if (ENCRYPTING_PACKETS) {
-        // Send encrypted during normal usage
-        ret = sendp(context, &encrypted_packet, (int)encrypted_len);
-    } else {
-        // Send unencrypted during dev mode
-        ret = sendp(context, packet, (int)packet_size);
+        if (ENCRYPTING_PACKETS) {
+            // Send encrypted during normal usage
+            ret = sendp(context, &encrypted_packet, (int)encrypted_len);
+        } else {
+            // Send unencrypted during dev mode
+            ret = sendp(context, packet, (int)packet_size);
+        }
+        fractal_unlock_mutex(context->mutex);
+        if (ret < 0) {
+            int error = get_last_network_error();
+            if (error == ENOBUFS) {
+                LOG_WARNING("Unexpected UDP Packet Error: %d, retrying to send packet in 5ms!",
+                            error);
+                fractal_sleep(5);
+                continue;
+            } else {
+                LOG_WARNING("Unexpected UDP Packet Error: %d", error);
+                return -1;
+            }
+        } else {
+            break;
+        }
     }
-    fractal_unlock_mutex(context->mutex);
-    if (ret < 0) {
-        int error = get_last_network_error();
-        LOG_WARNING("Unexpected UDP Packet Error: %d", error);
-        return -1;
-    }
+
     return 0;
 }
 // NOTE that this function is in the hotpath.
