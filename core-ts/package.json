@@ -65,7 +65,7 @@
     "test:ci": "yarn run compile && jest --coverage"
   },
   "engines": {
-    "node": ">=15.x",
+    "node": ">=12.x",
     "npm": "use-yarn",
     "yarn": ">=1.19.x"
   }
