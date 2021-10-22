@@ -105,9 +105,7 @@ module.exports = {
     "@snowpack/plugin-dotenv",
     // This plugin calls the typescript compiler on every build/reload. It uses
     // the tsconfig.json in the root of the project.
-    ["@snowpack/plugin-typescript",
-      {  },
-    ],
+    "@snowpack/plugin-typescript",
     // This is a custom plugin that we've written to deal with a annoying quirk
     // of Electron/Snowpack integration. Snowpack, which expects to be deployed
     // on a server, exports files with file path imports relative to "public".
