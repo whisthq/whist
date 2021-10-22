@@ -432,8 +432,8 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR | NV_ENC_PIC_FLAG_OUTPUT_SPSPPS;
     }
 
-    // The input timestamp opaque from the encoder's perspective; we effectively just use it as a unique handle
-    // for later manipulations such as reference frame invalidation
+    // The input timestamp opaque from the encoder's perspective; we effectively just use it as a
+    // unique handle for later manipulations such as reference frame invalidation
     enc_params.inputTimeStamp = encoder->frame_idx;
 
     // Encode the frame
@@ -557,12 +557,13 @@ bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder) {
 
         Arguments:
             encoder (NvidiaEncoder*): encoder to use
-        
+
         Returns:
             (bool): true on success, false on failure
     */
 
-    NVENCSTATUS ret = encoder->p_enc_fn.NvEncInvalidateRefFrames(encoder->internal_nvidia_encoder, encoder->frame_idx);
+    NVENCSTATUS ret = encoder->p_enc_fn.nvEncInvalidateRefFrames(encoder->internal_nvidia_encoder,
+                                                                 encoder->frame_idx);
     if (ret != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to invalidate the last frame, status = %d", ret);
         return false;

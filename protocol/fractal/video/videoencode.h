@@ -107,7 +107,7 @@ int video_encoder_encode(VideoEncoder* encoder);
  * @note                           Failures should be considered non-fatal; instead, we can simply
  *                                 request an iframe to recover if invalidation doesn't work.
  */
-bool video_encoder_invalidate_last_frame(VideoEncoder *encoder);
+bool video_encoder_invalidate_last_frame(VideoEncoder* encoder);
 
 /**
  * @brief                          Reconfigure the encoder using new parameters
