@@ -29,19 +29,19 @@ resourceServers:
 
 The Auth0 CLI will replace these with the variables defined in the config JSON at deploy-time. Thus, it's important to note that **the `tenant.yaml` file is the same for each of our three tenants**. Any tenant-specific configuration should be moved to its respective config json file.
 
-If you make changes in the Auth0 UI, make sure to run `yarn update-tenant` to download your changes in the local `tenant.yaml`. Changes made in the UI should only be done on the dev tenant. You may notice that this pulls the dev configuration -- this is by design. The flow for updating Auth0 configuration across the tenants is, broadly:
+If you make changes in the Auth0 UI, make sure to run `yarn dump:dev` to download your changes in the local `tenant.yaml`. Changes made in the UI should only be done on the dev tenant. You may notice that this pulls the dev configuration -- this is by design. The flow for updating Auth0 configuration across the tenants is, broadly:
 
 -   Change Auth0 config in dev tenant (with web UI, API, etc.)
--   Pull the new `tenant.yml`, commit and push to `dev` branch on GitHub
+-   Pull the new `tenant.yaml`, commit and push to `dev` branch on GitHub
 -   As the changes get promoted to `staging` and `prod`, GitHub Actions will update the Auth0 tenants accordingly
 
 This ensures that the `tenant.yaml` in source control is the definite source-of-truth for that branch's Auth0 configuration. It also helps by minimizing the differences between our dev and prod Auth0 tenants -- so that no issues will be introduced upon promoting `dev` to `staging` to `prod`.
 
-Note that `yarn update-tenant` may make undesirable changes to `tenant.yaml` or add unnecessary files to your git working tree. Be sure to review all changes made by `yarn update-tenant` in order to ensure that you only commit the changes you intend to commit.
+Note that `yarn dump:dev` may make undesirable changes to `tenant.yaml` or add unnecessary files to your git working tree. Be sure to review all changes made by `yarn dump:dev` in order to ensure that you only commit the changes you intend to commit.
 
 ### Clients
 
-The `tenant.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop application) or trusted "machine-to-machine" clients such as GitHub Actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn update-tenant`.
+The `tenant.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop application) or trusted "machine-to-machine" clients such as GitHub Actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn dump:dev`.
 
 Here's an example client configuration:
 
@@ -85,7 +85,7 @@ Auth0 supports the addition of new social providers. For a comprehensive list an
 
 Integrating a social provider with Auth0 includes generating an OAuth secret and supplying that to Auth0. If we're not careful, that secret can 1) leak into tenant.yaml, and 2) be overwritten in Auth0 when deploying a tenant configuration.
 
-To address these issues, a "censorMapping" is used in `scripts/update-tenant.js` that maps sensitive paths to the names of environment variables that they should be replaced with. For example, Apple's OAuth secret is replaced with "##APPLE_OAUTH_SECRET##". This value is replaced with the environment variable APPLE_OAUTH_SECRET at deploy-time. Thus, it is also important to include the `XYZ_OAUTH_SECRET`s in Github Actions (or whatever environment the `yarn deploy:[env]` commands are invoked in)
+To address these issues, a "censorMapping" is used in `scripts/dump.js` that maps sensitive paths to the names of environment variables that they should be replaced with. For example, Apple's OAuth secret is replaced with "##APPLE_OAUTH_SECRET##". This value is replaced with the environment variable APPLE_OAUTH_SECRET at deploy-time. Thus, it is also important to include the `XYZ_OAUTH_SECRET`s in Github Actions (or whatever environment the `yarn deploy:[env]` commands are invoked in)
 
 ### Including Dependencies
 
@@ -102,4 +102,4 @@ function (user, context, callback) {
 
 ## Deploying
 
-The `yarn deploy:[dev|staging|prod]` command will deploy all Rules to the specified tenant. GitHub Actions will do this for you in our deployment workflow.
+The `yarn deploy:{dev,staging,prod}` command will deploy all Rules to the specified tenant. GitHub Actions will do this for you in our deployment workflow.
