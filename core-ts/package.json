@@ -63,5 +63,10 @@
     "test": "CONFIG=$(yarn config:parse) yarn run compile && jest",
     "test:watch": "CONFIG=$(yarn config:parse) jest --watch",
     "test:ci": "yarn run compile && jest --coverage"
+  },
+  "engines": {
+    "node": ">=15.x",
+    "npm": "use-yarn",
+    "yarn": ">=1.19.x"
   }
 }
