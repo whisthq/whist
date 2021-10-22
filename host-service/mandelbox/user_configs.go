@@ -204,7 +204,9 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 		// Manually close file instead of defer otherwise files are only
 		// closed when ALL files are done unpacking
-		file.Close()
+		if err := file.Close(); err != nil {
+			logger.Warningf("Failed to close file %s: %v", path, err)
+		}
 	}
 
 	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
