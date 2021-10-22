@@ -283,7 +283,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
 
-	logger.Infof("Saved user config for mandelbox %s, version %s", c.mandelboxID, uploadResult.VersionID)
+	logger.Infof("Saved user config for mandelbox %s, version %s", c.mandelboxID, *uploadResult.VersionID)
 
 	return nil
 }
