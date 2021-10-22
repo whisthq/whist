@@ -68,7 +68,7 @@ volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 
 #define VIDEO_BUFFER_SIZE 25
-#define MAX_NUM_VIDEO_INDICES 500
+#define MAX_NUM_VIDEO_INDICES (MAX_VIDEOFRAME_DATA_SIZE / MAX_PAYLOAD_SIZE + 10)
 FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_NUM_VIDEO_INDICES];
 
 extern volatile bool stop_streaming;
