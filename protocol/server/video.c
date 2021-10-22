@@ -696,8 +696,11 @@ int32_t multithreaded_send_video(void* opaque) {
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                         // This frame is too large to send, but it's an encoder reference frame
-                        // So, we'll IDR to flush it out
-                        wants_iframe = true;
+                        // So, we'll try to invalidate it, and request an iframe if that doesn't
+                        // work!
+                        if (!video_encoder_invalidate_last_frame(encoder)) {
+                            wants_iframe = true;
+                        }
                         continue;
                     } else {
                         send_populated_frames(&statistics_timer, &server_frame_timer, device,

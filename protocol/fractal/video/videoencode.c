@@ -226,6 +226,40 @@ int video_encoder_encode(VideoEncoder *encoder) {
     }
 }
 
+bool video_encoder_invalidate_last_frame(VideoEncoder *encoder) {
+    /*
+        Invalidate the most recent frame in the encoder. Currently
+        only implemented for the nvidia encoder.
+
+        Arguments:
+            encoder (VideoEncdoer*): encoder to use
+        
+        Returns:
+            (bool): true on success, false on failure
+        
+        Note:
+            Failures should be considered non-fatal; instead, we can simply
+            request an iframe to recover if invalidation doesn't work.
+    */
+    if (!encoder) {
+        LOG_ERROR("Tried to video_encoder_invalidate_last_frame with a NULL encoder!");
+        return false;
+    }
+    switch (encoder->active_encoder) {
+        case NVIDIA_ENCODER:
+#ifdef __linux__
+            return nvidia_encoder_invalidate_last_frame(encoder->nvidia_encoders[encoder->active_encoder_idx]);
+#else
+            LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
+#endif
+        case FFMPEG_ENCODER:
+            return false;
+        default:
+            LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
+            return false;
+    }
+}
+
 bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
                          CodecType codec) {
     /*

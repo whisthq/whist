@@ -56,6 +56,18 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
                                      CUcontext cuda_context);
 
 /**
+ * @brief                          Invalidate the most recent frame in the encoder.
+ *
+ * @param encoder                  Encoder to use
+ *
+ * @returns                        true on success, false on failure
+ *
+ * @note                           Failures should be considered non-fatal; instead, we can simply
+ *                                 request an iframe to recover if invalidation doesn't work.
+ */
+bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder);
+
+/**
  * @brief                          Will reconfigure an nvidia encoder
  *
  * @param encoder                  The nvidia encoder to reconfigure

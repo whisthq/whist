@@ -432,6 +432,10 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR | NV_ENC_PIC_FLAG_OUTPUT_SPSPPS;
     }
 
+    // The input timestamp opaque from the encoder's perspective; we effectively just use it as a unique handle
+    // for later manipulations such as reference frame invalidation
+    enc_params.input_timestamp = encoder->frame_idx;
+
     // Encode the frame
     status = encoder->p_enc_fn.nvEncEncodePicture(encoder->internal_nvidia_encoder, &enc_params);
     if (status != NV_ENC_SUCCESS) {
@@ -547,6 +551,25 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     return 0;
 }
 
+bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder) {
+    /*
+        Invalidate the most recent frame in the encoder.
+
+        Arguments:
+            encoder (NvidiaEncoder*): encoder to use
+        
+        Returns:
+            (bool): true on success, false on failure
+    */
+
+    NVIDIASTATUS ret = NvEncInvalidateRefFrames(encoder->internal_nvidia_encoder, encoder->frame_idx);
+    if (status != NV_ENC_SUCCESS) {
+        LOG_ERROR("Failed to invalidate the last frame, status = %d", status);
+        return false;
+    }
+    return true;
+}
+
 bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate,
                                 CodecType codec) {
     /*
@@ -559,7 +582,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
             bitrate (int): new bitrate
 
         Returns:
-            (int): 0 on success, -1 on failure
+            (bool): true on success, false on failure
     */
 
     LOG_INFO("Reconfiguring encoder to width %d, height %d, bitrate %d, codec %d", width, height,

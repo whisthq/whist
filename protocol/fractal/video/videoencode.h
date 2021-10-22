@@ -97,6 +97,19 @@ VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, i
 int video_encoder_encode(VideoEncoder* encoder);
 
 /**
+ * @brief                          Invalidate the most recent frame in the encoder.
+ *                                 Currently only implemented for the nvidia encoder.
+ *
+ * @param encoder                  Encoder to use
+ *
+ * @returns                        true on success, false on failure
+ *
+ * @note                           Failures should be considered non-fatal; instead, we can simply
+ *                                 request an iframe to recover if invalidation doesn't work.
+ */
+bool video_encoder_invalidate_last_frame(VideoEncoder *encoder);
+
+/**
  * @brief                          Reconfigure the encoder using new parameters
  *
  * @param encoder                  The encoder to be updated
