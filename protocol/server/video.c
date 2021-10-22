@@ -522,6 +522,8 @@ int32_t multithreaded_send_video(void* opaque) {
 
     add_thread_to_client_active_dependents();
 
+    int consecutive_identical_frames = 0;
+
     bool assuming_client_active = false;
     while (!exiting) {
         update_client_active_status(&assuming_client_active);
@@ -613,26 +615,39 @@ int32_t multithreaded_send_video(void* opaque) {
         clock server_frame_timer;
         start_timer(&server_frame_timer);
 
-        // Only if we have a frame to render or we need to send something to keep up with MIN_FPS
-        if (accumulated_frames > 0 || wants_iframe ||
-            get_timer(last_frame_capture) > 1.0 / MIN_FPS) {
-            // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
+        // Immediately bring consecutives to 0
+        if (accumulated_frames > 0) {
+            consecutive_identical_frames = 0;
+        }
+        // Disable the encoder when we've sent enough identical frames,
+        // And no iframe is being requested at this time.
+        // When the encoder is disabled, we only wake the client CPU,
+        // DISABLED_ENCODER_FPS times per second for just a usec
+        bool disable_encoder =
+            consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES && !wants_iframe;
+        // Drop the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
+        int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
+        // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
+
+        // Only if we have a real frame to send, or we need to keep up with min_fps
+        if (accumulated_frames > 0 || wants_iframe ||
+            get_timer(last_frame_capture) > 1.0 / min_fps) {
+            // This loop only runs ~1/current_fps times per second, every 16-100ms
+            // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
             start_timer(&last_frame_capture);
 
+            if (accumulated_frames == 0) {
+                // Slowly increment while receiving identical frames
+                consecutive_identical_frames++;
+            }
             if (accumulated_frames > 1) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
-            // If 1/MIN_FPS has passed but no accumulated_frames have happened (or the client asked
-            // the server to stop encoding frames to save resources via `stop_streaming`), then we
-            // skip everything in here, and we just send an empty frame with is_empty_frame = true.
-            // NOTE: `accumulated_frames` is the number of new frames collected since the last frame
-            // sent. If this is 0, then this frame is just a repeat of the frame before it (which
-            // we're sending to keep the framerate above MIN_FPS).
-            // ADDITIONAL NOTE: If wants_iframe gets set to true when stop_streaming is true or
-            // accumulated_frames is 0 (which it ordinarily shouldn't), we HAVE TO render that frame
-            // or the server will spazz out and start sending 1000's of FPS.
-            if (accumulated_frames > 0 || wants_iframe) {
+            if (disable_encoder) {
+                // Send an empty frame
+                send_empty_frame(&id);
+            } else {
                 // transfer the capture of the latest frame from the device to
                 // the encoder,
                 // This function will try to CUDA/OpenGL optimize the transfer by
@@ -695,8 +710,6 @@ int32_t multithreaded_send_video(void* opaque) {
                                              get_timer(server_frame_timer) * 1000);
                     }
                 }
-            } else {
-                send_empty_frame(&id);
             }
         }
     }

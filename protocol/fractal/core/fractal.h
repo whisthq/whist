@@ -139,9 +139,17 @@ Defines
 #define MAX_SCREEN_HEIGHT 4096
 
 #define AUDIO_BITRATE 128000
-// We would like to set this higher, but mac displays have a max refresh rate of 60 Hz.
+
+// Set max FPS to 60, or 16ms
 #define FPS 60
-#define MIN_FPS 10
+// Once 22ms has passed, we can presume no frame will be coming anymore,
+// so this starts to send identical frames to keep up with the min fps
+#define MIN_FPS 45
+// Number of identical frames to send before turning the encoder off
+#define CONSECUTIVE_IDENTICAL_FRAMES 300
+// FPS to send when the encoder is off
+#define DISABLED_ENCODER_FPS 10
+
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
