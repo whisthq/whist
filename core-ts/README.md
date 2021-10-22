@@ -4,7 +4,7 @@ This project is an internal Fractal library for shared React components, Typescr
 
 It's important to note that development in this repository works a little differently than the rest of the Fractal organization. In `core-ts`, we try and follow standard practices for `npm` package development. This means that we do not have `dev` and `staging` branches, and PRs are merged directly into `prod`. This means that every push will trigger a new `npm` package release with an updated version number.
 
-If you have `core-ts` as a dependency in another `fractal` repository, you should "pin" your dependency version. This means your `package.json` dependencies should contain `@fractal/core-ts: 1.0.1`, not `@fractal/core-ts: ^1.0.1`. Install a specific version with `npm install @fractal/core-ts@1.0.1`, after following the authentication instructions below.
+If you have `core-ts` as a dependency in another `fractal` repository, you should "pin" your dependency version. This means your `package.json` dependencies should contain `@fractal/core-ts: 1.0.1`, not `@fractal/core-ts: ^1.0.1`. Install a specific version with `yarn add @fractal/core-ts@1.0.1`, after following the authentication instructions below.
 
 ## Installation
 
@@ -59,7 +59,7 @@ Because `core-ts` is decoupled from Electron or Create React App, we need a manu
 
 ##### 1. Run Jest in watch mode
 
-If you're just making small changes to some functions and want to make sure they pass the test suite, run `npm run test-watch`. This will start `jest --watch`, which runs the tests every time your code changes. It's a little nicer than manually re-triggering them.
+If you're just making small changes to some functions and want to make sure they pass the test suite, run `yarn test-watch`. This will start `jest --watch`, which runs the tests every time your code changes. It's a little nicer than manually re-triggering them.
 
 ##### 2. Hot reload all of core-ts
 
@@ -81,25 +81,25 @@ const _ = (async () => {
 })()
 ```
 
-`npm run dev` in your terminal will start up `nodemon` and `ts-node`, and you'll see new console output every time you reload.
+`yarn dev` in your terminal will start up `nodemon` and `ts-node`, and you'll see new console output every time you reload.
 
 ##### 3. Link your local core-ts repos to other projects
 
-The best kind of testing is using `core-ts` in working projects. If you're working on `core-ts/http`, you might want to import your functions into `fractal/website` so you can make sure they work in a real environment. You don't want to have to commit and publish for every change, however, so we use `npm link`. This command will create symlinks in `fractal/website`, pointing the corresponding `import` statements to your local `core-ts` repo.
+The best kind of testing is using `core-ts` in working projects. If you're working on `core-ts/http`, you might want to import your functions into `fractal/website` so you can make sure they work in a real environment. You don't want to have to commit and publish for every change, however, so we use `yarn link`. This command will create symlinks in `fractal/website`, pointing the corresponding `import` statements to your local `core-ts` repo.
 
-There's a few things that have to happen to make this work. First of all, you can't `link` your source TypeScript files. You have to link the JavaScript output from TypeScript compilation. Our `package.json` has a script set up to automatically compile your `.ts` files every time you change them: `npm run tsc-watch`. This will place the compiled `.js` files in `core-ts/dist`.
+There's a few things that have to happen to make this work. First of all, you can't `link` your source TypeScript files. You have to link the JavaScript output from TypeScript compilation. Our `package.json` has a script set up to automatically compile your `.ts` files every time you change them: `yarn tsc-watch`. This will place the compiled `.js` files in `core-ts/dist`.
 
-Make sure to keep the `npm run tsc-watch` process running, so that anytime you change your `core-ts/src`, it is compiled to `core-ts/dist`.
+Make sure to keep the `yarn tsc-watch` process running, so that anytime you change your `core-ts/src`, it is compiled to `core-ts/dist`.
 
-After you run `npm run tsc-watch` for the first time, you need to `cd` into the new `dist` folder in `core-ts` (same level as `src`). Here, run `npm link` in your terminal. It's important that you do this in your `dist` folder and not one level up, or else `npm link` will be linking your `.ts` source code instead of the compiled `.js` output.
+After you run `yarn tsc-watch` for the first time, you need to `cd` into the new `dist` folder in `core-ts` (same level as `src`). Here, run `yarn link` in your terminal. It's important that you do this in your `dist` folder and not one level up, or else `npm link` will be linking your `.ts` source code instead of the compiled `.js` output.
 
-Now, you need to navigate over to `fractal/website` (or wherever you're linking to). Where we'd usually run `npm install @fractal/core-ts`, we're going to run `npm link @fractal/core-ts`. This will create a symlink, so that when `fractal/website` calls `import { ... } from @fractal/core-ts/...`, it will import the latest changes for your local `@fractal/core-ts`.
+Now, you need to navigate over to `fractal/website` (or wherever you're linking to). Where we'd usually run `yarn add @fractal/core-ts`, we're going to run `yarn link @fractal/core-ts`. This will create a symlink, so that when `fractal/website` calls `import { ... } from @fractal/core-ts/...`, it will import the latest changes for your local `@fractal/core-ts`.
 
 If that sounded confusing, that's because it is. Here's a recap of the steps:
 
-1. In your local `@fractal/core-ts`, run `npm run tsc-watch`. Leave this process running in an open terminal.
-2. Still in `@fractal/core-ts`, `cd dist` to navigate to the new `dist` folder. Run `npm link`.
-3. Navigate to `fractal/website` (or wherever you'd like to import `core-ts`), and run `npm link @fractal/core-ts`.
+1. In your local `@fractal/core-ts`, run `yarn tsc-watch`. Leave this process running in an open terminal.
+2. Still in `@fractal/core-ts`, `cd dist` to navigate to the new `dist` folder. Run `yarn link`.
+3. Navigate to `fractal/website` (or wherever you'd like to import `core-ts`), and run `yarn link @fractal/core-ts`.
 
 If all goes well, `import @fractal/core-ts` will work in `fractal/website` just like any other `npm` module. It will even trigger a hot reload of the `fractal/website` development server every time you change your local `@fractal/core-ts`.
 
