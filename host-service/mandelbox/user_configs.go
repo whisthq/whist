@@ -156,6 +156,9 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	lz4Reader := lz4.NewReader(dataReader)
 	tarReader := tar.NewReader(lz4Reader)
 
+	// Track total size of files in the tar
+	totalFileSize := int64(0)
+
 	for {
 		// Read the header for the next file in the tar
 		header, err := tarReader.Next()
@@ -190,18 +193,23 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 			return utils.MakeError("error opening file: %v", err)
 		}
 
-		_, err = io.Copy(file, tarReader)
+		numBytesWritten, err := io.Copy(file, tarReader)
 		if err != nil {
 			file.Close()
 			return utils.MakeError("error copying data to file: %v", err)
 		}
 
+		// Add written bytes to total size
+		totalFileSize += numBytesWritten
+
 		// Manually close file instead of defer otherwise files are only
 		// closed when ALL files are done unpacking
-		file.Close()
+		if err := file.Close(); err != nil {
+			logger.Warningf("Failed to close file %s: %v", path, err)
+		}
 	}
 
-	logger.Infof("Untarred config to: %s", unpackedConfigDir)
+	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
 
 	return nil
 }

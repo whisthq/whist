@@ -86,7 +86,7 @@ test: build
 	# This ensures that tests that use the file system do not conflict or race with each other
 	#
 	# Set AWS credentials to allow user config integration tests to run
-	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
 
 	# Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
