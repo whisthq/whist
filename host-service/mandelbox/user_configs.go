@@ -264,6 +264,16 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 	defer encryptedConfig.Close()
 
+	// Find size of config we are uploading to S3
+	fileInfo, err := encryptedConfig.Stat()
+	if err != nil {
+		// We don't want to stop uploading configs because we can't get file stats
+		logger.Warningf("error opening file stats for encrypted user config: %s", encTarPath)
+	} else {
+		// Log encrypted user config size before S3 upload
+		logger.Infof("%s is %d bytes", encTarPath, fileInfo.Size())
+	}
+
 	_, err = uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(c.getS3ConfigKeyWithoutLocking()),
