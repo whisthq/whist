@@ -570,14 +570,15 @@ bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder) {
     static int last_invalidated_idx = -1;
     static unsigned int consecutive_invalidations = 0;
 
-    if (encoder->frame_idx == last_invalidated_idx) {
+    if ((int)encoder->frame_idx == last_invalidated_idx + 1) {
         consecutive_invalidations++;
         if (consecutive_invalidations > 3) {
             return false;
         }
+    } else {
+        consecutive_invalidations = 0;
     }
 
-    consecutive_invalidations = 0;
     last_invalidated_idx = encoder->frame_idx;
 
     NVENCSTATUS ret = encoder->p_enc_fn.nvEncInvalidateRefFrames(encoder->internal_nvidia_encoder,
