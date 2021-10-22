@@ -184,7 +184,7 @@ func (c *mandelboxData) DecryptUserConfigs() error {
 			break
 		}
 
-		path := filepath.Join(c.unpackedConfigDir, header.Name)
+		path := filepath.Join(unpackedConfigDir, header.Name)
 		info := header.FileInfo()
 
 		// Create directory if it doesn't exist, otherwise go next
