@@ -560,7 +560,25 @@ bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder) {
 
         Returns:
             (bool): true on success, false on failure
+
+        Note:
+            To avoid infinite loops and losing all of our
+            reference frames, this function will fail if
+            we invalidate more than 3 frames in a row.
     */
+
+    static int last_invalidated_idx = -1;
+    static unsigned int consecutive_invalidations = 0;
+
+    if (encoder->frame_idx == last_invalidated_idx) {
+        consecutive_invalidations++;
+        if (consecutive_invalidations > 3) {
+            return false;
+        }
+    }
+
+    consecutive_invalidations = 0;
+    last_invalidated_idx = encoder->frame_idx;
 
     NVENCSTATUS ret = encoder->p_enc_fn.nvEncInvalidateRefFrames(encoder->internal_nvidia_encoder,
                                                                  encoder->frame_idx);

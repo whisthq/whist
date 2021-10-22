@@ -63,7 +63,10 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
  * @returns                        true on success, false on failure
  *
  * @note                           Failures should be considered non-fatal; instead, we can simply
- *                                 request an iframe to recover if invalidation doesn't work.
+ *                                 request an iframe to recover if invalidation doesn't work. To
+ *                                 avoid infinite loops and losing all of our reference frames,
+ *                                 this function will fail if we invalidate more than 3 frames in
+ *                                 a row.
  */
 bool nvidia_invalidate_last_frame(NvidiaEncoder* encoder);
 

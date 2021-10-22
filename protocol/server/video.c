@@ -239,9 +239,12 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
                                  video_buffer[(*id) % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {
-        // Couldn't send frame, flush with IDR
         LOG_ERROR("Failed to write video packet to buffer");
-        wants_iframe = true;
+        // So, we'll try to invalidate it, and request an iframe if that doesn't
+        // work!
+        if (!video_encoder_invalidate_last_frame(encoder)) {
+            wants_iframe = true;
+        }
     } else {
         // Send the packets to the client
         for (int i = 0; i < num_packets; ++i) {
@@ -249,17 +252,6 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
                                      get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) <
                 0) {
                 LOG_WARNING("Failed to broadcast video packet: id %d, index %d", *id, i);
-            }
-        }
-// (Disable this logic for now).
-#define MOD 0
-        for (int j = 0; j < MOD; ++j) {
-            for (int i = j; i < num_packets; i += MOD) {
-                if (broadcast_udp_packet(
-                        &video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
-                        get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) < 0) {
-                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d", (*id), i);
-                }
             }
         }
         // Some subset of the frame may have been sent,
@@ -693,28 +685,20 @@ int32_t multithreaded_send_video(void* opaque) {
                     //   so that the decoder can freely skip to it
                     // - Call `video_encoder_invalidate_last_frame()` and `continue` -- make the
                     //   encoder forget about the last frame so that the decoder doesn't need
-                    //   to decode it, and try again. Note that not all issues can be fixed by
-                    //   rewinding and encoding again, so it's important to avoid infinite loops
-                    //   of invalidating/encoding frames.
+                    //   to decode it, and try again. To avoid infinite loops, make sure to request
+                    //   an iframe if this function fails.
                     //
                     // If we have sent any packets, then we MUST increment `id`, otherwise we
                     // will get a collision on `id` in the client's ringbuffer.
                     //
                     // == Avoid Corruption End Note ==
-
-                    static int large_frame_invalidate_attempts = 0;
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                         // This frame is too large to send, but it's an encoder reference frame
                         // So, we'll try to invalidate it, and request an iframe if that doesn't
-                        // work! We only try three times, as we don't want to end up in an infintie
-                        // invalidate-encode loop!
-                        if (large_frame_invalidate_attempts > 3 ||
-                            !video_encoder_invalidate_last_frame(encoder)) {
+                        // work!
+                        if (!video_encoder_invalidate_last_frame(encoder)) {
                             wants_iframe = true;
-                            large_frame_invalidate_attempts = 0;
-                        } else {
-                            ++large_frame_invalidate_attempts;
                         }
                         continue;
                     } else {
