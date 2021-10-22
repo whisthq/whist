@@ -686,20 +686,35 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 if (encoder->encoded_frame_size != 0) {
                     // == Avoid Corruption Note ==
-                    // Since the frame made it through the encoder at this point, EITHER
-                    // we must increment id++, OR we must set wants_iframe=true and continue
-                    // By doing id++, we're telling the decoder that it needs this frame first,
-                    // By doing wants_iframe=true continue, the next frame is an iframe anyway
-                    // Additionally, if we may have sent any packets, we MUST increment the id
-                    // Otherwise, the client may receive packets from two frames with the same id
+                    // Since the frame made it through the encoder at this point, then we must
+                    // do exactly one of the following:
+                    // - Increment `id++` -- tell the decoder that it needs this frame first
+                    // - Set `wants_iframe=true` and `continue` -- make the next frame an iframe
+                    //   so that the decoder can freely skip to it
+                    // - Call `video_encoder_invalidate_last_frame()` and `continue` -- make the
+                    //   encoder forget about the last frame so that the decoder doesn't need
+                    //   to decode it, and try again. Note that not all issues can be fixed by
+                    //   rewinding and encoding again, so it's important to avoid infinite loops
+                    //   of invalidating/encoding frames.
+                    //
+                    // If we have sent any packets, then we MUST increment `id`, otherwise we
+                    // will get a collision on `id` in the client's ringbuffer.
+                    //
                     // == Avoid Corruption End Note ==
+
+                    static int large_frame_invalidate_attempts = 0;
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
                         LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                         // This frame is too large to send, but it's an encoder reference frame
                         // So, we'll try to invalidate it, and request an iframe if that doesn't
-                        // work!
-                        if (!video_encoder_invalidate_last_frame(encoder)) {
+                        // work! We only try three times, as we don't want to end up in an infintie
+                        // invalidate-encode loop!
+                        if (large_frame_invalidate_attempts > 3 ||
+                            !video_encoder_invalidate_last_frame(encoder)) {
                             wants_iframe = true;
+                            large_frame_invalidate_attempts = 0;
+                        } else {
+                            ++large_frame_invalidate_attempts;
                         }
                         continue;
                     } else {
