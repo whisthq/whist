@@ -248,7 +248,7 @@ bool video_encoder_invalidate_last_frame(VideoEncoder *encoder) {
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
 #ifdef __linux__
-            return nvidia_encoder_invalidate_last_frame(encoder->nvidia_encoders[encoder->active_encoder_idx]);
+            return nvidia_invalidate_last_frame(encoder->nvidia_encoders[encoder->active_encoder_idx]);
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif
