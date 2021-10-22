@@ -98,15 +98,15 @@ func TestSpinUpMandelbox(t *testing.T) {
 
 	testMandelboxInfo := subscriptions.Mandelbox{
 		InstanceName: "test_instance_name",
-		MandelboxID:  "test_mandelbox_id",
-		SessionID:    1,
-		UserID:       "test_user_id",
+		MandelboxID:  "testMandelbox",
+		SessionID:    1234,
+		UserID:       "localdev_host_service_CI",
 	}
 	testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
 		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
 	}
 	testJSONTransportRequest := JSONTransportRequest{
-		ConfigEncryptionToken: "test_token",
+		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),

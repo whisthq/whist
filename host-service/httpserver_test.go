@@ -14,8 +14,6 @@ import (
 	"time"
 
 	"github.com/fractal/fractal/host-service/auth"
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -27,22 +25,12 @@ type JSONTransportResult struct {
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
-	testMandelboxInfo := subscriptions.Mandelbox{
-		InstanceName: "test_instance_name",
-		MandelboxID:  "test_mandelbox_id",
-		SessionID:    1,
-		UserID:       "test_user_id",
-	}
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
-	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest, 1)
-	testTransportRequestMap[testMandelboxInfo.UserID] = make(chan *JSONTransportRequest)
-	testTransportRequestMap[testMandelboxInfo.UserID] <- &testJSONTransportRequest
-	testmux := &sync.Mutex{}
 
 	testServerQueue := make(chan ServerRequest)
 	receivedRequest := make(chan ServerRequest)
@@ -68,7 +56,6 @@ func TestSpinUpHandler(t *testing.T) {
 	}()
 
 	processJSONDataRequest(res, httpRequest, testServerQueue)
-	validateJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	gotRequest := <-receivedRequest
 
 	var gotResult JSONTransportResult
@@ -88,17 +75,26 @@ func TestSpinUpHandler(t *testing.T) {
 		t.Fatalf("error marshalling json: %v", err)
 	}
 
-	var gotRequestMap map[string]interface{}
+	var gotRequestMap JSONTransportRequest
 	err = json.Unmarshal(jsonGotRequest, &gotRequestMap)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
 
-	// for key, value := range testJSONTransportRequest {
-	// 	if gotRequestMap[key] != value {
-	// 		t.Errorf("expected request key %s to be %v of type %T, got %v of type %T", key, value, value, gotRequestMap[key], gotRequestMap[key])
-	// 	}
-	// }
+	testMap := []struct {
+		key       string
+		want, got string
+	}{
+		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
+		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
+		{"JSONData", testJSONTransportRequest.JSONData, gotRequestMap.JSONData},
+	}
+
+	for _, value := range testMap {
+		if value.got != value.want {
+			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
+		}
+	}
 
 	// Check that we are successfully receiving replies on the result channel
 	if !reflect.DeepEqual(testResult, gotResult.Result) {
@@ -174,17 +170,26 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Fatalf("error marshalling json: %v", err)
 	}
 
-	var gotRequestMap map[string]interface{}
+	var gotRequestMap JSONTransportRequest
 	err = json.Unmarshal(jsonGotRequest, &gotRequestMap)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
 
-	// for key, value := range testJSONTransportRequest {
-	// 	if gotRequestMap[key] != value {
-	// 		t.Errorf("expected request key %s to be %v, got %v", key, value, gotRequestMap[key])
-	// 	}
-	// }
+	testMap := []struct {
+		key       string
+		want, got string
+	}{
+		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
+		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
+		{"JSONData", testJSONTransportRequest.JSONData, gotRequestMap.JSONData},
+	}
+
+	for _, value := range testMap {
+		if value.got != value.want {
+			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
+		}
+	}
 
 	// Check that we are successfully receiving replies on the result channel
 	var gotResult JSONTransportResult
