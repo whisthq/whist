@@ -668,7 +668,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
 	// Receive the config encryption token from the client via the httpserver
-	req := getJSONTransportRequestForUser(mandelboxInfo.UserID, transportRequestMap, rwlock)
+	jsonchan := getJSONTransportRequestForUser(mandelboxInfo.UserID, transportRequestMap, rwlock)
+	req := <-jsonchan
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {

@@ -177,25 +177,30 @@ func validateJSONTransportRequest(serverevent ServerRequest, transportRequestMap
 	rwlock.Lock()
 	defer rwlock.Unlock()
 
-	if _, ok := transportRequestMap[requestUserID]; ok {
-		// JSONData already received from this user,
-		// so we ignore the request.
-		return
+	if transportRequestMap[requestUserID] == nil {
+		transportRequestMap[requestUserID] = make(chan *JSONTransportRequest, 1)
 	}
 
-	// We register the request on the transportRequestMap and send the
-	// JSONTranportRequest data through the channel.
-	transportRequestMap[requestUserID] = make(chan *JSONTransportRequest)
+	// Send the JSONTransportRequest data through the map's channel and close the channel to
+	// prevent more requests from being sent, this ensures we only receive the
+	// json transport request once per user.
 	transportRequestMap[requestUserID] <- req
+	close(transportRequestMap[requestUserID])
 }
 
 func getJSONTransportRequestForUser(UserID mandelboxtypes.UserID,
-	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) *JSONTransportRequest {
+	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) chan *JSONTransportRequest {
 	// Acquire lock on transport requests map
 	rwlock.Lock()
 	defer rwlock.Unlock()
 
-	return <-transportRequestMap[UserID]
+	req := transportRequestMap[UserID]
+
+	if req == nil {
+		transportRequestMap[UserID] = make(chan *JSONTransportRequest, 1)
+	}
+
+	return transportRequestMap[UserID]
 }
 
 // Helper functions

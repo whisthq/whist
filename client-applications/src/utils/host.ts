@@ -19,10 +19,12 @@ import { HostServicePort } from "@app/utils/constants"
 export const hostSpinUp = async ({
   ip,
   config_encryption_token,
+  jwt_access_token,
   json_data,
 }: {
   ip: string
   config_encryption_token: string
+  jwt_access_token: string
   json_data: string
 }) =>
   (await apiPut(
@@ -30,6 +32,7 @@ export const hostSpinUp = async ({
     `https://${ip}:${HostServicePort}`,
     {
       config_encryption_token,
+      jwt_access_token,
       json_data,
     },
     true
