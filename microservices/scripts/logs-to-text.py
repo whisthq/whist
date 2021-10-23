@@ -2,10 +2,15 @@
 import requests
 import sys
 import json
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 
-# API key needed for authentication
-LOGZ_IO_API_KEY = "948fd3f8-43b5-429a-a8e0-61f123beb79f"
+
+# API key needed for authentication. User will need to set their API key
+# as an environment variable for security purposes
+if not os.environ.get("LOGZ_IO_API_KEY"):
+    raise Exception("Must set environment variable LOGZ_IO_API_KEY.")
+LOGZ_IO_API_KEY = os.environ["LOGZ_IO_API_KEY"]
 
 # API URL
 LOGZ_IO_SCROLL_URL = "https://api.logz.io/v1/scroll"
@@ -16,11 +21,19 @@ LOGS_PER_PAGE = 1000
 # Post headers needed for authentication
 LOGZ_IO_HEADERS = {"X-API-TOKEN": LOGZ_IO_API_KEY, "Content-Type": "application/json"}
 
+# Number of days logz.io retains the logs
+RETENTION_PERIOD_DAYS = 5
+
 # Errors from 'requests' are ugly, let's try to reduce the likely-hood
 # of those errors occuring
 def validate_args(argv):
     if len(argv) != 2:
         raise Exception("Usage: python3 logs-to-text.py <<session_id>>")
+
+
+def get_time_from_now_in_days_formatted(days):
+    now = str(datetime.utcnow() - timedelta(days=days))
+    return now[:10] + "T" + now[11:23] + "Z"
 
 
 # Sends the initial request to the POST logz.io scroll API
@@ -36,12 +49,32 @@ def init_scrolling(query_string):
     # then copy that query into here.
     # This is technically for the search API (we are using the scroll API)
     # but the query is the same for both
+
+    current_timestamp = get_time_from_now_in_days_formatted(0)
+    beginning_timestamp = get_time_from_now_in_days_formatted(RETENTION_PERIOD_DAYS)
+
     initial_post_body = {
-        "query": {"bool": {"must": [{"query_string": {"query": query_string}}]}},
+        "query": {
+            "bool": {
+                "must": [{"match_all": {}}],
+                "filter": [
+                    {"match_phrase": {"session_id": query_string}},
+                    {
+                        "range": {
+                            "@timestamp": {
+                                "gte": beginning_timestamp,
+                                "lte": current_timestamp,
+                                "format": "strict_date_optional_time",
+                            }
+                        }
+                    },
+                ],
+            }
+        },
         # Just says what to include with the logs
         # Message is our logging message and @timestamp is the logz.io timestamp
         # of when the log was updated
-        "_source": {"includes": ["message", "@timestamp"]},
+        "_source": {"includes": ["message", "@timestamp", "component"]},
         "size": LOGS_PER_PAGE,
     }
 
@@ -69,7 +102,7 @@ def get_logs_page(scroll_id):
 
 # This will sort the logs by date and time
 def sort_logs(parsed_logs):
-    return parsed_logs.sort(key=lambda log: datetime.strptime(log[:19], "%Y-%m-%d %H:%M:%S"))
+    return parsed_logs.sort(key=lambda log: datetime.strptime(log[1][:19], "%Y-%m-%d %H:%M:%S"))
 
 
 # Parses all the logs from the log_page
@@ -83,9 +116,16 @@ def parse_logs(parsed_logs, logs_page):
         logz_io_timestamp = log["_source"]["@timestamp"]
         year_month_day = logz_io_timestamp[:10]
 
+        # We need the component to separate out server vs client logs
+        component = log["_source"]["component"]
+
         # Sometimes, in errors, we do not include hour-month-day, so check
         # if the first character to see if it's a number.
-        if not message[0].isnumeric():
+        message_begins_with_time = (
+            message[0].isnumeric() and message[1].isnumeric() and message[2] == ":"
+        )
+
+        if not message_begins_with_time:
             # if we do not provide an hour-minute-second,
             # use the hour-minute-second from logz_io timestamp
             hour_minute_second = logz_io_timestamp[11:19]
@@ -95,7 +135,29 @@ def parse_logs(parsed_logs, logs_page):
             hour_minute_second = message[:8]
             message = year_month_day + " " + hour_minute_second + message[15:]
 
-        parsed_logs.append(message)
+        if component == "clientapp":
+            parsed_logs.append(("client", message))
+        else:
+            parsed_logs.append(("server", message))
+
+
+# Writes the server and client logs to two separate files
+# File names are <<SESSIONID>>-client.txt and <<SESSIONID>>-server.txt
+def write_logs_to_files(parsed_logs, session_id):
+    client_logs_file_name = "{}-client.txt".format(session_id)
+    server_logs_file_name = "{}-server.txt".format(session_id)
+
+    client_file = open(client_logs_file_name, "w")
+    server_file = open(server_logs_file_name, "w")
+    for log in parsed_logs:
+        if log[0] == "client":
+            client_file.write(log[1])
+            client_file.write("\n")
+        else:
+            server_file.write(log[1])
+            server_file.write("\n")
+    server_file.close()
+    client_file.close()
 
 
 if __name__ == "__main__":
@@ -114,6 +176,7 @@ if __name__ == "__main__":
     # This continues to paginate, making POST requests to the scroll API
     # and adds them to the parsed_logs array until there are no more results
     total, logs_page = get_logs_page(scroll_id)
+
     while len(logs_page) != 0:
         # This will take a bit, so it's nice to have some sort of progress meter
         # so the user doesn't think they're program is crashing
@@ -126,9 +189,4 @@ if __name__ == "__main__":
 
     # Write results- separated by a new line- to  a text file
     # named "<<session_id>>_logs.txt"
-    file_name = "{}_logs.txt".format(session_id)
-    file = open(file_name, "w")
-    for log in parsed_logs:
-        file.write(log)
-        file.write("\n")
-    file.close()
+    write_logs_to_files(parsed_logs, session_id)

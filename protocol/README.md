@@ -325,3 +325,15 @@ Running './run-clang-tidy.sh -c' will find whether there are any code standard v
 If you want any lines to be exempted from the clang-tidy check, either place `// NOLINTNEXTLINE` in the line above or `// NOLINT` at the end of the line.
 
 Macro constants will NOT be checked by this script because of the variety of implementations of `#define`. Please be sure to follow appropriate standards for `#define`s when committing code.
+
+### Logz.io
+
+We currently use logz.io to store our logs. To get the logs for a session_id, navigate to the `fractal/microservices/scripts` directory, then
+type in: `python3 logs-to-text.py <<sesion_id>>` where `session_id` is the id of the currently running session.
+
+This will output two files:
+
+1. `<<session_id>>-client.txt`: These are the sorted logs for the client from that session_id
+2. `<<session_id>>-server.txt`: These are the sorted logs for the server from that session_id
+
+Note: logz.io currently only retains logs for 5 days. That said, this will only return the logs from 5 days ago.
