@@ -336,4 +336,9 @@ This will output two files:
 1. `<<session_id>>-client.txt`: These are the sorted logs for the client from that session_id
 2. `<<session_id>>-server.txt`: These are the sorted logs for the server from that session_id
 
+You will need an logz.io API key to use this. Please contact Phil to get this or to get an admin account so you can generate your own.
+After this, set an environment variable "LOGZ_IO_API_KEY" to your API key via:
+
+`export LOGZ_IO_API_KEY=<<your api key>>`
+
 Note: logz.io currently only retains logs for 5 days. That said, this will only return the logs from 5 days ago.
