@@ -17,6 +17,8 @@ import (
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
+	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -91,16 +93,29 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	var instanceName aws.InstanceName
+	var userID mandelboxtypes.UserID
+	var err error
+	if metadata.IsRunningInCI() {
+		userID = "localdev_host_service_CI"
+	} else {
+		instanceName, err = aws.GetInstanceName()
+		if err != nil {
+			logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+		}
+		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+	}
+
 	// We always want to start with a clean slate
 	uninitializeFilesystem()
 	initializeFilesystem(cancel)
 	defer uninitializeFilesystem()
 
 	testMandelboxInfo := subscriptions.Mandelbox{
-		InstanceName: "test_instance_name",
+		InstanceName: string(instanceName),
 		MandelboxID:  "testMandelbox",
 		SessionID:    1234,
-		UserID:       "localdev_host_service_CI",
+		UserID:       userID,
 	}
 	testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
 		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
@@ -111,12 +126,12 @@ func TestSpinUpMandelbox(t *testing.T) {
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
-	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest, 1)
-	testTransportRequestMap[testMandelboxInfo.UserID] = make(chan *JSONTransportRequest)
-	testTransportRequestMap[testMandelboxInfo.UserID] <- &testJSONTransportRequest
+
 	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest)
 
 	dockerClient := mockClient{}
+	go validateJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
 	goroutineTracker.Wait()
