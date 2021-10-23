@@ -1079,7 +1079,7 @@ int render_video() {
 
     if (rendering) {
         // If the frame hasn't changed since the last one (or we've minimized or are occluded), the
-        // server will just send an empty frame to keep the framerate at least at MIN_FPS. We don't
+        // server will just send an empty frame to keep this thread alive. We don't
         // want to render this empty frame though. To avoid a MacOS bug where rendering hangs for 1
         // second upon window occlusion, we immediately block rendering when that happens. The
         // server will send an iframe when the window is visible again.

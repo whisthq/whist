@@ -179,7 +179,7 @@ int32_t create_new_device(clock* statistics_timer, CaptureDevice** device, Captu
  * @param id                        Pointer to frame id
  */
 void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
-                           CaptureDevice* device, VideoEncoder* encoder, int* id) {
+                           CaptureDevice* device, VideoEncoder* encoder, int id) {
     // transfer the capture of the latest frame from the device to
     // the encoder,
     // This function will try to CUDA/OpenGL optimize the transfer by
@@ -228,27 +228,25 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
                               (void*)get_frame_videodata(frame));
 
 #if LOG_VIDEO
-    LOG_INFO("Sent video packet %d (Size: %d) %s", *id, encoder->encoded_frame_size,
+    LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
              frame->is_iframe ? "(I-frame)" : "");
 #endif  // LOG_VIDEO
     start_timer(statistics_timer);
 
     // Packetize the frame
     int num_packets =
-        write_payload_to_packets((uint8_t*)frame, get_total_frame_size(frame), *id, PACKET_VIDEO,
-                                 video_buffer[(*id) % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+        write_payload_to_packets((uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
+                                 video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {
-        // Couldn't send frame, flush with IDR
-        LOG_ERROR("Failed to write video packet to buffer");
-        wants_iframe = true;
+        LOG_ERROR("Failed to write video packet to buffer. Dropping Frame.");
     } else {
         // Send the packets to the client
         for (int i = 0; i < num_packets; ++i) {
-            if (broadcast_udp_packet(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
-                                     get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) <
+            if (broadcast_udp_packet(&video_buffer[id % VIDEO_BUFFER_SIZE][i],
+                                     get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) <
                 0) {
-                LOG_WARNING("Failed to broadcast video packet: id %d, index %d", *id, i);
+                LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
             }
         }
 // (Disable this logic for now).
@@ -256,15 +254,12 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
         for (int j = 0; j < MOD; ++j) {
             for (int i = j; i < num_packets; i += MOD) {
                 if (broadcast_udp_packet(
-                        &video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
-                        get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) < 0) {
-                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d", (*id), i);
+                        &video_buffer[id % VIDEO_BUFFER_SIZE][i],
+                        get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
+                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
                 }
             }
         }
-        // Some subset of the frame may have been sent,
-        // so we have to increment ID to prevent overlap
-        (*id)++;
     }
 }
 
@@ -344,7 +339,7 @@ void update_current_device(clock* statistics_timer, CaptureDevice* device, Video
  *
  * @param id                      Pointer to the frame id
  */
-void send_empty_frame(int* id) {
+void send_empty_frame(int id) {
     // If we don't have a new frame to send, let's just send an empty one
     static char mini_buf[sizeof(VideoFrame)];
     VideoFrame* frame = (VideoFrame*)mini_buf;
@@ -356,23 +351,19 @@ void send_empty_frame(int* id) {
     // is_empty_frame is true, so it will just be ignored by the client.
 
     int num_packets =
-        write_payload_to_packets((uint8_t*)frame, sizeof(VideoFrame), *id, PACKET_VIDEO,
-                                 video_buffer[(*id) % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+        write_payload_to_packets((uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
+                                 video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {
-        // We don't need to set wants_iframe, since a frame was never encoded
         LOG_ERROR("Failed to write video packet to buffer");
     } else {
         for (int i = 0; i < num_packets; ++i) {
-            if (broadcast_udp_packet(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i],
-                                     get_packet_size(&video_buffer[(*id) % VIDEO_BUFFER_SIZE][i])) <
+            if (broadcast_udp_packet(&video_buffer[id % VIDEO_BUFFER_SIZE][i],
+                                     get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) <
                 0) {
                 LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
             }
         }
-        // We may have sent some packets,
-        // so we must increment the ID to prevent overlap
-        (*id)++;
     }
 }
 
@@ -622,15 +613,15 @@ int32_t multithreaded_send_video(void* opaque) {
         // Disable the encoder when we've sent enough identical frames,
         // And no iframe is being requested at this time.
         // When the encoder is disabled, we only wake the client CPU,
-        // DISABLED_ENCODER_FPS times per second for just a usec
+        // DISABLED_ENCODER_FPS times per second, for just a usec at a time.
         bool disable_encoder =
             consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES && !wants_iframe;
-        // Drop the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
+        // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
-        // Only if we have a real frame to send, or we need to keep up with min_fps
+        // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (accumulated_frames > 0 || wants_iframe ||
             get_timer(last_frame_capture) > 1.0 / min_fps) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
@@ -644,9 +635,15 @@ int32_t multithreaded_send_video(void* opaque) {
             if (accumulated_frames > 1) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
+
+            // Increment the Frame ID so that each frame we send gets its own unique ID.
+            // The decoder will ensure to decode frames in the order of these IDs,
+            // _Or_ skip to the next I-Frame.
+            id++;
+
             if (disable_encoder) {
                 // Send an empty frame
-                send_empty_frame(&id);
+                send_empty_frame(id);
             } else {
                 // transfer the capture of the latest frame from the device to
                 // the encoder,
@@ -685,23 +682,14 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (encoder->encoded_frame_size != 0) {
-                    // == Avoid Corruption Note ==
-                    // Since the frame made it through the encoder at this point, EITHER
-                    // we must increment id++, OR we must set wants_iframe=true and continue
-                    // By doing id++, we're telling the decoder that it needs this frame first,
-                    // By doing wants_iframe=true continue, the next frame is an iframe anyway
-                    // Additionally, if we may have sent any packets, we MUST increment the id
-                    // Otherwise, the client may receive packets from two frames with the same id
-                    // == Avoid Corruption End Note ==
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
-                        LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
-                        // This frame is too large to send, but it's an encoder reference frame
-                        // So, we'll IDR to flush it out
-                        wants_iframe = true;
+                        // Please make MAX_VIDEOFRAME_DATA_SIZE larger if this error happens
+                        LOG_ERROR("Frame of size %d bytes is too large! Dropping Frame.",
+                                  encoder->encoded_frame_size);
                         continue;
                     } else {
                         send_populated_frames(&statistics_timer, &server_frame_timer, device,
-                                              encoder, &id);
+                                              encoder, id);
 
                         log_double_statistic("Video frame send time (ms)",
                                              get_timer(statistics_timer) * MS_IN_SECOND);
