@@ -453,6 +453,6 @@ void print_hard_drive_info() {
     used_space = total_space - buf.f_bfree * buf.f_frsize;
     available_space = buf.f_bavail * buf.f_frsize;
 #endif
-    LOG_INFO("Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Whist",
-             used_space / BYTES_IN_GB, total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
+    LOG_INFO("Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Whist", used_space / BYTES_IN_GB,
+             total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }
