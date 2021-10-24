@@ -538,11 +538,10 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     // LOWDELAY seems to have longer encode times, and the frames are about the same size. So we're
     // sticking with CBR.
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    p_preset_config->presetCfg.rcParams.maxBitRate =
-        6 * bitrate;  // Set peak bitrate to 4x normal bitrate
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
-    p_preset_config->presetCfg.rcParams.vbvBufferSize =
-        60 * bitrate / FPS;  // Set VBV to 30 frame's worth
+    // Experimentally found to give good results,
+    // Smaller values reduce bitrate spikes but increase blurriness spikes
+    p_preset_config->presetCfg.rcParams.vbvBufferSize = 60 * bitrate / FPS;
 
     return 0;
 }
