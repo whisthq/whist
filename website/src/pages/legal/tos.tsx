@@ -41,8 +41,8 @@ const TermsOfService = () => {
               www.copyright.gov/legislation/dmca.pdf
             </a>
             , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE USING{" "}
-            <a href="https://www.whist.com">WWW.whist.com</a> (THE "SITE"),
-            ANY DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
+            <a href="https://www.whist.com">WWW.whist.com</a> (THE "SITE"), ANY
+            DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
             "APPLICATIONS") AND THE CLOUD COMPUTING SERVICES, FEATURES, CONTENT
             OR APPLICATIONS OFFERED BY FRACTAL COMPUTERS, INC. ("FRACTAL," "WE,"
             "US," OR "OUR") (TOGETHER WITH THE SITE AND THE APPLICATIONS, THE

@@ -50,7 +50,7 @@ The Whist monorepository contains 8 Whist subrepositories:
 | microservices       | Code we deploy to other platforms, like Auth0.                                                      |
 | protocol            | The streaming technology API, both client and server, for streaming applications to users.          |
 | webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two. |
-| website             | The website hosted at `whist.com`.                                                                 |
+| website             | The website hosted at `whist.com`.                                                                  |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
