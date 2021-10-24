@@ -43,10 +43,10 @@ const Overview = () => {
             Overview
           </p>
           <p className="mt-2 max-w-2xl text-lg lg:text-xl text-gray-400 lg:mx-auto">
-            Whist believes that privacy is a fundamental human right and
-            ensures that nobody but you can view your browsing information. No
-            engineer can view personal information about your browsing session.
-            In particular:
+            Whist believes that privacy is a fundamental human right and ensures
+            that nobody but you can view your browsing information. No engineer
+            can view personal information about your browsing session. In
+            particular:
           </p>
         </div>
 

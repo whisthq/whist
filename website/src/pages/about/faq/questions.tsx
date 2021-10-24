@@ -21,9 +21,9 @@ const faqs = [
     question: "Can I trust Whist with my data?",
     answer: (
       <div>
-        We encrypt and protect every piece of data that you input through
-        Whist so that not even our engineers can see your personal browsing
-        data. You can read more about how we handle privacy and security{" "}
+        We encrypt and protect every piece of data that you input through Whist
+        so that not even our engineers can see your personal browsing data. You
+        can read more about how we handle privacy and security{" "}
         <a href="/security#top" className="text-gray-300 hover:text-mint">
           here
         </a>

@@ -32,9 +32,9 @@ const Privacy = () => {
         </div>
 
         <p>
-          Thank you for choosing to be part of our community at Whist
-          Computers, Inc., doing business as Whist (“Fractal”, “we”, “us”, or
-          “our”). When you visit our website,{" "}
+          Thank you for choosing to be part of our community at Whist Computers,
+          Inc., doing business as Whist (“Fractal”, “we”, “us”, or “our”). When
+          you visit our website,{" "}
           <a href="https://www.fractal.co">www.fractal.co</a>, and use our
           services, you trust us with your personal information. We want you to
           know that we are committed to protecting your personal information and
@@ -46,11 +46,10 @@ const Privacy = () => {
           policy will also identify your rights regarding your personal
           information. If you have any questions or concerns about our policy,
           or our practices with regards to your personal information, please
-          contact us at{" "}
-          <a href="mailto:support@whist.com">support@whist.com</a>. We
-          encourage you to read through this important information. If there are
-          any terms in this privacy policy that you disagree with, please
-          discontinue the use of our Sites and our Services.
+          contact us at <a href="mailto:support@whist.com">support@whist.com</a>
+          . We encourage you to read through this important information. If
+          there are any terms in this privacy policy that you disagree with,
+          please discontinue the use of our Sites and our Services.
         </p>
 
         <p style={{ fontWeight: "bold", fontSize: 20 }}>Table Of Contents</p>
@@ -235,9 +234,8 @@ const Privacy = () => {
             contain personal information. Prior to posting a testimonial, we
             will seek your consent to use your name and testimonial. If you wish
             to update or delete your testimonial, please contact us at{" "}
-            <a href="mailto:support@whist.com">support@whist.com</a> and be
-            sure to include your name, testimonial location, and contact
-            information.
+            <a href="mailto:support@whist.com">support@whist.com</a> and be sure
+            to include your name, testimonial location, and contact information.
           </p>
           <p>
             To administer prize draws and competitions. We may use your
@@ -507,8 +505,7 @@ const Privacy = () => {
             here
           </a>
           . If you have questions or comments about your privacy rights, you may
-          email us at <a href="mailto:support@whist.com">support@whist.com</a>
-          .
+          email us at <a href="mailto:support@whist.com">support@whist.com</a>.
         </p>
         <div style={{ paddingLeft: 20 }}>
           <p style={{ fontWeight: "bold" }}>Account Information</p>
@@ -570,8 +567,8 @@ const Privacy = () => {
           <p>
             Note your preferences when you register an account with the site,
             access your account settings and update preferences, or contact us
-            by email at{" "}
-            <a href="mailto:support@whist.com">support@whist.com</a>.
+            by email at <a href="mailto:support@whist.com">support@whist.com</a>
+            .
           </p>
         </div>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
@@ -645,8 +642,8 @@ const Privacy = () => {
         </p>
         <p>
           If you have questions or comments about this policy, you may email us
-          at <a href="mailto:support@whist.com">support@whist.com</a> or by
-          post to:
+          at <a href="mailto:support@whist.com">support@whist.com</a> or by post
+          to:
         </p>
         <p>
           Fractal Computers, Inc. <br />

@@ -159,8 +159,8 @@ export const Middle = () => {
         }
         text={
           <div className="mt-2 text-md text-gray-400 mb-4">
-            Because Whist runs in a remote datacenter, your browser and all
-            its data are entirely decoupled from your personal computer.
+            Because Whist runs in a remote datacenter, your browser and all its
+            data are entirely decoupled from your personal computer.
           </div>
         }
         image={

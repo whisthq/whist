@@ -11,11 +11,11 @@ const Detailed = () => {
             </span>
           </h1>
           <p className="mt-8 text-gray-400 leading-8 text-left">
-            Whist works by streaming Google Chrome from our datacenters to
-            your computer. Because Google Chrome is being streamed to your
-            computer from a datacenter in the form of video pixels, there are
-            two types of security to consider: security of your browsing stream
-            and security of your browsing data.
+            Whist works by streaming Google Chrome from our datacenters to your
+            computer. Because Google Chrome is being streamed to your computer
+            from a datacenter in the form of video pixels, there are two types
+            of security to consider: security of your browsing stream and
+            security of your browsing data.
           </p>
           <p className="mt-8 text-xl text-mint leading-8 text-left">
             How We Secure Your Browsing Stream
