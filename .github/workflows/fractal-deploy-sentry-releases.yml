@@ -37,7 +37,7 @@ jobs:
             sentry-project: client-applications
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_ORG: tryfractal
+      SENTRY_ORG: whist
       SENTRY_PROJECT: ${{ matrix.project.sentry-project }}
 
     steps:
