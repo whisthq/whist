@@ -37,17 +37,17 @@ subscription status before deciding whether or not to allow the request to be
 processed as usual.
 
 As is mentioned in the section about :ref:`custom claims`, each access token's
-payload includes includes a ``https://api.fractal.co/subscription_status``
+payload includes includes a ``https://api.whist.com/subscription_status``
 claim whose value is a string representing the authorized user's subscription
 status. More specifically, the value of the
-``https://api.fractal.co/subscription_status`` claim is the value of the
+``https://api.whist.com/subscription_status`` claim is the value of the
 ``status`` attribute of the most recent non-terminal Stripe
 `Subscription object`_ associated with Stripe Customer record associated with
 the user's Whist account, or ``null`` if all of a user's subscriptions are in
 terminal states. Let's break that down:
 
 1. Also mentioned in the section about :ref:`custom claims` is the
-   ``https://api.fractal.co/stripe_customer_id`` claim. This claim contains the
+   ``https://api.whist.com/stripe_customer_id`` claim. This claim contains the
    ID of the Stripe customer record associated with the authorized user's
    Whist account. The customer record associated with the authorized user's
    is created the first time the user logs into Whist.
@@ -59,7 +59,7 @@ terminal states. Let's break that down:
    associated with their Customer record. Nevertheless, we disregard all
    Subscription objects associated with a user's Customer record other than the
    most recent one when computing the value of the
-   ``https://api.fractal.co/subscription_status`` claim to be on the safe side.
+   ``https://api.whist.com/subscription_status`` claim to be on the safe side.
 3. Each subscription can be in a variety of "terminal" or "non-terminal" states.
    To be in a terminal state is to be un-renewable. There is no action a user or
    developer can take (e.g. updating payment information) to move a
@@ -79,13 +79,13 @@ terminal states. Let's break that down:
    attribute is one of ``unpaid``, ``canceled``, or ``incomplete_expired``), the
    subscription is in a terminal state.
 4. If and only if all of the authorized users are in terminal states, the value
-   of the ``https://api.fractal.co/subscription_status`` claim is ``null``.
+   of the ``https://api.whist.com/subscription_status`` claim is ``null``.
    This is due to the fact that once a subscription enters a terminal state, it
    may as well not exist, but as long as it is in a non-terminal state, it may
    be worth knowing the exact state in which it is.
 
 The :func:`payments.payment_required` decorator examines the value of the
-access token's ``https://api.fractal.co/subscription_status`` claim and grants
+access token's ``https://api.whist.com/subscription_status`` claim and grants
 access to only those users whose subscriptions are ``active`` or ``trialing``.
 
 
@@ -105,7 +105,7 @@ developers can customize the form's appearance from the `Stripe dashboard`_.
 
 The Webserver determines whether or not a Checkout or Customer Portal session
 should be created based on the value of the authenticated user's access token's
-``https://api.fractal.co/subscription_status`` claim. If its value indicates
+``https://api.whist.com/subscription_status`` claim. If its value indicates
 that the user has a subscription in a non-terminal state (one of ``active``,
 ``past_due``, ``incomplete``, or ``trialing``), then the Webserver creates a
 Customer Portal session and returns its URL to the client so the user can
@@ -122,8 +122,8 @@ Optimizing the Stripe integration
 ---------------------------------
 
 We have decided to define the custom
-``https://api.fractal.co/stripe_customer_id`` and
-``https://api.fractal.co/subscription_status`` access token claims in order to
+``https://api.whist.com/stripe_customer_id`` and
+``https://api.whist.com/subscription_status`` access token claims in order to
 share information between Stripe and the rest of our backend as efficiently as
 possible.
 
@@ -146,7 +146,7 @@ Stripe API rate limits.
 
 The values of each of these claims is re-computed each time a new access token
 is issued. The only downside of re-computing the value of the
-``https://api.fractal.co/subscription_status`` claim is that the subscription
+``https://api.whist.com/subscription_status`` claim is that the subscription
 status claimed in the user's current access token may fall out of sync with the
 user's actual subscription status. In theory, an extremely meticulous and
 technical user could continue to use a subscription for one extra day after it

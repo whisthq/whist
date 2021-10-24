@@ -54,7 +54,7 @@ def _callback_webserver_hostname() -> str:
     return (
         request.host
         if not any((host in request.host for host in ("localhost", "127.0.0.1")))
-        else "dev-server.fractal.co"
+        else "dev-server.whist.com"
     )
 
 
@@ -182,7 +182,7 @@ class DeploymentConfig:
     _database_url = property(getter("DATABASE_URL", fetch=False))
 
     #: str: A domain name identifying the Auth0 tenant with which the Webserver should communicate.
-    #: Examples include ``fractal-dev.us.auth0.com`` and ``login.fractal.co``.
+    #: Examples include ``fractal-dev.us.auth0.com`` and ``login.whist.com``.
     AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
 
     #: str: The client ID of the OAuth 2.0 client representing the Webserver registered to the
@@ -201,13 +201,13 @@ class DeploymentConfig:
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
     JWT_ALGORITHM = "RS256"
     JWT_DECODE_ALGORITHMS = ("RS256",)
-    JWT_DECODE_AUDIENCE = "https://api.fractal.co"
+    JWT_DECODE_AUDIENCE = "https://api.whist.com"
     SILENCED_ENDPOINTS = ("/status", "/ping")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     #: str: The name of the access token claim containing the ID of the Stripe Customer record
     #: associated with an authenticated user's Whist account.
-    STRIPE_CUSTOMER_ID_CLAIM = "https://api.fractal.co/stripe_customer_id"
+    STRIPE_CUSTOMER_ID_CLAIM = "https://api.whist.com/stripe_customer_id"
 
     #: str: The ID of the Stripe Price object
     STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
@@ -218,7 +218,7 @@ class DeploymentConfig:
     #: str: The name of the access token claim containing the user's stripe subscription status.
     #: See https://stripe.com/docs/api/subscriptions/object#subscription_object-status for a list
     #: of possible values.
-    STRIPE_SUBSCRIPTION_STATUS_CLAIM = "https://api.fractal.co/subscription_status"
+    STRIPE_SUBSCRIPTION_STATUS_CLAIM = "https://api.whist.com/subscription_status"
     AWS_INSTANCE_TYPE_TO_LAUNCH = property(
         # Having a `fetch=True` can let us dynamically change the instance type to be launched.
         getter("AWS_INSTANCE_TYPE_TO_LAUNCH", fetch=True, default="g4dn.12xlarge")

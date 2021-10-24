@@ -295,7 +295,7 @@ def reset_limiter() -> None:
 
 
 def user(
-    *, domain: str = "fractal.co", user_id: Optional[str] = None  # pylint: disable=unused-argument
+    *, domain: str = "whist.com", user_id: Optional[str] = None  # pylint: disable=unused-argument
 ) -> str:
     """Generate a fake email address for a test user.
 

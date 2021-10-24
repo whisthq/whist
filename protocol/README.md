@@ -248,7 +248,7 @@ GCC only supports one type of build at a time, so if you are currently building 
 
 ### Further documentation
 
-We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.fractal.co`, but updating the documentation with CI is still a [TODO](https://github.com/fractal/fractal/issues/1976).
+We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.whist.com`, but updating the documentation with CI is still a [TODO](https://github.com/fractal/fractal/issues/1976).
 
 ## CI & CD
 

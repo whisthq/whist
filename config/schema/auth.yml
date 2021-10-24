@@ -2,7 +2,7 @@ AUTH_DOMAIN_URL:
   local: "fractal-dev.us.auth0.com"
   dev: "fractal-dev.us.auth0.com"
   staging: "fractal-staging.us.auth0.com"
-  prod: "auth.fractal.co"
+  prod: "auth.whist.com"
 
 AUTH_CLIENT_ID:
   local: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
@@ -10,7 +10,7 @@ AUTH_CLIENT_ID:
   staging: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz"
   prod: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD"
 
-AUTH_API_IDENTIFIER: "https://api.fractal.co"
+AUTH_API_IDENTIFIER: "https://api.whist.com"
 
 CLIENT_CALLBACK_URL: "http://localhost/callback"
 

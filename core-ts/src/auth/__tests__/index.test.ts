@@ -14,7 +14,7 @@ describe("authInfoParse", () => {
   //     "aud": "www.example.com",
   //     "sub": "jrocket@example.com",
   //     "email": "test@whist.com"
-  //     "https://api.fractal.co/subscription_status": "canceled"
+  //     "https://api.whist.com/subscription_status": "canceled"
   // }
 
   // Decodes to same as above, but missing email field

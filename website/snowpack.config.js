@@ -5,7 +5,7 @@ const buildEnv = {
   // https://docs.netlify.com/configure-builds/environment-variables. You can
   // also set these on your own.
 
-  // [dev/staging/www].fractal.co
+  // [dev/staging/www].whist.com
   URL: process.env.URL,
 
   // "deploy-preview" in the case this is a deploy preview

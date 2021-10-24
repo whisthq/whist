@@ -50,16 +50,16 @@ The Whist monorepository contains 8 Whist subrepositories:
 | microservices       | Code we deploy to other platforms, like Auth0.                                                      |
 | protocol            | The streaming technology API, both client and server, for streaming applications to users.          |
 | webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two. |
-| website             | The website hosted at `fractal.co`.                                                                 |
+| website             | The website hosted at `whist.com`.                                                                 |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
-Note that there is also additional documentation for some subrepos (and other Whist repos) at [docs.fractal.co](https://docs.fractal.co):
+Note that there is also additional documentation for some subrepos (and other Whist repos) at [docs.whist.com](https://docs.whist.com):
 
-- [docs.fractal.co/protocol](https://docs.fractal.co/protocol)
-- [docs.fractal.co/webserver](https://docs.fractal.co/webserver)
-- [docs.fractal.co/SDL](https://docs.fractal.co/SDL)
-- [docs.fractal.co/FFmpeg](https://docs.fractal.co/FFmpeg)
+- [docs.whist.com/protocol](https://docs.whist.com/protocol)
+- [docs.whist.com/webserver](https://docs.whist.com/webserver)
+- [docs.whist.com/SDL](https://docs.whist.com/SDL)
+- [docs.whist.com/FFmpeg](https://docs.whist.com/FFmpeg)
 
 ## Development
 

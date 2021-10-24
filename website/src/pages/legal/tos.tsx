@@ -35,13 +35,13 @@ const TermsOfService = () => {
           <p>
             PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH FRACTAL'S
             PRIVACY POLICY{" "}
-            <a href="https://www.fractal.co/privacy">www.fractal.co/privacy</a>{" "}
+            <a href="https://www.whist.com/privacy">www.whist.com/privacy</a>{" "}
             AND{" "}
             <a href="http://www.copyright.gov/legislation/dmca.pdf">
               www.copyright.gov/legislation/dmca.pdf
             </a>
             , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE USING{" "}
-            <a href="https://www.fractal.co">WWW.FRACTAL.CO</a> (THE "SITE"),
+            <a href="https://www.whist.com">WWW.whist.com</a> (THE "SITE"),
             ANY DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
             "APPLICATIONS") AND THE CLOUD COMPUTING SERVICES, FEATURES, CONTENT
             OR APPLICATIONS OFFERED BY FRACTAL COMPUTERS, INC. ("FRACTAL," "WE,"

@@ -40,7 +40,7 @@ runs:
                 "grant_type": "client_credentials",
                 "client_id": "${{ inputs.client-id }}",
                 "client_secret": "${{ inputs.client-secret }}",
-                "audience": "https://api.fractal.co"
+                "audience": "https://api.whist.com"
             }
         )
 

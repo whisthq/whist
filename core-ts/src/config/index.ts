@@ -11,7 +11,7 @@ export const DefaultConfig = {
   WEBSERVER_URL: "",
   AUTH_DOMAIN_URL: "", //fractal-dev.us.auth0.com
   AUTH_CLIENT_ID: "", //j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I
-  AUTH_API_IDENTIFIER: "", //https://api.fractal.co
+  AUTH_API_IDENTIFIER: "", //https://api.whist.com
   CLIENT_CALLBACK_URL: "", //http://localhost/callback
 }
 

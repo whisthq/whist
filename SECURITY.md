@@ -2,12 +2,7 @@
 
 ## Supported Versions
 
-All versions of Whist 2 are currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.x.x   | :white_check_mark: |
-| < 2.0   | :x:                |
+Only the latest version version is supported with security updates.
 
 ## Reporting a Vulnerability
 

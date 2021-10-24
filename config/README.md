@@ -94,19 +94,19 @@ Depending on the data in the YAML files, this might output JSON like you see bel
   "APPLE_API_KEY_ID": "a-really-secret-value",
   "AUTH_CLIENT_ID": "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I",
   "AUTH_DOMAIN": "fractal-dev.us.auth0.com",
-  "AUTH_IDENTIFIER_API": "https://api.fractal.co",
+  "AUTH_IDENTIFIER_API": "https://api.whist.com",
   "CLIENT_DOWNLOAD": "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
   "CLIENT_LOG_FILE_NAME": "client.log",
   "CLIENT_LOG_FOLDERNAME": "logs",
   "CLIENT_PERSISTENCE_FOLDER_NAME": "fractal",
   "ENV": "dev",
   "EXECUTABLE_NAME": "Whist (development)",
-  "FRONTEND": "dev.fractal.co",
+  "FRONTEND": "dev.whist.com",
   "ICON_FILE_NAME": "icon_dev",
   "NODEJS": "development",
   "PROTOCOL_FILE_NAME": "_Fractal",
   "PROTOCOL_FOLDER_PATH": "../../MacOS",
   "PROTOCOL_LOG_FILE_NAME": "protocol.log",
-  "WEBSERVER": "https://dev-server.fractal.co"
+  "WEBSERVER": "https://dev-server.whist.com"
 }
 ```

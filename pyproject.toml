@@ -8,9 +8,9 @@ authors = [
 license = "UNLICENSED"
 readme = "README.md"
 python = "^3.9"
-homepage = "https://fractal.co"
+homepage = "https://whist.com"
 repository = "https://github.com/fractal/fractal"
-documentation = "https://docs.fractal.co"
+documentation = "https://docs.whist.com"
 
 keywords = ["packaging", "dependency", "pyproject.toml"]
 

@@ -35,12 +35,12 @@ const Privacy = () => {
           Thank you for choosing to be part of our community at Whist Computers,
           Inc., doing business as Whist (“Fractal”, “we”, “us”, or “our”). When
           you visit our website,{" "}
-          <a href="https://www.fractal.co">www.fractal.co</a>, and use our
+          <a href="https://www.whist.com">www.whist.com</a>, and use our
           services, you trust us with your personal information. We want you to
           know that we are committed to protecting your personal information and
           your right to privacy. This privacy policy explains what happens to
           the personal information we collect through our website (such as{" "}
-          <a href="https://www.fractal.co">www.fractal.co</a>
+          <a href="https://www.whist.com">www.whist.com</a>
           ), and/or any related services, sales, marketing or events (we refer
           to them collectively in this privacy policy as the "Services"). This
           policy will also identify your rights regarding your personal
@@ -524,7 +524,7 @@ const Privacy = () => {
             However, some information may be retained in our files to prevent
             fraud, troubleshoot problems, assist with any investigations,
             enforce our{" "}
-            <a href="https://www.fractal.co/termsofservice">Terms of Service</a>{" "}
+            <a href="https://www.whist.com/termsofservice">Terms of Service</a>{" "}
             and/or comply with legal requirements.
           </p>
           <p>

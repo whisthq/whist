@@ -6,11 +6,11 @@
   "author": {
     "email": "support@whist.com",
     "name": "Fractal Computers, Inc.",
-    "url": "https://www.fractal.co"
+    "url": "https://www.whist.com"
   },
   "description": "Whist Desktop Application",
   "main": "build/dist/main/index.js",
-  "homepage": "https://fractal.co",
+  "homepage": "https://whist.com",
   "scripts": {
     "start": "node ./scripts/start.js",
     "start:lite": "node ./scripts/start-lite.js",

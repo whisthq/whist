@@ -39,12 +39,12 @@ const configs = {
     },
     url: {
       WEBSERVER_URL: FractalWebservers.local,
-      FRONTEND_URL: "https://dev.fractal.co",
+      FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
       clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I", // public; not a secret
-      apiIdentifier: "https://api.fractal.co",
+      apiIdentifier: "https://api.whist.com",
     },
     deployEnv: "dev",
     sentryEnv: "development",
@@ -66,12 +66,12 @@ const configs = {
     },
     url: {
       WEBSERVER_URL: FractalWebservers.dev,
-      FRONTEND_URL: "https://dev.fractal.co",
+      FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
       clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I", // public; not a secret
-      apiIdentifier: "https://api.fractal.co",
+      apiIdentifier: "https://api.whist.com",
     },
     deployEnv: "dev",
     sentryEnv: "development",
@@ -93,12 +93,12 @@ const configs = {
     },
     url: {
       WEBSERVER_URL: FractalWebservers.staging,
-      FRONTEND_URL: "https://staging.fractal.co",
+      FRONTEND_URL: "https://staging.whist.com",
     },
     auth0: {
       auth0Domain: "fractal-staging.us.auth0.com",
       clientId: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", // public; not a secret
-      apiIdentifier: "https://api.fractal.co",
+      apiIdentifier: "https://api.whist.com",
     },
     deployEnv: "staging",
     sentryEnv: "staging",
@@ -117,16 +117,16 @@ const configs = {
     buildRoot,
     url: {
       WEBSERVER_URL: FractalWebservers.production,
-      FRONTEND_URL: "https://fractal.co",
+      FRONTEND_URL: "https://whist.com",
     },
     keys: {
       ...keys,
       LOGZ_KEY: "dhwhpmrnfXZqNrilucOruibXgunbBqQJ",
     },
     auth0: {
-      auth0Domain: "auth.fractal.co",
+      auth0Domain: "auth.whist.com",
       clientId: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", // public; not a secret
-      apiIdentifier: "https://api.fractal.co",
+      apiIdentifier: "https://api.whist.com",
     },
     deployEnv: "prod",
     sentryEnv: "production",

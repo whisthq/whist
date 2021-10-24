@@ -34,8 +34,8 @@ def app() -> Flask:
     _app = Flask(__name__)
     _app.test_client_class = FractalAPITestClient
     _app.config["JWT_SECRET_KEY"] = "secret"
-    _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.fractal.co/stripe_customer_id"
-    _app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"] = "https://api.fractal.co/subscription_status"
+    _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.whist.com/stripe_customer_id"
+    _app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"] = "https://api.whist.com/subscription_status"
     _app.config["ENVIRONMENT"] = "TESTING"
 
     @_app.errorhandler(PaymentRequired)
