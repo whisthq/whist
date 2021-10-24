@@ -1,7 +1,7 @@
 
 
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file ProtocolTest.cpp
  * @brief This file contains all the uni tests for the /protocol codebase code f
 ============================
@@ -187,7 +187,7 @@ TEST(ProtocolTest, ArgParsingUsageArgTest) {
 
 /*
 ============================
-Fractal Library Tests
+Whist Library Tests
 ============================
 */
 

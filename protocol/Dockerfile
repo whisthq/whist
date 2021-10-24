@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 ARG uid
 
-# This Dockerfile is used to build the Fractal protocol server for Linux Ubuntu 20.04.
+# This Dockerfile is used to build the Whist protocol server for Linux Ubuntu 20.04.
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -71,7 +71,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
-# Install Fractal protocol Linux dependencies
+# Install Whist protocol Linux dependencies
 COPY setup-linux-build-environment.sh /
 RUN apt-get update \
     && ./setup-linux-build-environment.sh \

@@ -25,7 +25,7 @@ const Loading = () => (
           ></path>
         </svg>
       </div>
-      <div className="text-gray-300 font-medium">Fractal is launching</div>
+      <div className="text-gray-300 font-medium">Whist is launching</div>
     </div>
   </div>
 )

@@ -2,7 +2,7 @@
 #define NVIDIA_TRANSFER_CAPTURE_H
 
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file nvidiatransfercapture.h
  * @brief This code handles the data transfer, i.e. resource registration, from a video capture
  *        device to a video encoder via Nvidia's FBC and Video Codec SDKs.

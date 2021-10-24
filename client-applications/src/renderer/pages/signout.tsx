@@ -33,7 +33,7 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
         Are you sure you want to sign out?
       </div>
       <div className="mt-2 mb-4 text-gray-500">
-        Signing out will close Fractal and you will need to sign back in next
+        Signing out will close Whist and you will need to sign back in next
         time.
       </div>
       <div className="w-full">

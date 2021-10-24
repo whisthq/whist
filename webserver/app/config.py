@@ -43,7 +43,7 @@ def _callback_webserver_hostname() -> str:
     If we're launching a streamed application from an instance of the web server running on a local
     development machine, the server is unable to receive pings from the protocol running in the
     mandelbox from which the application is being streamed. Instead, we want to direct all of the
-    protocol's communication to the Fractal development server deployment on Heroku.
+    protocol's communication to the Whist development server deployment on Heroku.
 
     This function must be called with request context.
 
@@ -87,7 +87,7 @@ def getter(key: str, fetch: bool = True, **kwargs: Any) -> Any:
     This function attempts to retrieve the value associated with a configuration variable key. It
     first tries to retrieve the value of the environment variable whose name matches the key. If
     no environment variable is set in the process's execution environment it may attempt to fetch
-    the value associated with the specified key from Fractal's configuration database. If the key
+    the value associated with the specified key from Whist's configuration database. If the key
     cannot be found, a default value is returned or a KeyError is raised.
 
     Arguments:
@@ -206,7 +206,7 @@ class DeploymentConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     #: str: The name of the access token claim containing the ID of the Stripe Customer record
-    #: associated with an authenticated user's Fractal account.
+    #: associated with an authenticated user's Whist account.
     STRIPE_CUSTOMER_ID_CLAIM = "https://api.fractal.co/stripe_customer_id"
 
     #: str: The ID of the Stripe Price object

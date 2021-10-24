@@ -1,8 +1,8 @@
-# Fractal Mandelbox Images
+# Whist Mandelbox Images
 
-At Fractal, we use the term "mandelbox" to refer to what is essentially an application that we deliver, combined with the Fractal-specific customizations that make everything work (securely). At the moment, our mandelboxes run on Docker.
+At Whist, we use the term "mandelbox" to refer to what is essentially an application that we deliver, combined with the Whist-specific customizations that make everything work (securely). At the moment, our mandelboxes run on Docker.
 
-This repository contains the code for "mandelbox-izing" the various applications that Fractal streams. The base Dockerfile running the Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
+This repository contains the code for "mandelbox-izing" the various applications that Whist streams. The base Dockerfile running the Whist protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Whist protocol.
 
 ## File Structure
 
@@ -18,7 +18,7 @@ A tree structure is provided below:
 │   │   ├── Xmodmap <- Configuration file for keystroke mappings on Linux Ubuntu
 │   │   ├── app-config-map.json <- Map for applications settings configuration location on Ubuntu
 │   │   ├── awesome-rc.lua <- Configuration file for our AwesomeWM window manager
-│   │   ├── fractal-display-config.env <- Environment variables for the Fractal virtual displays
+│   │   ├── fractal-display-config.env <- Environment variables for the Whist virtual displays
 │   │   ├── gtk-3-settings.ini <- Configuration file for GTK-basedapplications
 │   │   ├── pulse-client.conf <- Configuration file for our PulseAudio server
 │   │   ├── qt4-settings.conf <- Configuration file for QT4-based applications
@@ -26,15 +26,15 @@ A tree structure is provided below:
 │   ├── scripts
 │   │   ├── docker-entrypoint.sh <- First script run within a mandelbox, to start systemd
 │   │   ├── entry.sh <- Script to start the `fractal` systemd user within a mandelbox
-│   │   ├── run-fractal-server.sh <- Script to start the Fractal server protocol
+│   │   ├── run-fractal-server.sh <- Script to start the Whist server protocol
 │   │   ├── update-xorg-conf.sh <- Script to update the X Server to use the Nvidia GPU and uinput node
-│   │   └── xinitrc <- Script to start the window manager and Fractal application
+│   │   └── xinitrc <- Script to start the window manager and Whist application
 │   └── services
 │       ├── fractal-audio.service <- Systemd service to start a PulseAudio server
-│       ├── fractal-display.service <- Systemd service to start the Fractal virtual display
-│       ├── fractal-entrypoint.service <- Systemd service to start the Fractal systemd user
-│       ├── fractal-protocol.service <- Systemd service to start the Fractal server protocol
-│       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Fractal configuration
+│       ├── fractal-display.service <- Systemd service to start the Whist virtual display
+│       ├── fractal-entrypoint.service <- Systemd service to start the Whist systemd user
+│       ├── fractal-protocol.service <- Systemd service to start the Whist server protocol
+│       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Whist configuration
 ├── browsers
 │   ├── chrome
 │   │   ├── Dockerfile.20 <- Mandelbox image for Google Chrome
@@ -45,7 +45,7 @@ A tree structure is provided below:
 ├── build_mandelbox_image.sh <- Helper script to build a specific mandelbox image
 ├── helper_scripts
 │   ├── build_mandelbox_image.py <- Helper script to build a/many mandelbox image(s)
-│   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
+│   ├── copy_protocol_build.sh <- Helper script to copy the compiled Whist server protocol between folders
 │   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
 │   └── run_mandelbox_image.sh <- Helper script to run a mandelbox image
 │   └── run_mandelbox_image.py <- Helper script to run a mandelbox image
@@ -53,14 +53,14 @@ A tree structure is provided below:
 ├── run_local_mandelbox_image.sh <- Helper script to run a locally-built mandelbox image
 ├── run_remote_mandelbox_image.sh <- Helper script to fetch and run a mandelbox image stored on GHCR
 └── testing_scripts
-    ├── connection_tester.py <- Helper script to test UDP/TCP connectivity between a Fractal protocol server in a mandelbox and a client
+    ├── connection_tester.py <- Helper script to test UDP/TCP connectivity between a Whist protocol server in a mandelbox and a client
     ├── uinput_server.c <- Helper script to set up a Linux uinput server in a mandelbox
     └── uinput_tester.py <- Helper script to test sending uinput events to a uinput server in a mandelbox
 ```
 
 ## Development
 
-To contribute to enhancing all the mandelbox images Fractal uses, you should contribute to the base Dockerfile under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile for the application in question. We strive to make mandelbox images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
+To contribute to enhancing all the mandelbox images Whist uses, you should contribute to the base Dockerfile under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile for the application in question. We strive to make mandelbox images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
 
 ### Getting Started
 

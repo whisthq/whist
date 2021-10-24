@@ -13,7 +13,7 @@ describe("authInfoParse", () => {
   //     "exp": 1657811946,
   //     "aud": "www.example.com",
   //     "sub": "jrocket@example.com",
-  //     "email": "test@fractal.co"
+  //     "email": "test@whist.com"
   //     "https://api.fractal.co/subscription_status": "canceled"
   // }
 
@@ -31,7 +31,7 @@ describe("authInfoParse", () => {
 
   test("returns userEmail, accessToken, subscriptionStatus", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
-      userEmail: "test@fractal.co",
+      userEmail: "test@whist.com",
       accessToken: testAccessTokenGood,
       subscriptionStatus: null,
     })

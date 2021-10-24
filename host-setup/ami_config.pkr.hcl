@@ -85,7 +85,7 @@ variable "vpc_id" {
 
 source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
   access_key           = "${var.access_key}"
-  ami_description      = "Fractal-optimized Ubuntu 20.04 AWS Machine Image."
+  ami_description      = "Whist-optimized Ubuntu 20.04 AWS Machine Image."
   ami_name             = "${var.ami_name}"
   ami_regions          = "${var.destination_regions}"
   ebs_optimized        = true

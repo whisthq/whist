@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file video.c
  * @brief This file contains all code that interacts directly with receiving and
  *        processing video packets on the client.
@@ -1177,7 +1177,7 @@ int render_video() {
                 start_timer(&latency_clock);
                 SDL_Rect texture_rect =
                     new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
-                // TODO: wrap this in Fractal update texture
+                // TODO: wrap this in Whist update texture
                 int ret = SDL_UpdateNVTexture(video_context.texture, &texture_rect,
                                               video_context.data[0], video_context.linesize[0],
                                               video_context.data[1], video_context.linesize[1]);

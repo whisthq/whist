@@ -14,7 +14,7 @@ import signal
 import time
 
 # Argument parser
-parser = argparse.ArgumentParser(description="Build Fractal mandelbox image(s).")
+parser = argparse.ArgumentParser(description="Build Whist mandelbox image(s).")
 parser.add_argument(
     "-q",
     "--quiet",

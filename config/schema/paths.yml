@@ -6,10 +6,10 @@ ICON_FILE_NAME:
   prod: "icon"
 
 EXECUTABLE_NAME:
-  local: "Fractal (local)"
-  dev: "Fractal (development)"
-  staging: "Fractal (staging)"
-  prod: "Fractal"
+  local: "Whist (local)"
+  dev: "Whist (development)"
+  staging: "Whist (staging)"
+  prod: "Whist"
 
 # client-applications/config/paths.js
 CLIENT_LOG_FILE_NAME: "client.log"
@@ -25,8 +25,8 @@ CLIENT_LOG_FOLDERNAME: "logs"
 
 PROTOCOL_FILE_NAME:
   macos: "_Fractal"
-  win32: "Fractal.exe"
-  linux: "Fractal"
+  win32: "Whist.exe"
+  linux: "Whist"
 
 PROTOCOL_FOLDER_PATH:
   macos: "../../MacOS"

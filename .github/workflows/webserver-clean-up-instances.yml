@@ -46,7 +46,7 @@ jobs:
         # names of deployment environments (e.g. prod, staging). The deployment
         # environment of any Heroku app whose name is not found in the lookup
         # dictionary is set to dev. A deployment environment must be set for
-        # each job configuration in the matrix because cached Fractal access
+        # each job configuration in the matrix because cached Whist access
         # tokens are associated with specific deployment environments.
       - name: Create instance cleanup matrix
         id: matrix
@@ -89,7 +89,7 @@ jobs:
         id: date
         run: echo ::set-output name=date::$(date -u +%Y%m%d%p)
 
-      - name: Restore cached Fractal access token
+      - name: Restore cached Whist access token
         uses: actions/cache@v2
         with:
           key: access-token-${{ matrix.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}

@@ -1,6 +1,6 @@
-# Fractal Desktop Client
+# Whist Desktop Client
 
-This repository contains the code for the Fractal client application, which is the end user's gateway into Fractal's technology. The user downloads and installs the client into `Applications` (MacOS) or `Program Files` (Windows), and launches it anytime they want to open up the Fractal browser.
+This repository contains the code for the Whist client application, which is the end user's gateway into Whist's technology. The user downloads and installs the client into `Applications` (MacOS) or `Program Files` (Windows), and launches it anytime they want to open up the Whist browser.
 
 This repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in packaging the application for the user. Packaging involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS.
 
@@ -64,7 +64,7 @@ We use TypeScript for both processes, which is bundled and compiled to JavaScrip
 
 The Electron "renderer" process runs in a web browser environment. You'll feel right at home if you have web dev experience, as the renderer process has an identical API to Google Chrome. The renderer process is fully capable of performing HTTP requests and bundling NodeJS dependencies, and many applications rely on it for much of their functionality.
 
-However, the Fractal client application uses the renderer very minimally. As an architectural decision, we've decided to keep the renderer process as "dumb" as possible. It holds very little logic or state, and is essentially a "view" layer for the main process.
+However, the Whist client application uses the renderer very minimally. As an architectural decision, we've decided to keep the renderer process as "dumb" as possible. It holds very little logic or state, and is essentially a "view" layer for the main process.
 
 Applications can become tricky to manage when there's two "brains". It becomes unclear what computation should happen where, and keeping state in sync becomes a major challenge. Because the renderer process has no ability to launch child process, manage windows, or work with the filesystem, we decided to make the main process the "brain" of the app.
 
@@ -181,7 +181,7 @@ Before you can package the MacOS application it needs to be notarized. The appli
 
 Notarizing is done in Github CI. In the event you want to notarize locally:
 
-1. Download the Fractal Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Fractalcomputers!`.
+1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Fractalcomputers!`.
 
 2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store, and ensuring that you have the MacOSX SDK at `/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk`.
 
@@ -191,7 +191,7 @@ Notarizing is done in Github CI. In the event you want to notarize locally:
 
 ### Publishing New Versions
 
-Fractal runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `prod`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
+Whist runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `prod`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
 
 Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 

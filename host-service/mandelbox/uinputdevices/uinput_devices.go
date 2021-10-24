@@ -46,7 +46,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 	var keyboardPath string
 	var err error
 
-	absmouse, err = uinput.CreateTouchPad("/dev/uinput", []byte("Fractal Virtual Absolute Input"), 0, 0xFFF, 0, 0xFFF)
+	absmouse, err = uinput.CreateTouchPad("/dev/uinput", []byte("Whist Virtual Absolute Input"), 0, 0xFFF, 0, 0xFFF)
 	if err != nil {
 		reterr = utils.MakeError("Could not create virtual absolute input: %s", reterr)
 		return
@@ -63,7 +63,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 		return
 	}
 
-	relmouse, err = uinput.CreateMouse("/dev/uinput", []byte("Fractal Virtual Relative Input"))
+	relmouse, err = uinput.CreateMouse("/dev/uinput", []byte("Whist Virtual Relative Input"))
 	if err != nil {
 		reterr = utils.MakeError("Could not create virtual relative input: %s", err)
 		return
@@ -80,7 +80,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 		return
 	}
 
-	keyboard, err = uinput.CreateKeyboard("/dev/uinput", []byte("Fractal Virtual Keyboard"))
+	keyboard, err = uinput.CreateKeyboard("/dev/uinput", []byte("Whist Virtual Keyboard"))
 	if err != nil {
 		reterr = utils.MakeError("Could not create virtual keyboard: %s", err)
 		return

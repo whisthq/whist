@@ -1,7 +1,7 @@
 {
   "name": "@fractal/core-ts",
   "version": "1.0.0",
-  "description": "Internal Library for all Fractal React components, Typescript functions, CSS modules, etc.",
+  "description": "Internal Library for all Whist React components, Typescript functions, CSS modules, etc.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

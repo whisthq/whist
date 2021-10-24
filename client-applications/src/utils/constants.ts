@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file constants.ts
  * @brief This file contains constant values that are passed around to other parts of the application.
  */

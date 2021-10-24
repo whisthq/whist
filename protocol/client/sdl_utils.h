@@ -1,7 +1,7 @@
 #ifndef SDL_UTILS_H
 #define SDL_UTILS_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file sdl_utils.h
  * @brief This file contains the code to create and destroy SDL windows on the
  *        client.

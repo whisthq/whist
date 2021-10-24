@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file sdl_event_handler.c
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.

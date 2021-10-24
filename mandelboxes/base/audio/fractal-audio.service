@@ -1,6 +1,6 @@
-# Activates PulseAudio with correct settings for Fractal, runs as root
+# Activates PulseAudio with correct settings for Whist, runs as root
 [Unit]
-Description=Fractal Audio
+Description=Whist Audio
 After=fractal-display.service network.target
 Requires=fractal-display.service
 

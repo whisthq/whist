@@ -58,8 +58,8 @@ The inputs to the Python program include a "config" path (config folder in monor
 {
   "PROTOCOL_FILE_NAME": {
     "macos": "_Fractal",
-    "win32": "Fractal.exe",
-    "linux": "Fractal"
+    "win32": "Whist.exe",
+    "linux": "Whist"
   }
 }
 ```

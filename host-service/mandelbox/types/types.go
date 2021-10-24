@@ -6,7 +6,7 @@
 package types // import "github.com/fractal/fractal/host-service/mandelbox/types"
 
 // We define special types for the following string types for all the benefits
-// of type safety, including making sure we never switch Docker and Fractal
+// of type safety, including making sure we never switch Docker and Whist
 // IDs, for instance.
 
 // A MandelboxID is a random string that the webserver creates for each

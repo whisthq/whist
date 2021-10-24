@@ -17,9 +17,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Check that our Fractal Authentication API authentication is valid for all our environments dev/staging/prod
+  # Check that our Whist Authentication API authentication is valid for all our environments dev/staging/prod
   microservices-auth0-verify-fractal-api-auth:
-    name: "Auth0: Verify Fractal API Authentication for ${{ matrix.environment.name }}"
+    name: "Auth0: Verify Whist API Authentication for ${{ matrix.environment.name }}"
     runs-on: ubuntu-20.04
 
     strategy:
@@ -43,7 +43,7 @@ jobs:
         with:
           ref: ${{ matrix.environment.ref }}
 
-      - name: Obtain an Auth0 Access Token with Fractal API Audience
+      - name: Obtain an Auth0 Access Token with Whist API Audience
         id: get-token
         uses: ./.github/actions/generate-auth0-token
         with:

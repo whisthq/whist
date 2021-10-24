@@ -1,16 +1,16 @@
-# Fractal Protocol
+# Whist Protocol
 
-This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a mandelbox, or a regular computer, and a client computer or mobile device.
+This repository contains the source code for the Whist Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a mandelbox, or a regular computer, and a client computer or mobile device.
 
 ## Supported Platforms
 
 ### Server
 
-This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for server-specific development details.
+This folder builds a server to stream via Whist. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for server-specific development details.
 
 ### Client
 
-This folder builds a client to receive a server stream via Fractal. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
+This folder builds a client to receive a server stream via Whist. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
 
 ## High-Level Overview
 

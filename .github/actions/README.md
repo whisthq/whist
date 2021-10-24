@@ -68,11 +68,11 @@ name: Monorepo Config
 description: Build /config folder into .json files.
 inputs: # inputs can be passed to an Action from a workflow.
   secrets: # our config program needs a secrets argument to merge with config.
-    description: JSON object of Fractal secrets # just for documentation
+    description: JSON object of Whist secrets # just for documentation
     required: true # optional arguments are also supported
 outputs:
   config: # our output will be available to the workflow with this key
-    description: JSON object of Fractal config
+    description: JSON object of Whist config
 runs: # this is where we select the environment for the action.
   using: docker # could also be a node version like 'node12' or 'composite'
   image: Dockerfile # looks for a Dockerfile in the same folder.

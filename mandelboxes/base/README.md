@@ -1,12 +1,12 @@
-# Fractal Base Mandelbox Image
+# Whist Base Mandelbox Image
 
-This subfolder contains the base mandelbox Dockerfile that builds the core Fractal mandelbox running Fractal and general utilities and services that application-specific Dockerfiles can build upon. The base image runs **Ubuntu 20.04**.
+This subfolder contains the base mandelbox Dockerfile that builds the core Whist mandelbox running Whist and general utilities and services that application-specific Dockerfiles can build upon. The base image runs **Ubuntu 20.04**.
 
 This subfolders conforms to the **Styling** and **Continous Integration** practices defined in the outer README.
 
 ## Development
 
-This repository calls the Fractal [Protocol](https://github.com/fractal/protocol) repository as a Git submodule for integrating our streaming technology in the Dockerfile. Refer to the outer README for instructions on fetching the protocol Git submodule and building it into the Dockerfile.
+This repository calls the Whist [Protocol](https://github.com/fractal/protocol) repository as a Git submodule for integrating our streaming technology in the Dockerfile. Refer to the outer README for instructions on fetching the protocol Git submodule and building it into the Dockerfile.
 
 Any Linux services needed for the mandelboxes to function properly should be developed and hosted as part of this project subfolder. For any details on continuous integration and styling, refer to the outer README of this project.
 
@@ -26,7 +26,7 @@ The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-a
 
 4. `fractal-audio.service`, meanwhile, can start as soon as `fractal-display.service` _begins_ running (which is important because the lifecycle of fractal-display is the lifecycle of our mandelboxized applications). It starts a virtual Pulse Audio soundcard in the mandelbox, enabling sound.
 
-5. `fractal-protocol.service` can start as soon as `fractal-display.service` and `fractal-audio.service` are both running, running the Fractal protocol and configuring some environment variables to work correctly with the X Server.
+5. `fractal-protocol.service` can start as soon as `fractal-display.service` and `fractal-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server.
 
 ### Useful Debugging Practices
 
@@ -36,7 +36,7 @@ You can run `systemctl status` to see all the running services in the mandelbox.
 
 `journalctl` shows all the systemd logs. If you run `journalctl` in a Bash shell inside a mandelbox, you'll be able to see the logs of a running server protocol, which is useful for debugging.
 
-`/usr/share/fractal/server.log` contains the Fractal protocol logs. They can also be found in the systemd logs with `journalctl | grep FractalServer`.
+`/usr/share/fractal/server.log` contains the Whist protocol logs. They can also be found in the systemd logs with `journalctl | grep FractalServer`.
 
 `/testing_scripts` contains some little test scripts that can help debug problems on the host machine.
 

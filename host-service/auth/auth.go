@@ -28,7 +28,7 @@ type Audience []string
 type Scopes []string
 
 // FractalClaims is a struct type that models the claims that must be present
-// in an Auth0-issued Fractal access token.
+// in an Auth0-issued Whist access token.
 type FractalClaims struct {
 	jwt.StandardClaims
 

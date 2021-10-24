@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file parse_args.c
  * @brief This file contains the code that parses the args for
 the server protocol.
@@ -126,7 +126,7 @@ int server_parse_args(int argc, char* argv[]) {
                 return 1;
             }
             case FRACTAL_GETOPT_VERSION_CHAR: {
-                printf("Fractal client revision %s\n", fractal_git_revision());
+                printf("Whist client revision %s\n", fractal_git_revision());
                 return 1;
             }
             default: {

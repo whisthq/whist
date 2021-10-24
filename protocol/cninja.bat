@@ -1,6 +1,6 @@
 @echo off
 
-REM Script to build the Fractal protocol on Windows
+REM Script to build the Whist protocol on Windows
 
 REM cd to parent directory of this script
 cd %~dp0

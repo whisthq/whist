@@ -29,7 +29,7 @@ Subscription status
 -------------------
 
 Part of enforcing access control is denying service to users who lack active
-Fractal subscriptions. The :func:`payments.payment_required` decorator
+Whist subscriptions. The :func:`payments.payment_required` decorator
 implements this behavior. Each time the Webserver receives a request for a
 resource that is only available to paying users, the
 :func:`payments.payment_required` decorator checks the authenticated user's
@@ -43,18 +43,18 @@ status. More specifically, the value of the
 ``https://api.fractal.co/subscription_status`` claim is the value of the
 ``status`` attribute of the most recent non-terminal Stripe
 `Subscription object`_ associated with Stripe Customer record associated with
-the user's Fractal account, or ``null`` if all of a user's subscriptions are in
+the user's Whist account, or ``null`` if all of a user's subscriptions are in
 terminal states. Let's break that down:
 
 1. Also mentioned in the section about :ref:`custom claims` is the
    ``https://api.fractal.co/stripe_customer_id`` claim. This claim contains the
    ID of the Stripe customer record associated with the authorized user's
-   Fractal account. The customer record associated with the authorized user's
-   is created the first time the user logs into Fractal.
-2. When a Fractal user buys a Fractal subscription, a Subscription object
+   Whist account. The customer record associated with the authorized user's
+   is created the first time the user logs into Whist.
+2. When a Whist user buys a Whist subscription, a Subscription object
    representing their subscription is associated with the Customer record
    associated with their account. An invariant that we don't necessarily
-   enforce, but we hope holds true is that each Fractal user is only paying for
+   enforce, but we hope holds true is that each Whist user is only paying for
    one subscription at a time (and so has only one Subscription object
    associated with their Customer record. Nevertheless, we disregard all
    Subscription objects associated with a user's Customer record other than the
@@ -100,7 +100,7 @@ would like to manage their subscription or billing information, the desktop app
 calls the ``/payment_portal_url`` endpoint on the Webserver to obtain the URL
 of either a Stripe Checkout or Customer Portal session. Opening the URL brings
 up a Stripe-hosted form that allows the user to sign up for a new subscription
-or manage their existing subscription and billing information. Fractal
+or manage their existing subscription and billing information. Whist
 developers can customize the form's appearance from the `Stripe dashboard`_.
 
 The Webserver determines whether or not a Checkout or Customer Portal session

@@ -82,7 +82,7 @@ jobs:
           git credential approve <<EOF
           protocol=https
           host=github.com
-          username=phil@fractal.co
+          username=phil@whist.com
           password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           EOF
 
@@ -117,6 +117,6 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-dev"
           TITLE = ":orange_book: Host Service Internal Documentation Deployed :orange_book:"
-          BODY = "Fractal `host-service` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Whist `host-service` Internal Documentation Deployed to `docs.fractal.co` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

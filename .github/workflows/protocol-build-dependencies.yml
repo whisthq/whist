@@ -1,7 +1,7 @@
 # workflows/protocol-build-dependencies.yml
 #
-# Build & Publish Fractal Protocol dependencies
-# Build and publish Fractal version-compatible builds of the Fractal protocol
+# Build & Publish Whist Protocol dependencies
+# Build and publish Whist version-compatible builds of the Whist protocol
 # dependencies to AWS S3. This workflow only builds non-forked dependencies,
 # forked dependencies, i.e. SDL, are forked as fractal/<dependency> (i.e. fractal/SDL) and
 # published directly from the forked repository
@@ -74,7 +74,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
 
-      - name: Build Fractal OpenSSL on Windows
+      - name: Build Whist OpenSSL on Windows
         if: runner.os == 'Windows'
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
@@ -85,7 +85,7 @@ jobs:
       ###################################################################################
       ################################# MACOS STEPS START ###############################
 
-      - name: Build Fractal OpenSSL on macOS
+      - name: Build Whist OpenSSL on macOS
         if: runner.os == 'macOS'
         env:
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
@@ -97,7 +97,7 @@ jobs:
       ###################################################################################
       ################################# LINUX STEPS START ###############################
 
-      - name: Build Fractal OpenSSL on Linux Ubuntu
+      - name: Build Whist OpenSSL on Linux Ubuntu
         if: runner.os == 'Linux'
         env:
           DEBIAN_FRONTEND: "noninteractive"
@@ -202,7 +202,7 @@ jobs:
       ###################################################################################
       ################################# MACOS STEPS START ###############################
 
-      - name: Build Fractal OpenSSL on macOS
+      - name: Build Whist OpenSSL on macOS
         env:
           FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
@@ -539,7 +539,7 @@ jobs:
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-prod"
-          TITLE = ":openssl: Fractal Protocol Dependencies Deployed :openssl:"
-          BODY = f"Fractal `Sentry` & `OpenSSL` Libraries deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":openssl: Whist Protocol Dependencies Deployed :openssl:"
+          BODY = f"Whist `Sentry` & `OpenSSL` Libraries deployed to Production via upload to AWS S3 (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

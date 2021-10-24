@@ -17,7 +17,7 @@ const Hero = () => (
           too many tabs.
         </p>
         <p className="max-w-xl mt-5 mx-auto text-xl text-gray-400">
-          Fractal makes your workflow faster by moving your computer&lsquo;s
+          Whist makes your workflow faster by moving your computer&lsquo;s
           most draining application — Google Chrome — to the cloud.
         </p>
       </div>

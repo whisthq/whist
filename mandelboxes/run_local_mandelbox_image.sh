@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # This script runs a mandelbox image that exists locally on the machine where
-# the script is run. For it to work with the Fractal mandelboxes, this script
-# needs to be run directly on a Fractal-enabled (see /host-setup) AWS EC2
+# the script is run. For it to work with the Whist mandelboxes, this script
+# needs to be run directly on a Whist-enabled (see /host-setup) AWS EC2
 # instance, via SSH, after the mandelbox image was locally built.
 
 set -Eeuo pipefail

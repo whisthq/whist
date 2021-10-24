@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file network.c
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.

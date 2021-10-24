@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file network.h
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.

@@ -1,7 +1,7 @@
 #ifndef WINDOWS_UTILS_H
 #define WINDOWS_UTILS_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file windows_utils.h
  * @brief This file contains all code that interacts directly with Windows
  *        desktops (Winlogon, the login screen, and regular desktops).
@@ -86,7 +86,7 @@ void open_window();
 /**
  * @brief                          Call the above functions; logs from Winlogon
  *                                 to Winsta0 (the standard Windows desktop) by
- *                                 entering the Fractal password
+ *                                 entering the Whist password
  *
  * @param input_device             The input device to use for setting the password
  * @param vm_password              The password to the VM

@@ -1,13 +1,13 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file main.c
- * @brief This file contains the main code that runs a Fractal client on a
+ * @brief This file contains the main code that runs a Whist client on a
  *        Windows, MacOS or Linux Ubuntu computer.
 ============================
 Usage
 ============================
 
-Follow main() to see a Fractal video streaming client being created and creating
+Follow main() to see a Whist video streaming client being created and creating
 its threads.
 */
 
@@ -231,7 +231,7 @@ int32_t multithreaded_renderer(void* opaque) {
 }
 
 void handle_single_icon_launch_client_app(int argc, char* argv[]) {
-    // This function handles someone clicking the protocol icon as a means of starting Fractal by
+    // This function handles someone clicking the protocol icon as a means of starting Whist by
     // instead launching the client app
     // If argc == 1 (no args passed), then check if client app path exists
     // and try to launch.
@@ -244,14 +244,14 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
         memset(client_app_path, 0, APP_PATH_MAXLEN + 1);
 
 #ifdef _WIN32
-        const char* relative_client_app_path = "/../../Fractal.exe";
+        const char* relative_client_app_path = "/../../Whist.exe";
         char dir_split_char = '\\';
         size_t protocol_path_len;
 
 #elif __APPLE__
         // This executable is located at
-        //    Fractal.app/Contents/MacOS/FractalClient
-        // We want to reference client app at Fractal.app/Contents/MacOS/FractalLauncher
+        //    Whist.app/Contents/MacOS/FractalClient
+        // We want to reference client app at Whist.app/Contents/MacOS/FractalLauncher
         const char* relative_client_app_path = "/FractalLauncher";
         char dir_split_char = '/';
         int protocol_path_len;
@@ -283,12 +283,12 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
                     LOG_INFO("Client app path: %s", client_app_path);
 #ifdef _WIN32
                     // If `_execl` fails, then the program proceeds, else defers to client app
-                    if (_execl(client_app_path, "Fractal.exe", NULL) < 0) {
+                    if (_execl(client_app_path, "Whist.exe", NULL) < 0) {
                         LOG_INFO("_execl errno: %d errstr: %s", errno, strerror(errno));
                     }
 #elif __APPLE__
                     // If `execl` fails, then the program proceeds, else defers to client app
-                    if (execl(client_app_path, "Fractal", NULL) < 0) {
+                    if (execl(client_app_path, "Whist", NULL) < 0) {
                         LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));
                     }
 #endif
@@ -344,7 +344,7 @@ int main(int argc, char* argv[]) {
     SDL_Thread* renderer_thread = NULL;
 
     print_system_info();
-    LOG_INFO("Fractal client revision %s", fractal_git_revision());
+    LOG_INFO("Whist client revision %s", fractal_git_revision());
 
     client_exiting = false;
     FractalExitCode exit_code = FRACTAL_EXIT_SUCCESS;

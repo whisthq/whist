@@ -1,6 +1,6 @@
 package metadata // import "github.com/fractal/fractal/host-service/metadata"
 
-// Fractal webserver URLs and relevant webserver endpoints
+// Whist webserver URLs and relevant webserver endpoints
 const localdevFractalWebserver = "https://127.0.0.1:7730"
 const devFractalWebserver = "https://dev-server.fractal.co"
 const stagingFractalWebserver = "https://staging-server.fractal.co"

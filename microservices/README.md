@@ -1,6 +1,6 @@
-# Fractal Microservices
+# Whist Microservices
 
-This repository contains Fractal's microservices. These are self-contained, discrete services that perform certain tasks.
+This repository contains Whist's microservices. These are self-contained, discrete services that perform certain tasks.
 
 Currently, it only contains Auth0 Rules and related scripts. See [auth0/README.md](auth0/README.md) for more details specific to Auth0 Rules.
 

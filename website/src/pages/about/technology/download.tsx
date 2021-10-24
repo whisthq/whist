@@ -13,7 +13,7 @@ const Download = () => {
           Chrome, just faster
         </div>
         <p className="mt-3 text-xl text-gray-500 sm:mt-4">
-          Fractal runs Google Chrome on datacenter-grade hardware
+          Whist runs Google Chrome on datacenter-grade hardware
         </p>
       </div>
       <div className="text-center mt-12">

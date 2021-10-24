@@ -1,6 +1,6 @@
-# Fractal Mandelbox Testing Scripts
+# Whist Mandelbox Testing Scripts
 
-This subfolder contains various scripts for manually testing different components of the Fractal mandelboxes (i.e. latency, connectivity, etc.). If you find yourself creating a testing script while implementing or debugging a feature of the mandelboxes, add it here so that it can help others eventually.
+This subfolder contains various scripts for manually testing different components of the Whist mandelboxes (i.e. latency, connectivity, etc.). If you find yourself creating a testing script while implementing or debugging a feature of the mandelboxes, add it here so that it can help others eventually.
 
 ## Existing Scripts
 

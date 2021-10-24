@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file index.tsx
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */

@@ -1,14 +1,14 @@
 {
   "name": "fractal",
-  "productName": "Fractal",
+  "productName": "Whist",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "author": {
-    "email": "support@fractal.co",
+    "email": "support@whist.com",
     "name": "Fractal Computers, Inc.",
     "url": "https://www.fractal.co"
   },
-  "description": "Fractal Desktop Application",
+  "description": "Whist Desktop Application",
   "main": "build/dist/main/index.js",
   "homepage": "https://fractal.co",
   "scripts": {

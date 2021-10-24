@@ -1,5 +1,5 @@
 /*
-Package mandelbox provides the abstractions of mandelboxes managed by Fractal.
+Package mandelbox provides the abstractions of mandelboxes managed by Whist.
 It defines the types and implements lots of functionality associated with
 mandelboxes. In `tracker.go`, it also keeps a list of all mandelboxes on this
 host at any given point.

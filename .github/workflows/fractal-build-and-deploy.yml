@@ -1,9 +1,9 @@
 # workflows/fractal-build-and-deploy.yml
 #
-# Fractal: Build & Deploy
-# Build and deploy each of the relevant Fractal projects for our production, staging and dev environments
+# Whist: Build & Deploy
+# Build and deploy each of the relevant Whist projects for our production, staging and dev environments
 
-name: "Fractal: Build & Deploy"
+name: "Whist: Build & Deploy"
 
 on:
   push:
@@ -318,7 +318,7 @@ jobs:
   #######################################################################################
 
   # Auth0 Rules: Build & Deploy Auth0 Rules to Auth0 Tenant
-  # Build and deploy the Auth0 rules to the Fractal Auth0 Tenant platform, with
+  # Build and deploy the Auth0 rules to the Whist Auth0 Tenant platform, with
   # which our client-application interfaces with authenticating users through Auth0
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   microservices-deploy-auth0-rules:
@@ -378,14 +378,14 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs
+  # Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs
   # This job does:
   # 1- Build and publish the mandelboxes to a GitHub Container Registry repository
-  # 2- Build and publish the Fractal Linux AMI, containing the pre-built Fractal Host Service and pre-pulled
-  #    Fractal mandelboxes from step 1, to all supported AWS EC2 regions
+  # 2- Build and publish the Whist Linux AMI, containing the pre-built Whist Host Service and pre-pulled
+  #    Whist mandelboxes from step 1, to all supported AWS EC2 regions
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   mandelboxes-and-amis-publish-ghcr-and-aws:
-    name: "Mandelbox Infrastructure: Build & Publish Fractal Mandelboxes and AMIs"
+    name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
     needs: [fractal-publish-build-config, fractal-build-monorepo-config]
@@ -397,7 +397,7 @@ jobs:
       aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on
       aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
-      aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
+      aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
 
     steps:
@@ -587,7 +587,7 @@ jobs:
       ##########################################################################################
       ############################# Stage 4 - Slack Notifications ##############################
 
-      # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
+      # Notify Slack after building and deploying the Whist AMI to all supported AWS regions.
       - name: Notify Slack on Job Successs
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
         shell: python3 {0}
@@ -852,7 +852,7 @@ jobs:
   #######################################################################################
 
   # Client Applications: Retrieve Version Number
-  # Retrieve the current Fractal version number from our configuration database, through Hasura
+  # Retrieve the current Whist version number from our configuration database, through Hasura
   # This is the first step in the client-applications deployment jobs
   client-applications-retrieve-version-number:
     name: "Client Applications: Retrieve Current Version Number from Config Database"
@@ -1107,7 +1107,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
         run: |
-          # Build the Fractal protocol and package the Electron application
+          # Build the Whist protocol and package the Electron application
           # We need to increase the timeout to deal with GHA's weak VMs.
           yarn config set network-timeout 600000
           yarn cache clean
@@ -1213,7 +1213,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
         run: |
-          # Build the Fractal protocol and package the Electron application
+          # Build the Whist protocol and package the Electron application
           # We need to increase the timeout to deal with GHA's weak VMs.
           yarn config set network-timeout 600000
           yarn cache clean
@@ -1228,7 +1228,7 @@ jobs:
   #######################################################################################
 
   # Client Applications: Update Version Number
-  # Set the New Fractal version number in our configuration database, through Hasura
+  # Set the New Whist version number in our configuration database, through Hasura
   client-applications-update-version-number:
     name: "Client Applications: Set New Version Number in Config Database"
     runs-on: ubuntu-20.04
@@ -1472,7 +1472,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}
-          body: Fractal Production Release on ${{ env.date }}
+          body: Whist Production Release on ${{ env.date }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1483,8 +1483,8 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          TITLE = ":github: Fractal GitHub Release Completed :github:"
-          BODY = "Deployment of Fractal Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          TITLE = ":github: Whist GitHub Release Completed :github:"
+          BODY = "Deployment of Whist Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error

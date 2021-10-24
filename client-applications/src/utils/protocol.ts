@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file protocol.ts
  * @brief This file contains utility functions launching the protocol ChildProcess. This file contains
  * all the code used to interact with the protocol through the client-app. Everything -- launching
@@ -78,7 +78,7 @@ export const protocolLaunch = async () => {
     stdio: ["pipe", "pipe", "ignore"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
-    // but expects to be in the Fractal.app root alongside the loading
+    // but expects to be in the Whist.app root alongside the loading
     // animation PNG files.
     ...(app.isPackaged &&
       process.platform === "darwin" && {

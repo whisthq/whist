@@ -1,13 +1,13 @@
 /* add-subscription-status-claim.js
 
-   Add the status of the authenticated user's Fractal Stripe subscription as the
+   Add the status of the authenticated user's Whist Stripe subscription as the
    value of the custom https://api.fractal.co/subscription_status access token
    claim.
 
    The subscription status is recomputed every time a new access token is
    issued. In a worst case scenario, it is possible for the user's subscription
    to expire before their access token does. This would allow them to continue
-   using Fractal for up to one access token lifetime, which is twenty-four
+   using Whist for up to one access token lifetime, which is twenty-four
    hours.
  */
 

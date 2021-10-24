@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file windowscursor.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================

@@ -32,8 +32,8 @@ const Privacy = () => {
         </div>
 
         <p>
-          Thank you for choosing to be part of our community at Fractal
-          Computers, Inc., doing business as Fractal (“Fractal”, “we”, “us”, or
+          Thank you for choosing to be part of our community at Whist
+          Computers, Inc., doing business as Whist (“Fractal”, “we”, “us”, or
           “our”). When you visit our website,{" "}
           <a href="https://www.fractal.co">www.fractal.co</a>, and use our
           services, you trust us with your personal information. We want you to
@@ -47,7 +47,7 @@ const Privacy = () => {
           information. If you have any questions or concerns about our policy,
           or our practices with regards to your personal information, please
           contact us at{" "}
-          <a href="mailto:support@fractal.co">support@fractal.co</a>. We
+          <a href="mailto:support@whist.com">support@whist.com</a>. We
           encourage you to read through this important information. If there are
           any terms in this privacy policy that you disagree with, please
           discontinue the use of our Sites and our Services.
@@ -235,7 +235,7 @@ const Privacy = () => {
             contain personal information. Prior to posting a testimonial, we
             will seek your consent to use your name and testimonial. If you wish
             to update or delete your testimonial, please contact us at{" "}
-            <a href="mailto:support@fractal.co">support@fractal.co</a> and be
+            <a href="mailto:support@whist.com">support@whist.com</a> and be
             sure to include your name, testimonial location, and contact
             information.
           </p>
@@ -455,7 +455,7 @@ const Privacy = () => {
           collected, we will deactivate the account and take reasonable measures
           to promptly delete such data from our records. If you become aware of
           any data we have collected from children under age 18, please contact
-          us at <a href="mailto:support@fractal.co">support@fractal.co</a>.
+          us at <a href="mailto:support@whist.com">support@whist.com</a>.
         </p>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
           9. Advertising And Analytics Services Provided By Others
@@ -507,7 +507,7 @@ const Privacy = () => {
             here
           </a>
           . If you have questions or comments about your privacy rights, you may
-          email us at <a href="mailto:support@fractal.co">support@fractal.co</a>
+          email us at <a href="mailto:support@whist.com">support@whist.com</a>
           .
         </p>
         <div style={{ paddingLeft: 20 }}>
@@ -519,7 +519,7 @@ const Privacy = () => {
           <p>
             Log into your account settings and update your user account, or
             contact us at{" "}
-            <a href="mailto:support@fractal.co">support@fractal.co</a>.
+            <a href="mailto:support@whist.com">support@whist.com</a>.
           </p>
           <p>
             Upon your request to terminate your account, we will deactivate or
@@ -571,7 +571,7 @@ const Privacy = () => {
             Note your preferences when you register an account with the site,
             access your account settings and update preferences, or contact us
             by email at{" "}
-            <a href="mailto:support@fractal.co">support@fractal.co</a>.
+            <a href="mailto:support@whist.com">support@whist.com</a>.
           </p>
         </div>
         <p style={{ fontWeight: "bold", fontSize: 20 }}>
@@ -645,7 +645,7 @@ const Privacy = () => {
         </p>
         <p>
           If you have questions or comments about this policy, you may email us
-          at <a href="mailto:support@fractal.co">support@fractal.co</a> or by
+          at <a href="mailto:support@whist.com">support@whist.com</a> or by
           post to:
         </p>
         <p>

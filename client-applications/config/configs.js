@@ -49,11 +49,11 @@ const configs = {
     deployEnv: "dev",
     sentryEnv: "development",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal (local)",
+    title: "Whist (local)",
   },
   DEVELOPMENT: {
     appEnvironment,
@@ -76,11 +76,11 @@ const configs = {
     deployEnv: "dev",
     sentryEnv: "development",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal (development)",
+    title: "Whist (development)",
   },
   STAGING: {
     appEnvironment,
@@ -104,11 +104,11 @@ const configs = {
     sentryEnv: "staging",
     clientDownloadURLs: {
       MacOS:
-        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
+        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal (staging)",
+    title: "Whist (staging)",
   },
   PRODUCTION: {
     appEnvironment,
@@ -131,11 +131,11 @@ const configs = {
     deployEnv: "prod",
     sentryEnv: "production",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
+      MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-base.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal",
+    title: "Whist",
   },
 }
 

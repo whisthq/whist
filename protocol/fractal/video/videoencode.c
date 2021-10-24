@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file videoencode.c
  * @brief This file contains the code to create and destroy Encoders and use
  *        them to encode captured screens.

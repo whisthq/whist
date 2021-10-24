@@ -307,7 +307,7 @@ def user(
         A string representing the user's identity.
     """
 
-    return user_id if user_id is not None else f"test-user+{uuid.uuid4()}@fractal.co"
+    return user_id if user_id is not None else f"test-user+{uuid.uuid4()}@whist.com"
 
 
 user_fixture = pytest.fixture(name="user")(user)

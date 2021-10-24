@@ -9,7 +9,7 @@ const supportLinks = [
   {
     name: "Your Google Environment",
     description:
-      "Signing into your Google account on Fractal loads all your extensions and settings.",
+      "Signing into your Google account on Whist loads all your extensions and settings.",
     icon: CloudDownloadIcon,
   },
   {
@@ -21,7 +21,7 @@ const supportLinks = [
   {
     name: "Dedicated GPU",
     description:
-      "Fractal runs Chrome on a dedicated NVIDIA graphics card for the fastest page rendering speeds.",
+      "Whist runs Chrome on a dedicated NVIDIA graphics card for the fastest page rendering speeds.",
     icon: ChipIcon,
   },
 ]
@@ -43,7 +43,7 @@ export const Features = () => {
         </div>
       </div>
       <p className="mt-3 text-xl text-gray-500 sm:mt-4 mb-12">
-        Fractal is the Google Chrome you love, running at breathtaking speeds in
+        Whist is the Google Chrome you love, running at breathtaking speeds in
         the cloud.
       </p>
       <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8 m-auto text-left max-w-7xl">

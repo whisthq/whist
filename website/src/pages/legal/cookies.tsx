@@ -167,7 +167,7 @@ const Cookies = () => {
         <p style={{ fontWeight: "bold", fontSize: 20 }}>More Information</p>
         <p>
           If you are looking for more information, you can contact us via email
-          at <a href="mailto:support@fractal.co">support@fractal.co</a>.
+          at <a href="mailto:support@whist.com">support@whist.com</a>.
         </p>
       </div>
     </div>

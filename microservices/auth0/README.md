@@ -1,12 +1,12 @@
-# Fractal Auth0 Rules
+# Whist Auth0 Rules
 
-This repository contains the code and deployment scripts for Fractal's Auth0 Rules. Auth0 is the identity management provider that Fractal uses. It handles signup, login, and some aspects of user management. Auth0 Rules are small callback scripts that are be triggered by Auth0 when users log in successfully. They are deployed to and run on Auth0's own servers.
+This repository contains the code and deployment scripts for Whist's Auth0 Rules. Auth0 is the identity management provider that Whist uses. It handles signup, login, and some aspects of user management. Auth0 Rules are small callback scripts that are be triggered by Auth0 when users log in successfully. They are deployed to and run on Auth0's own servers.
 
 ### A Note About Hooks
 
 Auth0 Hooks are similar to Rules in that they are scripts that are triggered to run by certain Auth0-defined events. Unlike Rules, which are only configurable to run when a user logs in successfully, Hooks may run in response to various user lifecycle events such as pre- and post- registration or password change.
 
-Currently, the functionality that Auth0 Hooks provide is not necessary for any of Fractal's use cases. More specifically, we do not currently have any functionality that we need to add at any of the Auth0 Hooks [Extensibility Points](https://auth0.com/docs/hooks/extensibility-points): Client Credentials Exchange, Pre-User Registration, Post-User Registration, Post-Change Password, Send Phone Message. The only callback functions we need to run should be triggered by successful user logins.
+Currently, the functionality that Auth0 Hooks provide is not necessary for any of Whist's use cases. More specifically, we do not currently have any functionality that we need to add at any of the Auth0 Hooks [Extensibility Points](https://auth0.com/docs/hooks/extensibility-points): Client Credentials Exchange, Pre-User Registration, Post-User Registration, Post-Change Password, Send Phone Message. The only callback functions we need to run should be triggered by successful user logins.
 
 ## Development
 
@@ -21,7 +21,7 @@ The `tenant.yaml` represents the full configuration of an Auth0 tenant. We have 
 ```yaml
 ---
 resourceServers:
-    - name: Fractal API
+    - name: Whist API
       identifier: "##API_IDENTIFIER##"
       allow_offline_access: true
       enforce_policies: true
@@ -41,7 +41,7 @@ Note that `yarn dump:dev` may make undesirable changes to `tenant.yaml` or add u
 
 ### Clients
 
-The `tenant.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Fractal desktop application) or trusted "machine-to-machine" clients such as GitHub Actions or the Fractal webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn dump:dev`.
+The `tenant.yaml` contains a list of clients -- these may represent either user-facing applications (eg. the Whist desktop application) or trusted "machine-to-machine" clients such as GitHub Actions or the Whist webserver. To add a client, it's recommended to use the Auth0 web UI and updating `tenant.yaml` with `yarn dump:dev`.
 
 Here's an example client configuration:
 
@@ -73,7 +73,7 @@ Here's an example client configuration:
 
 Many of these fields are self-explanatory, but some require more explanation:
 
--   `app_type` indicates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Fractal desktop application, etc.
+-   `app_type` indicates the type of this app. "non_interactive" means that this is a machine-to-machine client, "native" would be for the Whist desktop application, etc.
 -   `jwt_configuration.alg` is the algorithm used to sign access tokens for this client. This should be 'RS256' (asymmetric signing algorithm, can be verified with a public key) unless there's a very good reason otherwise.
 -   `jwt_configuration.lifetime_in_seconds` is the lifetime (in seconds) of an _access_ token. By default, this is 1 day
 -   `refresh_token.token_lifetime` is the _maximum_ lifetime (in seconds) of a _refresh_ token

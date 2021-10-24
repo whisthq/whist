@@ -4,7 +4,7 @@
       "names": ["clone", "unshare"],
       "action": "SCMP_ACT_ALLOW",
       "args": [],
-      "comment": "Fractal enables these syscalls for Chromium sandboxing to function.",
+      "comment": "Whist enables these syscalls for Chromium sandboxing to function.",
       "includes": {},
       "excludes": {}
     },
@@ -12,7 +12,7 @@
       "names": ["unshare", "mount", "umount", "umount2"],
       "action": "SCMP_ACT_ALLOW",
       "args": [],
-      "comment": "Fractal enables these syscalls for FUSE filesystems to function.",
+      "comment": "Whist enables these syscalls for FUSE filesystems to function.",
       "includes": {},
       "excludes": {}
     }

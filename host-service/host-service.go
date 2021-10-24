@@ -1,6 +1,6 @@
 /*
-The Fractal Host Service is responsible for orchestrating mandelboxes (i.e.
-Fractal-enabled containers) on EC2 instances (referred to as "hosts" throughout
+The Whist Host Service is responsible for orchestrating mandelboxes (i.e.
+Whist-enabled containers) on EC2 instances (referred to as "hosts" throughout
 the codebase). The host service is responsible for making Docker calls to start
 and stop mandelboxes, for enabling multiple mandelboxes to run concurrently on
 the same host (by dynamically allocating and assigning resources), and for
@@ -166,7 +166,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		return utils.MakeError("Couldn't find a suitable image")
 	}
 
-	// It turns out the second mandelbox (including starting the Fractal
+	// It turns out the second mandelbox (including starting the Whist
 	// applicaiton) is a bit slow still. Therefore, we do this warmup _twice_.
 	warmupCount := 2
 	for iter := 1; iter <= warmupCount; iter++ {
@@ -739,7 +739,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 // Handle tasks to be completed when a mandelbox dies
 func mandelboxDieHandler(id string) {
-	// Exit if we are not dealing with a Fractal mandelbox, or if it has already
+	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
 	fc, err := mandelbox.LookUpByDockerID(types.DockerID(id))
 	if err != nil {
@@ -857,7 +857,7 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 	defer func() {
-		// This function cleanly shuts down the Fractal Host Service. Note that
+		// This function cleanly shuts down the Whist Host Service. Note that
 		// besides the host machine itself being forcefully shut down, this
 		// deferred function from main() should be the _only_ way that the host
 		// service exits. In particular, it should be as a result of a panic() in

@@ -1,15 +1,15 @@
 #ifndef SERVER_MAIN_H
 #define SERVER_MAIN_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file main.h
- * @brief This file contains the main code that runs a Fractal server on a
+ * @brief This file contains the main code that runs a Whist server on a
  *        Windows or Linux Ubuntu computer.
 ============================
 Usage
 ============================
 
-Follow main() to see a Fractal video streaming server being created and creating
+Follow main() to see a Whist video streaming server being created and creating
 its threads.
 */
 

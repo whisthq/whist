@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file tray.ts
  * @brief This file contains all RXJS observables created from events caused by clicking on the tray.
  */

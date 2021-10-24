@@ -1,9 +1,9 @@
 [project]
 name = "fractal"
 version = "1.0.0"
-description = "Fractal monorepository pyproject.toml"
+description = "Whist monorepository pyproject.toml"
 authors = [
-    "Fractal Developers <developers@fractal.co>"
+    "Whist Developers <developers@whist.com>"
 ]
 license = "UNLICENSED"
 readme = "README.md"

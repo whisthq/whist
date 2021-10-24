@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file linuxcursor.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================
@@ -25,7 +25,7 @@ Includes
 #include "string.h"
 
 /*
-        These are the cursor hashes of corresponding Fractal Cursors
+        These are the cursor hashes of corresponding Whist Cursors
         (from cursor.h) returned from ::hash from ../utils/aes.c found
         experimentally
 */
