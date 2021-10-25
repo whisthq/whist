@@ -1095,7 +1095,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 					}
-					// Create a mandelbbox object as would be received from a Hasura subscription.
+					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
 						InstanceName: string(instanceName),
 						MandelboxID:  jsonReq.MandelboxID,

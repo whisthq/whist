@@ -53,7 +53,7 @@ func (m *mockClient) ImageList(ctx context.Context, options types.ImageListOptio
 		},
 		ParentID:    "testParent",
 		RepoDigests: []string{"testDigest"},
-		RepoTags:    []string{"testApp"},
+		RepoTags:    []string{"browsers/chrome"},
 		SharedSize:  1234,
 		Size:        1234,
 		VirtualSize: 1234,
@@ -168,8 +168,8 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Check that container config was passed in correctly
-	if dockerClient.config.Image != "testApp" {
-		t.Errorf("Expected container to use image testApp, got %v", dockerClient.config.Image)
+	if dockerClient.config.Image != "browsers/chrome" {
+		t.Errorf("Expected container to use image browsers/chrome, got %v", dockerClient.config.Image)
 	}
 
 	exposedPorts := dockerClient.config.ExposedPorts

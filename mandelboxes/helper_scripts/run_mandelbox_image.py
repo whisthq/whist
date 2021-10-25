@@ -157,7 +157,7 @@ def copy_locally_built_protocol(cont):
     cont.put_archive(mandelbox_server_path, fileobj.getvalue())
 
 
-def send_spin_up_mandelbox_request(mandelbox_id, json_data):
+def send_spin_up_mandelbox_request(mandelbox_id):
     """
     Sends the host service a SpinUpMandelbox request and returns a Container
     object corresponding to that mandelbox, along with its identifying host
@@ -214,7 +214,7 @@ if __name__ == "__main__":
             init_mandelbox.commit(args.image)
             init_mandelbox.remove()
 
-    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid, json_data)
+    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
 
     if local_host_service:
         # Find the Container object corresponding to the container that was just created
