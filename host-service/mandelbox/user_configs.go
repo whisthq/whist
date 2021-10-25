@@ -108,9 +108,6 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 // DecryptUserConfigs decrypts and unpacks the previously downloaded
 // s3 config using the encryption token received through JSON transport.
 func (c *mandelboxData) DecryptUserConfigs() error {
-	// Lock directory to avoid cleanup
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
 
 	if len(c.configEncryptionToken) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
@@ -138,6 +135,10 @@ func (c *mandelboxData) DecryptUserConfigs() error {
 
 	logger.Infof("Finished decrypting user config for mandelbox %s", c.mandelboxID)
 	logger.Infof("Decompressing user config for mandelbox %s", c.mandelboxID)
+
+	// Lock directory to avoid cleanup
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
 
 	// Make directory for user configs
 	configDir := c.getUserConfigDir()

@@ -5,7 +5,6 @@
 import argparse
 from collections import namedtuple
 import io
-import json
 import os
 import secrets
 import sys
@@ -42,7 +41,7 @@ parser.add_argument(
 parser.add_argument(
     "--json-data",
     help="Json string to pass through json transport.",
-    default={},
+    default="",
 )
 parser.add_argument(
     "--host-address",
@@ -95,7 +94,7 @@ mandelbox_server_path = os.path.abspath("/usr/share/fractal/bin")
 PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
 )
-json_data = json.loads(args.json_data)
+json_data = args.json_data
 
 
 def ensure_root_privileges():
