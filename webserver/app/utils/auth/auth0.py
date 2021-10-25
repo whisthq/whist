@@ -9,7 +9,7 @@ Example usage::
 
     app = Flask(__name__)
 
-    app.config["AUTH0_DOMAIN"] = "auth.whist.com"
+    app.config["AUTH0_DOMAIN"] = "auth.fractal.co"
     app.config["JWT_DECODE_ALGORITHMS"] = ("RS256",)
     app.config["JWT_DECODE_AUDIENCE"] = "https://api.fractal.co/"
 

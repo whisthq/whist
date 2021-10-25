@@ -124,7 +124,7 @@ const configs = {
       LOGZ_KEY: "dhwhpmrnfXZqNrilucOruibXgunbBqQJ",
     },
     auth0: {
-      auth0Domain: "auth.whist.com",
+      auth0Domain: "auth.fractal.co",
       clientId: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
     },
