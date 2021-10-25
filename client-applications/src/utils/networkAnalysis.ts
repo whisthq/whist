@@ -12,7 +12,6 @@ const config = { userAcceptedDataPolicy: true }
 // to track those results
 let iterations = 0
 let results = {
-  latency: 0,
   jitter: 0,
   downloadMbps: 0,
   progress: 0,
@@ -29,10 +28,7 @@ const handleDownloadMeasurements = (results: any, iterations: number) => {
         (measurement.Data.TCPInfo.ElapsedTime /
           (TEST_DURATION_SECONDS * 1000)) *
         100
-      const latencyInMs = measurement.Data.TCPInfo.RTT / 1000
       const jitterInMs = measurement.Data.TCPInfo.RTTVar / 1000
-      results.latency =
-        (results.latency * (iterations - 1) + latencyInMs) / iterations
       results.jitter =
         (results.jitter * (iterations - 1) + jitterInMs) / iterations
     }
@@ -70,4 +66,4 @@ const networkAnalyze = () => {
   }, TEST_DURATION_SECONDS)
 }
 
-export { networkAnalysisEvent, networkAnalyze }
+export { networkAnalysisEvent, networkAnalyze, TEST_DURATION_SECONDS }
