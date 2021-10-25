@@ -18,31 +18,30 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type SpinUpResult struct {
-	Result SpinUpMandelboxRequestResult `json:"result"`
+type JSONTransportResult struct {
+	Result JSONTransportRequestResult `json:"result"`
 }
 
 // TestSpinUpHandler calls processSpinUpMandelboxRequest and checks to see if
 // request data is successfully passed into the processing queue.
 func TestSpinUpHandler(t *testing.T) {
-	testRequest := map[string]interface{}{
-		"app_name":                "test_app",
-		"config_encryption_token": "test_token",
-		"jwt_access_token":        "test_jwt_token",
-		"mandelbox_id":            "test_mandelbox",
-		"session_id":              float64(1234),
+	testJSONTransportRequest := JSONTransportRequest{
+		ConfigEncryptionToken: "test_token",
+		JwtAccessToken:        "test_jwt_token",
+		JSONData:              "test_json_data",
+		resultChan:            make(chan requestResult),
 	}
 
 	testServerQueue := make(chan ServerRequest)
 	receivedRequest := make(chan ServerRequest)
 
 	res := httptest.NewRecorder()
-	httpRequest, err := generateTestSpinUpRequest(testRequest)
+	httpRequest, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {
-		t.Fatalf("error creating spin up request: %v", err)
+		t.Fatalf("error creating json transport request: %v", err)
 	}
 
-	testResult := SpinUpMandelboxRequestResult{
+	testResult := JSONTransportRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
@@ -56,10 +55,10 @@ func TestSpinUpHandler(t *testing.T) {
 		receivedRequest <- request
 	}()
 
-	processSpinUpMandelboxRequest(res, httpRequest, testServerQueue)
+	processJSONDataRequest(res, httpRequest, testServerQueue)
 	gotRequest := <-receivedRequest
 
-	var gotResult SpinUpResult
+	var gotResult JSONTransportResult
 	resBody, err := io.ReadAll(res.Result().Body)
 	if err != nil {
 		t.Fatalf("error reading result body: %v", resBody)
@@ -76,15 +75,24 @@ func TestSpinUpHandler(t *testing.T) {
 		t.Fatalf("error marshalling json: %v", err)
 	}
 
-	var gotRequestMap map[string]interface{}
+	var gotRequestMap JSONTransportRequest
 	err = json.Unmarshal(jsonGotRequest, &gotRequestMap)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
 
-	for key, value := range testRequest {
-		if gotRequestMap[key] != value {
-			t.Errorf("expected request key %s to be %v of type %T, got %v of type %T", key, value, value, gotRequestMap[key], gotRequestMap[key])
+	testMap := []struct {
+		key       string
+		want, got string
+	}{
+		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
+		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
+		{"JSONData", testJSONTransportRequest.JSONData, gotRequestMap.JSONData},
+	}
+
+	for _, value := range testMap {
+		if value.got != value.want {
+			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
 		}
 	}
 
@@ -110,16 +118,15 @@ func TestHttpServerIntegration(t *testing.T) {
 	// Wait for server startup
 	time.Sleep(5 * time.Second)
 
-	testRequest := map[string]interface{}{
-		"app_name":                "test_app",
-		"config_encryption_token": "test_token",
-		"jwt_access_token":        "test_jwt_token",
-		"mandelbox_id":            "test_mandelbox",
-		"session_id":              float64(1234),
+	testJSONTransportRequest := JSONTransportRequest{
+		ConfigEncryptionToken: "test_token",
+		JwtAccessToken:        "test_jwt_token",
+		JSONData:              "test_json_data",
+		resultChan:            make(chan requestResult),
 	}
-	req, err := generateTestSpinUpRequest(testRequest)
+	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
 	if err != nil {
-		t.Fatalf("error creating spin up request: %v", err)
+		t.Fatalf("error creating json transport request: %v", err)
 	}
 
 	// Disable certificate verification on client for testing
@@ -135,7 +142,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		Transport: tr,
 	}
 
-	testResult := SpinUpMandelboxRequestResult{
+	testResult := JSONTransportRequestResult{
 		HostPortForTCP32262: 32262,
 		HostPortForUDP32263: 32263,
 		HostPortForTCP32273: 32273,
@@ -163,20 +170,29 @@ func TestHttpServerIntegration(t *testing.T) {
 		t.Fatalf("error marshalling json: %v", err)
 	}
 
-	var gotRequestMap map[string]interface{}
+	var gotRequestMap JSONTransportRequest
 	err = json.Unmarshal(jsonGotRequest, &gotRequestMap)
 	if err != nil {
 		t.Fatalf("error unmarshalling json: %v", err)
 	}
 
-	for key, value := range testRequest {
-		if gotRequestMap[key] != value {
-			t.Errorf("expected request key %s to be %v, got %v", key, value, gotRequestMap[key])
+	testMap := []struct {
+		key       string
+		want, got string
+	}{
+		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
+		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
+		{"JSONData", testJSONTransportRequest.JSONData, gotRequestMap.JSONData},
+	}
+
+	for _, value := range testMap {
+		if value.got != value.want {
+			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
 		}
 	}
 
 	// Check that we are successfully receiving replies on the result channel
-	var gotResult SpinUpResult
+	var gotResult JSONTransportResult
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -197,16 +213,16 @@ func TestHttpServerIntegration(t *testing.T) {
 	t.Log("server goroutine ended")
 }
 
-// generateTestSpinUpRequest takes a request body and creates an
-// HTTP PUT request for /spin_up_mandelbox
-func generateTestSpinUpRequest(requestBody map[string]interface{}) (*http.Request, error) {
+// generateTestJSONTransportRequest takes a request body and creates an
+// HTTP PUT request for /json_transport
+func generateTestJSONTransportRequest(requestBody JSONTransportRequest) (*http.Request, error) {
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, utils.MakeError("error marshalling json: %v", err)
 	}
 
 	httpRequest, err := http.NewRequest(http.MethodPut,
-		utils.Sprintf("https://localhost:%d/spin_up_mandelbox", PortToListen),
+		utils.Sprintf("https://localhost:%d/json_transport", PortToListen),
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {

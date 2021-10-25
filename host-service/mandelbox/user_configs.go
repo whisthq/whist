@@ -49,10 +49,6 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		return nil
 	}
 
-	if len(c.GetConfigEncryptionToken()) == 0 {
-		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
-	}
-
 	s3ConfigKey := c.getS3ConfigKey()
 
 	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
@@ -88,8 +84,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
-	buf := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(context.Background(), buf, &s3.GetObjectInput{
+	c.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
+	numBytes, err := downloader.Download(context.Background(), c.configBuffer, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(s3ConfigKey),
 	})
@@ -105,10 +101,27 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	}
 
 	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, c.mandelboxID)
+
+	return nil
+}
+
+// DecryptUserConfigs decrypts and unpacks the previously downloaded
+// s3 config using the encryption token received through JSON transport.
+func (c *mandelboxData) DecryptUserConfigs() error {
+
+	if len(c.configEncryptionToken) == 0 {
+		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
+	}
+
+	if c.configBuffer == nil {
+		logger.Infof("Not decrypting user configs because the config buffer is empty.")
+		return nil
+	}
+
 	logger.Infof("Decrypting user config for mandelbox %s", c.mandelboxID)
 
 	// Decrypt the downloaded archive directly from memory
-	encryptedFile := buf.Bytes()
+	encryptedFile := c.configBuffer.Bytes()
 	salt, data, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
 	if err != nil {
 		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
@@ -292,6 +305,18 @@ func (c *mandelboxData) backupUserConfigs() error {
 	}
 
 	logger.Infof("Saved user config for mandelbox %s, version %s", c.mandelboxID, *uploadResult.VersionID)
+
+	return nil
+}
+
+// WriteJSONData writes the data received through JSON transport
+// to the config.json file located on the resourceMappingDir.
+func (c *mandelboxData) WriteJSONData() error {
+	logger.Infof("Writing JSON transport data to config.json file...")
+
+	if err := c.writeResourceMappingToFile("config.json", c.GetJSONData()); err != nil {
+		return err
+	}
 
 	return nil
 }

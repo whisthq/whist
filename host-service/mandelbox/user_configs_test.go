@@ -65,6 +65,10 @@ func TestUserConfigIntegration(t *testing.T) {
 		t.Fatalf("error populating configs: %v", err)
 	}
 
+	if err := testConfig.DecryptUserConfigs(); err != nil {
+		t.Fatalf("error decrypting configs: %v", err)
+	}
+
 	// Verify that all files in original directory are still there and correct
 	err = filepath.Walk(testBase, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {

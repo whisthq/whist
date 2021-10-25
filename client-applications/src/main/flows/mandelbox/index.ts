@@ -26,7 +26,7 @@ export default flow(
           ip: c.ip,
           config_encryption_token: t.configToken,
           jwt_access_token: t.accessToken,
-          mandelbox_id: c.mandelboxID,
+          json_data: JSON.stringify({}), // Data to send through the JSON transport
         }))
       )
     )

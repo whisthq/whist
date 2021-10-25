@@ -12,9 +12,10 @@ import (
 	"github.com/fractal/fractal/host-service/auth"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	"github.com/fractal/fractal/host-service/mandelbox/types"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Constants for use in setting up the HTTPS server
@@ -77,20 +78,19 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-// SpinUpMandelboxRequest defines the (unauthenticated) `spin_up_mandelbox`
+// JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
-type SpinUpMandelboxRequest struct {
-	AppName               types.AppName               `json:"app_name"`                // The app name to spin up (in localdev, this can be an arbitrary container image, but in deployment it must be a mandelbox image name).
-	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
-	JwtAccessToken        string                      `json:"jwt_access_token"`        // User's JWT access token
-	MandelboxID           types.MandelboxID           `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
-	SessionID             uint64                      `json:"session_id"`              // The sessionID provided by the client-app
-	resultChan            chan requestResult          // Channel to pass the request result between goroutines
+type JSONTransportRequest struct {
+	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
+	JwtAccessToken        string                               `json:"jwt_access_token"`        // User's JWT access token
+	JSONData              string                               `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
+	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id,omitempty"`  // MandelboxID, used for local testing when the pubsub is disabled
+	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 
-// SpinUpMandelboxRequestResult defines the data returned by the
-// `spin_up_mandelbox` endpoint.
-type SpinUpMandelboxRequestResult struct {
+// JSONTransportRequestResult defines the data returned by the
+// `json_transport` endpoint.
+type JSONTransportRequestResult struct {
 	HostPortForTCP32262 uint16 `json:"port_32262"`
 	HostPortForUDP32263 uint16 `json:"port_32263"`
 	HostPortForTCP32273 uint16 `json:"port_32273"`
@@ -99,28 +99,28 @@ type SpinUpMandelboxRequestResult struct {
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler.
-func (s *SpinUpMandelboxRequest) ReturnResult(result interface{}, err error) {
+func (s *JSONTransportRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass the request
 // result back to the HTTP request handler via ReturnResult.
-func (s *SpinUpMandelboxRequest) createResultChan() {
+func (s *JSONTransportRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
 
-// processSpinUpMandelboxRequest processes an HTTP request to spin up a
-// mandelbox. It is handled in host-service.go
-func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+// processJSONDataRequest processes an HTTP request to receive data
+// directly from the client app. It is handled in host-service.go
+func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
 		return
 	}
 
 	// Verify authorization and unmarshal into the right object type
-	var reqdata SpinUpMandelboxRequest
+	var reqdata JSONTransportRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
@@ -131,6 +131,73 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 	res := <-reqdata.resultChan
 
 	res.send(w)
+}
+
+// handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
+// the json data for the particular user exists, and finally it sends the data through the transport request map.
+func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+	// Receive the value of the `json_transport request`
+	req := serverevent.(*JSONTransportRequest)
+
+	// First we validate the JWT received from the `json_transport` endpoint
+	// Set up auth
+	claims := new(auth.FractalClaims)
+	parser := &jwt.Parser{SkipClaimsValidation: true}
+	var requestUserID mandelboxtypes.UserID
+	var err error
+	// Only verify auth in non-local environments
+	if !metadata.IsLocalEnv() {
+		// Decode the access token without validating any of its claims or
+		// verifying its signature because we've already done that in
+		// `authenticateAndParseRequest`. All we want to know is the value of the
+		// sub (subject) claim.
+		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
+			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
+			return
+		}
+		requestUserID = mandelboxtypes.UserID(claims.Subject)
+	} else {
+		requestUserID, err = metadata.GetUserID()
+		if err != nil {
+			logger.Errorf("Error getting userID, %v", err)
+		}
+	}
+
+	// If the jwt was valid, the next step is to verify if we have already received the JSONData from
+	// this specific user. In case we have, we ignore the request. Otherwise we add the request to the map.
+	// By performing this validation, we make the host service resistant to DDOS attacks, and by keeping track
+	// of each user's json data, we avoid any race condition that might corrupt other mandelboxes.
+
+	// Acquire lock on transport requests map
+	transportMapLock.Lock()
+	defer transportMapLock.Unlock()
+
+	if transportRequestMap[requestUserID] == nil {
+		transportRequestMap[requestUserID] = make(chan *JSONTransportRequest, 1)
+	}
+
+	// Send the JSONTransportRequest data through the map's channel and close the channel to
+	// prevent more requests from being sent, this ensures we only receive the
+	// json transport request once per user.
+	transportRequestMap[requestUserID] <- req
+	close(transportRequestMap[requestUserID])
+}
+
+// getJSONTransportRequestChannelForUser returns the JSON transport request for the solicited user
+// in a safe way. It also creates the channel in case it doesn't exists for that particular user.
+func getJSONTransportRequestChannelForUser(UserID mandelboxtypes.UserID,
+	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) chan *JSONTransportRequest {
+	// Acquire lock on transport requests map
+	transportMapLock.Lock()
+	defer transportMapLock.Unlock()
+
+	req := transportRequestMap[UserID]
+
+	if req == nil {
+		transportRequestMap[UserID] = make(chan *JSONTransportRequest, 1)
+	}
+
+	return transportRequestMap[UserID]
 }
 
 // Helper functions
@@ -248,7 +315,7 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
+	mux.HandleFunc("/json_transport", createHandler(processJSONDataRequest))
 
 	// Create the server itself
 	server := &http.Server{

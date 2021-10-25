@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/fractal/fractal/host-service/dbdriver"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
@@ -57,6 +58,13 @@ type Mandelbox interface {
 
 	GetConfigEncryptionToken() types.ConfigEncryptionToken
 	SetConfigEncryptionToken(types.ConfigEncryptionToken)
+
+	GetJSONData() string
+	SetJSONData(string)
+	WriteJSONData() error
+
+	// Decrypts the config encryption token and writes the user configs
+	DecryptUserConfigs() error
 
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
@@ -220,6 +228,15 @@ type mandelboxData struct {
 	// We use this to mount devices like /dev/fuse
 	otherDeviceMappings []dockercontainer.DeviceMapping
 
+	// We use this to apply any additional configs the user
+	// might have (dark mode, location, etc.)
+	JSONData string
+
+	// We use these to download an decrypt the user configs
+	// from s3.
+	unpackedConfigDir string
+	configBuffer      *manager.WriteAtBuffer
+
 	portBindings []portbindings.PortBinding
 }
 
@@ -262,6 +279,19 @@ func (c *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 	c.clientAppAccessToken = token
+}
+
+func (c *mandelboxData) GetJSONData() string {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+	return c.JSONData
+}
+
+func (c *mandelboxData) SetJSONData(JSONData string) {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+
+	c.JSONData = JSONData
 }
 
 func (c *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error) {
