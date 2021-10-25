@@ -97,15 +97,10 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
-		if errors.As(err, &noSuchKeyErr) {
-			logger.Infof("Could not download user config because config does not exist for user %s", mandelbox.userID)
-			return nil
-		}
-
-		return utils.MakeError("Failed to download user configuration from s3: %v", err)
+		return err
+	} else if len(bytes) == 0 {
+		return nil
 	}
-
-	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, mandelbox.ID)
 
 	return nil
 }
@@ -126,20 +121,14 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
 	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
 
-	// Decrypt the downloaded archive directly from memory
-	encryptedFile := mandelbox.configBuffer.Bytes()
-	salt, data, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
+	var data []byte
+	err := decryptFile(data)
 	if err != nil {
-		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
+		return err
+	} else if len(data) == 0 {
+		return nil
 	}
 
-	key, iv := getKeyAndIVFromPassAndSalt([]byte(mandelbox.GetConfigEncryptionToken()), salt)
-	err = decryptAES256CBC(key, iv, data)
-	if err != nil {
-		return utils.MakeError("failed to decrypt user config: %v", err)
-	}
-
-	logger.Infof("Finished decrypting user config for mandelbox %s", mandelbox.ID)
 	logger.Infof("Decompressing user config for mandelbox %s", mandelbox.ID)
 
 	// Lock directory to avoid cleanup
@@ -165,85 +154,11 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 		cmd.Run()
 	}()
 
-	// Unpacking the decrypted data involves:
-	// 1. Decompress the the lz4 file into a tar
-	// 2. Untar the config to the target directory
-	dataReader := bytes.NewReader(data)
-	lz4Reader := lz4.NewReader(dataReader)
-	tarReader := tar.NewReader(lz4Reader)
+	err := c.untarFiles(data, unpackedConfigDir)
 
-	// Track total size of files in the tar
-	totalFileSize := int64(0)
-
-	for {
-		// Read the header for the next file in the tar
-		header, err := tarReader.Next()
-
-		// If we reach EOF, that means we are done untaring
-		switch {
-		case err == io.EOF:
-			break
-		case err != nil:
-			return utils.MakeError("error reading tar file: %v", err)
-		}
-
-		// Not certain why this case happens, but causes segfaults if removed
-		if header == nil {
-			break
-		}
-
-		path := filepath.Join(unpackedConfigDir, header.Name)
-		info := header.FileInfo()
-
-		// Create directory if it doesn't exist, otherwise go next
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return utils.MakeError("error creating directory: %v", err)
-			}
-			continue
-		}
-
-		// Create file and copy contents
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return utils.MakeError("error opening file: %v", err)
-		}
-
-		numBytesWritten, err := io.Copy(file, tarReader)
-		if err != nil {
-			file.Close()
-			return utils.MakeError("error copying data to file: %v", err)
-		}
-
-		// Add written bytes to total size
-		totalFileSize += numBytesWritten
-
-		// Manually close file instead of defer otherwise files are only
-		// closed when ALL files are done unpacking
-		if err := file.Close(); err != nil {
-			logger.Warningf("Failed to close file %s: %v", path, err)
-		}
+	if err != nil {
+		return err
 	}
-
-	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
-
-	// Collect cookies and insert them
-
-
-	// Get cookies from s3
-
-	// Extract cookies
-
-	// decrypt
-
-	// untar
-
-	// encrypt cookies decrypt values
-
-	// insert into cookies file
-
-
-	// Delete s3 file?
 
 	return nil
 }
@@ -282,42 +197,12 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return err
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	err = uploadAndEncryptToS3(mandelbox.getS3ConfigKey(), encTarPath)
+
 	if err != nil {
-		return utils.MakeError("failed to load aws config: %v", err)
+		return err
 	}
-
-	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = "us-east-1"
-	})
-	uploader := manager.NewUploader(s3Client)
-
-	encryptedConfig, err := os.Open(encTarPath)
-	if err != nil {
-		return utils.MakeError("failed to open encrypted config: %v", err)
-	}
-	defer encryptedConfig.Close()
-
-	// Find size of config we are uploading to S3
-	fileInfo, err := encryptedConfig.Stat()
-	if err != nil {
-		// We don't want to stop uploading configs because we can't get file stats
-		logger.Warningf("error opening file stats for encrypted user config: %s", encTarPath)
-	} else {
-		// Log encrypted user config size before S3 upload
-		logger.Infof("%s is %d bytes", encTarPath, fileInfo.Size())
-	}
-
-	uploadResult, err := uploader.Upload(context.Background(), &s3.PutObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(mandelbox.getS3ConfigKeyWithoutLocking()),
-		Body:   encryptedConfig,
-	})
-	if err != nil {
-		return utils.MakeError("error uploading encrypted config to s3: %v", err)
-	}
-
-	logger.Infof("Saved user config for mandelbox %s, version %s", mandelbox.ID, *uploadResult.VersionID)
+	logger.Infof("Saved user config for mandelbox %s", mandelbox.mandelboxID)
 
 	return nil
 }
@@ -365,11 +250,6 @@ func (mandelbox *mandelboxData) getUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.FractalDir, mandelbox.GetID(), "userConfigs")
 }
 
-// getUserCookieDir returns the absolute path to the user config directory.
-func (c *mandelboxData) getUserCookieDir() string {
-	return path.Join(utils.FractalDir, string(c.GetMandelboxID()), "userCookies")
-}
-
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (mandelbox *mandelboxData) getS3ConfigKey() string {
 	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()), mandelbox.getEncryptedArchiveFilename())
@@ -393,21 +273,27 @@ func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4"
 }
 
-// getEncryptedArchiveCookieFilename returns the name of the encrypted user cookie file.
-func (c *mandelboxData) getEncryptedArchiveCookieFilename() string {
-	return "fractal-app-cookie.tar.lz4.enc"
+// getEncryptedArchiveCustomConfigFilename returns the name of the encrypted user custom config file(s).
+func (c *mandelboxData) getEncryptedArchiveCustomConfigFilename() string {
+	return "fractal-app-custom-config.tar.lz4.enc"
 }
 
-// getDecryptedArchiveCookieFilename returns the name of the
-// decrypted (but still compressed) user cookie file.
-func (c *mandelboxData) getDecryptedArchiveCookieFilename() string {
-	return "fractal-app-cookie.tar.lz4"
+// getDecryptedArchiveCustomConfigFilename returns the name of the
+// decrypted (but still compressed) user custom config file.
+func (c *mandelboxData) getDecryptedArchiveCustomConfigFilename() string {
+	return "fractal-app-custom-config.tar.lz4"
 }
 
-// getCookieFilename returns the name of the user cookie file
+// getCustomConfigFilename returns the name of the user custom config file(s)
+func (c *mandelboxData) getCustomConfigFilename() string {
+	return "fractal-app-custom-config"
+}
+
+// getCookieFilename returns the name of the cookie file
 func (c *mandelboxData) getCookieFilename() string {
-	return "fractal-app-cookie"
+	return "fractal-app-config-cookies"
 }
+
 
 // getUnpackedConfigsDirectoryName returns the name of the
 // directory that stores unpacked user configs.
