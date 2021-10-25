@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.10.0-slim-buster
 
 # Copy fully compiled Python dependencies from the builder image into this final image
-COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 # Copy the bin tools created for the Python dependencies from the builder image
 # into this final image to ease developer usage
 COPY --from=builder /usr/local/bin /usr/local/bin
