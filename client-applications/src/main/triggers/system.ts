@@ -9,8 +9,14 @@ import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
+import { networkAnalysisEvent } from "@app/utils/networkAnalysis"
 
 // Fires when your computer wakes up
 createTrigger(WhistTrigger.powerResume, fromEvent(powerMonitor, "resume"))
 // Fires when your computer goes to sleep
 createTrigger(WhistTrigger.powerSuspend, fromEvent(powerMonitor, "suspend"))
+// Fires when network analysis test is done running
+createTrigger(
+  WhistTrigger.networkAnalysis,
+  fromEvent(networkAnalysisEvent, "finished")
+)

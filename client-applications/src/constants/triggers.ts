@@ -65,6 +65,7 @@ const WhistTrigger = {
   // System triggers (power, Internet)
   powerResume: "powerResume",
   powerSuspend: "powerSuspend",
+  networkAnalysis: "networkAnalysis",
 
   // Protocol triggers
   protocolError: "protocolError",

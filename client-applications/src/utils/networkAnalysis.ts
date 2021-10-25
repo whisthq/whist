@@ -39,25 +39,25 @@ const handleDownloadMeasurements = (results: any, iterations: number) => {
 
     // If enough time has passed but we aren't done with the test, emit what we have so far
     if (results.progress >= 100) {
-      testComplete("success")
+      testComplete(true)
     }
   }
 }
 
 const networkAnalysisEvent = new events.EventEmitter()
-const testComplete = (status: string) => {
-  networkAnalysisEvent.emit(status, results)
+const testComplete = (success: boolean) => {
+  networkAnalysisEvent.emit("finished", success ? results : undefined)
 }
 
 // Callbacks to pass into download speed test
 const callbacks = {
   downloadMeasurement: handleDownloadMeasurements(results, iterations),
   downloadComplete: () => {
-    testComplete("success")
+    testComplete(true)
   },
   error: (err: { message: string }) => {
     console.error(err.message)
-    testComplete("error")
+    testComplete(false)
   },
 }
 
@@ -66,7 +66,7 @@ const networkAnalyze = () => {
   ndt7.downloadTest(config, callbacks, urlPromise)
 
   setTimeout(() => {
-    testComplete("success")
+    testComplete(true)
   }, TEST_DURATION_SECONDS)
 }
 
