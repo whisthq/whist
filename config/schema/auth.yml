@@ -5,8 +5,8 @@ AUTH_DOMAIN_URL:
   prod: "auth.fractal.co"
 
 AUTH_CLIENT_ID:
-  local: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
-  dev: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I"
+  local: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF"
+  dev: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF"
   staging: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz"
   prod: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD"
 
