@@ -433,6 +433,21 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Successfully downloaded user configs for mandelbox %s", mandelboxSubscription.ID)
 	}()
 
+	userCustomConfigDownloadComplete := make(chan bool)
+	go func() {
+		logger.Infof("SpinUpMandelbox(): Beginning user custom config download for mandelbox %s", req.MandelboxID)
+		err := fc.downloadBrowserData()
+		if err != nil {
+			logger.Warningf("Error requesting user custom configs: %v", err)
+			userCustomConfigDownloadComplete <- true
+			return
+		}
+
+		userCustomConfigDownloadComplete <- true
+		logger.Infof("SpinUpMandelbox(): Successfully obtained user custom configs for mandelbox %s", req.MandelboxID)
+	}()
+
+
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
 	preCreateGroup, _ := errgroup.WithContext(mandelbox.GetContext())
@@ -676,6 +691,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	<-userConfigDownloadComplete
+	<-userCustomConfigDownloadComplete
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
