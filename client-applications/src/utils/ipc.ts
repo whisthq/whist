@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file ipc.ts
  * @brief This file contains utility functions for IPC communication between the main and renderer
  * thread. This file is imported both by the main and the renderer process, so it's

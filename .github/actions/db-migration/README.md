@@ -1,4 +1,4 @@
-# Fractal Database Migration Workflow
+# Whist Database Migration Workflow
 
 This subfolder contains all the Python logic to automatically perform database migrations.
 
@@ -47,7 +47,7 @@ pg_dump --no-owner --no-privileges --schema-only $DB_URL > webserver/db_migratio
 
 ## High-Level Overview
 
-The Fractal migration strategy revolves around treating our database schema as code. Like anything else in the codebase, this involves checking a schema "source of truth" into version control. This takes the form of a file in `fractal/webserver/db-migration` called `schema.sql`.
+The Whist migration strategy revolves around treating our database schema as code. Like anything else in the codebase, this involves checking a schema "source of truth" into version control. This takes the form of a file in `fractal/webserver/db-migration` called `schema.sql`.
 
 `schema.sql` represents the shape of the database schema for the branch that it resides in. So the `schema.sql` in the `dev` branch represents the database at `fractal-dev-server`, and the `schema.sql` in the `staging` branch represents the database at `fractal-staging-server`.
 

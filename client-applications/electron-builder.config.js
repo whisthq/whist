@@ -1,5 +1,5 @@
 // This configuration specifies the name, description, and other
-// metadata regarding the Fractal application.
+// metadata regarding the Whist application.
 
 const { iconName, appEnvironment } = require("./config/build")
 
@@ -9,7 +9,7 @@ const appDetails = {
     (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
   copyright: "Copyright © Fractal Computers, Inc.",
   productName:
-    "Fractal" + (appEnvironment === "prod" ? "" : ` (${appEnvironment})`),
+    "Whist" + (appEnvironment === "prod" ? "" : ` (${appEnvironment})`),
 }
 
 // This configuration controls how the application is bundled,
@@ -19,7 +19,7 @@ const bundleConfig = {
 
   // We need to disable an eslint error here because this is electron-builder-specific syntax
   // (https://www.electron.build/configuration/configuration#artifact-file-name-template)
-  artifactName: "Fractal.${ext}", // eslint-disable-line no-template-curly-in-string
+  artifactName: "Whist.${ext}", // eslint-disable-line no-template-curly-in-string
 
   asar: true,
 
@@ -65,7 +65,7 @@ const bundleConfig = {
     ],
   },
 
-  // This controls the positions of the Fractal application and
+  // This controls the positions of the Whist application and
   // the Applications folder in the macOS DMG installation menu.
   dmg: {
     contents: [

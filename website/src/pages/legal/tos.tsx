@@ -35,14 +35,14 @@ const TermsOfService = () => {
           <p>
             PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH FRACTAL'S
             PRIVACY POLICY{" "}
-            <a href="https://www.fractal.co/privacy">www.fractal.co/privacy</a>{" "}
+            <a href="https://www.whist.com/privacy">www.whist.com/privacy</a>{" "}
             AND{" "}
             <a href="http://www.copyright.gov/legislation/dmca.pdf">
               www.copyright.gov/legislation/dmca.pdf
             </a>
             , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE USING{" "}
-            <a href="https://www.fractal.co">WWW.FRACTAL.CO</a> (THE "SITE"),
-            ANY DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
+            <a href="https://www.whist.com">WWW.whist.com</a> (THE "SITE"), ANY
+            DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
             "APPLICATIONS") AND THE CLOUD COMPUTING SERVICES, FEATURES, CONTENT
             OR APPLICATIONS OFFERED BY FRACTAL COMPUTERS, INC. ("FRACTAL," "WE,"
             "US," OR "OUR") (TOGETHER WITH THE SITE AND THE APPLICATIONS, THE
@@ -62,7 +62,7 @@ const TermsOfService = () => {
           </p>
           <p>
             These Terms of Service were last updated on the date specified
-            above. It is effective between Fractal and you as of the date you
+            above. It is effective between Whist and you as of the date you
             accept these Terms of Service.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>
@@ -106,7 +106,7 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Registration</p>
           <p>
-            To sign up for the Services, you must register for a Fractal user
+            To sign up for the Services, you must register for a Whist user
             account (a "User Account") on the Services (an "Account"). You must
             provide accurate and complete information and keep your Account
             information updated. You shall not: (i) use the name of another
@@ -126,60 +126,60 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Product</p>
           <p>
-            Fractal is a provider of cloud-based applications ("Cloud
+            Whist is a provider of cloud-based applications ("Cloud
             Applications"). Cloud Applications are similar to a regular
-            applications in that once your Fractal subscription is active, they
+            applications in that once your Whist subscription is active, they
             can be interacted with as you normally would with a local version of
             the application, except that they are installed on remote machines
-            and delivered to your local device via the Fractal streaming
-            service. Unless indicated otherwise, your Fractal Cloud Applications
-            run on Linux Ubuntu 20.04. These applications are developed by
-            third-parties and are serviced via Fractal in agreements with the
+            and delivered to your local device via the Whist streaming service.
+            Unless indicated otherwise, your Whist Cloud Applications run on
+            Linux Ubuntu 20.04. These applications are developed by
+            third-parties and are serviced via Whist in agreements with the
             applications Terms of Services. By using any application through
-            Fractal, you consent to the Terms of Service and Privacy Policy of
-            the application you use, in addition to Fractal's Terms of Service
-            and Privacy Policy. We encourage you to review an application's
-            Terms of Service and Privacy Policy before using it through Fractal.
-            For applications which require a user license to use, this license
-            will either be provided by us to you for the duration of your usage
-            of the application, or you will be required to supply it yourself
-            before being able to use the application via Fractal, either of
-            which will be made clear to you before your usage of the
-            application. Fractal does not support using license-requiring
-            applications without a valid license and will immediately, without
-            prenotice or refund, terminate any account which is found attempting
-            to do so in any way whatsoever. Fractal also reserves the rights to
-            terminate any account, without prenotice or refund, if it is found
-            breaking the Terms of Service of a specific application serviced via
-            Fractal as a Cloud Application.
+            Whist, you consent to the Terms of Service and Privacy Policy of the
+            application you use, in addition to Whist's Terms of Service and
+            Privacy Policy. We encourage you to review an application's Terms of
+            Service and Privacy Policy before using it through Whist. For
+            applications which require a user license to use, this license will
+            either be provided by us to you for the duration of your usage of
+            the application, or you will be required to supply it yourself
+            before being able to use the application via Whist, either of which
+            will be made clear to you before your usage of the application.
+            Whist does not support using license-requiring applications without
+            a valid license and will immediately, without prenotice or refund,
+            terminate any account which is found attempting to do so in any way
+            whatsoever. Whist also reserves the rights to terminate any account,
+            without prenotice or refund, if it is found breaking the Terms of
+            Service of a specific application serviced via Whist as a Cloud
+            Application.
           </p>
           <p>
-            Fractal is committed to our users' privacy and security, which why
-            we do not store the data within your applications after you
-            terminate a Fractal Session. A Fractal session (“Session”) occurs
-            each time you use Fractal’s software to access a cloud-based
-            application via Fractal. Each Session is standalone, meaning that
-            the remote machine running the application(s) you are using during a
-            Session will be permanently erased shortly after you terminate your
-            Session. As such, Fractal offers multiple ways to effortlessly store
-            your data with third-party cloud storage providers, provided that
-            you have a valid account and subscription to one or many of those
-            services. Fractal does not assume responsibility for any lost user
-            data due to incorrect or forgotten saves, or data storage issues
-            with third-party integrations.
+            Whist is committed to our users' privacy and security, which why we
+            do not store the data within your applications after you terminate a
+            Whist Session. A Whist session (“Session”) occurs each time you use
+            Fractal’s software to access a cloud-based application via Whist.
+            Each Session is standalone, meaning that the remote machine running
+            the application(s) you are using during a Session will be
+            permanently erased shortly after you terminate your Session. As
+            such, Whist offers multiple ways to effortlessly store your data
+            with third-party cloud storage providers, provided that you have a
+            valid account and subscription to one or many of those services.
+            Whist does not assume responsibility for any lost user data due to
+            incorrect or forgotten saves, or data storage issues with
+            third-party integrations.
           </p>
           <p>
             Exceptions to this rule might include application settings, plugins
             and third-party account integrations which you specify and install
-            so to customize your Fractal experience for a specific Cloud
-            Application. Fractal may store this data on your behalf to improve
+            so to customize your Whist experience for a specific Cloud
+            Application. Whist may store this data on your behalf to improve
             your experience.
           </p>
           <p>
-            The Cloud Applications Fractal services can be accessed via Fractal
-            from any Internet-connected device (a “User Device”), provided that
-            a Fractal local or web application has been developed for the
-            device’s operating system.
+            The Cloud Applications Whist services can be accessed via Whist from
+            any Internet-connected device (a “User Device”), provided that a
+            Whist local or web application has been developed for the device’s
+            operating system.
           </p>
           <p>
             Given the nature of cloud-based personal computing, your inputs
@@ -187,29 +187,29 @@ const TermsOfService = () => {
             Device to Fractal’s data center infrastructure, where Cloud
             Applications are hosted. The servers in Fractal’s data center
             infrastructure interpret these signals on your Cloud Applications,
-            which allows for the Fractal applications to display the Cloud
+            which allows for the Whist applications to display the Cloud
             Applications. All communications between your User Device and your
-            Fractal Cloud Applications, including input, audio and video
-            components of the streaming, are fully AES encrypted, and Fractal
-            does not observe directly any of your stream components.
+            Whist Cloud Applications, including input, audio and video
+            components of the streaming, are fully AES encrypted, and Whist does
+            not observe directly any of your stream components.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>
-            Fractal Plans And Subscriptions
+            Whist Plans And Subscriptions
           </p>
           <p>
-            A Fractal plan is your subscription to access your Cloud
-            Applications. Your subscription period will be calculated from the
-            date on which your Fractal account is set up and available for use
-            (the “Start Date”). You will receive an email informing you of that
-            date when you sign up for our service. The subscription will
-            continue from the Start Date for the term you selected (the
-            “Subscription Period”) and will then automatically renew for
-            successive periods equal to your then-current subscription term,
-            unless no later than the day preceding the end of the then-current
-            term you have cancelled your subscription. The renewed subscription
-            will be on the same terms as the current subscription, unless we
-            have amended our pricing or other terms before the renewal date,
-            which you will be informed of ahead of time should it happen.
+            A Whist plan is your subscription to access your Cloud Applications.
+            Your subscription period will be calculated from the date on which
+            your Whist account is set up and available for use (the “Start
+            Date”). You will receive an email informing you of that date when
+            you sign up for our service. The subscription will continue from the
+            Start Date for the term you selected (the “Subscription Period”) and
+            will then automatically renew for successive periods equal to your
+            then-current subscription term, unless no later than the day
+            preceding the end of the then-current term you have cancelled your
+            subscription. The renewed subscription will be on the same terms as
+            the current subscription, unless we have amended our pricing or
+            other terms before the renewal date, which you will be informed of
+            ahead of time should it happen.
           </p>
           <p>
             The cost to you of the Services is the price that was agreed by you
@@ -243,36 +243,36 @@ const TermsOfService = () => {
             time of purchase of your subscription.
           </p>
           <p>
-            You are responsible for making on-time payments for your Fractal
+            You are responsible for making on-time payments for your Whist
             subscription, as well as for updating relevant payment information
-            in the case of any changes. Fractal reserves the right to suspend
-            your access to any and all Fractal services if you do not make a
-            payment on time, and/or charge late payment fees equal to ten (10)
-            US dollars per default per week. There may be a delay in return to
-            normal Services after default payments have been rendered. If
-            Fractal does not receive payment for your Fractal plan on the day of
-            renewal and you have not cancelled your Fractal plan, your Services
-            will be suspended. If your Services are suspended, Fractal is not
-            responsible for any refund of previous payments (nor is Fractal
-            responsible for refunds of previous payments in other situations),
-            and you are still responsible for the entire subscription fee
-            outstanding, meaning you are still responsible for the entire
-            subscription fee of the current subscription period, as defined in
-            your Fractal plan. If Services are cancelled by Fractal because of a
-            failure to pay, the entire remaining subscription fee for the
-            subscription period will be payable to Fractal immediately.
+            in the case of any changes. Whist reserves the right to suspend your
+            access to any and all Whist services if you do not make a payment on
+            time, and/or charge late payment fees equal to ten (10) US dollars
+            per default per week. There may be a delay in return to normal
+            Services after default payments have been rendered. If Whist does
+            not receive payment for your Whist plan on the day of renewal and
+            you have not cancelled your Whist plan, your Services will be
+            suspended. If your Services are suspended, Whist is not responsible
+            for any refund of previous payments (nor is Whist responsible for
+            refunds of previous payments in other situations), and you are still
+            responsible for the entire subscription fee outstanding, meaning you
+            are still responsible for the entire subscription fee of the current
+            subscription period, as defined in your Whist plan. If Services are
+            cancelled by Whist because of a failure to pay, the entire remaining
+            subscription fee for the subscription period will be payable to
+            Whist immediately.
           </p>
           <p>
             You may receive offers to purchase additional optional services from
-            Fractal or to change your subscription plan. For the most part,
-            those changes will be accessible from the User Account. In the case
-            that you purchase additional optional services, your purchase of
-            those services will become effective immediately, subject to the
-            time needed for activation. The optional services or upgrades will
-            be billed instantly on a pro rata basis from the date of activation
-            to the end of the then-current Subscription Period. Going forward
-            from that point, the optional services or upgrades will be added
-            onto the main subscription and billed in cycle.
+            Whist or to change your subscription plan. For the most part, those
+            changes will be accessible from the User Account. In the case that
+            you purchase additional optional services, your purchase of those
+            services will become effective immediately, subject to the time
+            needed for activation. The optional services or upgrades will be
+            billed instantly on a pro rata basis from the date of activation to
+            the end of the then-current Subscription Period. Going forward from
+            that point, the optional services or upgrades will be added onto the
+            main subscription and billed in cycle.
           </p>
           <p>
             If you would like to change subscription plans to a lower-priced
@@ -282,34 +282,34 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Referral Programs</p>
           <p>
-            From time to time, Fractal may offer its Users benefits for
-            referring new additional customers to Fractal. Access to any such
-            program is subject to compliance with these Terms by both the User
-            and the referred User.
+            From time to time, Whist may offer its Users benefits for referring
+            new additional customers to Whist. Access to any such program is
+            subject to compliance with these Terms by both the User and the
+            referred User.
           </p>
-          <p style={{ fontWeight: "bold", fontSize: 20 }}>Fractal Software</p>
+          <p style={{ fontWeight: "bold", fontSize: 20 }}>Whist Software</p>
           <p>
-            Many of the Services offered by Fractal allow you, the user, to
+            Many of the Services offered by Whist allow you, the user, to
             download software in order to use those Services. Software includes,
             but is not limited to, local desktop, tablet, and mobile
-            applications that allow the user to access Fractal Cloud
-            Applications from User Devices. Fractal may automatically update
-            Fractal software on your device.
+            applications that allow the user to access Whist Cloud Applications
+            from User Devices. Whist may automatically update Whist software on
+            your device.
           </p>
           <p>
-            Fractal software is licensed and not sold. If you comply with these
-            Terms, Fractal grants you a worldwide, limited, personal,
+            Whist software is licensed and not sold. If you comply with these
+            Terms, Whist grants you a worldwide, limited, personal,
             non-exclusive, non-transferable, non-sub-licensable, and revocable
             license to use the software, only for private and non-commercial
             use, on compatible User Devices belonging to the user, and for the
             sole purpose of enabling the user to access the Services offered by
-            Fractal. This license is granted to the user for the duration of the
+            Whist. This license is granted to the user for the duration of the
             Subscription Period and will terminate the end of that period. This
             User license includes the right to download and install a copy of
             the software on each User Device.
           </p>
           <p>
-            Fractal reserves all other rights to the software. These rights
+            Whist reserves all other rights to the software. These rights
             include, but are not limited to, technological protection and
             privacy measures included in or relating to the software which you,
             the user, are not authorized: to circumvent or avoid; Likewise, you
@@ -327,32 +327,32 @@ const TermsOfService = () => {
             Servers And Operating Systems
           </p>
           <p>
-            Fractal may use any hardware and service providers it sees fit to
-            deliver the Fractal Services, and those hardware and service
-            providers may change over time. It is important to note that the
-            User may be using different computing infrastructure in different
-            Sessions and/or during a single Session. We will have sole
-            discretion in deciding which hardware and service providers we will
-            use in connection with our Services; the User acknowledges and
-            agrees that they may not make any complaints or demands regarding
-            Fractal’s choice in hardware and service providers.
+            Whist may use any hardware and service providers it sees fit to
+            deliver the Whist Services, and those hardware and service providers
+            may change over time. It is important to note that the User may be
+            using different computing infrastructure in different Sessions
+            and/or during a single Session. We will have sole discretion in
+            deciding which hardware and service providers we will use in
+            connection with our Services; the User acknowledges and agrees that
+            they may not make any complaints or demands regarding Fractal’s
+            choice in hardware and service providers.
           </p>
           <p>
-            The Cloud Applications serviced by Fractal are collectively hosted
-            on Microsoft Azure, Amazon Web Services and Google Cloud Platform,
+            The Cloud Applications serviced by Whist are collectively hosted on
+            Microsoft Azure, Amazon Web Services and Google Cloud Platform,
             depending on the Cloud Applications and the world region you are
-            accessing them from. Fractal abides by the Terms of Service of the
+            accessing them from. Whist abides by the Terms of Service of the
             respective cloud providers for which it uses the cloud
             infrastructure to service Cloud Applications, and your agreement in
-            the Fractal Terms of Service extends to the Terms of Service of the
+            the Whist Terms of Service extends to the Terms of Service of the
             cloud providers from which the Cloud Applications you are using are
             being serviced. We encourage you to review the Terms of Service of
-            the three cloud providers from which Fractal services cloud-based
+            the three cloud providers from which Whist services cloud-based
             applications. Other cloud providers may be added from time-to-time
-            to enable Fractal to service more users. If this is the case, you
-            will be notified ahead of time. By making continuous usage of the
-            Fractal Services following the addition of a new cloud provider by
-            Fractal, you express your agreement of their Terms of Service.
+            to enable Whist to service more users. If this is the case, you will
+            be notified ahead of time. By making continuous usage of the Whist
+            Services following the addition of a new cloud provider by Whist,
+            you express your agreement of their Terms of Service.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Internet Access</p>
           <p>
@@ -362,27 +362,27 @@ const TermsOfService = () => {
             connection, in terms of bandwidth, stability, ping, and a variety of
             other factors dependent on the properties of the Internet
             connection. The User is responsible for their own Internet
-            connection. Fractal cannot be held responsible for interruptions or
+            connection. Whist cannot be held responsible for interruptions or
             degradations in our Services due to a User’s Internet connection; we
             will not offer any refund if access to our Services has been
             interrupted or degraded by your Internet connection.
           </p>
           <p>
             You acknowledge that our Services may require the transfer of large
-            amounts of data over your Internet connection and accept that
-            Fractal is not responsible for any costs payable to your Internet
-            service provider.
+            amounts of data over your Internet connection and accept that Whist
+            is not responsible for any costs payable to your Internet service
+            provider.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Code Of Conduct</p>
           <p>
             The proper functioning of our Services requires that Users use the
-            Services in an appropriate and reasonable way. Most notably, Fractal
+            Services in an appropriate and reasonable way. Most notably, Whist
             Cloud Applications may only be used as a personal applications, for
-            the private use of the Fractal User, whether in the context of
+            the private use of the Whist User, whether in the context of
             personal usage or that of personal business usage. This excludes any
             business or professional purpose which exceeds a personal business
-            computing, like running a server, selling access to your Fractal
-            Cloud Applications, etc.
+            computing, like running a server, selling access to your Whist Cloud
+            Applications, etc.
           </p>
           <p>
             Without limiting the above, you will not use Fractal’s Services for
@@ -439,9 +439,9 @@ const TermsOfService = () => {
             </li>
             <li>
               Reselling the Services or otherwise making the Services available
-              to a third party, including using Fractal Cloud Applications as a
-              server or with Software that functions as a server, or using
-              Fractal for commercial or business purposes;
+              to a third party, including using Whist Cloud Applications as a
+              server or with Software that functions as a server, or using Whist
+              for commercial or business purposes;
             </li>
             <li>
               Hampering or attempting to hamper, in any way whatsoever, the
@@ -460,14 +460,14 @@ const TermsOfService = () => {
               Websites without Fractal’s prior written consent;
             </li>
             <li>
-              Printing, copying or reverse engineering any code or Fractal
+              Printing, copying or reverse engineering any code or Whist
               hardware, including any Software;
             </li>
             <li>
               Taking any action that degrades, harms, disrupts or interferes
-              with the Services, the cloud equipment that operates Fractal, or
-              the security of the Services or, more generally, taking any action
-              that could be harmful to Fractal or other users;
+              with the Services, the cloud equipment that operates Whist, or the
+              security of the Services or, more generally, taking any action
+              that could be harmful to Whist or other users;
             </li>
             <li>
               Analyzing, probing, or testing the vulnerability of any system or
@@ -483,17 +483,17 @@ const TermsOfService = () => {
           </p>
           <p>
             We also reserve the right to monitor, amend and/or remove any
-            content posted on the Websites. Fractal will not assume any
-            liability arising from the content in your (the user’s) account. You
-            are responsible for the content on your account.
+            content posted on the Websites. Whist will not assume any liability
+            arising from the content in your (the user’s) account. You are
+            responsible for the content on your account.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>
-            Non-Fractal Provided Services And Applications
+            Non-Whist Provided Services And Applications
           </p>
           <p>
             The Services may include software, applications, websites and
             services which are offered, controlled or operated by third-parties
-            unaffiliated with Fractal (the “Third-Party Applications”). We may
+            unaffiliated with Whist (the “Third-Party Applications”). We may
             also allow you to purchase Third-Party Applications from our
             Websites. These Third-Party Applications may have their own Terms of
             Service, in which case you may be required to accept them in order
@@ -502,7 +502,7 @@ const TermsOfService = () => {
             or in connection with, any Third-Party Applications. Cloud
             Applications are an example of Third-Party Applications for which
             you must accept the Terms of Service before usage. By using any
-            Cloud Application through Fractal, you agree to that Third-Party
+            Cloud Application through Whist, you agree to that Third-Party
             Application's Terms of Service. We encourage you to review these
             Terms of Service frequently.
           </p>
@@ -510,58 +510,57 @@ const TermsOfService = () => {
             User’s Data And Content
           </p>
           <p>
-            While using Cloud Applications through Fractal, you will send us
+            While using Cloud Applications through Whist, you will send us
             various files, content, emails, contacts, etc. (the “User Content”).
-            The User Content belongs to the User and in no way to Fractal.
-            Fractal is only granted the right to use the User Content to the
-            extent required for the proper functioning of the Services. These
-            limited rights include in particular, the right to temporarily host,
-            save, and share the User Content, for the intended functioning of
-            the User’s Cloud Applications. User Content is not stored by
-            Fractal, with the exception of third-party authentication
-            integrations, plugins and preferences you specifiy to us to improve
-            your experience, and gets permanently deleted shortly after the end
-            of a Fractal Session. It is the User's responsibility to save the
-            User Content through one of the provided third-party storage
-            solutions available for the User Content, either directly provided
-            through the Cloud Application they are using or integrated within
-            the Fractal Services by us. Third-Party storage solutions
-            availability may vary depending on the Cloud Application you are
-            using.
+            The User Content belongs to the User and in no way to Whist. Whist
+            is only granted the right to use the User Content to the extent
+            required for the proper functioning of the Services. These limited
+            rights include in particular, the right to temporarily host, save,
+            and share the User Content, for the intended functioning of the
+            User’s Cloud Applications. User Content is not stored by Whist, with
+            the exception of third-party authentication integrations, plugins
+            and preferences you specifiy to us to improve your experience, and
+            gets permanently deleted shortly after the end of a Whist Session.
+            It is the User's responsibility to save the User Content through one
+            of the provided third-party storage solutions available for the User
+            Content, either directly provided through the Cloud Application they
+            are using or integrated within the Whist Services by us. Third-Party
+            storage solutions availability may vary depending on the Cloud
+            Application you are using.
           </p>
           <p>
-            You acknowledge and agree that Fractal may remove User Content from
+            You acknowledge and agree that Whist may remove User Content from
             the Services if you are in violation of these Terms or if we cancel
             or suspend our Services; we are not liable for deletion of User
             Content or accidental loss User Content. We strongly advise that
             Users backup User Content in many different places. Some of our
             Services may allow you to share your User Content with third
-            parties; Fractal is not liable for the sharing of any User Content
+            parties; Whist is not liable for the sharing of any User Content
             with third parties.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Personal Data</p>
           <p>
             In addition to the User Content saved on the User's Cloud
-            Applications, Fractal collects certain personal data concerning the
-            User. For example, Fractal will collect information such as your
-            name, email address, phone number, payment information, physical
-            address, date of birth, and data concerning your purchase of
-            Services. In addition, Fractal will collect information related to
-            how and when you use the Services, including any User Devices used
-            to access the Services, solely with a view to performing or
-            improving its Services, including adjusting the video streaming to
-            the User's Internet connection and allocating its hardware resources
-            based on its Users’ needs.
+            Applications, Whist collects certain personal data concerning the
+            User. For example, Whist will collect information such as your name,
+            email address, phone number, payment information, physical address,
+            date of birth, and data concerning your purchase of Services. In
+            addition, Whist will collect information related to how and when you
+            use the Services, including any User Devices used to access the
+            Services, solely with a view to performing or improving its
+            Services, including adjusting the video streaming to the User's
+            Internet connection and allocating its hardware resources based on
+            its Users’ needs.
           </p>
           <p>
-            You hereby authorize Fractal to store, process and use the foregoing
+            You hereby authorize Whist to store, process and use the foregoing
             data, and communicate such data to our affiliates, in each case for
             the purposes set forth above.
           </p>
           <p>
-            For the efficient and proper running of the Websites, Fractal may
-            use cookies, which are files used to identify the User each time
-            they connect. Cookies are used to improve the personalized services
+            For the efficient and proper running of the Websites, Whist may use
+            cookies, which are files used to identify the User each time they
+            connect. Cookies are used to improve the personalized services
             offered and for statistical purposes. The User may object to the use
             of cookies, by changing his or her browser settings, without
             relinquishing access to the service.
@@ -570,17 +569,17 @@ const TermsOfService = () => {
             Websites User License
           </p>
           <p>
-            Fractal grants the User, subject to compliance with these Terms, a
+            Whist grants the User, subject to compliance with these Terms, a
             limited, non-exclusive, non-transferable, non-sub-licensable and
             revocable license for non-commercial, personal, private access,
             browsing and use of the Websites.
           </p>
           <p>
-            Fractal grants the User a non-exclusive and revocable right to
-            create hyperlinks to the home page of the Websites, provided that
-            they do not portray Fractal or its Services in a misleading,
-            derogatory or offensive way, or more generally, provided that they
-            do not affect Fractal in any way whatsoever.
+            Whist grants the User a non-exclusive and revocable right to create
+            hyperlinks to the home page of the Websites, provided that they do
+            not portray Whist or its Services in a misleading, derogatory or
+            offensive way, or more generally, provided that they do not affect
+            Whist in any way whatsoever.
           </p>
           <p>
             The reproduction of any documents published on the Websites is only
@@ -592,11 +591,11 @@ const TermsOfService = () => {
           </p>
           <p>
             All intellectual property associated with the Services and the
-            Software (jointly referred to as the "Fractal IP") are proprietary
-            to Fractal and/or its affiliates and/or its or their suppliers, and
-            are protected by copyrights, trademarks, service marks, patents
-            and/or other proprietary rights and laws. Fractal IP includes,
-            without limitation, any trademarks, logos, trade names, photographs,
+            Software (jointly referred to as the "Whist IP") are proprietary to
+            Whist and/or its affiliates and/or its or their suppliers, and are
+            protected by copyrights, trademarks, service marks, patents and/or
+            other proprietary rights and laws. Whist IP includes, without
+            limitation, any trademarks, logos, trade names, photographs,
             publications, texts, documents, descriptions, slogans, domain names,
             patents, know-how, software, source code, applications, user
             interfaces, databases, drawings, designs and models, designs, works,
@@ -606,15 +605,15 @@ const TermsOfService = () => {
           </p>
           <p>
             You acknowledge that by purchasing the Services you are not
-            acquiring any right in or title to the Fractal IP. Except as
-            specifically permitted herein, no portion of the Fractal IP may be
+            acquiring any right in or title to the Whist IP. Except as
+            specifically permitted herein, no portion of the Whist IP may be
             used or reproduced in any form, or by any means. All intellectual
             property rights not expressly granted in these Terms are reserved to
-            Fractal and its affiliates.
+            Whist and its affiliates.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Termination By Us</p>
           <p>
-            We expect you to comply with these Terms. Fractal reserves the right
+            We expect you to comply with these Terms. Whist reserves the right
             to suspend the Services, without notice, if you breach these Terms
             (including, in particular, in the event of a payment default or a
             violation of our Code of Conduct, which can be found above in these
@@ -624,20 +623,20 @@ const TermsOfService = () => {
             immediately liable for the price of all the Services included in
             your then-current Subscription Period. If you have selected a
             monthly plan, your plan will be automatically suspended immediately
-            without refund for the current billing period and your Fractal
-            Account data will be kept for internal reference. If you have
-            selected a longer prepaid plan, your plan will be automatically
-            suspended immediately without refund for the entire period of your
-            prepaid plan and your Fractal Account data will be kept for internal
-            reference. Your Cloud Applications data is not stored by Fractal
-            between Fractal Sessions and therefore will not be kept following a
+            without refund for the current billing period and your Whist Account
+            data will be kept for internal reference. If you have selected a
+            longer prepaid plan, your plan will be automatically suspended
+            immediately without refund for the entire period of your prepaid
+            plan and your Whist Account data will be kept for internal
+            reference. Your Cloud Applications data is not stored by Whist
+            between Whist Sessions and therefore will not be kept following a
             termination, as outlined in the User’s Data And Content section
             above.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Termination By You</p>
           <p>
             You may decide to end your subscription at any time, by reaching out
-            to your support team via the Fractal website, or by any other means
+            to your support team via the Whist website, or by any other means
             that may be indicated on the Websites. If you decide to terminate
             your subscription, the Services and the corresponding payments will
             continue until the end of the then-current Subscription Period, and
@@ -645,21 +644,21 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Territories</p>
           <p>
-            The Fractal Services are only supported in the regions and countries
+            The Whist Services are only supported in the regions and countries
             listed on our website at the time of signup. Because of the nature
-            of the Internet, Fractal Cloud Applications might be accessible in
-            the country or region in which you are physically present at a
-            specific moment, even if this country or region is not part of the
-            officially supported regions on our website. Furthermore, access
-            from those other geographies may be possible, but the distance
-            between the User and the Fractal data center infrastructure may
-            cause diminished material quality of Services. Fractal only
-            guarantees quality of service in officially supported regions; usage
-            of the Fractal Services outside of those territories is not endorsed
-            by Fractal and the User is reponsible to respect the local laws,
-            privacy regulations and other restrictions which may be imposed upon
-            them by local authorities. Fractal declines all liabilities for
-            usage of our Services outside of officially-supported geographies.
+            of the Internet, Whist Cloud Applications might be accessible in the
+            country or region in which you are physically present at a specific
+            moment, even if this country or region is not part of the officially
+            supported regions on our website. Furthermore, access from those
+            other geographies may be possible, but the distance between the User
+            and the Whist data center infrastructure may cause diminished
+            material quality of Services. Whist only guarantees quality of
+            service in officially supported regions; usage of the Whist Services
+            outside of those territories is not endorsed by Whist and the User
+            is reponsible to respect the local laws, privacy regulations and
+            other restrictions which may be imposed upon them by local
+            authorities. Whist declines all liabilities for usage of our
+            Services outside of officially-supported geographies.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Copyright</p>
           <p>
@@ -676,7 +675,7 @@ const TermsOfService = () => {
             Fractal Computers, Inc. <br />
             Six Landmark Square, 4th Floor <br />
             Stamford, CT 06901 <br />
-            <a href="mailto:support@fractal.co">support@fractal.co</a> <br />
+            <a href="mailto:support@whist.com">support@whist.com</a> <br />
           </p>
           <p>
             We reserve the right to delete or disable any content alleged to be
@@ -719,7 +718,7 @@ const TermsOfService = () => {
             Amendment Of The Conditions
           </p>
           <p>
-            Fractal may from time to time amend these Terms. In that case, you
+            Whist may from time to time amend these Terms. In that case, you
             will be asked to accept the amended Terms that will apply as of the
             start of your next billing period. If you do not accept the amended
             Terms, the Services will continue in accordance with these Terms,
@@ -730,16 +729,16 @@ const TermsOfService = () => {
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Notices</p>
           <p>
             Unless otherwise stated in these Terms, when the User seeks to
-            contact Fractal, the user should do so through Fractal’s website.
+            contact Whist, the user should do so through Fractal’s website.
           </p>
           <p>
-            Fractal may contact the User by any useful means, including by email
+            Whist may contact the User by any useful means, including by email
             or text message sent to the contact details provided by the User in
             their User Account or via the Websites.
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Miscellaneous</p>
           <p>
-            These Terms constitute the entire agreement between you and Fractal
+            These Terms constitute the entire agreement between you and Whist
             with respect to the subject matter of these Terms, and supersede and
             replace any other prior or contemporaneous agreements, or terms and
             conditions applicable to the subject matter of these Terms. These
@@ -752,7 +751,7 @@ const TermsOfService = () => {
             provisions of these Terms will remain in full effect and an
             enforceable term will be substituted reflecting as closely as
             possible the intent of the parties. You may not assign any of your
-            rights under these Terms, and any such attempt will be void. Fractal
+            rights under these Terms, and any such attempt will be void. Whist
             may assign its rights to any of its affiliates, or to any successor
             in interest of any business associated with the Services.
           </p>
@@ -772,7 +771,7 @@ const TermsOfService = () => {
           <p>
             To that effect, before filing a claim against us, you agree to try
             to resolve the dispute informally by opening a support ticket via
-            email to <a href="mailto:support@fractal.co">support@fractal.co</a>.
+            email to <a href="mailto:support@whist.com">support@whist.com</a>.
             We will try to resolve the dispute informally. If a dispute is not
             resolved within fifteen days of submission, you or we may bring a
             formal proceeding.
@@ -804,10 +803,10 @@ const TermsOfService = () => {
           </p>
           <p>
             You can opt-out of the requirement to arbitrate by emailing{" "}
-            <a href="mailto:support@fractal.co">support@fractal.co</a> with the
+            <a href="mailto:support@whist.com">support@whist.com</a> with the
             subject line “Arbitration Opt-Out” within 30 days of the date you
             first register your account. You can obtain the opt-form, free of
-            charge, by contacting Fractal via the email address provided. This
+            charge, by contacting Whist via the email address provided. This
             step is not necessary if you have already opted-out in a previous
             version of these terms: your previous decision regarding arbitration
             is still binding unless you update it.

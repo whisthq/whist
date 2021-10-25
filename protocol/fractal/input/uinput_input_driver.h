@@ -1,7 +1,7 @@
 #ifndef UINPUT_INPUT_DRIVER_H
 #define UINPUT_INPUT_DRIVER_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file uinput_input_driver.h
  * @brief This file defines the uinput input device type.
 ============================

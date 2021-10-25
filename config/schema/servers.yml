@@ -1,29 +1,29 @@
 CLIENT_DOWNLOAD_URL:
   local:
-    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
+    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg"
+    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe"
+    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Whist.AppImage"
   dev:
-    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Fractal.AppImage"
+    macos: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg"
+    win32: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe"
+    linux: "https://fractal-chromium-linux-dev.s3.amazonaws.com/Whist.AppImage"
   staging:
-    macos: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-staging.amazonaws.com/Fractal.AppImage"
+    macos: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg"
+    win32: "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe"
+    linux: "https://fractal-chromium-linux-staging.amazonaws.com/Whist.AppImage"
   prod:
-    macos: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg"
-    win32: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Fractal.exe"
-    linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Fractal.AppImage"
+    macos: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg"
+    win32: "https://fractal-chromium-windows-prod.s3.amazonaws.com/Whist.exe"
+    linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Whist.AppImage"
 
 WEBSERVER_URL:
   local: "http://127.0.0.1:7730"
-  dev: "https://dev-server.fractal.co"
-  staging: "https://staging-server.fractal.co"
-  prod: "https://prod-server.fractal.co"
+  dev: "https://dev-server.whist.com"
+  staging: "https://staging-server.whist.com"
+  prod: "https://prod-server.whist.com"
 
 FRONTEND_URL:
-  local: "dev.fractal.co"
-  dev: "dev.fractal.co"
-  staging: "staging.fractal.co"
-  prod: "production.fractal.co"
+  local: "dev.whist.com"
+  dev: "dev.whist.com"
+  staging: "staging.whist.com"
+  prod: "production.whist.com"

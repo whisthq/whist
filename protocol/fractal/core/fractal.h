@@ -6,9 +6,9 @@
 #endif
 
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file fractal.h
- * @brief This file contains the core of Fractal custom structs and definitions
+ * @brief This file contains the core of Whist custom structs and definitions
  *        used throughout.
  */
 
@@ -163,7 +163,7 @@ Defines
 // Therefore, whenever arrays are created or length of the string is compared, we should be
 // comparing to *MAXLEN + 1
 #define FRACTAL_IDENTIFIER_MAXLEN 31
-// this maxlen is the determined Fractal environment max length (the upper bound on all flags passed
+// this maxlen is the determined Whist environment max length (the upper bound on all flags passed
 // into the protocol)
 #define FRACTAL_ARGS_MAXLEN 255
 // Maximum number of packets that can fit in a frame. These values mirror the ones defined at the
@@ -612,7 +612,7 @@ typedef struct {
 #define MAX_AUDIO_PACKETS 3
 /**
  * @brief   Client message.
- * @details Message from a Fractal client to a Fractal server.
+ * @details Message from a Whist client to a Whist server.
  */
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
@@ -683,7 +683,7 @@ typedef struct FractalClientMessage {
 
 /**
  * @brief   Server message type.
- * @details Type of message being sent from a Fractal server to a Fractal client.
+ * @details Type of message being sent from a Whist server to a Whist client.
  */
 typedef enum FractalServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
@@ -700,7 +700,7 @@ typedef enum FractalServerMessageType {
 
 /**
  * @brief   Server message.
- * @details Message from a Fractal server to a Fractal client.
+ * @details Message from a Whist server to a Whist client.
  */
 typedef struct FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
@@ -789,9 +789,9 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  * @brief                          Calculate the size of a FractalClientMessage
  *                                 struct
  *
- * @param fcmsg                     The Fractal Client Message to find the size
+ * @param fcmsg                     The Whist Client Message to find the size
  *
- * @returns                        The size of the Fractal Client Message struct
+ * @returns                        The size of the Whist Client Message struct
  */
 int get_fcmsg_size(FractalClientMessage* fcmsg);
 

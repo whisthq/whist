@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file log_statistic.c
  * @brief This contains logging utils to log repeated statistics, where we
  *        don't want to print every time.

@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file sysinfo.c
  * @brief This file contains all code that logs client hardware specifications.
 ============================
@@ -424,7 +424,7 @@ void print_cpu_info() {
     LOG_INFO("Physical Cores: %d", cores);
     LOG_INFO("HyperThreaded: %s", (hyper_threads ? "true" : "false"));
 
-// add CPU usage at beginning of Fractal
+// add CPU usage at beginning of Whist
 #ifdef __APPLE__
     char* cpu_usage = NULL;
     runcmd("top -l 1 | grep -E '^CPU'", &cpu_usage);
@@ -453,6 +453,6 @@ void print_hard_drive_info() {
     used_space = total_space - buf.f_bfree * buf.f_frsize;
     available_space = buf.f_bavail * buf.f_frsize;
 #endif
-    LOG_INFO("Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Fractal",
-             used_space / BYTES_IN_GB, total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
+    LOG_INFO("Hard Drive: %.2fGB/%.2fGB used, %.2fGB available to Whist", used_space / BYTES_IN_GB,
+             total_space / BYTES_IN_GB, available_space / BYTES_IN_GB);
 }

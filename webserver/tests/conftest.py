@@ -295,7 +295,7 @@ def reset_limiter() -> None:
 
 
 def user(
-    *, domain: str = "fractal.co", user_id: Optional[str] = None  # pylint: disable=unused-argument
+    *, domain: str = "whist.com", user_id: Optional[str] = None  # pylint: disable=unused-argument
 ) -> str:
     """Generate a fake email address for a test user.
 
@@ -307,7 +307,7 @@ def user(
         A string representing the user's identity.
     """
 
-    return user_id if user_id is not None else f"test-user+{uuid.uuid4()}@fractal.co"
+    return user_id if user_id is not None else f"test-user+{uuid.uuid4()}@whist.com"
 
 
 user_fixture = pytest.fixture(name="user")(user)

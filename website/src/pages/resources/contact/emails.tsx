@@ -4,21 +4,21 @@ import { NewspaperIcon, PhoneIcon, SupportIcon } from "@heroicons/react/outline"
 const supportLinks = [
   {
     name: "Sales",
-    href: "sales@fractal.co",
+    href: "sales@whist.com",
     description:
       "For any business-related inquires including enterprise plans.",
     icon: PhoneIcon,
   },
   {
     name: "Technical Support",
-    href: "support@fractal.co",
+    href: "support@whist.com",
     description:
       "For bug reports, feature suggestions, and anything product-related.",
     icon: SupportIcon,
   },
   {
     name: "Media Inquiries",
-    href: "hello@fractal.co",
+    href: "hello@whist.com",
     description: "For questions about press, partnerships, etc.",
     icon: NewspaperIcon,
   },

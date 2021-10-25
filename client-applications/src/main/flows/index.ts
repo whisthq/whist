@@ -65,7 +65,7 @@ const config = configFlow(
   )
 )
 
-// Observable that fires when Fractal is ready to be launched
+// Observable that fires when Whist is ready to be launched
 const launchTrigger = fromTrigger(TRIGGER.configFlowSuccess).pipe(
   map((x: object) => ({
     ...x, // { accessToken, configToken }

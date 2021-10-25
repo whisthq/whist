@@ -115,7 +115,7 @@ module.exports = {
 
     const ext = process.platform === "win32" ? ".exe" : ""
     const oldExecutable = "FractalClient"
-    const newExecutable = process.platform === "darwin" ? "_Fractal" : "Fractal"
+    const newExecutable = process.platform === "darwin" ? "_Fractal" : "Whist"
 
     fse.moveSync(
       path.join(protocolBuildDir, `${oldExecutable}${ext}`),

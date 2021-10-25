@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file x11capture.c
  * @brief This file contains the code to create a capture device and use it to capture the screen on
 Linux.
@@ -151,7 +151,7 @@ void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t heigh
     if (!is_same_wh(device)) {
         char modename[128];
 
-        snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
+        snprintf(modename, sizeof(modename), "Whist-%dx%d", width, height);
 
         char* display_name;
         runcmd("xrandr --current | grep \" connected\"", &display_name);

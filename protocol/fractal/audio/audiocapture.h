@@ -1,7 +1,7 @@
 #ifndef AUDIO_CAPTURE_H
 #define AUDIO_CAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file audiocapture.h
  * @brief This file contains the code to capture audio on the servers,
  *        dynamically toggling Windows and Linux.

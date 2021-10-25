@@ -1,7 +1,7 @@
 #ifndef LINUX_CAPTURE_H
 #define LINUX_CAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file linuxcapture.h
  * @brief This file contains the code to create a capture device on a Linux machine using X11, and
 use that device to capture frames. It implements screencapture.h.

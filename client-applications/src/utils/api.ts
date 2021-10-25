@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file api.ts
  * @brief This file contains utility functions to make API calls.
  */
@@ -57,7 +57,7 @@ export const apiPut = async (
     Arguments:
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         body (JSON) : PUT request body
-        server (string) : HTTP URL (e.g. https://prod-server.fractal.co)
+        server (string) : HTTP URL (e.g. https://prod-server.whist.com)
         ignoreCertificate (bool) : whether to ignore the endpoint host's certificate (used for self-signed).
             This is `false` by default because we only want to not `rejectUnauthorized` when we are certain
             about the host's certificate being self-signed or trusted.

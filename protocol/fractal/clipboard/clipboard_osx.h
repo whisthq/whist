@@ -1,7 +1,7 @@
 #ifndef CLIPBOARD_OSX_H
 #define CLIPBOARD_OSX_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file clipboard_osx.h
  * @brief This file contains the code to interface with the MacOS clipboard via
  *        Apple's Objective-C language.

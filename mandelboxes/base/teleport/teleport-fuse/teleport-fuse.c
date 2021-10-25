@@ -1,4 +1,4 @@
-// This file is the main entrypoint for the FUSE filesystem for Fractal Teleport.
+// This file is the main entrypoint for the FUSE filesystem for Whist Teleport.
 
 // uses fuse3
 #define FUSE_USE_VERSION 31

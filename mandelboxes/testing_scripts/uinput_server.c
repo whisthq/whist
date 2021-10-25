@@ -403,19 +403,19 @@ int main() {
     // keyboard config
 
     usetup.id.product = 0x1122;
-    strcpy(usetup.name, "Fractal Virtual Keyboard");
+    strcpy(usetup.name, "Whist Virtual Keyboard");
     _FRACTAL_IOCTL_TRY(fd_keyboard, UI_DEV_SETUP, &usetup);
 
     // relative mouse config
 
     usetup.id.product = 0x1123;
-    strcpy(usetup.name, "Fractal Virtual Relative Input");
+    strcpy(usetup.name, "Whist Virtual Relative Input");
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_DEV_SETUP, &usetup);
 
     // absolute mouse config
 
     usetup.id.product = 0x1124;
-    strcpy(usetup.name, "Fractal Virtual Absolute Input");
+    strcpy(usetup.name, "Whist Virtual Absolute Input");
     _FRACTAL_IOCTL_TRY(fd_absmouse, UI_DEV_SETUP, &usetup);
 
     struct uinput_abs_setup axis_setup = {0};

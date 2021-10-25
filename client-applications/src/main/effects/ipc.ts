@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */

@@ -1,4 +1,4 @@
-# Fractal GitHub Actions Workflows
+# Whist GitHub Actions Workflows
 
 This subfolder contains the YAML workflow files for our GitHub Actions workflows. These workflows are integral to our continuous integration, handling everything from tests to building and deployment to cron jobs for cleanup and analysis.
 
@@ -23,10 +23,10 @@ For example, this is the header and beginning of `fractal-deploy-sentry-releases
 ```yaml
 # workflows/fractal-push-sentry-releases.yml
 #
-# Fractal: Push Sentry Release
+# Whist: Push Sentry Release
 # Automatically push a new Sentry release for each of the fractal/fractal projects.
 
-name: "Fractal: Push Sentry Releases"
+name: "Whist: Push Sentry Releases"
 ```
 
 Note that in addition to the filename, we entitle our workflow with `Project Name: Project Description in Title Case`, wrapping that title in quotes to escape the YAML syntax. This should always match the third line of the header.

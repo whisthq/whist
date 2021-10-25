@@ -39,7 +39,7 @@ const configs = {
     },
     url: {
       WEBSERVER_URL: FractalWebservers.local,
-      FRONTEND_URL: "https://dev.fractal.co",
+      FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
@@ -49,11 +49,11 @@ const configs = {
     deployEnv: "dev",
     sentryEnv: "development",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal (local)",
+    title: "Whist (local)",
   },
   DEVELOPMENT: {
     appEnvironment,
@@ -66,7 +66,7 @@ const configs = {
     },
     url: {
       WEBSERVER_URL: FractalWebservers.dev,
-      FRONTEND_URL: "https://dev.fractal.co",
+      FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
@@ -76,11 +76,11 @@ const configs = {
     deployEnv: "dev",
     sentryEnv: "development",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
+      MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal (development)",
+    title: "Whist (development)",
   },
   STAGING: {
     appEnvironment,
@@ -93,7 +93,7 @@ const configs = {
     },
     url: {
       WEBSERVER_URL: FractalWebservers.staging,
-      FRONTEND_URL: "https://staging.fractal.co",
+      FRONTEND_URL: "https://staging.whist.com",
     },
     auth0: {
       auth0Domain: "fractal-staging.us.auth0.com",
@@ -104,11 +104,11 @@ const configs = {
     sentryEnv: "staging",
     clientDownloadURLs: {
       MacOS:
-        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
+        "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal (staging)",
+    title: "Whist (staging)",
   },
   PRODUCTION: {
     appEnvironment,
@@ -117,7 +117,7 @@ const configs = {
     buildRoot,
     url: {
       WEBSERVER_URL: FractalWebservers.production,
-      FRONTEND_URL: "https://fractal.co",
+      FRONTEND_URL: "https://whist.com",
     },
     keys: {
       ...keys,
@@ -131,11 +131,11 @@ const configs = {
     deployEnv: "prod",
     sentryEnv: "production",
     clientDownloadURLs: {
-      MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
+      MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-base.s3.amazonaws.com/Whist.exe",
     },
-    title: "Fractal",
+    title: "Whist",
   },
 }
 

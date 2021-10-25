@@ -1,8 +1,8 @@
-# Fractal Website
+# Whist Website
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/fractal-prod/deploys) ![Website: Node.js Build and Test](https://github.com/fractal/website/workflows/Website:%20Node.js%20Build%20and%20Test/badge.svg) ![Website: Linting](https://github.com/fractal/website/workflows/Website:%20Linting/badge.svg)
 
-This repository contains the code for the Fractal website.
+This repository contains the code for the Whist website.
 
 ## Setting Up for Development
 
@@ -35,9 +35,9 @@ Finally, you can open PR to `dev`.
 
 The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/prod), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the code owners.
 
-- The branch `dev` deploys to https://dev.fractal.co.
-- The branch `staging` deploys to https://staging.fractal.co.
-- The branch `prod` deploys to https://fractal.co.
+- The branch `dev` deploys to https://dev.whist.com.
+- The branch `staging` deploys to https://staging.whist.com.
+- The branch `prod` deploys to https://whist.com.
 
 For `staging` the password is `><mc?@,>YF?v&p,e`. For `dev` the password is `Mandelbox2021!`.
 

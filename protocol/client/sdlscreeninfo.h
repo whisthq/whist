@@ -1,7 +1,7 @@
 #ifndef SDL_SCREEN_INFO_H
 #define SDL_SCREEN_INFO_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file sdlscreeninfo.h
  * @brief This file contains SDL screen info code, used to retrive information
  *        about SDL Windows.

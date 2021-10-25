@@ -9,17 +9,17 @@ const features = [
   {
     name: "Built-in VPN",
     description:
-      "When you visit websites on Fractal, you will not send the IP address of your computer but rather the IP of the datacenter that Fractal runs on.",
+      "When you visit websites on Whist, you will not send the IP address of your computer but rather the IP of the datacenter that Whist runs on.",
   },
   {
     name: "Browsing Data Privacy",
     description:
-      "Whereas Chrome caches your browsing data (history, cookies, etc.) onto your computer, Fractal encrypts it and stores it in a server that only you can access.",
+      "Whereas Chrome caches your browsing data (history, cookies, etc.) onto your computer, Whist encrypts it and stores it in a server that only you can access.",
   },
   {
     name: "Computer Info Privacy",
     description:
-      "Normal websites track you by pulling information about your computer's operating system, location, etc. This is impossible to do with Fractal.",
+      "Normal websites track you by pulling information about your computer's operating system, location, etc. This is impossible to do with Whist.",
   },
   {
     name: "Malware Protection",
@@ -29,7 +29,7 @@ const features = [
   {
     name: "Local Network Protection",
     description:
-      "All information sent over the network via Fractal is AES encrypted and protected against anyone spying on your network.",
+      "All information sent over the network via Whist is AES encrypted and protected against anyone spying on your network.",
   },
 ]
 
@@ -92,7 +92,7 @@ export const Middle = () => {
         }
         text={
           <div className="text-md text-gray-400">
-            Fractal runs in the cloud on gigabit Internet. Browse the web at
+            Whist runs in the cloud on gigabit Internet. Browse the web at
             lightning speeds, even if your own Internet is slow.
           </div>
         }
@@ -129,7 +129,7 @@ export const Middle = () => {
         text={
           <div className="text-md text-gray-400">
             Today, your computer runs out of memory and slows down when you open
-            too many tabs. By running in the cloud, Fractal never consumes more
+            too many tabs. By running in the cloud, Whist never consumes more
             than 300MB of memory.
           </div>
         }
@@ -159,8 +159,8 @@ export const Middle = () => {
         }
         text={
           <div className="mt-2 text-md text-gray-400 mb-4">
-            Because Fractal runs in a remote datacenter, your browser and all
-            its data are entirely decoupled from your personal computer.
+            Because Whist runs in a remote datacenter, your browser and all its
+            data are entirely decoupled from your personal computer.
           </div>
         }
         image={

@@ -22,7 +22,7 @@ USAGE:
   setup_host.sh --localdevelopment
   setup_host.sh --deployment [ARGS...]
 This script takes a blank Ubuntu 21.04 EC2 instance and sets it up for running
-Fractal by configuring Docker and NVIDIA to run Fractal's GPU-enabled
+Whist by configuring Docker and NVIDIA to run Whist's GPU-enabled
 mandelboxes.
 To set up the host for local development, pass in the --localdevelopment flag.
 To set it up for deployments, pass in the --deployment flag, followed by the

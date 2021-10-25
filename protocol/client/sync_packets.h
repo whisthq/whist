@@ -1,7 +1,7 @@
 #ifndef CLIENT_SYNC_PACKETS_H
 #define CLIENT_SYNC_PACKETS_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file sync_packets.h
  * @brief This file contains code for high-level communication with the server
 ============================

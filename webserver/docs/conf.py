@@ -18,9 +18,9 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = "Fractal Webserver"
-copyright = "2021, Fractal Computers, Inc."
-author = "Fractal"
+project = "Whist Webserver"
+copyright = "Fractal Computers, Inc. (dba Whist) 2021"
+author = "Whist"
 
 
 # -- General configuration ---------------------------------------------------

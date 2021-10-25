@@ -12,10 +12,10 @@ const environment: FractalEnvironment = {
     },
     sentry_env: "development",
     client_download_urls: {
-      macOS_x64: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
-      macOS_arm64: "https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Fractal.dmg",
+      macOS_x64: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
+      macOS_arm64: "https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Whist.exe",
     },
   },
   staging: {
@@ -24,10 +24,10 @@ const environment: FractalEnvironment = {
     },
     sentry_env: "staging",
     client_download_urls: {
-      macOS_x64: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
-      macOS_arm64: "https://fractal-chromium-macos-arm64-staging.s3.amazonaws.com/Fractal.dmg",
+      macOS_x64: "https://fractal-chromium-macos-staging.s3.amazonaws.com/Whist.dmg",
+      macOS_arm64: "https://fractal-chromium-macos-arm64-staging.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe",
     },
   },
   production: {
@@ -36,10 +36,10 @@ const environment: FractalEnvironment = {
     },
     sentry_env: "production",
     client_download_urls: {
-      macOS_x64: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
-      macOS_arm64: "https://fractal-chromium-macos-arm64-prod.s3.amazonaws.com/Fractal.dmg",
+      macOS_x64: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
+      macOS_arm64: "https://fractal-chromium-macos-arm64-prod.s3.amazonaws.com/Whist.dmg",
       Windows:
-        "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-base.s3.amazonaws.com/Whist.exe",
     },
   },
 }

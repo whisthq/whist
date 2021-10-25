@@ -10,11 +10,11 @@ const path = require("path")
 // Name of protocol executable
 const getProtocolName = () => {
   if (process.platform === "win32") {
-    return "Fractal.exe"
+    return "Whist.exe"
   } else if (process.platform === "darwin") {
     return "_Fractal"
   } else {
-    return "Fractal"
+    return "Whist"
   }
 }
 

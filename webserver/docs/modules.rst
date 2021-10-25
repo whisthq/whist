@@ -1,5 +1,5 @@
 .. modules.rst
-   A description of the different components of the Fractal Webserver and how
+   A description of the different components of the Whist Webserver and how
    they interact with one another.
 
 Module Documentation

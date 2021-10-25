@@ -11,11 +11,11 @@ const Detailed = () => {
             </span>
           </h1>
           <p className="mt-8 text-gray-400 leading-8 text-left">
-            Fractal works by streaming Google Chrome from our datacenters to
-            your computer. Because Google Chrome is being streamed to your
-            computer from a datacenter in the form of video pixels, there are
-            two types of security to consider: security of your browsing stream
-            and security of your browsing data.
+            Whist works by streaming Google Chrome from our datacenters to your
+            computer. Because Google Chrome is being streamed to your computer
+            from a datacenter in the form of video pixels, there are two types
+            of security to consider: security of your browsing stream and
+            security of your browsing data.
           </p>
           <p className="mt-8 text-xl text-mint leading-8 text-left">
             How We Secure Your Browsing Stream
@@ -34,7 +34,7 @@ const Detailed = () => {
             How We Secure Your Browsing Data
           </p>
           <p className="mt-8 text-gray-400 leading-8 text-left">
-            We know what you&lsquo;re thinking: If Fractal saves my cookies and
+            We know what you&lsquo;re thinking: If Whist saves my cookies and
             history, can&lsquo;t they see all of it? No — your session data is
             never stored unencrypted. Further, the encryption key for that data
             lives in 2 places: on your computer and temporarily on your cloud

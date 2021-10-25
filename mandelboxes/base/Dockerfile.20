@@ -488,7 +488,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Copy configuration for X11 display
 COPY display/fractal-display.conf /usr/share/X11/xorg.conf.d/01-fractal-display.conf
 
-# Set up Fractal service that starts before X to fix the Nvidia GPU bus ID and device paths
+# Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY display/fractal-update-xorg-conf.service /etc/systemd/system/
 COPY display/update-xorg-conf.sh /usr/share/fractal/
 RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
@@ -501,7 +501,7 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
-# Set up Fractal service to launch X11 display
+# Set up Whist service to launch X11 display
 COPY display/fractal-display-config.env /usr/share/fractal
 COPY display/xinitrc /root/.xinitrc
 COPY display/fractal-display.service /etc/systemd/system
@@ -644,7 +644,7 @@ CMD ["/usr/share/fractal/entrypoint.sh"]
 # Main
 #########################
 
-# Set up the default (harmless/useless) Fractal application (eyes)
+# Set up the default (harmless/useless) Whist application (eyes)
 
 # Install xeyes and dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
@@ -669,7 +669,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Set up the default Fractal application symlink
+# Set up the default Whist application symlink
 RUN ln -sf "$(which xeyes)" /usr/bin/fractal-application
 
 # Set up script to launch `fractal-application` as the `fractal` user
@@ -708,7 +708,7 @@ COPY teleport/uri-handler/fractal-teleport-uri-handler.sh /opt/teleport/uri-hand
 RUN chmod +x /opt/teleport/uri-handler
 RUN su - fractal -c 'xdg-desktop-menu install /opt/teleport/uri-handler.desktop'
 
-# Set up the Fractal server protocol
+# Set up the Whist server protocol
 
 # Install protocol dependencies
 COPY build-temp/setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
@@ -718,7 +718,7 @@ RUN /usr/share/fractal/setup-linux-build-environment.sh \
     && rm -rf /tmp/* /var/tmp/*
 RUN rm /usr/share/fractal/setup-linux-build-environment.sh
 
-# Set up Fractal Protocol symlink
+# Set up Whist Protocol symlink
 RUN mkdir /usr/share/fractal/bin
 RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
@@ -738,7 +738,7 @@ RUN chgrp root /etc/systemd/system/fractal* \
     && chown root:root /etc/systemd/system/fractal* \
     && chmod 600 /etc/systemd/system/fractal*
 
-# Install Fractal Protocol binaries and helper files
+# Install Whist Protocol binaries and helper files
 # We do this last and symlink `/usr/share/fractal/bin` earlier
 # to make it easier to modify the protocol and rebuild the base
 # Dockerfile without needing to redo many steps

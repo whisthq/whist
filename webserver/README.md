@@ -1,16 +1,14 @@
-# Fractal Webserver
+# Whist Webserver
 
-[![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal)
+This directory contains the source code for Whist's main web server. The Webserver is the central component of Whist's backend. Its primary responsibility is load-balancing requests across the other backend services.
 
-This directory contains the source code for Fractal's main web server. The Webserver is the central component of Fractal's backend. Its primary responsibility is load-balancing requests across the other backend services.
+![Whist Backend](https://user-images.githubusercontent.com/31637652/127786757-50ec9cde-fa93-4558-a7aa-432a21a2ae21.png)
 
-![Fractal Backend](https://user-images.githubusercontent.com/31637652/127786757-50ec9cde-fa93-4558-a7aa-432a21a2ae21.png)
+The diagram above is a simplified representation of Whist's backend. Directional arrows between services represent requests. Arrows A and B represent requests that the backend receives from clients.
 
-The diagram above is a simplified representation of Fractal's backend. Directional arrows between services represent requests. Arrows A and B represent requests that the backend receives from clients.
+We can use this diagram to better understand the Webserver's load balancing responsibilities. When a user would like to start streaming an application, their client sends a request of type A to the backend followed immediately by a request of type B. The recipient of the first request is the Webserver. Included in the Webserver's response is the IP address of a compute instance running the Whist host service. Upon receipt of the Webserver's response, the client sends a request of type B to the host service running at the address specified in the response. The Webserver examines compute instance resource utilization metrics to determine which instance's IP address to send back to the client. In summary, the Webserver responds to requests of type A such that all compute instances running the Whist host service share the responsibility of handling requests of type B.
 
-We can use this diagram to better understand the Webserver's load balancing responsibilities. When a user would like to start streaming an application, their client sends a request of type A to the backend followed immediately by a request of type B. The recipient of the first request is the Webserver. Included in the Webserver's response is the IP address of a compute instance running the Fractal host service. Upon receipt of the Webserver's response, the client sends a request of type B to the host service running at the address specified in the response. The Webserver examines compute instance resource utilization metrics to determine which instance's IP address to send back to the client. In summary, the Webserver responds to requests of type A such that all compute instances running the Fractal host service share the responsibility of handling requests of type B.
-
-Several other minor responsibilities of the Fractal Webserver are documented in the [Webserver documentation](https://docs.fractal.co/webserver/responsibilities.html).
+Several other minor responsibilities of the Whist Webserver are documented in the [Webserver documentation](https://docs.whist.com/webserver/responsibilities.html).
 
 ## Contributing
 
@@ -21,9 +19,9 @@ All Webserver patches must adhere to our [code standards](https://www.notion.so/
 - [ ] Do my changes non-negatively impact test coverage?
 - [ ] Are my changes documented well enough that a new intern could understand them?
 
-We don't like merge commits at Fractal. Be sure to rebase your feature branches off of the latest version of the dev branch to eliminate any conflicts that might prevent them from being automatically merged into dev when they're ready.
+We don't like merge commits at Whist. Be sure to rebase your feature branches off of the latest version of the dev branch to eliminate any conflicts that might prevent them from being automatically merged into dev when they're ready.
 
-Module documentation for every module in the `webserver` directory is available at https://docs.fractal.co/webserver/modules.
+Module documentation for every module in the `webserver` directory is available at https://docs.whist.com/webserver/modules.
 
 ## Development environment setup
 

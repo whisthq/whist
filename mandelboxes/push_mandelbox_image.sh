@@ -19,7 +19,7 @@ ghcr_uri=ghcr.io
 # Authenticate to GHCR
 echo $GH_PAT | docker login --username $GH_USERNAME --password-stdin $ghcr_uri
 
-# Tag the image following the Fractal naming convention
+# Tag the image following the Whist naming convention
 docker tag $local_name:$local_tag $ghcr_uri/$deploy_name:$git_hash
 
 # Upload to GHCR

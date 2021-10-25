@@ -304,7 +304,7 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	return events, nil
 }
 
-// Creates a TLS certificate/private key pair for secure communication with the Fractal webserver
+// Creates a TLS certificate/private key pair for secure communication with the Whist webserver
 func initializeTLS() error {
 	// Create a self-signed passwordless certificate
 	// https://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively

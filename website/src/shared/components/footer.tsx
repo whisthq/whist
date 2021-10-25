@@ -78,7 +78,7 @@ const Footer = () => {
               alt=""
             />
             <p className="text-gray-500 text-base">
-              Fractal is a lighter, faster version of Google Chrome that runs in
+              Whist is a lighter, faster version of Google Chrome that runs in
               the cloud.
             </p>
             <div className="flex space-x-6">

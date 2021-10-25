@@ -1,7 +1,7 @@
 /*
- * General Fractal helper functions and headers.
+ * General Whist helper functions and headers.
  *
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  **/
 
 /*
@@ -296,10 +296,10 @@ int get_fcmsg_size(FractalClientMessage *fcmsg) {
         Calculate the size of a FractalClientMessage struct
 
         Arguments:
-            fcmsg (FractalClientMessage*): The Fractal Client Message to find the size
+            fcmsg (FractalClientMessage*): The Whist Client Message to find the size
 
         Returns:
-            (int): The size of the Fractal Client Message struct
+            (int): The size of the Whist Client Message struct
     */
 
     if (fcmsg->type == MESSAGE_KEYBOARD_STATE || fcmsg->type == MESSAGE_DISCOVERY_REQUEST) {

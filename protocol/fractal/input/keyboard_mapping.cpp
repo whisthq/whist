@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file input.c
  * @brief This file defines general input-processing functions and toggles
  *        between Windows and Linux servers.

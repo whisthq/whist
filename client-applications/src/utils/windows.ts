@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file auth.ts
  * @brief This file contains utility functions to create Electron windows. This file manages
  * creation of renderer process windows. It is called from the main process, and passes all
@@ -121,9 +121,9 @@ export const closeAllWindows = (windows?: BrowserWindow[]) => {
 export const getWindowTitle = () => {
   const { deployEnv } = config
   if (deployEnv === FractalEnvironments.PRODUCTION) {
-    return "Fractal"
+    return "Whist"
   }
-  return `Fractal (${deployEnv})`
+  return `Whist (${deployEnv})`
 }
 
 // This is a "base" window creation function. It won't be called directly from

@@ -1,4 +1,4 @@
-# Fractal Uinput Go
+# Whist Uinput Go
 
 **This directory was originally forked from [bendahl/uinput](https://github.com/bendahl/uinput) to [fractal/uinput-go](https://github.com/fractal/uinput-go), and that repo was then copied into this directory of the host service.**
 

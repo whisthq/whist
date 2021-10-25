@@ -1,7 +1,7 @@
 #ifndef SERVER_CLIENT_H
 #define SERVER_CLIENT_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file client.h
  * @brief This file contains the code for interacting with the client buffer.
 

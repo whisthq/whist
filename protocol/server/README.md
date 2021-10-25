@@ -1,6 +1,6 @@
-## Fractal Windows/Linux Ubuntu Servers
+## Whist Windows/Linux Ubuntu Servers
 
-This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu.
+This folder builds a server to stream via Whist. It supports Windows and Linux Ubuntu.
 
 ### Recommended Workflow for Building Server Protocol on Linux
 

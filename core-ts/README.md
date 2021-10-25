@@ -1,8 +1,8 @@
-# Fractal Core Typescript Library
+# Whist Core Typescript Library
 
-This project is an internal Fractal library for shared React components, Typescript functions, CSS modules, etc., which are used in various other projects within Fractal. If you write TypeScript code that you believe can be reused across various projects, then you should add it to this internal library and use the library within your project, for maximum code reusability.
+This project is an internal Whist library for shared React components, Typescript functions, CSS modules, etc., which are used in various other projects within Whist. If you write TypeScript code that you believe can be reused across various projects, then you should add it to this internal library and use the library within your project, for maximum code reusability.
 
-It's important to note that development in this repository works a little differently than the rest of the Fractal organization. In `core-ts`, we try and follow standard practices for `npm` package development. This means that we do not have `dev` and `staging` branches, and PRs are merged directly into `prod`. This means that every push will trigger a new `npm` package release with an updated version number.
+It's important to note that development in this repository works a little differently than the rest of the Whist organization. In `core-ts`, we try and follow standard practices for `npm` package development. This means that we do not have `dev` and `staging` branches, and PRs are merged directly into `prod`. This means that every push will trigger a new `npm` package release with an updated version number.
 
 If you have `core-ts` as a dependency in another `fractal` repository, you should "pin" your dependency version. This means your `package.json` dependencies should contain `@fractal/core-ts: 1.0.1`, not `@fractal/core-ts: ^1.0.1`. Install a specific version with `yarn add @fractal/core-ts@1.0.1`, after following the authentication instructions below.
 
@@ -19,11 +19,11 @@ You can authenticate your user account in your terminal with the `npm login` com
 
     > Username: USERNAME (github username)
     > Password: TOKEN    (personal access token)
-    > Email:    EMAIL    (@fractal.co email)
+    > Email:    EMAIL    (@whist.com email)
 
 It's also possible to create a per-user `~.npmrc` file that contains your token. However, to avoid storing authentication tokens in plain text, use the method above to enter your credentials. More about authenticating with GitHub packages at [this link](https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#authenticating-to-github-packages).
 
-##### 2. Add the Fractal GitHub registry to your project's `.npmrc`
+##### 2. Add the Whist GitHub registry to your project's `.npmrc`
 
 If you don't already have a `.npmrc` in the root of your project, create one. You only need to add this line:
 
@@ -53,7 +53,7 @@ Sometimes, this can lead to installation difficulties that you may not be used t
 
 ## Development Workflow
 
-One of the goals of `core-ts` is to extract out common code in the Fractal website and Fractal client application. Those code bases are run in a browser environment and setup with Hot Module Reloading, making it easy to save a file and see how your changes work.
+One of the goals of `core-ts` is to extract out common code in the Whist website and Whist client application. Those code bases are run in a browser environment and setup with Hot Module Reloading, making it easy to save a file and see how your changes work.
 
 Because `core-ts` is decoupled from Electron or Create React App, we need a manual setup so that we can interact with code as we're developing. Here's a few ways may want to work, depending on the job you're doing.
 
@@ -115,4 +115,4 @@ This project is not published to any **npm** registry, but is rather built and i
 
 ## Style
 
-This project follows the [Fractal TypeScript Coding Philosophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289). Any contributions to this project should be in the form of PRs following the usual Fractal TypeScript standards.
+This project follows the [Whist TypeScript Coding Philosophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289). Any contributions to this project should be in the form of PRs following the usual Whist TypeScript standards.

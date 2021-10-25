@@ -33,7 +33,7 @@ const Cookies = () => {
         <p>
           Fractal Computers, Inc. (“we” or “us” or “our”) may use cookies and
           other tracking technologies when you visit our website,{" "}
-          <a href="/privacy#top">www.fractal.co</a>, including any other media
+          <a href="/privacy#top">www.whist.com</a>, including any other media
           form, media channel, mobile website, or mobile application related or
           connected thereto (collectively, the “Site”) to help customize the
           Site and improve your experience.
@@ -167,7 +167,7 @@ const Cookies = () => {
         <p style={{ fontWeight: "bold", fontSize: 20 }}>More Information</p>
         <p>
           If you are looking for more information, you can contact us via email
-          at <a href="mailto:support@fractal.co">support@fractal.co</a>.
+          at <a href="mailto:support@whist.com">support@whist.com</a>.
         </p>
       </div>
     </div>

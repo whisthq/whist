@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script downloads pre-built Fractal protocol libraries from AWS S3, on all OSes
+# This script downloads pre-built Whist protocol libraries from AWS S3, on all OSes
 
 # Exit on errors and missing environment variables
 set -Eeuo pipefail
@@ -223,4 +223,4 @@ if has_updated "$FFMPEG_LIB"; then
 fi
 
 ###############################
-echo "-- Downloading Fractal Protocol binaries from AWS S3 - Completed"
+echo "-- Downloading Whist Protocol binaries from AWS S3 - Completed"

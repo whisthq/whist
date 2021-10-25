@@ -19,7 +19,7 @@ The optional argument \`--cmakebuildtype\` can be specified
 to be either \`Debug\` or \`Release\`. It controls the \`CMAKE_BUILD_TYPE\`
 build parameter. It defaults to \`Debug\`.
 The optional argument \`--nodownloadbinaries\`, when provided, tells \`cmake\`
-not to download the libraries used to build the Fractal protocol from S3.
+not to download the libraries used to build the Whist protocol from S3.
 The optional argument \`--cmakesetCI\`, if provided, is used to set
 \`-DCI=TRUE\` in the cmake configuration.
 EOF

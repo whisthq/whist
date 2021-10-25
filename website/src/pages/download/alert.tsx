@@ -59,14 +59,14 @@ const Alert = () => {
                     as="h3"
                     className="text-lg leading-6 font-medium text-gray-900"
                   >
-                    Fractal has reached capacity
+                    Whist has reached capacity
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
                       Due to high demand, we have reached download capacity and
                       are working hard to onboard more users. Please join our
                       waitlist and we will notify you when you can download
-                      Fractal!
+                      Whist!
                     </p>
                   </div>
                 </div>

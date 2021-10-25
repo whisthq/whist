@@ -27,7 +27,7 @@ void update_mapped_keyboard_state(InputDevice* input_device, FractalOSType os_ty
  *
  * @param os_type                  The origin OS to use for deciding keymaps
  *
- * @param fractal_keycode              The Fractal keycode to modify
+ * @param fractal_keycode          The Whist keycode to modify
  *
  * @param pressed                  1 for a key press, 0 for a key unpress
  *

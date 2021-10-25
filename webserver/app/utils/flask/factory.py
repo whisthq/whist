@@ -118,7 +118,7 @@ def register_handlers(app: Flask) -> None:
     @app.errorhandler(PaymentRequired)
     def _handle_payment_required(_error: Any) -> Tuple[Response, HTTPStatus]:
         return (
-            jsonify(error="That resource is only available to Fractal subscribers"),
+            jsonify(error="That resource is only available to Whist subscribers"),
             HTTPStatus.PAYMENT_REQUIRED,
         )
 

@@ -6,7 +6,7 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 )
 
-// Fractal database connection strings
+// Whist database connection strings
 
 const localDevDatabaseURL = "user=uap4ch2emueqo9 host=localhost port=9999 dbname=d9rf2k3vd6hvbm"
 

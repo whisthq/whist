@@ -1,7 +1,7 @@
 import { ServerEffect, ServerResponse } from "../../types/api"
 
 export const REQUEST_SUCCESS = {
-  url: "https://fractal.co/endpoint",
+  url: "https://whist.com/endpoint",
   token: "accessToken",
 }
 
