@@ -3,6 +3,10 @@ package metadata // import "github.com/fractal/fractal/host-service/metadata"
 import (
 	"os"
 	"strings"
+
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
+	"github.com/fractal/fractal/host-service/metadata/aws"
+	"github.com/fractal/fractal/host-service/utils"
 )
 
 // An AppEnvironment represents either localdev or localdevwithdb (i.e. a personal
@@ -79,4 +83,22 @@ func IsRunningInCI() bool {
 	default:
 		return false
 	}
+}
+
+// GetUserID returns the user ID depending on the environment
+// the host is run.
+func GetUserID() (mandelboxtypes.UserID, error) {
+	var UserID mandelboxtypes.UserID
+	if IsRunningInCI() {
+		// CI doesn't run in AWS so we need to set a custom name
+		UserID = "localdev_host_service_CI"
+	} else {
+		instanceName, err := aws.GetInstanceName()
+		if err != nil {
+			return "", utils.MakeError("Error getting instance name from AWS, %v", err)
+		}
+		UserID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+	}
+
+	return UserID, nil
 }

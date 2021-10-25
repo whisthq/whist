@@ -16,6 +16,10 @@ import (
 	"github.com/docker/go-connections/nat"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
+	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/fractal/host-service/metadata/aws"
+	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -49,7 +53,7 @@ func (m *mockClient) ImageList(ctx context.Context, options types.ImageListOptio
 		},
 		ParentID:    "testParent",
 		RepoDigests: []string{"testDigest"},
-		RepoTags:    []string{"testApp"},
+		RepoTags:    []string{"browsers/chrome"},
 		SharedSize:  1234,
 		Size:        1234,
 		VirtualSize: 1234,
@@ -89,30 +93,55 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	var instanceName aws.InstanceName
+	var userID mandelboxtypes.UserID
+	var err error
+	if metadata.IsRunningInCI() {
+		userID = "localdev_host_service_CI"
+	} else {
+		instanceName, err = aws.GetInstanceName()
+		if err != nil {
+			logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+		}
+		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+	}
+
 	// We always want to start with a clean slate
 	uninitializeFilesystem()
 	initializeFilesystem(cancel)
 	defer uninitializeFilesystem()
 
-	testReq := SpinUpMandelboxRequest{
-		AppName:               "testApp",
+	testMandelboxInfo := subscriptions.Mandelbox{
+		InstanceName: string(instanceName),
+		MandelboxID:  "testMandelbox",
+		SessionID:    1234,
+		UserID:       userID,
+	}
+	testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
+		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
+	}
+	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "testToken1234",
-		MandelboxID:           "testMandelbox",
-		SessionID:             1234,
+		JwtAccessToken:        "test_jwt_token",
+		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
 
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest)
+
 	dockerClient := mockClient{}
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testReq)
+	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
 	goroutineTracker.Wait()
 
 	// Check that response is as expected
-	result := <-testReq.resultChan
+	result := <-testJSONTransportRequest.resultChan
 	if result.Err != nil {
 		t.Fatalf("SpinUpMandelbox returned with error: %v", result.Err)
 	}
-	spinUpResult, ok := result.Result.(SpinUpMandelboxRequestResult)
+	spinUpResult, ok := result.Result.(JSONTransportRequestResult)
 	if !ok {
 		t.Fatalf("Expected instance of SpinUpMandelboxRequestResult, got: %v", result.Result)
 	}
@@ -139,8 +168,8 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Check that container config was passed in correctly
-	if dockerClient.config.Image != "testApp" {
-		t.Errorf("Expected container to use image testApp, got %v", dockerClient.config.Image)
+	if dockerClient.config.Image != "browsers/chrome" {
+		t.Errorf("Expected container to use image browsers/chrome, got %v", dockerClient.config.Image)
 	}
 
 	exposedPorts := dockerClient.config.ExposedPorts
