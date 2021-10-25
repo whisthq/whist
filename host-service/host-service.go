@@ -369,12 +369,12 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *ImportBrowserConfigRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
+		err := utils.MakeError("ImportBrowserConfig(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
 
-	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", req.MandelboxID)
+	logger.Infof("ImportBrowserConfig(): Setting up auth")
 
 	// Set up auth
 	claims := new(auth.FractalClaims)
@@ -406,35 +406,22 @@ func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelF
 		}
 	}
 
-	// If so, create the mandelbox object.
-	fc := mandelbox.New(context.Background(), goroutineTracker, req.MandelboxID)
-	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetMandelboxID())
-
-	// If the creation of the mandelbox fails, we want to clean up after it. We
-	// do this by setting `createFailed` to true until all steps are done, and
-	// closing the mandelbox's context on function exit if `createFailed` is
-	// still set to true.
-	var createFailed bool = true
-	defer func() {
-		if createFailed {
-			fc.Close()
-		}
-	}()
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
-		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.")
+		logAndReturnError("Unable to import browser configs: trivial config encryption token received.")
 		return
 	}
-	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 
-	fc.AssignToUser(userID)
-	fc.SetAppName(req.AppName)
+	// Upload custom config to s3
+	err = UploadCustomConfig(req.Cookies, userID, req.ConfigEncryptionToken, req.AppName)
+	if err != nil {
+		logAndReturnError(err)
+		return
+	}
 
-	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
+	logger.Infof("ImportBrowserConfig(): Successfully uploaded custom configs")
 
-	// Upload cookies to s3
-	fc.UploadCustomConfig(req.Cookies)
 }
 
 // ------------------------------------
