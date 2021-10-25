@@ -1,6 +1,6 @@
 package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
 
-import "github.com/fractal/fractal/host-service/mandelbox/types"
+import mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.
@@ -19,10 +19,10 @@ type Instance struct {
 // Mandelbox represents a row from the "mandelbox_info" table
 // in the database. These fields are defined in queries.go
 type Mandelbox struct {
-	InstanceName string            `json:"instance_name"`
-	MandelboxID  types.MandelboxID `json:"mandelbox_id"`
-	SessionID    uint64            `json:"session_id"`
-	UserID       types.UserID      `json:"user_id"`
+	InstanceName string                     `json:"instance_name"`
+	MandelboxID  mandelboxtypes.MandelboxID `json:"mandelbox_id"`
+	SessionID    uint64                     `json:"session_id"`
+	UserID       mandelboxtypes.UserID      `json:"user_id"`
 }
 
 // InstanceInfoResult is a struct used to hold results for any

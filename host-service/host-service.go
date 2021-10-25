@@ -1077,8 +1077,39 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *JSONTransportRequest:
-				// Handle JSON transport validation on a separate go routine
-				go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
+				if !metadata.IsLocalEnv() {
+					// Handle JSON transport validation on a separate go routine
+					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
+				} else {
+					// If running on a local environment, disable any pubsub logic. We have to create a subscription request
+					// that mocks the Hasura subscription event. Doing this avoids the need of setting up a Hasura server and
+					// postgres database on the development instance.
+					jsonReq := serverevent.(*JSONTransportRequest)
+
+					userID, err := metadata.GetUserID()
+					if err != nil {
+						logger.Errorf("Error getting userID, %v", err)
+					}
+
+					instanceName, err := aws.GetInstanceName()
+					if err != nil {
+						logger.Errorf("Error getting instance name from AWS, %v", err)
+					}
+					// Create a mandelbbox object as would be received from a Hasura subscription.
+					mandelbox := subscriptions.Mandelbox{
+						InstanceName: string(instanceName),
+						MandelboxID:  jsonReq.MandelboxID,
+						SessionID:    1234,
+						UserID:       userID,
+					}
+					subscriptionEvent := subscriptions.MandelboxInfoEvent{
+						MandelboxInfo: []subscriptions.Mandelbox{mandelbox},
+					}
+
+					// Launch both the JSON transport handler and the SpinUpMandelbox go routines.
+					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
+					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
+				}
 
 			default:
 				if serverevent != nil {

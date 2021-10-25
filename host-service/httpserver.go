@@ -14,7 +14,6 @@ import (
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -85,6 +84,7 @@ type JSONTransportRequest struct {
 	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        string                               `json:"jwt_access_token"`        // User's JWT access token
 	JSONData              string                               `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
+	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id,omitempty"`  // MandelboxID, used for local testing when the pubsub is disabled
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 
@@ -133,6 +133,8 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	res.send(w)
 }
 
+// handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
+// the json data for the particular user exists, and finally it sends the data through the transport request map.
 func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 	// Receive the value of the `json_transport request`
 	req := serverevent.(*JSONTransportRequest)
@@ -142,7 +144,7 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 	claims := new(auth.FractalClaims)
 	parser := &jwt.Parser{SkipClaimsValidation: true}
 	var requestUserID mandelboxtypes.UserID
-
+	var err error
 	// Only verify auth in non-local environments
 	if !metadata.IsLocalEnv() {
 		// Decode the access token without validating any of its claims or
@@ -155,16 +157,9 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 		}
 		requestUserID = mandelboxtypes.UserID(claims.Subject)
 	} else {
-		// CI doesn't run in AWS so we need to set a custom name
-		if metadata.IsRunningInCI() {
-			requestUserID = "localdev_host_service_CI"
-		} else {
-			instanceName, err := aws.GetInstanceName()
-			if err != nil {
-				logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
-				return
-			}
-			requestUserID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+		requestUserID, err = metadata.GetUserID()
+		if err != nil {
+			logger.Errorf("Error getting userID, %v", err)
 		}
 	}
 
@@ -188,6 +183,8 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 	close(transportRequestMap[requestUserID])
 }
 
+// getJSONTransportRequestChannelForUser returns the JSON transport request for the solicited user
+// in a safe way. It also creates the channel in case it doesn't exists for that particular user.
 func getJSONTransportRequestChannelForUser(UserID mandelboxtypes.UserID,
 	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) chan *JSONTransportRequest {
 	// Acquire lock on transport requests map
