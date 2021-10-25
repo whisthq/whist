@@ -98,7 +98,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		return err
-	} else if len(bytes) == 0 {
+	} else if len(data) == 0 {
 		return nil
 	}
 
@@ -154,7 +154,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 		cmd.Run()
 	}()
 
-	err := c.untarFiles(data, unpackedConfigDir)
+	err = c.untarFiles(data, unpackedConfigDir)
 
 	if err != nil {
 		return err
@@ -180,7 +180,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	decTarPath := path.Join(configDir, mandelbox.getDecryptedArchiveFilename())
 	unpackedConfigPath := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
 
-	err = tarFile(unpackedConfigPath, decTarPath)
+	err := c.tarFile(unpackedConfigPath, decTarPath)
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return err
 	}
 
-	err = uploadAndEncryptToS3(mandelbox.getS3ConfigKey(), encTarPath)
+	err = mandelbox.uploadAndEncryptToS3(mandelbox.getS3ConfigKey(), encTarPath)
 
 	if err != nil {
 		return err
