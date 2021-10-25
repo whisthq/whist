@@ -414,9 +414,9 @@ func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelF
 	}
 
 	// Upload custom config to s3
-	err = UploadCustomConfig(req.Cookies, userID, req.ConfigEncryptionToken, req.AppName)
+	err := mandelbox.UploadCustomConfig(req.Cookies, userID, req.ConfigEncryptionToken, req.AppName)
 	if err != nil {
-		logAndReturnError(err)
+		logAndReturnError(err.Error())
 		return
 	}
 
