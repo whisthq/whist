@@ -35,7 +35,7 @@ const features = [
   {
     name: "macOS 10.15+",
     description:
-      "For compatibility reasons, Fractal requires macOS 10.15 or higher.",
+      "For compatibility reasons, Whist requires macOS 10.15 or higher.",
     icon: DesktopComputerIcon,
   },
 ]

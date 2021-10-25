@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file mac_clipboard.c
  * @brief This file contains the general clipboard functions for a shared
  *        client-server clipboard on MacOS clients.

@@ -14,7 +14,7 @@ GPU_INDEX=$(cat $FRACTAL_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
 
 echo "Using GPU Index ${GPU_INDEX}"
 
-# Retrieve the Fractal NVIDIA display config
+# Retrieve the Whist NVIDIA display config
 XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-display.conf"
 if [ ! -f ${XCONFIG} ]; then
   echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
@@ -45,15 +45,15 @@ fi
 # Loop through files /dev/input/eventN to determine which correspond to which device
 for filename in /dev/input/event*; do
   name=$(udevadm info -a $filename | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
-  if [[ $name == 'Fractal Virtual Absolute Input' ]]; then
+  if [[ $name == 'Whist Virtual Absolute Input' ]]; then
     echo "Found device file $filename=$name"
     sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" ${XCONFIG}
   fi
-  if [[ $name == 'Fractal Virtual Relative Input' ]]; then
+  if [[ $name == 'Whist Virtual Relative Input' ]]; then
     echo "Found device file $filename=$name"
     sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" ${XCONFIG}
   fi
-  if [[ $name == 'Fractal Virtual Keyboard' ]]; then
+  if [[ $name == 'Whist Virtual Keyboard' ]]; then
     echo "Found device file $filename=$name"
     sed -i "s~KEYBOARD_DEVICE~$filename~g" ${XCONFIG}
   fi

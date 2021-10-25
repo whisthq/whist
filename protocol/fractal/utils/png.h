@@ -1,7 +1,7 @@
 #ifndef PNG_H
 #define PNG_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file clock.h
  * @brief Helper functions for png to bmp and bmp to png
 ============================

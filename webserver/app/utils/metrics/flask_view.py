@@ -12,7 +12,7 @@ import app.utils.metrics.keys_dims as dkey
 
 # This should be a globally unique key that shouldn't conflict with any other
 # potential keys in flask.request.
-ATTR__REQUEST_START = "Fractal-Request-StartTime"
+ATTR__REQUEST_START = "Whist-Request-StartTime"
 
 
 def _get_dims_from_request(request: flask.Request) -> Mapping[str, Optional[str]]:

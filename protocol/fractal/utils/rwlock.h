@@ -1,7 +1,7 @@
 #ifndef RWLOCK_H
 #define RWLOCK_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file rwlock.h
  * @brief This file contains a write-preferred read-write lock.
 ============================

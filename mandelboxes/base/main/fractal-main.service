@@ -1,6 +1,6 @@
-# Starts the Fractal server protocol and the symlinked application. Runs as root.
+# Starts the Whist server protocol and the symlinked application. Runs as root.
 [Unit]
-Description=Fractal Protocol
+Description=Whist Protocol
 After=fractal-display.service fractal-audio.service
 Requires=fractal-display.service fractal-audio.service
 

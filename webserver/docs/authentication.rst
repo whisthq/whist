@@ -61,7 +61,7 @@ Custom claims
 
 Don't be alarmed to find two custom claims in each access token's payload. The
 ``https://api.fractal.co/stripe_customer_id`` claim contains the ID of the
-Stripe customer record that is associated with the authorized user's Fractal
+Stripe customer record that is associated with the authorized user's Whist
 account. The ``https://api.fractal.co/subscription_status`` claim contains a
 string indicating the user's subscription status. Note that, per Auth0's
 guidelines, each of these claims is `namespaced`_ with the namespace URL

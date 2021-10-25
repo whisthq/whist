@@ -1,7 +1,7 @@
 #ifndef XTEST_INPUT_DRIVER_H
 #define XTEST_INPUT_DRIVER_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file xtest_input_driver.h
  * @brief This file defines the X11 input device type.
 ============================

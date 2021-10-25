@@ -14,7 +14,7 @@ const metrics = [
   {
     id: 3,
     stat: "<20 ms",
-    text: "Latency introduced by Fractal",
+    text: "Latency introduced by Whist",
   },
   {
     id: 4,
@@ -28,12 +28,12 @@ const Streaming = () => (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="text-base max-w-prose mx-auto lg:max-w-none">
         <p className="mt-2 text-3xl leading-8 tracking-tight text-gray-300 sm:text-5xl">
-          How Fractal Works
+          How Whist Works
         </p>
       </div>
       <div className="relative z-10 text-base max-w-prose lg:max-w-5xl lg:mx-0 lg:pr-72">
         <p className="text-lg text-gray-500">
-          Fractal works by running Google Chrome in a powerful computer in the
+          Whist works by running Google Chrome in a powerful computer in the
           cloud and streaming a video of Chrome to your computer. It&lsquo;s
           like remote desktop, if remote desktop felt like using a native
           application.
@@ -43,11 +43,11 @@ const Streaming = () => (
         <div className="relative z-10">
           <div className="prose prose-indigo text-gray-500 mx-auto lg:max-w-none md:pr-8">
             <p>
-              The core of Fractal is our streaming technology, which we&lsquo;ve
+              The core of Whist is our streaming technology, which we&lsquo;ve
               spent years perfecting. We obsess over every millisecond of
               latency and on minimizing memory, CPU, and network usage. Whereas
               a native install of Google Chrome consumes several gigabytes of
-              memory and a large percentage of your CPU, Fractal uses only a
+              memory and a large percentage of your CPU, Whist uses only a
               fraction.
             </p>
             <p>
@@ -81,7 +81,7 @@ const Streaming = () => (
                 <p className="relative">
                   As someone who treats web browsing like depth-first search,
                   I&lsquo;m all too familiar with the &quot;spinning wheel of
-                  death.&quot; Fractal has saved my computer from overheating or
+                  death.&quot; Whist has saved my computer from overheating or
                   freezing, even with 30 tabs open!
                 </p>
               </div>

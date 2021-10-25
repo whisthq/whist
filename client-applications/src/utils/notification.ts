@@ -8,25 +8,25 @@ const internetWarning = () =>
 
 const rebootWarning = () =>
   new Notification({
-    body: "Fractal unexpectedly disconnected and is rebooting",
+    body: "Whist unexpectedly disconnected and is rebooting",
     silent: true,
   })
 
 const updateAvailableNotification = () =>
   new Notification({
-    body: "An update is available! Fractal is downloading it in the background.",
+    body: "An update is available! Whist is downloading it in the background.",
     silent: true,
   })
 
 const updateDownloadedNotification = () =>
   new Notification({
-    body: "Your update has been downloaded successfully. Fractal will auto-update the next time it is closed.",
+    body: "Your update has been downloaded successfully. Whist will auto-update the next time it is closed.",
     silent: true,
   })
 
 const startupNotification = () =>
   new Notification({
-    body: "Fractal is starting up",
+    body: "Whist is starting up",
     silent: true,
   })
 

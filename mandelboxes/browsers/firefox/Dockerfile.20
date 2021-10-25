@@ -67,9 +67,9 @@ RUN su - fractal -c "mkdir -p /home/fractal/.mozilla/firefox"
 # Copy custom user profile
 COPY fractal_profile/  /home/fractal/.mozilla/firefox/fractal_profile
 
-# Install Fractal wrapper script to run Firefox into /usr/bin
+# Install Whist wrapper script to run Firefox into /usr/bin
 COPY start-firefox.sh /usr/bin/start-firefox
 RUN chmod +x /usr/bin/start-firefox
 
-# Setup Fractal application symlink
+# Setup Whist application symlink
 RUN ln -sf /usr/bin/start-firefox /usr/bin/fractal-application

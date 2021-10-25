@@ -1,7 +1,7 @@
 #ifndef CAPTURE_X11NVIDIACAPTURE_H
 #define CAPTURE_X11NVIDIACAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file nvidiacapture.h
  * @brief This file contains the code to do screen capture via the Nvidia FBC SDK on Linux Ubuntu.
 ============================

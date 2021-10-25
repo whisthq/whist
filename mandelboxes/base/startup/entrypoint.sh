@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# This script is the first script run within the Fractal mandelbox. It retrieves the
+# This script is the first script run within the Whist mandelbox. It retrieves the
 # mandelbox-specific parameters from Linux environment variables and sets them for
-# the Fractal mandelbox to use. It then starts systemd, which starts all of the
-# Fractal system services (.service files), starting Fractal inside the mandelbox.
+# the Whist mandelbox to use. It then starts systemd, which starts all of the
+# Whist system services (.service files), starting Whist inside the mandelbox.
 
 # Exit on subcommand errors
 set -Eeuo pipefail

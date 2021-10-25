@@ -12,7 +12,7 @@ inputs:
     required: false
 outputs:
   config:
-    description: JSON object of Fractal config
+    description: JSON object of Whist config
 runs:
   using: docker
   image: ../../../config/Dockerfile # note relative to this file (action.yml)

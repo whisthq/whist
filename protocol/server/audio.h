@@ -1,7 +1,7 @@
 #ifndef SERVER_AUDIO_H
 #define SERVER_AUDIO_H
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file audio.h
  * @brief This file contains all code that interacts directly with processing
  *        audio on the server.

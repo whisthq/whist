@@ -1,7 +1,7 @@
 #ifndef SCREENCAPTURE_H
 #define SCREENCAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file screencapture.h
  * @brief This file defines the proper header for capturing the screen depending
  *        on the local OS.

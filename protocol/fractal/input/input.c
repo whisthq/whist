@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file input.c
  * @brief This file defines general input-processing functions and toggles
  *        between Windows and Linux servers.
@@ -60,7 +60,7 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcms
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            fcmsg (FractalClientMessage*): The Fractal message packet, defining one
+            fcmsg (FractalClientMessage*): The Whist message packet, defining one
                 keyboard event, to update the keyboard state
     */
 
@@ -87,7 +87,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg) {
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            fcmsg (FractalClientMessage*): The Fractal message packet, defining one user
+            fcmsg (FractalClientMessage*): The Whist message packet, defining one user
                 action event, to replay on the computer
 
         Returns:

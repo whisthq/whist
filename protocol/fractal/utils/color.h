@@ -2,7 +2,7 @@
 #define COLOR_H
 
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file color.h
  * @brief This file contains functions relating to colors, colorspace conversion,
           and implementations of algorithms and heuristics related to color and UX.

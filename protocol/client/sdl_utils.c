@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file sdl_utils.c
  * @brief This file contains the code to create and destroy SDL windows on the
  *        client.
@@ -171,7 +171,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
-    sdl_window = SDL_CreateWindow((name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED,
+    sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
     if (!sdl_window) {

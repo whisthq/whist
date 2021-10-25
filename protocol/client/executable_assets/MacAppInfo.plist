@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>
-  <string>Fractal</string>
+  <string>Whist</string>
 
   <key>CFBundleDisplayName</key>
-  <string>Fractal</string>
+  <string>Whist</string>
 
   <key>CFBundleIconFile</key>
-  <string>../../../../Resources/Fractal.icns</string>
+  <string>../../../../Resources/Whist.icns</string>
 </dict>
 </plist>

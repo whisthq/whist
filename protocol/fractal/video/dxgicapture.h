@@ -1,7 +1,7 @@
 #ifndef DXGI_CAPTURE_H
 #define DXGI_CAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file dxgicapture.h
  * @brief This file contains the code to capture a Windows screen in the GPU via
  *        Windows DXGI API.

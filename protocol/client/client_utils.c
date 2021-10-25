@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file client_utils.c
  * @brief This file contains helper functions for FractalClient
 ============================
@@ -299,13 +299,13 @@ int client_parse_args(int argc, char *argv[]) {
         "                                  specified: h264 (default) or h265\n"
         "  -k, --private-key=PK          Pass in the RSA Private Key as a \n"
         "                                  hexadecimal string\n"
-        "  -u, --user=EMAIL              Tell Fractal the user's email. Default: None \n"
+        "  -u, --user=EMAIL              Tell Whist the user's email. Default: None \n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
         "                                  e.g production, staging, development. Default: none\n"
         "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
         "                                  Default: identity mapping\n"
-        "  -n, --name=NAME               Set the window title. Default: Fractal\n"
+        "  -n, --name=NAME               Set the window title. Default: Whist\n"
         "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
         "                                  in IP if using this argument and passing with arg `ip`\n"
         "  -l, --loading                 Custom loading screen message\n"
@@ -347,7 +347,7 @@ int client_parse_args(int argc, char *argv[]) {
                 return 1;
             }
             case FRACTAL_GETOPT_VERSION_CHAR: {  // version
-                printf("Fractal client revision %s\n", fractal_git_revision());
+                printf("Whist client revision %s\n", fractal_git_revision());
                 return 1;
             }
             default: {

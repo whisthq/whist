@@ -1,4 +1,4 @@
-"""Fractal's Stripe utility library.
+"""Whist's Stripe utility library.
 
 A Stripe API key must be set before the functions in this utility library may be used.
 
@@ -23,7 +23,7 @@ Example usage::
 
     @app.errorhandler(PaymentRequired)
     def _handle_payment_required(e):
-        return jsonify(error="That resource is only available to Fractal subscribers"), 402
+        return jsonify(error="That resource is only available to Whist subscribers"), 402
 
     @app.route("/hello")
     @payment_required
@@ -48,7 +48,7 @@ class PaymentRequired(Exception):
 
 
 def check_payment() -> None:
-    """Make sure the authenticated user has an active Fractal subscription.
+    """Make sure the authenticated user has an active Whist subscription.
 
     The user's subscription is considered valid if and only if it is paid or it is still in the
     trial period.
@@ -83,14 +83,14 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
     def customer_portal(*_args: Any, **_kwargs: Any) -> Any:
         """Create a Stripe checkout or customer portal session.
 
-        If the authenticated user already has a Fractal subscription in a non-terminal state (e.g.
+        If the authenticated user already has a Whist subscription in a non-terminal state (e.g.
         one of ``active``, ``trialing``, ``incomplete``, or ``past_due``), create a Stripe customer
         portal session that the customer can use to manage their subscription and billing
         information.
 
-        If the authenticated user has no Fractal subscriptions in non-terminal states (i.e. all of
+        If the authenticated user has no Whist subscriptions in non-terminal states (i.e. all of
         the user's subscriptions are ``canceled``, ``unpaid``, or ``incomplete_expired``), create a
-        Stripe checkout session that the customer can use to enroll in a new Fractal subscription.
+        Stripe checkout session that the customer can use to enroll in a new Whist subscription.
 
         See https://stripe.com/docs/api/subscriptions/object#subscription_object-status for Stripe
         subscription status documentation.
@@ -195,7 +195,7 @@ def payment_required(view_func: Callable[..., Any]) -> Callable[..., Any]:
         view_func: The Flask view function to which the decorator is applied.
 
     Returns:
-        Another Flask view function. This one is inaccessible to users without valid Fractal
+        Another Flask view function. This one is inaccessible to users without valid Whist
         subscriptions.
     """
 

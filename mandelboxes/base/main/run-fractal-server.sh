@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script starts the Fractal protocol server and the Fractal application.
+# This script starts the Whist protocol server and the Whist application.
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -19,7 +19,7 @@ TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
 
-# Create list of command-line arguments to pass to the Fractal protocol server
+# Create list of command-line arguments to pass to the Whist protocol server
 OPTIONS=""
 
 # Send in AES private key, if set
@@ -45,7 +45,7 @@ fi
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
-# reach the end of this file (because either FractalServer or the Fractal
+# reach the end of this file (because either FractalServer or the Whist
 # application died), or there was an error somewhere else in the script.
 function cleanup {
   echo "cleanup() called! Shutting down the mandelbox..."
@@ -64,7 +64,7 @@ fi
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
 fractal_application_runuser_pid=$!
 
-echo "Fractal application runuser pid: $fractal_application_runuser_pid"
+echo "Whist application runuser pid: $fractal_application_runuser_pid"
 
 # Wait for run-fractal-application.sh to write PID to file
 until [ -f "$FRACTAL_APPLICATION_PID_FILE" ]
@@ -74,7 +74,7 @@ done
 fractal_application_pid=$(cat $FRACTAL_APPLICATION_PID_FILE)
 rm $FRACTAL_APPLICATION_PID_FILE
 
-echo "Fractal application pid: $fractal_application_pid"
+echo "Whist application pid: $fractal_application_pid"
 
 echo "Now sleeping until there are X clients..."
 

@@ -1,7 +1,7 @@
 #ifndef DXGI_CUDA_TRANSFER_CAPTURE_H
 #define DXGI_CUDA_TRANSFER_CAPTURE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file dxgicudatransfercapture.h
  * @brief This code handles the data transfer from a video capture device to a
  *        video encoder via DXGI CUDA.

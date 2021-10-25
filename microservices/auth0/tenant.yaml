@@ -24,7 +24,7 @@ pages:
     enabled: true
     html: ./pages/login.html
 resourceServers:
-  - name: Fractal API
+  - name: Whist API
     identifier: "##FRACTAL_AUTHENTICATION_API##"
     allow_offline_access: true
     enforce_policies: true
@@ -39,14 +39,14 @@ resourceServers:
     token_lifetime: 86400
     token_lifetime_for_web: 7200
 clients:
-  - name: Fractal
+  - name: Whist
     allowed_clients: []
     app_type: native
     callbacks: @@FRACTAL_ELECTRON_APP_CALLBACK@@
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: The Fractal desktop application.
+    description: The Whist desktop application.
     grant_types:
       - authorization_code
       - refresh_token
@@ -81,7 +81,7 @@ clients:
     cross_origin_auth: false
     custom_login_page_on: true
     description: A service that performs administrative operations on the fractal
-      webservers on behalf of Fractal developers.
+      webservers on behalf of Whist developers.
     grant_types:
       - client_credentials
     is_first_party: true
@@ -115,7 +115,7 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: A tool that developers use to test Fractal's APIs.
+    description: A tool that developers use to test Whist's APIs.
     grant_types:
       - authorization_code
     is_first_party: true
@@ -181,7 +181,7 @@ connections:
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
-      - Fractal
+      - Whist
       - Postman
     is_domain_connection: false
     options:
@@ -234,7 +234,7 @@ tenant:
     disable_clickjack_protection_headers: false
   friendly_name: ""
   picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
-  support_email: support@fractal.co
+  support_email: support@whist.com
   support_url: ""
   universal_login:
     colors:
@@ -244,14 +244,14 @@ emailProvider:
   name: sendgrid
   credentials:
     api_key: "##SENDGRID_API_KEY##"
-  default_from_address: Fractal <support@fractal.co>
+  default_from_address: Whist <support@whist.com>
   enabled: true
 emailTemplates:
   - template: welcome_email
     body: ./emailTemplates/welcome_email.html
     enabled: true
-    from: Fractal <noreply@fractal.co>
-    subject: Welcome to Fractal!
+    from: Whist <noreply@whist.com>
+    subject: Welcome to Whist!
     syntax: liquid
 clientGrants:
   - client_id: Webserver
@@ -285,7 +285,7 @@ guardianPhoneFactorMessageTypes:
   message_types: []
 roles:
   - name: Developer
-    description: A Fractal developer
+    description: A Whist developer
     permissions:
       - permission_name: admin
         resource_server_identifier: "##FRACTAL_AUTHENTICATION_API##"

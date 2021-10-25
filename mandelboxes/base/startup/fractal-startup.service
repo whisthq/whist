@@ -1,6 +1,6 @@
-# Starts Fractal by starting Fractal systemd services, runs as root
+# Starts Whist by starting Whist systemd services, runs as root
 [Unit]
-Description=Fractal Entrypoint
+Description=Whist Entrypoint
 
 [Service]
 Type=oneshot

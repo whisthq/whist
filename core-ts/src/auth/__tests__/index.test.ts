@@ -13,7 +13,7 @@ describe("authInfoParse", () => {
   //     "exp": 1657811946,
   //     "aud": "www.example.com",
   //     "sub": "jrocket@example.com",
-  //     "email": "test@fractal.co"
+  //     "email": "test@whist.com"
   //     "https://api.fractal.co/subscription_status": "canceled"
   // }
 

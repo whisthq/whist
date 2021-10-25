@@ -29,7 +29,7 @@ export const OneButtonError = (props: {
 }) => {
   /*
         Description:
-            One button error pop-up. Includes the base error + a blue Fractal button
+            One button error pop-up. Includes the base error + a blue Whist button
         Arguments:
             title (string): Title of error window
             text (string): Body text of error window

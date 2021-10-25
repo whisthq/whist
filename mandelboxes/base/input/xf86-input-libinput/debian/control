@@ -5,8 +5,8 @@ Priority: optional
 Architecture: all
 Depends: libinput-fractal
 Provides: xserver-xorg-input-libinput (= 9.99.9)
-Maintainer: Fractal (developers@fractal.co)
-Description: Fractal provides our own, patched
+Maintainer: Whist (developers@whist.com)
+Description: Whist provides our own, patched
  build of xf86-input-libinputlibinput. Please
  contact us for more
  details.

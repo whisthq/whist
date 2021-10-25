@@ -8,7 +8,7 @@ set(PROTOCOL_TEST_BINARY FractalProtocolTest)
 # Client-only files, since macOS is only supported client-sides
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
-        # Files needed for Fractal Lib unit tests
+        # Files needed for Whist Lib unit tests
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
@@ -37,7 +37,7 @@ else()
         ../server/handle_client_message.c
         ../server/network.c
 
-        # Files needed for Fractal Lib unit tests
+        # Files needed for Whist Lib unit tests
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
@@ -184,7 +184,7 @@ if(GENERATE_COVERAGE)
     add_custom_command(
         TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
         COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-        COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Fractal files
+        COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Whist files
         COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info # print verbose coverage information
     )
 endif()

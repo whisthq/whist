@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file input.h
  * @brief This file defines general input-processing functions and toggles
  *        between Windows and Linux servers.
@@ -46,7 +46,7 @@ void reset_input(FractalOSType os_type);
  * @param input_device             The initialized input device struct defining
  *                                 mouse and keyboard states for the user
  *
- * @param fcmsg                     The Fractal message packet, defining one user
+ * @param fcmsg                     The Whist message packet, defining one user
  *                                 action event, to replay on the computer
  *
  * @returns                        True if it replayed the event, False
@@ -61,7 +61,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg);
  * @param input_device             The initialized input device struct defining
  *                                 mouse and keyboard states for the user
  *
- * @param fcmsg                     The Fractal message packet, defining one
+ * @param fcmsg                     The Whist message packet, defining one
  *                                 keyboard event, to update the keyboard state
  */
 void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcmsg);

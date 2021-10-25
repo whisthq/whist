@@ -63,7 +63,7 @@ export const Hero = () => {
         <div className="mt-6 md:mt-8relative">
           <p className="text-md m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
             Load pages instantly. Use 10x less memory. Enjoy complete privacy.
-            Fractal is a supercharged version of Chrome that runs in the cloud.
+            Whist is a supercharged version of Chrome that runs in the cloud.
           </p>
           <a href="/download#top">
             <FractalButton

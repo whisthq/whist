@@ -1,5 +1,5 @@
 #[[
-############################### Fractal Protocol ###############################
+############################### Whist Protocol ###############################
 This is the root CmakeLists.txt for the protocol repository. We define various
 project level settings here as well as include the subdirectories of the
 repository. We also look for the protocol libraries here (FFmpeg, SDL, etc.).
@@ -69,9 +69,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 set(META_PROJECT_NAME        "Protocol")
-set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
+set(META_PROJECT_DESCRIPTION "CMake Project for the Whist client protocol clients on mac, linux and windows
                               and servers on windows and linux.")
-set(META_AUTHOR_ORGANIZATION "Fractal")
+set(META_AUTHOR_ORGANIZATION "Whist")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractal/fractal")
 
 set(CMAKE_C_STANDARD 99)
@@ -204,7 +204,7 @@ endif()
 # Download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if(DOWNLOAD_BINARIES)
-    message(STATUS "Downloading Fractal Protocol binaries from AWS S3")
+    message(STATUS "Downloading Whist Protocol binaries from AWS S3")
     if(WSL)
         set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_BINARY_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
         execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}

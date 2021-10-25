@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file x11_window_info.h
  * @brief This file contains all the code for getting X11-specific window information.
 ============================
@@ -115,7 +115,7 @@ int get_focused_window_name(char* name_return) {
         return 1;
     }
 
-    // Ask all Fractal & library functions to use the locale defined by the environment. This
+    // Ask all Whist & library functions to use the locale defined by the environment. This
     // prevents encoding problems (for example, when it comes to encoding strings in UTF8 format).
     setlocale(LC_ALL, "");
 

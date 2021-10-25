@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file error.ts
  * @brief This file contains various error messages.
  */
@@ -20,31 +20,31 @@ export const fractalError = {
   [NO_PAYMENT_ERROR]: {
     title: "Your free trial has expired!",
     text: allowPayments
-      ? "To continue receiving access to Fractal, please sign up for a paid plan."
-      : "To continue receiving access to Fractal, please contact support@fractal.co",
+      ? "To continue receiving access to Whist, please sign up for a paid plan."
+      : "To continue receiving access to Whist, please contact support@whist.com",
   },
   [UNAUTHORIZED_ERROR]: {
-    title: "There was an error authenticating you with Fractal.",
-    text: "Please try logging in again or contact support@fractal.co for help.",
+    title: "There was an error authenticating you with Whist.",
+    text: "Please try logging in again or contact support@whist.com for help.",
   },
   [PROTOCOL_ERROR]: {
-    title: "The Fractal browser lost connection.",
-    text: "This could be due to inactivity or weak Internet. Please try again or contact support@fractal.co for help.",
+    title: "The Whist browser lost connection.",
+    text: "This could be due to inactivity or weak Internet. Please try again or contact support@whist.com for help.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
-    title: "There was an error connecting to the Fractal servers.",
+    title: "There was an error connecting to the Whist servers.",
     text: "Please check your Internet connection or try again in a few minutes.",
   },
   [AUTH_ERROR]: {
     title: "We've added extra security measures to our login system.",
-    text: "Please sign out and sign back in. If this doesn't work, please contact support@fractal.co to report a bug.",
+    text: "Please sign out and sign back in. If this doesn't work, please contact support@whist.com to report a bug.",
   },
   [NAVIGATION_ERROR]: {
-    title: "There was an error loading the Fractal window.",
-    text: "Please try logging in again or contact support@fractal.co for help.",
+    title: "There was an error loading the Whist window.",
+    text: "Please try logging in again or contact support@whist.com for help.",
   },
   [MAINTENANCE_ERROR]: {
-    title: "Fractal is currently pushing out an update.",
+    title: "Whist is currently pushing out an update.",
     text: "We apologize for the inconvenience. Please check back in a few minutes!",
   },
   [INTERNET_ERROR]: {
@@ -53,7 +53,7 @@ export const fractalError = {
   },
   [SLEEP_ERROR]: {
     title: "Your computer went to sleep.",
-    text: "Fractal automatically disconnected and should reconnect when your computer wakes up.",
+    text: "Whist automatically disconnected and should reconnect when your computer wakes up.",
   },
 } as {
   [key: string]: {

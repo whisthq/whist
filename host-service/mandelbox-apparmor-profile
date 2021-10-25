@@ -2,7 +2,7 @@
 #
 # The AppArmor profile for mandelboxes, enabling new functionality while maintaining security.
 #
-# Copyright Fractal Computers, Inc. 2021
+# Copyright 2021 Fractal Computers, Inc., dba Whist
 #
 # This profile was generated according to fractal/mandelbox-utils:apparmor-dump-profile
 # to match the docker-default profile, and then modified as follows:

@@ -1,7 +1,7 @@
 #ifndef AUDIO_DECODE_H
 #define AUDIO_DECODE_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file audiodecode.h
  * @brief This file contains the code to decode AAC-encoded audio using FFmpeg.
 ============================

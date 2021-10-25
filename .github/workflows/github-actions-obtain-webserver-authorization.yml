@@ -1,13 +1,13 @@
 # workflows/gha-obtain-webserver-authorization.yml
 #
-# GitHub Actions: Obtain Authorization to Call Fractal's API
-# Obtain authorization from Auth0 for all Workflows to call Fractal's API. This
+# GitHub Actions: Obtain Authorization to Call Whist's API
+# Obtain authorization from Auth0 for all Workflows to call Whist's API. This
 # Workflow performs an OAuth 2.0 Client Credentials exchange with one of our
 # Auth0-hosted authorization servers (tenants). The tenant-issued access token
 # is cached so that other Workflows can use it to make authorized requests to
-# Fractal's API.
+# Whist's API.
 
-name: "GitHub Actions: Obtain Authorization to Call Fractal's API"
+name: "GitHub Actions: Obtain Authorization to Call Whist's API"
 
 on:
   schedule:
@@ -38,7 +38,7 @@ jobs:
           ref: ${{ matrix.ref }}
 
       # Just before the beginning of each 12-hour period P (starting from
-      # UNIX epoch time), we want to obtain a new Fractal API access
+      # UNIX epoch time), we want to obtain a new Whist API access
       # token for GHA to use until the current time no longer falls into
       # P. This Workflow is scheduled to run 20 minutes before P begins,
       # so if the Workflow is triggered by a schedule event (i.e. not a
@@ -86,8 +86,8 @@ jobs:
 
       # Perform a Client Credentials exchange with one of our Auth0-
       # hosted authorization servers in order to obtain an access token
-      # that can be used to make authorized requests to Fractal's API.
-      - name: Obtain authorization to call Fractal's API
+      # that can be used to make authorized requests to Whist's API.
+      - name: Obtain authorization to call Whist's API
         id: token
         if: "!steps.cache.outputs.cache-hit"
         uses: ./.github/actions/generate-auth0-token

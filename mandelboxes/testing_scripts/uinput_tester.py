@@ -20,7 +20,7 @@ relmouse = uinput.Device(
         uinput.REL_WHEEL_HI_RES,
         uinput.REL_HWHEEL_HI_RES,
     ],
-    name="Fractal Virtual Relative Input",
+    name="Whist Virtual Relative Input",
     bustype=BUS_USB,
     vendor=0xF4C1,
     product=0x1123,
@@ -161,7 +161,7 @@ keycodes = [
 
 keyboard = uinput.Device(
     keycodes,
-    name="Fractal Virtual Keyboard",
+    name="Whist Virtual Keyboard",
     bustype=BUS_USB,
     vendor=0xF4C1,
     product=0x1122,

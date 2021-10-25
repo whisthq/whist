@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file auth.ts
  * @brief This file contains custom RXJS operators that add functionality on top of existing RXJS
  * operators.

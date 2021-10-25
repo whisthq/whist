@@ -1,7 +1,7 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file clock.h
  * @brief This file contains the helper functions for timing code.
 ============================

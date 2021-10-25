@@ -60,7 +60,7 @@ const Investors = () => {
             Meet our investors
           </div>
           <p className="text-xl text-gray-500">
-            Fractal is backed by renowned institutional investors and angels.
+            Whist is backed by renowned institutional investors and angels.
           </p>
         </div>
         <div className="lg:col-span-2">

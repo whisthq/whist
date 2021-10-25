@@ -1,8 +1,8 @@
-# Fractal Application Streaming
+# Whist Application Streaming
 
-[![Fractal: Build & Deploy](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml/badge.svg)](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal)
+[![Whist: Build & Deploy](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml/badge.svg)](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal)
 
-This repository contains the end-to-end code for the Fractal Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
+This repository contains the end-to-end code for the Whist Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
 ## Table of Contents
 
@@ -26,46 +26,46 @@ This repository contains the end-to-end code for the Fractal Application Streami
 
 ## Introduction
 
-Application Streaming is Fractal's core service. It consists of running an application in a GPU-enabled Linux Docker container (called a "mandelbox" here at Fractal) on a powerful host server in the cloud (currently an EC2 instance) and streaming the audio and video output of the mandelbox to a user device.
+Application Streaming is Whist's core service. It consists of running an application in a GPU-enabled Linux Docker container (called a "mandelbox" here at Whist) on a powerful host server in the cloud (currently an EC2 instance) and streaming the audio and video output of the mandelbox to a user device.
 
-At a high-level, Fractal works the following way:
+At a high-level, Whist works the following way:
 
-- Users download the Fractal Electron application for their OS and log in to launch the streamed application, like Chrome.
-- The login and launch processes are REST API requests to the Fractal webserver, which is responsible for picking an EC2 instance with available space (or creating a new one if there aren't any) and passing the request over to the Host Service on the chosen EC2 instance, which is responsible for allocating the user to a container (mandelbox) on that EC2 instance.
+- Users download the Whist Electron application for their OS and log in to launch the streamed application, like Chrome.
+- The login and launch processes are REST API requests to the Whist webserver, which is responsible for picking an EC2 instance with available space (or creating a new one if there aren't any) and passing the request over to the Host Service on the chosen EC2 instance, which is responsible for allocating the user to a container (mandelbox) on that EC2 instance.
   - If all existing EC2 instances are at maxed capacity of mandelboxes running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/host-setup` scripts and has the `/host-service` preinstalled, and tell the `/host-service` that this user needs a mandelbox.
-- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the `/host-service` running on the chosen EC2 instance will allocate the user to a mandelbox. The Fractal protocol server inside this mandelbox image will be started and will notify the webserver/Electron application that it is ready to stream, and the Electron application will launch the Fractal protocol client, which will start the stream.
+- If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the `/host-service` running on the chosen EC2 instance will allocate the user to a mandelbox. The Whist protocol server inside this mandelbox image will be started and will notify the webserver/Electron application that it is ready to stream, and the Electron application will launch the Whist protocol client, which will start the stream.
   - The mandelboxes are based off of `/mandelboxes` and are pre-built and stored in GitHub Container Registry, where our Host Servicepulls the images from.
 
 ### Repository Structure
 
-The Fractal monorepository contains 8 Fractal subrepositories:
+The Whist monorepository contains 8 Whist subrepositories:
 
-| Subrepository       | Description                                                                                           |
-| ------------------- | ----------------------------------------------------------------------------------------------------- |
-| client-applications | The client-side Electron-based application users download and use to launch a streamed application.   |
-| core-ts             | The Fractal internal TypeScript library of utilities and reusable components.                         |
-| host-service        | The Fractal service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
-| host-setup          | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal mandelboxes. |
-| mandelboxes         | The Dockerfiles defining the mandelboxes and helper scripts for the applications we stream.           |
-| microservices       | Code we deploy to other platforms, like Auth0.                                                        |
-| protocol            | The streaming technology API, both client and server, for streaming applications to users.            |
-| webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.   |
-| website             | The website hosted at `fractal.co`.                                                                   |
+| Subrepository       | Description                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| client-applications | The client-side Electron-based application users download and use to launch a streamed application. |
+| core-ts             | The Whist internal TypeScript library of utilities and reusable components.                         |
+| host-service        | The Whist service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
+| host-setup          | The scripts to setup an EC2 innstance into a Whist-optimized host ready to run Whist mandelboxes.   |
+| mandelboxes         | The Dockerfiles defining the mandelboxes and helper scripts for the applications we stream.         |
+| microservices       | Code we deploy to other platforms, like Auth0.                                                      |
+| protocol            | The streaming technology API, both client and server, for streaming applications to users.          |
+| webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two. |
+| website             | The website hosted at `whist.com`.                                                                  |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
-Note that there is also additional documentation for some subrepos (and other Fractal repos) at [docs.fractal.co](https://docs.fractal.co):
+Note that there is also additional documentation for some subrepos (and other Whist repos) at [docs.whist.com](https://docs.whist.com):
 
-- [docs.fractal.co/protocol](https://docs.fractal.co/protocol)
-- [docs.fractal.co/webserver](https://docs.fractal.co/webserver)
-- [docs.fractal.co/SDL](https://docs.fractal.co/SDL)
-- [docs.fractal.co/FFmpeg](https://docs.fractal.co/FFmpeg)
+- [docs.whist.com/protocol](https://docs.whist.com/protocol)
+- [docs.whist.com/webserver](https://docs.whist.com/webserver)
+- [docs.whist.com/SDL](https://docs.whist.com/SDL)
+- [docs.whist.com/FFmpeg](https://docs.whist.com/FFmpeg)
 
 ## Development
 
 To get started with development, you will have to clone this repository and navigate to a specific subrepository. On windows, you will have to install [gitbash](https://git-scm.com/downloads). It is recommended to use [SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent), so that you don't have to type in your github password on every push.
 
-While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
+While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Whist Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
 To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
 
@@ -75,7 +75,7 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 #### `prod` is for Releases only; `staging` is "almost `prod`"
 
-At Fractal, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/fractal/fractal/issues/1139).
+At Whist, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/fractal/fractal/issues/1139).
 
 We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `prod`, except after a production release, when they will be even.
 

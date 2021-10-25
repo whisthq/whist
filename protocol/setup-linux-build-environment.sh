@@ -17,7 +17,7 @@ sudo apt-get install --no-install-recommends -y \
   libva-drm2 \
   libvdpau1
 
-# Install Fractal dependencies
+# Install Whist dependencies
 sudo apt-get install --no-install-recommends -y \
   libssl-dev \
   libgl1-mesa-dev \

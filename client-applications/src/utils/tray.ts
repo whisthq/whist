@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file auth.ts
  * @brief This file contains utility functions for managing the MacOS tray, which appears at the
  * top right corner of the screen when the protocol launches.
@@ -94,7 +94,7 @@ const settingsMenu = new MenuItem({
       },
     },
     {
-      label: "(Coming Soon) Make Fractal my default browser",
+      label: "(Coming Soon) Make Whist my default browser",
       click: () => {
         trayEvent.emit("defaultBrowser")
       },
@@ -119,7 +119,7 @@ export const createMenu = (signedIn: boolean, userEmail?: string) =>
   Menu.buildFromTemplate([
     ...(signedIn ? [accountMenu] : []),
     ...[settingsMenu, feedbackMenu],
-    ...(signedIn && (userEmail ?? "").endsWith("@fractal.co")
+    ...(signedIn && (userEmail ?? "").endsWith("@whist.com")
       ? [regionMenu]
       : []),
   ])

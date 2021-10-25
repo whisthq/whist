@@ -1,7 +1,7 @@
 #ifndef INPUT_DRIVER_H
 #define INPUT_DRIVER_H
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file input_driver.h
  * @brief This file defines the methods required to implement an input driver
 ============================
@@ -62,7 +62,7 @@ void destroy_input_device(InputDevice* input_device);
  *
  * @param input_device             The initialized input device to query
  *
- * @param fractal_keycode          The Fractal keycode of the modifier to
+ * @param fractal_keycode          The Whist keycode of the modifier to
  *                                 query (`FK_CAPSLOCK` or `FK_NUMLOCK`)
  *
  * @returns                        1 if the queried modifier is active,
@@ -76,7 +76,7 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
  *
  * @param input_device             The initialized input device to query
  *
- * @param fractal_keycode          The Fractal keycode to query
+ * @param fractal_keycode          The Whist keycode to query
  *
  * @returns                        1 if the queried key is pressed,
  *                                 0 if unpressed, and -1 on error
@@ -88,7 +88,7 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
  *
  * @param input_device             The initialized input device to query
  *
- * @param fractal_keycode          The Fractal keycode to query
+ * @param fractal_keycode          The Whist keycode to query
  *
  * @param active_pinch             Whether the client has an active pinch gesture
  *
@@ -102,7 +102,7 @@ int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, 
  *
  * @param input_device             The initialized input device to write
  *
- * @param fractal_keycode              The Fractal keycode to modify
+ * @param fractal_keycode              The Whist keycode to modify
  *
  * @param pressed                  1 for a key press, 0 for a key unpress
  *

@@ -1,13 +1,13 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file main.c
- * @brief This file contains the main code that runs a Fractal server on a
+ * @brief This file contains the main code that runs a Whist server on a
  *        Windows or Linux Ubuntu computer.
 ============================
 Usage
 ============================
 
-Follow main() to see a Fractal video streaming server being created and creating
+Follow main() to see a Whist video streaming server being created and creating
 its threads.
 */
 
@@ -112,7 +112,7 @@ void sig_handler(int sig_num) {
 
 void handle_fractal_client_message(FractalClientMessage* fcmsg) {
     /*
-        Handles a Fractal client message
+        Handles a Whist client message
 
         Arguments:
             fcmsg (FractalClientMessage*): the client message being handled
@@ -126,7 +126,7 @@ void handle_fractal_client_message(FractalClientMessage* fcmsg) {
 
 void get_fractal_client_messages(bool get_tcp, bool get_udp) {
     /*
-        Gets all pending Fractal TCP and/or UDP messages
+        Gets all pending Whist TCP and/or UDP messages
 
         Arguments:
             get_tcp (bool): true if we want to get TCP, false otherwise
@@ -257,7 +257,7 @@ int main(int argc, char* argv[]) {
     srand((unsigned int)time(NULL));
     connection_id = rand();
 
-    LOG_INFO("Fractal server revision %s", fractal_git_revision());
+    LOG_INFO("Whist server revision %s", fractal_git_revision());
 
 // initialize the windows socket library if this is a windows client
 #ifdef _WIN32

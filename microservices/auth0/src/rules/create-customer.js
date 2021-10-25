@@ -2,7 +2,7 @@
 
    Each time a user logs in, determine whether or not a Stripe customer record
    is already associated with their account. If no such record exists, create
-   one and start a free trial of Fractal.
+   one and start a free trial of Whist.
  */
 
 function createCustomer(user, context, callback) {

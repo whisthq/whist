@@ -1,6 +1,6 @@
-# Starts the display configured for Fractal, runs as root
+# Starts the display configured for Whist, runs as root
 [Unit]
-Description=Fractal Display
+Description=Whist Display
 After=fractal-startup.service
 Requires=fractal-startup.service
 

@@ -10,14 +10,14 @@
 #include <X11/extensions/XTest.h>
 #include <X11/keysymdef.h>
 
-// @brief Linux keycodes for replaying Fractal user inputs on server
-// @details index is Fractal keycode, value is Linux keycode
+// @brief Linux keycodes for replaying Whist user inputs on server
+// @details index is Whist keycode, value is Linux keycode
 #define GetX11KeySym(fractal_keycode) x11_keysyms[fractal_keycode]
 const int x11_keysyms[KEYCODE_UPPERBOUND] = {
-    0,                        // Fractal keycodes start at index 4
-    0,                        // Fractal keycodes start at index 4
-    0,                        // Fractal keycodes start at index 4
-    0,                        // Fractal keycodes start at index 4
+    0,                        // Whist keycodes start at index 4
+    0,                        // Whist keycodes start at index 4
+    0,                        // Whist keycodes start at index 4
+    0,                        // Whist keycodes start at index 4
     XK_A,                     // 4 -> A
     XK_B,                     // 5 -> B
     XK_C,                     // 6 -> C
@@ -64,7 +64,7 @@ const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     XK_bracketleft,           // 47 -> Left Bracket
     XK_bracketright,          // 48 -> Right Bracket
     XK_backslash,             // 49 -> Backslash
-    0,                        // 50 -> no Fractal keycode at index 50
+    0,                        // 50 -> no Whist keycode at index 50
     XK_semicolon,             // 51 -> Semicolon
     XK_apostrophe,            // 52 -> Apostrophe
     XK_grave,                 // 53 -> Backtick
@@ -114,10 +114,10 @@ const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     XK_KP_9,                  // 97 -> Numeric Keypad 9
     XK_KP_0,                  // 98 -> Numeric Keypad 0
     XK_KP_Decimal,            // 99 -> Numeric Keypad Period
-    0,                        // 100 -> no Fractal keycode at index 100
+    0,                        // 100 -> no Whist keycode at index 100
     XK_Menu,                  // 101 -> Application
-    0,                        // 102 -> no Fractal keycode at index 102
-    0,                        // 103 -> no Fractal keycode at index 103
+    0,                        // 102 -> no Whist keycode at index 102
+    0,                        // 103 -> no Whist keycode at index 103
     XK_F13,                   // 104 -> F13
     XK_F14,                   // 105 -> F14
     XK_F15,                   // 106 -> F15
@@ -134,110 +134,110 @@ const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     XK_Help,                  // 117 -> Help
     XK_Menu,                  // 118 -> Menu
     XK_Select,                // 119 -> Select
-    0,                        // 120 -> no Fractal keycode at index 120
-    0,                        // 121 -> no Fractal keycode at index 121
-    0,                        // 122 -> no Fractal keycode at index 122
-    0,                        // 123 -> no Fractal keycode at index 123
-    0,                        // 124 -> no Fractal keycode at index 124
-    0,                        // 125 -> no Fractal keycode at index 125
-    0,                        // 126 -> no Fractal keycode at index 126
+    0,                        // 120 -> no Whist keycode at index 120
+    0,                        // 121 -> no Whist keycode at index 121
+    0,                        // 122 -> no Whist keycode at index 122
+    0,                        // 123 -> no Whist keycode at index 123
+    0,                        // 124 -> no Whist keycode at index 124
+    0,                        // 125 -> no Whist keycode at index 125
+    0,                        // 126 -> no Whist keycode at index 126
     XF86XK_AudioMute,         // 127 -> Mute
     XF86XK_AudioRaiseVolume,  // 128 -> Volume Up
     XF86XK_AudioLowerVolume,  // 129 -> Volume Down
-    0,                        // 130 -> no Fractal keycode at index 130
-    0,                        // 131 -> no Fractal keycode at index 131
-    0,                        // 132 -> no Fractal keycode at index 132
-    0,                        // 133 -> no Fractal keycode at index 133
-    0,                        // 134 -> no Fractal keycode at index 134
-    0,                        // 135 -> no Fractal keycode at index 135
-    0,                        // 136 -> no Fractal keycode at index 136
-    0,                        // 137 -> no Fractal keycode at index 137
-    0,                        // 138 -> no Fractal keycode at index 138
-    0,                        // 139 -> no Fractal keycode at index 139
-    0,                        // 140 -> no Fractal keycode at index 140
-    0,                        // 141 -> no Fractal keycode at index 141
-    0,                        // 142 -> no Fractal keycode at index 142
-    0,                        // 143 -> no Fractal keycode at index 143
-    0,                        // 144 -> no Fractal keycode at index 144
-    0,                        // 145 -> no Fractal keycode at index 145
-    0,                        // 146 -> no Fractal keycode at index 146
-    0,                        // 147 -> no Fractal keycode at index 147
-    0,                        // 148 -> no Fractal keycode at index 148
-    0,                        // 149 -> no Fractal keycode at index 149
-    0,                        // 150 -> no Fractal keycode at index 150
-    0,                        // 151 -> no Fractal keycode at index 151
-    0,                        // 152 -> no Fractal keycode at index 152
-    0,                        // 153 -> no Fractal keycode at index 153
-    0,                        // 154 -> no Fractal keycode at index 154
-    0,                        // 155 -> no Fractal keycode at index 155
-    0,                        // 156 -> no Fractal keycode at index 156
-    0,                        // 157 -> no Fractal keycode at index 157
-    0,                        // 158 -> no Fractal keycode at index 158
-    0,                        // 159 -> no Fractal keycode at index 159
-    0,                        // 160 -> no Fractal keycode at index 160
-    0,                        // 161 -> no Fractal keycode at index 161
-    0,                        // 162 -> no Fractal keycode at index 162
-    0,                        // 163 -> no Fractal keycode at index 163
-    0,                        // 164 -> no Fractal keycode at index 164
-    0,                        // 165 -> no Fractal keycode at index 165
-    0,                        // 166 -> no Fractal keycode at index 166
-    0,                        // 167 -> no Fractal keycode at index 167
-    0,                        // 168 -> no Fractal keycode at index 168
-    0,                        // 169 -> no Fractal keycode at index 169
-    0,                        // 170 -> no Fractal keycode at index 170
-    0,                        // 171 -> no Fractal keycode at index 171
-    0,                        // 172 -> no Fractal keycode at index 172
-    0,                        // 173 -> no Fractal keycode at index 173
-    0,                        // 174 -> no Fractal keycode at index 174
-    0,                        // 175 -> no Fractal keycode at index 175
-    0,                        // 176 -> no Fractal keycode at index 176
-    0,                        // 177 -> no Fractal keycode at index 177
-    0,                        // 178 -> no Fractal keycode at index 178
-    0,                        // 179 -> no Fractal keycode at index 179
-    0,                        // 180 -> no Fractal keycode at index 180
-    0,                        // 181 -> no Fractal keycode at index 181
-    0,                        // 182 -> no Fractal keycode at index 182
-    0,                        // 183 -> no Fractal keycode at index 183
-    0,                        // 184 -> no Fractal keycode at index 184
-    0,                        // 185 -> no Fractal keycode at index 185
-    0,                        // 186 -> no Fractal keycode at index 186
-    0,                        // 187 -> no Fractal keycode at index 187
-    0,                        // 188 -> no Fractal keycode at index 188
-    0,                        // 189 -> no Fractal keycode at index 189
-    0,                        // 190 -> no Fractal keycode at index 190
-    0,                        // 191 -> no Fractal keycode at index 191
-    0,                        // 192 -> no Fractal keycode at index 192
-    0,                        // 193 -> no Fractal keycode at index 193
-    0,                        // 194 -> no Fractal keycode at index 194
-    0,                        // 195 -> no Fractal keycode at index 195
-    0,                        // 196 -> no Fractal keycode at index 196
-    0,                        // 197 -> no Fractal keycode at index 197
-    0,                        // 198 -> no Fractal keycode at index 198
-    0,                        // 199 -> no Fractal keycode at index 199
-    0,                        // 200 -> no Fractal keycode at index 200
-    0,                        // 201 -> no Fractal keycode at index 201
-    0,                        // 202 -> no Fractal keycode at index 202
-    0,                        // 203 -> no Fractal keycode at index 203
-    0,                        // 204 -> no Fractal keycode at index 204
-    0,                        // 205 -> no Fractal keycode at index 205
-    0,                        // 206 -> no Fractal keycode at index 206
-    0,                        // 207 -> no Fractal keycode at index 207
-    0,                        // 208 -> no Fractal keycode at index 208
-    0,                        // 209 -> no Fractal keycode at index 209
-    0,                        // 210 -> no Fractal keycode at index 210
-    0,                        // 211 -> no Fractal keycode at index 211
-    0,                        // 212 -> no Fractal keycode at index 212
-    0,                        // 213 -> no Fractal keycode at index 213
-    0,                        // 214 -> no Fractal keycode at index 214
-    0,                        // 215 -> no Fractal keycode at index 215
-    0,                        // 216 -> no Fractal keycode at index 216
-    0,                        // 217 -> no Fractal keycode at index 217
-    0,                        // 218 -> no Fractal keycode at index 218
-    0,                        // 219 -> no Fractal keycode at index 219
-    0,                        // 220 -> no Fractal keycode at index 220
-    0,                        // 221 -> no Fractal keycode at index 221
-    0,                        // 222 -> no Fractal keycode at index 222
-    0,                        // 223 -> no Fractal keycode at index 223
+    0,                        // 130 -> no Whist keycode at index 130
+    0,                        // 131 -> no Whist keycode at index 131
+    0,                        // 132 -> no Whist keycode at index 132
+    0,                        // 133 -> no Whist keycode at index 133
+    0,                        // 134 -> no Whist keycode at index 134
+    0,                        // 135 -> no Whist keycode at index 135
+    0,                        // 136 -> no Whist keycode at index 136
+    0,                        // 137 -> no Whist keycode at index 137
+    0,                        // 138 -> no Whist keycode at index 138
+    0,                        // 139 -> no Whist keycode at index 139
+    0,                        // 140 -> no Whist keycode at index 140
+    0,                        // 141 -> no Whist keycode at index 141
+    0,                        // 142 -> no Whist keycode at index 142
+    0,                        // 143 -> no Whist keycode at index 143
+    0,                        // 144 -> no Whist keycode at index 144
+    0,                        // 145 -> no Whist keycode at index 145
+    0,                        // 146 -> no Whist keycode at index 146
+    0,                        // 147 -> no Whist keycode at index 147
+    0,                        // 148 -> no Whist keycode at index 148
+    0,                        // 149 -> no Whist keycode at index 149
+    0,                        // 150 -> no Whist keycode at index 150
+    0,                        // 151 -> no Whist keycode at index 151
+    0,                        // 152 -> no Whist keycode at index 152
+    0,                        // 153 -> no Whist keycode at index 153
+    0,                        // 154 -> no Whist keycode at index 154
+    0,                        // 155 -> no Whist keycode at index 155
+    0,                        // 156 -> no Whist keycode at index 156
+    0,                        // 157 -> no Whist keycode at index 157
+    0,                        // 158 -> no Whist keycode at index 158
+    0,                        // 159 -> no Whist keycode at index 159
+    0,                        // 160 -> no Whist keycode at index 160
+    0,                        // 161 -> no Whist keycode at index 161
+    0,                        // 162 -> no Whist keycode at index 162
+    0,                        // 163 -> no Whist keycode at index 163
+    0,                        // 164 -> no Whist keycode at index 164
+    0,                        // 165 -> no Whist keycode at index 165
+    0,                        // 166 -> no Whist keycode at index 166
+    0,                        // 167 -> no Whist keycode at index 167
+    0,                        // 168 -> no Whist keycode at index 168
+    0,                        // 169 -> no Whist keycode at index 169
+    0,                        // 170 -> no Whist keycode at index 170
+    0,                        // 171 -> no Whist keycode at index 171
+    0,                        // 172 -> no Whist keycode at index 172
+    0,                        // 173 -> no Whist keycode at index 173
+    0,                        // 174 -> no Whist keycode at index 174
+    0,                        // 175 -> no Whist keycode at index 175
+    0,                        // 176 -> no Whist keycode at index 176
+    0,                        // 177 -> no Whist keycode at index 177
+    0,                        // 178 -> no Whist keycode at index 178
+    0,                        // 179 -> no Whist keycode at index 179
+    0,                        // 180 -> no Whist keycode at index 180
+    0,                        // 181 -> no Whist keycode at index 181
+    0,                        // 182 -> no Whist keycode at index 182
+    0,                        // 183 -> no Whist keycode at index 183
+    0,                        // 184 -> no Whist keycode at index 184
+    0,                        // 185 -> no Whist keycode at index 185
+    0,                        // 186 -> no Whist keycode at index 186
+    0,                        // 187 -> no Whist keycode at index 187
+    0,                        // 188 -> no Whist keycode at index 188
+    0,                        // 189 -> no Whist keycode at index 189
+    0,                        // 190 -> no Whist keycode at index 190
+    0,                        // 191 -> no Whist keycode at index 191
+    0,                        // 192 -> no Whist keycode at index 192
+    0,                        // 193 -> no Whist keycode at index 193
+    0,                        // 194 -> no Whist keycode at index 194
+    0,                        // 195 -> no Whist keycode at index 195
+    0,                        // 196 -> no Whist keycode at index 196
+    0,                        // 197 -> no Whist keycode at index 197
+    0,                        // 198 -> no Whist keycode at index 198
+    0,                        // 199 -> no Whist keycode at index 199
+    0,                        // 200 -> no Whist keycode at index 200
+    0,                        // 201 -> no Whist keycode at index 201
+    0,                        // 202 -> no Whist keycode at index 202
+    0,                        // 203 -> no Whist keycode at index 203
+    0,                        // 204 -> no Whist keycode at index 204
+    0,                        // 205 -> no Whist keycode at index 205
+    0,                        // 206 -> no Whist keycode at index 206
+    0,                        // 207 -> no Whist keycode at index 207
+    0,                        // 208 -> no Whist keycode at index 208
+    0,                        // 209 -> no Whist keycode at index 209
+    0,                        // 210 -> no Whist keycode at index 210
+    0,                        // 211 -> no Whist keycode at index 211
+    0,                        // 212 -> no Whist keycode at index 212
+    0,                        // 213 -> no Whist keycode at index 213
+    0,                        // 214 -> no Whist keycode at index 214
+    0,                        // 215 -> no Whist keycode at index 215
+    0,                        // 216 -> no Whist keycode at index 216
+    0,                        // 217 -> no Whist keycode at index 217
+    0,                        // 218 -> no Whist keycode at index 218
+    0,                        // 219 -> no Whist keycode at index 219
+    0,                        // 220 -> no Whist keycode at index 220
+    0,                        // 221 -> no Whist keycode at index 221
+    0,                        // 222 -> no Whist keycode at index 222
+    0,                        // 223 -> no Whist keycode at index 223
     XK_Control_L,             // 224 -> Left Ctrl
     XK_Shift_L,               // 225 -> Left Shift
     XK_Alt_L,                 // 226 -> Left Alt
@@ -246,31 +246,31 @@ const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     XK_Shift_R,               // 229 -> Right Shift
     XK_Alt_R,                 // 230 -> Right Alt
     XK_Super_R,               // 231 -> Right GUI (Windows Key)
-    0,                        // 232 -> no Fractal keycode at index 232
-    0,                        // 233 -> no Fractal keycode at index 233
-    0,                        // 234 -> no Fractal keycode at index 234
-    0,                        // 235 -> no Fractal keycode at index 235
-    0,                        // 236 -> no Fractal keycode at index 236
-    0,                        // 237 -> no Fractal keycode at index 237
-    0,                        // 238 -> no Fractal keycode at index 238
-    0,                        // 239 -> no Fractal keycode at index 239
-    0,                        // 240 -> no Fractal keycode at index 240
-    0,                        // 241 -> no Fractal keycode at index 241
-    0,                        // 242 -> no Fractal keycode at index 242
-    0,                        // 243 -> no Fractal keycode at index 243
-    0,                        // 244 -> no Fractal keycode at index 244
-    0,                        // 245 -> no Fractal keycode at index 245
-    0,                        // 246 -> no Fractal keycode at index 246
-    0,                        // 247 -> no Fractal keycode at index 247
-    0,                        // 248 -> no Fractal keycode at index 248
-    0,                        // 249 -> no Fractal keycode at index 249
-    0,                        // 250 -> no Fractal keycode at index 250
-    0,                        // 251 -> no Fractal keycode at index 251
-    0,                        // 252 -> no Fractal keycode at index 252
-    0,                        // 253 -> no Fractal keycode at index 253
-    0,                        // 254 -> no Fractal keycode at index 254
-    0,                        // 255 -> no Fractal keycode at index 255
-    0,                        // 256 -> no Fractal keycode at index 256
+    0,                        // 232 -> no Whist keycode at index 232
+    0,                        // 233 -> no Whist keycode at index 233
+    0,                        // 234 -> no Whist keycode at index 234
+    0,                        // 235 -> no Whist keycode at index 235
+    0,                        // 236 -> no Whist keycode at index 236
+    0,                        // 237 -> no Whist keycode at index 237
+    0,                        // 238 -> no Whist keycode at index 238
+    0,                        // 239 -> no Whist keycode at index 239
+    0,                        // 240 -> no Whist keycode at index 240
+    0,                        // 241 -> no Whist keycode at index 241
+    0,                        // 242 -> no Whist keycode at index 242
+    0,                        // 243 -> no Whist keycode at index 243
+    0,                        // 244 -> no Whist keycode at index 244
+    0,                        // 245 -> no Whist keycode at index 245
+    0,                        // 246 -> no Whist keycode at index 246
+    0,                        // 247 -> no Whist keycode at index 247
+    0,                        // 248 -> no Whist keycode at index 248
+    0,                        // 249 -> no Whist keycode at index 249
+    0,                        // 250 -> no Whist keycode at index 250
+    0,                        // 251 -> no Whist keycode at index 251
+    0,                        // 252 -> no Whist keycode at index 252
+    0,                        // 253 -> no Whist keycode at index 253
+    0,                        // 254 -> no Whist keycode at index 254
+    0,                        // 255 -> no Whist keycode at index 255
+    0,                        // 256 -> no Whist keycode at index 256
     XK_Mode_switch,           // 257 -> ModeSwitch
     XF86XK_AudioNext,         // 258 -> Audio/Media Next
     XF86XK_AudioPrev,         // 259 -> Audio/Media Prev

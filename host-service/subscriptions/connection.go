@@ -6,7 +6,7 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 )
 
-// Fractal database connection strings
+// Whist database connection strings
 
 const localHasuraURL = "http://localhost:8080/v1/graphql"
 

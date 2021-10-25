@@ -1,5 +1,5 @@
 /**
- * Copyright Fractal Computers, Inc. 2021
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file bitrate.h
  * @brief This file contains the client's adaptive bitrate code. Any algorithms we are using for
  *        predicting bitrate should be stored here.

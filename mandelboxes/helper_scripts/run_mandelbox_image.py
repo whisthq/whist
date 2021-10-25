@@ -16,7 +16,7 @@ import requests
 
 
 DESCRIPTION = """
-This script runs a Fractal mandelbox by calling the `SpinUpMandelbox` endpoint
+This script runs a Whist mandelbox by calling the `SpinUpMandelbox` endpoint
 on the host service and emulating the client-app (but not the client protocol).
 It is used by the scripts `run_local_mandelbox_image.sh` and
 `run_remote_mandelbox_image.sh` and is usually not called directly.
@@ -35,7 +35,7 @@ reset_working_directory()
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument(
     "image",
-    help="Fractal mandelbox to run. Defaults to 'fractal/base:current-build'.",
+    help="Whist mandelbox to run. Defaults to 'fractal/base:current-build'.",
     default="fractal/base:current-build",
 )
 parser.add_argument(

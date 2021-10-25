@@ -21,7 +21,7 @@ def slack_post(
     slack_webhook,
     channel,
     body,
-    slack_username="Fractal Bot",
+    slack_username="Whist Bot",
     title=None,
     code=None,
     lang=None,

@@ -1,16 +1,16 @@
-# Fractal Protocol
+# Whist Protocol
 
-This repository contains the source code for the Fractal Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a mandelbox, or a regular computer, and a client computer or mobile device.
+This repository contains the source code for the Whist Protocol, which is a low-latency interactive streaming technology that streams audio/video/inputs between an OS-like device, whether it is a virtual machine, a mandelbox, or a regular computer, and a client computer or mobile device.
 
 ## Supported Platforms
 
 ### Server
 
-This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for server-specific development details.
+This folder builds a server to stream via Whist. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for server-specific development details.
 
 ### Client
 
-This folder builds a client to receive a server stream via Fractal. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
+This folder builds a client to receive a server stream via Whist. It supports Windows, MacOS and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
 
 ## High-Level Overview
 
@@ -248,7 +248,7 @@ GCC only supports one type of build at a time, so if you are currently building 
 
 ### Further documentation
 
-We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.fractal.co`, but updating the documentation with CI is still a [TODO](https://github.com/fractal/fractal/issues/1976).
+We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.whist.com`, but updating the documentation with CI is still a [TODO](https://github.com/fractal/fractal/issues/1976).
 
 ## CI & CD
 

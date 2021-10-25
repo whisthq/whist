@@ -1,7 +1,7 @@
 /**
- * Copyright Fractal Computers, Inc. 2020
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file fractal_memory.c
- * @brief This file contains custom memory handling for Fractal.
+ * @brief This file contains custom memory handling for Whist.
 
 ============================
 Usage
