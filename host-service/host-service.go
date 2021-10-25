@@ -366,6 +366,77 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 	globalCancel()
 }
 
+
+func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *ImportBrowserConfigRequest) {
+	logAndReturnError := func(fmt string, v ...interface{}) {
+		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
+		logger.Error(err)
+		req.ReturnResult("", err)
+	}
+
+	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", req.MandelboxID)
+
+	// Set up auth
+	claims := new(auth.FractalClaims)
+	parser := &jwt.Parser{SkipClaimsValidation: true}
+	var userID types.UserID
+
+	// Only verify auth in non-local environments
+	if !metadata.IsLocalEnv() {
+		// Decode the access token without validating any of its claims or
+		// verifying its signature because we've already done that in
+		// `authenticateAndParseRequest`. All we want to know is the value of the
+		// sub (subject) claim.
+		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
+			logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
+			return
+		}
+		userID = types.UserID(claims.Subject)
+	} else {
+		// CI doesn't run in AWS so we need to set a custom name
+		if metadata.IsRunningInCI() {
+			userID = "localdev_host_service_CI"
+		} else {
+			instanceName, err := aws.GetInstanceName()
+			if err != nil {
+				logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
+				return
+			}
+			userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+		}
+	}
+
+	// If so, create the mandelbox object.
+	fc := mandelbox.New(context.Background(), goroutineTracker, req.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", fc.GetMandelboxID())
+
+	// If the creation of the mandelbox fails, we want to clean up after it. We
+	// do this by setting `createFailed` to true until all steps are done, and
+	// closing the mandelbox's context on function exit if `createFailed` is
+	// still set to true.
+	var createFailed bool = true
+	defer func() {
+		if createFailed {
+			fc.Close()
+		}
+	}()
+
+	// Verify that this user sent in a (nontrivial) config encryption token
+	if len(req.ConfigEncryptionToken) < 10 {
+		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.")
+		return
+	}
+	fc.SetConfigEncryptionToken(req.ConfigEncryptionToken)
+
+	fc.AssignToUser(userID)
+	fc.SetAppName(req.AppName)
+
+	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", req.MandelboxID, userID)
+
+	// Upload cookies to s3
+	fc.UploadCustomConfig(req.Cookies)
+}
+
 // ------------------------------------
 // Mandelbox event handlers
 // ------------------------------------
@@ -436,7 +507,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	userCustomConfigDownloadComplete := make(chan bool)
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning user custom config download for mandelbox %s", req.MandelboxID)
-		err := fc.downloadBrowserData()
+		err := fc.DownloadCustomConfig()
 		if err != nil {
 			logger.Warningf("Error requesting user custom configs: %v", err)
 			userCustomConfigDownloadComplete <- true
@@ -1174,6 +1245,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
 				}
 
+			case *ImportBrowserConfigRequest:
+				go ImportBrowserConfig(globalCtx, globalCancel, goroutineTracker, serverevent.(*ImportBrowserConfigRequest))
 			default:
 				if serverevent != nil {
 					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
