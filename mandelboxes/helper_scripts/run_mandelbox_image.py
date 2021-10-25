@@ -5,6 +5,7 @@
 import argparse
 from collections import namedtuple
 import io
+import json
 import os
 import secrets
 import sys
@@ -37,6 +38,11 @@ parser.add_argument(
     "image",
     help="Whist mandelbox to run. Defaults to 'fractal/base:current-build'.",
     default="fractal/base:current-build",
+)
+parser.add_argument(
+    "--json-data",
+    help="Json string to pass through json transport.",
+    default={},
 )
 parser.add_argument(
     "--host-address",
@@ -89,6 +95,7 @@ mandelbox_server_path = os.path.abspath("/usr/share/fractal/bin")
 PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
 )
+json_data = json.loads(args.json_data)
 
 
 def ensure_root_privileges():
@@ -151,7 +158,7 @@ def copy_locally_built_protocol(cont):
     cont.put_archive(mandelbox_server_path, fileobj.getvalue())
 
 
-def send_spin_up_mandelbox_request(mandelbox_id):
+def send_spin_up_mandelbox_request(mandelbox_id, json_data):
     """
     Sends the host service a SpinUpMandelbox request and returns a Container
     object corresponding to that mandelbox, along with its identifying host
@@ -165,6 +172,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     payload = {
         "config_encryption_token": args.user_config_encryption_token,
         "jwt_access_token": "bogus_jwt",
+        "json_data": json_data,
         "mandelbox_id": mandelbox_id,
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
@@ -207,7 +215,7 @@ if __name__ == "__main__":
             init_mandelbox.commit(args.image)
             init_mandelbox.remove()
 
-    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
+    host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid, json_data)
 
     if local_host_service:
         # Find the Container object corresponding to the container that was just created
