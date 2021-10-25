@@ -48,6 +48,9 @@ done
 # Delete broken symlinks from config
 find $USER_CONFIGS_DIR -xtype l -delete
 
+# Override cookies
+python3 /usr/bin/import_custom_cookies.py
+
 # Register TTY once it was assigned via writing to a file by Whist Host Service
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 
