@@ -4,6 +4,7 @@ import sys
 import json
 import os
 from datetime import datetime, timedelta
+from tqdm import tqdm
 
 
 # API key needed for authentication. User will need to set their API key
@@ -122,7 +123,10 @@ def parse_logs(parsed_logs, logs_page):
         # Sometimes, in errors, we do not include hour-month-day, so check
         # if the first character to see if it's a number.
         message_begins_with_time = (
-            message[0].isnumeric() and message[1].isnumeric() and message[2] == ":"
+            len(message) > 2
+            and message[0].isnumeric()
+            and message[1].isnumeric()
+            and message[2] == ":"
         )
 
         if not message_begins_with_time:
@@ -177,10 +181,10 @@ if __name__ == "__main__":
     # and adds them to the parsed_logs array until there are no more results
     total, logs_page = get_logs_page(scroll_id)
 
-    while len(logs_page) != 0:
+    for i in tqdm(range(total, 0, -len(parsed_logs)), desc="logs-to-text.py"):
         # This will take a bit, so it's nice to have some sort of progress meter
         # so the user doesn't think they're program is crashing
-        print(total - len(parsed_logs), " logs remaining")
+        # print(total - len(parsed_logs), " logs remaining")
         parse_logs(parsed_logs, logs_page)
         total, logs_page = get_logs_page(scroll_id)
 
