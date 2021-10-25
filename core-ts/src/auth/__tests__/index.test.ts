@@ -14,7 +14,7 @@ describe("authInfoParse", () => {
   //     "aud": "www.example.com",
   //     "sub": "jrocket@example.com",
   //     "email": "test@whist.com"
-  //     "https://api.whist.com/subscription_status": "canceled"
+  //     "https://api.fractal.co/subscription_status": "canceled"
   // }
 
   // Decodes to same as above, but missing email field
@@ -31,7 +31,7 @@ describe("authInfoParse", () => {
 
   test("returns userEmail, accessToken, subscriptionStatus", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
-      userEmail: "test@whist.com",
+      userEmail: "test@fractal.co",
       accessToken: testAccessTokenGood,
       subscriptionStatus: null,
     })

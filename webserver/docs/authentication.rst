@@ -41,7 +41,7 @@ Upon receipt of an HTTP request containing an access token in its
 the token is valid. In order to be considered valid, a token's standard time-\
 based claims (``iat`` and ``exp``) must be valid, the issuer must be the
 deployment-specific Auth0 tenant (e.g. ``https://fractal-prod.us.auth0.com/``
-in production), ``https://api.whist.com`` must be one of the token's
+in production), ``https://api.fractal.co`` must be one of the token's
 audiences, and the signature must be verified.
 
 Validating the standard time-based, issuer, and audience claims can easily be
@@ -60,12 +60,12 @@ Custom claims
 -------------
 
 Don't be alarmed to find two custom claims in each access token's payload. The
-``https://api.whist.com/stripe_customer_id`` claim contains the ID of the
+``https://api.fractal.co/stripe_customer_id`` claim contains the ID of the
 Stripe customer record that is associated with the authorized user's Whist
-account. The ``https://api.whist.com/subscription_status`` claim contains a
+account. The ``https://api.fractal.co/subscription_status`` claim contains a
 string indicating the user's subscription status. Note that, per Auth0's
 guidelines, each of these claims is `namespaced`_ with the namespace URL
-``https://api.whist.com/``. Read :ref:`stripe optimization` for an explanation
+``https://api.fractal.co/``. Read :ref:`stripe optimization` for an explanation
 of why we have chosen to define these two custom claims.
 
 

@@ -44,7 +44,7 @@ const configs = {
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
       clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I", // public; not a secret
-      apiIdentifier: "https://api.whist.com",
+      apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "dev",
     sentryEnv: "development",
@@ -71,7 +71,7 @@ const configs = {
     auth0: {
       auth0Domain: "fractal-dev.us.auth0.com",
       clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I", // public; not a secret
-      apiIdentifier: "https://api.whist.com",
+      apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "dev",
     sentryEnv: "development",
@@ -98,7 +98,7 @@ const configs = {
     auth0: {
       auth0Domain: "fractal-staging.us.auth0.com",
       clientId: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", // public; not a secret
-      apiIdentifier: "https://api.whist.com",
+      apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "staging",
     sentryEnv: "staging",
@@ -126,7 +126,7 @@ const configs = {
     auth0: {
       auth0Domain: "auth.whist.com",
       clientId: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", // public; not a secret
-      apiIdentifier: "https://api.whist.com",
+      apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "prod",
     sentryEnv: "production",

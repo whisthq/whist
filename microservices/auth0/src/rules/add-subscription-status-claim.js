@@ -1,7 +1,7 @@
 /* add-subscription-status-claim.js
 
    Add the status of the authenticated user's Whist Stripe subscription as the
-   value of the custom https://api.whist.com/subscription_status access token
+   value of the custom https://api.fractal.co/subscription_status access token
    claim.
 
    The subscription status is recomputed every time a new access token is
@@ -31,7 +31,7 @@ function addSubscriptionStatusClaim(user, context, callback) {
           .pop()
 
         context.accessToken[
-          "https://api.whist.com/subscription_status"
+          "https://api.fractal.co/subscription_status"
         ] = subscription ? subscription.status : null
 
         return callback(null, user, context)

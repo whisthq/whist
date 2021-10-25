@@ -92,7 +92,7 @@ export const authInfoParse = (res: {
     const decodedIdToken = jwtDecode(res?.json?.id_token ?? "") as any
     const userEmail = decodedIdToken?.email
     const subscriptionStatus =
-      decodedAccessToken["https://api.whist.com/subscription_status"]
+      decodedAccessToken["https://api.fractal.co/subscription_status"]
 
     if (typeof accessToken !== "string")
       return {
@@ -150,6 +150,6 @@ export const isTokenExpired = ({ accessToken }: accessToken): boolean => {
 export const subscriptionStatusParse = ({ accessToken }: accessToken) => {
   const decodedAccessToken = jwtDecode(accessToken ?? "") as any
   const subscriptionStatus =
-    decodedAccessToken["https://api.whist.com/subscription_status"]
+    decodedAccessToken["https://api.fractal.co/subscription_status"]
   return { subscriptionStatus }
 }

@@ -11,7 +11,7 @@ Example usage::
 
     app.config["AUTH0_DOMAIN"] = "auth.whist.com"
     app.config["JWT_DECODE_ALGORITHMS"] = ("RS256",)
-    app.config["JWT_DECODE_AUDIENCE"] = "https://api.whist.com/"
+    app.config["JWT_DECODE_AUDIENCE"] = "https://api.fractal.co/"
 
     @app.errorhandler(ScopeError)
     def _handle_scope_error(_e: ScopeError) -> Any:

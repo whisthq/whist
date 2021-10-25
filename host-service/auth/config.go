@@ -16,17 +16,17 @@ func (a authConfig) getJwksURL() string {
 }
 
 var authConfigDev = authConfig{
-	Aud: "https://api.whist.com",
+	Aud: "https://api.fractal.co",
 	Iss: "https://fractal-dev.us.auth0.com/",
 }
 
 var authConfigStaging = authConfig{
-	Aud: "https://api.whist.com",
+	Aud: "https://api.fractal.co",
 	Iss: "https://fractal-staging.us.auth0.com/",
 }
 
 var authConfigProd = authConfig{
-	Aud: "https://api.whist.com",
+	Aud: "https://api.fractal.co",
 	Iss: "https://auth.whist.com/",
 }
 

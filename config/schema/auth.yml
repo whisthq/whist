@@ -10,7 +10,7 @@ AUTH_CLIENT_ID:
   staging: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz"
   prod: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD"
 
-AUTH_API_IDENTIFIER: "https://api.whist.com"
+AUTH_API_IDENTIFIER: "https://api.fractal.co"
 
 CLIENT_CALLBACK_URL: "http://localhost/callback"
 
