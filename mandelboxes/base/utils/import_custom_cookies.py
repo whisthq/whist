@@ -1,4 +1,4 @@
-from os import error
+from os import error, path
 from sqlite3.dbapi2 import Error
 import sys
 import browser_cookie3
@@ -82,18 +82,20 @@ def encrypt(browser_name, value, encrypt_prefix):
     return encrypted_value
 
 
-def set_browser_cookies(to_browser_name):
+def set_browser_cookies(to_browser_name, path):
     """
     Sets cookies from one browser to another
     Args:
         to_browser_name (str): the name of the browser we will import cookies to
     """
+    if not path.exist(path):
+        return
+
     to_browser = get_browser(to_browser_name)
 
     cookie_file = to_browser.cookie_file
 
-    # Extract cookies
-    with open("/fractal/userCustomConfigs/fractal-app-config-cookies") as file:
+    with open(path) as file:
         cookies = file.read()
         print(f"The cookies read are {cookies}")
     # Read value of cookie and store it in a cookies var
@@ -121,4 +123,5 @@ def set_browser_cookies(to_browser_name):
 
 if __name__ == "__main__":
     browser = "chrome"  # hard coded for now til I figure out how to determine it
-    set_browser_cookies(browser)
+    path = "/fractal/userCustomConfigs/fractal-app-config-cookies"
+    set_browser_cookies(browser, path)
