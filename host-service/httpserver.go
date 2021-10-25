@@ -87,6 +87,7 @@ type ImportBrowserConfigRequest struct {
 	MandelboxID           types.MandelboxID           `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
 	SessionID             uint64                      `json:"session_id"`              // The sessionID provided by the client-app
 	Cookies 	   		  []map[string]string 		  `json:"browser_cookies"`		   // The cookies provided by the client-app
+	resultChan            chan requestResult          // Channel to pass the request result between goroutines
 }
 
 // JSONTransportRequest defines the (unauthenticated) `json_transport`
@@ -119,6 +120,20 @@ func (s *JSONTransportRequest) ReturnResult(result interface{}, err error) {
 // createResultChan is called to create the Go channel to pass the request
 // result back to the HTTP request handler via ReturnResult.
 func (s *JSONTransportRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
+func (s *ImportBrowserConfigRequest) ReturnResult(result interface{}, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
+func (s *ImportBrowserConfigRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
