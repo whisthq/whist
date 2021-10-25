@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -22,9 +23,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	awsTypes "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	types "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/pierrec/lz4/v4"
@@ -122,7 +124,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
 
 	var data []byte
-	err := downloadAndDecryptFromS3(s3ConfigKey, data, string(c.GetConfigEncryptionToken()))
+	err := c.downloadAndDecryptFromS3(s3ConfigKey, data)
 
 	if err != nil {
 		return err
