@@ -692,6 +692,10 @@ RUN ln -sf "$(which xeyes)" /usr/bin/fractal-application
 COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
 RUN chmod 0555 /usr/bin/run-fractal-application.sh
 
+# Override custom configs
+COPY utils/import_custom_cookies.py /usr/bin/import_custom_cookies.py
+RUN python3 /usr/bin/import_custom_cookies.py
+
 # Set up the teleport FUSE service
 
 # Install FUSE dependencies
