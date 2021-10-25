@@ -84,8 +84,6 @@ type ImportBrowserConfigRequest struct {
 	AppName               types.AppName               `json:"app_name"`                // The app name to spin up (in localdev, this can be an arbitrary container image, but in deployment it must be a mandelbox image name).
 	ConfigEncryptionToken types.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        string                      `json:"jwt_access_token"`        // User's JWT access token
-	MandelboxID           types.MandelboxID           `json:"mandelbox_id"`            // The mandelbox ID provided by the webserver
-	SessionID             uint64                      `json:"session_id"`              // The sessionID provided by the client-app
 	Cookies 	   		  []map[string]string 		  `json:"browser_cookies"`		   // The cookies provided by the client-app
 	resultChan            chan requestResult          // Channel to pass the request result between goroutines
 }
