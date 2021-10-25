@@ -1,6 +1,7 @@
 import argparse
 import getpass
 import os
+import subprocess
 import time
 import threading
 from typing import Dict, List, Tuple
@@ -17,7 +18,7 @@ mandelbox for running the client. You will see the output from the client.
 """
 
 # This ami was created for protocol-testing.
-AMI = 'ami-0ec20b64a8d8a7c80'
+AMI = 'ami-0d593d6c1cedae4c5'
 
 
 ec2 = boto3.resource('ec2')
@@ -96,12 +97,12 @@ def start_instances(key_name: str) -> List[str]:
     }
     resp = client.run_instances(**kwargs)
     instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
-    # instance_ids = ['i-06f2e0d53aa31b723', 'i-07da17c0cc68127ca']
     print(f"Created ec2 instances with ids: {instance_ids}")
     return instance_ids
 
 
 def wait_for_ssh(instance_ips: List[Dict[str, str]], key: paramiko.RSAKey) -> None:
+    print("Waiting for SSH to be avaliable on the hosts")
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -113,7 +114,6 @@ def wait_for_ssh(instance_ips: List[Dict[str, str]], key: paramiko.RSAKey) -> No
             try:
                 ssh_client.connect(hostname=ip['public'], username='ubuntu', pkey=key)
             except:
-                print(ip)
                 avaliable = False
             finally:
                 ssh_client.close()
@@ -140,10 +140,10 @@ def transfer_protocol(instance_ips: List[Dict[str, str]], key_path: str) -> None
 
 def setup_host_serive(instance_ips: List[Dict[str, str]], key: paramiko.RSAKey) -> Tuple[threading.Thread]:
     print("Setting up the host services on both instances")
-    command = 'cd ~/fractal/host-service; make run; make run'
+    command = 'cd ~/fractal/host-service; while true; do make run; sleep 2; done'
     
-    t1 = threading.Thread(target=perform_work, args=(instance_ips[0], command, key, False, 180))
-    t2 = threading.Thread(target=perform_work, args=(instance_ips[1], command, key, False, 180))
+    t1 = threading.Thread(target=perform_work, args=(instance_ips[0], command, key, False))
+    t2 = threading.Thread(target=perform_work, args=(instance_ips[1], command, key, False))
     
     t1.start()
     t2.start()
@@ -156,23 +156,25 @@ def perform_work(
     cmd: str,
     key: paramiko.RSAKey,
     display_res: bool,
-    timeout: int,
 ) -> None:
     global client_command
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh_client.connect(hostname=ip['public'], username='ubuntu', pkey=key)
     try:
-        _, stdout, _ = ssh_client.exec_command(cmd, timeout=timeout)
+        _, stdout, _ = ssh_client.exec_command(cmd)
         if display_res:
             for line in iter(stdout.readline, ""):
                 print(line, end="")
+                if 'linux/macos' in line:
+                    client_command = line[line.find('.')+2:].strip()
+                    print(f"Client command: {client_command}")
         else:
             for line in iter(stdout.readline, ""):
                 if 'linux/macos' in line:
                     client_command = line[line.find('.')+2:].strip()
                     print(f"Client command: {client_command}")
-    except:  # If timeout, we just close the connection
+    except:
         pass
     finally:
         ssh_client.close()
@@ -210,14 +212,8 @@ if __name__ == "__main__":
         
         print('Running the server and the client')
         # Set up the host server
-        cmd = '''
-            cd ~/fractal/protocol;
-            ./build_protocol_targets.sh FractalServer;
-            cd ~/fractal/mandelboxes/helper_scripts;
-            echo hello; 
-            sudo python3 run_mandelbox_image.py fractal/base:current-build --update-protocol
-        '''
-        t3 = threading.Thread(target=perform_work, args=(instance_ips[0], cmd, key, False, 170))
+        cmd = 'cd ~/fractal/protocol && ./build_protocol_targets.sh FractalServer'
+        t3 = threading.Thread(target=perform_work, args=(instance_ips[0], cmd, key, False))
         t3.start()
 
         # Set up the client server
@@ -225,35 +221,45 @@ if __name__ == "__main__":
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         ssh_client.connect(hostname=instance_ips[1]['public'], username='ubuntu', pkey=key)
-        cmd = '''
-            cd ~/fractal/protocol;
-            ./build_protocol_targets.sh FractalClient;
-            cd ~/fractal/mandelboxes/helper_scripts;
-            echo hello; 
-            sudo python3 run_mandelbox_image.py fractal/base-client:current-build --update-protocol
-        '''
-        _, stdout, _ = ssh_client.exec_command(cmd, timeout=120)
+        cmd = 'cd ~/fractal/protocol && ./build_protocol_targets.sh FractalClient; cd ~/fractal/mandelboxes/helper_scripts && sudo python3 run_mandelbox_image.py fractal/base-client:current-build --update-protocol'
 
         # Startup the docker container and get the ID
-        _, stdout, _ = ssh_client.exec_command(cmd, timeout=120)
+        _, stdout, _ = ssh_client.exec_command(cmd, timeout=720)
         output = []
         for line in iter(stdout.readline, ""):
             output.append(line)
         container_id = output[-1][:-1]
 
+        t3.join()
+
+        cmd = 'ssh -i ' + key_path + ' ubuntu@' + instance_ips[0]['public'] + ' "cd ~/fractal/mandelboxes/helper_scripts && sudo python3 run_mandelbox_image.py fractal/base:current-build --update-protocol"'
+        result = subprocess.check_output(cmd, shell=True)
+        print(f'here is the result {result}')
+
+        temp = result.split(b'\n')
+        client_command = temp[6][temp[6].index(b'.')+2:].decode("utf-8")
+        print(client_command)
+
         # Wait for the client command
         while not client_command:
             time.sleep(1)
 
+        time.sleep(10)
+
         # Exec the client and capture the output
+        print('Running the client!')
         run_client_cmd = "docker exec " + container_id + " /usr/share/fractal/bin/" + client_command
-        _, stdout, _ = ssh_client.exec_command(run_client_cmd, timeout=120)
+        print(f"Running command: {run_client_cmd}")
+        _, stdout, _ = ssh_client.exec_command(run_client_cmd, timeout=720)
         for line in iter(stdout.readline, ""):
             print(line, end="")
 
         t1.join()
         t2.join()
         t3.join()
+        time.sleep(300)
+    except: # Don't throw error for keyboard interrupt or timeout
+        pass
     finally:
         # Terminating the instances and waiting for them to shutdown
         print(f"Testing complete, terminating instances with ids: {instance_ids}")
