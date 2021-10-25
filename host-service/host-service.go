@@ -730,7 +730,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 }
 
 // Handle tasks to be completed when a mandelbox dies
-func mandelboxDieHandler(id string) {
+func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
 	fc, err := mandelbox.LookUpByDockerID(mandelboxtypes.DockerID(id))
