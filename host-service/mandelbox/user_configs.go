@@ -122,7 +122,8 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
 
 	var data []byte
-	err := decryptFile(data)
+	err := downloadAndDecryptFromS3(s3ConfigKey, data, string(c.GetConfigEncryptionToken()))
+
 	if err != nil {
 		return err
 	} else if len(data) == 0 {
@@ -154,7 +155,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 		cmd.Run()
 	}()
 
-	err = c.untarFiles(data, unpackedConfigDir)
+	err = untarFiles(data, unpackedConfigDir)
 
 	if err != nil {
 		return err
@@ -180,7 +181,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	decTarPath := path.Join(configDir, mandelbox.getDecryptedArchiveFilename())
 	unpackedConfigPath := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
 
-	err := c.tarFile(unpackedConfigPath, decTarPath)
+	err := tarFile(unpackedConfigPath, decTarPath)
 	if err != nil {
 		return err
 	}
@@ -274,23 +275,12 @@ func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
 }
 
 // getEncryptedArchiveCustomConfigFilename returns the name of the encrypted user custom config file(s).
-func (c *mandelboxData) getEncryptedArchiveCustomConfigFilename() string {
+func getEncryptedArchiveCustomConfigFilename() string {
 	return "fractal-app-custom-config.tar.lz4.enc"
 }
 
-// getDecryptedArchiveCustomConfigFilename returns the name of the
-// decrypted (but still compressed) user custom config file.
-func (c *mandelboxData) getDecryptedArchiveCustomConfigFilename() string {
-	return "fractal-app-custom-config.tar.lz4"
-}
-
-// getCustomConfigFilename returns the name of the user custom config file(s)
-func (c *mandelboxData) getCustomConfigFilename() string {
-	return "fractal-app-custom-config"
-}
-
 // getCookieFilename returns the name of the cookie file
-func (c *mandelboxData) getCookieFilename() string {
+func getCookieFilename() string {
 	return "fractal-app-config-cookies"
 }
 
