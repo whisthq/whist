@@ -369,7 +369,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	sub *subscriptions.MandelboxInfoEvent, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) {
+	sub *subscriptions.MandelboxInfoEvent, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
@@ -668,7 +668,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
 	// Receive the config encryption token from the client via the httpserver
-	jsonchan := getJSONTransportRequestForUser(mandelboxInfo.UserID, transportRequestMap, rwlock)
+	jsonchan := getJSONTransportRequestChannelForUser(mandelboxInfo.UserID, transportRequestMap, transportMapLock)
 	req := <-jsonchan
 
 	// Verify that this user sent in a (nontrivial) config encryption token
@@ -738,6 +738,11 @@ func mandelboxDieHandler(id string) {
 		logger.Infof("mandelboxDieHandler(): %s", err)
 		return
 	}
+
+	// Clean up this user from the JSON transport request map.
+	transportMapLock.Lock()
+	transportRequestMap[fc.GetUserID()] = nil
+	transportMapLock.Unlock()
 
 	fc.Close()
 }
@@ -1014,7 +1019,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 	}
 
 	// We use this lock to protect the transportRequestMap
-	rwlock := &sync.Mutex{}
+	transportMapLock := &sync.Mutex{}
 	transportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest)
 
 	// In the following loop, this var determines whether to re-initialize the
@@ -1061,7 +1066,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case dockerevent := <-dockerevents:
 			logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			if dockerevent.Action == "die" {
-				mandelboxDieHandler(dockerevent.ID)
+				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock)
 			}
 
 		// It may seem silly to just launch goroutines to handle these
@@ -1073,7 +1078,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			// TODO: actually handle panics in these goroutines
 			case *JSONTransportRequest:
 				// Handle JSON transport validation on a separate go routine
-				go validateJSONTransportRequest(serverevent, transportRequestMap, rwlock)
+				go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 
 			default:
 				if serverevent != nil {
@@ -1088,7 +1093,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
 				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
-					subscriptionEvent.(*subscriptions.MandelboxInfoEvent), transportRequestMap, rwlock)
+					subscriptionEvent.(*subscriptions.MandelboxInfoEvent), transportRequestMap, transportMapLock)
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.

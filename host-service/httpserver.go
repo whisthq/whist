@@ -133,7 +133,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	res.send(w)
 }
 
-func validateJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) {
+func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 	// Receive the value of the `json_transport request`
 	req := serverevent.(*JSONTransportRequest)
 
@@ -174,8 +174,8 @@ func validateJSONTransportRequest(serverevent ServerRequest, transportRequestMap
 	// of each user's json data, we avoid any race condition that might corrupt other mandelboxes.
 
 	// Acquire lock on transport requests map
-	rwlock.Lock()
-	defer rwlock.Unlock()
+	transportMapLock.Lock()
+	defer transportMapLock.Unlock()
 
 	if transportRequestMap[requestUserID] == nil {
 		transportRequestMap[requestUserID] = make(chan *JSONTransportRequest, 1)
@@ -188,11 +188,11 @@ func validateJSONTransportRequest(serverevent ServerRequest, transportRequestMap
 	close(transportRequestMap[requestUserID])
 }
 
-func getJSONTransportRequestForUser(UserID mandelboxtypes.UserID,
-	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, rwlock *sync.Mutex) chan *JSONTransportRequest {
+func getJSONTransportRequestChannelForUser(UserID mandelboxtypes.UserID,
+	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) chan *JSONTransportRequest {
 	// Acquire lock on transport requests map
-	rwlock.Lock()
-	defer rwlock.Unlock()
+	transportMapLock.Lock()
+	defer transportMapLock.Unlock()
 
 	req := transportRequestMap[UserID]
 

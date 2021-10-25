@@ -131,7 +131,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest)
 
 	dockerClient := mockClient{}
-	go validateJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
 	goroutineTracker.Wait()

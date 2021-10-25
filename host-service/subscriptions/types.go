@@ -25,16 +25,16 @@ type Mandelbox struct {
 	UserID       types.UserID      `json:"user_id"`
 }
 
-// InstanceInfoResult is a struct used to hold
-// results for any subscription to the "instance_info" table.
-// Hasura always returns an array as a result.
+// InstanceInfoResult is a struct used to hold results for any
+// subscription to the "instance_info" table. The CloudInstanceInfo
+// interface represents the table `instance_info` from the `cloud` schema on the database.
 type InstanceInfoResult struct {
 	CloudInstanceInfo interface{} `json:"cloud_instance_info"`
 }
 
-// MandelboxInfoResult is a struct used to hold
-// results for any subscription to the "mandelbox_info" table.
-// Hasura always returns an array as a result.
+// MandelboxInfoResult is a struct used to hold results for any
+// subscription to the "mandelbox_info" table. The CloudMandelboxInfo
+// interface represents the table `mandelbox_info` from the `cloud` schema on the database.
 type MandelboxInfoResult struct {
 	CloudMandelboxInfo interface{} `json:"cloud_mandelbox_info"`
 }
