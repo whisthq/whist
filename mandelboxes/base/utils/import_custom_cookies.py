@@ -1,5 +1,4 @@
-from os import error, path
-from sqlite3.dbapi2 import Error
+from os import path, environ
 import sys
 import browser_cookie3
 import sqlite3
@@ -122,6 +121,6 @@ def set_browser_cookies(to_browser_name, path):
 
 
 if __name__ == "__main__":
-    browser = "chrome"  # hard coded for now til I figure out how to determine it
+    browser = environ["FRACTAL_COOKIE_UPLOAD_TARGET"]
     path = "/fractal/userCustomConfigs/fractal-app-config-cookies"
     set_browser_cookies(browser, path)
