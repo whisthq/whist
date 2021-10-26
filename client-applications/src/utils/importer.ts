@@ -308,7 +308,7 @@ const getCookiesFromFile = async (
       },
     })
 
-    let rows: Cookie[] = await db.select().from<Cookie>("cookies")
+    const rows: Cookie[] = await db.select().from<Cookie>("cookies")
 
     return rows
   } catch (err) {

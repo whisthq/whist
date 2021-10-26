@@ -12,7 +12,6 @@ import { trayIconPath } from "@app/config/files"
 import { AWSRegion } from "@app/@types/aws"
 import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { MenuItem } from "electron/main"
-import { persistGet } from "./persist"
 import { createSpeedtestWindow } from "@app/utils/windows"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 

@@ -1,5 +1,5 @@
 import { merge, Observable, zip, from } from "rxjs"
-import { map, tap, switchMap } from "rxjs/operators"
+import { map, switchMap } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"

@@ -9,8 +9,8 @@ import {
   isTokenExpired,
   refreshToken,
   accessToken,
+  generateRandomConfigToken,
 } from "@fractal/core-ts"
-import { generateRandomConfigToken } from "@fractal/core-ts"
 
 export const authRefreshFlow = flow<refreshToken>(
   "authRefreshFlow",

@@ -22,7 +22,6 @@ import {
   COOKIE_IMPORTER_SUBMITTED,
   ONBOARDING_TYPEFORM_SUBMITTED,
 } from "@app/constants/store"
-import { startsWith } from "lodash"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger("updateAvailable"))
