@@ -33,6 +33,7 @@ NetworkContext* create_udp_network_context(SocketContext* context, char* destina
     network_context->send_packet = send_udp_packet;
     network_context->send_packet_from_payload = send_udp_packet_from_payload;
     network_context->free_packet = free_udp_packet;
+    network_context->write_payload_to_packets = write_payload_to_udp_packets;
 
     // Add in the socket context
     network_context->context = context;
@@ -107,6 +108,59 @@ FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp);
  * @param tcp_packet               The UDP packet to free
  */
 void free_udp_packet(FractalPacket* tcp_packet);
+
+/**
+ * @brief                          Split a payload into several packets approprately-sized
+ *                                 for UDP transport, and write those files to a buffer.
+ *
+ * @param payload                  The payload data to be split into packets
+ * @param payload_size             The size of the payload, in bytes
+ * @param payload_id               An ID for the UDP data (must be positive)
+ * @param packet_type              The FractalPacketType (video, audio, or message)
+ * @param packet_buffer            The buffer to write the packets to
+ * @param packet_buffer_length     The length of the packet buffer
+ *
+ * @returns                        The number of packets that were written to the buffer,
+ *                                 or -1 on failure
+ *
+ * @note                           This function should be removed and replaced with
+ *                                 a more general packet splitter/joiner context, which
+ *                                 will enable us to use forward error correction, etc.
+ */
+int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length);
+
+/**
+ * @brief                          Initialize a UDP connection between a
+ *                                 server and a client
+ *
+ * @param context                  The socket context that will be initialized
+ * @param destination              The server IP address to connect to. Passing
+ *                                 NULL will wait for another client to connect
+ *                                 to the socket
+ * @param port                     The port to connect to. This will be a real
+ *                                 port if USING_STUN is false, and it will be a
+ *                                 virtual port if USING_STUN is
+ *                                 true; (The real port will be some randomly
+ *                                 chosen port if USING_STUN is true)
+ * @param recvfrom_timeout_s       The timeout that the socketcontext will use
+ *                                 after being initialized
+ * @param connection_timeout_ms    The timeout that will be used when attempting
+ *                                 to connect. The handshake sends a few packets
+ *                                 back and forth, so the upper
+ *                                 bound of how long CreateXContext will take is
+ *                                 some small constant times
+ *                                 connection_timeout_ms
+ * @param using_stun               True/false for whether or not to use the STUN server for this
+ *                                 context
+ * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /*
 ============================
@@ -661,34 +715,6 @@ void free_udp_packet(FractalPacket* udp_packet) {
    LOG_FATAL("free_udp_packet is not implemented!");
 }
 
-/**
- * @brief                          Initialize a UDP connection between a
- *                                 server and a client
- *
- * @param context                  The socket context that will be initialized
- * @param destination              The server IP address to connect to. Passing
- *                                 NULL will wait for another client to connect
- *                                 to the socket
- * @param port                     The port to connect to. This will be a real
- *                                 port if USING_STUN is false, and it will be a
- *                                 virtual port if USING_STUN is
- *                                 true; (The real port will be some randomly
- *                                 chosen port if USING_STUN is true)
- * @param recvfrom_timeout_s       The timeout that the socketcontext will use
- *                                 after being initialized
- * @param connection_timeout_ms    The timeout that will be used when attempting
- *                                 to connect. The handshake sends a few packets
- *                                 back and forth, so the upper
- *                                 bound of how long CreateXContext will take is
- *                                 some small constant times
- *                                 connection_timeout_ms
- * @param using_stun               True/false for whether or not to use the STUN server for this
- *                                 context
- * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
 int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
                        int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
     /*
@@ -743,4 +769,54 @@ int create_udp_context(SocketContext* context, char* destination, int port, int 
             return create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
                                              stun_timeout_ms);
     }
+}
+
+int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length) {
+    /*
+        Split a payload into several packets approprately-sized
+        for UDP transport, and write those files to a buffer.
+
+        Arguments:
+            payload (uint8_t*): The payload data to be split into packets
+            payload_size (size_t): The size of the payload, in bytes
+            payload_id (int): An ID for the UDP data (must be positive)
+            packet_type (FractalPacketType): The FractalPacketType (video, audio, or message)
+            packet_buffer (FractalPacket*): The buffer to write the packets to
+            packet_buffer_length (size_t): The length of the packet buffer
+
+        Returns:
+            (int): The number of packets that were written to the buffer,
+                or -1 on failure
+
+        Note:
+            This function should be removed and replaced with
+            a more general packet splitter/joiner context, which
+            will enable us to use forward error correction, etc.
+    */
+    size_t current_position = 0;
+
+    // Calculate number of packets needed to send the payload, rounding up.
+    int num_indices =
+        (int)(payload_size / MAX_PAYLOAD_SIZE + (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
+
+    if ((size_t)num_indices > packet_buffer_length) {
+        LOG_ERROR("Too many packets needed to send payload");
+        return -1;
+    }
+
+    for (int packet_index = 0; packet_index < num_indices; ++packet_index) {
+        FractalPacket* packet = &packet_buffer[packet_index];
+        packet->type = packet_type;
+        packet->payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
+        packet->index = (short)packet_index;
+        packet->id = payload_id;
+        packet->num_indices = (short)num_indices;
+        packet->is_a_nack = false;
+        memcpy(packet->data, &payload[current_position], packet->payload_size);
+        current_position += packet->payload_size;
+    }
+
+    return num_indices;
 }

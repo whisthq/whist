@@ -29,6 +29,7 @@ NetworkContext* create_tcp_network_context(SocketContext* context, char* destina
     network_context->send_packet = send_tcp_packet;
     network_context->send_packet_from_payload = send_tcp_packet_from_payload;
     network_context->free_packet = free_tcp_packet;
+    network_context->write_payload_to_packets = write_payload_to_tcp_packets;
 
     // Add in the socket context
     network_context->context = context;
@@ -146,6 +147,28 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
  * @param tcp_packet               The TCP/UDP packet to free
  */
 void free_tcp_packet(FractalPacket* tcp_packet);
+
+/**
+ * @brief                          Split a payload into several packets approprately-sized
+ *                                 for UDP transport, and write those files to a buffer.
+ *
+ * @param payload                  The payload data to be split into packets
+ * @param payload_size             The size of the payload, in bytes
+ * @param payload_id               An ID for the UDP data (must be positive)
+ * @param packet_type              The FractalPacketType (video, audio, or message)
+ * @param packet_buffer            The buffer to write the packets to
+ * @param packet_buffer_length     The length of the packet buffer
+ *
+ * @returns                        The number of packets that were written to the buffer,
+ *                                 or -1 on failure
+ *
+ * @note                           This function should be removed and replaced with
+ *                                 a more general packet splitter/joiner context, which
+ *                                 will enable us to use forward error correction, etc.
+ */
+int write_payload_to_tcp_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length);
 
 /*
 ============================
@@ -1009,4 +1032,32 @@ int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type,
 
     // Return success code
     return failed ? -1 : 0;
+}
+
+int write_payload_to_tcp_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length) {
+    /*
+        Split a payload into several packets approprately-sized
+        for TCP transport, and write those files to a buffer.
+
+        Arguments:
+            payload (uint8_t*): The payload data to be split into packets
+            payload_size (size_t): The size of the payload, in bytes
+            payload_id (int): An ID for the TCP data (must be positive)
+            packet_type (FractalPacketType): The FractalPacketType (video, audio, or message)
+            packet_buffer (FractalPacket*): The buffer to write the packets to
+            packet_buffer_length (size_t): The length of the packet buffer
+
+        Returns:
+            (int): The number of packets that were written to the buffer,
+                or -1 on failure
+
+        Note:
+            This function should be removed and replaced with
+            a more general packet splitter/joiner context, which
+            will enable us to use forward error correction, etc.
+    */
+    LOG_FATAL("write_payload_to_tcp_packets has not been implemented!");
+    return -1;
 }

@@ -229,6 +229,9 @@ typedef struct NetworkContext {
                                     int len, int id);  // id only valid in UDP contexts
     int (*send_packet)(SocketContext* context, FractalPacket* packet, size_t packet_size);
     void (*free_packet)(FractalPacket* packet);  // Only Non-NULL in TCP.
+    int (*write_payload_to_packets)(uint8_t* payload, size_t payload_size, int payload_id,
+                             FractalPacketType packet_type, FractalPacket* packet_buffer,
+                             size_t packet_buffer_length);
 } NetworkContext;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -260,28 +263,6 @@ void init_networking();
  *                                 on Linux
  */
 int get_last_network_error();
-
-/**
- * @brief                          Split a payload into several packets approprately-sized
- *                                 for UDP transport, and write those files to a buffer.
- *
- * @param payload                  The payload data to be split into packets
- * @param payload_size             The size of the payload, in bytes
- * @param payload_id               An ID for the UDP data (must be positive)
- * @param packet_type              The FractalPacketType (video, audio, or message)
- * @param packet_buffer            The buffer to write the packets to
- * @param packet_buffer_length     The length of the packet buffer
- *
- * @returns                        The number of packets that were written to the buffer,
- *                                 or -1 on failure
- *
- * @note                           This function should be removed and replaced with
- *                                 a more general packet splitter/joiner context, which
- *                                 will enable us to use forward error correction, etc.
- */
-int write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length);
 
 /**
  * @brief                          Get the size of a FractalPacket
