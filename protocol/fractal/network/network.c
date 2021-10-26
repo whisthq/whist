@@ -1722,7 +1722,7 @@ int write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len) {
+                                 int len, int id) {
     /*
         This will send a FractalPacket over TCP to the SocketContext context containing
         the specified payload. A FractalPacketType is also provided to describe the packet.

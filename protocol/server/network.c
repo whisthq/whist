@@ -163,7 +163,7 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size) <
+    if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) <
         0) {
         LOG_ERROR("Failed to send discovery reply message.");
         closesocket(context->socket);
@@ -261,7 +261,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
 int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len) < 0) {
+        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }
@@ -298,11 +298,7 @@ int try_get_next_message_udp(FractalClientMessage *fcmsg, size_t *fcmsg_size) {
 
     memset(fcmsg, 0, sizeof(*fcmsg));
 
-<<<<<<< HEAD
-    FractalPacket *packet = read_udp_packet(&(client.udp_context));
-=======
-    FractalPacket *packet = read_udp_packet(&(clients[client_id].udp_context), false);
->>>>>>> Modifying interface functions to have same parameters
+    FractalPacket *packet = read_udp_packet(&(client.udp_context), false);
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_fcmsg_size(fcmsg)) {

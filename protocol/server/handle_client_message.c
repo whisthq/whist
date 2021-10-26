@@ -273,7 +273,7 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
     int ret = 0;
 
     if (send_udp_packet_from_payload(&(client.udp_context), PACKET_MESSAGE,
-                                     (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), 1) < 0) {
+                                     (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), 1) < 0, false) {
         LOG_WARNING("Could not send Ping");
         ret = -1;
     }
@@ -304,7 +304,7 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
     int ret = 0;
 
     if (send_tcp_packet_from_payload(&(client.tcp_context), PACKET_MESSAGE,
-                                     (uint8_t *)&fsmsg_response, sizeof(fsmsg_response)) < 0) {
+                                     (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), -1) < 0) {
         LOG_WARNING("Could not send TCP Ping to client");
         ret = -1;
     }
