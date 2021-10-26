@@ -117,6 +117,9 @@ Defines
 #define FRACTAL_EINPROGRESS EINPROGRESS
 #endif
 
+#define STUN_IP "0.0.0.0"
+#define STUN_PORT 48800
+
 // Note that both the Windows and Linux versions use 2 as the second argument
 // to indicate shutting down both ends of the socket
 #define FRACTAL_SHUTDOWN_SOCKET(s) shutdown(s, 2)
@@ -196,6 +199,19 @@ typedef struct FractalPacket {
                                      // than the unencrypted packet
 } FractalPacket;
 
+typedef struct {
+    unsigned int ip;
+    unsigned short private_port;
+    unsigned short public_port;
+} StunEntry;
+
+typedef enum StunRequestType { ASK_INFO, POST_INFO } StunRequestType;
+
+typedef struct {
+    StunRequestType type;
+    StunEntry entry;
+} StunRequest;
+
 /**
  * @brief                       Interface describing the avaliable functions
  *                              and socket context of a network protocol
@@ -219,6 +235,9 @@ typedef struct NetworkContext {
 // Unencrypted)
 //                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
 
+// Global data
+unsigned short fractal_port_mappings[USHRT_MAX + 1];
+
 /*
 ============================
 Public Functions
@@ -239,39 +258,6 @@ void init_networking();
  *                                 on Linux
  */
 int get_last_network_error();
-
-/**
- * @brief                          Initialize a UDP/TCP connection between a
- *                                 server and a client
- *
- * @param context                  The socket context that will be initialized
- * @param destination              The server IP address to connect to. Passing
- *                                 NULL will wait for another client to connect
- *                                 to the socket
- * @param port                     The port to connect to. This will be a real
- *                                 port if USING_STUN is false, and it will be a
- *                                 virtual port if USING_STUN is
- *                                 true; (The real port will be some randomly
- *                                 chosen port if USING_STUN is true)
- * @param recvfrom_timeout_s       The timeout that the socketcontext will use
- *                                 after being initialized
- * @param connection_timeout_ms    The timeout that will be used when attempting
- *                                 to connect. The handshake sends a few packets
- *                                 back and forth, so the upper
- *                                 bound of how long CreateXContext will take is
- *                                 some small constant times
- *                                 connection_timeout_ms
- * @param using_stun               True/false for whether or not to use the STUN server for this
- *                                 context
- * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                       int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
-int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                       int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /**
  * @brief                          Split a payload into several packets approprately-sized
@@ -305,63 +291,6 @@ int write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_
 int get_packet_size(FractalPacket* packet);
 
 /**
- * @brief                          This will send a FractalPacket over TCP to
- *                                 the SocketContext context. A
- *                                 FractalPacketType is also provided to
- *                                 describe the packet
- *
- * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len, int id);
-
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketContext context. A
- *                                 FractalPacketType is also provided to the
- *                                 receiving end
- *
- * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- * @param id                       An ID for the UDP data.
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len, int id);
-
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketContext context. This function does
- *                                 not create the packet from raw data, but
- *                                 assumes that the packet has been prepared by
- *                                 the caller (e.g. fragmented into
- *                                 appropriately-sized chunks by a fragmenter).
- *                                 This function assumes and checks that the
- *                                 packet is small enough to send without
- *                                 further breaking into smaller packets.
- *
- * @param context                  The socket context
- * @param packet                   A pointer to the packet to be sent
- * @param packet_size              The size of the packet to be sent
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
-
-/**
  * @brief                          Send a 0-length packet over the socket. Used
  *                                 to keep-alive over NATs, and to check on the
  *                                 validity of the socket
@@ -375,30 +304,5 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
  *                                 error
  */
 int ack(SocketContext* context);
-
-/**
- * @brief                          Receive a FractalPacket from a SocketContext,
- *                                 if any such packet exists
- *
- * @param context                  The socket context
- * @param should_recvp             Only valid in TCP contexts. Adding in so that functions can
- *                                 be generalized.
- *                                 If false, this function will only pop buffered packets
- *                                 If true, this function will pull data from the TCP socket,
- *                                 but that might take a while
- *
- * @returns                        A pointer to the FractalPacket on success,
- *                                 NULL on failure
- */
-FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
-FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp);
-
-/**
- * @brief                          Frees a TCP/udp packet created by read_tcp_packet/read_udp_packet
- *
- * @param tcp_packet               The TCP/UDP packet to free
- */
-void free_tcp_packet(FractalPacket* tcp_packet);
-void free_udp_packet(FractalPacket* udp_packet);
 
 #endif  // NETWORK_H

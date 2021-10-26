@@ -40,6 +40,8 @@ udp_context->free_packet(...);
  *                                  to connect. The handshake sends a few packets
  *                                  back and forth, so the upper bound of how
  *                                  long CreateUDPNetworkContext will take is
+ * @param using_stun                True/false for whether or not to use the STUN server for this
+ *                                  context
  *                                  some small constant times connection_timeout_ms
  * @param binary_aes_private_key    The AES private key used to encrypt the socket
  *                                  communication
@@ -48,6 +50,26 @@ udp_context->free_packet(...);
  */
 NetworkContext* create_udp_network_context(SocketContext* context, char* destination, int port,
                                            int recvfrom_timeout_s, int connection_timeout_ms,
-                                           char* binary_aes_private_key);
+                                           bool using_stun, char* binary_aes_private_key);
+
+/**
+ * @brief                          This will send a FractalPacket over UDP to
+ *                                 the SocketContext context. This function does
+ *                                 not create the packet from raw data, but
+ *                                 assumes that the packet has been prepared by
+ *                                 the caller (e.g. fragmented into
+ *                                 appropriately-sized chunks by a fragmenter).
+ *                                 This function assumes and checks that the
+ *                                 packet is small enough to send without
+ *                                 further breaking into smaller packets.
+ *
+ * @param context                  The socket context
+ * @param packet                   A pointer to the packet to be sent
+ * @param packet_size              The size of the packet to be sent
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
 
 #endif  // UDP_H

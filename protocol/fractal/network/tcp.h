@@ -40,6 +40,8 @@ tcp_context->free_packet(...);
  *                                  to connect. The handshake sends a few packets
  *                                  back and forth, so the upper bound of how
  *                                  long CreateUDPNetworkContext will take is
+ * @param using_stun                True/false for whether or not to use the STUN server for this
+ *                                  context
  *                                  some small constant times connection_timeout_ms
  * @param binary_aes_private_key    The AES private key used to encrypt the socket
  *                                  communication
@@ -48,6 +50,6 @@ tcp_context->free_packet(...);
  */
 NetworkContext* create_tcp_network_context(SocketContext* context, char* destination, int port,
                                            int recvfrom_timeout_s, int connection_timeout_ms,
-                                           char* binary_aes_private_key);
+                                           bool using_stun, char* binary_aes_private_key);
 
 #endif  // TCP_H
