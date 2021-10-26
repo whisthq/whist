@@ -14,7 +14,7 @@ import pickBy from "lodash.pickby"
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { WindowHashProtocol } from "@app/utils/constants"
+import { WindowHashProtocol } from "@app/constants/windows"
 import {
   createProtocolWindow,
   createImporterWindow,
@@ -135,7 +135,9 @@ fromTrigger("networkUnstable")
   })
 
 fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
-  createImporterWindow()
+  const imported =
+    (persistGet("cookieImporterSubmitted", "data") as boolean) ?? false
+  if (!imported) createImporterWindow()
 })
 
 fromTrigger("appReady").subscribe(() => {

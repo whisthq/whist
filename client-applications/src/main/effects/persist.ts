@@ -18,7 +18,7 @@ merge(
     configToken?: string
   }) => {
     toPairs(args).forEach(([key, value]) => {
-      if (value !== undefined) persist(key, value)
+      if (value !== undefined) persist(`auth.${key}`, value)
     })
   }
 )

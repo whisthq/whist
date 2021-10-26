@@ -8,7 +8,6 @@ import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
-import { zip } from "rxjs"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -24,6 +23,7 @@ import { persist, persistGet, persistClear, store } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
 import { accessToken } from "@fractal/core-ts"
+import { ONBOARDED } from "@app/constants/store"
 
 fromTrigger("appReady").subscribe(() => {
   createTray(createMenu(false))
@@ -116,7 +116,7 @@ withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
 )
 
 withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
-  persist("onboardingTypeformSubmitted", true, "data")
+  persist(ONBOARDED, true)
 })
 
 fromTrigger("appReady").subscribe(() => {

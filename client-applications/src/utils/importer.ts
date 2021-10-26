@@ -25,7 +25,7 @@ import {
   OperaLinuxCookieFiles,
   OperaOSXCookieFiles,
   SecretServiceName,
-} from "@app/utils/constants"
+} from "@app/constants/importer"
 
 export const importEvent = new events.EventEmitter()
 const DEFAULT_ENCRYPTION_KEY = "peanuts"

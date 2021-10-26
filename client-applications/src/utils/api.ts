@@ -6,7 +6,7 @@
 
 import { configGet, configPost, configPut } from "@fractal/core-ts"
 import config from "@app/config/environment"
-import { sessionID } from "@app/utils/constants"
+import { sessionID } from "@app/constants/app"
 
 import { logBase } from "@app/utils/logging"
 

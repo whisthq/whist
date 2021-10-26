@@ -1,0 +1,7 @@
+export const ONBOARDING_TYPEFORM_SUBMITTED = "data.onboardingTypeformSubmitted"
+export const COOKIE_IMPORTER_SUBMITTED = "data.cookieImporterSubmitted"
+export const EXIT_TYPEFORM_SUBMITTED = "data.exitTypeformSubmitted"
+export const ACCESS_TOKEN = "auth.accessToken"
+export const REFRESH_TOKEN = "auth.refreshToken"
+export const CONFIG_TOKEN = "auth.configToken"
+export const USER_EMAIL = "auth.userEmail"

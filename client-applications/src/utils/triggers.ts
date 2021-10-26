@@ -51,7 +51,6 @@ export default {
   trayRegionAction: "trayRegionAction",
   trayFeedbackAction: "trayFeedbackAction",
   trayBugAction: "trayBugAction",
-  trayAutolaunchAction: "trayAutolaunchAction",
   trayRestoreSessionAction: "trayRestoreSessionAction",
   showPaymentWindow: "showPaymentWindow",
 

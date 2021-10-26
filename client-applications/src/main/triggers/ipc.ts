@@ -7,7 +7,7 @@
 import { ipcMain } from "electron"
 import { fromEvent } from "rxjs"
 import { map, share, startWith } from "rxjs/operators"
-import { StateChannel } from "@app/utils/constants"
+import { StateChannel } from "@app/constants/ipc"
 import { StateIPC } from "@app/@types/state"
 import { createTrigger } from "@app/utils/flows"
 import TRIGGER from "@app/utils/triggers"

@@ -8,7 +8,7 @@ import isEmpty from "lodash.isempty"
 
 import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
-import { sessionID } from "@app/utils/constants"
+import { sessionID } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import config from "@app/config/environment"

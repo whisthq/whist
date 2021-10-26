@@ -29,7 +29,7 @@ import {
   WindowHashSpeedtest,
   WindowHashUpdate,
   WindowHashImporter,
-} from "@app/utils/constants"
+} from "@app/constants/windows"
 import {
   protocolLaunch,
   protocolStreamKill,

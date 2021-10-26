@@ -25,8 +25,8 @@ type CacheName = "auth" | "data"
 
 const persistedAuth = store.get("auth") as Cache
 
-const persist = (key: string, value: string | boolean, cache?: CacheName) => {
-  store.set(`${cache ?? "auth"}.${key}`, value)
+const persist = (key: string, value: string | boolean) => {
+  store.set(key, value)
 }
 
 const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {

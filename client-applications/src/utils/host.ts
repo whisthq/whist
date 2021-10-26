@@ -6,7 +6,7 @@
 
 import { AsyncReturnType } from "@app/@types/state"
 import { hostPut } from "@app/utils/api"
-import { HostServicePort } from "@app/utils/constants"
+import { HostServicePort } from "@app/constants/mandelbox"
 
 // This file directly interacts with data returned from the webserver, which
 // has keys labelled in Python's snake_case format. We want to be able to pass

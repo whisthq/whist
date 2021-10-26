@@ -19,8 +19,7 @@ import {
   WindowHashOnboardingTypeform,
   WindowHashUpdate,
   WindowHashImporter,
-  allowPayments,
-} from "@app/utils/constants"
+} from "@app/constants/windows"
 import {
   fractalError,
   NO_PAYMENT_ERROR,
@@ -72,7 +71,6 @@ const RootComponent = () => {
     })
 
   const handleImporterSubmit = (browser: string) => {
-    console.log("SELECTED BROWSER", browser)
     setMainState({
       trigger: { name: TRIGGER.importerSubmitted, payload: { browser } },
     })
@@ -109,7 +107,7 @@ const RootComponent = () => {
     return (
       <Typeform onSubmit={() => {}} id="VMWBFgGc" email={mainState.userEmail} />
     )
-  if (show === NO_PAYMENT_ERROR && allowPayments)
+  if (show === NO_PAYMENT_ERROR)
     return (
       <TwoButtonError
         title={fractalError[show].title}
