@@ -35,6 +35,7 @@ import {
   protocolStreamKill,
   isNetworkUnstable,
 } from "@app/utils/protocol"
+import { accessToken } from "@fractal/core-ts"
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()
@@ -227,14 +228,8 @@ export const createAuthWindow = () => {
   return win
 }
 
-export const createPaymentWindow = async ({
-  accessToken,
-  refreshToken,
-}: {
-  accessToken: string
-  refreshToken: string
-}) => {
-  const response = await paymentPortalRequest({ accessToken })
+export const createPaymentWindow = async (accessToken: accessToken) => {
+  const response = await paymentPortalRequest(accessToken)
   const { paymentPortalURL } = paymentPortalParse(response)
 
   const win = createWindow({
@@ -262,10 +257,7 @@ export const createPaymentWindow = async ({
       url === "http://localhost/callback/payment?success=true"
     ) {
       // if it’s from the customer portal or a successful checkout
-      stripeEvent.emit("stripe-auth-refresh", {
-        accessToken,
-        refreshToken,
-      })
+      stripeEvent.emit("stripe-auth-refresh")
     } else if (url === "http://localhost/callback/payment?success=false") {
       stripeEvent.emit("stripe-payment-error")
     }

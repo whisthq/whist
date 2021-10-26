@@ -139,17 +139,15 @@ fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
 })
 
 fromTrigger("appReady").subscribe(() => {
-  // const authCache = {
-  //   accessToken: (persistedAuth?.accessToken ?? "") as string,
-  //   refreshToken: (persistedAuth?.refreshToken ?? "") as string,
-  //   userEmail: (persistedAuth?.userEmail ?? "") as string,
-  //   configToken: (persistedAuth?.configToken ?? "") as string,
-  // }
+  const authCache = {
+    accessToken: (persistedAuth?.accessToken ?? "") as string,
+    refreshToken: (persistedAuth?.refreshToken ?? "") as string,
+    userEmail: (persistedAuth?.userEmail ?? "") as string,
+    configToken: (persistedAuth?.configToken ?? "") as string,
+  }
 
-  // if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
-  //   app?.dock?.show()
-  //   createAuthWindow()
-  // }
-
-  createImporterWindow()
+  if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
+    app?.dock?.show()
+    createAuthWindow()
+  }
 })

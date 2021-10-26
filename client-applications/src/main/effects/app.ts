@@ -23,6 +23,7 @@ import { fromTrigger } from "@app/utils/flows"
 import { persist, persistGet, persistClear, store } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
+import { accessToken } from "@fractal/core-ts"
 
 fromTrigger("appReady").subscribe(() => {
   createTray(createMenu(false))
@@ -100,19 +101,16 @@ withAppReady(fromTrigger("authFlowSuccess"))
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 withAppReady(fromTrigger("showPaymentWindow")).subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
-  const refreshToken = (store.get("auth.refreshToken") ?? "") as string
   createPaymentWindow({
     accessToken,
-    refreshToken,
   }).catch((err) => Sentry.captureException(err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
-  ({ accessToken, refreshToken }) => {
+  ({ accessToken }: accessToken) => {
     createPaymentWindow({
       accessToken,
-      refreshToken,
     }).catch((err) => Sentry.captureException(err))
   }
 )

@@ -57,7 +57,7 @@ const checkPayment = checkPaymentFlow(
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  fromTrigger(TRIGGER.stripeAuthRefresh)
+  fromSignal(combineLatest({ refreshToken }), fromTrigger("stripeAuthRefresh"))
 )
 
 // Observable that fires when Fractal is ready to be launched
