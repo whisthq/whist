@@ -224,9 +224,11 @@ typedef struct NetworkContext {
     // Functions common to all network connections
     int (*ack)(SocketContext* context);
     FractalPacket* (*read_packet)(SocketContext* context, bool should_recvp);
+
     int (*send_packet_from_payload)(SocketContext* context, FractalPacketType type, void* data,
                                     int len, int id);  // id only valid in UDP contexts
-    void (*free_packet)(FractalPacket* packet);        // Only Non-NULL in TCP.
+    int (*send_packet)(SocketContext* context, FractalPacket* packet, size_t packet_size);
+    void (*free_packet)(FractalPacket* packet);  // Only Non-NULL in TCP.
 } NetworkContext;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))

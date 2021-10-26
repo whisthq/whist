@@ -26,6 +26,7 @@ NetworkContext* create_tcp_network_context(SocketContext* context, char* destina
 
     // Funcitons common to only TCP contexts
     network_context->read_packet = read_tcp_packet;
+    network_context->send_packet = send_tcp_packet;
     network_context->send_packet_from_payload = send_tcp_packet_from_payload;
     network_context->free_packet = free_tcp_packet;
 
@@ -52,6 +53,27 @@ Private Functions
 @returns                        The new socket file descriptor, -1 on failure
 */
 SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
+
+
+/**
+ * @brief                          This will send a FractalPacket over TCP to
+ *                                 the SocketContext context. This function does
+ *                                 not create the packet from raw data, but
+ *                                 assumes that the packet has been prepared by
+ *                                 the caller (e.g. fragmented into
+ *                                 appropriately-sized chunks by a fragmenter).
+ *                                 This function assumes and checks that the
+ *                                 packet is small enough to send without
+ *                                 further breaking into smaller packets.
+ *
+ * @param context                  The socket context
+ * @param packet                   A pointer to the packet to be sent
+ * @param packet_size              The size of the packet to be sent
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int send_tcp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
@@ -903,6 +925,11 @@ void free_tcp_packet(FractalPacket* tcp_packet) {
     */
 
     deallocate_region(tcp_packet);
+}
+
+int send_tcp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
+    LOG_FATAL("send_tcp_packet has not been implemented!");
+    return -1;
 }
 
 // NOTE that this function is in the hotpath.

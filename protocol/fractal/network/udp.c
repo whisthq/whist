@@ -30,6 +30,7 @@ NetworkContext* create_udp_network_context(SocketContext* context, char* destina
 
     // Funcitons common to only UDP contexts
     network_context->read_packet = read_udp_packet;
+    network_context->send_packet = send_udp_packet;
     network_context->send_packet_from_payload = send_udp_packet_from_payload;
     network_context->free_packet = free_udp_packet;
 
@@ -38,6 +39,80 @@ NetworkContext* create_udp_network_context(SocketContext* context, char* destina
 
     return network_context;
 }
+
+/*
+============================
+Private Functions
+============================
+*/
+
+/**
+ * @brief                          This will send a FractalPacket over UDP to
+ *                                 the SocketContext context. This function does
+ *                                 not create the packet from raw data, but
+ *                                 assumes that the packet has been prepared by
+ *                                 the caller (e.g. fragmented into
+ *                                 appropriately-sized chunks by a fragmenter).
+ *                                 This function assumes and checks that the
+ *                                 packet is small enough to send without
+ *                                 further breaking into smaller packets.
+ *
+ * @param context                  The socket context
+ * @param packet                   A pointer to the packet to be sent
+ * @param packet_size              The size of the packet to be sent
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
+
+/**
+ * @brief                          This will send a FractalPacket over UDP to
+ *                                 the SocketContext context. A
+ *                                 FractalPacketType is also provided to the
+ *                                 receiving end
+ *
+ * @param context                  The socket context
+ * @param type                     The FractalPacketType, either VIDEO, AUDIO,
+ *                                 or MESSAGE
+ * @param data                     A pointer to the data to be sent
+ * @param len                      The number of bytes to send
+ * @param id                       An ID for the UDP data.
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int send_udp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                 int len, int id);
+
+/**
+ * @brief                          Receive a FractalPacket from a SocketContext,
+ *                                 if any such packet exists
+ *
+ * @param context                  The socket context
+ * @param should_recvp             Only valid in TCP contexts. Adding in so that functions can
+ *                                 be generalized.
+ *                                 If false, this function will only pop buffered packets
+ *                                 If true, this function will pull data from the UDP socket,
+ *                                 but that might take a while
+ *
+ * @returns                        A pointer to the FractalPacket on success,
+ *                                 NULL on failure
+ */
+FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp);
+
+/**
+ * @brief                          Frees a UDP packet created by read_tcp_packet/read_udp_packet
+ *
+ * @param tcp_packet               The UDP packet to free
+ */
+void free_udp_packet(FractalPacket* tcp_packet);
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
@@ -108,59 +183,7 @@ int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet
 
     return 0;
 }
-/*
-============================
-Private Functions
-============================
-*/
 
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketContext context. A
- *                                 FractalPacketType is also provided to the
- *                                 receiving end
- *
- * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- * @param id                       An ID for the UDP data.
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len, int id);
-
-/**
- * @brief                          Receive a FractalPacket from a SocketContext,
- *                                 if any such packet exists
- *
- * @param context                  The socket context
- * @param should_recvp             Only valid in TCP contexts. Adding in so that functions can
- *                                 be generalized.
- *                                 If false, this function will only pop buffered packets
- *                                 If true, this function will pull data from the UDP socket,
- *                                 but that might take a while
- *
- * @returns                        A pointer to the FractalPacket on success,
- *                                 NULL on failure
- */
-FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp);
-
-/**
- * @brief                          Frees a UDP packet created by read_tcp_packet/read_udp_packet
- *
- * @param tcp_packet               The UDP packet to free
- */
-void free_udp_packet(FractalPacket* tcp_packet);
-
-/*
-============================
-Private Function Implementations
-============================
-*/
 
 int create_udp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
@@ -635,6 +658,7 @@ void free_udp_packet(FractalPacket* udp_packet) {
         TODO (abecohen): Change read_udp_packet to use malloc
         and then add "deallocate_region(udp_packet);" to this function.
     */
+   LOG_FATAL("free_udp_packet is not implemented!");
 }
 
 /**

@@ -52,24 +52,4 @@ NetworkContext* create_udp_network_context(SocketContext* context, char* destina
                                            int recvfrom_timeout_s, int connection_timeout_ms,
                                            bool using_stun, char* binary_aes_private_key);
 
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketContext context. This function does
- *                                 not create the packet from raw data, but
- *                                 assumes that the packet has been prepared by
- *                                 the caller (e.g. fragmented into
- *                                 appropriately-sized chunks by a fragmenter).
- *                                 This function assumes and checks that the
- *                                 packet is small enough to send without
- *                                 further breaking into smaller packets.
- *
- * @param context                  The socket context
- * @param packet                   A pointer to the packet to be sent
- * @param packet_size              The size of the packet to be sent
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
-
 #endif  // UDP_H
