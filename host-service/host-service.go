@@ -36,6 +36,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/sync/errgroup"
 
 	// We use this package instead of the standard library log so that we never
@@ -45,6 +46,7 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 
+	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
 	mandelboxData "github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
@@ -379,7 +381,7 @@ func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelF
 	// Set up auth
 	claims := new(auth.FractalClaims)
 	parser := &jwt.Parser{SkipClaimsValidation: true}
-	var userID types.UserID
+	var userID mandelboxtypes.UserID
 
 	// Only verify auth in non-local environments
 	if !metadata.IsLocalEnv() {
@@ -391,7 +393,7 @@ func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelF
 			logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
 			return
 		}
-		userID = types.UserID(claims.Subject)
+		userID = mandelboxtypes.UserID(claims.Subject)
 	} else {
 		// CI doesn't run in AWS so we need to set a custom name
 		if metadata.IsRunningInCI() {
@@ -402,7 +404,7 @@ func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelF
 				logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
 				return
 			}
-			userID = types.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+			userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
 		}
 	}
 
@@ -493,7 +495,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	userCustomConfigDownloadComplete := make(chan bool)
 	go func() {
-		logger.Infof("SpinUpMandelbox(): Beginning user custom config download for mandelbox %s", req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Beginning user custom config download for mandelbox %s", mandelboxInfo.MandelboxID)
 		err := fc.DownloadCustomConfig()
 		if err != nil {
 			logger.Warningf("Error requesting user custom configs: %v", err)
@@ -502,7 +504,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 
 		userCustomConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully obtained user custom configs for mandelbox %s", req.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully obtained user custom configs for mandelbox %s", mandelboxInfo.MandelboxID)
 	}()
 
 
