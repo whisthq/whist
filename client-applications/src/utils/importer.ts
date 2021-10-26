@@ -298,18 +298,23 @@ const getCookiesFromFile = async (
 ): Promise<Cookie[]> => {
   const cookieFile = getExpandedCookieFilePath(browser)
 
-  const tempFile = createLocalCopy(cookieFile)
+  try {
+    const tempFile = createLocalCopy(cookieFile)
 
-  const db = knex({
-    client: "sqlite3",
-    connection: {
-      filename: tempFile,
-    },
-  })
+    const db = knex({
+      client: "sqlite3",
+      connection: {
+        filename: tempFile,
+      },
+    })
 
-  let rows: Cookie[] = await db.select().from<Cookie>("cookies")
+    let rows: Cookie[] = await db.select().from<Cookie>("cookies")
 
-  return rows
+    return rows
+  } catch (err) {
+    console.error(err)
+    return []
+  }
 }
 
 const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
@@ -400,17 +405,21 @@ const getInstalledBrowsers = () => {
 }
 
 const getDecryptedCookies = async (
-  browser: InstalledBrowser
+  browser: InstalledBrowser | undefined
 ): Promise<Cookie[]> => {
+  if (browser === undefined) return []
+
   const encryptedCookies = await getCookiesFromFile(browser)
+
+  if (encryptedCookies.length === 0) return []
 
   const encryptKey = await getCookieEncryptionKey(browser)
 
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
-  importEvent.emit("cookies-imported")
+  console.log(`There are ${cookies.length} cookies`)
 
   return cookies
 }
 
-export { InstalledBrowser, getInstalledBrowsers, getDecryptedCookies }
+export { InstalledBrowser, Cookie, getInstalledBrowsers, getDecryptedCookies }

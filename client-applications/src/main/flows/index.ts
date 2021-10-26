@@ -74,7 +74,8 @@ const launchTrigger = fromSignal(
     accessToken,
     configToken,
     importCookiesFrom: fromTrigger("importerSubmitted").pipe(
-      startWith(undefined)
+      startWith(undefined),
+      map((payload) => payload?.browser)
     ),
   }).pipe(
     map((x: object) => ({

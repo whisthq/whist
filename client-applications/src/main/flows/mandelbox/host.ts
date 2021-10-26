@@ -9,12 +9,13 @@ import { map, switchMap } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 
 import { accessToken, configToken } from "@fractal/core-ts"
+import { Cookie } from "@app/utils/importer"
 
 export default flow<
   {
     ip: string
     jsonData: string
-    cookies: string[]
+    cookies: Cookie[]
     mandelboxID: string
   } & accessToken &
     configToken
