@@ -210,9 +210,9 @@ typedef struct NetworkContext {
     int (*recvp)(SocketContext* context, void* buf, int len);
     int (*ack)(SocketContext* context);
     FractalPacket* (*read_packet)(SocketContext* context, bool should_recvp);
-    int (*send_packet_from_payload)(SocketContext* context, FractalPacketType type,
-        void* data, int len, int id); // id only valid in UDP contexts
-    void (*free_packet)(FractalPacket* packet); //Only Non-NULL in TCP.
+    int (*send_packet_from_payload)(SocketContext* context, FractalPacketType type, void* data,
+                                    int len, int id);  // id only valid in UDP contexts
+    void (*free_packet)(FractalPacket* packet);        // Only Non-NULL in TCP.
 } NetworkContext;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -399,7 +399,7 @@ int ack(SocketContext* context);
  *
  * @param context                  The socket context
  * @param should_recvp             Only valid in TCP contexts. Adding in so that functions can
- *                                 be generalized. 
+ *                                 be generalized.
  *                                 If false, this function will only pop buffered packets
  *                                 If true, this function will pull data from the TCP socket,
  *                                 but that might take a while

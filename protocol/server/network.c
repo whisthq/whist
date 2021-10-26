@@ -163,8 +163,8 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) <
-        0) {
+    if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size,
+                                     -1) < 0) {
         LOG_ERROR("Failed to send discovery reply message.");
         closesocket(context->socket);
         free(fsmsg);
@@ -261,7 +261,8 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
 int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) < 0) {
+        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) <
+            0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }

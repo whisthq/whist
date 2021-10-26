@@ -22,7 +22,7 @@ NetworkContext* create_tcp_network_context(SocketContext* context, char* destina
     network_context->read_packet = read_tcp_packet;
     network_context->send_packet_from_payload = send_tcp_packet_from_payload;
     network_context->free_packet = free_tcp_packet;
-    
+
     // Add in the socket context
     network_context->context = context;
 
