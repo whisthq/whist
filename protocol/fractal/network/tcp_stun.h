@@ -1,5 +1,27 @@
 #ifndef TCP_STUN_H
 #define TCP_STUN_H
+/**
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * @file tcp_stun.h
+ * @brief This file contains the network interface code for TCP STUN protocol
+ *
+ *
+============================
+Usage
+============================
+
+To create the context:
+tcp_stun_context = create_tcp_stun_network_context(...);
+
+To send a packet from payload:
+tcp_stun_context->send_packet_from_payload(...);
+
+To read a packet:
+tcp_stun_context->read_packet(...);
+
+To free a packet:
+tcp_stun_context->free_packet(...);
+ */
 
 #include "network.h"
 

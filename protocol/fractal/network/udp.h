@@ -1,6 +1,27 @@
 #ifndef UDP_H
 #define UDP_H
+/**
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * @file udp.h
+ * @brief This file contains the network interface code for UDP protocol
+ *
+ *
+============================
+Usage
+============================
 
+To create the context:
+udp_context = create_udp_network_context(...);
+
+To send a packet from payload:
+udp_context->send_packet_from_payload(...);
+
+To read a packet:
+udp_context->read_packet(...);
+
+To free a packet:
+udp_context->free_packet(...);
+ */
 #include "network.h"
 
 /**

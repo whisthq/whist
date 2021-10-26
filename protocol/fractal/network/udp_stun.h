@@ -1,6 +1,27 @@
 #ifndef UDP_STUN_H
 #define UDP_STUN_H
+/**
+ * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * @file udp_stun.h
+ * @brief This file contains the network interface code for UDP STUN protocol
+ *
+ *
+============================
+Usage
+============================
 
+To create the context:
+udp_stun_context = create_udp_stun_network_context(...);
+
+To send a packet from payload:
+udp_stun_context->send_packet_from_payload(...);
+
+To read a packet:
+udp_stun_context->read_packet(...);
+
+To free a packet:
+udp_stun_context->free_packet(...);
+ */
 #include "network.h"
 
 /**
