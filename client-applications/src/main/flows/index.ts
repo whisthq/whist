@@ -30,7 +30,10 @@ const auth = authFlow(
       refreshToken,
       userEmail,
       configToken,
-    }).pipe((take(1), filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))))
+    }).pipe(
+      take(1),
+      filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))
+    )
   )
 )
 
@@ -66,14 +69,13 @@ const launchTrigger = fromSignal(
     map((x: object) => ({
       ...x, // { accessToken, configToken }
       region: getRegionFromArgv(process.argv),
-    })),
-    take(1)
+    }))
   ),
   merge(
     fromTrigger(TRIGGER.checkPaymentFlowSuccess),
     refreshAfterPaying.success
   )
-)
+).pipe(take(1))
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)

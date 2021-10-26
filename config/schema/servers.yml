@@ -17,7 +17,7 @@ CLIENT_DOWNLOAD_URL:
     linux: "https://fractal-chromium-linux-prod.s3.amazonaws.com/Whist.AppImage"
 
 WEBSERVER_URL:
-  local: "http://127.0.0.1:7730"
+  local: "https://dev-server.whist.com"
   dev: "https://dev-server.whist.com"
   staging: "https://staging-server.whist.com"
   prod: "https://prod-server.whist.com"
