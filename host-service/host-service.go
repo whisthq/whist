@@ -24,6 +24,7 @@ import (
 
 	"context"
 	_ "embed"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
