@@ -243,21 +243,6 @@ void init_networking();
 int get_last_network_error();
 
 /**
- * @brief                          This will send or receive data over a socket
- *
- * @param context                  The socket context to be used
- * @param buf                      The buffer to read or write to
- * @param len                      The length of the buffer to send over the socket
-                                   Or, the maximum number of bytes that can be read
- *                                 from the socket
-
- * @returns                        The number of bytes that have been read or
- *                                 written to or from the buffer
- */
-int recvp(SocketContext* context, void* buf, int len);
-int sendp(SocketContext* context, void* buf, int len);
-
-/**
  * @brief                          Initialize a UDP/TCP connection between a
  *                                 server and a client
  *
@@ -411,10 +396,11 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
 FractalPacket* read_udp_packet(SocketContext* context, bool should_recvp);
 
 /**
- * @brief                          Frees a TCP packet created by read_tcp_packet
+ * @brief                          Frees a TCP/udp packet created by read_tcp_packet/read_udp_packet
  *
- * @param tcp_packet               The TCP packet to free
+ * @param tcp_packet               The TCP/UDP packet to free
  */
 void free_tcp_packet(FractalPacket* tcp_packet);
+void free_udp_packet(FractalPacket* udp_packet);
 
 #endif  // NETWORK_H

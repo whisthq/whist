@@ -208,6 +208,21 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
                          PrivateKeyData* our_signed_priv_key_data, int recv_size,
                          void* private_key);
 
+/**
+ * @brief                          This will send or receive data over a socket
+ *
+ * @param context                  The socket context to be used
+ * @param buf                      The buffer to read or write to
+ * @param len                      The length of the buffer to send over the socket
+                                   Or, the maximum number of bytes that can be read
+ *                                 from the socket
+
+ * @returns                        The number of bytes that have been read or
+ *                                 written to or from the buffer
+ */
+int recvp(SocketContext* context, void* buf, int len);
+int sendp(SocketContext* context, void* buf, int len);
+
 /*
 ============================
 Private Function Implementations
@@ -2125,4 +2140,16 @@ void free_tcp_packet(FractalPacket* tcp_packet) {
     */
 
     deallocate_region(tcp_packet);
+}
+
+void free_udp_packet(FractalPacket* udp_packet) {
+    /*
+        Frees a UDP packet created by read_udp_packet
+
+        Arguments:
+            tcp_packet (FractalPacket*): The udp packet to free
+
+        TODO (abecohen): Change read_udp_packet to use malloc
+        and then add "deallocate_region(udp_packet);" to this function.
+    */
 }
