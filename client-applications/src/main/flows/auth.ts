@@ -10,6 +10,7 @@ import {
   refreshToken,
   accessToken,
 } from "@fractal/core-ts"
+import { generateRandomConfigToken } from "@fractal/core-ts"
 
 export const authRefreshFlow = flow<refreshToken>(
   "authRefreshFlow",
@@ -57,8 +58,15 @@ export default flow<{
     refreshedAuthInfo.failure
   )
 
+  const withConfig = zip(authInfo, trigger).pipe(
+    map(([a, t]) => ({
+      ...a,
+      configToken: t.configToken ?? generateRandomConfigToken(),
+    }))
+  )
+
   return {
-    success: authInfo.pipe(filter((res) => !has(res, "error"))),
-    failure: authInfo.pipe(filter((res) => has(res, "error"))),
+    success: withConfig.pipe(filter((res) => !has(res, "error"))),
+    failure: withConfig.pipe(filter((res) => has(res, "error"))),
   }
 })

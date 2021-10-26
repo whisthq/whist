@@ -7,7 +7,7 @@ import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
 // import Database from "better-sqlite3"
-import knex from 'knex'
+import knex from "knex"
 import crypto from "crypto"
 
 import {
@@ -301,13 +301,13 @@ const getCookiesFromFile = async (
   const tempFile = createLocalCopy(cookieFile)
 
   const db = knex({
-    client: 'sqlite3',
+    client: "sqlite3",
     connection: {
       filename: tempFile,
-    }
+    },
   })
 
-  let rows: Cookie[] = await db.select().from<Cookie>('cookies')
+  let rows: Cookie[] = await db.select().from<Cookie>("cookies")
 
   return rows
 }
@@ -409,8 +409,6 @@ const getDecryptedCookies = async (
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
   importEvent.emit("cookies-imported")
-
-  console.log(cookies)
 
   return cookies
 }

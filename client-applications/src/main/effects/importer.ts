@@ -1,10 +1,13 @@
 import { fromTrigger } from "@app/utils/flows"
 import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
+import { hostImportConfig } from "@app/utils/host"
 
-fromTrigger("importerSubmitted").subscribe((payload: { browser: string }) => {
-  if (payload.browser === "None") return
+fromTrigger("importerSubmitted").subscribe(
+  async (payload: { browser: string }) => {
+    if (payload.browser === "None") return
 
-  getDecryptedCookies(payload.browser as InstalledBrowser).catch((err) =>
-    console.error(err)
-  )
-})
+    const cookies = await getDecryptedCookies(
+      payload.browser as InstalledBrowser
+    )
+  }
+)
