@@ -771,6 +771,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
+	fmt.Printf("%v",req)
+
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
 		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
