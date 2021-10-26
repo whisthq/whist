@@ -14,6 +14,7 @@ import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { MenuItem } from "electron/main"
 import { persistGet } from "./persist"
 import { createSpeedtestWindow } from "@app/utils/windows"
+import { RESTORE_LAST_SESSION } from "@app/constants/store"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -85,7 +86,7 @@ const settingsMenu = new MenuItem({
     {
       label: "Restore the last browser session",
       type: "checkbox",
-      checked: <boolean>persistGet("RestoreLastBrowserSession", "data") ?? true,
+      checked: <boolean>persistGet(RESTORE_LAST_SESSION) ?? true,
       click: () => {
         trayEvent.emit("restore-last-browser-session")
       },

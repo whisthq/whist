@@ -18,6 +18,7 @@ import config, {
 import { persistGet } from "@app/utils/persist"
 import { sessionID } from "@app/constants/app"
 import { createLogger } from "logzio-nodejs"
+import { CACHED_USER_EMAIL } from "@app/constants/store"
 
 app.setPath("userData", loggingBaseFilePath)
 
@@ -125,7 +126,7 @@ export const logBase = (
     onMatch: { skipChildren: true },
   })
 
-  const userEmail = persistGet("userEmail") ?? ""
+  const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
   localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 
   if (app.isPackaged) amplitudeLog(title, data, userEmail as string, msElapsed)

@@ -1,11 +1,13 @@
-import { merge, Observable, zip } from "rxjs"
-import { map } from "rxjs/operators"
+import { merge, Observable, zip, from } from "rxjs"
+import { map, filter, startWith, switchMap } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { execCommandByOS } from "@app/utils/execCommand"
-import { persistGet, persist } from "@app/utils/persist"
+import { persistGet, persistSet } from "@app/utils/persist"
+import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
+import { RESTORE_LAST_SESSION } from "@app/constants/store"
 
 export default flow(
   "mandelboxFlow",
@@ -14,6 +16,7 @@ export default flow(
       accessToken: string
       configToken: string
       isNewConfigToken: boolean
+      importCookiesFrom: string | undefined
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -101,25 +104,30 @@ export default flow(
       keyRepeat = keyRepeatFloat.toFixed()
     }
 
-    if (persistGet("RestoreLastBrowserSession", "data") === undefined) {
-      persist("RestoreLastBrowserSession", true, "data")
+    if (persistGet(RESTORE_LAST_SESSION) === undefined) {
+      persistSet(RESTORE_LAST_SESSION, true)
     }
 
+    const decrypted = trigger.pipe(
+      filter((t) => t.importCookiesFrom !== undefined),
+      switchMap((t) =>
+        from(getDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
+      ),
+      startWith([])
+    )
+
     const host = hostSpinUpFlow(
-      zip([trigger, create.success]).pipe(
-        map(([t, c]) => ({
+      zip([trigger, create.success, decrypted]).pipe(
+        map(([t, c, d]) => ({
           ip: c.ip,
-          config_encryption_token: t.configToken,
-          is_new_config_encryption_token: t.isNewConfigToken,
-          jwt_access_token: t.accessToken,
-          mandelbox_id: c.mandelboxID,
-          json_data: JSON.stringify({
+          configToken: t.configToken,
+          accessToken: t.accessToken,
+          mandelboxID: c.mandelboxID,
+          cookies: d as string[],
+          jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            restore_last_session: persistGet(
-              "RestoreLastBrowserSession",
-              "data"
-            ),
+            restore_last_session: persistGet(RESTORE_LAST_SESSION),
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
                 initial_key_repeat: parseInt(initialKeyRepeat),

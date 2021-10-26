@@ -19,11 +19,17 @@ import {
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
-import { persist, persistGet, persistClear, store } from "@app/utils/persist"
+import { persistGet, persistClear, persistSet, store } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
 import { accessToken } from "@fractal/core-ts"
-import { ONBOARDED } from "@app/constants/store"
+import {
+  ONBOARDED,
+  CACHED_USER_EMAIL,
+  CACHED_ACCESS_TOKEN,
+  CACHED_REFRESH_TOKEN,
+  CACHED_CONFIG_TOKEN,
+} from "@app/constants/store"
 
 fromTrigger("appReady").subscribe(() => {
   createTray(createMenu(false))
@@ -54,13 +60,10 @@ fromTrigger("updateAvailable")
 // the app
 fromTrigger("clearCacheAction").subscribe(
   (payload: { clearConfig: boolean }) => {
-    persistClear(
-      [
-        ...["accessToken", "refreshToken", "userEmail"],
-        ...(payload.clearConfig ? ["configToken"] : []),
-      ],
-      "auth"
-    )
+    persistClear([
+      ...[CACHED_USER_EMAIL, CACHED_ACCESS_TOKEN, CACHED_REFRESH_TOKEN],
+      ...(payload.clearConfig ? [CACHED_CONFIG_TOKEN] : []),
+    ])
     // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
     // a partition called "auth0", so we clear the "auth0" partition here
     session
@@ -93,8 +96,7 @@ withAppReady(fromTrigger("trayBugAction")).subscribe(() => {
 withAppReady(fromTrigger("authFlowSuccess"))
   .pipe(take(1))
   .subscribe(() => {
-    const onboarded =
-      (persistGet("onboardingTypeformSubmitted", "data") as boolean) ?? false
+    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
     if (!onboarded) createOnboardingTypeform()
   })
 
@@ -116,7 +118,7 @@ withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
 )
 
 withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
-  persist(ONBOARDED, true)
+  persistSet(ONBOARDED, true)
 })
 
 fromTrigger("appReady").subscribe(() => {

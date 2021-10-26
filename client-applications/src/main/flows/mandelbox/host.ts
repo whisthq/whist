@@ -8,18 +8,37 @@ import { zip, from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 
-export default flow<{
-  ip: string
-  config_encryption_token: string
-  is_new_config_encryption_token: boolean
-  jwt_access_token: string
-  mandelbox_id: string
-  json_data: string
-}>("hostSpinUpFlow", (trigger) => {
-  const spin = fork(trigger.pipe(switchMap((args) => from(hostSpinUp(args)))), {
-    success: (result: HostSpinUpResponse) => hostSpinUpValid(result),
-    failure: (result: HostSpinUpResponse) => hostSpinUpError(result),
-  })
+import { accessToken, configToken } from "@fractal/core-ts"
+
+export default flow<
+  {
+    ip: string
+    jsonData: string
+    cookies: string[]
+    mandelboxID: string
+  } & accessToken &
+    configToken
+>("hostSpinUpFlow", (trigger) => {
+  const spin = fork(
+    trigger.pipe(
+      switchMap((args) =>
+        from(
+          hostSpinUp({
+            ip: args.ip,
+            config_encryption_token: args.configToken,
+            jwt_access_token: args.accessToken,
+            json_data: args.jsonData,
+            mandelbox_id: args.mandelboxID,
+            cookies: args.cookies,
+          })
+        )
+      )
+    ),
+    {
+      success: (result: HostSpinUpResponse) => hostSpinUpValid(result),
+      failure: (result: HostSpinUpResponse) => hostSpinUpError(result),
+    }
+  )
 
   return {
     success: zip([trigger, spin.success]).pipe(

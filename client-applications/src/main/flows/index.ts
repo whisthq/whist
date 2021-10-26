@@ -1,5 +1,5 @@
-import { merge, Observable, of, combineLatest } from "rxjs"
-import { map, take, filter } from "rxjs/operators"
+import { merge, of, combineLatest, zip } from "rxjs"
+import { map, take, filter, startWith } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -18,6 +18,11 @@ import {
   userEmail,
   configToken,
 } from "@app/utils/state"
+import {
+  COOKIE_IMPORTER_SUBMITTED,
+  ONBOARDING_TYPEFORM_SUBMITTED,
+} from "@app/constants/store"
+import { startsWith } from "lodash"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger("updateAvailable"))
@@ -39,14 +44,14 @@ const auth = authFlow(
 
 const onboarded = fromSignal(
   merge(
-    merge(
-      fromTrigger("cookiesImported"),
-      fromTrigger("importerSubmitted").pipe(
-        filter((payload) => payload.browser === "None")
+    fromTrigger("importerSubmitted"),
+    zip(
+      of(persistGet(ONBOARDING_TYPEFORM_SUBMITTED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      ),
+      of(persistGet(COOKIE_IMPORTER_SUBMITTED)).pipe(
+        filter((imported) => imported as boolean)
       )
-    ),
-    of(persistGet("onboardingTypeformSubmitted", "data")).pipe(
-      filter((onboarded) => onboarded as boolean)
     )
   ),
   fromTrigger(TRIGGER.authFlowSuccess)
@@ -65,9 +70,15 @@ const refreshAfterPaying = authRefreshFlow(
 
 // Observable that fires when Fractal is ready to be launched
 const launchTrigger = fromSignal(
-  combineLatest({ accessToken, configToken }).pipe(
+  combineLatest({
+    accessToken,
+    configToken,
+    importCookiesFrom: fromTrigger("importerSubmitted").pipe(
+      startWith(undefined)
+    ),
+  }).pipe(
     map((x: object) => ({
-      ...x, // { accessToken, configToken }
+      ...x,
       region: getRegionFromArgv(process.argv),
     }))
   ),

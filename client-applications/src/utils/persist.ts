@@ -17,25 +17,16 @@ app.setPath("userData", loggingBaseFilePath)
 
 export const store = new Store({ watch: true })
 
-interface Cache {
-  [k: string]: string | boolean
-}
-
-type CacheName = "auth" | "data"
-
-const persistedAuth = store.get("auth") as Cache
-
-const persist = (key: string, value: string | boolean) => {
+const persistSet = (key: string, value: string | boolean) => {
   store.set(key, value)
 }
 
-const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {
+const persistGet = (key: string) => store.get(key)
+
+const persistClear = (keys: string[]) => {
   keys.forEach((key) => {
-    store.delete(`${cache as string}.${key as string}`)
+    store.delete(key)
   })
 }
 
-const persistGet = (key: keyof Cache, cache?: CacheName) =>
-  (store.get(cache ?? "auth") as Cache)?.[key]
-
-export { Cache, persist, persistedAuth, persistClear, persistGet }
+export { persistSet, persistClear, persistGet }

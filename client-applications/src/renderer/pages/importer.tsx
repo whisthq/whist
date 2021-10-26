@@ -27,7 +27,7 @@ const SelectBrowser = (props: {
             {props.browsers.map((browser: string, index: number) => (
               <option key={index}>{browser}</option>
             ))}
-            <option value="None">None, start from a clean slate</option>
+            <option value={undefined}>None, start from a clean slate</option>
           </select>
         </div>
       </div>
@@ -39,17 +39,15 @@ const Importer = (props: {
   browsers: string[]
   onSubmit: (browser: string) => void
 }) => {
-  const [browser, setBrowser] = useState("None")
+  const [browser, setBrowser] = useState<string | undefined>(undefined)
   const [processing, setProcessing] = useState(false)
 
   const onSubmit = (browser: string) => {
     setProcessing(true)
-    console.log("THE BROWSER IS", browser)
     props.onSubmit(browser)
   }
 
   const onSelect = (browser: string) => {
-    console.log("SETTING BROWSER TO", browser)
     setBrowser(browser)
   }
 

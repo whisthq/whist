@@ -15,15 +15,17 @@ import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/constants/windows"
-import {
-  createProtocolWindow,
-  createImporterWindow,
-  createAuthWindow,
-} from "@app/utils/windows"
-import { persistGet, persistedAuth } from "@app/utils/persist"
+import { createProtocolWindow, createAuthWindow } from "@app/utils/windows"
+import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import TRIGGER from "@app/utils/triggers"
+import {
+  CACHED_ACCESS_TOKEN,
+  CACHED_CONFIG_TOKEN,
+  CACHED_REFRESH_TOKEN,
+  CACHED_USER_EMAIL,
+} from "@app/constants/store"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -134,18 +136,12 @@ fromTrigger("networkUnstable")
     }
   })
 
-fromTrigger("onboardingTypeformSubmitted").subscribe(() => {
-  const imported =
-    (persistGet("cookieImporterSubmitted", "data") as boolean) ?? false
-  if (!imported) createImporterWindow()
-})
-
 fromTrigger("appReady").subscribe(() => {
   const authCache = {
-    accessToken: (persistedAuth?.accessToken ?? "") as string,
-    refreshToken: (persistedAuth?.refreshToken ?? "") as string,
-    userEmail: (persistedAuth?.userEmail ?? "") as string,
-    configToken: (persistedAuth?.configToken ?? "") as string,
+    accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
+    refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,
+    userEmail: (persistGet(CACHED_USER_EMAIL) ?? "") as string,
+    configToken: (persistGet(CACHED_CONFIG_TOKEN) ?? "") as string,
   }
 
   if (!isEmpty(pickBy(authCache, (x) => x === ""))) {

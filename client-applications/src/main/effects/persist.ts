@@ -2,7 +2,7 @@ import { merge } from "rxjs"
 import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/utils/flows"
-import { persist } from "@app/utils/persist"
+import { persistSet } from "@app/utils/persist"
 
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
@@ -18,7 +18,7 @@ merge(
     configToken?: string
   }) => {
     toPairs(args).forEach(([key, value]) => {
-      if (value !== undefined) persist(`auth.${key}`, value)
+      if (value !== undefined) persistSet(`auth.${key}`, value)
     })
   }
 )
