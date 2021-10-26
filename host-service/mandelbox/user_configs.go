@@ -124,7 +124,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
 
 	var data []byte
-	err := c.downloadAndDecryptFromS3(s3ConfigKey, data)
+	err := c.decryptFileInMemory(c.configBuffer, data)
 
 	if err != nil {
 		return err
