@@ -682,7 +682,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Decrypt the previously downloaded user configs using the encryption token
 	err = fc.DecryptUserConfigs()
 	if err != nil {
-		logAndReturnError("Unable to spin up mandelbox: error decrypting config token.", err)
+		logger.Errorf("Unable to spin up mandelbox: error decrypting config token.", err)
 	}
 
 	// Write the config.json file with the data received from JSON transport
