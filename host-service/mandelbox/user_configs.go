@@ -100,8 +100,6 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		return err
-	} else if len(data) == 0 {
-		return nil
 	}
 
 	return nil
