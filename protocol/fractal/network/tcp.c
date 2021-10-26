@@ -14,8 +14,6 @@ NetworkContext* create_tcp_network_context(SocketContext* context, char* destina
     NetworkContext* network_context = safe_malloc(sizeof(NetworkContext));
 
     // Functions common to all network contexts
-    network_context->sendp = sendp;
-    network_context->recvp = recvp;
     network_context->ack = ack;
 
     // Funcitons common to only TCP contexts

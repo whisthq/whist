@@ -206,8 +206,6 @@ typedef struct NetworkContext {
     SocketContext* context;
 
     // Functions common to all network connections
-    int (*sendp)(SocketContext* context, void* buf, int len);
-    int (*recvp)(SocketContext* context, void* buf, int len);
     int (*ack)(SocketContext* context);
     FractalPacket* (*read_packet)(SocketContext* context, bool should_recvp);
     int (*send_packet_from_payload)(SocketContext* context, FractalPacketType type, void* data,
