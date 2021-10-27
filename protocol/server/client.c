@@ -20,6 +20,8 @@ Includes
 
 volatile int threads_needing_active = 0;  // Threads dependent on client being active
 volatile int threads_holding_active = 0;  // Threads currently assuming client is active
+FractalMutex active_holding_write_mutex;  // Protects writes to the above two variables
+                                          //     (protecting reads not necessary)
 
 Client client;
 
@@ -44,6 +46,7 @@ int init_client(void) {
     client.udp_port = BASE_UDP_PORT;
     client.tcp_port = BASE_TCP_PORT;
     init_rw_lock(&client.tcp_rwlock);
+    active_holding_write_mutex = fractal_create_mutex();
 
     return 0;
 }
@@ -129,7 +132,9 @@ void add_thread_to_client_active_dependents() {
         Add thread to count of those dependent on client being active
     */
 
+    fractal_lock_mutex(active_holding_write_mutex);
     threads_needing_active++;
+    fractal_unlock_mutex(active_holding_write_mutex);
 }
 
 void remove_thread_from_holding_active_count() {
@@ -137,7 +142,9 @@ void remove_thread_from_holding_active_count() {
         Remove thread from those currently assuming that client is active
     */
 
+    fractal_lock_mutex(active_holding_write_mutex);
     threads_holding_active--;
+    fractal_unlock_mutex(active_holding_write_mutex);
 }
 
 void reset_threads_holding_active_count() {
@@ -150,8 +157,10 @@ void reset_threads_holding_active_count() {
         NOTE: Should only be called from `multithreaded_manage_client`
     */
 
+    fractal_lock_mutex(active_holding_write_mutex);
     threads_holding_active = threads_needing_active;
     client.is_deactivating = false;
+    fractal_unlock_mutex(active_holding_write_mutex);
 }
 
 void update_client_active_status(bool* is_thread_assuming_active) {
