@@ -7,7 +7,6 @@ import { isNumber } from "lodash"
 
 const execCommand = require("./execCommand").execCommand
 
-
 export default flow(
   "mandelboxFlow",
   (
@@ -25,7 +24,9 @@ export default flow(
     )
 
     // Retrieve macOS keyboard repeat rate(s) to send them to the server
-    const initialKeyRepeat = execCommand(`defaults read NSGlobalDomain InitialKeyRepeat`)
+    const initialKeyRepeat = execCommand(
+      `defaults read NSGlobalDomain InitialKeyRepeat`
+    )
     const keyRepeat = execCommand(`defaults read NSGlobalDomain KeyRepeat`)
 
     const host = hostSpinUpFlow(
@@ -35,8 +36,10 @@ export default flow(
           config_encryption_token: t.configToken,
           jwt_access_token: t.accessToken,
           json_data: JSON.stringify({
-            initial_key_repeat: (isNumber(initialKeyRepeat) ? initialKeyRepeat : 68), // this fails if user hasn't modified the default value, which is 68
-            key_repeat: (isNumber(keyRepeat) ? keyRepeat : 6), // this fails if user hasn't modified the default value, which is 6
+            initial_key_repeat: isNumber(initialKeyRepeat)
+              ? initialKeyRepeat
+              : 68, // this fails if user hasn't modified the default value, which is 68
+            key_repeat: isNumber(keyRepeat) ? keyRepeat : 6, // this fails if user hasn't modified the default value, which is 6
           }), // Data to send through the JSON transport
         }))
       )
