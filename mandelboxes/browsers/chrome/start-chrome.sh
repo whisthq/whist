@@ -18,7 +18,7 @@ fi
 DARK_MODE=false
 RESTORE_LAST_SESSION=true
 
-FRACTAL_JSON_FILE=./config.json
+FRACTAL_JSON_FILE=/fractal/resourceMappings/config.json
 if [[ -f $FRACTAL_JSON_FILE ]]; then
   if [ "$( jq 'has("dark_mode")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
     DARK_MODE="$(jq '.dark_mode' < $FRACTAL_JSON_FILE)"
