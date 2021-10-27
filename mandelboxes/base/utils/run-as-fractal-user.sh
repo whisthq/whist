@@ -11,6 +11,10 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
   if [ "$( jq 'has("initial_key_repeat")' < $FRACTAL_JSON_FILE )" == "true" && "$( jq 'has("initial_key_repeat")' < $FRACTAL_JSON_FILE )" == "true" ]; then
     INITIAL_KEY_REPEAT=$( jq -r '.initial_key_repeat' < $FRACTAL_JSON_FILE )
     KEY_REPEAT=$( jq -r '.key_repeat' < $FRACTAL_JSON_FILE )
+
+    echo "INITIAL_KEY_REPEAT IS $INITIAL_KEY_REPEAT"
+    echo "KEY_REPEAT IS $KEY_REPEAT"
+
     xset r rate $INITIAL_KEY_REPEAT $KEY_REPEAT
   fi
 fi
