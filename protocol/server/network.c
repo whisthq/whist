@@ -111,9 +111,9 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
             //     undefined behavior.
             write_lock(&client.tcp_rwlock);
             destroy_socket_context(&client.tcp_context);
-            if (create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
+            if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
                                           TCP_CONNECTION_WAIT, get_using_stun(),
-                                          binary_aes_private_key) < 0) {
+                                          binary_aes_private_key)) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&client.tcp_rwlock);
@@ -282,13 +282,11 @@ int try_get_next_message_tcp(FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    read_lock(&client.tcp_rwlock);
     FractalPacket *tcp_packet = read_packet(&client.tcp_context, should_recvp);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
     }
-    read_unlock(&client.tcp_rwlock);
     return 0;
 }
 
@@ -404,9 +402,9 @@ int multithreaded_manage_client(void *opaque) {
         }
 
         // Even without multiclient, we need this for TCP recovery over the discovery port
-        if (create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
+        if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
                                       TCP_CONNECTION_WAIT, get_using_stun(),
-                                      binary_aes_private_key) < 0) {
+                                      binary_aes_private_key)) {
             continue;
         }
 
