@@ -36,7 +36,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/sync/errgroup"
 
 	// We use this package instead of the standard library log so that we never
@@ -46,7 +45,6 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 
-	"github.com/fractal/fractal/host-service/auth"
 	"github.com/fractal/fractal/host-service/dbdriver"
 	mandelboxData "github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
@@ -368,7 +366,6 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 	globalCancel()
 }
 
-
 // ------------------------------------
 // Mandelbox event handlers
 // ------------------------------------
@@ -435,7 +432,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		userConfigDownloadComplete <- true
 		logger.Infof("SpinUpMandelbox(): Successfully downloaded user configs for mandelbox %s", mandelboxSubscription.ID)
 	}()
-
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
