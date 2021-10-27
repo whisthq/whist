@@ -128,7 +128,7 @@ int send_packet_from_payload(SocketContext* context, FractalPacketType type, voi
 int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
     return context->send_packet(context->context, packet, packet_size);
 }
-void free_packet(SocketContext* context, FractalPacket* packet) { context->free_packet(packet); }
+void free_packet(SocketContext* context, FractalPacket* packet) { context->free_packet(context->context, packet); }
 int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
                              int payload_id, FractalPacketType packet_type,
                              FractalPacket* packet_buffer, size_t packet_buffer_length) {

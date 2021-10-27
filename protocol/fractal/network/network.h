@@ -138,22 +138,6 @@ Custom types
 ============================
 */
 
-typedef struct SocketAttributes {
-    bool is_server;
-    bool is_tcp;
-    bool udp_is_connected;
-    int timeout;
-    SOCKET socket;
-    struct sockaddr_in addr;
-    int ack;
-    FractalMutex mutex;
-    char binary_aes_private_key[16];
-    // Used for reading TCP packets
-    int reading_packet_len;
-    DynamicBuffer* encrypted_tcp_packet_buffer;
-    NetworkThrottleContext* network_throttler;
-} SocketAttributes;
-
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
 // TODO: INC integer that must not be used twice
@@ -161,7 +145,7 @@ typedef struct SocketAttributes {
 /**
  * @brief                          Data packet description
  */
-typedef enum FractalPacketType {
+typedef enum {
     PACKET_AUDIO,
     PACKET_VIDEO,
     PACKET_MESSAGE,
@@ -171,7 +155,7 @@ typedef enum FractalPacketType {
  * @brief                          Packet of data to be sent over a
  *                                 SocketAttributes
  */
-typedef struct FractalPacket {
+typedef struct {
     char hash[16];  // Hash of the rest of the packet
     // hash[16] is a signature for everything below this line
 
@@ -205,19 +189,37 @@ typedef struct {
     unsigned short public_port;
 } StunEntry;
 
-typedef enum StunRequestType { ASK_INFO, POST_INFO } StunRequestType;
+typedef enum { ASK_INFO, POST_INFO } StunRequestType;
 
 typedef struct {
     StunRequestType type;
     StunEntry entry;
 } StunRequest;
 
+typedef struct {
+    bool is_server;
+    bool is_tcp;
+    bool udp_is_connected;
+    int timeout;
+    SOCKET socket;
+    struct sockaddr_in addr;
+    int ack;
+    FractalMutex mutex;
+    char binary_aes_private_key[16];
+    // Used for reading TCP packets
+    int reading_packet_len;
+    DynamicBuffer* encrypted_tcp_packet_buffer;
+    NetworkThrottleContext* network_throttler;
+    bool decrypted_packet_used;
+    FractalPacket decrypted_packet;
+} SocketAttributes;
+
 /**
  * @brief                       Interface describing the avaliable functions
  *                              and socket context of a network protocol
  *
  */
-typedef struct SocketContext {
+typedef struct {
     // Attributes
     void* context;
 
@@ -228,7 +230,7 @@ typedef struct SocketContext {
     int (*send_packet_from_payload)(SocketAttributes* context, FractalPacketType type, void* data,
                                     int len, int id);  // id only valid in UDP contexts
     int (*send_packet)(SocketAttributes* context, FractalPacket* packet, size_t packet_size);
-    void (*free_packet)(FractalPacket* packet);  // Only Non-NULL in TCP.
+    void (*free_packet)(SocketAttributes* context, FractalPacket* packet);  // Only Non-NULL in TCP.
     int (*write_payload_to_packets)(uint8_t* payload, size_t payload_size, int payload_id,
                                     FractalPacketType packet_type, FractalPacket* packet_buffer,
                                     size_t packet_buffer_length);

@@ -118,7 +118,7 @@ FractalPacket* read_tcp_packet(SocketAttributes* context, bool should_recvp);
  *
  * @param tcp_packet               The TCP/UDP packet to free
  */
-void free_tcp_packet(FractalPacket* tcp_packet);
+void free_tcp_packet(SocketAttributes* context, FractalPacket* tcp_packet);
 
 /**
  * @brief                          Split a payload into several packets approprately-sized
@@ -949,7 +949,7 @@ FractalPacket* read_tcp_packet(SocketAttributes* context, bool should_recvp) {
     return NULL;
 }
 
-void free_tcp_packet(FractalPacket* tcp_packet) {
+void free_tcp_packet(SocketAttributes* context, FractalPacket* tcp_packet) {
     /*
         Frees a TCP packet created by read_tcp_packet
 

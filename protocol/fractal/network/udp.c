@@ -75,7 +75,7 @@ FractalPacket* read_udp_packet(SocketAttributes* context, bool should_recvp);
  *
  * @param tcp_packet               The UDP packet to free
  */
-void free_udp_packet(FractalPacket* tcp_packet);
+void free_udp_packet(SocketAttributes* context, FractalPacket* tcp_packet);
 
 /**
  * @brief                          Split a payload into several packets approprately-sized
@@ -649,23 +649,26 @@ FractalPacket* read_udp_packet(SocketAttributes* context, bool should_recvp) {
         return NULL;
     }
 
+    if (context->decrypted_packet_used) {
+        LOG_ERROR("Cannot use context->decrypted_packet buffer! Still being used somewhere else!");
+        return NULL;
+    }
+
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
     int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
-
-    static FractalPacket decrypted_packet;
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
         int decrypted_len;
         if (ENCRYPTING_PACKETS) {
             // Decrypt the packet
-            decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+            decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &context->decrypted_packet,
                                            (unsigned char*)context->binary_aes_private_key);
         } else {
             // The decrypted packet is just the original packet, during dev mode
             decrypted_len = encrypted_len;
-            memcpy(&decrypted_packet, &encrypted_packet, encrypted_len);
+            memcpy(&context->decrypted_packet, &encrypted_packet, encrypted_len);
         }
 #if LOG_NETWORKING
         LOG_INFO("Received a FractalPacket of size %d over UDP", decrypted_len);
@@ -684,7 +687,8 @@ FractalPacket* read_udp_packet(SocketAttributes* context, bool should_recvp) {
             return NULL;
         }
 
-        return &decrypted_packet;
+        context->decrypted_packet_used = true;
+        return &context->decrypted_packet;
     } else {
         if (encrypted_len < 0) {
             int error = get_last_network_error();
@@ -706,7 +710,7 @@ FractalPacket* read_udp_packet(SocketAttributes* context, bool should_recvp) {
     }
 }
 
-void free_udp_packet(FractalPacket* udp_packet) {
+void free_udp_packet(SocketAttributes* context, FractalPacket* udp_packet) {
     /*
         Frees a UDP packet created by read_udp_packet
 
@@ -716,6 +720,14 @@ void free_udp_packet(FractalPacket* udp_packet) {
         TODO (abecohen): Change read_udp_packet to use malloc
         and then add "deallocate_region(udp_packet);" to this function.
     */
+    if (!context->decrypted_packet_used) {
+        LOG_ERROR("Called free_udp_packet, but there was no udp_packet to free!");
+        return;
+    }
+    if (udp_packet != &context->decrypted_packet) {
+        LOG_ERROR("The wrong pointer was passed into free_udp_packet!");
+    }
+    context->decrypted_packet_used = false;
 }
 
 int create_udp_context(SocketAttributes* context, char* destination, int port,
