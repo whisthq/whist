@@ -369,63 +369,6 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 }
 
 
-func ImportBrowserConfig(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *ImportBrowserConfigRequest) {
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := utils.MakeError("ImportBrowserConfig(): "+fmt, v...)
-		logger.Error(err)
-		req.ReturnResult("", err)
-	}
-
-	logger.Infof("ImportBrowserConfig(): Setting up auth")
-
-	// Set up auth
-	claims := new(auth.FractalClaims)
-	parser := &jwt.Parser{SkipClaimsValidation: true}
-	var userID mandelboxtypes.UserID
-
-	// Only verify auth in non-local environments
-	if !metadata.IsLocalEnv() {
-		// Decode the access token without validating any of its claims or
-		// verifying its signature because we've already done that in
-		// `authenticateAndParseRequest`. All we want to know is the value of the
-		// sub (subject) claim.
-		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
-			logAndReturnError("There was a problem while parsing the access token for the second time: %s", err)
-			return
-		}
-		userID = mandelboxtypes.UserID(claims.Subject)
-	} else {
-		// CI doesn't run in AWS so we need to set a custom name
-		if metadata.IsRunningInCI() {
-			userID = "localdev_host_service_CI"
-		} else {
-			instanceName, err := aws.GetInstanceName()
-			if err != nil {
-				logAndReturnError("Can't get AWS Instance name for localdev user config userID.")
-				return
-			}
-			userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
-		}
-	}
-
-
-	// Verify that this user sent in a (nontrivial) config encryption token
-	if len(req.ConfigEncryptionToken) < 10 {
-		logAndReturnError("Unable to import browser configs: trivial config encryption token received.")
-		return
-	}
-
-	// Upload custom config to s3
-	err := mandelbox.UploadCustomConfig(req.Cookies, userID, req.ConfigEncryptionToken, req.AppName)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	logger.Infof("ImportBrowserConfig(): Successfully uploaded custom configs")
-
-}
-
 // ------------------------------------
 // Mandelbox event handlers
 // ------------------------------------
@@ -491,20 +434,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 		userConfigDownloadComplete <- true
 		logger.Infof("SpinUpMandelbox(): Successfully downloaded user configs for mandelbox %s", mandelboxSubscription.ID)
-	}()
-
-	userCustomConfigDownloadComplete := make(chan bool)
-	go func() {
-		logger.Infof("SpinUpMandelbox(): Beginning user custom config download for mandelbox %s", mandelboxInfo.MandelboxID)
-		err := fc.DownloadCustomConfig()
-		if err != nil {
-			logger.Warningf("Error requesting user custom configs: %v", err)
-			userCustomConfigDownloadComplete <- true
-			return
-		}
-
-		userCustomConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully obtained user custom configs for mandelbox %s", mandelboxInfo.MandelboxID)
 	}()
 
 
@@ -601,6 +530,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
+		utils.Sprint("WHIST_INITIAL_USER_COOKIES=%v", req.Cookies)
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -751,7 +681,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	<-userConfigDownloadComplete
-	<-userCustomConfigDownloadComplete
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
