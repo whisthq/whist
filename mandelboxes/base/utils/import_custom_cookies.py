@@ -1,4 +1,4 @@
-from os import path, environ
+import os
 import sys
 import browser_cookie3
 import sqlite3
@@ -59,16 +59,8 @@ def encrypt(browser_name, value, encrypt_prefix):
             os_crypt_name = browser_name
 
         my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
-        print(my_pass)
 
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
-
-    for i in key:
-        print(i)
-
-    print(key)
-
-    print(f"pass: {my_pass}, salt: {salt}")
 
     aes_cbc_encrypt = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv=iv))
 
@@ -81,23 +73,30 @@ def encrypt(browser_name, value, encrypt_prefix):
     return encrypted_value
 
 
-def set_browser_cookies(to_browser_name, path):
+def set_browser_cookies(to_browser_name, cookies):
     """
     Sets cookies from one browser to another
     Args:
         to_browser_name (str): the name of the browser we will import cookies to
+        cookies (dict): the cookies being imported
     """
-    if not path.exist(path):
-        return
-
     to_browser = get_browser(to_browser_name)
 
     cookie_file = to_browser.cookie_file
 
-    with open(path) as file:
-        cookies = file.read()
-        print(f"The cookies read are {cookies}")
-    # Read value of cookie and store it in a cookies var
+    encrypted_cookies = []
+
+    for cookie in cookies:
+        if cookie["value"] == "":
+            value = cookie["decrypted_value"]
+            encrypted_prefix = cookie["encrypted_prefix"]
+            cookie["encrypted_value"] = encrypt(to_browser_name, value, encrypted_prefix)
+
+        cookie.pop("decrypted_value", None)
+        cookie.pop("encryption_prefix", None)
+
+        # We only want the values in a list form
+        encrypted_cookies.append(list(cookie.values()))
 
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
@@ -107,13 +106,13 @@ def set_browser_cookies(to_browser_name, path):
         # chrome <=55
         cur.executemany(
             "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            cookies,
+            encrypted_cookies,
         )
     except sqlite3.OperationalError:
         # chrome >=56
         cur.executemany(
             "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            cookies,
+            encrypted_cookies,
         )
 
     con.commit()
@@ -121,6 +120,8 @@ def set_browser_cookies(to_browser_name, path):
 
 
 if __name__ == "__main__":
-    browser = environ["FRACTAL_COOKIE_UPLOAD_TARGET"]
-    path = "/fractal/userCustomConfigs/fractal-app-config-cookies"
-    set_browser_cookies(browser, path)
+    browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
+    cookies = os.getenv("WHIST_INITIAL_USER_COOKIES", None)
+
+    if not (cookies is None):
+        set_browser_cookies(browser, cookies)
