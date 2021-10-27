@@ -1,4 +1,4 @@
-export { configGet, configPost } from "./http"
+export { configGet, configPost, configPut } from "./http"
 export {
   paymentPortalRequest,
   paymentPortalParse,

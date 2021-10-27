@@ -5,7 +5,7 @@
  */
 
 import { AsyncReturnType } from "@app/@types/state"
-import { apiPut } from "@app/utils/api"
+import { hostPut } from "@app/utils/api"
 import { HostServicePort } from "@app/utils/constants"
 
 // This file directly interacts with data returned from the webserver, which
@@ -27,16 +27,14 @@ export const hostSpinUp = async ({
   jwt_access_token: string
   json_data: string
 }) =>
-  (await apiPut(
-    "/json_transport",
-    `https://${ip}:${HostServicePort}`,
-    {
+  hostPut(`https://${ip}:${HostServicePort}`)({
+    endpoint: "/json_transport",
+    body: {
       config_encryption_token,
       jwt_access_token,
       json_data,
     },
-    true
-  )) as {
+  }) as {
     status: number
     json?: {
       result?: {
