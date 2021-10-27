@@ -1,5 +1,5 @@
-import { merge, Observable, combineLatest, from } from "rxjs"
-import { map, switchMap, tap, take } from "rxjs/operators"
+import { merge, Observable, zip, from } from "rxjs"
+import { map, switchMap, share } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
@@ -25,7 +25,6 @@ export default flow(
   ) => {
     const create = mandelboxCreateFlow(
       trigger.pipe(
-        tap((x) => console.log("flow got", x)),
         map((t) => ({
           accessToken: t.accessToken,
         }))
@@ -117,12 +116,11 @@ export default flow(
       switchMap((t) =>
         from(getDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
       ),
-      tap((x) => console.log("finished", x?.[0]))
+      share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
     )
 
     const host = hostSpinUpFlow(
-      combineLatest([trigger, create.success, decrypted]).pipe(
-        take(1),
+      zip([trigger, create.success, decrypted]).pipe(
         map(([t, c, d]) => ({
           ip: c.ip,
           configToken: t.configToken,

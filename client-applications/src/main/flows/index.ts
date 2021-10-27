@@ -1,5 +1,5 @@
 import { merge, of, combineLatest, zip } from "rxjs"
-import { map, take, filter, startWith } from "rxjs/operators"
+import { map, take, filter, startWith, share, tap } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -86,7 +86,11 @@ const launchTrigger = fromSignal(
     fromTrigger(TRIGGER.checkPaymentFlowSuccess),
     refreshAfterPaying.success
   )
-).pipe(take(1))
+).pipe(
+  take(1),
+  tap((x) => console.log("LAUNCH TRIGGEr")),
+  share()
+)
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)
