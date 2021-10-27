@@ -123,5 +123,5 @@ if __name__ == "__main__":
     browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
     cookies = os.getenv("WHIST_INITIAL_USER_COOKIES", None)
 
-    if not (cookies is None):
+    if not (cookies is None) and len(cookies) > 0:
         set_browser_cookies(browser, cookies)
