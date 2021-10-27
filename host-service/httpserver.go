@@ -78,7 +78,6 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-
 // JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
 type JSONTransportRequest struct {
@@ -113,7 +112,6 @@ func (s *JSONTransportRequest) createResultChan() {
 		s.resultChan = make(chan requestResult)
 	}
 }
-
 
 // processJSONDataRequest processes an HTTP request to receive data
 // directly from the client app. It is handled in host-service.go
