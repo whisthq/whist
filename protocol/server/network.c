@@ -112,8 +112,8 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
             write_lock(&client.tcp_rwlock);
             destroy_socket_context(&client.tcp_context);
             if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
-                                          TCP_CONNECTION_WAIT, get_using_stun(),
-                                          binary_aes_private_key)) {
+                                           TCP_CONNECTION_WAIT, get_using_stun(),
+                                           binary_aes_private_key)) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&client.tcp_rwlock);
@@ -403,8 +403,8 @@ int multithreaded_manage_client(void *opaque) {
 
         // Even without multiclient, we need this for TCP recovery over the discovery port
         if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
-                                      TCP_CONNECTION_WAIT, get_using_stun(),
-                                      binary_aes_private_key)) {
+                                       TCP_CONNECTION_WAIT, get_using_stun(),
+                                       binary_aes_private_key)) {
             continue;
         }
 
