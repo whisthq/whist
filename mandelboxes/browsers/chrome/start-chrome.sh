@@ -15,24 +15,6 @@ if [[ ! -f $FRACTAL_CHROME_SINGLETON_LOCK ]]; then
     rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
-DARK_MODE=false
-RESTORE_LAST_SESSION=true
-
-FRACTAL_JSON_FILE=/fractal/resourceMappings/config.json
-if [[ -f $FRACTAL_JSON_FILE ]]; then
-  if [ "$( jq 'has("dark_mode")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
-    DARK_MODE="$(jq '.dark_mode' < $FRACTAL_JSON_FILE)"
-  fi
-  if [ "$( jq 'has("restore_last_session")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
-    RESTORE_LAST_SESSION="$(jq '.restore_last_session' < $FRACTAL_JSON_FILE)"
-  fi
-  if [ "$( jq 'has("desired_timezone")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
-    export TZ="$(jq '.desired_timezone' < $FRACTAL_JSON_FILE)"
-    #datetimectl $TZ
-  fi
-fi
-
-
 flags=(
   --use-gl=desktop
   --flag-switches-begin
@@ -53,7 +35,6 @@ fi
 if [[ $RESTORE_LAST_SESSION == true ]]; then
     flags+=(--restore-last-session)
 fi
-
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
