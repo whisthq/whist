@@ -56,35 +56,6 @@ export const hostSpinUp = async ({
     }
   }
 
-export const hostImportConfig = async ({
-  ip,
-  config_encryption_token,
-  jwt_access_token,
-  mandelbox_id,
-  session_id,
-  cookies,
-}: {
-  ip: string
-  config_encryption_token: string
-  jwt_access_token: string
-  mandelbox_id: string
-  session_id: string
-  cookies: any[]
-}) =>
-  await apiPut(
-    "/import_browser_cookies",
-    `https://${ip}:${HostServicePort}`,
-    {
-      app_name: `browsers/chrome`,
-      config_encryption_token,
-      jwt_access_token,
-      mandelbox_id,
-      session_id,
-      cookies,
-    },
-    true
-  )
-
 export type HostSpinUpResponse = AsyncReturnType<typeof hostSpinUp>
 
 export const hostSpinUpValid = (res: HostSpinUpResponse) => {

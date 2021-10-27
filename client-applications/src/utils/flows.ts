@@ -63,6 +63,7 @@ export const flow = <T>(
     let triggerPayload: object | undefined = {}
 
     trigger.pipe(take(1)).subscribe((x?: any) => {
+      logBase(`Flow ${name} started`, x)
       startTime = Date.now() // Get the timestamp of when the flow started running
       triggerPayload = x // Save the trigger payload for logging down below
     })
