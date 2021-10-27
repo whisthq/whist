@@ -122,10 +122,12 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
 	var data []byte
 	err := c.decryptFileInMemory(data)
-
+	logger.Infof("The data we have received is %v", data)
 	if err != nil {
+		logger.Infof("There was an error with the data???")
 		return err
 	} else if len(data) == 0 {
+		logger.Infof("Len is 0 sad")
 		return nil
 	}
 
