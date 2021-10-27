@@ -78,15 +78,6 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-// ImportBrowserConfigRequest defines the (unauthenticated) `import_browser_config`
-// endpoint
-type ImportBrowserConfigRequest struct {
-	AppName               mandelboxtypes.AppName               `json:"app_name"`                // The app name to spin up (in localdev, this can be an arbitrary container image, but in deployment it must be a mandelbox image name).
-	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
-	JwtAccessToken        string                      `json:"jwt_access_token"`        // User's JWT access token
-	Cookies 	   		  []map[string]string 		  `json:"browser_cookies"`		   // The cookies provided by the client-app
-	resultChan            chan requestResult          // Channel to pass the request result between goroutines
-}
 
 // JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
@@ -123,19 +114,6 @@ func (s *JSONTransportRequest) createResultChan() {
 	}
 }
 
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *ImportBrowserConfigRequest) ReturnResult(result interface{}, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass the request
-// result back to the HTTP request handler via ReturnResult.
-func (s *ImportBrowserConfigRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
 
 // processJSONDataRequest processes an HTTP request to receive data
 // directly from the client app. It is handled in host-service.go
@@ -352,7 +330,6 @@ func StartHTTPServer(globalCtx context.Context, globalCancel context.CancelFunc,
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/json_transport", createHandler(processJSONDataRequest))
-	mux.HandleFunc("/import_browser_config", createHandler(processImportBrowserConfigRequest))
 
 	// Create the server itself
 	server := &http.Server{
