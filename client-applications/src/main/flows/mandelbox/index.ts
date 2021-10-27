@@ -23,11 +23,19 @@ export default flow(
       )
     )
 
-    // Retrieve macOS keyboard repeat rate(s) to send them to the server
+    // Retrieve macOS keyboard repeat rates to send them to the mandelbox
     const initialKeyRepeat = execCommand(
-      `defaults read NSGlobalDomain InitialKeyRepeat`
+      "defaults read NSGlobalDomain InitialKeyRepeat",
+      ".",
+      {},
+      "pipe"
     )
-    const keyRepeat = execCommand(`defaults read NSGlobalDomain KeyRepeat`)
+    const keyRepeat = execCommand(
+      "defaults read NSGlobalDomain KeyRepeat",
+      ".",
+      {},
+      "pipe"
+    )
 
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
@@ -38,8 +46,10 @@ export default flow(
           json_data: JSON.stringify({
             initial_key_repeat: isNumber(initialKeyRepeat)
               ? initialKeyRepeat
-              : 68, // this fails if user hasn't modified the default value, which is 68
-            key_repeat: isNumber(keyRepeat) ? keyRepeat : 6, // this fails if user hasn't modified the default value, which is 6
+              : 68, // this fails if the user hasn't modified the default value, which is 68
+            key_repeat: isNumber(keyRepeat) 
+              ? keyRepeat 
+              : 6, // this fails if the user hasn't modified the default value, which is 6
           }), // Data to send through the JSON transport
         }))
       )
