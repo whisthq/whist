@@ -20,14 +20,13 @@ export default flow(
         }))
       )
     )
-
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
         map(([t, c]) => ({
           ip: c.ip,
           config_encryption_token: t.configToken,
           jwt_access_token: t.accessToken,
-          json_data: JSON.stringify({ dark_mode: nativeTheme.shouldUseDarkColors, restore_last_session:true, desired_timezone:Intl.DateTimeFormat().resolvedOptions().timeZone }), // Data to send through the JSON transport
+          json_data: JSON.stringify({ dark_mode:nativeTheme.shouldUseDarkColors , restore_last_session:true, desired_timezone:Intl.DateTimeFormat().resolvedOptions().timeZone}), // Data to send through the JSON transport
         }))
       )
     )
