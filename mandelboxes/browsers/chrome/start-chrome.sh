@@ -28,7 +28,7 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
   fi
   if [ "$( jq 'has("desired_timezone")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
     export TZ="$(jq '.desired_timezone' < $FRACTAL_JSON_FILE)"
-    datetimectl $TZ
+    #datetimectl $TZ
   fi
 fi
 
