@@ -243,7 +243,7 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
 
     // Use the burst bitrate to update the client's UDP packet throttle context
     network_throttler_set_burst_bitrate(
-        ((SocketAttributes *)client.udp_context.context)->network_throttler,
+        ((SocketContextData*)client.udp_context.context)->network_throttler,
         fcmsg->bitrate_data.burst_bitrate);
 
     // Update the encoder using the new bitrate
