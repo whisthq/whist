@@ -306,6 +306,7 @@ FractalPacket* read_packet(SocketContext* context, bool should_recv);
 /**
  * @brief                          Frees a FractalPacket created by read_packet
  *
+ * @param context                  The socket context that created the packet
  * @param packet                   The FractalPacket to free
  */
 void free_packet(SocketContext* context, FractalPacket* packet);
@@ -369,7 +370,7 @@ int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t pa
 /**
  * @brief                          Destroys an allocated and initialized SocketContext
  *
- * @param packet                   The SocketContext to destroy
+ * @param context                  The SocketContext to destroy
  */
 void destroy_socket_context(SocketContext* context);
 

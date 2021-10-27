@@ -294,6 +294,10 @@ int udp_write_payload_to_packets(uint8_t* payload, size_t payload_size, int payl
 void udp_destroy_socket_context(void* raw_context) {
     SocketContextData* context = raw_context;
 
+    if (context->decrypted_packet_used) {
+        LOG_ERROR("Destroyed the socket context, but didn't free the most recent UDP packet!");
+    }
+
     closesocket(context->socket);
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
