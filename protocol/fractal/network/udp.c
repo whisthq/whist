@@ -716,7 +716,6 @@ void free_udp_packet(FractalPacket* udp_packet) {
         TODO (abecohen): Change read_udp_packet to use malloc
         and then add "deallocate_region(udp_packet);" to this function.
     */
-    LOG_FATAL("free_udp_packet is not implemented!");
 }
 
 int create_udp_context(SocketAttributes* context, char* destination, int port,

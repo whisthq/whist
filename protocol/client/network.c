@@ -137,10 +137,10 @@ int discover_ports(bool *using_stun) {
         destroy_socket_context(&context);
         return -1;
     }
-    free_packet(&context, tcp_packet);
-    destroy_socket_context(&context);
 
     FractalServerMessage fsmsg = *(FractalServerMessage *)tcp_packet->data;
+    free_packet(&context, tcp_packet);
+    destroy_socket_context(&context);
     if (fsmsg.type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg.type);
         return -1;
