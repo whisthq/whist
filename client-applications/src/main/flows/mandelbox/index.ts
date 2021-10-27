@@ -5,7 +5,7 @@ import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { isNumber } from "lodash"
 
-const execCommand = require("./execCommand").execCommand
+const execCommand = require("./../../../../scripts/execCommand").execCommand
 
 export default flow(
   "mandelboxFlow",
