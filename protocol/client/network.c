@@ -138,18 +138,18 @@ int discover_ports(bool *using_stun) {
         return -1;
     }
 
-    FractalServerMessage fsmsg = *(FractalServerMessage *)tcp_packet->data;
-    free_packet(&context, tcp_packet);
-    destroy_socket_context(&context);
-    if (fsmsg.type != MESSAGE_DISCOVERY_REPLY) {
-        LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg.type);
+    FractalServerMessage* fsmsg = (FractalServerMessage*)tcp_packet->data;
+    if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
+        LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
+        free_packet(&context, tcp_packet);
+        destroy_socket_context(&context);
         return -1;
     }
 
     LOG_INFO("Received discovery info packet from server!");
 
     // Create and send discovery reply message
-    FractalDiscoveryReplyMessage *reply_msg = (FractalDiscoveryReplyMessage *)fsmsg.discovery_reply;
+    FractalDiscoveryReplyMessage *reply_msg = (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
@@ -159,6 +159,8 @@ int discover_ports(bool *using_stun) {
 
     error_monitor_set_connection_id(reply_msg->connection_id);
 
+    free_packet(&context, tcp_packet);
+    destroy_socket_context(&context);
     return 0;
 }
 
