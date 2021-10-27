@@ -37,8 +37,7 @@ extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 extern volatile char client_binary_aes_private_key[16];
 int udp_port = -1;
 int tcp_port = -1;
-SocketContext packet_send_udp_context = {0};
-SocketContext packet_receive_udp_context = {0};
+SocketContext packet_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 extern char *server_ip;
 int uid;
@@ -262,7 +261,7 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (!create_udp_socket_context(&packet_send_udp_context, server_ip, udp_port, 10,
+    if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, 10,
                                    UDP_CONNECTION_WAIT, using_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed establish UDP connection from server");
@@ -272,11 +271,9 @@ int connect_to_server(bool using_stun) {
     if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
                                    using_stun, (char *)client_binary_aes_private_key)) {
         LOG_ERROR("Failed to establish TCP connection with server.");
-        destroy_socket_context(&packet_send_udp_context);
+        destroy_socket_context(&packet_udp_context);
         return -1;
     }
-
-    packet_receive_udp_context = packet_send_udp_context;
 
     return 0;
 }
@@ -332,8 +329,7 @@ int close_connections(void) {
             (int): 0 on success
     */
 
-    destroy_socket_context(&packet_send_udp_context);
-    destroy_socket_context(&packet_receive_udp_context);
+    destroy_socket_context(&packet_udp_context);
     destroy_socket_context(&packet_tcp_context);
     return 0;
 }
@@ -400,7 +396,7 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet_from_payload(&packet_send_udp_context, PACKET_MESSAGE, fcmsg,
+        return send_packet_from_payload(&packet_udp_context, PACKET_MESSAGE, fcmsg,
                                         get_fcmsg_size(fcmsg), sent_packet_id);
     }
 }
