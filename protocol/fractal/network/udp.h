@@ -49,7 +49,7 @@ udp_context->free_packet(...);
  *                                  on failure
  */
 bool create_udp_socket_context(SocketContext* context, char* destination, int port,
-                                           int recvfrom_timeout_s, int connection_timeout_ms,
-                                           bool using_stun, char* binary_aes_private_key);
+                               int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
+                               char* binary_aes_private_key);
 
 #endif  // FRACTAL_UDP_H

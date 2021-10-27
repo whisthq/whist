@@ -121,24 +121,24 @@ Public Function Implementations
 FractalPacket* read_packet(SocketContext* context, bool should_recvp) {
     return context->read_packet(context->context, should_recvp);
 }
-int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                int len, int id) {
+int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data, int len,
+                             int id) {
     return context->send_packet_from_payload(context->context, type, data, len, id);
 }
 int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
     return context->send_packet(context->context, packet, packet_size);
 }
-void free_packet(SocketContext* context, FractalPacket* packet) {
-    context->free_packet(packet);
-}
-int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size, int payload_id,
-                          FractalPacketType packet_type, FractalPacket* packet_buffer,
-                          size_t packet_buffer_length) {
-    return context->write_payload_to_packets(payload, payload_size, payload_id, packet_type, packet_buffer, packet_buffer_length);
+void free_packet(SocketContext* context, FractalPacket* packet) { context->free_packet(packet); }
+int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
+                             int payload_id, FractalPacketType packet_type,
+                             FractalPacket* packet_buffer, size_t packet_buffer_length) {
+    return context->write_payload_to_packets(payload, payload_size, payload_id, packet_type,
+                                             packet_buffer, packet_buffer_length);
 }
 void destroy_socket_context(SocketContext* context) {
     closesocket(((SocketAttributes*)context->context)->socket);
-    NetworkThrottleContext* network_throttler = ((SocketAttributes*)context->context)->network_throttler;
+    NetworkThrottleContext* network_throttler =
+        ((SocketAttributes*)context->context)->network_throttler;
     if (!((SocketAttributes*)context->context)->is_tcp && network_throttler != NULL) {
         network_throttler_destroy(network_throttler);
     }
@@ -218,7 +218,6 @@ SOCKET socketp_udp() {
 
     return sock_fd;
 }
-
 
 bool handshake_private_key(SocketAttributes* context) {
     /*
@@ -556,7 +555,4 @@ int get_packet_size(FractalPacket* packet) {
     return PACKET_HEADER_SIZE + packet->payload_size;
 }
 
-int ack(SocketContext* context) {
-    return context->ack(context->context);
-}
-
+int ack(SocketContext* context) { return context->ack(context->context); }

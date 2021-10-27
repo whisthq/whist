@@ -112,8 +112,8 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
             write_lock(&client.tcp_rwlock);
             destroy_socket_context(&client.tcp_context);
             if (create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
-                                   TCP_CONNECTION_WAIT, get_using_stun(),
-                                   binary_aes_private_key) < 0) {
+                                          TCP_CONNECTION_WAIT, get_using_stun(),
+                                          binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&client.tcp_rwlock);
@@ -163,8 +163,8 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size,
-                                     -1) < 0) {
+    if (send_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) <
+        0) {
         LOG_ERROR("Failed to send discovery reply message.");
         destroy_socket_context(context);
         free(fsmsg);
@@ -185,14 +185,14 @@ Public Function Implementations
 */
 
 int connect_client(bool using_stun, char *binary_aes_private_key_input) {
-    if (!create_udp_socket_context(&client.udp_context, NULL, client.udp_port, 1, UDP_CONNECTION_WAIT,
-                           using_stun, binary_aes_private_key_input)) {
+    if (!create_udp_socket_context(&client.udp_context, NULL, client.udp_port, 1,
+                                   UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
 
-    if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1, TCP_CONNECTION_WAIT,
-                           using_stun, binary_aes_private_key_input)) {
+    if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
+                                   TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
         LOG_WARNING("Failed TCP connection with client");
         destroy_socket_context(&client.udp_context);
         return -1;
@@ -260,8 +260,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
 int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        if (send_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) <
-            0) {
+        if (send_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }
@@ -405,8 +404,9 @@ int multithreaded_manage_client(void *opaque) {
         }
 
         // Even without multiclient, we need this for TCP recovery over the discovery port
-        if (create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                               get_using_stun(), binary_aes_private_key) < 0) {
+        if (create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
+                                      TCP_CONNECTION_WAIT, get_using_stun(),
+                                      binary_aes_private_key) < 0) {
             continue;
         }
 

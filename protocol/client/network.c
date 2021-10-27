@@ -79,13 +79,13 @@ int discover_ports(bool *using_stun) {
     // Create TCP context
     SocketContext context;
     LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
-    if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
-                           (char *)client_binary_aes_private_key)) {
+    if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                                   *using_stun, (char *)client_binary_aes_private_key)) {
         /*
                 *using_stun = !*using_stun;
                 LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
-                if (create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                                       *using_stun, (char *)client_binary_aes_private_key) < 0) {
+                if (create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1,
+           TCP_CONNECTION_WAIT, *using_stun, (char *)client_binary_aes_private_key) < 0) {
         */
         LOG_WARNING("Failed to connect to server's discovery port.");
         return -1;
@@ -101,8 +101,8 @@ int discover_ports(bool *using_stun) {
 
     prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
 
-    if (send_packet_from_payload(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
-                                     (int)sizeof(fcmsg), -1) < 0) {
+    if (send_packet_from_payload(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg),
+                                 -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&context);
         return -1;
@@ -140,7 +140,7 @@ int discover_ports(bool *using_stun) {
     free_packet(&context, tcp_packet);
     destroy_socket_context(&context);
 
-    FractalServerMessage fsmsg = *(FractalServerMessage*)tcp_packet->data;
+    FractalServerMessage fsmsg = *(FractalServerMessage *)tcp_packet->data;
     if (fsmsg.type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg.type);
         return -1;
@@ -149,8 +149,7 @@ int discover_ports(bool *using_stun) {
     LOG_INFO("Received discovery info packet from server!");
 
     // Create and send discovery reply message
-    FractalDiscoveryReplyMessage *reply_msg =
-        (FractalDiscoveryReplyMessage *)fsmsg.discovery_reply;
+    FractalDiscoveryReplyMessage *reply_msg = (FractalDiscoveryReplyMessage *)fsmsg.discovery_reply;
 
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
@@ -261,14 +260,15 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (!create_udp_socket_context(&packet_send_udp_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
-                           using_stun, (char *)client_binary_aes_private_key)) {
+    if (!create_udp_socket_context(&packet_send_udp_context, server_ip, udp_port, 10,
+                                   UDP_CONNECTION_WAIT, using_stun,
+                                   (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
 
     if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
-                           using_stun, (char *)client_binary_aes_private_key)) {
+                                   using_stun, (char *)client_binary_aes_private_key)) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         destroy_socket_context(&packet_send_udp_context);
         return -1;
@@ -296,13 +296,13 @@ int send_tcp_reconnect_message(bool using_stun) {
 
     SocketContext discovery_context;
     if (!create_tcp_socket_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
-                           using_stun, (char *)client_binary_aes_private_key)) {
+                                   using_stun, (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to connect to server's discovery port.");
         return -1;
     }
 
     if (send_packet_from_payload(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
-                                     (int)sizeof(fcmsg), -1) < 0) {
+                                 (int)sizeof(fcmsg), -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&discovery_context);
         return -1;
@@ -313,8 +313,8 @@ int send_tcp_reconnect_message(bool using_stun) {
     //     close regardless of what caused the socket failure without worrying about
     //     undefined behavior.
     destroy_socket_context(&packet_tcp_context);
-    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000, using_stun,
-                           (char *)client_binary_aes_private_key)) {
+    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000,
+                                   using_stun, (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to connect to server's TCP port.");
         return -1;
     }
@@ -386,7 +386,7 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
     if (fcmsg->type == CMESSAGE_CLIPBOARD || fcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
         fcmsg->type == MESSAGE_TCP_PING) {
         return send_packet_from_payload(&packet_tcp_context, PACKET_MESSAGE, fcmsg,
-                                            get_fcmsg_size(fcmsg), -1);
+                                        get_fcmsg_size(fcmsg), -1);
     } else {
         if ((size_t)get_fcmsg_size(fcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
@@ -399,6 +399,6 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
         sent_packet_id++;
 
         return send_packet_from_payload(&packet_send_udp_context, PACKET_MESSAGE, fcmsg,
-                                            get_fcmsg_size(fcmsg), sent_packet_id);
+                                        get_fcmsg_size(fcmsg), sent_packet_id);
     }
 }

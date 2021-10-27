@@ -27,7 +27,6 @@ int tcp_ack(SocketAttributes* context);
 */
 SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
 
-
 /**
  * @brief                          This will send a FractalPacket over TCP to
  *                                 the SocketAttributes context. This function does
@@ -65,7 +64,7 @@ int send_tcp_packet(SocketAttributes* context, FractalPacket* packet, size_t pac
  */
 int send_tcp_packet_from_payload(SocketAttributes* context, FractalPacketType type, void* data,
                                  int len, int id);
-                        
+
 /**
  * @brief                          Initialize a TCP connection between a
  *                                 server and a client
@@ -94,8 +93,9 @@ int send_tcp_packet_from_payload(SocketAttributes* context, FractalPacketType ty
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int create_tcp_context(SocketAttributes* context, char* destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key);
+int create_tcp_context(SocketAttributes* context, char* destination, int port,
+                       int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun,
+                       char* binary_aes_private_key);
 
 /**
  * @brief                          Receive a FractalPacket from a SocketAttributes,
@@ -139,8 +139,8 @@ void free_tcp_packet(FractalPacket* tcp_packet);
  *                                 will enable us to use forward error correction, etc.
  */
 int write_payload_to_tcp_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length);
+                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                 size_t packet_buffer_length);
 
 /*
 ============================
@@ -149,14 +149,14 @@ Public Function Implementations
 */
 
 bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port,
-                                           int recvfrom_timeout_s, int connection_timeout_ms,
-                                           bool using_stun, char* binary_aes_private_key) {
+                               int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
+                               char* binary_aes_private_key) {
     // Make a socket context
     network_context->context = safe_malloc(sizeof(SocketAttributes));
 
     // Initialize the SocketAttributes with using_stun as false
-    if (create_tcp_context(network_context->context, destination, port, recvfrom_timeout_s, connection_timeout_ms,
-                           using_stun, binary_aes_private_key) < 0) {
+    if (create_tcp_context(network_context->context, destination, port, recvfrom_timeout_s,
+                           connection_timeout_ms, using_stun, binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to create TCP network context!");
         return false;
     };
@@ -180,9 +180,7 @@ Private Function Implementations
 ============================
 */
 
-int tcp_ack(SocketAttributes* context) {
-    return sendp(context, NULL, 0);
-}
+int tcp_ack(SocketAttributes* context) { return sendp(context, NULL, 0); }
 
 bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     /*
@@ -737,8 +735,9 @@ int create_tcp_client_context_stun(SocketAttributes* context, char* destination,
     return 0;
 }
 
-int create_tcp_context(SocketAttributes* context, char* destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
+int create_tcp_context(SocketAttributes* context, char* destination, int port,
+                       int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun,
+                       char* binary_aes_private_key) {
     /*
         Create a TCP context
 
@@ -1043,8 +1042,8 @@ int send_tcp_packet_from_payload(SocketAttributes* context, FractalPacketType ty
 }
 
 int write_payload_to_tcp_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length) {
+                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                 size_t packet_buffer_length) {
     /*
         Split a payload into several packets approprately-sized
         for TCP transport, and write those files to a buffer.

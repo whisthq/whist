@@ -96,8 +96,8 @@ void free_udp_packet(FractalPacket* tcp_packet);
  *                                 will enable us to use forward error correction, etc.
  */
 int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length);
+                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                 size_t packet_buffer_length);
 
 /**
  * @brief                          Initialize a UDP connection between a
@@ -127,8 +127,9 @@ int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payl
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int create_udp_context(SocketAttributes* context, char* destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key);
+int create_udp_context(SocketAttributes* context, char* destination, int port,
+                       int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun,
+                       char* binary_aes_private_key);
 
 /*
 ============================
@@ -137,14 +138,14 @@ Public Function Implementations
 */
 
 bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
-                                           int recvfrom_timeout_s, int connection_timeout_ms,
-                                           bool using_stun, char* binary_aes_private_key) {
+                               int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
+                               char* binary_aes_private_key) {
     // Create the attributes, set to zero, and load its functions
     network_context->context = safe_malloc(sizeof(SocketAttributes));
 
     // Initialize the SocketAttributes with using_stun as false
-    if (create_udp_context(network_context->context, destination, port, recvfrom_timeout_s, connection_timeout_ms,
-                           using_stun, binary_aes_private_key) < 0) {
+    if (create_udp_context(network_context->context, destination, port, recvfrom_timeout_s,
+                           connection_timeout_ms, using_stun, binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to create UDP network context!");
         return false;
     };
@@ -168,9 +169,7 @@ Private Function Implementations
 ============================
 */
 
-int udp_ack(SocketAttributes* context) {
-    return sendp(context, NULL, 0);
-}
+int udp_ack(SocketAttributes* context) { return sendp(context, NULL, 0); }
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
@@ -241,7 +240,6 @@ int send_udp_packet(SocketAttributes* context, FractalPacket* packet, size_t pac
 
     return 0;
 }
-
 
 int create_udp_server_context(SocketAttributes* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
@@ -716,11 +714,12 @@ void free_udp_packet(FractalPacket* udp_packet) {
         TODO (abecohen): Change read_udp_packet to use malloc
         and then add "deallocate_region(udp_packet);" to this function.
     */
-   LOG_FATAL("free_udp_packet is not implemented!");
+    LOG_FATAL("free_udp_packet is not implemented!");
 }
 
-int create_udp_context(SocketAttributes* context, char* destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
+int create_udp_context(SocketAttributes* context, char* destination, int port,
+                       int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun,
+                       char* binary_aes_private_key) {
     /*
         Create a UDP context
 
@@ -762,17 +761,17 @@ int create_udp_context(SocketAttributes* context, char* destination, int port, i
     int ret;
     if (using_stun) {
         if (destination == NULL)
-            ret = create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
-                                                  stun_timeout_ms);
+            ret =
+                create_udp_server_context_stun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
             ret = create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                                  stun_timeout_ms);
+                                                 stun_timeout_ms);
     } else {
         if (destination == NULL)
             ret = create_udp_server_context(context, port, recvfrom_timeout_ms, stun_timeout_ms);
         else
             ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                             stun_timeout_ms);
+                                            stun_timeout_ms);
     }
 
     if (ret == 0) {
@@ -781,8 +780,8 @@ int create_udp_context(SocketAttributes* context, char* destination, int port, i
         // this is set to stop the kernel from buffering too much, thereby
         // getting the data to us faster for lower latency
         int a = 65535;
-        if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
-                    sizeof(int)) == -1) {
+        if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof(int)) ==
+            -1) {
             LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
             closesocket(context->socket);
             return -1;
@@ -793,8 +792,8 @@ int create_udp_context(SocketAttributes* context, char* destination, int port, i
 }
 
 int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length) {
+                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                 size_t packet_buffer_length) {
     /*
         Split a payload into several packets approprately-sized
         for UDP transport, and write those files to a buffer.

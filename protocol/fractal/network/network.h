@@ -230,8 +230,8 @@ typedef struct SocketContext {
     int (*send_packet)(SocketAttributes* context, FractalPacket* packet, size_t packet_size);
     void (*free_packet)(FractalPacket* packet);  // Only Non-NULL in TCP.
     int (*write_payload_to_packets)(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length);
+                                    FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                    size_t packet_buffer_length);
 } SocketContext;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -286,17 +286,15 @@ int get_packet_size(FractalPacket* packet);
 int ack(SocketContext* context);
 
 FractalPacket* read_packet(SocketContext* context, bool should_recvp);
-int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                int len, int id);  // id only valid in UDP contexts
+int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data, int len,
+                             int id);  // id only valid in UDP contexts
 int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
 void free_packet(SocketContext* context, FractalPacket* packet);  // Only Non-NULL in TCP.
-int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size, int payload_id,
-                          FractalPacketType packet_type, FractalPacket* packet_buffer,
-                          size_t packet_buffer_length);
+int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
+                             int payload_id, FractalPacketType packet_type,
+                             FractalPacket* packet_buffer, size_t packet_buffer_length);
 
 void destroy_socket_context(SocketContext* context);
-
-
 
 typedef struct {
     char iv[16];
