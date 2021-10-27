@@ -26,6 +26,10 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
   if [ "$( jq 'has("restore_last_session")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
     RESTORE_LAST_SESSION="$(jq '.restore_last_session' < $FRACTAL_JSON_FILE)"
   fi
+  if [ "$( jq 'has("desired_timezone")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    export TZ="$(jq '.desired_timezone' < $FRACTAL_JSON_FILE)"
+    datetimectl $TZ
+  fi
 fi
 
 
