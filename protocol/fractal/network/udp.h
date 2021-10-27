@@ -1,5 +1,5 @@
-#ifndef UDP_H
-#define UDP_H
+#ifndef FRACTAL_UDP_H
+#define FRACTAL_UDP_H
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file udp.h
@@ -39,7 +39,7 @@ udp_context->free_packet(...);
  * @param connection_timeout_ms     The timeout that will be used when attempting
  *                                  to connect. The handshake sends a few packets
  *                                  back and forth, so the upper bound of how
- *                                  long CreateUDPNetworkContext will take is
+ *                                  long CreateUDPSocketContext will take is
  * @param using_stun                True/false for whether or not to use the STUN server for this
  *                                  context
  *                                  some small constant times connection_timeout_ms
@@ -48,8 +48,8 @@ udp_context->free_packet(...);
  * @return                          The UDP network context on success, NULL
  *                                  on failure
  */
-NetworkContext* create_udp_network_context(SocketContext* context, char* destination, int port,
+bool create_udp_socket_context(SocketContext* context, char* destination, int port,
                                            int recvfrom_timeout_s, int connection_timeout_ms,
                                            bool using_stun, char* binary_aes_private_key);
 
-#endif  // UDP_H
+#endif  // FRACTAL_UDP_H

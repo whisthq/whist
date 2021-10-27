@@ -7,7 +7,7 @@
 Usage
 ============================
 
-SocketContext: This type represents a socket.
+SocketAttributes: This type represents a socket.
    - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
      parameters
    - To send data over a socket, call SendTCPPacket or SendUDPPacket
@@ -42,7 +42,7 @@ if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
 Client
 -----
 
-SocketContext context;
+SocketAttributes context;
 CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
 
 char* msg = "Hello this is a message!";
@@ -52,7 +52,7 @@ SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
 Server
 -----
 
-SocketContext context;
+SocketAttributes context;
 CreateTCPContext(&context, NULL, 5055, 500, 250);
 
 FractalPacket* packet = NULL;
@@ -87,21 +87,14 @@ LOG_INFO("MESSAGE: %s", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
+// Global data
+unsigned short port_mappings[USHRT_MAX + 1];
+
 /*
 ============================
 Private Custom Types
 ============================
 */
-
-typedef struct {
-    char iv[16];
-    char signature[32];
-} PrivateKeyData;
-
-typedef struct {
-    char iv[16];
-    char private_key[16];
-} SignatureData;
 
 /**
  * @brief                       Struct to keep response data from a curl
@@ -120,73 +113,33 @@ Private Functions
 */
 
 /*
-@brief                          This will set `socket` to have timeout
-                                timeout_ms.
-
-@param socket                   The SOCKET to be configured
-@param timeout_ms               The maximum amount of time that all recv/send
-                                calls will take for that socket (0 to return
-                                immediately, -1 to never return). Set 0 to have
-                                a non-blocking socket, and -1 for an indefinitely
-                                blocking socket.
+============================
+Public Function Implementations
+============================
 */
-void set_timeout(SOCKET socket, int timeout_ms);
 
-/*
-@brief                          Perform socket syscalls and set fds to
-                                use flag FD_CLOEXEC
-
-@returns                        The socket file descriptor, -1 on failure
-*/
-SOCKET socketp_tcp();
-SOCKET socketp_udp();
-
-/*
-@brief                          This will prepare the private key data
-
-@param priv_key_data            The private key data buffer
-*/
-void prepare_private_key_request(PrivateKeyData* priv_key_data);
-
-/*
-@brief                          This will sign the other connection's private key data
-
-@param priv_key_data            The private key data buffer
-@param recv_size                The length of the buffer
-@param private_key              The private key
-
-@returns                        True if the verification succeeds, false if it fails
-*/
-bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
-
-/*
-@brief                          This will verify the given private key
-
-@param our_priv_key_data        The private key data buffer
-@param our_signed_priv_key_data The signed private key data buffer
-@param recv_size                The length of the buffer
-@param private_key              The private key
-
-@returns                        True if the verification succeeds, false if it fails
-*/
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
-                         void* private_key);
-
-/**
- * @brief                          This will send or receive data over a socket
- *
- * @param context                  The socket context to be used
- * @param buf                      The buffer to read or write to
- * @param len                      The length of the buffer to send over the socket
-                                   Or, the maximum number of bytes that can be read
- *                                 from the socket
-
- * @returns                        The number of bytes that have been read or
- *                                 written to or from the buffer
- */
-int recvp(SocketContext* context, void* buf, int len);
-int sendp(SocketContext* context, void* buf, int len);
+FractalPacket* read_packet(SocketContext* context, bool should_recvp) {
+    return context->read_packet(context->context, should_recvp);
+}
+int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                int len, int id) {
+    return context->send_packet_from_payload(context->context, type, data, len, id);
+}
+int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
+    return context->send_packet(context->context, packet, packet_size);
+}
+void free_packet(SocketContext* context, FractalPacket* packet) {
+    context->free_packet(packet);
+}
+int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size, int payload_id,
+                          FractalPacketType packet_type, FractalPacket* packet_buffer,
+                          size_t packet_buffer_length) {
+    return context->write_payload_to_packets(payload, payload_size, payload_id, packet_type, packet_buffer, packet_buffer_length);
+}
+void destroy_socket_context(SocketContext* context) {
+    closesocket(((SocketAttributes*)context->context)->socket);
+    free(context->context);
+}
 
 /*
 ============================
@@ -263,12 +216,12 @@ SOCKET socketp_udp() {
 }
 
 
-bool handshake_private_key(SocketContext* context) {
+bool handshake_private_key(SocketAttributes* context) {
     /*
         Perform a private key handshake with a peer.
 
         Arguments:
-            context (SocketContext*): the socket context to be used
+            context (SocketAttributes*): the socket context to be used
 
         Returns:
             (bool): True on success, False on failure
@@ -494,7 +447,7 @@ void init_networking() {
     */
 
     for (int i = 0; i <= USHRT_MAX; i++) {
-        fractal_port_mappings[i] = (unsigned short)i;
+        port_mappings[i] = (unsigned short)i;
     }
 }
 
@@ -514,12 +467,12 @@ int get_last_network_error() {
 #endif
 }
 
-int recvp(SocketContext* context, void* buf, int len) {
+int recvp(SocketAttributes* context, void* buf, int len) {
     /*
         This will receive data over a socket
 
         Arguments:
-            context (SocketContext*): The socket context to be used
+            context (SocketAttributes*): The socket context to be used
             buf (void*): The buffer to write to
             len (int): The maximum number of bytes that can be read
                 from the socket
@@ -539,12 +492,12 @@ int recvp(SocketContext* context, void* buf, int len) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int sendp(SocketContext* context, void* buf, int len) {
+int sendp(SocketAttributes* context, void* buf, int len) {
     /*
         This will send data over a socket
 
         Arguments:
-            context (SocketContext*): The socket context to be used
+            context (SocketAttributes*): The socket context to be used
             buf (void*): The buffer to read from
             len (int): The length of the buffer to send over the socket
 
@@ -600,20 +553,6 @@ int get_packet_size(FractalPacket* packet) {
 }
 
 int ack(SocketContext* context) {
-    /*
-        Send a 0-length packet over the socket. Used to keep-alive over NATs,
-        and to check on the validity of the socket.
-
-        Arguments:
-            context (SocketContext*): The socket context
-
-        Returns:
-            (int): Will return -1 on failure, will return 0 on success.
-                Failure implies that the socket is broken or the TCP
-                connection has ended, use GetLastNetworkError() to learn
-                more about the error
-    */
-
-    return sendp(context, NULL, 0);
+    return context->ack(context->context);
 }
 

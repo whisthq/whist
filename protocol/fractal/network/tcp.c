@@ -1,47 +1,19 @@
 #include "tcp.h"
+#include <fractal/utils/aes.h>
 
-extern unsigned short fractal_port_mappings[USHRT_MAX + 1];
+#ifndef _WIN32
+#include <fcntl.h>
+#endif
 
-/*
-============================
-Public Function Implementations
-============================
-*/
-
-NetworkContext* create_tcp_network_context(SocketContext* context, char* destination, int port,
-                                           int recvfrom_timeout_s, int connection_timeout_ms,
-                                           bool using_stun, char* binary_aes_private_key) {
-    // Initialize the SocketContext with using_stun as false
-    if (create_tcp_context(context, destination, port, recvfrom_timeout_s, connection_timeout_ms,
-                           using_stun, binary_aes_private_key) < 0) {
-        LOG_WARNING("Failed to create TCP network context!");
-        return NULL;
-    };
-
-    // Create the nextwork_context, set to zero, and load its functions
-    NetworkContext* network_context = safe_malloc(sizeof(NetworkContext));
-
-    // Functions common to all network contexts
-    network_context->ack = ack;
-
-    // Funcitons common to only TCP contexts
-    network_context->read_packet = read_tcp_packet;
-    network_context->send_packet = send_tcp_packet;
-    network_context->send_packet_from_payload = send_tcp_packet_from_payload;
-    network_context->free_packet = free_tcp_packet;
-    network_context->write_payload_to_packets = write_payload_to_tcp_packets;
-
-    // Add in the socket context
-    network_context->context = context;
-
-    return network_context;
-}
+extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
 Private Functions
 ============================
 */
+
+int tcp_ack(SocketAttributes* context);
 
 /*
 @brief                          Perform accept syscall and set fd to use flag
@@ -58,7 +30,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
- *                                 the SocketContext context. This function does
+ *                                 the SocketAttributes context. This function does
  *                                 not create the packet from raw data, but
  *                                 assumes that the packet has been prepared by
  *                                 the caller (e.g. fragmented into
@@ -74,11 +46,11 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_tcp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
+int send_tcp_packet(SocketAttributes* context, FractalPacket* packet, size_t packet_size);
 
 /**
  * @brief                          This will send a FractalPacket over TCP to
- *                                 the SocketContext context. A
+ *                                 the SocketAttributes context. A
  *                                 FractalPacketType is also provided to
  *                                 describe the packet
  *
@@ -91,7 +63,7 @@ int send_tcp_packet(SocketContext* context, FractalPacket* packet, size_t packet
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+int send_tcp_packet_from_payload(SocketAttributes* context, FractalPacketType type, void* data,
                                  int len, int id);
                         
 /**
@@ -107,7 +79,7 @@ int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type,
  *                                 virtual port if USING_STUN is
  *                                 true; (The real port will be some randomly
  *                                 chosen port if USING_STUN is true)
- * @param recvfrom_timeout_s       The timeout that the socketcontext will use
+ * @param recvfrom_timeout_s       The timeout that the SocketAttributes will use
  *                                 after being initialized
  * @param connection_timeout_ms    The timeout that will be used when attempting
  *                                 to connect. The handshake sends a few packets
@@ -122,11 +94,11 @@ int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type,
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+int create_tcp_context(SocketAttributes* context, char* destination, int port, int recvfrom_timeout_ms,
                        int stun_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /**
- * @brief                          Receive a FractalPacket from a SocketContext,
+ * @brief                          Receive a FractalPacket from a SocketAttributes,
  *                                 if any such packet exists
  *
  * @param context                  The socket context
@@ -139,7 +111,7 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
  * @returns                        A pointer to the FractalPacket on success,
  *                                 NULL on failure
  */
-FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
+FractalPacket* read_tcp_packet(SocketAttributes* context, bool should_recvp);
 
 /**
  * @brief                          Frees a TCP/udp packet created by read_tcp_packet/read_udp_packet
@@ -172,9 +144,45 @@ int write_payload_to_tcp_packets(uint8_t* payload, size_t payload_size, int payl
 
 /*
 ============================
+Public Function Implementations
+============================
+*/
+
+bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port,
+                                           int recvfrom_timeout_s, int connection_timeout_ms,
+                                           bool using_stun, char* binary_aes_private_key) {
+    // Make a socket context
+    network_context->context = safe_malloc(sizeof(SocketAttributes));
+
+    // Initialize the SocketAttributes with using_stun as false
+    if (create_tcp_context(network_context->context, destination, port, recvfrom_timeout_s, connection_timeout_ms,
+                           using_stun, binary_aes_private_key) < 0) {
+        LOG_WARNING("Failed to create TCP network context!");
+        return false;
+    };
+
+    // Functions common to all network contexts
+    network_context->ack = tcp_ack;
+
+    // Funcitons common to only TCP contexts
+    network_context->read_packet = read_tcp_packet;
+    network_context->send_packet = send_tcp_packet;
+    network_context->send_packet_from_payload = send_tcp_packet_from_payload;
+    network_context->free_packet = free_tcp_packet;
+    network_context->write_payload_to_packets = write_payload_to_tcp_packets;
+
+    return true;
+}
+
+/*
+============================
 Private Function Implementations
 ============================
 */
+
+int tcp_ack(SocketAttributes* context) {
+    return sendp(context, NULL, 0);
+}
 
 bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     /*
@@ -245,13 +253,13 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-int create_tcp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
+int create_tcp_server_context(SocketAttributes* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
     /*
         Create a TCP server context
 
         Arguments:
-            context (SocketContext*): pointer to the context to populate
+            context (SocketAttributes*): pointer to the context to populate
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
             stun_timeout_ms (int): timeout, in milliseconds, for socket connection
@@ -350,13 +358,13 @@ int create_tcp_server_context(SocketContext* context, int port, int recvfrom_tim
     return 0;
 }
 
-int create_tcp_server_context_stun(SocketContext* context, int port, int recvfrom_timeout_ms,
+int create_tcp_server_context_stun(SocketAttributes* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
     /*
         Create a TCP server context over STUN server
 
         Arguments:
-            context (SocketContext*): pointer to the context to populate
+            context (SocketAttributes*): pointer to the context to populate
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
             stun_timeout_ms (int): timeout, in milliseconds, for socket connection
@@ -504,13 +512,13 @@ int create_tcp_server_context_stun(SocketContext* context, int port, int recvfro
     return 0;
 }
 
-int create_tcp_client_context(SocketContext* context, char* destination, int port,
+int create_tcp_client_context(SocketAttributes* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     /*
         Create a TCP client context
 
         Arguments:
-            context (SocketContext*): pointer to the context to populate
+            context (SocketAttributes*): pointer to the context to populate
             destination (char*): the destination address
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
@@ -562,13 +570,13 @@ int create_tcp_client_context(SocketContext* context, char* destination, int por
     return 0;
 }
 
-int create_tcp_client_context_stun(SocketContext* context, char* destination, int port,
+int create_tcp_client_context_stun(SocketAttributes* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
     /*
         Create a TCP client context over STUN server
 
         Arguments:
-            context (SocketContext*): pointer to the context to populate
+            context (SocketAttributes*): pointer to the context to populate
             destination (char*): the destination address
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
@@ -729,13 +737,13 @@ int create_tcp_client_context_stun(SocketContext* context, char* destination, in
     return 0;
 }
 
-int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+int create_tcp_context(SocketAttributes* context, char* destination, int port, int recvfrom_timeout_ms,
                        int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
     /*
         Create a TCP context
 
         Arguments:
-            context (SocketContext*): pointer to the context to populate
+            context (SocketAttributes*): pointer to the context to populate
             destination (char*): the destination address
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
@@ -754,7 +762,7 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
         LOG_ERROR("Context is NULL");
         return -1;
     }
-    port = fractal_port_mappings[port];
+    port = port_mappings[port];
 
     context->timeout = recvfrom_timeout_ms;
     context->mutex = fractal_create_mutex();
@@ -831,12 +839,12 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) 
     return new_socket;
 }
 
-FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
+FractalPacket* read_tcp_packet(SocketAttributes* context, bool should_recvp) {
     /*
-        Receive a FractalPacket from a SocketContext, if any such packet exists
+        Receive a FractalPacket from a SocketAttributes, if any such packet exists
 
         Arguments:
-            context (SocketContext*): The socket context
+            context (SocketAttributes*): The socket context
             should_recvp (bool): If false, this function will only pop buffered packets
                 If true, this function will pull data from the TCP socket,
                 but that might take a while
@@ -950,7 +958,7 @@ void free_tcp_packet(FractalPacket* tcp_packet) {
     deallocate_region(tcp_packet);
 }
 
-int send_tcp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
+int send_tcp_packet(SocketAttributes* context, FractalPacket* packet, size_t packet_size) {
     LOG_FATAL("send_tcp_packet has not been implemented!");
     return -1;
 }
@@ -958,14 +966,14 @@ int send_tcp_packet(SocketContext* context, FractalPacket* packet, size_t packet
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+int send_tcp_packet_from_payload(SocketAttributes* context, FractalPacketType type, void* data,
                                  int len, int id) {
     /*
-        This will send a FractalPacket over TCP to the SocketContext context containing
+        This will send a FractalPacket over TCP to the SocketAttributes context containing
         the specified payload. A FractalPacketType is also provided to describe the packet.
 
         Arguments:
-            context (SocketContext*): The socket context
+            context (SocketAttributes*): The socket context
             type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
             data (void*): A pointer to the data to be sent
             len (int): The number of bytes to send

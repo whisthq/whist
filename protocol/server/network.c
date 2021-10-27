@@ -110,8 +110,8 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
             //     close regardless of what caused the socket failure without worrying about
             //     undefined behavior.
             write_lock(&client.tcp_rwlock);
-            closesocket(client.tcp_context.socket);
-            if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1,
+            destroy_socket_context(&client.tcp_context);
+            if (create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
                                    TCP_CONNECTION_WAIT, get_using_stun(),
                                    binary_aes_private_key) < 0) {
                 LOG_WARNING("Failed TCP connection with client");
@@ -185,13 +185,13 @@ Public Function Implementations
 */
 
 int connect_client(bool using_stun, char *binary_aes_private_key_input) {
-    if (create_udp_context(&(client.udp_context), NULL, client.udp_port, 1, UDP_CONNECTION_WAIT,
+    if (create_udp_socket_context(&(client.udp_context), NULL, client.udp_port, 1, UDP_CONNECTION_WAIT,
                            using_stun, binary_aes_private_key_input) < 0) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
 
-    if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1, TCP_CONNECTION_WAIT,
+    if (create_tcp_socket_context(&(client.tcp_context), NULL, client.tcp_port, 1, TCP_CONNECTION_WAIT,
                            using_stun, binary_aes_private_key_input) < 0) {
         LOG_WARNING("Failed TCP connection with client");
         closesocket(client.udp_context.socket);
@@ -402,7 +402,7 @@ int multithreaded_manage_client(void *opaque) {
         }
 
         // Even without multiclient, we need this for TCP recovery over the discovery port
-        if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+        if (create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
                                get_using_stun(), binary_aes_private_key) < 0) {
             continue;
         }

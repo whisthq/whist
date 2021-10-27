@@ -9,7 +9,7 @@
 Usage
 ============================
 
-SocketContext: This type represents a socket.
+SocketAttributes: This type represents a socket.
    - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
      parameters
    - To send data over a socket, call SendTCPPacket or SendUDPPacket
@@ -44,7 +44,7 @@ if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
 Client
 -----
 
-SocketContext context;
+SocketAttributes context;
 CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
 
 char* msg = "Hello this is a message!";
@@ -54,7 +54,7 @@ SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
 Server
 -----
 
-SocketContext context;
+SocketAttributes context;
 CreateTCPContext(&context, NULL, 5055, 500, 250);
 
 FractalPacket* packet = NULL;
@@ -138,7 +138,7 @@ Custom types
 ============================
 */
 
-typedef struct SocketContext {
+typedef struct SocketAttributes {
     bool is_server;
     bool is_tcp;
     bool udp_is_connected;
@@ -152,7 +152,7 @@ typedef struct SocketContext {
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
     NetworkThrottleContext* network_throttler;
-} SocketContext;
+} SocketAttributes;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
@@ -169,7 +169,7 @@ typedef enum FractalPacketType {
 
 /**
  * @brief                          Packet of data to be sent over a
- *                                 SocketContext
+ *                                 SocketAttributes
  */
 typedef struct FractalPacket {
     char hash[16];  // Hash of the rest of the packet
@@ -217,31 +217,28 @@ typedef struct {
  *                              and socket context of a network protocol
  *
  */
-typedef struct NetworkContext {
+typedef struct SocketContext {
     // Attributes
-    SocketContext* context;
+    void* context;
 
     // Functions common to all network connections
-    int (*ack)(SocketContext* context);
-    FractalPacket* (*read_packet)(SocketContext* context, bool should_recvp);
+    int (*ack)(SocketAttributes* context);
+    FractalPacket* (*read_packet)(SocketAttributes* context, bool should_recvp);
 
-    int (*send_packet_from_payload)(SocketContext* context, FractalPacketType type, void* data,
+    int (*send_packet_from_payload)(SocketAttributes* context, FractalPacketType type, void* data,
                                     int len, int id);  // id only valid in UDP contexts
-    int (*send_packet)(SocketContext* context, FractalPacket* packet, size_t packet_size);
+    int (*send_packet)(SocketAttributes* context, FractalPacket* packet, size_t packet_size);
     void (*free_packet)(FractalPacket* packet);  // Only Non-NULL in TCP.
     int (*write_payload_to_packets)(uint8_t* payload, size_t payload_size, int payload_id,
                              FractalPacketType packet_type, FractalPacket* packet_buffer,
                              size_t packet_buffer_length);
-} NetworkContext;
+} SocketContext;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
 #define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
 // Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size (If
 // Unencrypted)
 //                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
-
-// Global data
-unsigned short fractal_port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
@@ -287,5 +284,102 @@ int get_packet_size(FractalPacket* packet);
  *                                 error
  */
 int ack(SocketContext* context);
+
+FractalPacket* read_packet(SocketContext* context, bool should_recvp);
+int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
+                                int len, int id);  // id only valid in UDP contexts
+int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
+void free_packet(SocketContext* context, FractalPacket* packet);  // Only Non-NULL in TCP.
+int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size, int payload_id,
+                          FractalPacketType packet_type, FractalPacket* packet_buffer,
+                          size_t packet_buffer_length);
+
+void destroy_socket_context(SocketContext* context);
+
+
+
+typedef struct {
+    char iv[16];
+    char signature[32];
+} PrivateKeyData;
+
+typedef struct {
+    char iv[16];
+    char private_key[16];
+} SignatureData;
+
+/*
+@brief                          This will set `socket` to have timeout
+                                timeout_ms.
+
+@param socket                   The SOCKET to be configured
+@param timeout_ms               The maximum amount of time that all recv/send
+                                calls will take for that socket (0 to return
+                                immediately, -1 to never return). Set 0 to have
+                                a non-blocking socket, and -1 for an indefinitely
+                                blocking socket.
+*/
+void set_timeout(SOCKET socket, int timeout_ms);
+
+/*
+@brief                          Perform socket syscalls and set fds to
+                                use flag FD_CLOEXEC
+
+@returns                        The socket file descriptor, -1 on failure
+*/
+SOCKET socketp_tcp();
+SOCKET socketp_udp();
+
+/*
+@brief                          This will prepare the private key data
+
+@param priv_key_data            The private key data buffer
+*/
+void prepare_private_key_request(PrivateKeyData* priv_key_data);
+
+/*
+@brief                          This will sign the other connection's private key data
+
+@param priv_key_data            The private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
+
+/*
+@brief                          This will verify the given private key
+
+@param our_priv_key_data        The private key data buffer
+@param our_signed_priv_key_data The signed private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                         void* private_key);
+
+bool handshake_private_key(SocketAttributes* context);
+
+/**
+ * @brief                          This will send or receive data over a socket
+ *
+ * @param context                  The socket context to be used
+ * @param buf                      The buffer to read or write to
+ * @param len                      The length of the buffer to send over the socket
+                                   Or, the maximum number of bytes that can be read
+ *                                 from the socket
+
+ * @returns                        The number of bytes that have been read or
+ *                                 written to or from the buffer
+ */
+int recvp(SocketAttributes* context, void* buf, int len);
+int sendp(SocketAttributes* context, void* buf, int len);
+
+#include <fractal/network/tcp.h>
+#include <fractal/network/udp.h>
 
 #endif  // NETWORK_H
