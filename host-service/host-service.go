@@ -1164,9 +1164,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
 				}
-
-			case *ImportBrowserConfigRequest:
-				go ImportBrowserConfig(globalCtx, globalCancel, goroutineTracker, serverevent.(*ImportBrowserConfigRequest))
 			default:
 				if serverevent != nil {
 					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
