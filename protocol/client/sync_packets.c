@@ -283,7 +283,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         // Time the following recvfrom code
         start_timer(&recvfrom_timer);
         FractalPacket* packet;
-        packet = read_packet(&socket_context, false);
+        packet = read_packet(&socket_context, true);
 
         double recvfrom_short_time = get_timer(recvfrom_timer);
 

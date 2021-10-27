@@ -9,183 +9,28 @@ extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
-Private Functions
+UDP Implementation of Network.h Interface
 ============================
 */
 
-int udp_ack(SocketAttributes* context);
-
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketAttributes context. This function does
- *                                 not create the packet from raw data, but
- *                                 assumes that the packet has been prepared by
- *                                 the caller (e.g. fragmented into
- *                                 appropriately-sized chunks by a fragmenter).
- *                                 This function assumes and checks that the
- *                                 packet is small enough to send without
- *                                 further breaking into smaller packets.
- *
- * @param context                  The socket context
- * @param packet                   A pointer to the packet to be sent
- * @param packet_size              The size of the packet to be sent
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet(SocketAttributes* context, FractalPacket* packet, size_t packet_size);
-
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketAttributes context. A
- *                                 FractalPacketType is also provided to the
- *                                 receiving end
- *
- * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- * @param id                       An ID for the UDP data.
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet_from_payload(SocketAttributes* context, FractalPacketType type, void* data,
-                                 int len, int id);
-
-/**
- * @brief                          Receive a FractalPacket from a SocketAttributes,
- *                                 if any such packet exists
- *
- * @param context                  The socket context
- * @param should_recvp             Only valid in TCP contexts. Adding in so that functions can
- *                                 be generalized.
- *                                 If false, this function will only pop buffered packets
- *                                 If true, this function will pull data from the UDP socket,
- *                                 but that might take a while
- *
- * @returns                        A pointer to the FractalPacket on success,
- *                                 NULL on failure
- */
-FractalPacket* read_udp_packet(SocketAttributes* context, bool should_recvp);
-
-/**
- * @brief                          Frees a UDP packet created by read_tcp_packet/read_udp_packet
- *
- * @param tcp_packet               The UDP packet to free
- */
-void free_udp_packet(SocketAttributes* context, FractalPacket* tcp_packet);
-
-/**
- * @brief                          Split a payload into several packets approprately-sized
- *                                 for UDP transport, and write those files to a buffer.
- *
- * @param payload                  The payload data to be split into packets
- * @param payload_size             The size of the payload, in bytes
- * @param payload_id               An ID for the UDP data (must be positive)
- * @param packet_type              The FractalPacketType (video, audio, or message)
- * @param packet_buffer            The buffer to write the packets to
- * @param packet_buffer_length     The length of the packet buffer
- *
- * @returns                        The number of packets that were written to the buffer,
- *                                 or -1 on failure
- *
- * @note                           This function should be removed and replaced with
- *                                 a more general packet splitter/joiner context, which
- *                                 will enable us to use forward error correction, etc.
- */
-int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
-                                 size_t packet_buffer_length);
-
-/**
- * @brief                          Initialize a UDP connection between a
- *                                 server and a client
- *
- * @param context                  The socket context that will be initialized
- * @param destination              The server IP address to connect to. Passing
- *                                 NULL will wait for another client to connect
- *                                 to the socket
- * @param port                     The port to connect to. This will be a real
- *                                 port if USING_STUN is false, and it will be a
- *                                 virtual port if USING_STUN is
- *                                 true; (The real port will be some randomly
- *                                 chosen port if USING_STUN is true)
- * @param recvfrom_timeout_s       The timeout that the SocketAttributes will use
- *                                 after being initialized
- * @param connection_timeout_ms    The timeout that will be used when attempting
- *                                 to connect. The handshake sends a few packets
- *                                 back and forth, so the upper
- *                                 bound of how long CreateXContext will take is
- *                                 some small constant times
- *                                 connection_timeout_ms
- * @param using_stun               True/false for whether or not to use the STUN server for this
- *                                 context
- * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int create_udp_context(SocketAttributes* context, char* destination, int port,
-                       int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun,
-                       char* binary_aes_private_key);
-
-/*
-============================
-Public Function Implementations
-============================
-*/
-
-bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
-                               int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
-    // Create the attributes, set to zero, and load its functions
-    network_context->context = safe_malloc(sizeof(SocketAttributes));
-    memset(network_context->context, 0, sizeof(SocketAttributes));
-
-    // Initialize the SocketAttributes with using_stun as false
-    if (create_udp_context(network_context->context, destination, port, recvfrom_timeout_s,
-                           connection_timeout_ms, using_stun, binary_aes_private_key) < 0) {
-        LOG_WARNING("Failed to create UDP network context!");
-        free(network_context->context);
-        return false;
-    };
-
-    // Functions common to all network contexts
-    network_context->ack = udp_ack;
-
-    // Funcitons common to only UDP contexts
-    network_context->read_packet = read_udp_packet;
-    network_context->send_packet = send_udp_packet;
-    network_context->send_packet_from_payload = send_udp_packet_from_payload;
-    network_context->free_packet = free_udp_packet;
-    network_context->write_payload_to_packets = write_payload_to_udp_packets;
-
-    return true;
+int udp_ack(void* raw_context) {
+    SocketContextData* context = raw_context;
+    return sendp(context, NULL, 0);
 }
-
-/*
-============================
-Private Function Implementations
-============================
-*/
-
-int udp_ack(SocketAttributes* context) { return sendp(context, NULL, 0); }
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_udp_packet(SocketAttributes* context, FractalPacket* packet, size_t packet_size) {
+int udp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
     /*
-        This will send a FractalPacket over UDP to the SocketAttributes context. This
+        This will send a FractalPacket over UDP to the SocketContextData context. This
         function does not create the packet from raw data, but assumes that the
         packet has been prepared by the caller (e.g. fragmented into appropriately-sized)
         chunks by a fragmenter). This function assumes and checks that the packet is
         small enough to send without further breaking into smaller packets.
 
         Arguments:
-            context (SocketAttributes*): The socket context
+            context (SocketContextData*): The socket context
             packet (FractalPacket*): A pointer to the packet to be sent
             packet_size (size_t): The size of the packet to be sent
 
@@ -193,8 +38,9 @@ int send_udp_packet(SocketAttributes* context, FractalPacket* packet, size_t pac
             (int): Will return -1 on failure, will return 0 on success
     */
 
+    SocketContextData* context = raw_context;
     if (context == NULL) {
-        LOG_WARNING("SocketAttributes is NULL");
+        LOG_ERROR("SocketContextData is NULL");
         return -1;
     }
 
@@ -243,13 +89,232 @@ int send_udp_packet(SocketAttributes* context, FractalPacket* packet, size_t pac
     return 0;
 }
 
-int create_udp_server_context(SocketAttributes* context, int port, int recvfrom_timeout_ms,
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+int udp_send_packet_from_payload(void* raw_context, FractalPacketType type, void* data, int len,
+                                 int id) {
+    /*
+        This will send a FractalPacket over UDP to the SocketContextData context. A
+        FractalPacketType is also provided to the receiving end. This function
+        assumes and checks that the packet is small enough to send without breaking
+        into smaller packets.
+
+        Arguments:
+            context (SocketContextData*): The socket context
+            type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
+            data (void*): A pointer to the data to be sent
+            len (int): The number of bytes to send
+            id (int): An ID for the UDP data
+
+        Returns:
+            (int): Will return -1 on failure, will return 0 on success
+    */
+
+    SocketContextData* context = raw_context;
+    if (context == NULL) {
+        LOG_ERROR("SocketContextData is NULL");
+        return -1;
+    }
+
+    // Use MAX_PAYLOAD_SIZE here since we are checking the size of the packet's
+    // payload data.
+    if ((size_t)len > MAX_PAYLOAD_SIZE) {
+        LOG_ERROR("Payload too large to send over UDP: %d", len);
+        return -1;
+    }
+
+    FractalPacket packet;
+    packet.id = id;
+    packet.type = type;
+    packet.index = 0;
+    packet.payload_size = len;
+    packet.num_indices = 1;
+    packet.is_a_nack = false;
+    memcpy(packet.data, data, len);
+    size_t packet_size = (size_t)get_packet_size(&packet);
+    return udp_send_packet(context, &packet, packet_size);
+}
+
+FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
+    /*
+        Receive a FractalPacket from a SocketContextData, if any such packet exists
+
+        Arguments:
+            context (SocketContextData*): The socket context
+
+        Returns:
+            (FractalPacket*): A pointer to the FractalPacket on success, NULL on failure
+    */
+
+    SocketContextData* context = raw_context;
+
+    if (should_recv == false) {
+        LOG_ERROR("should_recv should only be false in TCP contexts");
+        return NULL;
+    }
+
+    if (context->decrypted_packet_used) {
+        LOG_ERROR("Cannot use context->decrypted_packet buffer! Still being used somewhere else!");
+        return NULL;
+    }
+
+    // Wait to receive packet over TCP, until timing out
+    FractalPacket encrypted_packet;
+    int encrypted_len = recv(context->socket, &encrypted_packet, sizeof(encrypted_packet), 0);
+
+    // If the packet was successfully received, then decrypt it
+    if (encrypted_len > 0) {
+        int decrypted_len;
+        if (ENCRYPTING_PACKETS) {
+            // Decrypt the packet
+            decrypted_len =
+                decrypt_packet(&encrypted_packet, encrypted_len, &context->decrypted_packet,
+                               (unsigned char*)context->binary_aes_private_key);
+        } else {
+            // The decrypted packet is just the original packet, during dev mode
+            decrypted_len = encrypted_len;
+            memcpy(&context->decrypted_packet, &encrypted_packet, encrypted_len);
+        }
+#if LOG_NETWORKING
+        LOG_INFO("Received a FractalPacket of size %d over UDP", decrypted_len);
+#endif
+
+        // If there was an issue decrypting it, post warning and then
+        // ignore the problem
+        if (decrypted_len < 0) {
+            if (encrypted_len == sizeof(StunEntry)) {
+                StunEntry* e;
+                e = (void*)&encrypted_packet;
+                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
+                         ntohs(e->private_port));
+            }
+            LOG_WARNING("Failed to decrypt packet");
+            return NULL;
+        }
+
+        context->decrypted_packet_used = true;
+        return &context->decrypted_packet;
+    } else {
+        if (encrypted_len < 0) {
+            int error = get_last_network_error();
+            switch (error) {
+                case FRACTAL_ETIMEDOUT:
+                    // LOG_ERROR("Read UDP Packet error: Timeout");
+                case FRACTAL_EWOULDBLOCK:
+                    // LOG_ERROR("Read UDP Packet error: Blocked");
+                    // Break on expected network errors
+                    break;
+                default:
+                    LOG_WARNING("Unexpected Packet Error: %d", error);
+                    break;
+            }
+        } else {
+            // Ignore packets of size 0
+        }
+        return NULL;
+    }
+}
+
+void udp_free_packet(void* raw_context, FractalPacket* udp_packet) {
+    /*
+        Frees a UDP packet created by udp_read_packet
+
+        Arguments:
+            tcp_packet (FractalPacket*): The udp packet to free
+
+        TODO (abecohen): Change udp_read_packet to use malloc
+        and then add "deallocate_region(udp_packet);" to this function.
+    */
+
+    SocketContextData* context = raw_context;
+
+    if (!context->decrypted_packet_used) {
+        LOG_ERROR("Called udp_free_packet, but there was no udp_packet to free!");
+        return;
+    }
+    if (udp_packet != &context->decrypted_packet) {
+        LOG_ERROR("The wrong pointer was passed into udp_free_packet!");
+    }
+
+    // Free the one buffer
+    context->decrypted_packet_used = false;
+}
+
+int udp_write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
+                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                 size_t packet_buffer_length) {
+    /*
+        Split a payload into several packets approprately-sized
+        for UDP transport, and write those files to a buffer.
+
+        Arguments:
+            payload (uint8_t*): The payload data to be split into packets
+            payload_size (size_t): The size of the payload, in bytes
+            payload_id (int): An ID for the UDP data (must be positive)
+            packet_type (FractalPacketType): The FractalPacketType (video, audio, or message)
+            packet_buffer (FractalPacket*): The buffer to write the packets to
+            packet_buffer_length (size_t): The length of the packet buffer
+
+        Returns:
+            (int): The number of packets that were written to the buffer,
+                or -1 on failure
+
+        Note:
+            This function should be removed and replaced with
+            a more general packet splitter/joiner context, which
+            will enable us to use forward error correction, etc.
+    */
+    size_t current_position = 0;
+
+    // Calculate number of packets needed to send the payload, rounding up.
+    int num_indices =
+        (int)(payload_size / MAX_PAYLOAD_SIZE + (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
+
+    if ((size_t)num_indices > packet_buffer_length) {
+        LOG_ERROR("Too many packets needed to send payload");
+        return -1;
+    }
+
+    for (int packet_index = 0; packet_index < num_indices; ++packet_index) {
+        FractalPacket* packet = &packet_buffer[packet_index];
+        packet->type = packet_type;
+        packet->payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
+        packet->index = (short)packet_index;
+        packet->id = payload_id;
+        packet->num_indices = (short)num_indices;
+        packet->is_a_nack = false;
+        memcpy(packet->data, &payload[current_position], packet->payload_size);
+        current_position += packet->payload_size;
+    }
+
+    return num_indices;
+}
+
+void udp_destroy_socket_context(void* raw_context) {
+    SocketContextData* context = raw_context;
+
+    closesocket(context->socket);
+    if (context->network_throttler != NULL) {
+        network_throttler_destroy(context->network_throttler);
+    }
+    fractal_destroy_mutex(context->mutex);
+    free(context);
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
     /*
         Create a UDP server context
 
         Arguments:
-            context (SocketAttributes*): pointer to the context to populate
+            context (SocketContextData*): pointer to the context to populate
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
             stun_timeout_ms (int): timeout, in milliseconds, for socket connection
@@ -258,10 +323,7 @@ int create_udp_server_context(SocketAttributes* context, int port, int recvfrom_
             (int): -1 on failure, 0 on success
     */
 
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
+    SocketContextData* context = raw_context;
 
     context->udp_is_connected = false;
     context->is_tcp = false;
@@ -311,13 +373,13 @@ int create_udp_server_context(SocketAttributes* context, int port, int recvfrom_
     return 0;
 }
 
-int create_udp_server_context_stun(SocketAttributes* context, int port, int recvfrom_timeout_ms,
+int create_udp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
     /*
         Create a UDP client context over STUN server
 
         Arguments:
-            context (SocketAttributes*): pointer to the context to populate
+            context (SocketContextData*): pointer to the context to populate
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
             stun_timeout_ms (int): timeout, in milliseconds, for socket connection
@@ -440,7 +502,7 @@ int create_udp_server_context_stun(SocketAttributes* context, int port, int recv
     return 0;
 }
 
-int create_udp_client_context(SocketAttributes* context, char* destination, int port,
+int create_udp_client_context(SocketContextData* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->udp_is_connected = false;
     context->is_tcp = false;
@@ -483,13 +545,13 @@ int create_udp_client_context(SocketAttributes* context, char* destination, int 
     return 0;
 }
 
-int create_udp_client_context_stun(SocketAttributes* context, char* destination, int port,
+int create_udp_client_context_stun(SocketContextData* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
     /*
         Create a UDP client context
 
         Arguments:
-            context (SocketAttributes*): pointer to the context to populate
+            context (SocketContextData*): pointer to the context to populate
             destination (char*): the destination address
             port (int): the port to bind over
             recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
@@ -532,7 +594,7 @@ int create_udp_client_context_stun(SocketAttributes* context, char* destination,
 
     StunEntry entry = {0};
     int recv_size;
-    if ((recv_size = recvp(context, &entry, sizeof(entry))) < 0) {
+    if ((recv_size = recv(context->socket, &entry, sizeof(entry), 0)) < 0) {
         LOG_WARNING("Could not receive message from STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -582,179 +644,32 @@ int create_udp_client_context_stun(SocketAttributes* context, char* destination,
     return 0;
 }
 
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-int send_udp_packet_from_payload(SocketAttributes* context, FractalPacketType type, void* data,
-                                 int len, int id) {
-    /*
-        This will send a FractalPacket over UDP to the SocketAttributes context. A
-        FractalPacketType is also provided to the receiving end. This function
-        assumes and checks that the packet is small enough to send without breaking
-        into smaller packets.
+/*
+============================
+Public Function Implementations
+============================
+*/
 
-        Arguments:
-            context (SocketAttributes*): The socket context
-            type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
-            data (void*): A pointer to the data to be sent
-            len (int): The number of bytes to send
-            id (int): An ID for the UDP data
+bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
+                               int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
+                               char* binary_aes_private_key) {
+    // Populate function pointer table
+    network_context->ack = udp_ack;
+    network_context->read_packet = udp_read_packet;
+    network_context->send_packet = udp_send_packet;
+    network_context->send_packet_from_payload = udp_send_packet_from_payload;
+    network_context->free_packet = udp_free_packet;
+    network_context->write_payload_to_packets = udp_write_payload_to_packets;
+    network_context->destroy_socket_context = udp_destroy_socket_context;
 
-        Returns:
-            (int): Will return -1 on failure, will return 0 on success
-    */
+    // Create the SocketContextData, and set to zero
+    SocketContextData* context = safe_malloc(sizeof(SocketContextData));
+    memset(context, 0, sizeof(SocketContextData));
+    network_context->context = context;
 
-    if (context == NULL) {
-        LOG_WARNING("SocketAttributes is NULL");
-        return -1;
-    }
-
-    // Use MAX_PAYLOAD_SIZE here since we are checking the size of the packet's
-    // payload data.
-    if ((size_t)len > MAX_PAYLOAD_SIZE) {
-        LOG_ERROR("Payload too large to send over UDP: %d", len);
-        return -1;
-    }
-
-    FractalPacket packet;
-    packet.id = id;
-    packet.type = type;
-    packet.index = 0;
-    packet.payload_size = len;
-    packet.num_indices = 1;
-    packet.is_a_nack = false;
-    memcpy(packet.data, data, len);
-    size_t packet_size = (size_t)get_packet_size(&packet);
-    return send_udp_packet(context, &packet, packet_size);
-}
-
-FractalPacket* read_udp_packet(SocketAttributes* context, bool should_recvp) {
-    /*
-        Receive a FractalPacket from a SocketAttributes, if any such packet exists
-
-        Arguments:
-            context (SocketAttributes*): The socket context
-
-        Returns:
-            (FractalPacket*): A pointer to the FractalPacket on success, NULL on failure
-    */
-
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return NULL;
-    }
-
-    if (should_recvp == true) {
-        LOG_WARNING("should_recvp can only be true in TCP contexts");
-        return NULL;
-    }
-
-    if (context->decrypted_packet_used) {
-        LOG_ERROR("Cannot use context->decrypted_packet buffer! Still being used somewhere else!");
-        return NULL;
-    }
-
-    // Wait to receive packet over TCP, until timing out
-    FractalPacket encrypted_packet;
-    int encrypted_len = recvp(context, &encrypted_packet, sizeof(encrypted_packet));
-
-    // If the packet was successfully received, then decrypt it
-    if (encrypted_len > 0) {
-        int decrypted_len;
-        if (ENCRYPTING_PACKETS) {
-            // Decrypt the packet
-            decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &context->decrypted_packet,
-                                           (unsigned char*)context->binary_aes_private_key);
-        } else {
-            // The decrypted packet is just the original packet, during dev mode
-            decrypted_len = encrypted_len;
-            memcpy(&context->decrypted_packet, &encrypted_packet, encrypted_len);
-        }
-#if LOG_NETWORKING
-        LOG_INFO("Received a FractalPacket of size %d over UDP", decrypted_len);
-#endif
-
-        // If there was an issue decrypting it, post warning and then
-        // ignore the problem
-        if (decrypted_len < 0) {
-            if (encrypted_len == sizeof(StunEntry)) {
-                StunEntry* e;
-                e = (void*)&encrypted_packet;
-                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
-                         ntohs(e->private_port));
-            }
-            LOG_WARNING("Failed to decrypt packet");
-            return NULL;
-        }
-
-        context->decrypted_packet_used = true;
-        return &context->decrypted_packet;
-    } else {
-        if (encrypted_len < 0) {
-            int error = get_last_network_error();
-            switch (error) {
-                case FRACTAL_ETIMEDOUT:
-                    // LOG_ERROR("Read UDP Packet error: Timeout");
-                case FRACTAL_EWOULDBLOCK:
-                    // LOG_ERROR("Read UDP Packet error: Blocked");
-                    // Break on expected network errors
-                    break;
-                default:
-                    LOG_WARNING("Unexpected Packet Error: %d", error);
-                    break;
-            }
-        } else {
-            // Ignore packets of size 0
-        }
-        return NULL;
-    }
-}
-
-void free_udp_packet(SocketAttributes* context, FractalPacket* udp_packet) {
-    /*
-        Frees a UDP packet created by read_udp_packet
-
-        Arguments:
-            tcp_packet (FractalPacket*): The udp packet to free
-
-        TODO (abecohen): Change read_udp_packet to use malloc
-        and then add "deallocate_region(udp_packet);" to this function.
-    */
-    if (!context->decrypted_packet_used) {
-        LOG_ERROR("Called free_udp_packet, but there was no udp_packet to free!");
-        return;
-    }
-    if (udp_packet != &context->decrypted_packet) {
-        LOG_ERROR("The wrong pointer was passed into free_udp_packet!");
-    }
-    context->decrypted_packet_used = false;
-}
-
-int create_udp_context(SocketAttributes* context, char* destination, int port,
-                       int recvfrom_timeout_ms, int stun_timeout_ms, bool using_stun,
-                       char* binary_aes_private_key) {
-    /*
-        Create a UDP context
-
-        Arguments:
-            context (SocketAttributes*): pointer to the context to populate
-            destination (char*): the destination address
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-            using_stun (bool): whether to connect over the STUN server or not
-            binary_aes_private_key (char*): the AES private key to use for the connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
+    // Map Port
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
-    }
-    if (context == NULL) {
-        LOG_ERROR("Context is NULL");
-        return -1;
     }
     port = port_mappings[port];
 
@@ -774,17 +689,18 @@ int create_udp_context(SocketAttributes* context, char* destination, int port,
     int ret;
     if (using_stun) {
         if (destination == NULL)
-            ret =
-                create_udp_server_context_stun(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+            ret = create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
+                                                 connection_timeout_ms);
         else
             ret = create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                                 stun_timeout_ms);
+                                                 connection_timeout_ms);
     } else {
         if (destination == NULL)
-            ret = create_udp_server_context(context, port, recvfrom_timeout_ms, stun_timeout_ms);
+            ret = create_udp_server_context(context, port, recvfrom_timeout_ms,
+                                            connection_timeout_ms);
         else
             ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                            stun_timeout_ms);
+                                            connection_timeout_ms);
     }
 
     if (ret == 0) {
@@ -797,59 +713,10 @@ int create_udp_context(SocketAttributes* context, char* destination, int port,
             -1) {
             LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
             closesocket(context->socket);
-            return -1;
+            return false;
         }
+        return true;
+    } else {
+        return false;
     }
-
-    return ret;
-}
-
-int write_payload_to_udp_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
-                                 size_t packet_buffer_length) {
-    /*
-        Split a payload into several packets approprately-sized
-        for UDP transport, and write those files to a buffer.
-
-        Arguments:
-            payload (uint8_t*): The payload data to be split into packets
-            payload_size (size_t): The size of the payload, in bytes
-            payload_id (int): An ID for the UDP data (must be positive)
-            packet_type (FractalPacketType): The FractalPacketType (video, audio, or message)
-            packet_buffer (FractalPacket*): The buffer to write the packets to
-            packet_buffer_length (size_t): The length of the packet buffer
-
-        Returns:
-            (int): The number of packets that were written to the buffer,
-                or -1 on failure
-
-        Note:
-            This function should be removed and replaced with
-            a more general packet splitter/joiner context, which
-            will enable us to use forward error correction, etc.
-    */
-    size_t current_position = 0;
-
-    // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices =
-        (int)(payload_size / MAX_PAYLOAD_SIZE + (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
-
-    if ((size_t)num_indices > packet_buffer_length) {
-        LOG_ERROR("Too many packets needed to send payload");
-        return -1;
-    }
-
-    for (int packet_index = 0; packet_index < num_indices; ++packet_index) {
-        FractalPacket* packet = &packet_buffer[packet_index];
-        packet->type = packet_type;
-        packet->payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
-        packet->index = (short)packet_index;
-        packet->id = payload_id;
-        packet->num_indices = (short)num_indices;
-        packet->is_a_nack = false;
-        memcpy(packet->data, &payload[current_position], packet->payload_size);
-        current_position += packet->payload_size;
-    }
-
-    return num_indices;
 }

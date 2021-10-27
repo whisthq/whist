@@ -295,7 +295,7 @@ int try_get_next_message_udp(FractalClientMessage *fcmsg, size_t *fcmsg_size) {
 
     memset(fcmsg, 0, sizeof(*fcmsg));
 
-    FractalPacket *packet = read_packet(&(client.udp_context), false);
+    FractalPacket *packet = read_packet(&(client.udp_context), true);
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_fcmsg_size(fcmsg)) {

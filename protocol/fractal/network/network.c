@@ -7,7 +7,7 @@
 Usage
 ============================
 
-SocketAttributes: This type represents a socket.
+SocketContextData: This type represents a socket.
    - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
      parameters
    - To send data over a socket, call SendTCPPacket or SendUDPPacket
@@ -42,7 +42,7 @@ if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
 Client
 -----
 
-SocketAttributes context;
+SocketContextData context;
 CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
 
 char* msg = "Hello this is a message!";
@@ -52,7 +52,7 @@ SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
 Server
 -----
 
-SocketAttributes context;
+SocketContextData context;
 CreateTCPContext(&context, NULL, 5055, 500, 250);
 
 FractalPacket* packet = NULL;
@@ -92,22 +92,6 @@ unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
-Private Custom Types
-============================
-*/
-
-/**
- * @brief                       Struct to keep response data from a curl
- *                              request as it is being received.
- */
-typedef struct {
-    char* buffer;       // Buffer that contains received response data
-    size_t filled_len;  // How much of the buffer is full so far
-    size_t max_len;     // How much the buffer can be filled, at most
-} CurlResponseBuffer;
-
-/*
-============================
 Private Functions
 ============================
 */
@@ -118,31 +102,33 @@ Public Function Implementations
 ============================
 */
 
-FractalPacket* read_packet(SocketContext* context, bool should_recvp) {
-    return context->read_packet(context->context, should_recvp);
+FractalPacket* read_packet(SocketContext* context, bool should_recv) {
+    return context->read_packet(context->context, should_recv);
 }
+
 int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data, int len,
                              int id) {
     return context->send_packet_from_payload(context->context, type, data, len, id);
 }
+
 int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
     return context->send_packet(context->context, packet, packet_size);
 }
-void free_packet(SocketContext* context, FractalPacket* packet) { context->free_packet(context->context, packet); }
+
+void free_packet(SocketContext* context, FractalPacket* packet) {
+    context->free_packet(context->context, packet);
+}
+
 int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
                              int payload_id, FractalPacketType packet_type,
                              FractalPacket* packet_buffer, size_t packet_buffer_length) {
     return context->write_payload_to_packets(payload, payload_size, payload_id, packet_type,
                                              packet_buffer, packet_buffer_length);
 }
+
 void destroy_socket_context(SocketContext* context) {
-    closesocket(((SocketAttributes*)context->context)->socket);
-    NetworkThrottleContext* network_throttler =
-        ((SocketAttributes*)context->context)->network_throttler;
-    if (!((SocketAttributes*)context->context)->is_tcp && network_throttler != NULL) {
-        network_throttler_destroy(network_throttler);
-    }
-    free(context->context);
+    context->destroy_socket_context(context->context);
+    memset(context, 0, sizeof(*context));
 }
 
 /*
@@ -219,12 +205,12 @@ SOCKET socketp_udp() {
     return sock_fd;
 }
 
-bool handshake_private_key(SocketAttributes* context) {
+bool handshake_private_key(SocketContextData* context) {
     /*
         Perform a private key handshake with a peer.
 
         Arguments:
-            context (SocketAttributes*): the socket context to be used
+            context (SocketContextData*): the socket context to be used
 
         Returns:
             (bool): True on success, False on failure
@@ -270,7 +256,8 @@ bool handshake_private_key(SocketAttributes* context) {
     fractal_sleep(50);
 
     // Wait for and verify their signed private key request data
-    recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
+    recv_size =
+        recv(context->socket, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data), 0);
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
@@ -280,35 +267,6 @@ bool handshake_private_key(SocketAttributes* context) {
         set_timeout(context->socket, context->timeout);
         return true;
     }
-}
-
-size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
-    /*
-    Writes CURL request response data to the CurlResponseBuffer buffer up to `crb->max_len`
-
-    Arguments:
-        ptr (char*): pointer to the delivered response data
-        size (size_t): always 1 - size of each `nmemb` pointed to by `ptr`
-        nmemb (size_t): the size of the buffer pointed to by `ptr`
-        crb (CurlResponseBuffer*): the response buffer object that contains full response data
-
-    Returns:
-        size (size_t): returns `size * nmemb` if successful (this function just always
-            returns success state)
-    */
-
-    if (!crb || !crb->buffer || crb->filled_len > crb->max_len) {
-        return size * nmemb;
-    }
-
-    size_t copy_bytes = size * nmemb;
-    if (copy_bytes + crb->filled_len > crb->max_len) {
-        copy_bytes = crb->max_len - crb->filled_len;
-    }
-
-    memcpy(crb->buffer + crb->filled_len, ptr, copy_bytes);
-
-    return size * nmemb;
 }
 
 void set_timeout(SOCKET socket, int timeout_ms) {
@@ -470,37 +428,15 @@ int get_last_network_error() {
 #endif
 }
 
-int recvp(SocketAttributes* context, void* buf, int len) {
-    /*
-        This will receive data over a socket
-
-        Arguments:
-            context (SocketAttributes*): The socket context to be used
-            buf (void*): The buffer to write to
-            len (int): The maximum number of bytes that can be read
-                from the socket
-
-        Returns:
-            (int): The number of bytes that have been read into the
-                buffer
-    */
-
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
-    return recv(context->socket, buf, len, 0);
-}
-
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int sendp(SocketAttributes* context, void* buf, int len) {
+int sendp(SocketContextData* context, void* buf, int len) {
     /*
         This will send data over a socket
 
         Arguments:
-            context (SocketAttributes*): The socket context to be used
+            context (SocketContextData*): The socket context to be used
             buf (void*): The buffer to read from
             len (int): The length of the buffer to send over the socket
 

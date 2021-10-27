@@ -623,7 +623,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (client.is_active && (accumulated_frames > 0 || wants_iframe ||
-            get_timer(last_frame_capture) > 1.0 / min_fps)) {
+                                 get_timer(last_frame_capture) > 1.0 / min_fps)) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
             // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
             start_timer(&last_frame_capture);

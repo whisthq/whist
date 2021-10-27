@@ -454,8 +454,8 @@ int main(int argc, char* argv[]) {
 
         // Create thread to receive all packets and handle them as needed
         run_sync_udp_packets = true;
-        SDL_Thread* sync_udp_packets_thread = SDL_CreateThread(
-            multithreaded_sync_udp_packets, "SyncUDPPackets", &packet_udp_context);
+        SDL_Thread* sync_udp_packets_thread =
+            SDL_CreateThread(multithreaded_sync_udp_packets, "SyncUDPPackets", &packet_udp_context);
 
         // Create thread to send and receive TCP packets
         run_sync_tcp_packets = true;
