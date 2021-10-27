@@ -70,7 +70,7 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
     })
 
-  const handleImporterSubmit = (browser: string) => {
+  const handleImporterSubmit = (browser: string | undefined) => {
     setMainState({
       trigger: { name: TRIGGER.importerSubmitted, payload: { browser } },
     })
@@ -91,7 +91,9 @@ const RootComponent = () => {
     return (
       <Importer
         browsers={mainState.browsers ?? []}
-        onSubmit={(browser: string) => handleImporterSubmit(browser)}
+        onSubmit={(browser: string | undefined) =>
+          handleImporterSubmit(browser)
+        }
       />
     )
   if (show === WindowHashOnboardingTypeform) {

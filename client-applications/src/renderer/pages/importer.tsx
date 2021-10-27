@@ -37,17 +37,17 @@ const SelectBrowser = (props: {
 
 const Importer = (props: {
   browsers: string[]
-  onSubmit: (browser: string) => void
+  onSubmit: (browser: string | undefined) => void
 }) => {
   const [browser, setBrowser] = useState<string | undefined>(undefined)
   const [processing, setProcessing] = useState(false)
 
-  const onSubmit = (browser: string) => {
+  const onSubmit = (browser: string | undefined) => {
     setProcessing(true)
     props.onSubmit(browser)
   }
 
-  const onSelect = (browser: string) => {
+  const onSelect = (browser: string | undefined) => {
     setBrowser(browser)
   }
 
