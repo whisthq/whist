@@ -166,12 +166,10 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
     if (send_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) <
         0) {
         LOG_ERROR("Failed to send discovery reply message.");
-        destroy_socket_context(context);
         free(fsmsg);
         return -1;
     }
 
-    destroy_socket_context(context);
     free(fsmsg);
 
     LOG_INFO("Discovery handshake succeeded.");
@@ -413,8 +411,12 @@ int multithreaded_manage_client(void *opaque) {
         //     accepting connections and is reliable for both discovery and recovery messages.
         if (handle_discovery_port_message(&discovery_context, &new_client) != 0) {
             LOG_WARNING("Discovery port message could not be handled.");
+            destroy_socket_context(&discovery_context);
             continue;
         }
+
+        // Destroy the ephemeral discovery context
+        destroy_socket_context(&discovery_context);
 
         // If the handled message was not for a discovery handshake, then skip
         //     over everything that is necessary for setting up a new client
