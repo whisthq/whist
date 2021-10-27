@@ -335,8 +335,8 @@ int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_siz
  * @param context                  The socket context
  * @param type                     The FractalPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
+ * @param payload                  A pointer to the payload that is to be sent
+ * @param payload_len              The length of the payload
  * @param id                       An ID for the UDP data.
  *
  * @returns                        Will return -1 on failure, will return 0 on
@@ -349,6 +349,7 @@ int send_packet_from_payload(SocketContext* context, FractalPacketType type, voi
  * @brief                          Split a payload into several packets approprately-sized
  *                                 for UDP transport, and write those files to a buffer.
  *
+ * @param context                  The socket context to use
  * @param payload                  The payload data to be split into packets
  * @param payload_size             The size of the payload, in bytes
  * @param payload_id               An ID for the UDP data (must be positive)
