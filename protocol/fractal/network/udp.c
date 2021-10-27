@@ -142,11 +142,13 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
                                char* binary_aes_private_key) {
     // Create the attributes, set to zero, and load its functions
     network_context->context = safe_malloc(sizeof(SocketAttributes));
+    memset(network_context->context, 0, sizeof(SocketAttributes));
 
     // Initialize the SocketAttributes with using_stun as false
     if (create_udp_context(network_context->context, destination, port, recvfrom_timeout_s,
                            connection_timeout_ms, using_stun, binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to create UDP network context!");
+        free(network_context->context);
         return false;
     };
 

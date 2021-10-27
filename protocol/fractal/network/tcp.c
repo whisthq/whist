@@ -153,11 +153,13 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
                                char* binary_aes_private_key) {
     // Make a socket context
     network_context->context = safe_malloc(sizeof(SocketAttributes));
+    memset(network_context->context, 0, sizeof(SocketAttributes));
 
     // Initialize the SocketAttributes with using_stun as false
     if (create_tcp_context(network_context->context, destination, port, recvfrom_timeout_s,
                            connection_timeout_ms, using_stun, binary_aes_private_key) < 0) {
         LOG_WARNING("Failed to create TCP network context!");
+        free(network_context->context);
         return false;
     };
 
@@ -289,6 +291,7 @@ int create_tcp_server_context(SocketAttributes* context, int port, int recvfrom_
     opt = 1;
     if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
+        closesocket(context->socket);
         return -1;
     }
 
