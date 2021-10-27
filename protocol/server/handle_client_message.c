@@ -242,7 +242,7 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
     max_bitrate = fcmsg->bitrate_data.bitrate;
 
     // Use the burst bitrate to update the client's UDP packet throttle context
-    network_throttler_set_burst_bitrate(client.udp_context.network_throttler,
+    network_throttler_set_burst_bitrate(((SocketAttributes*)client.udp_context.context)->network_throttler,
                                         fcmsg->bitrate_data.burst_bitrate);
 
     // Update the encoder using the new bitrate
@@ -272,7 +272,7 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
     fsmsg_response.ping_id = fcmsg->ping_id;
     int ret = 0;
 
-    if (send_udp_packet_from_payload(&(client.udp_context), PACKET_MESSAGE,
+    if (send_packet_from_payload(&client.udp_context, PACKET_MESSAGE,
                                      (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), 1) < 0,
         false) {
         LOG_WARNING("Could not send Ping");
@@ -304,7 +304,7 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
     fsmsg_response.ping_id = fcmsg->ping_id;
     int ret = 0;
 
-    if (send_tcp_packet_from_payload(&(client.tcp_context), PACKET_MESSAGE,
+    if (send_packet_from_payload(&(client.tcp_context), PACKET_MESSAGE,
                                      (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), -1) < 0) {
         LOG_WARNING("Could not send TCP Ping to client");
         ret = -1;
@@ -375,7 +375,7 @@ static void handle_nack_single_audio_packet(int packet_id, int packet_index) {
             "Relaying!",
             packet_id, len);
         audio_packet->is_a_nack = true;
-        send_udp_packet(&(client.udp_context), audio_packet, len);
+        send_packet(&client.udp_context, audio_packet, len);
     }
     // If we were asked for an invalid index, just ignore it
     else if (packet_index < audio_packet->num_indices) {
@@ -428,7 +428,7 @@ static void handle_nack_single_video_packet(int packet_id, int packet_index) {
             "NACKed video packet ID %d Index %d found of "
             "length %d. Relaying!",
             packet_id, packet_index, len);
-        send_udp_packet(&(client.udp_context), video_packet, len);
+        send_packet(&client.udp_context, video_packet, len);
     }
 
     // If we were asked for an invalid index, just ignore it

@@ -138,6 +138,10 @@ int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t pa
 }
 void destroy_socket_context(SocketContext* context) {
     closesocket(((SocketAttributes*)context->context)->socket);
+    NetworkThrottleContext* network_throttler = ((SocketAttributes*)context->context)->network_throttler;
+    if (!((SocketAttributes*)context->context)->is_tcp && network_throttler != NULL) {
+        network_throttler_destroy(network_throttler);
+    }
     free(context->context);
 }
 

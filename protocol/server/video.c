@@ -235,7 +235,7 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
 
     // Packetize the frame
     int num_packets =
-        write_payload_to_packets((uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
+        write_payload_to_packets(&client.udp_context, (uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
                                  video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {
@@ -351,7 +351,7 @@ void send_empty_frame(int id) {
     // is_empty_frame is true, so it will just be ignored by the client.
 
     int num_packets =
-        write_payload_to_packets((uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
+        write_payload_to_packets(&client.udp_context, (uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
                                  video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {

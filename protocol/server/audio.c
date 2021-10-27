@@ -136,6 +136,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                                                   audio_encoder->packets, (void*)frame->data);
 
                         int num_packets = write_payload_to_packets(
+                            &client.udp_context,
                             (uint8_t*)frame, audio_encoder->encoded_frame_size + sizeof(int), id,
                             PACKET_AUDIO, audio_buffer[id % AUDIO_BUFFER_SIZE],
                             MAX_NUM_AUDIO_INDICES);

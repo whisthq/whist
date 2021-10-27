@@ -160,7 +160,7 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
         }
         // Free the tcp packet if we received one
         if (tcp_packet) {
-            free_tcp_packet(tcp_packet);
+            free_packet(&client.tcp_context, tcp_packet);
         }
     }
 }
