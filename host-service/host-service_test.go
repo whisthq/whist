@@ -128,7 +128,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest)
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
 	dockerClient := mockClient{}
 	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
