@@ -51,7 +51,7 @@ RUN su - whist -c \
 # https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
-    # Whitelist streamed URI protocols (zoommtg,slack.spotify,discord)
+    # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
     | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
     # Disable search suggestions (as a workaround to improve URL bar
     # keyboard input until we can fork the browser and fix it)
