@@ -254,6 +254,11 @@ local_development_steps () {
   echo "Creating symlink for root user to get AWS credentials..."
   echo "================================================"
   sudo ln -sf /home/ubuntu/.aws /root/.aws
+
+  echo "================================================"
+  echo "Linking run-chrome script into /usr/local/bin..."
+  echo "================================================"
+  sudo ln -s "$PWD/run-chrome" /usr/local/bin
 }
 
 # `deployment_setup_steps` contains the commands that are specific to setting
@@ -293,7 +298,7 @@ deployment_setup_steps() {
 
   # The Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
   # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
-  # It gets enabled in base_userdata_template.sh
+  # It gets enabled in ec2_userdata.sh
 
   # Here we pre-pull the desired mandelboxes onto the AMI to speed up mandelbox startup.
   ghcr_uri=ghcr.io

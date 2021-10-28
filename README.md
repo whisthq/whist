@@ -43,6 +43,7 @@ The Whist monorepository contains 8 Whist subrepositories:
 | Subrepository       | Description                                                                                         |
 | ------------------- | --------------------------------------------------------------------------------------------------- |
 | client-applications | The client-side Electron-based application users download and use to launch a streamed application. |
+| config              | The Whist common configuration values that can be re-used across our monorepo                       |
 | core-ts             | The Whist internal TypeScript library of utilities and reusable components.                         |
 | host-service        | The Whist service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
 | host-setup          | The scripts to setup an EC2 innstance into a Whist-optimized host ready to run Whist mandelboxes.   |
@@ -191,37 +192,4 @@ Each subfolder in this monorepository is its own project with its dedicated styl
 
 - Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
 - Making sure you don't accidentally introduce merge commits from a `git pull`: `git config pull.ff only`
-
-### Example of Bad Commit History
-
-This is an example of a bad commit history, which exhibits a phenomenon caused by allowing merge commits into feature branches. There's exactly two "useful" commits in the mess below. The rest are merge commits from `dev` into a feature branch, which should be avoided.
-
-[Back to Text](#while-on-feature-branches-git-rebase-dev-is-your-friend-git-merge-dev-is-not)
-
-```
-| | | | |/| | | | | |
-| | | | | | | * | | |   8bd2acce - Merge branch 'dev' into feature_branch (8 weeks ago) <developer2>
-| | | | | | | |\ \ \ \
-| | | | | | | | | |_|/
-| | | | | | | | |/| |
-| | | | | | | * | | |   ee0961e5 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer1>
-| | | | | | | |\ \ \ \
-| | | | | | | * \ \ \ \   c4301083 - Merge branch 'dev' into feature_branch (8 weeks ago) <developer2>
-| | | | | | | |\ \ \ \ \
-| | | | | | | * \ \ \ \ \   4c521824 - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
-| | | | | | | |\ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \   a882b67c - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
-| | | | | | | |\ \ \ \ \ \ \
-| | | | | | | * | | | | | | | 34ca8f9b - clang format (10 weeks ago) <developer1>
-| | | | | | | * | | | | | | |   6e1501d6 - Merge branch 'dev' into feature_branch (10 weeks ago) <developer1>
-| | | | | | | |\ \ \ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \ \ \   1fc9f76e - Merge branch 'dev' into feature_branch (10 weeks ago) <developer2>
-| | | | | | | |\ \ \ \ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \ \ \ \   d3fabb5e - Merge branch 'dev' into feature_branch (2 months ago) <developer1>
-| | | | | | | |\ \ \ \ \ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \ \ \ \ \   4458e26b - Merge branch 'dev' into feature_branch (3 months ago) <developer1>
-| | | | | | | |\ \ \ \ \ \ \ \ \ \ \
-| | | | | | | * \ \ \ \ \ \ \ \ \ \ \   1de676f6 - Merge branch 'dev' into feature_branch (3 months ago) <developer3>
-| | | | | | | |\ \ \ \ \ \ \ \ \ \ \ \
-| | | | | | | * | | | | | | | | | | | | 7b478fd4 - a commit for feature_branch (3 months ago) <developer3>
-```
+- We disallow merge commits into feature branches to avoid clogging our git history with `Merge branch 'dev' into feature_branch ...`, please do not introduce merge commits!

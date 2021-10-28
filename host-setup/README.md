@@ -21,7 +21,11 @@ To set up your Whist development instance:
 
 - Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
 
-- Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
+- Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem` and connect to your `ssh -i "your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com`.
+
+  - If you want to make connecting to your AWS instance easier, you can export an alias for the command in your `.zshrc`/`.bashrc`, depending on which shell you use, by adding `alias [your-alias]="ssh -i "[path-to-your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com".
+
+- Run `sudo apt-get update` to refresh the packager manager, and run `sudo apt-get install awscli git`.
 
 - If you use GitHub with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
@@ -50,16 +54,18 @@ cd ~/fractal/mandelboxes
 cd ~/fractal/host-service
 make run # keep this open in a separate terminal
 
-# run the Whist base container image
+# run the Whist base container image (swap base to browsers/chrome to run the Whist Chrome container)
 cd ~/fractal/mandelboxes
 ./run_local_mandelbox_image.sh base
 ```
+
+Additionally, you may optionally execute the command `run-chrome` on your instance, which will run all of the above commands for you, using the `browsers/chrome` image.
 
 ⚠️ If `./setup_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
 ⚠️ If the `./build_mandelbox_image.sh base` command fails due to apt being unable to fetch some archives (e.g. error: `E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?`), call `docker system prune -af` first, then run `./build_mandelbox_image.sh base` again.
 
-- Start a Whist protocol client to connect to the Whist protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Whist base application, which is currently **xterm**, then you are all set!
+- Start a Whist protocol client to connect to the Whist protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Whist base application, which is currently **xeyes**, then you are all set!
 
 - Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://tryfractal.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
 
@@ -67,7 +73,7 @@ cd ~/fractal/mandelboxes
 
 ## Setting Up an AMI
 
-To create an AMI:
+We create AMIs for deployment programmatically via our deploy pipeline in GitHub Actions. You should **NEVER** create a production AMI manually! If you wish to create an AMI for yourself/for internal development:
 
 - Create an Ubuntu Server 20.04 `g4dn.xlarge` EC2 instance on AWS region **us-east-1**, with at least 32 GB of persistent, EBS storage in addition to the 125 GB of ephemeral storage.
 
@@ -94,7 +100,7 @@ rm -rf fractal
 
 - Manually test that this instance can be attached to an AWS EC2 instances cluster and that it can be connected to, and then save it as an AMI in the AWS console.
 
-**NOTE**: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the subfolder `webserver` in the file [`app/helpers/utils/aws/base_userdata_template.sh`](https://github.com/fractal/fractal/blob/dev/webserver/app/helpers/utils/aws/base_userdata_template.sh).
+**NOTE**: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the subfolder `webserver` in the file [`app/helpers/utils/aws/ec2_userdata.sh`](https://github.com/fractal/fractal/blob/dev/webserver/app/helpers/utils/aws/ec2_userdata.sh).
 
 ## Copying AMIs Across AWS Regions
 
