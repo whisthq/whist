@@ -1,4 +1,4 @@
-import { keys, difference } from "lodash"
+import difference from "lodash.difference"
 
 // We expect that configuration will be passed through the CONFIG environment
 // variable. If the CONFIG environment variable is undefined, we'll replace it
@@ -31,7 +31,7 @@ export const isConfig = (obj: any): obj is Config => {
 export const config = (() => {
   const c = JSON.parse(process.env.CONFIG ?? "{}")
   if (isConfig(c)) return c
-  const missing = difference(keys(DefaultConfig), keys(c))
+  const missing = difference(Object.keys(DefaultConfig), Object.keys(c))
   console.log("Environment CONFIG=", c)
   throw new Error(`Environment CONFIG= missing required keys: ${missing}`)
 })()
