@@ -123,6 +123,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
+		MandelboxID:           "testMandelbox",
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
