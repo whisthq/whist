@@ -286,6 +286,7 @@ ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
             pending_clipboard_push = false;
             // Free clipboard
             free_clipboard(clipboard);
+            clipboard = NULL;
             clipboard_written_bytes = 0;
         }
 
