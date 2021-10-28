@@ -36,12 +36,10 @@ A tree structure is provided below:
 │       ├── fractal-protocol.service <- Systemd service to start the Whist server protocol
 │       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Whist configuration
 ├── browsers
-│   ├── chrome
-│   │   ├── Dockerfile.20 <- Mandelbox image for Google Chrome
-│   │   ├── install-extensions.sh <- Helper script to install Chromium extensions onto Chrome
-│   │   └── start-chrome.sh <- Helper script to start Chrome with specific flags
-│   ├── firefox
-│   │   └── Dockerfile.20 <- Mandelbox image for Mozilla Firefox
+│   └── chrome
+│       ├── Dockerfile.20 <- Mandelbox image for Google Chrome
+│       ├── install-extensions.sh <- Helper script to install Chromium extensions onto Chrome
+│       └── start-chrome.sh <- Helper script to start Chrome with specific flags
 ├── build_mandelbox_image.sh <- Helper script to build a specific mandelbox image
 ├── helper_scripts
 │   ├── build_mandelbox_image.py <- Helper script to build a/many mandelbox image(s)
