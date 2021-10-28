@@ -11,7 +11,6 @@ import { logBase, LogLevel } from "@app/utils/logging"
 import TRIGGER from "@app/utils/triggers"
 
 import mapValues from "lodash.mapvalues"
-import omit from "lodash.omit"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
 export interface Trigger {
@@ -73,8 +72,8 @@ export const flow = <T>(
         logBase(
           `${name}.${key}`, // e.g. authFlow.success
           {
-            input: omit(triggerPayload, "configToken"),
-            output: omit(value, "configToken"),
+            input: triggerPayload,
+            output: value,
           }, // Log both the flow input (trigger) and output
           LogLevel.DEBUG,
           Date.now() - startTime // This is how long the flow took run
