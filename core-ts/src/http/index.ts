@@ -1,4 +1,4 @@
-import { identity } from "lodash"
+import identity from "lodash.identity"
 
 import { fetchBase } from "./fetchBase"
 import { withCatch } from "./withCatch"

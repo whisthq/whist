@@ -1,3 +1,5 @@
+import { fetchBase } from "src/http/fetchBase"
+
 /*
  * Returns a function that extras the element of an array
  * at the given index.

@@ -43,13 +43,13 @@ export default flow<{
           delayWhen(() => {
             if (attempts < 20) {
               attempts = attempts + 1
-              return timer(500)
+              return timer(1000)
             }
             throw new Error()
           })
         )
       ),
-      catchError((error) => of(error))
+      catchError((error) => of(error)) // We retry because sometimes Fractal launches before the computer connects to Wifi
     ),
     {
       success: (regions) => regions.length > 0,
