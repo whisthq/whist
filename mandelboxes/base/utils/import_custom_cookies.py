@@ -73,6 +73,31 @@ def encrypt(browser_name, value, encrypt_prefix):
     return encrypted_value
 
 
+def format_chromium_based_cookie(cookie):
+    formatted_cookie = [
+        cookie["creation_utc"],
+        cookie["top_frame_site_key"],
+        cookie["host_key"],
+        cookie["name"],
+        cookie["value"],
+        cookie["encrypted_value"],
+        cookie["path"],
+        cookie["expires_utc"],
+        cookie["secure"] if not (cookie["secure"] is None) else cookie["is_secure"],
+        cookie["is_httponly"],
+        cookie["last_access_utc"],
+        cookie["has_expires"],
+        cookie["is_persistent"],
+        cookie["priority"],
+        cookie["samesite"],
+        cookie["source_scheme"],
+        cookie["source_port"],
+        cookie["is_same_party"],
+    ]
+
+    return formatted_cookie
+
+
 def set_browser_cookies(to_browser_name, cookies):
     """
     Sets cookies from one browser to another
@@ -96,7 +121,8 @@ def set_browser_cookies(to_browser_name, cookies):
         cookie.pop("encryption_prefix", None)
 
         # We only want the values in a list form
-        encrypted_cookies.append(list(cookie.values()))
+        formatted_cookie = format_chromium_based_cookie(cookie)
+        encrypted_cookies.append(formatted_cookie)
 
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
