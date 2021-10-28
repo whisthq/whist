@@ -8,6 +8,8 @@ import { configGet, configPost, configPut } from "@fractal/core-ts"
 import config from "@app/config/environment"
 import { sessionID } from "@app/utils/constants"
 
+import { logBase } from "@app/utils/logging"
+
 /*
  * @fractal/core-ts http functions like "get" and "post"
  * are constructed at runtime so they can be passed a config
@@ -37,12 +39,23 @@ export const withSessionID = (body: object) => {
   }
 }
 
-export const get = configGet(httpConfig)
-export const post = configPost(httpConfig)
-export const hostPut = (server: string) =>
-  configPut({
-    server,
-  })
+export const get = (...args: any) => {
+  logBase("GET request sent", args)
+  return configGet(httpConfig)(...args)
+}
+
+export const post = (...args: any) => {
+  logBase("POST request sent", args)
+  return configPost(httpConfig)(...args)
+}
+export const hostPut =
+  (server: string) =>
+  (...args: any) => {
+    logBase("PUT request sent", args)
+    return configPut({
+      server,
+    })(...args)
+  }
 
 // TODO: this needs to move somewhere else, but we're not using it yet
 export const tokenValidate = async (accessToken: string) =>
