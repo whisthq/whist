@@ -3,7 +3,7 @@ import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
-import {nativeTheme} from "electron/remote" 
+import { nativeTheme } from "electron"
 
 export default flow(
   "mandelboxFlow",
@@ -26,7 +26,11 @@ export default flow(
           ip: c.ip,
           config_encryption_token: t.configToken,
           jwt_access_token: t.accessToken,
-          json_data: JSON.stringify({ dark_mode:nativeTheme.shouldUseDarkColors , restore_last_session:true, desired_timezone:Intl.DateTimeFormat().resolvedOptions().timeZone}), // Data to send through the JSON transport
+          json_data: JSON.stringify({
+            dark_mode: nativeTheme.shouldUseDarkColors,
+            restore_last_session:false,
+            desired_tz:Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }), // Data to send through the JSON transport
         }))
       )
     )
