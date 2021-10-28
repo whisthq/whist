@@ -514,6 +514,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
+	logger.Infof("SpinUpMandelbox(): Getting JSON transport requests...")
+	
+	if !metadata.IsLocalEnv() {
+		// Receive the json transpor request from the client via the httpserver.
+		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+		req = <-jsonchan
+	}
+
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
