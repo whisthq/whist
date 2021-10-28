@@ -94,6 +94,15 @@ const settingsMenu = new MenuItem({
       },
     },
     {
+      label: "Restore the last Chrome session",
+      type: "checkbox",
+      checked:
+        (persistGet("restoreLastChromeSession", "data") ?? "true") === "true",
+      click: () => {
+        trayEvent.emit("restoreLastChromeSession")
+      },
+    },
+    {
       label: "(Coming Soon) Make Whist my default browser",
       click: () => {
         trayEvent.emit("defaultBrowser")

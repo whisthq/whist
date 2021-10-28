@@ -28,8 +28,8 @@ export default flow(
           jwt_access_token: t.accessToken,
           json_data: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
-            restore_last_session:false,
-            desired_tz:Intl.DateTimeFormat().resolvedOptions().timeZone,
+            restore_last_session: false,
+            desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
           }), // Data to send through the JSON transport
         }))
       )
