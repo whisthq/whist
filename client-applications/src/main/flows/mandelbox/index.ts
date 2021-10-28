@@ -4,8 +4,7 @@ import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { isNumber } from "lodash"
-
-const execCommand = require("./../../../../scripts/execCommand").execCommand
+import { execCommand } from "./../../../../scripts/execCommand"
 
 export default flow(
   "mandelboxFlow",
@@ -47,9 +46,7 @@ export default flow(
             initial_key_repeat: isNumber(initialKeyRepeat)
               ? initialKeyRepeat
               : 68, // this fails if the user hasn't modified the default value, which is 68
-            key_repeat: isNumber(keyRepeat) 
-              ? keyRepeat 
-              : 6, // this fails if the user hasn't modified the default value, which is 6
+            key_repeat: isNumber(keyRepeat) ? keyRepeat : 6, // this fails if the user hasn't modified the default value, which is 6
           }), // Data to send through the JSON transport
         }))
       )
