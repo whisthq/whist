@@ -646,10 +646,13 @@ RUN systemctl enable fractal-audio
 COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
 
 # Install Cookies dependencies
-RUN apt-get update && apt-get install -y python3-pip
-RUN pip install browser-cookie3 && pip install keyring \
-    && pip install pyaes \
-    && pip install pbkdf2
+RUN apt-get update && apt-get install -y --no-install-recommends python3-pip \
+    && pip install --no-cache-dir browser-cookie3==0.13.0 \
+    && pip install --no-cache-dir keyring==23.2.1 \
+    && pip install --no-cache-dir pyaes==1.6.1  \
+    && pip install --no-cache-dir pbkdf2==1.3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set up custom config scripts
 COPY utils/import_custom_cookies.py /usr/bin/import_custom_cookies.py
