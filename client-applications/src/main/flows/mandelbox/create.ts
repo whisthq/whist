@@ -49,7 +49,7 @@ export default flow<{
           })
         )
       ),
-      catchError((error) => of(error))
+      catchError((error) => of(error)) // We retry because sometimes Fractal launches before the computer connects to Wifi
     ),
     {
       success: (regions) => regions.length > 0,

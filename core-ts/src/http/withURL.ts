@@ -1,4 +1,3 @@
-import { isString } from "lodash"
 import { ServerDecorator } from "../types/api"
 
 /*
@@ -26,10 +25,10 @@ const serverUrl = (server: string, endpoint: string): string =>
 export const withURL: ServerDecorator = async (fn, req) => {
   const { url, server, endpoint } = req
 
-  if (isString(url)) {
+  if (typeof url === "string") {
     return await fn(req)
   } else {
-    if (isString(server) && isString(endpoint)) {
+    if (typeof server === "string" && typeof endpoint === "string") {
       return await fn({
         ...req,
         url: serverUrl(server || "", endpoint || ""),
