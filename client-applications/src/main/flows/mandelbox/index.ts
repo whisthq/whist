@@ -4,6 +4,8 @@ import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
+import { isNumber } from "lodash"
+import { execCommand } from "./../../../../scripts/execCommand"
 
 export default flow(
   "mandelboxFlow",
@@ -20,6 +22,21 @@ export default flow(
         }))
       )
     )
+
+    // Retrieve macOS keyboard repeat rates to send them to the mandelbox
+    const initialKeyRepeat = execCommand(
+      "defaults read NSGlobalDomain InitialKeyRepeat",
+      ".",
+      {},
+      "pipe"
+    )
+    const keyRepeat = execCommand(
+      "defaults read NSGlobalDomain KeyRepeat",
+      ".",
+      {},
+      "pipe"
+    )
+
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
         map(([t, c]) => ({
@@ -33,6 +50,10 @@ export default flow(
               "restoreLastChromeSession",
               "data"
             ),
+            initial_key_repeat: isNumber(initialKeyRepeat)
+            ? initialKeyRepeat
+            : 68, // this fails if the user hasn't modified the default value, which is 68
+            key_repeat: isNumber(keyRepeat) ? keyRepeat : 6, // this fails if the user hasn't modified the default value, which is 6
           }), // Data to send through the JSON transport
         }))
       )
