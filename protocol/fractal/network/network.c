@@ -88,52 +88,79 @@ LOG_INFO("MESSAGE: %s", packet->data); // Will print "Hello this is a message!"
 #define MS_IN_SECOND 1000
 
 // Global data
+
 unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
-Private Functions
+Public Interface Implementations
 ============================
 */
 
-/*
-============================
-Public Function Implementations
-============================
-*/
+int ack(SocketContext* context) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return -1;
+    }
+    return context->ack(context->context);
+}
 
 FractalPacket* read_packet(SocketContext* context, bool should_recv) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return NULL;
+    }
     return context->read_packet(context->context, should_recv);
 }
 
 int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data, int len,
                              int id) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return -1;
+    }
     return context->send_packet_from_payload(context->context, type, data, len, id);
 }
 
 int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return -1;
+    }
     return context->send_packet(context->context, packet, packet_size);
 }
 
 void free_packet(SocketContext* context, FractalPacket* packet) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return;
+    }
     context->free_packet(context->context, packet);
 }
 
 int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
                              int payload_id, FractalPacketType packet_type,
                              FractalPacket* packet_buffer, size_t packet_buffer_length) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return -1;
+    }
     return context->write_payload_to_packets(payload, payload_size, payload_id, packet_type,
                                              packet_buffer, packet_buffer_length);
 }
 
 void destroy_socket_context(SocketContext* context) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return;
+    }
     context->destroy_socket_context(context->context);
     memset(context, 0, sizeof(*context));
 }
 
 /*
 ============================
-Private Function Implementations
+Public Function Implementations
 ============================
 */
 
@@ -396,12 +423,6 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
     }
 }
 
-/*
-============================
-Public Function Implementations
-============================
-*/
-
 void init_networking() {
     /*
         Initialize default port mappings (i.e. the identity)
@@ -490,5 +511,3 @@ int get_packet_size(FractalPacket* packet) {
 
     return PACKET_HEADER_SIZE + packet->payload_size;
 }
-
-int ack(SocketContext* context) { return context->ack(context->context); }

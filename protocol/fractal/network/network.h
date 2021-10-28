@@ -183,6 +183,12 @@ typedef struct {
                                      // than the unencrypted packet
 } FractalPacket;
 
+#define MAX_PACKET_SIZE (sizeof(FractalPacket))
+#define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
+// Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size (If
+// Unencrypted)
+//                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
+
 typedef struct {
     unsigned int ip;
     unsigned short private_port;
@@ -236,12 +242,6 @@ typedef struct {
                                     size_t packet_buffer_length);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
-
-#define MAX_PACKET_SIZE (sizeof(FractalPacket))
-#define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
-// Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size (If
-// Unencrypted)
-//                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
 
 /*
 ============================
