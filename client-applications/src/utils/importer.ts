@@ -285,6 +285,8 @@ const decryptCookie = async (
     const originalText = decodedBuffer
     cookie.decrypted_value = originalText
 
+    delete cookie.encrypted_value
+
     return cookie
   } catch (err) {
     console.error("Decrypt failed with error: ", err)
