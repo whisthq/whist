@@ -15,8 +15,10 @@ do
   sleep 0.1
 done
 
+# Pass JSON transport settings as environment variables
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 export TZ=$TZ
+
 # Start the application that this mandelbox runs
 exec fractal-application
