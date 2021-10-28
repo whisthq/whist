@@ -6,6 +6,7 @@ import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { isNumber } from "lodash"
 import { execCommand } from "./../../../../scripts/execCommand"
+import { persistGet } from "@app/utils/persist"
 
 export default flow(
   "mandelboxFlow",
@@ -51,8 +52,8 @@ export default flow(
               "data"
             ),
             initial_key_repeat: isNumber(initialKeyRepeat)
-            ? initialKeyRepeat
-            : 68, // this fails if the user hasn't modified the default value, which is 68
+              ? initialKeyRepeat
+              : 68, // this fails if the user hasn't modified the default value, which is 68
             key_repeat: isNumber(keyRepeat) ? keyRepeat : 6, // this fails if the user hasn't modified the default value, which is 6
           }), // Data to send through the JSON transport
         }))
