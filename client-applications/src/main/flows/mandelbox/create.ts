@@ -43,7 +43,7 @@ export default flow<{
           delayWhen(() => {
             if (attempts < 20) {
               attempts = attempts + 1
-              return timer(1000)
+              return timer(500)
             }
             throw new Error()
           })
