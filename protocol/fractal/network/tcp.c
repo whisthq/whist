@@ -13,17 +13,28 @@ Private Functions
 ============================
 */
 
-/*
-@brief                          Perform accept syscall and set fd to use flag
-                                FD_CLOEXEC
-
-@param sock_fd                  The socket file descriptor
-@param sock_addr                The socket address
-@param sock_len                 The size of the socket address
-
-@returns                        The new socket file descriptor, -1 on failure
-*/
+/**
+ * @brief                           Perform accept syscall and set fd to use flag
+ *                                  FD_CLOEXEC
+ *
+ * @param sock_fd                   The socket file descriptor
+ * @param sock_addr                 The socket address
+ * @param sock_len                  The size of the socket address
+ *
+ * @returns                         The new socket file descriptor, -1 on failure
+ */
 SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
+
+/**
+ * @brief                           Connect to a TCP Server
+ *
+ * @param sock_fd                   The socket file descriptor
+ * @param sock_addr                 The socket address
+ * @param timeout_ms                The timeout for the connection attempt
+ *
+ * @returns                         Returns true on success, false on failure.
+ */
+bool tcp_connect(SOCKET sock_fd, struct sockaddr_in sock_addr, int timeout_ms);
 
 /*
 ============================
@@ -34,75 +45,6 @@ TCP Implementation of Network.h Interface
 int tcp_ack(void* raw_context) {
     SocketContextData* context = raw_context;
     return sendp(context, NULL, 0);
-}
-
-bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
-    /*
-        Connect to TCP server
-
-        Arguments:
-            socket (SOCKET): socket to connect over
-            addr (struct sockaddr_in): connection address information
-            timeout_ms (int): timeout in milliseconds
-
-        Returns:
-            (bool): true on success, false on failure
-    */
-
-    // Connect to TCP server
-    int ret;
-    // Set to nonblocking
-    set_timeout(socket, 0);
-    // Following instructions here: https://man7.org/linux/man-pages/man2/connect.2.html
-    // Observe the paragraph under EINPROGRESS for how to nonblocking connect over TCP
-    if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
-        bool worked = get_last_network_error() == FRACTAL_EINPROGRESS;
-
-        if (!worked) {
-            LOG_WARNING(
-                "Could not connect() over TCP to server: Returned %d, Error "
-                "Code %d",
-                ret, get_last_network_error());
-            closesocket(socket);
-            return false;
-        }
-    }
-
-    // Select connection
-    fd_set set;
-    FD_ZERO(&set);
-    FD_SET(socket, &set);
-    struct timeval tv;
-    tv.tv_sec = timeout_ms / MS_IN_SECOND;
-    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
-    if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
-        if (ret == 0) {
-            LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
-        } else {
-            LOG_WARNING(
-                "Could not select() over TCP to server: Returned %d, Error Code "
-                "%d\n",
-                ret, get_last_network_error());
-        }
-        closesocket(socket);
-        return false;
-    }
-
-    int error;
-    socklen_t len = sizeof(error);
-    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
-        LOG_WARNING("Could not getsockopt SO_ERROR");
-        closesocket(socket);
-        return false;
-    }
-    if (error != 0) {
-        LOG_WARNING("getsockopt has captured the following error: %d", error);
-        closesocket(socket);
-        return false;
-    }
-
-    set_timeout(socket, timeout_ms);
-    return true;
 }
 
 FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
@@ -341,6 +283,75 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) 
 #endif
 
     return new_socket;
+}
+
+bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
+    /*
+        Connect to TCP server
+
+        Arguments:
+            socket (SOCKET): socket to connect over
+            addr (struct sockaddr_in): connection address information
+            timeout_ms (int): timeout in milliseconds
+
+        Returns:
+            (bool): true on success, false on failure
+    */
+
+    // Connect to TCP server
+    int ret;
+    // Set to nonblocking
+    set_timeout(socket, 0);
+    // Following instructions here: https://man7.org/linux/man-pages/man2/connect.2.html
+    // Observe the paragraph under EINPROGRESS for how to nonblocking connect over TCP
+    if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
+        // EINPROGRESS is a valid error, anything else is invalid
+        if (get_last_network_error() != FRACTAL_EINPROGRESS) {
+            LOG_WARNING(
+                "Could not connect() over TCP to server: Returned %d, Error "
+                "Code %d",
+                ret, get_last_network_error());
+            closesocket(socket);
+            return false;
+        }
+    }
+
+    // Select connection
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(socket, &set);
+    struct timeval tv;
+    tv.tv_sec = timeout_ms / MS_IN_SECOND;
+    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
+    if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
+        if (ret == 0) {
+            LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
+        } else {
+            LOG_WARNING(
+                "Could not select() over TCP to server: Returned %d, Error Code "
+                "%d\n",
+                ret, get_last_network_error());
+        }
+        closesocket(socket);
+        return false;
+    }
+
+    // Check for errors that may have happened during the select()
+    int error;
+    socklen_t len = sizeof(error);
+    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
+        LOG_WARNING("Could not getsockopt SO_ERROR");
+        closesocket(socket);
+        return false;
+    }
+    if (error != 0) {
+        LOG_WARNING("getsockopt has captured the following error: %d", error);
+        closesocket(socket);
+        return false;
+    }
+
+    set_timeout(socket, timeout_ms);
+    return true;
 }
 
 int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,

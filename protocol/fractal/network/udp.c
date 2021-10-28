@@ -22,22 +22,6 @@ int udp_ack(void* raw_context) {
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int udp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
-    /*
-        This will send a FractalPacket over UDP to the SocketContextData context. This
-        function does not create the packet from raw data, but assumes that the
-        packet has been prepared by the caller (e.g. fragmented into appropriately-sized)
-        chunks by a fragmenter). This function assumes and checks that the packet is
-        small enough to send without further breaking into smaller packets.
-
-        Arguments:
-            context (SocketContextData*): The socket context
-            packet (FractalPacket*): A pointer to the packet to be sent
-            packet_size (size_t): The size of the packet to be sent
-
-        Returns:
-            (int): Will return -1 on failure, will return 0 on success
-    */
-
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -94,23 +78,6 @@ int udp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size
 // Please pass this comment into any non-trivial function that this function calls.
 int udp_send_packet_from_payload(void* raw_context, FractalPacketType type, void* data, int len,
                                  int id) {
-    /*
-        This will send a FractalPacket over UDP to the SocketContextData context. A
-        FractalPacketType is also provided to the receiving end. This function
-        assumes and checks that the packet is small enough to send without breaking
-        into smaller packets.
-
-        Arguments:
-            context (SocketContextData*): The socket context
-            type (FractalPacketType): The FractalPacketType, either VIDEO, AUDIO, or MESSAGE
-            data (void*): A pointer to the data to be sent
-            len (int): The number of bytes to send
-            id (int): An ID for the UDP data
-
-        Returns:
-            (int): Will return -1 on failure, will return 0 on success
-    */
-
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -137,16 +104,6 @@ int udp_send_packet_from_payload(void* raw_context, FractalPacketType type, void
 }
 
 FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
-    /*
-        Receive a FractalPacket from a SocketContextData, if any such packet exists
-
-        Arguments:
-            context (SocketContextData*): The socket context
-
-        Returns:
-            (FractalPacket*): A pointer to the FractalPacket on success, NULL on failure
-    */
-
     SocketContextData* context = raw_context;
 
     if (should_recv == false) {
@@ -217,16 +174,6 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
 }
 
 void udp_free_packet(void* raw_context, FractalPacket* udp_packet) {
-    /*
-        Frees a UDP packet created by udp_read_packet
-
-        Arguments:
-            tcp_packet (FractalPacket*): The udp packet to free
-
-        TODO (abecohen): Change udp_read_packet to use malloc
-        and then add "deallocate_region(udp_packet);" to this function.
-    */
-
     SocketContextData* context = raw_context;
 
     if (!context->decrypted_packet_used) {
@@ -244,27 +191,6 @@ void udp_free_packet(void* raw_context, FractalPacket* udp_packet) {
 int udp_write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
                                  FractalPacketType packet_type, FractalPacket* packet_buffer,
                                  size_t packet_buffer_length) {
-    /*
-        Split a payload into several packets approprately-sized
-        for UDP transport, and write those files to a buffer.
-
-        Arguments:
-            payload (uint8_t*): The payload data to be split into packets
-            payload_size (size_t): The size of the payload, in bytes
-            payload_id (int): An ID for the UDP data (must be positive)
-            packet_type (FractalPacketType): The FractalPacketType (video, audio, or message)
-            packet_buffer (FractalPacket*): The buffer to write the packets to
-            packet_buffer_length (size_t): The length of the packet buffer
-
-        Returns:
-            (int): The number of packets that were written to the buffer,
-                or -1 on failure
-
-        Note:
-            This function should be removed and replaced with
-            a more general packet splitter/joiner context, which
-            will enable us to use forward error correction, etc.
-    */
     size_t current_position = 0;
 
     // Calculate number of packets needed to send the payload, rounding up.

@@ -25,8 +25,8 @@ tcp_context->free_packet(...);
 #include "network.h"
 
 /**
- * @brief Creates a tcp network context and initializes a TCP connection
- *        between a server and a client
+ * @brief                           Creates a tcp network context and initializes a TCP connection
+ *                                  between a server and a client
  *
  * @param context                   The socket context that will be initialized
  * @param destination               The server IP address to connect to. Passing
