@@ -113,14 +113,13 @@ FractalPacket* read_packet(SocketContext* context, bool should_recv) {
     return context->read_packet(context->context, should_recv);
 }
 
-int send_packet_from_payload(SocketContext* context, FractalPacketType packet_type, void* payload,
-                             int payload_size, int packet_id) {
+int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload,
+                int payload_size, int packet_id) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
         return -1;
     }
-    return context->send_packet_from_payload(context->context, packet_type, payload, payload_size,
-                                             packet_id);
+    return context->send_packet(context->context, packet_type, payload, payload_size, packet_id);
 }
 
 void free_packet(SocketContext* context, FractalPacket* packet) {

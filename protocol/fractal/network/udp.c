@@ -106,7 +106,7 @@ void udp_free_packet(void* raw_context, FractalPacket* udp_packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
+int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -161,8 +161,8 @@ int udp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet_from_payload(void* raw_context, FractalPacketType packet_type, void* payload,
-                                 int payload_size, int packet_id) {
+int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payload,
+                    int payload_size, int packet_id) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -213,7 +213,7 @@ int udp_send_packet_from_payload(void* raw_context, FractalPacketType packet_typ
         current_position += packet->payload_size;
         // Send the packet,
         // ignoring the return code since maybe a subset of the packets were sent
-        udp_send_packet(context, packet, packet->payload_size);
+        udp_send_constructed_packet(context, packet, get_packet_size(packet));
     }
 
     return 0;
@@ -280,7 +280,7 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
             "NACKed %s packet ID %d Index %d found of "
             "length %d. Relaying!",
             type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, len);
-        return udp_send_packet(context, packet, len);
+        return udp_send_constructed_packet(context, packet, len);
     } else {
         LOG_WARNING(
             "NACKed %s packet %d %d not found, ID %d was "
@@ -671,7 +671,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     network_context->ack = udp_ack;
     network_context->read_packet = udp_read_packet;
     network_context->free_packet = udp_free_packet;
-    network_context->send_packet_from_payload = udp_send_packet_from_payload;
+    network_context->send_packet = udp_send_packet;
     network_context->destroy_socket_context = udp_destroy_socket_context;
 
     // Create the SocketContextData, and set to zero

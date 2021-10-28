@@ -231,8 +231,7 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
 
     // Send the video frame
     if (client.is_active) {
-        send_packet_from_payload(&client.udp_context, PACKET_VIDEO, frame,
-                                 get_total_frame_size(frame), id);
+        send_packet(&client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame), id);
     }
 }
 
@@ -325,7 +324,7 @@ void send_empty_frame(int id) {
 
     // Send the empty frame
     if (client.is_active) {
-        send_packet_from_payload(&client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
+        send_packet(&client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
     }
 }
 

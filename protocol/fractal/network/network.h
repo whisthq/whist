@@ -240,8 +240,7 @@ typedef struct {
     int (*ack)(void* context);
     FractalPacket* (*read_packet)(void* context, bool should_recv);
     void (*free_packet)(void* context, FractalPacket* packet);
-    int (*send_packet_from_payload)(void* context, FractalPacketType type, void* data, int len,
-                                    int id);
+    int (*send_packet)(void* context, FractalPacketType type, void* data, int len, int id);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
@@ -330,8 +329,8 @@ void free_packet(SocketContext* context, FractalPacket* packet);
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_packet_from_payload(SocketContext* context, FractalPacketType packet_type, void* payload,
-                             int payload_size, int packet_id);
+int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload,
+                int payload_size, int packet_id);
 
 /**
  * @brief                          Destroys an allocated and initialized SocketContext

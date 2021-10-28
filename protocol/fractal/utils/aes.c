@@ -143,7 +143,7 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
                      FractalPacket* plaintext_packet, int plaintext_len,
                      unsigned char* private_key) {
     if ((unsigned long)packet_len < PACKET_HEADER_SIZE) {
-        LOG_WARNING("Packet is too small for metadata!");
+        LOG_WARNING("Packet is too small (%d bytes) for metadata!", packet_len);
         return -1;
     }
 

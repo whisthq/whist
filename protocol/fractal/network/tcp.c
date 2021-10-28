@@ -147,7 +147,7 @@ void tcp_free_packet(void* raw_context, FractalPacket* tcp_packet) {
     deallocate_region(tcp_packet);
 }
 
-int tcp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
+int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
 
     // Allocate a buffer for the encrypted packet
@@ -194,8 +194,7 @@ int tcp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet_from_payload(void* raw_context, FractalPacketType type, void* data, int len,
-                                 int id) {
+int tcp_send_packet(void* raw_context, FractalPacketType type, void* data, int len, int id) {
     SocketContextData* context = raw_context;
 
     if (id != -1) {
@@ -219,7 +218,7 @@ int tcp_send_packet_from_payload(void* raw_context, FractalPacketType type, void
     memcpy(packet->data, data, len);
 
     // Send the packet
-    int ret = tcp_send_packet(context, packet, packet_size);
+    int ret = tcp_send_constructed_packet(context, packet, packet_size);
 
     // Free the packet
     deallocate_region(packet);
@@ -832,7 +831,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     network_context->ack = tcp_ack;
     network_context->read_packet = tcp_read_packet;
     network_context->free_packet = tcp_free_packet;
-    network_context->send_packet_from_payload = tcp_send_packet_from_payload;
+    network_context->send_packet = tcp_send_packet;
     network_context->destroy_socket_context = tcp_destroy_socket_context;
 
     // Create the SocketContextData, and set to zero

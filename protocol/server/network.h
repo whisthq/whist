@@ -45,7 +45,7 @@ int broadcast_ack(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int len, int packet_id);
+int broadcast_udp_packet(FractalPacketType type, void *data, int len, int packet_id);
 
 /**
  * @brief                          Sends a FractalPacket and accompanying
@@ -59,7 +59,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len);
+int broadcast_tcp_packet(FractalPacketType type, void *data, int len);
 
 /**
  * @brief                          Tries to read in next available TCP message

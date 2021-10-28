@@ -132,17 +132,16 @@ int32_t multithreaded_send_audio(void* opaque) {
                                                   audio_encoder->packets, (void*)frame->data);
 
                         if (client.is_active) {
-                            send_packet_from_payload(
-                                &client.udp_context, PACKET_AUDIO, frame,
-                                audio_encoder->encoded_frame_size + sizeof(int), id);
+                            send_packet(&client.udp_context, PACKET_AUDIO, frame,
+                                        audio_encoder->encoded_frame_size + sizeof(int), id);
                             id++;
                         }
                     }
                 }
 #else
                 if (client.is_active) {
-                    send_packet_from_payload(&client.udp_context, PACKET_AUDIO,
-                                             audio_device->buffer, audio_device->buffer_size, id);
+                    send_packet(&client.udp_context, PACKET_AUDIO, audio_device->buffer,
+                                audio_device->buffer_size, id);
                     id++;
                 }
 #endif
