@@ -369,7 +369,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	sub *subscriptions.MandelboxInfoEvent, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+	sub *subscriptions.MandelboxInfoEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
@@ -668,7 +668,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
 	// Receive the config encryption token from the client via the httpserver
-	jsonchan := getJSONTransportRequestChannelForUser(mandelboxInfo.UserID, transportRequestMap, transportMapLock)
+	jsonchan := getJSONTransportRequestChannel(mandelboxInfo.MandelboxID, transportRequestMap, transportMapLock)
 	req := <-jsonchan
 
 	// Verify that this user sent in a (nontrivial) config encryption token
@@ -730,7 +730,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 }
 
 // Handle tasks to be completed when a mandelbox dies
-func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
 	fc, err := mandelbox.LookUpByDockerID(mandelboxtypes.DockerID(id))
@@ -740,8 +740,9 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.UserI
 	}
 
 	// Clean up this user from the JSON transport request map.
+	mandelboxID := fc.GetMandelboxID()
 	transportMapLock.Lock()
-	transportRequestMap[fc.GetUserID()] = nil
+	transportRequestMap[mandelboxID] = nil
 	transportMapLock.Unlock()
 
 	fc.Close()
@@ -1020,7 +1021,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 	// We use this lock to protect the transportRequestMap
 	transportMapLock := &sync.Mutex{}
-	transportRequestMap := make(map[mandelboxtypes.UserID]chan *JSONTransportRequest)
+	transportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
 	// In the following loop, this var determines whether to re-initialize the
 	// Docker event stream. This is necessary because the Docker event stream
