@@ -177,9 +177,9 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         LOG_ERROR("Type is out of bounds! Something wrong happened");
         return -1;
     }
-    if (context->nack_buffer[type_index] != NULL) {
+    if (context->nack_buffers[type_index] != NULL) {
         nack_buffer =
-            context->nack_buffer[type_index][packet_id % context->nack_buffer_size[type_index]];
+            context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]];
     }
 
     // Calculate number of packets needed to send the payload, rounding up.
@@ -191,7 +191,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
     // Or there's no nack buffer but it's a packet that must be split,
     // Then there's a problem and we LOG_ERROR
     if (nack_buffer && num_indices > context->nack_buffer_max_indices[type_index] ||
-        nack_buffer && payload_size > context->nack_buffer_size[type_index] ||
+        nack_buffer && payload_size > context->nack_buffer_max_payload_size[type_index] ||
         !nack_buffer && num_indices > 1) {
         LOG_ERROR("Packet is too large to send the payload! %d", num_indices);
         return -1;
@@ -209,7 +209,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         packet->id = packet_id;
         packet->num_indices = (short)num_indices;
         packet->is_a_nack = false;
-        memcpy(packet->data, payload + current_position, packet->payload_size);
+        memcpy(packet->data, (char*)payload + current_position, packet->payload_size);
         current_position += packet->payload_size;
         // Send the packet,
         // ignoring the return code since maybe a subset of the packets were sent
@@ -220,7 +220,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
 }
 
 void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType type,
-                              int max_payload_size, int buffer_size) {
+                              int max_payload_size, int num_buffers) {
     SocketContextData* context = socket_context->context;
 
     int type_index = (int)type;
@@ -228,25 +228,26 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
         LOG_ERROR("Type is out of bounds! Something wrong happened");
         return;
     }
-    if (context->nack_buffer[type_index] != NULL) {
+    if (context->nack_buffers[type_index] != NULL) {
         LOG_ERROR("Nack Buffer has already been initialized!");
         return;
     }
 
     int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 2;
 
-    context->nack_buffer[type_index] = malloc(sizeof(FractalPacket*) * buffer_size);
-    context->nack_buffer_size[type_index] = buffer_size;
+    context->nack_buffers[type_index] = malloc(sizeof(FractalPacket*) * num_buffers);
+    context->nack_num_buffers[type_index] = num_buffers;
+    context->nack_buffer_max_payload_size[type_index] = max_payload_size;
     context->nack_buffer_max_indices[type_index] = max_num_ids;
 
-    // Allocate each nack buffer, based on buffer_size
-    for (int i = 0; i < buffer_size; i++) {
+    // Allocate each nack buffer, based on num_buffers
+    for (int i = 0; i < num_buffers; i++) {
         // Allocate a buffer of max_num_ids FractalPacket's
-        context->nack_buffer[type_index][i] = allocate_region(sizeof(FractalPacket) * max_num_ids);
+        context->nack_buffers[type_index][i] = allocate_region(sizeof(FractalPacket) * max_num_ids);
         // Set just the ID, but don't memset the entire region to 0,
         // Or you'll make the kernel allocate all of the memory
         for (int j = 0; j < max_num_ids; j++) {
-            context->nack_buffer[type_index][i][j].id = 0;
+            context->nack_buffers[type_index][i][j].id = 0;
         }
     }
 }
@@ -260,7 +261,7 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
         LOG_ERROR("Type is out of bounds! Something wrong happened");
         return -1;
     }
-    if (context->nack_buffer[type_index] == NULL) {
+    if (context->nack_buffers[type_index] == NULL) {
         LOG_ERROR("Nack Buffer has not been initialized!");
         return -1;
     }
@@ -271,8 +272,8 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
     }
 
     FractalPacket* packet =
-        &context->nack_buffer[type_index][packet_id % context->nack_buffer_size[type_index]]
-                             [packet_index];
+        &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
+                              [packet_index];
     if (packet->id == packet_id) {
         int len = get_packet_size(packet);
         packet->is_a_nack = true;
@@ -299,12 +300,12 @@ void udp_destroy_socket_context(void* raw_context) {
 
     // Deallocate the nack buffers
     for (int type_id = 0; type_id < NUM_PACKET_TYPES; type_id++) {
-        if (context->nack_buffer[type_id] != NULL) {
-            for (int i = 0; i < context->nack_buffer_size[type_id]; i++) {
-                deallocate_region(context->nack_buffer[type_id][i]);
+        if (context->nack_buffers[type_id] != NULL) {
+            for (int i = 0; i < context->nack_num_buffers[type_id]; i++) {
+                deallocate_region(context->nack_buffers[type_id][i]);
             }
-            free(context->nack_buffer[type_id]);
-            context->nack_buffer[type_id] = NULL;
+            free(context->nack_buffers[type_id]);
+            context->nack_buffers[type_id] = NULL;
         }
     }
 

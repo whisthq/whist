@@ -222,9 +222,11 @@ typedef struct {
     NetworkThrottleContext* network_throttler;
     bool decrypted_packet_used;
     FractalPacket decrypted_packet;
-    FractalPacket** nack_buffer[NUM_PACKET_TYPES];
-    int nack_buffer_size[NUM_PACKET_TYPES];
+    // Nack Buffer Data
+    FractalPacket** nack_buffers[NUM_PACKET_TYPES];
+    int nack_num_buffers[NUM_PACKET_TYPES];
     int nack_buffer_max_indices[NUM_PACKET_TYPES];
+    int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
 } SocketContextData;
 
 /**

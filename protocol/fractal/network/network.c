@@ -264,8 +264,8 @@ bool handshake_private_key(SocketContextData* context) {
     fractal_sleep(50);
 
     // Wait for and verify their signed private key request data
-    recv_size =
-        recv(context->socket, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data), 0);
+    recv_size = recv(context->socket, (char*)&our_signed_priv_key_data,
+                     sizeof(our_signed_priv_key_data), 0);
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
