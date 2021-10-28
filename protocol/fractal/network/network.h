@@ -131,6 +131,8 @@ Constants
 */
 
 #define MAX_PAYLOAD_SIZE 1285
+#define VIDEO_NACKBUFFER_SIZE 25
+#define AUDIO_NACKBUFFER_SIZE 100
 
 /*
 ============================
@@ -150,6 +152,8 @@ typedef enum {
     PACKET_VIDEO,
     PACKET_MESSAGE,
 } FractalPacketType;
+// Used for buffers whose key is a packet_type
+#define NUM_PACKET_TYPES 3
 
 /**
  * @brief                          Packet of data to be sent over a
@@ -218,6 +222,9 @@ typedef struct {
     NetworkThrottleContext* network_throttler;
     bool decrypted_packet_used;
     FractalPacket decrypted_packet;
+    FractalPacket** nack_buffer[NUM_PACKET_TYPES];
+    int nack_buffer_size[NUM_PACKET_TYPES];
+    int nack_buffer_max_indices[NUM_PACKET_TYPES];
 } SocketContextData;
 
 /**
@@ -232,14 +239,9 @@ typedef struct {
     // Function table
     int (*ack)(void* context);
     FractalPacket* (*read_packet)(void* context, bool should_recv);
-
+    void (*free_packet)(void* context, FractalPacket* packet);
     int (*send_packet_from_payload)(void* context, FractalPacketType type, void* data, int len,
-                                    int id);  // id only valid in UDP contexts
-    int (*send_packet)(void* context, FractalPacket* packet, size_t packet_size);
-    void (*free_packet)(void* context, FractalPacket* packet);  // Only Non-NULL in TCP.
-    int (*write_payload_to_packets)(uint8_t* payload, size_t payload_size, int payload_id,
-                                    FractalPacketType packet_type, FractalPacket* packet_buffer,
-                                    size_t packet_buffer_length);
+                                    int id);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
@@ -312,20 +314,6 @@ FractalPacket* read_packet(SocketContext* context, bool should_recv);
 void free_packet(SocketContext* context, FractalPacket* packet);
 
 /**
- * @brief                          This will send a FractalPacket over the
- *                                 the SocketContext context.
- *                                 packet_size must not exceed sizeof(FractalPacket) over UDP
- *
- * @param context                  The socket context
- * @param packet                   A pointer to the packet to be sent
- * @param packet_size              The total size of the packet to be sent
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
-
-/**
  * @brief                          Given a FractalPacket's type, payload, payload_len, and id,
  *                                 This function will send the FractalPacket over the network.
  *                                 There is no restriction on the size of this packet,
@@ -333,40 +321,17 @@ int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_siz
  *                                 TODO: Fragment over UDP
  *
  * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
+ * @param packet_type              The FractalPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
  * @param payload                  A pointer to the payload that is to be sent
- * @param payload_len              The length of the payload
- * @param id                       An ID for the UDP data.
+ * @param payload_size             The size of the payload
+ * @param packet_id                A Packet ID for the packet.
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* payload,
-                             int payload_len, int id);
-
-/**
- * @brief                          Split a payload into several packets approprately-sized
- *                                 for UDP transport, and write those files to a buffer.
- *
- * @param context                  The socket context to use
- * @param payload                  The payload data to be split into packets
- * @param payload_size             The size of the payload, in bytes
- * @param payload_id               An ID for the UDP data (must be positive)
- * @param packet_type              The FractalPacketType (video, audio, or message)
- * @param packet_buffer            The buffer to write the packets to
- * @param packet_buffer_length     The length of the packet buffer
- *
- * @returns                        The number of packets that were written to the buffer,
- *                                 or -1 on failure
- *
- * @note                           This function should be removed and replaced with
- *                                 a more general packet splitter/joiner context, which
- *                                 will enable us to use forward error correction, etc.
- */
-int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
-                             int payload_id, FractalPacketType packet_type,
-                             FractalPacket* packet_buffer, size_t packet_buffer_length);
+int send_packet_from_payload(SocketContext* context, FractalPacketType packet_type, void* payload,
+                             int payload_size, int packet_id);
 
 /**
  * @brief                          Destroys an allocated and initialized SocketContext

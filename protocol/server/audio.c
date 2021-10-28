@@ -54,10 +54,6 @@ Includes
 
 extern volatile bool exiting;
 
-#define AUDIO_BUFFER_SIZE 100
-#define MAX_NUM_AUDIO_INDICES 3
-FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
-
 extern int sample_rate;
 
 /*
@@ -135,46 +131,20 @@ int32_t multithreaded_send_audio(void* opaque) {
                         write_avpackets_to_buffer(audio_encoder->num_packets,
                                                   audio_encoder->packets, (void*)frame->data);
 
-                        // Requires UDP context to be active, is_active == true
-                        int num_packets = write_payload_to_packets(
-                            &client.udp_context, (uint8_t*)frame,
-                            audio_encoder->encoded_frame_size + sizeof(int), id, PACKET_AUDIO,
-                            audio_buffer[id % AUDIO_BUFFER_SIZE], MAX_NUM_AUDIO_INDICES);
-
-                        if (num_packets < 0) {
-                            LOG_WARNING("Failed to write audio packet to buffer");
-                        } else {
-                            for (int i = 0; i < num_packets; ++i) {
-                                if (broadcast_udp_packet(
-                                        &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
-                                        get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) <
-                                    0) {
-                                    LOG_WARNING("Failed to broadcast audio packet");
-                                }
-                            }
+                        if (client.is_active) {
+                            send_packet_from_payload(
+                                &client.udp_context, PACKET_AUDIO, frame,
+                                audio_encoder->encoded_frame_size + sizeof(int), id);
+                            id++;
                         }
-
-                        id++;
                     }
                 }
 #else
-                int num_packets = write_payload_to_packets(
-                    (uint8_t*)audio_device->buffer, audio_device->buffer_size, id, PACKET_AUDIO,
-                    audio_buffer[id % AUDIO_BUFFER_SIZE], MAX_NUM_AUDIO_INDICES);
-
-                if (num_packets < 0) {
-                    LOG_WARNING("Failed to write audio packet to buffer");
-                } else if (assuming_client_actives) {
-                    for (int i = 0; i < num_packets; ++i) {
-                        if (broadcast_udp_packet(
-                                &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
-                                get_packet_size(&audio_buffer[id % AUDIO_BUFFER_SIZE][i])) < 0) {
-                            LOG_WARNING("Failed to broadcast audio packet");
-                        }
-                    }
+                if (client.is_active) {
+                    send_packet_from_payload(&client.udp_context, PACKET_AUDIO,
+                                             audio_device->buffer, audio_device->buffer_size, id);
+                    id++;
                 }
-
-                id++;
 #endif
             }
 

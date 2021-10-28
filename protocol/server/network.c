@@ -188,6 +188,10 @@ int connect_client(bool using_stun, char *binary_aes_private_key_input) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
+    udp_register_nack_buffer(&client.udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE,
+                             VIDEO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client.udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE,
+                             AUDIO_NACKBUFFER_SIZE);
 
     if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
                                    TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
@@ -217,27 +221,6 @@ int broadcast_ack(void) {
         read_unlock(&client.tcp_rwlock);
     }
     return ret;
-}
-
-int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
-    /*
-        Broadcasts UDP packet `packet` of size `packet_size` to client
-
-        Arguments:
-            packet (FractalPacket*): packet to be broadcast
-            packet_size (size_t): size of the packet to be broadcast
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    if (client.is_active) {
-        if (send_packet(&(client.udp_context), packet, packet_size) < 0) {
-            LOG_ERROR("Failed to send UDP packet to client");
-            return -1;
-        }
-    }
-    return 0;
 }
 
 int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int len, int packet_id) {

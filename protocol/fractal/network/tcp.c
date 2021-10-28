@@ -228,12 +228,6 @@ int tcp_send_packet_from_payload(void* raw_context, FractalPacketType type, void
     return ret;
 }
 
-int tcp_write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
-                                 size_t packet_buffer_length) {
-    LOG_FATAL("tcp_write_payload_to_packets has not been implemented!");
-}
-
 void tcp_destroy_socket_context(void* raw_context) {
     SocketContextData* context = raw_context;
 
@@ -837,10 +831,8 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     // Populate function pointer table
     network_context->ack = tcp_ack;
     network_context->read_packet = tcp_read_packet;
-    network_context->send_packet = tcp_send_packet;
-    network_context->send_packet_from_payload = tcp_send_packet_from_payload;
     network_context->free_packet = tcp_free_packet;
-    network_context->write_payload_to_packets = tcp_write_payload_to_packets;
+    network_context->send_packet_from_payload = tcp_send_packet_from_payload;
     network_context->destroy_socket_context = tcp_destroy_socket_context;
 
     // Create the SocketContextData, and set to zero

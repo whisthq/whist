@@ -113,21 +113,14 @@ FractalPacket* read_packet(SocketContext* context, bool should_recv) {
     return context->read_packet(context->context, should_recv);
 }
 
-int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* data, int len,
-                             int id) {
+int send_packet_from_payload(SocketContext* context, FractalPacketType packet_type, void* payload,
+                             int payload_size, int packet_id) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
         return -1;
     }
-    return context->send_packet_from_payload(context->context, type, data, len, id);
-}
-
-int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return -1;
-    }
-    return context->send_packet(context->context, packet, packet_size);
+    return context->send_packet_from_payload(context->context, packet_type, payload, payload_size,
+                                             packet_id);
 }
 
 void free_packet(SocketContext* context, FractalPacket* packet) {
@@ -136,17 +129,6 @@ void free_packet(SocketContext* context, FractalPacket* packet) {
         return;
     }
     context->free_packet(context->context, packet);
-}
-
-int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
-                             int payload_id, FractalPacketType packet_type,
-                             FractalPacket* packet_buffer, size_t packet_buffer_length) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return -1;
-    }
-    return context->write_payload_to_packets(payload, payload_size, payload_id, packet_type,
-                                             packet_buffer, packet_buffer_length);
 }
 
 void destroy_socket_context(SocketContext* context) {

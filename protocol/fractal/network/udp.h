@@ -52,4 +52,28 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
                                char* binary_aes_private_key);
 
+/**
+ * @brief                          Registers a nack buffer, so that future nacks can be responded
+ * to. It will be able to respond to nacks from the most last `buffer_size` ID's that have been send
+ * via send_packet_from_payload
+ *
+ * @param context                  The SocketContext that will have a nack buffer
+ * @param type                     The FractalPacketType that this nack buffer will be used for
+ * @param max_payload_size         The largest payload that will be saved in the nack buffer
+ * @param buffer_size              The number of packets that will be stored in the nack buffer
+ */
+void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, int max_payload_size,
+                              int buffer_size);
+
+/**
+ * @brief                          Respond to a nack for a given ID/Index
+ *
+ * @param context                  The SocketContext to nack from
+ * @param type                     The FractalPacketType of the nack'ed packet
+ * @param id                       The ID of the nack'ed packet
+ * @param index                    The index of the nack'ed packet
+ *                                 (The UDP packet index into the larger FractalPacket)
+ */
+int udp_nack(SocketContext* context, FractalPacketType type, int id, int index);
+
 #endif  // FRACTAL_UDP_H
