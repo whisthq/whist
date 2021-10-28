@@ -90,7 +90,7 @@ const settingsMenu = new MenuItem({
       type: "checkbox",
       checked: (persistGet("autoLaunch", "data") ?? "true") === "true",
       click: () => {
-        trayEvent.emit("autoLaunch")
+        trayEvent.emit("auto-launch")
       },
     },
     {
@@ -99,13 +99,13 @@ const settingsMenu = new MenuItem({
       checked:
         (persistGet("restoreLastChromeSession", "data") ?? "true") === "true",
       click: () => {
-        trayEvent.emit("restoreLastChromeSession")
+        trayEvent.emit("restore-last-chrome-session")
       },
     },
     {
       label: "(Coming Soon) Make Whist my default browser",
       click: () => {
-        trayEvent.emit("defaultBrowser")
+        trayEvent.emit("default-browser")
       },
     },
   ],
