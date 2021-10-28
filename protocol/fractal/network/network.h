@@ -9,7 +9,7 @@
 Usage
 ============================
 
-SocketContext: This type represents a socket.
+SocketContextData: This type represents a socket.
    - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
      parameters
    - To send data over a socket, call SendTCPPacket or SendUDPPacket
@@ -44,7 +44,7 @@ if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
 Client
 -----
 
-SocketContext context;
+SocketContextData context;
 CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
 
 char* msg = "Hello this is a message!";
@@ -54,7 +54,7 @@ SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
 Server
 -----
 
-SocketContext context;
+SocketContextData context;
 CreateTCPContext(&context, NULL, 5055, 500, 250);
 
 FractalPacket* packet = NULL;
@@ -117,6 +117,9 @@ Defines
 #define FRACTAL_EINPROGRESS EINPROGRESS
 #endif
 
+#define STUN_IP "0.0.0.0"
+#define STUN_PORT 48800
+
 // Note that both the Windows and Linux versions use 2 as the second argument
 // to indicate shutting down both ends of the socket
 #define FRACTAL_SHUTDOWN_SOCKET(s) shutdown(s, 2)
@@ -135,22 +138,6 @@ Custom types
 ============================
 */
 
-typedef struct SocketContext {
-    bool is_server;
-    bool is_tcp;
-    bool udp_is_connected;
-    int timeout;
-    SOCKET socket;
-    struct sockaddr_in addr;
-    int ack;
-    FractalMutex mutex;
-    char binary_aes_private_key[16];
-    // Used for reading TCP packets
-    int reading_packet_len;
-    DynamicBuffer* encrypted_tcp_packet_buffer;
-    NetworkThrottleContext* network_throttler;
-} SocketContext;
-
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
 // replayed
 // TODO: INC integer that must not be used twice
@@ -158,7 +145,7 @@ typedef struct SocketContext {
 /**
  * @brief                          Data packet description
  */
-typedef enum FractalPacketType {
+typedef enum {
     PACKET_AUDIO,
     PACKET_VIDEO,
     PACKET_MESSAGE,
@@ -166,9 +153,9 @@ typedef enum FractalPacketType {
 
 /**
  * @brief                          Packet of data to be sent over a
- *                                 SocketContext
+ *                                 SocketContextData
  */
-typedef struct FractalPacket {
+typedef struct {
     char hash[16];  // Hash of the rest of the packet
     // hash[16] is a signature for everything below this line
 
@@ -202,6 +189,60 @@ typedef struct FractalPacket {
 // Unencrypted)
 //                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
 
+typedef struct {
+    unsigned int ip;
+    unsigned short private_port;
+    unsigned short public_port;
+} StunEntry;
+
+typedef enum { ASK_INFO, POST_INFO } StunRequestType;
+
+typedef struct {
+    StunRequestType type;
+    StunEntry entry;
+} StunRequest;
+
+typedef struct {
+    bool is_server;
+    bool is_tcp;
+    bool udp_is_connected;
+    int timeout;
+    SOCKET socket;
+    struct sockaddr_in addr;
+    int ack;
+    FractalMutex mutex;
+    char binary_aes_private_key[16];
+    // Used for reading TCP packets
+    int reading_packet_len;
+    DynamicBuffer* encrypted_tcp_packet_buffer;
+    NetworkThrottleContext* network_throttler;
+    bool decrypted_packet_used;
+    FractalPacket decrypted_packet;
+} SocketContextData;
+
+/**
+ * @brief                       Interface describing the avaliable functions
+ *                              and socket context of a network protocol
+ *
+ */
+typedef struct {
+    // Attributes
+    void* context;
+
+    // Function table
+    int (*ack)(void* context);
+    FractalPacket* (*read_packet)(void* context, bool should_recv);
+
+    int (*send_packet_from_payload)(void* context, FractalPacketType type, void* data, int len,
+                                    int id);  // id only valid in UDP contexts
+    int (*send_packet)(void* context, FractalPacket* packet, size_t packet_size);
+    void (*free_packet)(void* context, FractalPacket* packet);  // Only Non-NULL in TCP.
+    int (*write_payload_to_packets)(uint8_t* payload, size_t payload_size, int payload_id,
+                                    FractalPacketType packet_type, FractalPacket* packet_buffer,
+                                    size_t packet_buffer_length);
+    void (*destroy_socket_context)(void* context);
+} SocketContext;
+
 /*
 ============================
 Public Functions
@@ -224,57 +265,91 @@ void init_networking();
 int get_last_network_error();
 
 /**
- * @brief                          This will send or receive data over a socket
+ * @brief                          Get the size of a FractalPacket
  *
- * @param context                  The socket context to be used
- * @param buf                      The buffer to read or write to
- * @param len                      The length of the buffer to send over the socket
-                                   Or, the maximum number of bytes that can be read
- *                                 from the socket
-
- * @returns                        The number of bytes that have been read or
- *                                 written to or from the buffer
+ * @param packet                   The packet to get the size of
+ *
+ * @returns                        The size of the packet, or -1 on error
  */
-int recvp(SocketContext* context, void* buf, int len);
-int sendp(SocketContext* context, void* buf, int len);
+int get_packet_size(FractalPacket* packet);
 
 /**
- * @brief                          Initialize a UDP/TCP connection between a
- *                                 server and a client
+ * @brief                          Send a 0-length packet over the socket. Used
+ *                                 to keep-alive over NATs, and to check on the
+ *                                 validity of the socket
  *
- * @param context                  The socket context that will be initialized
- * @param destination              The server IP address to connect to. Passing
- *                                 NULL will wait for another client to connect
- *                                 to the socket
- * @param port                     The port to connect to. This will be a real
- *                                 port if USING_STUN is false, and it will be a
- *                                 virtual port if USING_STUN is
- *                                 true; (The real port will be some randomly
- *                                 chosen port if USING_STUN is true)
- * @param recvfrom_timeout_s       The timeout that the socketcontext will use
- *                                 after being initialized
- * @param connection_timeout_ms    The timeout that will be used when attempting
- *                                 to connect. The handshake sends a few packets
- *                                 back and forth, so the upper
- *                                 bound of how long CreateXContext will take is
- *                                 some small constant times
- *                                 connection_timeout_ms
- * @param using_stun               True/false for whether or not to use the STUN server for this
- *                                 context
- * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
+ * @param context                  The socket context
+ *
+ * @returns                        Will return -1 on failure, and 0 on success
+ *                                 Failure implies that the socket is
+ *                                 broken or the TCP connection has ended, use
+ *                                 get_last_network_error() to learn more about the
+ *                                 error
+ */
+int ack(SocketContext* context);
+
+/**
+ * @brief                          Receive a FractalPacket from a SocketContext,
+ *                                 if any such packet exists
+ *
+ * @param context                  The socket context
+ * @param should_recv              If false, this function will only pop buffered packets,
+ *                                 if any exist.
+ *                                 If true, this function will call recv from the socket,
+ *                                 but that might take a while in the case of TCP.
+ *
+ * @returns                        A pointer to the FractalPacket on success,
+ *                                 NULL on failure
+ */
+FractalPacket* read_packet(SocketContext* context, bool should_recv);
+
+/**
+ * @brief                          Frees a FractalPacket created by read_packet
+ *
+ * @param context                  The socket context that created the packet
+ * @param packet                   The FractalPacket to free
+ */
+void free_packet(SocketContext* context, FractalPacket* packet);
+
+/**
+ * @brief                          This will send a FractalPacket over the
+ *                                 the SocketContext context.
+ *                                 packet_size must not exceed sizeof(FractalPacket) over UDP
+ *
+ * @param context                  The socket context
+ * @param packet                   A pointer to the packet to be sent
+ * @param packet_size              The total size of the packet to be sent
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                       int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
-int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
-                       int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
+int send_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
+
+/**
+ * @brief                          Given a FractalPacket's type, payload, payload_len, and id,
+ *                                 This function will send the FractalPacket over the network.
+ *                                 There is no restriction on the size of this packet,
+ *                                 it will be fragmented if necessary.
+ *                                 TODO: Fragment over UDP
+ *
+ * @param context                  The socket context
+ * @param type                     The FractalPacketType, either VIDEO, AUDIO,
+ *                                 or MESSAGE
+ * @param payload                  A pointer to the payload that is to be sent
+ * @param payload_len              The length of the payload
+ * @param id                       An ID for the UDP data.
+ *
+ * @returns                        Will return -1 on failure, will return 0 on
+ *                                 success
+ */
+int send_packet_from_payload(SocketContext* context, FractalPacketType type, void* payload,
+                             int payload_len, int id);
 
 /**
  * @brief                          Split a payload into several packets approprately-sized
  *                                 for UDP transport, and write those files to a buffer.
  *
+ * @param context                  The socket context to use
  * @param payload                  The payload data to be split into packets
  * @param payload_size             The size of the payload, in bytes
  * @param payload_id               An ID for the UDP data (must be positive)
@@ -289,111 +364,99 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
  *                                 a more general packet splitter/joiner context, which
  *                                 will enable us to use forward error correction, etc.
  */
-int write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                             FractalPacketType packet_type, FractalPacket* packet_buffer,
-                             size_t packet_buffer_length);
+int write_payload_to_packets(SocketContext* context, uint8_t* payload, size_t payload_size,
+                             int payload_id, FractalPacketType packet_type,
+                             FractalPacket* packet_buffer, size_t packet_buffer_length);
 
 /**
- * @brief                          Get the size of a FractalPacket
+ * @brief                          Destroys an allocated and initialized SocketContext
  *
- * @param packet                   The packet to get the size of
- *
- * @returns                        The size of the packet, or -1 on error
+ * @param context                  The SocketContext to destroy
  */
-int get_packet_size(FractalPacket* packet);
+void destroy_socket_context(SocketContext* context);
+
+/*
+@brief                          This will set `socket` to have timeout
+                                timeout_ms.
+
+@param socket                   The SOCKET to be configured
+@param timeout_ms               The maximum amount of time that all recv/send
+                                calls will take for that socket (0 to return
+                                immediately, -1 to never return). Set 0 to have
+                                a non-blocking socket, and -1 for an indefinitely
+                                blocking socket.
+*/
+void set_timeout(SOCKET socket, int timeout_ms);
+
+/*
+@brief                          Perform socket syscalls and set fds to
+                                use flag FD_CLOEXEC
+
+@returns                        The socket file descriptor, -1 on failure
+*/
+SOCKET socketp_tcp();
+SOCKET socketp_udp();
+
+typedef struct {
+    char iv[16];
+    char signature[32];
+} PrivateKeyData;
+
+typedef struct {
+    char iv[16];
+    char private_key[16];
+} SignatureData;
+
+/*
+@brief                          This will prepare the private key data
+
+@param priv_key_data            The private key data buffer
+*/
+void prepare_private_key_request(PrivateKeyData* priv_key_data);
+
+/*
+@brief                          This will sign the other connection's private key data
+
+@param priv_key_data            The private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
+
+/*
+@brief                          This will verify the given private key
+
+@param our_priv_key_data        The private key data buffer
+@param our_signed_priv_key_data The signed private key data buffer
+@param recv_size                The length of the buffer
+@param private_key              The private key
+
+@returns                        True if the verification succeeds, false if it fails
+*/
+bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                         void* private_key);
+
+// Handshake
+bool handshake_private_key(SocketContextData* context);
 
 /**
- * @brief                          This will send a FractalPacket over TCP to
- *                                 the SocketContext context. A
- *                                 FractalPacketType is also provided to
- *                                 describe the packet
+ * @brief                          This will send or receive data over a socket
  *
- * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_tcp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len);
+ * @param context                  The socket context to be used
+ * @param buf                      The buffer to read or write to
+ * @param len                      The length of the buffer to send over the socket
+                                   Or, the maximum number of bytes that can be read
+ *                                 from the socket
 
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketContext context. A
- *                                 FractalPacketType is also provided to the
- *                                 receiving end
- *
- * @param context                  The socket context
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
- *                                 or MESSAGE
- * @param data                     A pointer to the data to be sent
- * @param len                      The number of bytes to send
- * @param id                       An ID for the UDP data.
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
+ * @returns                        The number of bytes that have been read or
+ *                                 written to or from the buffer
  */
-int send_udp_packet_from_payload(SocketContext* context, FractalPacketType type, void* data,
-                                 int len, int id);
+int sendp(SocketContextData* context, void* buf, int len);
 
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 the SocketContext context. This function does
- *                                 not create the packet from raw data, but
- *                                 assumes that the packet has been prepared by
- *                                 the caller (e.g. fragmented into
- *                                 appropriately-sized chunks by a fragmenter).
- *                                 This function assumes and checks that the
- *                                 packet is small enough to send without
- *                                 further breaking into smaller packets.
- *
- * @param context                  The socket context
- * @param packet                   A pointer to the packet to be sent
- * @param packet_size              The size of the packet to be sent
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int send_udp_packet(SocketContext* context, FractalPacket* packet, size_t packet_size);
-
-/**
- * @brief                          Send a 0-length packet over the socket. Used
- *                                 to keep-alive over NATs, and to check on the
- *                                 validity of the socket
- *
- * @param context                  The socket context
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success Failure implies that the socket is
- *                                 broken or the TCP connection has ended, use
- *                                 GetLastNetworkError() to learn more about the
- *                                 error
- */
-int ack(SocketContext* context);
-
-/**
- * @brief                          Receive a FractalPacket from a SocketContext,
- *                                 if any such packet exists
- *
- * @param context                  The socket context
- * @param should_recvp             If false, this function will only pop buffered packets
- *                                 If true, this function will pull data from the TCP socket,
- *                                 but that might take a while
- *
- * @returns                        A pointer to the FractalPacket on success,
- *                                 NULL on failure
- */
-FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
-FractalPacket* read_udp_packet(SocketContext* context);
-
-/**
- * @brief                          Frees a TCP packet created by read_tcp_packet
- *
- * @param tcp_packet               The TCP packet to free
- */
-void free_tcp_packet(FractalPacket* tcp_packet);
+#include <fractal/network/tcp.h>
+#include <fractal/network/udp.h>
 
 #endif  // NETWORK_H

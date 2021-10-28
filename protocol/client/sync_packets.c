@@ -283,7 +283,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         // Time the following recvfrom code
         start_timer(&recvfrom_timer);
         FractalPacket* packet;
-        packet = read_udp_packet(&socket_context);
+        packet = read_packet(&socket_context, true);
 
         double recvfrom_short_time = get_timer(recvfrom_timer);
 
@@ -302,11 +302,9 @@ int multithreaded_sync_udp_packets(void* opaque) {
                     lastrecv * MS_IN_SECOND);
             }
             lastrecv = 0.0;
-        }
 
-        // LOG_INFO("Recv wait time: %f", get_timer(recvfrom_timer));
+            // LOG_INFO("Recv wait time: %f", get_timer(recvfrom_timer));
 
-        if (packet) {
             // Check packet type and then redirect packet to the proper packet
             // handler
             switch (packet->type) {
@@ -336,6 +334,8 @@ int multithreaded_sync_udp_packets(void* opaque) {
                     LOG_WARNING("Unknown Packet");
                     break;
             }
+
+            free_packet(&socket_context, packet);
         }
     }
 
@@ -393,11 +393,11 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         start_timer(&last_tcp_check_timer);
 
         // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
+        FractalPacket* tcp_packet = read_packet(&packet_tcp_context, true);
         if (tcp_packet) {
             handle_server_message((FractalServerMessage*)tcp_packet->data,
                                   (size_t)tcp_packet->payload_size);
-            free_tcp_packet(tcp_packet);
+            free_packet(&packet_tcp_context, tcp_packet);
         }
 
         // SEND TCP PACKET HANDLERS:

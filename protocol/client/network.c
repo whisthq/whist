@@ -37,8 +37,7 @@ extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 extern volatile char client_binary_aes_private_key[16];
 int udp_port = -1;
 int tcp_port = -1;
-SocketContext packet_send_udp_context = {0};
-SocketContext packet_receive_udp_context = {0};
+SocketContext packet_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 extern char *server_ip;
 int uid;
@@ -79,13 +78,13 @@ int discover_ports(bool *using_stun) {
     // Create TCP context
     SocketContext context;
     LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
-    if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
-                           (char *)client_binary_aes_private_key) < 0) {
+    if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                                   *using_stun, (char *)client_binary_aes_private_key)) {
         /*
                 *using_stun = !*using_stun;
                 LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
-                if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                                       *using_stun, (char *)client_binary_aes_private_key) < 0) {
+                if (create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1,
+           TCP_CONNECTION_WAIT, *using_stun, (char *)client_binary_aes_private_key) < 0) {
         */
         LOG_WARNING("Failed to connect to server's discovery port.");
         return -1;
@@ -101,10 +100,10 @@ int discover_ports(bool *using_stun) {
 
     prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
 
-    if (send_tcp_packet_from_payload(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
-                                     (int)sizeof(fcmsg)) < 0) {
+    if (send_packet_from_payload(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg),
+                                 -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
-        closesocket(context.socket);
+        destroy_socket_context(&context);
         return -1;
     }
     LOG_INFO("Sent discovery packet");
@@ -114,19 +113,18 @@ int discover_ports(bool *using_stun) {
     clock timer;
     start_timer(&timer);
     do {
-        tcp_packet = read_tcp_packet(&context, true);
+        tcp_packet = read_packet(&context, true);
         SDL_Delay(5);
     } while (tcp_packet == NULL && get_timer(timer) < 5.0);
-    closesocket(context.socket);
 
     // If no tcp packet was found, just return -1
     // Otherwise, parse the tcp packet's FractalDiscoveryReplyMessage
     if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive discovery packet from server.");
+        destroy_socket_context(&context);
         return -1;
     }
 
-    FractalServerMessage *fsmsg = (FractalServerMessage *)tcp_packet->data;
     if (tcp_packet->payload_size !=
         sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage)) {
         LOG_ERROR(
@@ -134,12 +132,16 @@ int discover_ports(bool *using_stun) {
             "%d",
             sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage),
             tcp_packet->payload_size);
-        free_tcp_packet(tcp_packet);
+        free_packet(&context, tcp_packet);
+        destroy_socket_context(&context);
         return -1;
     }
+
+    FractalServerMessage *fsmsg = (FractalServerMessage *)tcp_packet->data;
     if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
-        free_tcp_packet(tcp_packet);
+        free_packet(&context, tcp_packet);
+        destroy_socket_context(&context);
         return -1;
     }
 
@@ -157,10 +159,8 @@ int discover_ports(bool *using_stun) {
 
     error_monitor_set_connection_id(reply_msg->connection_id);
 
-    // fsmsg and reply_msg are pointers into tcp_packet,
-    // but at this point, we're done.
-    free_tcp_packet(tcp_packet);
-
+    free_packet(&context, tcp_packet);
+    destroy_socket_context(&context);
     return 0;
 }
 
@@ -262,31 +262,19 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (create_udp_context(&packet_send_udp_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
-                           using_stun, (char *)client_binary_aes_private_key) < 0) {
+    if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, 10,
+                                   UDP_CONNECTION_WAIT, using_stun,
+                                   (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
 
-    // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
-    // Windows Socket 65535 Socket options apply to all sockets.
-    // this is set to stop the kernel from buffering too much, thereby
-    // getting the data to us faster for lower latency
-    int a = 65535;
-    if (setsockopt(packet_send_udp_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
-                   sizeof(int)) == -1) {
-        LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
-        return -1;
-    }
-
-    if (create_tcp_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
-                           using_stun, (char *)client_binary_aes_private_key) < 0) {
+    if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
+                                   using_stun, (char *)client_binary_aes_private_key)) {
         LOG_ERROR("Failed to establish TCP connection with server.");
-        closesocket(packet_send_udp_context.socket);
+        destroy_socket_context(&packet_udp_context);
         return -1;
     }
-
-    packet_receive_udp_context = packet_send_udp_context;
 
     return 0;
 }
@@ -307,26 +295,26 @@ int send_tcp_reconnect_message(bool using_stun) {
     fcmsg.type = MESSAGE_TCP_RECOVERY;
 
     SocketContext discovery_context;
-    if (create_tcp_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
-                           using_stun, (char *)client_binary_aes_private_key) < 0) {
+    if (!create_tcp_socket_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
+                                   using_stun, (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to connect to server's discovery port.");
         return -1;
     }
 
-    if (send_tcp_packet_from_payload(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
-                                     (int)sizeof(fcmsg)) < 0) {
+    if (send_packet_from_payload(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
+                                 (int)sizeof(fcmsg), -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
-        closesocket(discovery_context.socket);
+        destroy_socket_context(&discovery_context);
         return -1;
     }
-    closesocket(discovery_context.socket);
+    destroy_socket_context(&discovery_context);
 
     // We wouldn't have called closesocket on this socket before, so we can safely call
     //     close regardless of what caused the socket failure without worrying about
     //     undefined behavior.
-    closesocket(packet_tcp_context.socket);
-    if (create_tcp_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000, using_stun,
-                           (char *)client_binary_aes_private_key) < 0) {
+    destroy_socket_context(&packet_tcp_context);
+    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000,
+                                   using_stun, (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to connect to server's TCP port.");
         return -1;
     }
@@ -342,9 +330,8 @@ int close_connections(void) {
             (int): 0 on success
     */
 
-    closesocket(packet_send_udp_context.socket);
-    closesocket(packet_receive_udp_context.socket);
-    closesocket(packet_tcp_context.socket);
+    destroy_socket_context(&packet_udp_context);
+    destroy_socket_context(&packet_tcp_context);
     return 0;
 }
 
@@ -397,8 +384,8 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
 
     if (fcmsg->type == CMESSAGE_CLIPBOARD || fcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
         fcmsg->type == MESSAGE_TCP_PING) {
-        return send_tcp_packet_from_payload(&packet_tcp_context, PACKET_MESSAGE, fcmsg,
-                                            get_fcmsg_size(fcmsg));
+        return send_packet_from_payload(&packet_tcp_context, PACKET_MESSAGE, fcmsg,
+                                        get_fcmsg_size(fcmsg), -1);
     } else {
         if ((size_t)get_fcmsg_size(fcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
@@ -410,7 +397,7 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_udp_packet_from_payload(&packet_send_udp_context, PACKET_MESSAGE, fcmsg,
-                                            get_fcmsg_size(fcmsg), sent_packet_id);
+        return send_packet_from_payload(&packet_udp_context, PACKET_MESSAGE, fcmsg,
+                                        get_fcmsg_size(fcmsg), sent_packet_id);
     }
 }

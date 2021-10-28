@@ -233,10 +233,10 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
 #endif  // LOG_VIDEO
     start_timer(statistics_timer);
 
-    // Packetize the frame
-    int num_packets =
-        write_payload_to_packets((uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
-                                 video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+    // Packetize the frame, required client.is_active == true
+    int num_packets = write_payload_to_packets(
+        &client.udp_context, (uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
+        video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {
         LOG_ERROR("Failed to write video packet to buffer. Dropping Frame.");
@@ -350,9 +350,9 @@ void send_empty_frame(int id) {
     // We don't need to fill out the rest of the fields of the VideoFrame because
     // is_empty_frame is true, so it will just be ignored by the client.
 
-    int num_packets =
-        write_payload_to_packets((uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
-                                 video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
+    int num_packets = write_payload_to_packets(
+        &client.udp_context, (uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
+        video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
 
     if (num_packets < 0) {
         LOG_ERROR("Failed to write video packet to buffer");
@@ -622,8 +622,8 @@ int32_t multithreaded_send_video(void* opaque) {
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
-        if (accumulated_frames > 0 || wants_iframe ||
-            get_timer(last_frame_capture) > 1.0 / min_fps) {
+        if (client.is_active && (accumulated_frames > 0 || wants_iframe ||
+                                 get_timer(last_frame_capture) > 1.0 / min_fps)) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
             // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
             start_timer(&last_frame_capture);

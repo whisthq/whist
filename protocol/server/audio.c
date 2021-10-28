@@ -127,7 +127,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                     log_double_statistic("Audio encode time (ms)", get_timer(t) * 1000);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
-                    } else {
+                    } else if (assuming_client_active && client.is_active) {
                         static char buf[LARGEST_AUDIOFRAME_SIZE];
                         AudioFrame* frame = (AudioFrame*)buf;
                         frame->data_length = audio_encoder->encoded_frame_size;
@@ -135,14 +135,15 @@ int32_t multithreaded_send_audio(void* opaque) {
                         write_avpackets_to_buffer(audio_encoder->num_packets,
                                                   audio_encoder->packets, (void*)frame->data);
 
+                        // Requires UDP context to be active, is_active == true
                         int num_packets = write_payload_to_packets(
-                            (uint8_t*)frame, audio_encoder->encoded_frame_size + sizeof(int), id,
-                            PACKET_AUDIO, audio_buffer[id % AUDIO_BUFFER_SIZE],
-                            MAX_NUM_AUDIO_INDICES);
+                            &client.udp_context, (uint8_t*)frame,
+                            audio_encoder->encoded_frame_size + sizeof(int), id, PACKET_AUDIO,
+                            audio_buffer[id % AUDIO_BUFFER_SIZE], MAX_NUM_AUDIO_INDICES);
 
                         if (num_packets < 0) {
                             LOG_WARNING("Failed to write audio packet to buffer");
-                        } else if (assuming_client_active) {
+                        } else {
                             for (int i = 0; i < num_packets; ++i) {
                                 if (broadcast_udp_packet(
                                         &audio_buffer[id % AUDIO_BUFFER_SIZE][i],
