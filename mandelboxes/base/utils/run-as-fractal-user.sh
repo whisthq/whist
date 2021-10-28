@@ -17,17 +17,18 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
   if [ "$( jq 'has("restore_last_session")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
     RESTORE_LAST_SESSION="$(jq '.restore_last_session' < $FRACTAL_JSON_FILE)"
   fi
-  if [ "$( jq 'has("desired_timezone")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
-    DESIRED_TIMEZONE="$(jq '.desired_timezone' < $FRACTAL_JSON_FILE)"
+  
+  if [ "$( jq 'has("desired_tz")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    DESIRED_TIMEZONE="$(jq '.desired_tz' < $FRACTAL_JSON_FILE)"
     timedatectl set-timezone $DESIRED_TIMEZONE
   fi
 fi
 
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
-export DESIRED_TIMEZONE=$DESIRED_TIMEZONE
+export TZ=$DESIRED_TIMEZONE 
 
-exec runuser --login fractal --whitelist-environment=DESIRED_TIMEZONE,DARK_MODE,RESTORE_LAST_SESSION -c \
+exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
