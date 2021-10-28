@@ -9,6 +9,7 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
+import omitDeep from "deepdash/omitDeep"
 
 import config, {
   loggingBaseFilePath,
@@ -117,6 +118,13 @@ export const logBase = (
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
+
+  // Don't log the config token to Amplitude to protect user privacy
+  data = omitDeep(data, "configToken", { onMatch: { skipChildren: true } })
+  data = omitDeep(data, "config_encryption_token", {
+    onMatch: { skipChildren: true },
+  })
+
   const userEmail = persistGet("userEmail") ?? ""
   localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 
