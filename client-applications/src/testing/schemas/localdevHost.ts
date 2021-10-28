@@ -15,7 +15,7 @@
  */
 import { mapTo, tap } from "rxjs/operators"
 import { MockSchema } from "@app/@types/schema"
-import crypto from "crypto";
+import crypto from "crypto"
 
 const localdevHost: MockSchema = {
   mandelboxCreateFlow: (trigger) => ({
