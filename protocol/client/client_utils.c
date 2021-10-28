@@ -63,7 +63,7 @@ bool using_stun = false;
 MouseMotionAccumulation mouse_state = {0};
 volatile SDL_Window *window;
 
-extern unsigned short port_mappings[USHRT_MAX];
+extern unsigned short port_mappings[USHRT_MAX + 1];
 
 volatile bool using_piped_arguments;
 const struct option client_cmd_options[] = {

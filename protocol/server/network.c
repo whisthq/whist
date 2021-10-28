@@ -73,13 +73,13 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
     clock timer;
     start_timer(&timer);
     do {
-        tcp_packet = read_tcp_packet(context, true);
+        tcp_packet = read_packet(context, true);
         fractal_sleep(5);
     } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
     // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
     if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive request over discovery port from client.");
-        closesocket(context->socket);
+        destroy_socket_context(context);
         return -1;
     }
 
@@ -97,7 +97,7 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
                     LOG_WARNING("Discovery handshake failed.");
                 }
 
-                free_tcp_packet(tcp_packet);
+                free_packet(context, tcp_packet);
                 fcmsg = NULL;
                 tcp_packet = NULL;
 
@@ -110,10 +110,10 @@ int handle_discovery_port_message(SocketContext *context, bool *new_client) {
             //     close regardless of what caused the socket failure without worrying about
             //     undefined behavior.
             write_lock(&client.tcp_rwlock);
-            closesocket(client.tcp_context.socket);
-            if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1,
-                                   TCP_CONNECTION_WAIT, get_using_stun(),
-                                   binary_aes_private_key) < 0) {
+            destroy_socket_context(&client.tcp_context);
+            if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
+                                           TCP_CONNECTION_WAIT, get_using_stun(),
+                                           binary_aes_private_key)) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&client.tcp_rwlock);
@@ -163,15 +163,13 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_tcp_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size) <
+    if (send_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) <
         0) {
         LOG_ERROR("Failed to send discovery reply message.");
-        closesocket(context->socket);
         free(fsmsg);
         return -1;
     }
 
-    closesocket(context->socket);
     free(fsmsg);
 
     LOG_INFO("Discovery handshake succeeded.");
@@ -185,25 +183,24 @@ Public Function Implementations
 */
 
 int connect_client(bool using_stun, char *binary_aes_private_key_input) {
-    if (create_udp_context(&(client.udp_context), NULL, client.udp_port, 1, UDP_CONNECTION_WAIT,
-                           using_stun, binary_aes_private_key_input) < 0) {
+    if (!create_udp_socket_context(&client.udp_context, NULL, client.udp_port, 1,
+                                   UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
 
-    if (create_tcp_context(&(client.tcp_context), NULL, client.tcp_port, 1, TCP_CONNECTION_WAIT,
-                           using_stun, binary_aes_private_key_input) < 0) {
+    if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
+                                   TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
         LOG_WARNING("Failed TCP connection with client");
-        closesocket(client.udp_context.socket);
+        destroy_socket_context(&client.udp_context);
         return -1;
     }
     return 0;
 }
 
 int disconnect_client() {
-    closesocket(client.udp_context.socket);
-    network_throttler_destroy(client.udp_context.network_throttler);
-    closesocket(client.tcp_context.socket);
+    destroy_socket_context(&client.udp_context);
+    destroy_socket_context(&client.tcp_context);
     return 0;
 }
 
@@ -235,7 +232,7 @@ int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
     */
 
     if (client.is_active) {
-        if (send_udp_packet(&(client.udp_context), packet, packet_size) < 0) {
+        if (send_packet(&(client.udp_context), packet, packet_size) < 0) {
             LOG_ERROR("Failed to send UDP packet to client");
             return -1;
         }
@@ -250,7 +247,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
     }
 
     if (client.is_active) {
-        if (send_udp_packet_from_payload(&(client.udp_context), type, data, len, packet_id) < 0) {
+        if (send_packet_from_payload(&(client.udp_context), type, data, len, packet_id) < 0) {
             LOG_WARNING("Failed to send UDP packet to client");
             return -1;
         }
@@ -261,7 +258,7 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
 int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        if (send_tcp_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len) < 0) {
+        if (send_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }
@@ -283,13 +280,11 @@ int try_get_next_message_tcp(FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    read_lock(&client.tcp_rwlock);
-    FractalPacket *tcp_packet = read_tcp_packet(&(client.tcp_context), should_recvp);
+    FractalPacket *tcp_packet = read_packet(&client.tcp_context, should_recvp);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
     }
-    read_unlock(&client.tcp_rwlock);
     return 0;
 }
 
@@ -298,12 +293,13 @@ int try_get_next_message_udp(FractalClientMessage *fcmsg, size_t *fcmsg_size) {
 
     memset(fcmsg, 0, sizeof(*fcmsg));
 
-    FractalPacket *packet = read_udp_packet(&(client.udp_context));
+    FractalPacket *packet = read_packet(&(client.udp_context), true);
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_fcmsg_size(fcmsg)) {
             LOG_WARNING("Packet is of the wrong size!: %d", packet->payload_size);
             LOG_WARNING("Type: %d", fcmsg->type);
+            free_packet(&client.udp_context, packet);
             return -1;
         }
         *fcmsg_size = packet->payload_size;
@@ -316,9 +312,12 @@ int try_get_next_message_udp(FractalClientMessage *fcmsg, size_t *fcmsg_size) {
             } else {
                 LOG_WARNING("Ignoring out of order keyboard input.");
                 *fcmsg_size = 0;
+                free_packet(&client.udp_context, packet);
                 return 0;
             }
         }
+
+        free_packet(&client.udp_context, packet);
     }
     return 0;
 }
@@ -401,8 +400,9 @@ int multithreaded_manage_client(void *opaque) {
         }
 
         // Even without multiclient, we need this for TCP recovery over the discovery port
-        if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                               get_using_stun(), binary_aes_private_key) < 0) {
+        if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
+                                       TCP_CONNECTION_WAIT, get_using_stun(),
+                                       binary_aes_private_key)) {
             continue;
         }
 
@@ -411,8 +411,12 @@ int multithreaded_manage_client(void *opaque) {
         //     accepting connections and is reliable for both discovery and recovery messages.
         if (handle_discovery_port_message(&discovery_context, &new_client) != 0) {
             LOG_WARNING("Discovery port message could not be handled.");
+            destroy_socket_context(&discovery_context);
             continue;
         }
+
+        // Destroy the ephemeral discovery context
+        destroy_socket_context(&discovery_context);
 
         // If the handled message was not for a discovery handshake, then skip
         //     over everything that is necessary for setting up a new client

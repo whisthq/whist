@@ -151,6 +151,7 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
     }
 
     if (get_tcp) {
+        read_lock(&client.tcp_rwlock);
         FractalPacket* tcp_packet = NULL;
         // If received a TCP message
         if (try_get_next_message_tcp(&tcp_packet) == 0 && tcp_packet != NULL) {
@@ -160,8 +161,9 @@ void get_fractal_client_messages(bool get_tcp, bool get_udp) {
         }
         // Free the tcp packet if we received one
         if (tcp_packet) {
-            free_tcp_packet(tcp_packet);
+            free_packet(&client.tcp_context, tcp_packet);
         }
+        read_unlock(&client.tcp_rwlock);
     }
 }
 
