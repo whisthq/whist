@@ -15,6 +15,7 @@
  */
 import { mapTo, tap } from "rxjs/operators"
 import { MockSchema } from "@app/@types/schema"
+import crypto from "crypto"
 
 const localdevHost: MockSchema = {
   mandelboxCreateFlow: (trigger) => ({
@@ -27,7 +28,7 @@ const localdevHost: MockSchema = {
         }
       }),
       mapTo({
-        mandelboxID: "0123456789abcdef0123456789abcd",
+        mandelboxID: crypto.randomBytes(8).toString("hex"),
         ip: process.env.TESTING_LOCALDEV_HOST_IP,
       }),
       tap(() => console.log("HARDCODED HOST SERVICE IP"))

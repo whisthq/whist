@@ -12,6 +12,7 @@ export default flow<{
   ip: string
   config_encryption_token: string
   jwt_access_token: string
+  mandelbox_id: string
   json_data: string
 }>("hostSpinUpFlow", (trigger) => {
   const spin = fork(trigger.pipe(switchMap((args) => from(hostSpinUp(args)))), {

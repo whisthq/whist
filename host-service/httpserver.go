@@ -83,8 +83,8 @@ func (r requestResult) send(w http.ResponseWriter) {
 type JSONTransportRequest struct {
 	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        string                               `json:"jwt_access_token"`        // User's JWT access token
+	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`            // MandelboxID, used for the json transport request map
 	JSONData              string                               `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
-	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id,omitempty"`  // MandelboxID, used for local testing when the pubsub is disabled
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 
@@ -135,7 +135,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 
 // handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
 // the json data for the particular user exists, and finally it sends the data through the transport request map.
-func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 	// Receive the value of the `json_transport request`
 	req := serverevent.(*JSONTransportRequest)
 
@@ -143,8 +143,7 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 	// Set up auth
 	claims := new(auth.FractalClaims)
 	parser := &jwt.Parser{SkipClaimsValidation: true}
-	var requestUserID mandelboxtypes.UserID
-	var err error
+
 	// Only verify auth in non-local environments
 	if !metadata.IsLocalEnv() {
 		// Decode the access token without validating any of its claims or
@@ -154,12 +153,6 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
 			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
 			return
-		}
-		requestUserID = mandelboxtypes.UserID(claims.Subject)
-	} else {
-		requestUserID, err = metadata.GetUserID()
-		if err != nil {
-			logger.Errorf("Error getting userID, %v", err)
 		}
 	}
 
@@ -172,32 +165,32 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 	transportMapLock.Lock()
 	defer transportMapLock.Unlock()
 
-	if transportRequestMap[requestUserID] == nil {
-		transportRequestMap[requestUserID] = make(chan *JSONTransportRequest, 1)
+	if transportRequestMap[req.MandelboxID] == nil {
+		transportRequestMap[req.MandelboxID] = make(chan *JSONTransportRequest, 1)
 	}
 
 	// Send the JSONTransportRequest data through the map's channel and close the channel to
 	// prevent more requests from being sent, this ensures we only receive the
 	// json transport request once per user.
-	transportRequestMap[requestUserID] <- req
-	close(transportRequestMap[requestUserID])
+	transportRequestMap[req.MandelboxID] <- req
+	close(transportRequestMap[req.MandelboxID])
 }
 
-// getJSONTransportRequestChannelForUser returns the JSON transport request for the solicited user
+// getJSONTransportRequestChannel returns the JSON transport request for the solicited user
 // in a safe way. It also creates the channel in case it doesn't exists for that particular user.
-func getJSONTransportRequestChannelForUser(UserID mandelboxtypes.UserID,
-	transportRequestMap map[mandelboxtypes.UserID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) chan *JSONTransportRequest {
+func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
+	transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) chan *JSONTransportRequest {
 	// Acquire lock on transport requests map
 	transportMapLock.Lock()
 	defer transportMapLock.Unlock()
 
-	req := transportRequestMap[UserID]
+	req := transportRequestMap[mandelboxID]
 
 	if req == nil {
-		transportRequestMap[UserID] = make(chan *JSONTransportRequest, 1)
+		transportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
 	}
 
-	return transportRequestMap[UserID]
+	return transportRequestMap[mandelboxID]
 }
 
 // Helper functions
