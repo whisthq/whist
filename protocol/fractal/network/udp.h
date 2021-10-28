@@ -53,9 +53,10 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
                                char* binary_aes_private_key);
 
 /**
- * @brief                          Registers a nack buffer, so that future nacks can be responded
- * to. It will be able to respond to nacks from the most last `buffer_size` ID's that have been send
- * via send_packet_from_payload
+ * @brief                          Registers a nack buffer, so that future nacks can be handled.
+ *                                 It will be able to respond to nacks from the most recent
+ *                                 `buffer_size` ID's that have been send via send_packet
+ *                                 NOTE: This function is not thread-safe on SocketContext
  *
  * @param context                  The SocketContext that will have a nack buffer
  * @param type                     The FractalPacketType that this nack buffer will be used for
@@ -67,6 +68,7 @@ void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, in
 
 /**
  * @brief                          Respond to a nack for a given ID/Index
+ *                                 NOTE: This function is thread-safe with send_packet
  *
  * @param context                  The SocketContext to nack from
  * @param type                     The FractalPacketType of the nack'ed packet

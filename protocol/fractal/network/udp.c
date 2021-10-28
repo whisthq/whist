@@ -200,6 +200,10 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
     // Write all the packets into the packet buffer and send them all
     size_t current_position = 0;
     for (int packet_index = 0; packet_index < num_indices; packet_index++) {
+        if (nack_buffer) {
+            // Lock on a per-loop basis to not starve nack() calls
+            fractal_lock_mutex(context->nack_mutex[type_index]);
+        }
         FractalPacket local_packet;
         // Construct the packet, potentially into the nack buffer
         FractalPacket* packet = nack_buffer ? &nack_buffer[packet_index] : &local_packet;
@@ -214,6 +218,9 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         // Send the packet,
         // ignoring the return code since maybe a subset of the packets were sent
         udp_send_constructed_packet(context, packet, get_packet_size(packet));
+        if (nack_buffer) {
+            fractal_unlock_mutex(context->nack_mutex[type_index]);
+        }
     }
 
     return 0;
@@ -236,6 +243,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
     int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 2;
 
     context->nack_buffers[type_index] = malloc(sizeof(FractalPacket*) * num_buffers);
+    context->nack_mutex[type_index] = fractal_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     context->nack_buffer_max_payload_size[type_index] = max_payload_size;
     context->nack_buffer_max_indices[type_index] = max_num_ids;
@@ -271,9 +279,12 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
         return -1;
     }
 
+    fractal_lock_mutex(context->nack_mutex[type_index]);
     FractalPacket* packet =
         &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
                               [packet_index];
+
+    int ret;
     if (packet->id == packet_id) {
         int len = get_packet_size(packet);
         packet->is_a_nack = true;
@@ -281,14 +292,17 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
             "NACKed %s packet ID %d Index %d found of "
             "length %d. Relaying!",
             type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, len);
-        return udp_send_constructed_packet(context, packet, len);
+        ret = udp_send_constructed_packet(context, packet, len);
     } else {
         LOG_WARNING(
             "NACKed %s packet %d %d not found, ID %d was "
             "located instead.",
             type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, packet->id);
-        return -1;
+        ret = -1;
     }
+
+    fractal_unlock_mutex(context->nack_mutex[type_index]);
+    return ret;
 }
 
 void udp_destroy_socket_context(void* raw_context) {

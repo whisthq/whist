@@ -224,6 +224,8 @@ typedef struct {
     FractalPacket decrypted_packet;
     // Nack Buffer Data
     FractalPacket** nack_buffers[NUM_PACKET_TYPES];
+    // This mutex will protect the data in nack_buffers
+    FractalMutex nack_mutex[NUM_PACKET_TYPES];
     int nack_num_buffers[NUM_PACKET_TYPES];
     int nack_buffer_max_indices[NUM_PACKET_TYPES];
     int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
