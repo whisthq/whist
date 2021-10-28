@@ -6,12 +6,6 @@ const internetWarning = () =>
     silent: true,
   })
 
-const rebootWarning = () =>
-  new Notification({
-    body: "Whist unexpectedly disconnected and is rebooting",
-    silent: true,
-  })
-
 const updateAvailableNotification = () =>
   new Notification({
     body: "An update is available! Whist is downloading it in the background.",
@@ -32,7 +26,6 @@ const startupNotification = () =>
 
 export {
   internetWarning,
-  rebootWarning,
   updateAvailableNotification,
   updateDownloadedNotification,
   startupNotification,

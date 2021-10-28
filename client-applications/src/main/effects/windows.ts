@@ -14,16 +14,11 @@ import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
 import { createProtocolWindow, createExitTypeform } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
-import { internetWarning, rebootWarning } from "@app/utils/notification"
-import { protocolStreamInfo } from "@app/utils/protocol"
+import { internetWarning } from "@app/utils/notification"
 import TRIGGER from "@app/utils/triggers"
 
-// Keeps track of how many times we've tried to relaunch the protocol
-const MAX_RETRIES = 3
-let protocolLaunchRetries = 0
 // Notifications
 let internetNotification: Notification | undefined
-let rebootNotification: Notification | undefined
 // Keeps track of how often we show warnings
 let warningWindowOpen = false
 let warningLastShown = 0
@@ -35,7 +30,6 @@ createProtocolWindow().catch((err) => console.error(err))
 
 fromTrigger("appReady").subscribe(() => {
   internetNotification = internetWarning()
-  rebootNotification = rebootWarning()
 })
 
 const quit = () => {
@@ -61,22 +55,18 @@ fromTrigger("windowsAllClosed").subscribe((evt: IpcMainEvent) => {
 
 allWindowsClosed
   .pipe(
-    withLatestFrom(fromTrigger("mandelboxFlowSuccess").pipe(startWith({}))),
     withLatestFrom(
       fromTrigger("mandelboxFlowFailure").pipe(mapTo(true), startWith(false))
     )
   )
   .subscribe(
-    ([[args, info], mandelboxFailure]: [
-      [
-        {
-          crashed: boolean
-          numberWindowsRemaining: number
-          hash: string
-          event: string
-        },
-        any
-      ],
+    ([args, mandelboxFailure]: [
+      {
+        crashed: boolean
+        numberWindowsRemaining: number
+        hash: string
+        event: string
+      },
       boolean
     ]) => {
       // If they didn't crash out and didn't fill out the exit survey, show it to them
@@ -96,23 +86,6 @@ allWindowsClosed
       ) {
         quit()
         // If the protocol crashed out, try to reconnect
-      } else if (
-        args.hash === WindowHashProtocol &&
-        args.crashed &&
-        args.event === "close" &&
-        protocolLaunchRetries < MAX_RETRIES
-      ) {
-        protocolLaunchRetries = protocolLaunchRetries + 1
-        createProtocolWindow()
-          .then(() => {
-            protocolStreamInfo(info)
-            rebootNotification?.show()
-            setTimeout(() => {
-              rebootNotification?.close()
-            }, 6000)
-          })
-          .catch((err) => console.error(err))
-        // If we've already tried several times to reconnect, just show the protocol error window
       } else {
         createTrigger(TRIGGER.protocolError, of(undefined))
       }
