@@ -518,8 +518,8 @@ TEST(ProtocolTest, Utf8Truncation) {
     const int good_utf8_tests[] = {4, 29, 33, 42, 50, 100};
 
     for (auto test : bad_utf8_tests) {
-        char* truncated_buf = (char*)malloc(test + 1);
-        char* fixed_buf = (char*)malloc(test + 1);
+        char* truncated_buf = (char*)malloc(test);
+        char* fixed_buf = (char*)malloc(test);
         safe_strncpy(truncated_buf, buf, test);
         safe_strncpy(fixed_buf, buf, test);
         trim_utf8_string(fixed_buf);
@@ -528,8 +528,9 @@ TEST(ProtocolTest, Utf8Truncation) {
         free(truncated_buf);
     }
     for (auto test : good_utf8_tests) {
-        char* truncated_buf = (char*)malloc(test + 1);
-        char* fixed_buf = (char*)malloc(test + 1);
+        char* truncated_buf = (char*)malloc(test);
+        char* fixed_buf = (char*)malloc(test);
+        safe_strncpy(truncated_buf, buf, test);
         safe_strncpy(truncated_buf, buf, test);
         safe_strncpy(fixed_buf, buf, test);
         trim_utf8_string(fixed_buf);

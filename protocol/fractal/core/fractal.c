@@ -380,30 +380,26 @@ void trim_utf8_string(char *str) {
     // in the malformed case, we would at most need to
     // trim 3 trailing bytes.
 
-    // b[0] = str[len - 3]
-    // b[1] = str[len - 2]
-    // b[2] = str[len - 1]
-    // b[3] = str[len] = '\0'
-    char *b = str + strlen(str) - 3;
+    size_t len = strlen(str);
 
-    // Does a 4-byte sequence start at b[0]?
-    if ((b[0] & 0xf0) == 0xf0) {
+    // Does a 4-byte sequence start at b[len - 3]?
+    if (len >= 3 && (str[len - 3] & 0xf0) == 0xf0) {
         // Yes, so we need to trim 3 bytes.
-        b[0] = '\0';
+        str[len - 3] = '\0';
         return;
     }
 
-    // Does a 3 or more byte sequence start at b[1]?
-    if ((b[1] & 0xe0) == 0xe0) {
+    // Does a 3 or more byte sequence start at str[len - 2]?
+    if (len >= 2 && (str[len - 2] & 0xe0) == 0xe0) {
         // Yes, so we need to trim 2 bytes.
-        b[1] = '\0';
+        str[len - 2] = '\0';
         return;
     }
 
-    // Does a 2 or more byte sequence start at b[2]?
-    if ((b[2] & 0xc0) == 0xc0) {
+    // Does a 2 or more byte sequence start at str[len - 1]?
+    if (len >= 1 && (str[len - 1] & 0xc0) == 0xc0) {
         // Yes, so we need to trim 1 byte.
-        b[2] = '\0';
+        str[len - 1] = '\0';
         return;
     }
 #endif  // _WIN32
