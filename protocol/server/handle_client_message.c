@@ -492,8 +492,6 @@ static int handle_init_message(FractalClientMessage *cfcmsg) {
 
     FractalDiscoveryRequestMessage fcmsg = cfcmsg->discoveryRequest;
 
-    // Handle time
-    set_time_data(&fcmsg.time_data);
     client_os = fcmsg.os;
 
     error_monitor_set_username(fcmsg.user_email);

@@ -101,9 +101,4 @@ char* current_time_str();
  */
 int get_time_data(FractalTimeData* time_data);
 
-/**
- * @brief                          Sets the current timezone based on a FractalTimeData object
- */
-void set_time_data(FractalTimeData* time_data);
-
 #endif
