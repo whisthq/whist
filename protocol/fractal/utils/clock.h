@@ -96,9 +96,4 @@ clock create_clock(int timeout_ms);
  */
 char* current_time_str();
 
-/**
- * @brief                          Gets a FractalTimeData object representing the current timezone
- */
-int get_time_data(FractalTimeData* time_data);
-
 #endif
