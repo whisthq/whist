@@ -157,7 +157,7 @@ const TermsOfService = () => {
             Whist is committed to our users' privacy and security, which why we
             do not store the data within your applications after you terminate a
             Whist Session. A Whist session (“Session”) occurs each time you use
-            Fractal’s software to access a cloud-based application via Whist.
+            Whist’s software to access a cloud-based application via Whist.
             Each Session is standalone, meaning that the remote machine running
             the application(s) you are using during a Session will be
             permanently erased shortly after you terminate your Session. As
@@ -672,9 +672,9 @@ const TermsOfService = () => {
             send a DMCA Notice to the Designated Agent identified below:
           </p>
           <p>
-            Fractal Computers, Inc. <br />
-            Six Landmark Square, 4th Floor <br />
-            Stamford, CT 06901 <br />
+            Fractal Computers, Inc., dba Whist <br />
+            33 Irving Pl <br />
+            New York, NY 10003 <br />
             <a href="mailto:support@whist.com">support@whist.com</a> <br />
           </p>
           <p>

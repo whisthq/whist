@@ -201,7 +201,7 @@ module.exports = {
       if (process.platform === "darwin") {
         console.log("Codesigning everything in protocol-build/client")
         execCommand(
-          'find protocol-build/client -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \\;',
+          'find protocol-build/client -type f -exec codesign -f -v -s "Fractal Computers, Inc., dba Whist" {} \\;',
           "."
         )
       } else {

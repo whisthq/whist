@@ -154,7 +154,7 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: protocol
         env:
-          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           # Build the protocol and its test suite
           mkdir build
@@ -286,7 +286,7 @@ jobs:
       - name: Build and Test Protocol Client
         working-directory: protocol
         env:
-          FRACTAL_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           mkdir build
           cd build

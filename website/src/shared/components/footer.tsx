@@ -182,7 +182,7 @@ const Footer = () => {
         </div>
         <div className="mt-12 border-t border-gray-600 pt-8">
           <p className="text-base text-gray-400 xl:text-center">
-            &copy; 2021 Fractal Computers, Inc. All rights reserved.
+            &copy; 2021 Fractal Computers, Inc., dba Whist. All rights reserved.
           </p>
         </div>
       </div>
