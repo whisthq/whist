@@ -49,8 +49,7 @@ export default flow(
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
-              (persistGet("restoreLastChromeSession", "data") ?? "true") ===
-              "true",
+              persistGet("restoreLastChromeSession", "data") ?? "true",
             initial_key_repeat: isNumber(initialKeyRepeat)
               ? initialKeyRepeat
               : 68, // this fails if the user hasn't modified the default value, which is 68
