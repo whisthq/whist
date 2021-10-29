@@ -9,7 +9,6 @@ This repository has two main functions. The first is that it's the home for all 
 * [Helpful `yarn` Commands](#helpful-yarn-commands)
 * [How To Contribute](#how-to-contribute)
 	* [Building, Debugging, and Connecting to a dev instance](Building-Debugging-and-Connecting-to-a-dev-instance)
-	* [App State and Logging](#app-state-and-logging)
 * [Client Application Source Code](#client-application-source-code)
  	* [Client Renderer Process](#client-renderer-process)
  	* [Client Main Process](#client-main-process)
