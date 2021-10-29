@@ -1,4 +1,50 @@
 #!/usr/bin/env python3
+
+"""
+The file, given a set LOGZ_IO_API_KEY environment variable and a session id
+parameter, will obtain all the logs present in logz.io for that session id.
+
+This file uses the logz.io SCROLL API, whose documentation is below:
+@see https://docs.logz.io/api/#operation/scroll
+
+Basically, using this API, we can send an initial POST request with a query
+for the logs we desire. 
+
+In the initial request, we need to provide a header and a body. 
+
+The header will be our "X_API_TOKEN", which is your API token, and the 
+"Content-Type", which will always be "application/json".
+
+The body will contatin the meat of the request. There are 3 fields we need
+to fill in the body:
+
+1. query: This describes what kind of logs you want to recieve. The docs
+on how to make this are terrible, so I recommend that you do the search manually
+on logz.io and then navigate to the "Inpect" tab. This will show you the resulting
+query that the website made. Now, copy that over. More detail provided in the 
+comments inside the "init_scrolling" function in this file.
+
+2. _sources: What fields from the logs we want to recieve. Here, we only
+care about the message (the actual log data produced from logging.c),
+the timestamp (timestamp logz.io provides to the logs when they recieve them),
+and component (which is either clientapp or mandlebox, which indicates that
+this is a log for the client or server, respectively).
+
+3. size: How many logs per pagination to recieve. 
+
+In the initial reply, we will recieve 2 bigs pieces of info:
+
+1. "hits": These are the total number of logs we will recieve. This will be 
+used to determine how many times we need to paginate
+2. "scroll_id": This is required in following POST requests to get the next
+page of results (where the number of logs in each POST is LOGS_PER_PAGE long).
+
+Then, we will paginate with that same SCROLL_ID until the logs recieved is
+equal to the number of logs logz.io has. Note, we do not need to resend the query 
+each time. Only the header and the scroll_id.
+
+"""
+
 import requests
 import sys
 import json
@@ -32,6 +78,9 @@ def validate_args(argv):
         raise Exception("Usage: python3 logs-to-text.py <<session_id>>")
 
 
+# Gets a time 'days' days from current time in ElasticSearch timestamp format
+# To get the current time in ElasticSearch timestamp format, pass in 0
+# when calling this function
 def get_time_from_now_in_days_formatted(days):
     now = str(datetime.utcnow() - timedelta(days=days))
     return now[:10] + "T" + now[11:23] + "Z"
@@ -63,9 +112,9 @@ def init_scrolling(query_string):
                     {
                         "range": {
                             "@timestamp": {
-                                "gte": beginning_timestamp,
-                                "lte": current_timestamp,
-                                "format": "strict_date_optional_time",
+                                "gte": beginning_timestamp,  # beginning time range to get logs
+                                "lte": current_timestamp,  # ending time range to get logs
+                                "format": "strict_date_optional_time",  # format needed for elastic search API to parse timestamps
                             }
                         }
                     },
@@ -76,6 +125,7 @@ def init_scrolling(query_string):
         # Message is our logging message and @timestamp is the logz.io timestamp
         # of when the log was updated
         "_source": {"includes": ["message", "@timestamp", "component"]},
+        # Number of logs to provide per pagination
         "size": LOGS_PER_PAGE,
     }
 
@@ -140,8 +190,10 @@ def parse_logs(parsed_logs, logs_page):
             message = year_month_day + " " + hour_minute_second + message[15:]
 
         if component == "clientapp":
+            # if it's client app, then we know these are logs from the client
             parsed_logs.append(("client", message))
         else:
+            # otherwise, this is mandlebox, so these are logs from the server
             parsed_logs.append(("server", message))
 
 
