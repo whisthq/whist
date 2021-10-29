@@ -4,6 +4,21 @@ This repository contains the code for the Whist client application, which is the
 
 This repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in packaging the application for the user. Packaging involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS.
 
+## Table of contents
+* [Setting Up for Development](#setting-up-for-development)
+* [Helpful `yarn` Commands](#helpful-`yarn`-commands)
+* [How To Contribute](#how-to-contribute)
+	* [App State and Logging](#app-state-and-logging)
+* [Client Application Source Code](#client-application-source-code)
+ 	* [Client Renderer Process](#client-renderer-process)
+ 	* [Client Main Process](#client-main-process)
+* [Packaging](#packaging)
+	* [MacOS Notarizing](#macos-notarizing)
+	* [Publishing New Versions](#publishing-new-versions)
+	* [Common Auto-Update Errors](#common-auto-update-errors)
+* [Continuous Integration](#continuous-integration)
+* [Traps!](#traps!)
+
 ## Setting Up for Development
 
 We use `yarn` as the package manager for this project. All of the commands required for development are aliased in `package.json`, and can be called with `yarn`. For example, `yarn start` will boot up the development environment. We don't write commands out directly in the `scripts` section of `package.json`. Instead, each command has a corresponding file in the `/scripts` folder. This allows us to more carefully comment our `yarn` commands, and it makes diffs more visible in PRs. You shouldn't `cd scripts` to run anything in the scripts folder.
