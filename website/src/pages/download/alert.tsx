@@ -73,7 +73,7 @@ const Alert = () => {
               </div>
               <div className="mt-2 sm:mt-4 sm:flex sm:flex-row-reverse">
                 <a
-                  href="https://tryfractal.typeform.com/to/RsOsBSSu"
+                  href="https://whist.typeform.com/to/RsOsBSSu"
                   target="_blank"
                   rel="noreferrer"
                 >

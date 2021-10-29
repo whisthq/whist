@@ -16,7 +16,7 @@ See `webserver/README.md` for a description of each one.
 
 ### 1. Retrieve Environment Variables
 
-In many circumstances, you can use the `retrieve_config.sh` script to quickly generate an initial `.env` file. Before running this script, you must have the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and you must be logged into your Heroku account, which must have access to the `tryfractal` team on Heroku. If you do not meet one or more of these requirements, just ask someone to send you their `.env` file. Otherwise, run the following command:
+In many circumstances, you can use the `retrieve_config.sh` script to quickly generate an initial `.env` file. Before running this script, you must have the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and you must be logged into your Heroku account, which must have access to the `whist` team on Heroku. If you do not meet one or more of these requirements, just ask someone to send you their `.env` file. Otherwise, run the following command:
 
     bash /path/to/retrieve_config.sh
 
