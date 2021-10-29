@@ -679,9 +679,9 @@ jobs:
         run: |
           webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
-
-      # If we perform a DB migration, we may need to update the Hasura metadata
+      # After we perform a database migration, we may need to reload the Hasura metadata (in case the schema has changed)
       - name: Update Hasura Metadata Following Database Migration (as needed)
+        if: needs.fractal-publish-build-config.outputs.publish == 'true'
         run: |
           BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
 
