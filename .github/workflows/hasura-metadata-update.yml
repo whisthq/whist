@@ -1,0 +1,36 @@
+name: "Hasura metadata"
+on:
+  push:
+    branches:
+      - prod
+      - staging
+      - dev
+
+jobs:
+  whist-config:
+    name: "Configure Jobs"
+    runs-on: ubuntu-20.04
+    outputs:
+      branch: ${{ steps.set-deploy-environment.outputs.environment }}
+      
+  - name: Add Heroku Remote
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+      run: |
+        if [[ ${{ needs.whist-config.outputs.branch }} == dev ]]; then
+          HASURA_APP_NAME=fractal-dev-hasura
+        elif [[ ${{ needs.whist-config.outputs.branch }} == staging ]]; then
+          HASURA_APP_NAME=fractal-staging-hasura
+        elif [[ ${{ needs.whist-config.outputs.branch }} == prod ]]; then
+          HASURA_APP_NAME=fractal-prod-hasura
+        else
+          echo 'Error: Invalid branch' && false
+        fi
+        echo "HASURA_APP_NAME=$HASURA_APP_NAME" >> $GITHUB_ENV
+
+  - name: Update Hasura metadata
+    env:
+      HASURA_APP_NAME: ${{ env.HASURA_APP_NAME }}
+      HASURA_ADMIN_SECRET: ${{ env.HASURA_APP_NAME }}
+    run: |
+      hasura metadata reload --endpoint HASURA_APP_NAME --admin-secret HASURA_ADMIN_SECRET
