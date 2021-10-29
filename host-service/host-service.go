@@ -324,6 +324,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			return utils.MakeError("Error warming up host service: %v", err)
 		}
 
+		// Unblocks fractal-startup.sh to start symlink loaded user configs
 		err = fc.MarkReady()
 		if err != nil {
 			return utils.MakeError("Error marking mandelbox as ready: %s", err)
@@ -691,6 +692,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Errorf("Error writing config.json file for protocol: %v", err)
 	}
 
+	// Unblocks fractal-startup.sh to start symlink loaded user configs 
 	err = fc.MarkReady()
 	if err != nil {
 		logAndReturnError("Error marking mandelbox %s as ready: %s", mandelboxInfo.MandelboxID, err)

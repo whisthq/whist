@@ -63,6 +63,8 @@ cd ~/fractal/mandelboxes
 
 - Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://tryfractal.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
 
+- If you want to build a specific browser along with base run `./build_mandelbox_image.sh browsers/<name>` (ie chrome) instead of `./build_mandelbox_image.sh base`
+
 ## Setting Up an AMI
 
 To create an AMI:

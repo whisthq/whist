@@ -455,7 +455,7 @@ def test_lingering_instances(
     # has NO associated mandelbox should be included to lingering_instances
     # (we check instance status change table to not be mislead by heart beating)
     instance_no_associated_mandelbox = bulk_instance(
-        instance_name="no_associated_mandelbox_instance",
+        instance_name="not_associated_mandelbox_instance",
         aws_ami_id="test-AMI",
         location=region_name,
         status=MandelboxHostState.DRAINING.value,
@@ -477,7 +477,7 @@ def test_lingering_instances(
 
     time_2_mins_ago = date.fromtimestamp(time() - 125)
 
-    update_status_change_time(time_2_mins_ago, "no_associated_mandelbox_instance")
+    update_status_change_time(time_2_mins_ago, "not_associated_mandelbox_instance")
     update_status_change_time(time_2_mins_ago, "associated_mandelbox_instance")
 
     bulk_instance(
