@@ -264,7 +264,6 @@ typedef struct {
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
-
 /*
 ============================
 SocketContext Interface
@@ -369,7 +368,7 @@ int get_packet_size(FractalPacket* packet);
 /**
  * @brief                          This will set `socket` to have timeout
  *                                 timeout_ms.
- * 
+ *
  * @param socket                   The SOCKET to be configured
  * @param timeout_ms               The maximum amount of time that all recv/send
  *                                 calls will take for that socket (0 to return
@@ -384,7 +383,7 @@ void set_timeout(SOCKET socket, int timeout_ms);
  *                                 use flag FD_CLOEXEC if needed. This prevents
  *                                 child processes from holding onto the socket,
  *                                 preventing the socket's closure.
- * 
+ *
  * @returns                        The socket file descriptor, -1 on failure
  */
 SOCKET socketp_udp();
@@ -392,14 +391,14 @@ SOCKET socketp_udp();
 /**
  * @brief                          Perform socket syscalls and set fds to
  *                                 use flag FD_CLOEXEC
- * 
+ *
  * @returns                        The socket file descriptor, -1 on failure
  */
 
 /**
  * @brief                          Given a SocketContextData, this will perform a private key
  *                                 handshake with the other side of the connection
- * 
+ *
  * @param context                  The SocketContextData that the handshake will happen over
  */
 bool handshake_private_key(SocketContextData* context);

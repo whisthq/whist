@@ -99,30 +99,30 @@ typedef struct {
 
 /**
  * @brief                          This will prepare the private key data
- * 
+ *
  * @param priv_key_data            The private key data buffer
  */
 void prepare_private_key_request(PrivateKeyData* priv_key_data);
 
 /**
  * @brief                          This will sign the other connection's private key data
- * 
+ *
  * @param priv_key_data            The private key data buffer
  * @param recv_size                The length of the buffer
  * @param private_key              The private key
- * 
+ *
  * @returns                        True if the verification succeeds, false if it fails
  */
 bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
 
 /**
  * @brief                          This will verify the given private key
- * 
+ *
  * @param our_priv_key_data        The private key data buffer
  * @param our_signed_priv_key_data The signed private key data buffer
  * @param recv_size                The length of the buffer
  * @param private_key              The private key
- * 
+ *
  * @returns                        True if the verification succeeds, false if it fails
  */
 bool confirm_private_key(PrivateKeyData* our_priv_key_data,

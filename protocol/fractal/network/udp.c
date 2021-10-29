@@ -474,7 +474,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
-    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr))== -1) {
+    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
         closesocket(context->socket);
         return -1;

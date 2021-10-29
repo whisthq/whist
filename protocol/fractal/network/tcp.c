@@ -16,7 +16,7 @@ Private Functions
 /**
  * @brief                          Perform socket() syscall and set fds to
  *                                 use flag FD_CLOEXEC
- * 
+ *
  * @returns                        The socket file descriptor, -1 on failure
  */
 SOCKET socketp_tcp();
