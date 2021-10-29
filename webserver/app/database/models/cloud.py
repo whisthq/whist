@@ -64,12 +64,16 @@ class LingeringInstances(DeferredReflection, db.Model):  # type: ignore[name-def
     """
     A view detailing which instances haven't updated recently so we can manually
     drain them.
-    Specifically, it's all instances that are listed as either  active or preconnection,
-    but that have not updated their status in the db for the specified period of time:
+
+    Specifically, it's all instances that are listed as either active or preconnection,
+    but that have not updated in the db for the specified period of time:
     2 min for running instances, 15 for preconnected instances
+    Or, instances that are not associated with a mandelbox with the status draining for
+    longer than 2 mins and possibly still updating in the db
 
 
     Attributes:
+        instance_name (string): what is the instance called?
         cloud_provider_id (string): What's it called on AWS?
         status (string):  What's it's most recent status??
     """
@@ -105,14 +109,11 @@ class RegionToAmi(DeferredReflection, db.Model):  # type: ignore[name-defined]
     for instances in that region
 
     Attributes:
-        region_name: The name of the region to which the AMI corresponds as a string.
-        ami_id: A string representing the AMI ID of the latest AMI provisioned in the region
-            corresponding to this row.
-        client_commit_hash: A string representing the commit hash for the client.
-        ami_active: A boolean that will be marked true if this AMI corresponds to
-            an active versions of the client app'.
-        protected_from_scale_down: A bool indicating whether the AMI is currently having an initial
-            buffer spun up for it
+        region_name (string): what is the name of the region for the corresponding AMI?
+        ami_id (string): the AMI ID of the latest AMI provisioned in the region corresponding to this row.
+        client_commit_hash (string): what is the commit hash for the client??
+        ami_active (boolean): marked true if this AMI corresponds to an active versions of the client app'.
+        protected_from_scale_down (boolean): is the AMI is currently having an initial buffer spun up for it?
 
     Constraints:
         Unique:
@@ -130,10 +131,10 @@ class InstanceStatusChanges(DeferredReflection, db.Model):  # type: ignore[name-
     A view that has historical information on status change of all instances
 
     Attributes:
-        timestamp: A timestamp of when the change occured.
-        instance_name: A string representing the instance name.
-        new_status: A string representing the new status.
-        old_status: A string representing the old status.
+        timestamp (timestamp): when did the change occur?
+        instance_name (string): what is the instance called?
+        new_status (string): what is the new instance status?
+        old_status (string): what is the old instance status?
 
     """
 

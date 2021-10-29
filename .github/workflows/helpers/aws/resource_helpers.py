@@ -194,7 +194,7 @@ def is_personal_dev_instance(instance):
 
 def get_non_personal_development_instances(region):
     """
-    Gets a filtered list of all aws instances that are not for development
+    Gets a filtered list of all aws instances name and id that are not for development
 
     Args:
         region (str): current region

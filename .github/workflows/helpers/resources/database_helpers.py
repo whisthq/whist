@@ -71,7 +71,7 @@ def get_host_service_unresponsive_instances(database_url, region):
 
 def get_lingering_instances(database_url, region):
     """
-    Gets all lingering instances using the database url and region
+    Gets all lingering instances name and id using the database url and region
 
     Args:
         database_url (str): current database url

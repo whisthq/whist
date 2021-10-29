@@ -45,7 +45,7 @@ def get_random_region_name() -> Optional[str]:
 
 def update_status_change_time(timestamp: Any, instance_name: str) -> None:
     """
-    Update the time of the most recent instance status change
+    Update the most recent instance status change matching the given instance name
 
     Arguments:
         timestamp: new time to update the timestamp field
