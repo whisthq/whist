@@ -62,13 +62,13 @@ jobs:
   #   Hanging EC2 instances are defined as resources that are
   #     not in one of our databases, but still exist in AWS
   #   Unresponsive EC2 instances are defined as resourced marked
-  #     as state HOST_SERVICE_UNRESPONSIVE in one of our databases
+  #     as `status` HOST_SERVICE_UNRESPONSIVE in our database table instance_info
   #   Lingering EC2 instances are defined as resources that have
   #     updated their `last_update` value >2 mins for running instances, >15 mins
-  #     for pre-connected instances, or have been in state DRAINING for more than
-  #.    2 minutes without an associated mandelbox (`last_update` can be <2 mins)
+  #     for pre-connected instances, or `status` is DRAINING for >2 minutes
+  #     without an associated mandelbox (`last_update` can be <2 mins)
   webserver-old-hanging-unresponsive-lingering-resource-notifications:
-    name: Webserver Old, Hanging, Unresponsive or Lingering Resource Notifications
+    name: Webserver Old, Hanging, Unresponsive Host or Lingering Resource Notifications
     runs-on: ubuntu-20.04
     needs: [webserver-enumerate-all-instances]
     strategy:
