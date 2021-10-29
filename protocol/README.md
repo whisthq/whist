@@ -328,8 +328,8 @@ Macro constants will NOT be checked by this script because of the variety of imp
 
 ### Logz.io
 
-We currently use logz.io to store our logs. To get the logs for a session_id, navigate to the `fractal/microservices/scripts` directory, then
-type in: `python3 logs-to-text.py <<sesion_id>>` where `session_id` is the id of the currently running session.
+We currently use logz.io to store our logs. To get the logs for a session_id, navigate to the `fractal/protocol` directory, then
+type in: `python3 logs-to-text.py <<sesion_id>>` where `<<session_id>>` is the id of the currently running session.
 
 This will output two files:
 
@@ -339,6 +339,7 @@ This will output two files:
 You will need an logz.io API key to use this. Please contact Phil to get this or to get an admin account so you can generate your own.
 After this, set an environment variable "LOGZ_IO_API_KEY" to your API key via:
 
-`export LOGZ_IO_API_KEY=<<your api key>>`
+`export LOGZ_IO_API_KEY=<<your api key>>` where `<<your api key>>` is your API key.
 
-Note: logz.io currently only retains logs for 5 days. That said, this will only return the logs from 5 days ago.
+Note: logz.io currently only retains logs for 5 days, as of 10/29/2021. That said, this will only return the logs from 5 days ago. If this changes,
+please modify the `RETENTION_PERIOD_DAYS` constant in the top of `logs-to-text.py` to reflect this change.
