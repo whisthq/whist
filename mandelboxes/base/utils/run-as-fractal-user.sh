@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # Running with login means that we lose all environment variables, so we need to pass them in manually.
 
 # default values for the JSON transport settings from the client
-DARK_MODE=true
+DARK_MODE=false
 RESTORE_LAST_SESSION=true
 DESIRED_TIMEZONE=Etc/UTC
 INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25, 15
