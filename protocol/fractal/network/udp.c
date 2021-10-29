@@ -1,6 +1,10 @@
 #include "udp.h"
 #include <fractal/utils/aes.h>
 
+#ifndef _WIN32
+#include <fcntl.h>
+#endif
+
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
@@ -15,7 +19,7 @@ UDP Implementation of Network.h Interface
 
 int udp_ack(void* raw_context) {
     SocketContextData* context = raw_context;
-    return sendp(context, NULL, 0);
+    return send(context->socket, NULL, 0, 0);
 }
 
 FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
@@ -133,10 +137,10 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 #endif
         if (ENCRYPTING_PACKETS) {
             // Send encrypted during normal usage
-            ret = sendp(context, &encrypted_packet, (int)encrypted_len);
+            ret = send(context->socket, &encrypted_packet, (int)encrypted_len, 0);
         } else {
             // Send unencrypted during dev mode
-            ret = sendp(context, packet, (int)packet_size);
+            ret = send(context->socket, packet, (int)packet_size, 0);
         }
         fractal_unlock_mutex(context->mutex);
         if (ret < 0) {
@@ -339,23 +343,8 @@ Private Function Implementations
 
 int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
-    /*
-        Create a UDP server context
-
-        Arguments:
-            context (SocketContextData*): pointer to the context to populate
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
     SocketContextData* context = raw_context;
 
-    context->udp_is_connected = false;
-    context->is_tcp = false;
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -363,7 +352,6 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
 
     set_timeout(context->socket, stun_timeout_ms);
     // Server connection protocol
-    context->is_server = true;
 
     // Bind the server port to the advertized public port
     struct sockaddr_in origin_addr;
@@ -388,6 +376,12 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
         return -1;
     }
 
+    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
+        LOG_WARNING("Failed to connect()!");
+        closesocket(context->socket);
+        return -1;
+    }
+
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
@@ -404,22 +398,6 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
 
 int create_udp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
-    /*
-        Create a UDP client context over STUN server
-
-        Arguments:
-            context (SocketContextData*): pointer to the context to populate
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
-    context->udp_is_connected = false;
-    context->is_tcp = false;
-
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -428,7 +406,6 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     set_timeout(context->socket, stun_timeout_ms);
 
     // Server connection protocol
-    context->is_server = true;
 
     // Tell the STUN to log our requested virtual port
     struct sockaddr_in stun_addr;
@@ -497,9 +474,15 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
              inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
+    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr))== -1) {
+        LOG_WARNING("Failed to connect()!");
+        closesocket(context->socket);
+        return -1;
+    }
+
     // Open up the port
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_ERROR("sendp(3) failed! Could not open up port! %d", get_last_network_error());
+    if (send(context->socket, NULL, 0, 0) < 0) {
+        LOG_ERROR("send(4) failed! Could not open up port! %d", get_last_network_error());
         return false;
     }
     fractal_sleep(150);
@@ -533,9 +516,6 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
 
 int create_udp_client_context(SocketContextData* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
-    context->udp_is_connected = false;
-    context->is_tcp = false;
-
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -544,10 +524,14 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
     set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
-    context->is_server = false;
     context->addr.sin_family = AF_INET;
     context->addr.sin_addr.s_addr = inet_addr(destination);
     context->addr.sin_port = htons((unsigned short)port);
+    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
+        LOG_WARNING("Failed to connect()!");
+        closesocket(context->socket);
+        return -1;
+    }
 
     LOG_INFO("Connecting to server...");
 
@@ -576,23 +560,6 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
 
 int create_udp_client_context_stun(SocketContextData* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
-    /*
-        Create a UDP client context
-
-        Arguments:
-            context (SocketContextData*): pointer to the context to populate
-            destination (char*): the destination address
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
-    context->udp_is_connected = false;
-    context->is_tcp = false;
-
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -601,7 +568,6 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
     set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
-    context->is_server = false;
 
     struct sockaddr_in stun_addr;
     stun_addr.sin_family = AF_INET;
@@ -652,10 +618,15 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
     }
 
     LOG_INFO("Connecting to server...");
+    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
+        LOG_WARNING("Failed to connect()!");
+        closesocket(context->socket);
+        return -1;
+    }
 
     // Open up the port
-    if (sendp(context, NULL, 0) < 0) {
-        LOG_ERROR("sendp(3) failed! Could not open up port! %d", get_last_network_error());
+    if (send(context->socket, NULL, 0, 0) < 0) {
+        LOG_ERROR("send(4) failed! Could not open up port! %d", get_last_network_error());
         return false;
     }
     fractal_sleep(150);
@@ -682,6 +653,22 @@ Public Function Implementations
 bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
                                char* binary_aes_private_key) {
+    /*
+        Create a UDP socket context
+
+        Arguments:
+            context (SocketContext*): pointer to the SocketContext struct to initialize
+            destination (char*): the destination address, NULL means act as a server
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            connection_timeout_ms (int): timeout, in milliseconds, for socket connection
+            using_stun (bool): Whether or not to use STUN
+            binary_aes_private_key (char*): The 16byte AES key to use
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     // Populate function pointer table
     network_context->ack = udp_ack;
     network_context->read_packet = udp_read_packet;

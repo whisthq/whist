@@ -44,25 +44,44 @@ if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
 Client
 -----
 
-SocketContextData context;
-CreateTCPContext(&context, "10.0.0.5", 5055, 500, 250);
+SocketContext context;
+create_tcp_socket_context(&context, "10.0.0.5", 5055, 500, 250);
 
 char* msg = "Hello this is a message!";
-SendTCPPacket(&context, PACKET_MESSAGE, msg, strlen(msg);
+send_packet(&context, PACKET_MESSAGE, msg, strlen(msg) + 1);
+
+FractalPacket* packet = NULL;
+while(packet == NULL) {
+    packet = read_packet(&context);
+}
+
+LOG_INFO("Response: %s", packet->data); // Will print "Message received!"
+
+free_packet(packet);
+
+destroy_socket_context(&context);
 
 -----
 Server
 -----
 
-SocketContextData context;
-CreateTCPContext(&context, NULL, 5055, 500, 250);
+SocketContext context;
+creaqte_tcp_socket_context(&context, NULL, 5055, 500, 250);
 
 FractalPacket* packet = NULL;
-while(!packet) {
-  packet = ReadTCPPacket(context);
+while(packet == NULL) {
+    packet = read_packet(&context);
 }
 
-LOG_INFO("MESSAGE: %s", packet->data); // Will print "Hello this is a message!"
+LOG_INFO("Message: %s", packet->data); // Will print "Hello this is a message!"
+
+free_packet(packet);
+
+char* msg = "Message received!";
+send_packet(&context, PACKET_MESSAGE, msg, strlen(msg) + 1);
+
+destroy_socket_context(&context);
+
 */
 
 /*
@@ -207,9 +226,6 @@ typedef struct {
 } StunRequest;
 
 typedef struct {
-    bool is_server;
-    bool is_tcp;
-    bool udp_is_connected;
     int timeout;
     SOCKET socket;
     struct sockaddr_in addr;
@@ -248,35 +264,12 @@ typedef struct {
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
+
 /*
 ============================
-Public Functions
+SocketContext Interface
 ============================
 */
-
-/*
- * @brief                          Initialize networking system
- *                                 Must be called before calling any other function in this file
- */
-void init_networking();
-
-/**
- * @brief                          Get the most recent network error.
- *
- * @returns                        The network error that most recently occured,
- *                                 through WSAGetLastError on Windows or errno
- *                                 on Linux
- */
-int get_last_network_error();
-
-/**
- * @brief                          Get the size of a FractalPacket
- *
- * @param packet                   The packet to get the size of
- *
- * @returns                        The size of the packet, or -1 on error
- */
-int get_packet_size(FractalPacket* packet);
 
 /**
  * @brief                          Send a 0-length packet over the socket. Used
@@ -344,86 +337,74 @@ int send_packet(SocketContext* context, FractalPacketType packet_type, void* pay
 void destroy_socket_context(SocketContext* context);
 
 /*
-@brief                          This will set `socket` to have timeout
-                                timeout_ms.
-
-@param socket                   The SOCKET to be configured
-@param timeout_ms               The maximum amount of time that all recv/send
-                                calls will take for that socket (0 to return
-                                immediately, -1 to never return). Set 0 to have
-                                a non-blocking socket, and -1 for an indefinitely
-                                blocking socket.
+============================
+Public Functions
+============================
 */
-void set_timeout(SOCKET socket, int timeout_ms);
 
 /*
-@brief                          Perform socket syscalls and set fds to
-                                use flag FD_CLOEXEC
-
-@returns                        The socket file descriptor, -1 on failure
-*/
-SOCKET socketp_tcp();
-SOCKET socketp_udp();
-
-typedef struct {
-    char iv[16];
-    char signature[32];
-} PrivateKeyData;
-
-typedef struct {
-    char iv[16];
-    char private_key[16];
-} SignatureData;
-
-/*
-@brief                          This will prepare the private key data
-
-@param priv_key_data            The private key data buffer
-*/
-void prepare_private_key_request(PrivateKeyData* priv_key_data);
-
-/*
-@brief                          This will sign the other connection's private key data
-
-@param priv_key_data            The private key data buffer
-@param recv_size                The length of the buffer
-@param private_key              The private key
-
-@returns                        True if the verification succeeds, false if it fails
-*/
-bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
-
-/*
-@brief                          This will verify the given private key
-
-@param our_priv_key_data        The private key data buffer
-@param our_signed_priv_key_data The signed private key data buffer
-@param recv_size                The length of the buffer
-@param private_key              The private key
-
-@returns                        True if the verification succeeds, false if it fails
-*/
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
-                         void* private_key);
-
-// Handshake
-bool handshake_private_key(SocketContextData* context);
+ * @brief                          Initialize networking system
+ *                                 Must be called before calling any other function in this file
+ */
+void init_networking();
 
 /**
- * @brief                          This will send or receive data over a socket
+ * @brief                          Get the most recent network error.
  *
- * @param context                  The socket context to be used
- * @param buf                      The buffer to read or write to
- * @param len                      The length of the buffer to send over the socket
-                                   Or, the maximum number of bytes that can be read
- *                                 from the socket
-
- * @returns                        The number of bytes that have been read or
- *                                 written to or from the buffer
+ * @returns                        The network error that most recently occured,
+ *                                 through WSAGetLastError on Windows or errno
+ *                                 on Linux
  */
-int sendp(SocketContextData* context, void* buf, int len);
+int get_last_network_error();
 
+/**
+ * @brief                          Get the size of a FractalPacket
+ *
+ * @param packet                   The packet to get the size of
+ *
+ * @returns                        The size of the packet, or -1 on error
+ */
+int get_packet_size(FractalPacket* packet);
+
+/**
+ * @brief                          This will set `socket` to have timeout
+ *                                 timeout_ms.
+ * 
+ * @param socket                   The SOCKET to be configured
+ * @param timeout_ms               The maximum amount of time that all recv/send
+ *                                 calls will take for that socket (0 to return
+ *                                 immediately, -1 to never return). Set 0 to have
+ *                                 a non-blocking socket, and -1 for an indefinitely
+ *                                 blocking socket.
+ */
+void set_timeout(SOCKET socket, int timeout_ms);
+
+/**
+ * @brief                          Perform a UDP socket() syscall and set fds to
+ *                                 use flag FD_CLOEXEC if needed. This prevents
+ *                                 child processes from holding onto the socket,
+ *                                 preventing the socket's closure.
+ * 
+ * @returns                        The socket file descriptor, -1 on failure
+ */
+SOCKET socketp_udp();
+
+/**
+ * @brief                          Perform socket syscalls and set fds to
+ *                                 use flag FD_CLOEXEC
+ * 
+ * @returns                        The socket file descriptor, -1 on failure
+ */
+
+/**
+ * @brief                          Given a SocketContextData, this will perform a private key
+ *                                 handshake with the other side of the connection
+ * 
+ * @param context                  The SocketContextData that the handshake will happen over
+ */
+bool handshake_private_key(SocketContextData* context);
+
+// Included at the bottom due to circular #include <network.h> reference
 #include <fractal/network/tcp.h>
 #include <fractal/network/udp.h>
 

@@ -45,7 +45,8 @@ tcp_context->free_packet(...);
  *                                  some small constant times connection_timeout_ms
  * @param binary_aes_private_key    The AES private key used to encrypt the socket
  *                                  communication
- * @return                          The TCP network context on success, NULL
+ * 
+ * @returns                         The TCP network context on success, NULL
  *                                  on failure
  */
 bool create_tcp_socket_context(SocketContext* context, char* destination, int port,

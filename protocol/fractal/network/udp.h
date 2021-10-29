@@ -13,8 +13,8 @@ Usage
 To create the context:
 udp_context = create_udp_network_context(...);
 
-To send a packet from payload:
-udp_context->send_packet_from_payload(...);
+To send a packet:
+udp_context->send_packet(...);
 
 To read a packet:
 udp_context->read_packet(...);
