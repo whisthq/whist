@@ -39,9 +39,8 @@ There are two ways of running development mandelboxes on the host service. The f
 
 1. Start your instance, ssh into it and go to `~/fractal/host-service`, then run `make run` and wait for the event loop to start. Take note of your dev instance ip address.
 2. On your local machine, go to `fractal/client-applications` and run the command
-`TESTING_LOCALDEV_HOST_IP=<your instance ip> yarn test:manual localdevHost`. You can also export the `TESTING_LOCALDEV_HOST_IP` env var first and then run `yarn test:manual localdevHost`.
+   `TESTING_LOCALDEV_HOST_IP=<your instance ip> yarn test:manual localdevHost`. You can also export the `TESTING_LOCALDEV_HOST_IP` env var first and then run `yarn test:manual localdevHost`.
 3. The client should open up a Chrome window.
-
 
 ### Working with the JSON transport endpoint
 
@@ -52,7 +51,7 @@ The host service communicates with the client through the `json_transport` endpo
 The host service uses a pubsub architecture to fire the mandelbox spinup and to shutdown when its marked as `DRAINING` on the database. You can see the analysis behind this decision in [this document](https://www.notion.so/tryfractal/Implementing-a-PubSub-822ddcbcdde545e89379e7c7dfa25d71). **This setup is only necessary if you need to test the database/pubsub interaction**. Follow the steps below, or follow this [guide](https://hasura.io/docs/latest/graphql/core/getting-started/docker-simple.html).
 
 1. Download the `docker-compose.yml` file with:
-`curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml`
+   `curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml`
 2. Run the containers with `docker-compose up -d`
 3. Open up the Hasura console on `http://localhost:8080/console` and add the postgres database (select the Database URL option) with the url `psql postgres://postgres:postgrespassword@127.0.0.1:5432/postgres`
 4. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using [this command](https://github.com/fractal/fractal/tree/dev/.github/actions/db-migration#command-to-dump-the-database-schema)
@@ -84,6 +83,7 @@ When you "allocate" a mandelbox for your instance on your database, the pubsub s
 To test the `DrainAndShutdown` function, which is also tied to the pubsub, change the status of your instance to `DRAINING` on your local database, this should immediately fire the shutdown and cancel the context.
 
 ##### Test the pubsub with development database
+
 If, for some reason, you need to test the pubsub with the dev Hasura server, you don't need to do the local setup. Just run follow the same steps for adding your instance and allocating a mandelbox on the development database (change the test values to something real).
 
 Before starting the host service export your heroku api token `export HEROKU_API_TOKEN=<your api token>` and the logzio token `export LOGZIO_SHIPPING_TOKEN=<logzio shipping token>`, and then set the prod logging as necessary `export USE_PROD_LOGGING=false`, then you can start the host service with `make rundev`.

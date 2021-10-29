@@ -1,17 +1,18 @@
 # Hasura Subscriptions
 
-This directory contains files relating to the pubsub implementation. 
+This directory contains files relating to the pubsub implementation.
 
-For the go implementation, we use the official [Hasura client](https://github.com/hasura/go-graphql-client) which supports subscriptions out of the box. 
+For the go implementation, we use the official [Hasura client](https://github.com/hasura/go-graphql-client) which supports subscriptions out of the box.
 
-The GraphQL queries are made on the `queries.go` file. 
-The functions relating to starting and stopping the Hasura client are located on the `client.go` file. 
-Heroku connection strings are set on the `connection.go` file 
-Logic for running the client and subscriptions is located on the `subscriptions.go` file. 
+The GraphQL queries are made on the `queries.go` file.
+The functions relating to starting and stopping the Hasura client are located on the `client.go` file.
+Heroku connection strings are set on the `connection.go` file
+Logic for running the client and subscriptions is located on the `subscriptions.go` file.
 
 ### Adding a subscription to Hasura
 
 For creating a new Hasura subscription follow the implementation:
+
 ```go
 // InstanceStatusSubscription defines the event when
 // the provided instance $instance_name
