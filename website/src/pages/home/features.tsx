@@ -15,7 +15,7 @@ const supportLinks = [
   {
     name: "Lightning Speeds",
     description:
-      "Fractal’s proprietary streaming technology runs at 60+ frames per second with no noticeable lag.",
+      "Whist’s proprietary streaming technology runs at 60+ frames per second with no noticeable lag.",
     icon: LightningBoltIcon,
   },
   {

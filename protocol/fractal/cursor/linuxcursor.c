@@ -114,13 +114,13 @@ FractalCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
         hash(cursor_image->pixels, 4 * cursor_image->width * cursor_image->height);
     switch (cursor_hash) {
         case ARROW_CURSOR_HASH:
-            id = FRACTAL_CURSOR_ARROW;
+            id = WHIST_CURSOR_ARROW;
             break;
         case IBEAM_CURSOR_HASH:
-            id = FRACTAL_CURSOR_IBEAM;
+            id = WHIST_CURSOR_IBEAM;
             break;
         case WAIT_PROGRESS_CURSOR_HASH:
-            id = FRACTAL_CURSOR_WAITARROW;
+            id = WHIST_CURSOR_WAITARROW;
             break;
         case WAIT_CURSOR_HASH1:
         case WAIT_CURSOR_HASH2:
@@ -145,34 +145,34 @@ FractalCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
         case WAIT_CURSOR_HASH21:
         case WAIT_CURSOR_HASH22:
         case WAIT_CURSOR_HASH23:
-            id = FRACTAL_CURSOR_WAIT;
+            id = WHIST_CURSOR_WAIT;
             break;
         case NWSE_CURSOR_HASH:
         case NW_CURSOR_HASH:
         case SE_CURSOR_HASH:
-            id = FRACTAL_CURSOR_SIZENWSE;
+            id = WHIST_CURSOR_SIZENWSE;
             break;
         case NESW_CURSOR_HASH:
         case NE_CURSOR_HASH:
         case SW_CURSOR_HASH:
-            id = FRACTAL_CURSOR_SIZENESW;
+            id = WHIST_CURSOR_SIZENESW;
             break;
         case EW_CURSOR_HASH:
-            id = FRACTAL_CURSOR_SIZEWE;
+            id = WHIST_CURSOR_SIZEWE;
             break;
         case NS_CURSOR_HASH:
-            id = FRACTAL_CURSOR_SIZENS;
+            id = WHIST_CURSOR_SIZENS;
             break;
         case NOT_ALLOWED_CURSOR_HASH:
-            id = FRACTAL_CURSOR_NO;
+            id = WHIST_CURSOR_NO;
             break;
         case CROSSHAIR_CURSOR_HASH:
-            id = FRACTAL_CURSOR_CROSSHAIR;
+            id = WHIST_CURSOR_CROSSHAIR;
             break;
         case HAND_POINT_CURSOR_HASH:
         case HAND_GRAB_CURSOR_HASH:
         case HAND_GRABBING_CURSOR_HASH:
-            id = FRACTAL_CURSOR_HAND;
+            id = WHIST_CURSOR_HAND;
             break;
     }
 
@@ -188,7 +188,7 @@ void get_current_cursor(FractalCursorImage* image) {
     */
 
     memset(image, 0, sizeof(FractalCursorImage));
-    image->cursor_id = FRACTAL_CURSOR_ARROW;
+    image->cursor_id = WHIST_CURSOR_ARROW;
     image->cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {
         XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
