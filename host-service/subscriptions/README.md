@@ -1,4 +1,4 @@
-# Hasura Suscriptions
+# Hasura Subscriptions
 
 This directory contains files relating to the pubsub implementation. 
 
