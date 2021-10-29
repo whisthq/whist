@@ -5,19 +5,20 @@ This repository contains the code for the Whist client application, which is the
 This repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in packaging the application for the user. Packaging involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS.
 
 ## Table of contents
-* [Setting Up for Development](#setting-up-for-development)
-* [Helpful `yarn` Commands](#helpful-yarn-commands)
-* [How To Contribute](#how-to-contribute)
-	* [Building, Debugging, and Connecting to a dev instance](#building-debugging-and-connecting-to-a-dev-server)
-* [Client Application Source Code](#client-application-source-code)
- 	* [Client Renderer Process](#client-renderer-process)
- 	* [Client Main Process](#client-main-process)
-* [Packaging](#packaging)
-	* [MacOS Notarizing](#macos-notarizing)
-	* [Publishing New Versions](#publishing-new-versions)
-	* [Common Auto-Update Errors](#common-auto-update-errors)
-* [Continuous Integration](continuous-integration)
-* [Traps!](#traps)
+
+- [Setting Up for Development](#setting-up-for-development)
+- [Helpful `yarn` Commands](#helpful-yarn-commands)
+- [How To Contribute](#how-to-contribute)
+  - [Building, Debugging, and Connecting to a dev instance](#building-debugging-and-connecting-to-a-dev-server)
+- [Client Application Source Code](#client-application-source-code)
+  - [Client Renderer Process](#client-renderer-process)
+  - [Client Main Process](#client-main-process)
+- [Packaging](#packaging)
+  - [MacOS Notarizing](#macos-notarizing)
+  - [Publishing New Versions](#publishing-new-versions)
+  - [Common Auto-Update Errors](#common-auto-update-errors)
+- [Continuous Integration](continuous-integration)
+- [Traps!](#traps)
 
 ## Setting Up for Development
 
@@ -55,6 +56,7 @@ Before making a pull request, ensure that the following steps are taken:
 Finally, you can open PR to `dev`.
 
 ## Building, Debugging, and Connecting to a dev server
+
 If you want to build/run the client application, first run `yarn` to initialize the repo and obtain all the node modules that are needed. Then, you can build/run with `yarn start`. If you prefer to skip the protocol building, use `yarn start:lite`, which will launch Electron faster.
 
 Additional run commands are `yarn start --help` and `yarn start:lite --help`, which will display custom options. In particular, the `--show-protocol-logs` and `--use-local-server` can be used to `console.log` protocol logs and use localhost instead of the dev server, respectively.
@@ -62,13 +64,14 @@ Additional run commands are `yarn start --help` and `yarn start:lite --help`, wh
 To debug, you can take a look at the client and server logs as described in the section below ([App State and Logging](#app-state-and-logging)).
 
 ### Connecting to a dev server
+
 In order to test the interaction between the client app and the server, you may want to spin up the host-service on a dev instance, and connect to it. To do that, you can follow this procedure.
 
-* On your AWS instance, build the protocol (if needed) with  `cd ~/fractal/protocol && ./build_protocol_targets.sh FractalServer` and the Chrome mandelbox with `cd ~/fractal/mandelboxes && ./build_mandelbox_image.sh browsers/chrome`. Then, run the host-service with cd `~/fractal/host-service && make run`. 
-	* N.B.: You should not run the Chrome mandelbox instance with the `run_local_mandelbox_image.sh` script!! 
-	* If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /fractal folder with `sudo rm -rf /fractal/`.
-* On your computer, after initializing yarn by running `yarn`, set the `TESTING_LOCALDEV_HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
-* After closing the client-application on your machine, you need to stop and remove all Docker containers on the AWS instance before you can quit the `host-service` (`Ctrl+C` won't work while the Docker containers are still running). To see all running/recently stopped containers, use `docker ps -a`. From the results, you can find the container IDs which you can then use to stop/remove containers with `docker stop <container ID>` and `docker rm <container ID>`. A quicker way to stop/remove all containers is `docker stop $(docker ps -aq) && docker rm $(docker ps -aq)`. Once you are done with this step, press (`Ctrl+C`) to stop the `host-service`.
+- On your AWS instance, build the protocol (if needed) with `cd ~/fractal/protocol && ./build_protocol_targets.sh FractalServer` and the Chrome mandelbox with `cd ~/fractal/mandelboxes && ./build_mandelbox_image.sh browsers/chrome`. Then, run the host-service with cd `~/fractal/host-service && make run`.
+  - N.B.: You should not run the Chrome mandelbox instance with the `run_local_mandelbox_image.sh` script!!
+  - If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /fractal folder with `sudo rm -rf /fractal/`.
+- On your computer, after initializing yarn by running `yarn`, set the `TESTING_LOCALDEV_HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
+- After closing the client-application on your machine, you need to stop and remove all Docker containers on the AWS instance before you can quit the `host-service` (`Ctrl+C` won't work while the Docker containers are still running). To see all running/recently stopped containers, use `docker ps -a`. From the results, you can find the container IDs which you can then use to stop/remove containers with `docker stop <container ID>` and `docker rm <container ID>`. A quicker way to stop/remove all containers is `docker stop $(docker ps -aq) && docker rm $(docker ps -aq)`. Once you are done with this step, press (`Ctrl+C`) to stop the `host-service`.
 
 If errors/crashes occur, the best thing to do is to check the client-side and server-side logs as described in the section below ([App State and Logging](#app-state-and-logging)).
 
