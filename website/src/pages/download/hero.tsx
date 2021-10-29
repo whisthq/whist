@@ -75,7 +75,7 @@ const Hero = (props: { allowDownloads: boolean }) => {
               </div>
             ) : (
               <a
-                href="https://tryfractal.typeform.com/to/RsOsBSSu"
+                href="https://whist.typeform.com/to/RsOsBSSu"
                 target="_blank"
                 rel="noreferrer"
               >
