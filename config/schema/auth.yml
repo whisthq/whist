@@ -2,7 +2,7 @@ AUTH_DOMAIN_URL:
   local: "fractal-dev.us.auth0.com"
   dev: "fractal-dev.us.auth0.com"
   staging: "fractal-staging.us.auth0.com"
-  prod: "auth.whist.com"
+  prod: "fractal-prod.us.auth0.com"
 
 AUTH_CLIENT_ID:
   local: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF"
