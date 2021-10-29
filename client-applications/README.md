@@ -25,6 +25,8 @@ We use `yarn` as the package manager for this project. All of the commands requi
 
 `yarn start --help` and `yarn start:lite --help` display custom options. In particular, the `--show-protocol-logs` and `--use-local-server` can be used to `console.log` protocol logs and use localhost instead of the dev server, respectively.
 
+`yarn test:manual localdevHost` connects directly to a host service runniing on a development ec2 instance. Make sure to first export `TESTING_LOCALDEV_HOST_IP=<your instance ip>`.
+
 ## How To Contribute
 
 Before making a pull request, ensure that the following steps are taken:
