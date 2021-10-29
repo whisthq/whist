@@ -21,16 +21,18 @@ let results = {
 const handleDownloadMeasurements = (results: any, iterations: number) => {
   return (measurement: any) => {
     if (measurement.Source === "client") {
-      results.downloadMbps = measurement.Data.MeanClientMbps
+      results.downloadMbps = Math.round(measurement.Data.MeanClientMbps)
     } else {
       iterations += 1
-      results.progress =
+      results.progress = Math.ceil(
         (measurement.Data.TCPInfo.ElapsedTime /
           (TEST_DURATION_SECONDS * 1000)) *
-        100
+          100
+      )
       const jitterInMs = measurement.Data.TCPInfo.RTTVar / 1000
-      results.jitter =
+      results.jitter = Math.round(
         (results.jitter * (iterations - 1) + jitterInMs) / iterations
+      )
     }
 
     // If enough time has passed but we aren't done with the test, emit what we have so far
