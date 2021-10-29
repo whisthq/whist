@@ -157,14 +157,14 @@ const TermsOfService = () => {
             Whist is committed to our users' privacy and security, which why we
             do not store the data within your applications after you terminate a
             Whist Session. A Whist session (“Session”) occurs each time you use
-            Whist’s software to access a cloud-based application via Whist.
-            Each Session is standalone, meaning that the remote machine running
-            the application(s) you are using during a Session will be
-            permanently erased shortly after you terminate your Session. As
-            such, Whist offers multiple ways to effortlessly store your data
-            with third-party cloud storage providers, provided that you have a
-            valid account and subscription to one or many of those services.
-            Whist does not assume responsibility for any lost user data due to
+            Whist’s software to access a cloud-based application via Whist. Each
+            Session is standalone, meaning that the remote machine running the
+            application(s) you are using during a Session will be permanently
+            erased shortly after you terminate your Session. As such, Whist
+            offers multiple ways to effortlessly store your data with
+            third-party cloud storage providers, provided that you have a valid
+            account and subscription to one or many of those services. Whist
+            does not assume responsibility for any lost user data due to
             incorrect or forgotten saves, or data storage issues with
             third-party integrations.
           </p>
