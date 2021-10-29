@@ -1,5 +1,5 @@
 [project]
-name = "fractal"
+name = "whist"
 version = "1.0.0"
 description = "Whist monorepository pyproject.toml"
 authors = [

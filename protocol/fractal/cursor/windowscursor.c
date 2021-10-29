@@ -104,29 +104,29 @@ FractalCursorImage get_cursor_image(PCURSORINFO pci) {
     FractalCursorImage image = {0};
 
     if (cursor == types->CursorArrow) {
-        image.cursor_id = FRACTAL_CURSOR_ARROW;
+        image.cursor_id = WHIST_CURSOR_ARROW;
     } else if (cursor == types->CursorCross) {
-        image.cursor_id = FRACTAL_CURSOR_CROSSHAIR;
+        image.cursor_id = WHIST_CURSOR_CROSSHAIR;
     } else if (cursor == types->CursorHand) {
-        image.cursor_id = FRACTAL_CURSOR_HAND;
+        image.cursor_id = WHIST_CURSOR_HAND;
     } else if (cursor == types->CursorIBeam) {
-        image.cursor_id = FRACTAL_CURSOR_IBEAM;
+        image.cursor_id = WHIST_CURSOR_IBEAM;
     } else if (cursor == types->CursorNo) {
-        image.cursor_id = FRACTAL_CURSOR_NO;
+        image.cursor_id = WHIST_CURSOR_NO;
     } else if (cursor == types->CursorSizeAll) {
-        image.cursor_id = FRACTAL_CURSOR_SIZEALL;
+        image.cursor_id = WHIST_CURSOR_SIZEALL;
     } else if (cursor == types->CursorSizeNESW) {
-        image.cursor_id = FRACTAL_CURSOR_SIZENESW;
+        image.cursor_id = WHIST_CURSOR_SIZENESW;
     } else if (cursor == types->CursorSizeNS) {
-        image.cursor_id = FRACTAL_CURSOR_SIZENS;
+        image.cursor_id = WHIST_CURSOR_SIZENS;
     } else if (cursor == types->CursorSizeNWSE) {
-        image.cursor_id = FRACTAL_CURSOR_SIZENWSE;
+        image.cursor_id = WHIST_CURSOR_SIZENWSE;
     } else if (cursor == types->CursorSizeWE) {
-        image.cursor_id = FRACTAL_CURSOR_SIZEWE;
+        image.cursor_id = WHIST_CURSOR_SIZEWE;
     } else if (cursor == types->CursorWait) {
-        image.cursor_id = FRACTAL_CURSOR_WAITARROW;
+        image.cursor_id = WHIST_CURSOR_WAITARROW;
     } else {
-        image.cursor_id = FRACTAL_CURSOR_ARROW;
+        image.cursor_id = WHIST_CURSOR_ARROW;
     }
 
     return image;

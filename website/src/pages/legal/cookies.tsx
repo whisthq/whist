@@ -31,8 +31,8 @@ const Cookies = () => {
           Last updated October 8th, 2020
         </div>
         <p>
-          Fractal Computers, Inc. (“we” or “us” or “our”) may use cookies and
-          other tracking technologies when you visit our website,{" "}
+          Fractal Computers, Inc., dba Whist (“we” or “us” or “our”) may use
+          cookies and other tracking technologies when you visit our website,{" "}
           <a href="/privacy#top">www.whist.com</a>, including any other media
           form, media channel, mobile website, or mobile application related or
           connected thereto (collectively, the “Site”) to help customize the
