@@ -12,6 +12,9 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
+# Turn off interactive mode
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 # Install and configure Ubuntu utils
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     wget \
