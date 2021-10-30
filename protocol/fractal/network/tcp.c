@@ -14,6 +14,14 @@ Private Functions
 */
 
 /**
+ * @brief                          Perform socket() syscall and set fds to
+ *                                 use flag FD_CLOEXEC
+ *
+ * @returns                        The socket file descriptor, -1 on failure
+ */
+SOCKET socketp_tcp();
+
+/**
  * @brief                           Perform accept syscall and set fd to use flag
  *                                  FD_CLOEXEC
  *
@@ -44,7 +52,7 @@ TCP Implementation of Network.h Interface
 
 int tcp_ack(void* raw_context) {
     SocketContextData* context = raw_context;
-    return sendp(context, NULL, 0);
+    return send(context->socket, NULL, 0, 0);
 }
 
 FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
@@ -137,17 +145,10 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
 }
 
 void tcp_free_packet(void* raw_context, FractalPacket* tcp_packet) {
-    /*
-        Frees a TCP packet created by tcp_read_packet
-
-        Arguments:
-            tcp_packet (FractalPacket*): The TCP packet to free
-    */
-
     deallocate_region(tcp_packet);
 }
 
-int tcp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
+int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
 
     // Allocate a buffer for the encrypted packet
@@ -178,7 +179,7 @@ int tcp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size
 
     // Send the packet
     bool failed = false;
-    int ret = sendp(context, encrypted_packet_buffer, sizeof(int) + encrypted_len);
+    int ret = send(context->socket, encrypted_packet_buffer, sizeof(int) + encrypted_len, 0);
     if (ret < 0) {
         int error = get_last_network_error();
         LOG_WARNING("Unexpected TCP Packet Error: %d", error);
@@ -194,8 +195,7 @@ int tcp_send_packet(void* raw_context, FractalPacket* packet, size_t packet_size
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet_from_payload(void* raw_context, FractalPacketType type, void* data, int len,
-                                 int id) {
+int tcp_send_packet(void* raw_context, FractalPacketType type, void* data, int len, int id) {
     SocketContextData* context = raw_context;
 
     if (id != -1) {
@@ -219,19 +219,13 @@ int tcp_send_packet_from_payload(void* raw_context, FractalPacketType type, void
     memcpy(packet->data, data, len);
 
     // Send the packet
-    int ret = tcp_send_packet(context, packet, packet_size);
+    int ret = tcp_send_constructed_packet(context, packet, packet_size);
 
     // Free the packet
     deallocate_region(packet);
 
     // Return success code
     return ret;
-}
-
-int tcp_write_payload_to_packets(uint8_t* payload, size_t payload_size, int payload_id,
-                                 FractalPacketType packet_type, FractalPacket* packet_buffer,
-                                 size_t packet_buffer_length) {
-    LOG_FATAL("tcp_write_payload_to_packets has not been implemented!");
 }
 
 void tcp_destroy_socket_context(void* raw_context) {
@@ -248,6 +242,44 @@ void tcp_destroy_socket_context(void* raw_context) {
 Private Function Implementations
 ============================
 */
+
+SOCKET socketp_tcp() {
+    /*
+        Create a TCP socket and set the FD_CLOEXEC flag.
+        Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
+        but this is not available on other operating systems yet.
+
+        Return:
+            SOCKET: socket fd on success; INVALID_SOCKET on failure
+    */
+
+#ifdef SOCK_CLOEXEC
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+    if (sock_fd <= 0) {
+        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
+        return INVALID_SOCKET;
+    }
+#else
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock_fd <= 0) {  // Windows & Unix cases
+        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
+        return INVALID_SOCKET;
+    }
+
+#ifndef _WIN32
+    // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
+    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return INVALID_SOCKET;
+    }
+#endif
+#endif
+
+    return sock_fd;
+}
 
 SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
     /*
@@ -356,25 +388,10 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
 
 int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
-    /*
-        Create a TCP server context
-
-        Arguments:
-            context (SocketContextData*): pointer to the context to populate
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
     }
-
-    context->is_tcp = true;
 
     int opt;
 
@@ -386,7 +403,6 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
 
     set_timeout(context->socket, stun_timeout_ms);
     // Server connection protocol
-    context->is_server = true;
 
     // Reuse addr
     opt = 1;
@@ -462,25 +478,10 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
 
 int create_tcp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
-    /*
-        Create a TCP server context over STUN server
-
-        Arguments:
-            context (SocketContextData*): pointer to the context to populate
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
     }
-
-    context->is_tcp = true;
 
     // Init stun_addr
     struct sockaddr_in stun_addr;
@@ -507,7 +508,6 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     closesocket(udp_s);
 
     // Server connection protocol
-    context->is_server = true;
 
     // Reuse addr
     opt = 1;
@@ -536,7 +536,7 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
+    if (send(context->socket, &stun_request, sizeof(stun_request), 0) < 0) {
         LOG_WARNING("Could not send STUN request to connected STUN server!");
         closesocket(context->socket);
         return -1;
@@ -616,20 +616,6 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
 
 int create_tcp_client_context(SocketContextData* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
-    /*
-        Create a TCP client context
-
-        Arguments:
-            context (SocketContextData*): pointer to the context to populate
-            destination (char*): the destination address
-            port (int): the port to bind over
-            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
-            stun_timeout_ms (int): timeout, in milliseconds, for socket connection
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -639,7 +625,6 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
         LOG_WARNING("destination is NULL");
         return -1;
     }
-    context->is_tcp = true;
 
     // Create TCP socket
     if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
@@ -649,7 +634,6 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
     set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
-    context->is_server = false;
 
     context->addr.sin_family = AF_INET;
     context->addr.sin_addr.s_addr = inet_addr(destination);
@@ -682,7 +666,6 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
         LOG_WARNING("destiniation is NULL");
         return -1;
     }
-    context->is_tcp = true;
 
     // Init stun_addr
     struct sockaddr_in stun_addr;
@@ -708,7 +691,6 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     sendto(udp_s, NULL, 0, 0, (struct sockaddr*)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
     // Client connection protocol
-    context->is_server = false;
 
     // Reuse addr
     opt = 1;
@@ -737,7 +719,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
+    if (send(context->socket, &stun_request, sizeof(stun_request), 0) < 0) {
         LOG_WARNING("Could not send STUN request to connected STUN server!");
         closesocket(context->socket);
         return -1;
@@ -834,13 +816,27 @@ Public Function Implementations
 bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
                                char* binary_aes_private_key) {
+    /*
+        Create a TCP socket context
+
+        Arguments:
+            context (SocketContext*): pointer to the SocketContext struct to initialize
+            destination (char*): the destination address, NULL means act as a server
+            port (int): the port to bind over
+            recvfrom_timeout_ms (int): timeout, in milliseconds, for recvfrom
+            connection_timeout_ms (int): timeout, in milliseconds, for socket connection
+            using_stun (bool): Whether or not to use STUN
+            binary_aes_private_key (char*): The 16byte AES key to use
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     // Populate function pointer table
     network_context->ack = tcp_ack;
     network_context->read_packet = tcp_read_packet;
-    network_context->send_packet = tcp_send_packet;
-    network_context->send_packet_from_payload = tcp_send_packet_from_payload;
     network_context->free_packet = tcp_free_packet;
-    network_context->write_payload_to_packets = tcp_write_payload_to_packets;
+    network_context->send_packet = tcp_send_packet;
     network_context->destroy_socket_context = tcp_destroy_socket_context;
 
     // Create the SocketContextData, and set to zero

@@ -100,8 +100,7 @@ int discover_ports(bool *using_stun) {
 
     prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
 
-    if (send_packet_from_payload(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg),
-                                 -1) < 0) {
+    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg), -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&context);
         return -1;
@@ -301,8 +300,8 @@ int send_tcp_reconnect_message(bool using_stun) {
         return -1;
     }
 
-    if (send_packet_from_payload(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg,
-                                 (int)sizeof(fcmsg), -1) < 0) {
+    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg), -1) <
+        0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&discovery_context);
         return -1;
@@ -384,8 +383,7 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
 
     if (fcmsg->type == CMESSAGE_CLIPBOARD || fcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
         fcmsg->type == MESSAGE_TCP_PING) {
-        return send_packet_from_payload(&packet_tcp_context, PACKET_MESSAGE, fcmsg,
-                                        get_fcmsg_size(fcmsg), -1);
+        return send_packet(&packet_tcp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg), -1);
     } else {
         if ((size_t)get_fcmsg_size(fcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
@@ -397,7 +395,7 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet_from_payload(&packet_udp_context, PACKET_MESSAGE, fcmsg,
-                                        get_fcmsg_size(fcmsg), sent_packet_id);
+        return send_packet(&packet_udp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg),
+                           sent_packet_id);
     }
 }

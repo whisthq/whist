@@ -67,10 +67,6 @@ volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 
-#define VIDEO_BUFFER_SIZE 25
-#define MAX_NUM_VIDEO_INDICES (MAX_VIDEOFRAME_DATA_SIZE / MAX_PAYLOAD_SIZE + 10)
-FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_NUM_VIDEO_INDICES];
-
 extern volatile bool stop_streaming;
 extern volatile bool wants_iframe;
 extern volatile bool update_encoder;
@@ -233,33 +229,9 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
 #endif  // LOG_VIDEO
     start_timer(statistics_timer);
 
-    // Packetize the frame, required client.is_active == true
-    int num_packets = write_payload_to_packets(
-        &client.udp_context, (uint8_t*)frame, get_total_frame_size(frame), id, PACKET_VIDEO,
-        video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
-
-    if (num_packets < 0) {
-        LOG_ERROR("Failed to write video packet to buffer. Dropping Frame.");
-    } else {
-        // Send the packets to the client
-        for (int i = 0; i < num_packets; ++i) {
-            if (broadcast_udp_packet(&video_buffer[id % VIDEO_BUFFER_SIZE][i],
-                                     get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) <
-                0) {
-                LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
-            }
-        }
-// (Disable this logic for now).
-#define MOD 0
-        for (int j = 0; j < MOD; ++j) {
-            for (int i = j; i < num_packets; i += MOD) {
-                if (broadcast_udp_packet(
-                        &video_buffer[id % VIDEO_BUFFER_SIZE][i],
-                        get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) < 0) {
-                    LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
-                }
-            }
-        }
+    // Send the video frame
+    if (client.is_active) {
+        send_packet(&client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame), id);
     }
 }
 
@@ -350,20 +322,9 @@ void send_empty_frame(int id) {
     // We don't need to fill out the rest of the fields of the VideoFrame because
     // is_empty_frame is true, so it will just be ignored by the client.
 
-    int num_packets = write_payload_to_packets(
-        &client.udp_context, (uint8_t*)frame, sizeof(VideoFrame), id, PACKET_VIDEO,
-        video_buffer[id % VIDEO_BUFFER_SIZE], MAX_NUM_VIDEO_INDICES);
-
-    if (num_packets < 0) {
-        LOG_ERROR("Failed to write video packet to buffer");
-    } else {
-        for (int i = 0; i < num_packets; ++i) {
-            if (broadcast_udp_packet(&video_buffer[id % VIDEO_BUFFER_SIZE][i],
-                                     get_packet_size(&video_buffer[id % VIDEO_BUFFER_SIZE][i])) <
-                0) {
-                LOG_WARNING("Failed to broadcast video packet: id %d, index %d", id, i);
-            }
-        }
+    // Send the empty frame
+    if (client.is_active) {
+        send_packet(&client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
     }
 }
 

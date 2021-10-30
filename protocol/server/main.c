@@ -68,8 +68,8 @@ void graceful_exit() {
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = SMESSAGE_QUIT;
     if (client.is_active) {
-        if (broadcast_udp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
-                                              sizeof(FractalServerMessage), 1) != 0) {
+        if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
+                                 sizeof(FractalServerMessage), 1) != 0) {
             LOG_WARNING("Could not send Quit Message");
         }
     }
@@ -210,9 +210,9 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 memcpy(&fsmsg_response->clipboard, clipboard_chunk,
                        sizeof(ClipboardData) + clipboard_chunk->size);
                 // Send fsmsg
-                if (broadcast_tcp_packet_from_payload(
-                        PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                        sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
+                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
+                                         sizeof(FractalServerMessage) + clipboard_chunk->size) <
+                    0) {
                     LOG_WARNING("Failed to broadcast clipboard message.");
                 }
                 // Free fsmsg
@@ -373,8 +373,8 @@ int main(int argc, char* argv[]) {
                 memset(fsmsg, 0, sizeof(FractalServerMessage));
                 fsmsg->type = SMESSAGE_FULLSCREEN;
                 fsmsg->fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                                      sizeof(FractalServerMessage)) < 0) {
+                if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg,
+                                         sizeof(FractalServerMessage)) < 0) {
                     LOG_ERROR("Failed to broadcast fullscreen message.");
                 } else {
                     LOG_INFO("Sent fullscreen message!");
@@ -396,8 +396,8 @@ int main(int argc, char* argv[]) {
                     memset(fsmsg_response, 0, sizeof(*fsmsg_response));
                     fsmsg_response->type = SMESSAGE_WINDOW_TITLE;
                     memcpy(&fsmsg_response->window_title, name, sizeof(name));
-                    if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                                                          (int)fsmsg_size) < 0) {
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg_response,
+                                             (int)fsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast window title message.");
                     } else {
                         LOG_INFO("Sent window title message!");
@@ -426,8 +426,8 @@ int main(int argc, char* argv[]) {
                     memset(fsmsg, 0, sizeof(*fsmsg));
                     fsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&fsmsg->requested_uri, handled_uri, sizeof(handled_uri));
-                    if (broadcast_tcp_packet_from_payload(PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                                          (int)fsmsg_size) < 0) {
+                    if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) <
+                        0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
                         LOG_INFO("Sent open URI message!");

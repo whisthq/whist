@@ -45,26 +45,7 @@ int broadcast_ack(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int len, int packet_id);
-
-/**
- * @brief                          This will send a FractalPacket over UDP to
- *                                 all active clients. This function does not
- *                                 create the packet from raw data, but assumes
- *                                 that the packet has been prepared by the
- *                                 caller (e.g. fragmented into
- *                                 appropriately-sized chunks by a fragmenter).
- *                                 This function assumes and checks that the
- *                                 packet is small enough to send without
- *                                 further breaking into smaller packets.
- *
- * @param packet                   A pointer to the packet to be sent
- * @param packet_size              The size of the packet to be sent
- *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
- */
-int broadcast_udp_packet(FractalPacket *packet, size_t packet_size);
+int broadcast_udp_packet(FractalPacketType type, void *data, int len, int packet_id);
 
 /**
  * @brief                          Sends a FractalPacket and accompanying
@@ -78,7 +59,7 @@ int broadcast_udp_packet(FractalPacket *packet, size_t packet_size);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len);
+int broadcast_tcp_packet(FractalPacketType type, void *data, int len);
 
 /**
  * @brief                          Tries to read in next available TCP message

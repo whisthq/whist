@@ -14,6 +14,7 @@ else() # GCC and Clang base flags
     "-Wno-unused-parameter"
     "-Wno-unused-result"
     "-Wno-unused-variable"
+    "-Wno-parentheses"
     "-Wno-missing-field-initializers"
     "-Wno-implicit-fallthrough" # We use switch/case fallthrough intentionally a lot, it should be allowed
     "-fno-common" # Error when two global variables have the same name, which would overlap them
