@@ -13,8 +13,8 @@ Usage
 To create the context:
 udp_context = create_udp_network_context(...);
 
-To send a packet from payload:
-udp_context->send_packet_from_payload(...);
+To send a packet:
+udp_context->send_packet(...);
 
 To read a packet:
 udp_context->read_packet(...);
@@ -51,5 +51,31 @@ udp_context->free_packet(...);
 bool create_udp_socket_context(SocketContext* context, char* destination, int port,
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
                                char* binary_aes_private_key);
+
+/**
+ * @brief                          Registers a nack buffer, so that future nacks can be handled.
+ *                                 It will be able to respond to nacks from the most recent
+ *                                 `buffer_size` ID's that have been send via send_packet
+ *                                 NOTE: This function is not thread-safe on SocketContext
+ *
+ * @param context                  The SocketContext that will have a nack buffer
+ * @param type                     The FractalPacketType that this nack buffer will be used for
+ * @param max_payload_size         The largest payload that will be saved in the nack buffer
+ * @param num_buffers              The number of buffers that will be stored in the nack buffer
+ */
+void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, int max_payload_size,
+                              int num_buffers);
+
+/**
+ * @brief                          Respond to a nack for a given ID/Index
+ *                                 NOTE: This function is thread-safe with send_packet
+ *
+ * @param context                  The SocketContext to nack from
+ * @param type                     The FractalPacketType of the nack'ed packet
+ * @param id                       The ID of the nack'ed packet
+ * @param index                    The index of the nack'ed packet
+ *                                 (The UDP packet index into the larger FractalPacket)
+ */
+int udp_nack(SocketContext* context, FractalPacketType type, int id, int index);
 
 #endif  // FRACTAL_UDP_H

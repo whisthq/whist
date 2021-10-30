@@ -163,8 +163,7 @@ int do_discovery_handshake(SocketContext *context, FractalClientMessage *fcmsg) 
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
-    if (send_packet_from_payload(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) <
-        0) {
+    if (send_packet(context, PACKET_MESSAGE, (uint8_t *)fsmsg, (int)fsmsg_size, -1) < 0) {
         LOG_ERROR("Failed to send discovery reply message.");
         free(fsmsg);
         return -1;
@@ -188,6 +187,10 @@ int connect_client(bool using_stun, char *binary_aes_private_key_input) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
+    udp_register_nack_buffer(&client.udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE,
+                             VIDEO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client.udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE,
+                             AUDIO_NACKBUFFER_SIZE);
 
     if (!create_tcp_socket_context(&client.tcp_context, NULL, client.tcp_port, 1,
                                    TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
@@ -219,35 +222,14 @@ int broadcast_ack(void) {
     return ret;
 }
 
-int broadcast_udp_packet(FractalPacket *packet, size_t packet_size) {
-    /*
-        Broadcasts UDP packet `packet` of size `packet_size` to client
-
-        Arguments:
-            packet (FractalPacket*): packet to be broadcast
-            packet_size (size_t): size of the packet to be broadcast
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    if (client.is_active) {
-        if (send_packet(&(client.udp_context), packet, packet_size) < 0) {
-            LOG_ERROR("Failed to send UDP packet to client");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int len, int packet_id) {
+int broadcast_udp_packet(FractalPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
         return -1;
     }
 
     if (client.is_active) {
-        if (send_packet_from_payload(&(client.udp_context), type, data, len, packet_id) < 0) {
+        if (send_packet(&(client.udp_context), type, data, len, packet_id) < 0) {
             LOG_WARNING("Failed to send UDP packet to client");
             return -1;
         }
@@ -255,10 +237,10 @@ int broadcast_udp_packet_from_payload(FractalPacketType type, void *data, int le
     return 0;
 }
 
-int broadcast_tcp_packet_from_payload(FractalPacketType type, void *data, int len) {
+int broadcast_tcp_packet(FractalPacketType type, void *data, int len) {
     if (client.is_active) {
         read_lock(&client.tcp_rwlock);
-        if (send_packet_from_payload(&(client.tcp_context), type, (uint8_t *)data, len, -1) < 0) {
+        if (send_packet(&(client.tcp_context), type, (uint8_t *)data, len, -1) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }

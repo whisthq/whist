@@ -34,14 +34,6 @@ Includes
 
 extern Client client;
 
-#define VIDEO_BUFFER_SIZE 25
-#define MAX_VIDEO_INDEX 500
-extern FractalPacket video_buffer[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
-
-#define AUDIO_BUFFER_SIZE 100
-#define MAX_NUM_AUDIO_INDICES 3
-extern FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
-
 extern volatile int max_bitrate;
 extern volatile int client_width;
 extern volatile int client_height;
@@ -273,8 +265,8 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
     fsmsg_response.ping_id = fcmsg->ping_id;
     int ret = 0;
 
-    if (send_packet_from_payload(&client.udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                                 sizeof(fsmsg_response), 1) < 0,
+    if (send_packet(&client.udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
+                    sizeof(fsmsg_response), 1) < 0,
         false) {
         LOG_WARNING("Could not send Ping");
         ret = -1;
@@ -305,8 +297,8 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
     fsmsg_response.ping_id = fcmsg->ping_id;
     int ret = 0;
 
-    if (send_packet_from_payload(&(client.tcp_context), PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                                 sizeof(fsmsg_response), -1) < 0) {
+    if (send_packet(&(client.tcp_context), PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
+                    sizeof(fsmsg_response), -1) < 0) {
         LOG_WARNING("Could not send TCP Ping to client");
         ret = -1;
     }
@@ -368,23 +360,7 @@ static int handle_clipboard_message(FractalClientMessage *fcmsg) {
 static void handle_nack_single_audio_packet(int packet_id, int packet_index) {
     // LOG_INFO("Audio NACK requested for: ID %d Index %d",
     // packet_id, packet_index);
-    FractalPacket *audio_packet = &audio_buffer[packet_id % AUDIO_BUFFER_SIZE][packet_index];
-    int len = get_packet_size(audio_packet);
-    if (audio_packet->id == packet_id) {
-        LOG_INFO(
-            "NACKed audio packet %d found of length %d. "
-            "Relaying!",
-            packet_id, len);
-        audio_packet->is_a_nack = true;
-        send_packet(&client.udp_context, audio_packet, len);
-    }
-    // If we were asked for an invalid index, just ignore it
-    else if (packet_index < audio_packet->num_indices) {
-        LOG_WARNING(
-            "NACKed audio packet %d %d not found, ID %d %d was "
-            "located instead.",
-            packet_id, packet_index, audio_packet->id, audio_packet->index);
-    }
+    udp_nack(&client.udp_context, PACKET_AUDIO, packet_id, packet_index);
 }
 
 static int handle_audio_nack_message(FractalClientMessage *fcmsg) {
@@ -422,23 +398,7 @@ static int handle_audio_nack_message(FractalClientMessage *fcmsg) {
 static void handle_nack_single_video_packet(int packet_id, int packet_index) {
     // LOG_INFO("Video NACK requested for: ID %d Index %d",
     // fcmsg->nack_data.simple_nack.id, fcmsg->nack_data.simple_nack.index);
-    FractalPacket *video_packet = &video_buffer[packet_id % VIDEO_BUFFER_SIZE][packet_index];
-    int len = get_packet_size(video_packet);
-    if (video_packet->id == packet_id) {
-        LOG_INFO(
-            "NACKed video packet ID %d Index %d found of "
-            "length %d. Relaying!",
-            packet_id, packet_index, len);
-        send_packet(&client.udp_context, video_packet, len);
-    }
-
-    // If we were asked for an invalid index, just ignore it
-    else if (packet_index < video_packet->num_indices) {
-        LOG_WARNING(
-            "NACKed video packet %d %d not found, ID %d %d was "
-            "located instead.",
-            packet_id, packet_index, video_packet->id, video_packet->index);
-    }
+    udp_nack(&client.udp_context, PACKET_VIDEO, packet_id, packet_index);
 }
 
 static int handle_video_nack_message(FractalClientMessage *fcmsg) {
