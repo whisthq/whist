@@ -233,10 +233,8 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
     // Set the new bitrate data (for the video encoder)
     max_bitrate = fcmsg->bitrate_data.bitrate;
 
-    // Use the burst bitrate to update the client's UDP packet throttle context
-    network_throttler_set_burst_bitrate(
-        ((SocketContextData *)client.udp_context.context)->network_throttler,
-        fcmsg->bitrate_data.burst_bitrate);
+    // Update the UDP Context's burst bitrate
+    udp_update_bitrate_settings(&client.udp_context, fcmsg->bitrate_data.burst_bitrate, 0.0);
 
     // Update the encoder using the new bitrate
     update_encoder = true;
