@@ -388,7 +388,7 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
         return -1;
     }
 
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntop(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
@@ -550,7 +550,7 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
         return -1;
     }
 
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntop(context->addr.sin_addr),
              port, ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
@@ -576,7 +576,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
 
     StunRequest stun_request = {0};
     stun_request.type = ASK_INFO;
-    stun_request.entry.ip = inet_addr(destination);
+    stun_request.entry.ip = inet_pton(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending info request to STUN...");
@@ -589,7 +589,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
 
     StunEntry entry = {0};
     int recv_size;
-    if ((recv_size = recv(context->socket, &entry, sizeof(entry), 0)) < 0) {
+    if ((recv_size = recv(context->socket, (char*) &entry, sizeof(entry), 0)) < 0) {
         LOG_WARNING("Could not receive message from STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
