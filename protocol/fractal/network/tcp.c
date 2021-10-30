@@ -468,7 +468,7 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
     closesocket(context->socket);
     context->socket = new_socket;
 
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntop(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
@@ -486,7 +486,7 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     // Init stun_addr
     struct sockaddr_in stun_addr;
     stun_addr.sin_family = AF_INET;
-    stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
+    stun_addr.sin_addr.s_addr = inet_pton(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
     int opt;
 
@@ -571,7 +571,7 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     client_addr.sin_family = AF_INET;
     client_addr.sin_addr.s_addr = entry.ip;
     client_addr.sin_port = entry.private_port;
-    LOG_INFO("TCP STUN notified of desired request from %s:%d\n", inet_ntoa(client_addr.sin_addr),
+    LOG_INFO("TCP STUN notified of desired request from %s:%d\n", inet_ntop(client_addr.sin_addr),
              ntohs(client_addr.sin_port));
 
     closesocket(context->socket);
@@ -608,7 +608,7 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     }
 
     context->addr = client_addr;
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntop(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
     set_timeout(context->socket, recvfrom_timeout_ms);
     return 0;
@@ -636,7 +636,7 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
     // Client connection protocol
 
     context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = inet_addr(destination);
+    context->addr.sin_addr.s_addr = inet_pton(destination);
     context->addr.sin_port = htons((unsigned short)port);
 
     LOG_INFO("Connecting to server...");
@@ -670,7 +670,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     // Init stun_addr
     struct sockaddr_in stun_addr;
     stun_addr.sin_family = AF_INET;
-    stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
+    stun_addr.sin_addr.s_addr = inet_pton(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
     int opt;
 
@@ -716,7 +716,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     // Make STUN request
     StunRequest stun_request = {0};
     stun_request.type = ASK_INFO;
-    stun_request.entry.ip = inet_addr(destination);
+    stun_request.entry.ip = inet_pton(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
 
     if (send(context->socket, &stun_request, sizeof(stun_request), 0) < 0) {
@@ -768,7 +768,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     // Print STUN response
     struct in_addr a;
     a.s_addr = entry.ip;
-    LOG_WARNING("TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa(a),
+    LOG_WARNING("TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntop(a),
                 ntohs(entry.private_port));
 
     closesocket(context->socket);

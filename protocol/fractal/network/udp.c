@@ -37,7 +37,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
 
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
-    int encrypted_len = recv(context->socket, &encrypted_packet, sizeof(encrypted_packet), 0);
+    int encrypted_len = recv(context->socket, (char*) &encrypted_packet, sizeof(encrypted_packet), 0);
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
@@ -410,7 +410,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     // Tell the STUN to log our requested virtual port
     struct sockaddr_in stun_addr;
     stun_addr.sin_family = AF_INET;
-    stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
+    stun_addr.sin_addr.s_addr = inet_pton(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
 
     StunRequest stun_request = {0};
@@ -472,7 +472,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     context->addr.sin_port = entry.private_port;
 
     LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
-             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+             inet_ntop(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
@@ -499,16 +499,16 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
         LOG_WARNING(
             "Connection did not match STUN's claimed client, got %s:%d "
             "instead\n",
-            inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+            inet_ntop(context->addr.sin_addr), ntohs(context->addr.sin_port));
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
-        LOG_WARNING("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+        LOG_WARNING("Should have been %s:%d!\n", inet_ntop(context->addr.sin_addr),
                     ntohs(context->addr.sin_port));
         closesocket(context->socket);
         return -1;
     }
 
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received at %s:%d!\n", inet_ntop(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
 
     return 0;
@@ -525,7 +525,7 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
 
     // Client connection protocol
     context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = inet_addr(destination);
+    context->addr.sin_addr.s_addr = inet_pton(destination);
     context->addr.sin_port = htons((unsigned short)port);
     if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
@@ -571,7 +571,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
 
     struct sockaddr_in stun_addr;
     stun_addr.sin_family = AF_INET;
-    stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
+    stun_addr.sin_addr.s_addr = inet_pton(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
 
     StunRequest stun_request = {0};
@@ -637,7 +637,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
         return -1;
     }
 
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntop(context->addr.sin_addr),
              port, ntohs(context->addr.sin_port));
     set_timeout(context->socket, recvfrom_timeout_ms);
 
