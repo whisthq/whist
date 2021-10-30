@@ -13,8 +13,8 @@ on:
       - ".github/workflows/mandelboxes-check-pr.yml"
       - "!mandelboxes/helper_scripts/run_mandelbox_image.sh"
       - "!mandelboxes/run.sh"
-      - pyproject.toml
-      - pylintrc
+      - "pyproject.toml"
+      - "pylintrc"
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
   mandelboxes-lint-dockerfiles:
     name: Linting
     runs-on: ubuntu-20.04
-    container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
+    container: hadolint/hadolint:v2.7.0 # This version should be updated periodically to use latest Hadolint rules
 
     steps:
       - name: Checkout Git Repository
