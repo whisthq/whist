@@ -17,8 +17,8 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 
 # Install and configure Ubuntu utils
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    wget \
     apt-utils \
+    wget \
     curl \
     git \
     xz-utils \
