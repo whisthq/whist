@@ -1032,6 +1032,9 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 	// We use this lock to protect the transportRequestMap
 	transportMapLock := &sync.Mutex{}
+
+	// Note: If a mandelbox suffers a bug, or fails to start correctly
+	// these channels will become a memory leak.
 	transportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
 	// In the following loop, this var determines whether to re-initialize the
