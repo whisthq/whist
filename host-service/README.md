@@ -32,7 +32,7 @@ There are two ways of running development mandelboxes on the host service. The f
 
 1. Start your instance, ssh into it and go to `~/fractal/host-service`, then run `make run`.
 2. Once you see the host enter the event loop, open another terminal window, ssh into your instance, go to `~/fractal/host-service/mandelboxes` and run `./run_local_mandelbox_image.sh browsers/chrome`. This should start a mandelbox, and you should see the output give a command to run the protocol client on your machine.
-3. Run the protocol client on your local machine (follow the [protocol readme](https://github.com/fractal/fractal/tree/dev/protocol#building-the-protocol)).
+3. Run the protocol client on your local machine (follow the [protocol readme](../protocol/README.md#building-the-protocol)).
 4. You should see a Chrome window open on your machine.
 
 #### Connecting the client application to your development instance
@@ -54,7 +54,7 @@ The host service uses a pubsub architecture to fire the mandelbox spinup and to 
    `curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml`
 2. Run the containers with `docker-compose up -d`
 3. Open up the Hasura console on `http://localhost:8080/console` and add the postgres database (select the Database URL option) with the url `psql postgres://postgres:postgrespassword@127.0.0.1:5432/postgres`
-4. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using [this command](https://github.com/fractal/fractal/tree/dev/.github/actions/db-migration#command-to-dump-the-database-schema)
+4. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using [this command](../.github/actions/db-migration/README.md#command-to-dump-the-database-schema)
 
 Once you have the schema on your local database and Hasura running, it's ready to test!
 
