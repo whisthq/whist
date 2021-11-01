@@ -48,6 +48,8 @@ fi
 
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
+# Setting the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
+# in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE 
 
 exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION -c \

@@ -18,7 +18,8 @@ done
 # Pass JSON transport settings as environment variables
 export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
-export TZ=$TZ
+export TZ=$TZ #TZ variable automatically adjusts the timezone (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
+
 
 # Start the application that this mandelbox runs
 exec fractal-application
