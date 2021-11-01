@@ -22,10 +22,10 @@ import (
 // config is the same as the original.
 func TestUserConfigIntegration(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	testConfig := mandelboxData{
+	testMandelboxData := mandelboxData{
 		ctx:                   ctx,
 		cancel:                cancel,
-		mandelboxID:           "userConfigTest",
+		ID:                    "userConfigTest",
 		appName:               "testApp",
 		userID:                "user_config_test_user",
 		configEncryptionToken: "testEncryptionToken",
@@ -34,18 +34,18 @@ func TestUserConfigIntegration(t *testing.T) {
 	// Start with a clean slate
 	os.RemoveAll(utils.FractalDir)
 
-	err := setupTestDirs(&testConfig)
+	err := setupTestDirs(&testMandelboxData)
 	if err != nil {
 		t.Fatalf("failed to set up test directories: %v", err)
 	}
-	defer cleanupTestDirs(&testConfig)
+	defer cleanupTestDirs(&testMandelboxData)
 
-	unpackedConfigPath := path.Join(testConfig.getUserConfigDir(), testConfig.getUnpackedConfigsDirectoryName())
+	unpackedConfigPath := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
 	if err := os.MkdirAll(unpackedConfigPath, 0777); err != nil {
 		t.Fatalf("failed to create config dir %s: %v", unpackedConfigPath, err)
 	}
 
-	testBase := path.Join(utils.FractalDir, string(testConfig.mandelboxID), "testBase")
+	testBase := path.Join(utils.FractalDir, string(testMandelboxData.ID), "testBase")
 
 	// Copy test directory to unpacked config path
 	copyCommand := exec.Command("cp", "-R", testBase, unpackedConfigPath)
@@ -54,18 +54,18 @@ func TestUserConfigIntegration(t *testing.T) {
 		t.Fatalf("error copying test directories: %v, output: %s", err, output)
 	}
 
-	if err := testConfig.backupUserConfigs(); err != nil {
+	if err := testMandelboxData.backupUserConfigs(); err != nil {
 		t.Fatalf("error backing up configs: %v", err)
 	}
 
 	// Delete the user config directory so it can be recreated
 	os.RemoveAll(unpackedConfigPath)
 
-	if err := testConfig.PopulateUserConfigs(); err != nil {
+	if err := testMandelboxData.PopulateUserConfigs(); err != nil {
 		t.Fatalf("error populating configs: %v", err)
 	}
 
-	if err := testConfig.DecryptUserConfigs(); err != nil {
+	if err := testMandelboxData.DecryptUserConfigs(); err != nil {
 		t.Fatalf("error decrypting configs: %v", err)
 	}
 
@@ -120,8 +120,8 @@ func TestUserConfigIntegration(t *testing.T) {
 
 // setupTestDirs creates a sample user config with some nested directories
 // and files inside.
-func setupTestDirs(c *mandelboxData) error {
-	configDir := path.Join(utils.FractalDir, string(c.mandelboxID))
+func setupTestDirs(mandelbox *mandelboxData) error {
+	configDir := path.Join(utils.FractalDir, string(mandelbox.ID))
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("failed to create config dir %s: %v", configDir, err)
 	}
