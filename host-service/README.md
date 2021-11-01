@@ -51,10 +51,10 @@ The host service communicates with the client through the `json_transport` endpo
 The host service uses a pubsub architecture to fire the mandelbox spinup and to shutdown when its marked as `DRAINING` on the database. You can see the analysis behind this decision in [this document](https://www.notion.so/tryfractal/Implementing-a-PubSub-822ddcbcdde545e89379e7c7dfa25d71). **This setup is only necessary if you need to test the database/pubsub interaction**. Follow the steps below, or follow this [guide](https://hasura.io/docs/latest/graphql/core/getting-started/docker-simple.html).
 
 1. Download the `docker-compose.yml` file with:
-   `curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml`
-2. Run the containers with `docker-compose up -d`
-3. Open up the Hasura console on `http://localhost:8080/console` and add the postgres database (select the Database URL option) with the url `psql postgres://postgres:postgrespassword@127.0.0.1:5432/postgres`
-4. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using [this command](../.github/actions/db-migration/README.md#command-to-dump-the-database-schema)
+   `curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml`.
+2. Run the containers with `docker-compose up -d`.
+3. Open up the Hasura console on `http://localhost:8080/console` and add the postgres database (select the Database URL option) with the url `psql postgres://postgres:postgrespassword@127.0.0.1:5432/postgres`.
+4. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using the command provided in the [DB Migration README](../.github/actions/db-migration/README.md#command-to-dump-the-database-schema).
 
 Once you have the schema on your local database and Hasura running, it's ready to test!
 
