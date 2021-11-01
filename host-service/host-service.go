@@ -377,8 +377,19 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Error(err)
 		sub.ReturnResult("", err)
 	}
+
 	subscriptionInfo := sub.MandelboxInfo[0]
-	AppName := mandelboxtypes.AppName("browsers/chrome")
+
+	var AppName mandelboxtypes.AppName
+	var req *JSONTransportRequest
+	if metadata.IsLocalEnv() {
+		// Receive the json transport request immediately when running on local env
+		jsonchan := getJSONTransportRequestChannel(mandelboxInfo.MandelboxID, transportRequestMap, transportMapLock)
+		req = <-jsonchan
+		AppName = req.AppName
+	} else {
+		AppName = mandelboxtypes.AppName("browsers/chrome")
+	}
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", subscriptionInfo.MandelboxID)
 
@@ -668,9 +679,17 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
+<<<<<<< HEAD
 	// Receive the config encryption token from the client via the httpserver
 	jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
 	req := <-jsonchan
+=======
+	if !metadata.IsLocalEnv() {
+		// Receive the json transpor request from the client via the httpserver.
+		jsonchan := getJSONTransportRequestChannel(mandelboxInfo.MandelboxID, transportRequestMap, transportMapLock)
+		req = <-jsonchan
+	}
+>>>>>>> 4fbe42420 (Use app name value on json transport request when running on local env)
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
@@ -693,7 +712,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// Unblocks fractal-startup.sh to start symlink loaded user configs
+<<<<<<< HEAD
 	err = mandelbox.MarkReady()
+=======
+	err = fc.MarkReady()
+>>>>>>> 4fbe42420 (Use app name value on json transport request when running on local env)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox %s as ready: %s", subscriptionInfo.MandelboxID, err)
 		return
