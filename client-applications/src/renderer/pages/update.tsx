@@ -30,7 +30,7 @@ const Update = () => {
     <div className="flex flex-col justify-center items-center bg-black bg-opacity-90 h-screen text-center">
       <div className="w-full max-w-xs m-auto font-body">
         <div className="font-body text-xl font-semibold text-gray-300">
-          A critical update is downloading
+          Please wait while we download the latest version of Whist
         </div>
         <div className="text-sm text-gray-400 mt-1">
           Downloaded {downloadedSize.toString()} MB /{" "}
