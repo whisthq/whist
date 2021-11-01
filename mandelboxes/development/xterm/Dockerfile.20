@@ -1,4 +1,4 @@
-FROM fractal/base:current-build
+FROM fractal/browsers/chrome:current-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
