@@ -24,7 +24,7 @@ require (
 	github.com/logzio/logzio-go v1.0.2
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pierrec/lz4/v4 v4.1.8
-	github.com/shirou/gopsutil v3.21.9+incompatible
+	github.com/shirou/gopsutil v3.21.10+incompatible
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 )
 
