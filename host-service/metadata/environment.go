@@ -102,3 +102,14 @@ func GetUserID() (mandelboxtypes.UserID, error) {
 
 	return UserID, nil
 }
+
+// VerifyEnvironment is used to enforce that the host service is running on a valid
+// environment.
+func VerifyEnvironment() error {
+	if IsRunningInCI() && !IsLocalEnv() {
+		// Running on a non-local environment with CI enabled is an invalid configuration.
+		return utils.MakeError("Running on non-local environment with CI enabled.")
+	}
+
+	return nil
+}
