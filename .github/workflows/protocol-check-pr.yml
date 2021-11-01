@@ -206,10 +206,10 @@ jobs:
           ./build_protocol_targets.sh clang-format
 
           # Show diff in GitHub Actions logs
-          git diff HEAD --
+          git diff HEAD .
 
           # This will return an error if there is a non-empty diff
-          git diff-index --quiet HEAD --
+          git diff-index --quiet HEAD .
 
       - name: Verify Builds with clang-tidy on Linux Ubuntu
         if: runner.os == 'Linux'
