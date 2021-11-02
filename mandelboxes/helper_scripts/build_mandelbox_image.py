@@ -83,7 +83,7 @@ while i < len(image_paths):
     i += 1
 
 
-def build_image_path(img_path):
+def build_image_path(img_path, running_processes=[]):
     # Build image path
     print("Building " + img_path + "...")
 
@@ -91,27 +91,34 @@ def build_image_path(img_path):
     envs = os.environ.copy()
     envs["DOCKER_BUILDKIT"] = "1"
 
-    command = (
-        "docker build -f "
-        + img_path
-        + "/Dockerfile.20 "
-        + img_path
-        + " -t fractal/"
-        + img_path
-        + ":current-build"
-    )
-    if not show_output:
-        command += " >> .build_output 2>&1"
+    command = [
+        "docker",
+        "build",
+        "-f",
+        f"{img_path}/Dockerfile.20",
+        img_path,
+        "-t",
+        f"fractal/{img_path}:current-build",
+    ]
 
-    with subprocess.Popen(command, shell=True, env=envs) as build_process:
-        build_process.wait()
-        if build_process.returncode != 0:
-            # If _any_ build fails, we exit with return code 1
-            print("Build of " + img_path + " failed, terminating")
-            terminate()
+    with open(f"{img_path}/.build-output", "w") as outfile:
+        with subprocess.Popen(
+            command,
+            env=envs,
+            stdout=None if show_output else outfile,
+            stderr=None if show_output else subprocess.STDOUT,
+        ) as build_process:
+            running_processes.append(build_process)
+            build_process.wait()
+            if build_process.returncode != 0:
+                print(f"Failed to build {img_path}")
+                print(f"Cancelling running builds...")
+                for process in running_processes:
+                    process.terminate()
+                return False
 
     # Notify successful build
-    print("Built " + img_path + "!")
+    print(f"Built {img_path}")
 
     # Take all of the image_paths that depended on this img_path, and save them
     # as the next layer of image_paths to build
@@ -128,9 +135,9 @@ def build_image_path(img_path):
     procs = []
     for next_image_path in next_layer:
         proc = threading.Thread(
-            name="Builder of " + next_image_path,
+            name=f"docker build {next_image_path}",
             target=build_image_path,
-            args=[next_image_path],
+            args=[next_image_path, running_processes],
         )
         proc.start()
         procs.append(proc)
@@ -139,26 +146,22 @@ def build_image_path(img_path):
         proc.join()
 
 
-def terminate():
-    print("Terminating child processes...")
-    os.killpg(0, signal.SIGTERM)
-    time.sleep(0.5)
-    os.killpg(0, signal.SIGKILL)
-    # pylint: disable=protected-access
-    os._exit(1)
-
-
 # Get all image_path's with no dependencies
 if __name__ == "__main__":
-    os.setpgrp()
-
     root_level_images = []
     for image_path, dependency_of_image in dependencies.items():
         if dependency_of_image is None:
             root_level_images.append(image_path)
 
     # Build all root_level_images
+    success = True
     for image_path in root_level_images:
-        build_image_path(image_path)
+        success = build_image_path(image_path)
+        if not success:
+            break
 
-    print("All images have been built successfully!")
+    if success:
+        print("All images built successfully!")
+    else:
+        print("Failed to build some images")
+        exit(1)
