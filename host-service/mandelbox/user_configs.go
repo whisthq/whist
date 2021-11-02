@@ -42,16 +42,16 @@ const (
 	opensslSaltHeader = "Salted__"
 )
 
-func (c *mandelboxData) PopulateUserConfigs() error {
+func (mandelbox *mandelboxData) PopulateUserConfigs() error {
 	// If userID is not set, then we don't retrieve configs from s3
-	if len(c.GetUserID()) == 0 {
-		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", c.mandelboxID)
+	if len(mandelbox.GetUserID()) == 0 {
+		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.ID)
 		return nil
 	}
 
-	s3ConfigKey := c.getS3ConfigKey()
+	s3ConfigKey := mandelbox.getS3ConfigKey()
 
-	logger.Infof("Starting S3 config download for mandelbox %s", c.mandelboxID)
+	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.ID)
 
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
@@ -75,7 +75,7 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
 		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NotFound" {
-			logger.Infof("Could not get head object because config does not exist for user %s", c.userID)
+			logger.Infof("Could not get head object because config does not exist for user %s", mandelbox.userID)
 			return nil
 		}
 
@@ -84,8 +84,8 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
-	c.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(context.Background(), c.configBuffer, &s3.GetObjectInput{
+	mandelbox.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
+	numBytes, err := downloader.Download(context.Background(), mandelbox.configBuffer, &s3.GetObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
 		Key:    aws.String(s3ConfigKey),
 	})
@@ -93,60 +93,60 @@ func (c *mandelboxData) PopulateUserConfigs() error {
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
-			logger.Infof("Could not download user config because config does not exist for user %s", c.userID)
+			logger.Infof("Could not download user config because config does not exist for user %s", mandelbox.userID)
 			return nil
 		}
 
 		return utils.MakeError("Failed to download user configuration from s3: %v", err)
 	}
 
-	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, c.mandelboxID)
+	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, mandelbox.ID)
 
 	return nil
 }
 
 // DecryptUserConfigs decrypts and unpacks the previously downloaded
 // s3 config using the encryption token received through JSON transport.
-func (c *mandelboxData) DecryptUserConfigs() error {
+func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
-	if len(c.configEncryptionToken) == 0 {
-		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
+	if len(mandelbox.configEncryptionToken) == 0 {
+		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.ID)
 	}
 
-	if c.configBuffer == nil {
+	if mandelbox.configBuffer == nil {
 		logger.Infof("Not decrypting user configs because the config buffer is empty.")
 		return nil
 	}
 
-	logger.Infof("Decrypting user config for mandelbox %s", c.mandelboxID)
+	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
 
 	// Decrypt the downloaded archive directly from memory
-	encryptedFile := c.configBuffer.Bytes()
+	encryptedFile := mandelbox.configBuffer.Bytes()
 	salt, data, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
 	if err != nil {
 		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
 	}
 
-	key, iv := getKeyAndIVFromPassAndSalt([]byte(c.GetConfigEncryptionToken()), salt)
+	key, iv := getKeyAndIVFromPassAndSalt([]byte(mandelbox.GetConfigEncryptionToken()), salt)
 	err = decryptAES256CBC(key, iv, data)
 	if err != nil {
 		return utils.MakeError("failed to decrypt user config: %v", err)
 	}
 
-	logger.Infof("Finished decrypting user config for mandelbox %s", c.mandelboxID)
-	logger.Infof("Decompressing user config for mandelbox %s", c.mandelboxID)
+	logger.Infof("Finished decrypting user config for mandelbox %s", mandelbox.ID)
+	logger.Infof("Decompressing user config for mandelbox %s", mandelbox.ID)
 
 	// Lock directory to avoid cleanup
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
 
 	// Make directory for user configs
-	configDir := c.getUserConfigDir()
+	configDir := mandelbox.getUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
-	unpackedConfigDir := path.Join(configDir, c.getUnpackedConfigsDirectoryName())
+	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
 	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
@@ -228,21 +228,21 @@ func (c *mandelboxData) DecryptUserConfigs() error {
 }
 
 // backupUserConfigs compresses, encrypts, and then uploads user config files to S3.
-// Requires `c.rwlock` to be locked.
-func (c *mandelboxData) backupUserConfigs() error {
-	if len(c.userID) == 0 {
-		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", c.mandelboxID)
+// Requires `mandelbox.rwlock` to be locked.
+func (mandelbox *mandelboxData) backupUserConfigs() error {
+	if len(mandelbox.userID) == 0 {
+		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", mandelbox.ID)
 		return nil
 	}
 
-	if len(c.configEncryptionToken) == 0 {
-		return utils.MakeError("Cannot save user configs for MandelboxID %s since ConfigEncryptionToken is empty", c.mandelboxID)
+	if len(mandelbox.configEncryptionToken) == 0 {
+		return utils.MakeError("Cannot save user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.ID)
 	}
 
-	configDir := c.getUserConfigDir()
-	encTarPath := path.Join(configDir, c.getEncryptedArchiveFilename())
-	decTarPath := path.Join(configDir, c.getDecryptedArchiveFilename())
-	unpackedConfigPath := path.Join(configDir, c.getUnpackedConfigsDirectoryName())
+	configDir := mandelbox.getUserConfigDir()
+	encTarPath := path.Join(configDir, mandelbox.getEncryptedArchiveFilename())
+	decTarPath := path.Join(configDir, mandelbox.getDecryptedArchiveFilename())
+	unpackedConfigPath := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
 
 	tarConfigCmd := exec.Command(
 		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
@@ -261,7 +261,7 @@ func (c *mandelboxData) backupUserConfigs() error {
 		"/usr/bin/openssl", "aes-256-cbc", "-e",
 		"-in", decTarPath,
 		"-out", encTarPath,
-		"-pass", "pass:"+string(c.configEncryptionToken), "-pbkdf2")
+		"-pass", "pass:"+string(mandelbox.configEncryptionToken), "-pbkdf2")
 	encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 	if err != nil {
 		// If the config could not be encrypted, don't upload
@@ -297,24 +297,24 @@ func (c *mandelboxData) backupUserConfigs() error {
 
 	uploadResult, err := uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(c.getS3ConfigKeyWithoutLocking()),
+		Key:    aws.String(mandelbox.getS3ConfigKeyWithoutLocking()),
 		Body:   encryptedConfig,
 	})
 	if err != nil {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
 
-	logger.Infof("Saved user config for mandelbox %s, version %s", c.mandelboxID, *uploadResult.VersionID)
+	logger.Infof("Saved user config for mandelbox %s, version %s", mandelbox.ID, *uploadResult.VersionID)
 
 	return nil
 }
 
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
-func (c *mandelboxData) WriteJSONData() error {
+func (mandelbox *mandelboxData) WriteJSONData() error {
 	logger.Infof("Writing JSON transport data to config.json file...")
 
-	if err := c.writeResourceMappingToFile("config.json", c.GetJSONData()); err != nil {
+	if err := mandelbox.writeResourceMappingToFile("config.json", mandelbox.GetJSONData()); err != nil {
 		return err
 	}
 
@@ -322,45 +322,45 @@ func (c *mandelboxData) WriteJSONData() error {
 }
 
 // cleanUserConfigDir removes all user config related files and directories from the host.
-// Requires `c.rwlock` to be locked.
-func (c *mandelboxData) cleanUserConfigDir() {
-	err := os.RemoveAll(c.getUserConfigDir())
+// Requires `mandelbox.rwlock` to be locked.
+func (mandelbox *mandelboxData) cleanUserConfigDir() {
+	err := os.RemoveAll(mandelbox.getUserConfigDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s. Error: %s", c.getUserConfigDir(), err)
+		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.getUserConfigDir(), err)
 	}
 }
 
 // getUserConfigDir returns the absolute path to the user config directory.
-func (c *mandelboxData) getUserConfigDir() string {
-	return path.Join(utils.FractalDir, string(c.GetMandelboxID()), "userConfigs")
+func (mandelbox *mandelboxData) getUserConfigDir() string {
+	return path.Join(utils.FractalDir, string(mandelbox.GetID()), "userConfigs")
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
-func (c *mandelboxData) getS3ConfigKey() string {
-	return path.Join(string(c.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(c.GetAppName()), c.getEncryptedArchiveFilename())
+func (mandelbox *mandelboxData) getS3ConfigKey() string {
+	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()), mandelbox.getEncryptedArchiveFilename())
 }
 
 // getS3ConfigKeyWithoutLocking returns the S3 key to the encrypted user config file
 // without locking the mandelbox. This is used when the enclosing function already
 // holds a lock.
-func (c *mandelboxData) getS3ConfigKeyWithoutLocking() string {
-	return path.Join(string(c.userID), metadata.GetAppEnvironmentLowercase(), string(c.appName), c.getEncryptedArchiveFilename())
+func (mandelbox *mandelboxData) getS3ConfigKeyWithoutLocking() string {
+	return path.Join(string(mandelbox.userID), metadata.GetAppEnvironmentLowercase(), string(mandelbox.appName), mandelbox.getEncryptedArchiveFilename())
 }
 
 // getEncryptedArchiveFilename returns the name of the encrypted user config file.
-func (c *mandelboxData) getEncryptedArchiveFilename() string {
+func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4.enc"
 }
 
 // getDecryptedArchiveFilename returns the name of the
 // decrypted (but still compressed) user config file.
-func (c *mandelboxData) getDecryptedArchiveFilename() string {
+func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4"
 }
 
 // getUnpackedConfigsDirectoryName returns the name of the
 // directory that stores unpacked user configs.
-func (c *mandelboxData) getUnpackedConfigsDirectoryName() string {
+func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs/"
 }
 
