@@ -39,9 +39,7 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
     INITIAL_KEY_REPEAT=$(echo $INITIAL_KEY_REPEAT | tr -d '"')
     KEY_REPEAT=$(echo $KEY_REPEAT | tr -d '"')
 
-    echo "INITIAL_KEY_REPEAT IS $INITIAL_KEY_REPEAT"
-    echo "KEY_REPEAT IS $KEY_REPEAT"
-
+    # Set the key repeat rates
     xset r rate $INITIAL_KEY_REPEAT $KEY_REPEAT
   fi
 fi
