@@ -4,11 +4,9 @@
 
 import argparse
 from collections import namedtuple
-import io
 import os
 import secrets
 import sys
-import tarfile
 
 import docker
 import psutil
@@ -127,21 +125,6 @@ def kill_container(cont):
     """
     cont.kill()
     cont.remove()
-
-
-def copy_locally_built_protocol(cont):
-    """
-    Takes in a Container object and copies the locally built version of the
-    protocol into the corresponding Mandelbox.
-    """
-    # The docker Python API is stupid, so we first need to tar the protocol directory
-    fileobj = io.BytesIO()
-    with tarfile.open(fileobj=fileobj, mode="w") as tar:
-        os.chdir(protocol_build_path)
-        tar.add(".")
-        reset_working_directory()
-
-    cont.put_archive(mandelbox_server_path, fileobj.getvalue())
 
 
 def send_spin_up_mandelbox_request(mandelbox_id):

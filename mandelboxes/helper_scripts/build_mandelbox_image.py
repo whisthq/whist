@@ -10,8 +10,7 @@ import os
 import re
 import threading
 import subprocess
-import signal
-import time
+import sys
 
 # Argument parser
 parser = argparse.ArgumentParser(description="Build Whist mandelbox image(s).")
@@ -32,8 +31,9 @@ parser.add_argument(
     help=(
         "This flag controls when the protocol gets copied into the mandelbox. "
         "In dev mode, the protocol is copied at the end of each target mandelbox image. "
-        "In prod mode, the protocol is only copied at the end of the base image and inherited by child images. "
-        "If --all is passed in, this flag is ignored and prod mode is automatically set."
+        "In prod mode, the protocol is only copied at the end of the base image and "
+        "inherited by child images. If --all is passed in, this flag is ignored and "
+        "prod mode is automatically set."
     ),
     required=True,
 )
@@ -47,7 +47,7 @@ image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
 protocol_copy_mode = "prod" if build_all else args.mode
 # Keep track of the initial targets for protocol copying purposes
-target_image_paths = [path for path in image_paths]
+target_image_paths = image_paths
 
 # If --all is passed, generate image_paths procedurally
 if build_all:
@@ -97,7 +97,7 @@ while i < len(image_paths):
     i += 1
 
 
-def build_image_path(img_path, running_processes=[], ret={"status": None}, root_image=False):
+def build_image_path(img_path, running_processes=None, ret=None, root_image=False):
     # Build image path
     print("Building " + img_path + "...")
 
@@ -144,7 +144,7 @@ def build_image_path(img_path, running_processes=[], ret={"status": None}, root_
                 status = 1
             if status != 0:
                 print(f"Failed to build {img_path}")
-                print(f"Cancelling running builds...")
+                print("Cancelling running builds...")
                 for process in running_processes:
                     process.terminate()
                 # We have to do this to get the return code in the parent
@@ -172,7 +172,7 @@ def build_image_path(img_path, running_processes=[], ret={"status": None}, root_
     procs = []
     rets = []
     for next_image_path in next_layer:
-        next_ret = {"status": None, "path": next_image_path}
+        next_ret = {"status": None}
         proc = threading.Thread(
             name=f"docker build {next_image_path}",
             target=build_image_path,
@@ -203,14 +203,12 @@ if __name__ == "__main__":
             root_level_images.append(image_path)
 
     # Build all root level images
-    status = 0
     for image_path in root_level_images:
-        status = build_image_path(image_path, root_image=True)
-        if status != 0:
-            break
+        err = build_image_path(
+            image_path, running_processes=[], ret={"status": None}, root_image=True
+        )
+        if err != 0:
+            print("Failed to build some images")
+            sys.exit(err)
 
-    if status == 0:
-        print("All images built successfully!")
-    else:
-        print("Failed to build some images")
-        exit(status)
+    print("All images built successfully!")
