@@ -384,7 +384,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	var req *JSONTransportRequest
 	if metadata.IsLocalEnv() {
 		// Receive the json transport request immediately when running on local env
-		jsonchan := getJSONTransportRequestChannel(mandelboxInfo.MandelboxID, transportRequestMap, transportMapLock)
+		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 		AppName = req.AppName
 	} else {
@@ -679,17 +679,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
-<<<<<<< HEAD
-	// Receive the config encryption token from the client via the httpserver
-	jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
-	req := <-jsonchan
-=======
 	if !metadata.IsLocalEnv() {
 		// Receive the json transpor request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(mandelboxInfo.MandelboxID, transportRequestMap, transportMapLock)
+		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 	}
->>>>>>> 4fbe42420 (Use app name value on json transport request when running on local env)
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
@@ -712,11 +706,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// Unblocks fractal-startup.sh to start symlink loaded user configs
-<<<<<<< HEAD
 	err = mandelbox.MarkReady()
-=======
-	err = fc.MarkReady()
->>>>>>> 4fbe42420 (Use app name value on json transport request when running on local env)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox %s as ready: %s", subscriptionInfo.MandelboxID, err)
 		return
