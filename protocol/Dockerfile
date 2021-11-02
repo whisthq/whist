@@ -12,10 +12,13 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
+# Turn off interactive mode
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 # Install and configure Ubuntu utils
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    wget \
     apt-utils \
+    wget \
     curl \
     git \
     xz-utils \
@@ -32,7 +35,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \ 
+    wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
 RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 
 RUN apt-get update \
