@@ -471,6 +471,7 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
         SDL_Thread* destroy_decoder_thread = SDL_CreateThread(
             multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
         SDL_DetachThread(destroy_decoder_thread);
+        video_context.decoder = NULL;
     }
 
     VideoDecoder* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
@@ -1254,21 +1255,51 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
+#ifdef __APPLE__
+        // On __APPLE__, video_context.renderer is maintained in init_sdl_renderer
+        if (video_context.texture) {
+            SDL_DestroyTexture(video_context.texture);
+            video_context.texture = NULL;
+        }
+#else
+        // SDL_DestroyTexture(video_context.texture); is not needed,
+        // the renderer destroys it
         SDL_DestroyRenderer((SDL_Renderer*)video_context.renderer);
+        video_context.renderer = NULL;
+        video_context.texture = NULL;
+#endif
 
         if (native_window_color) {
             free((FractalRGBColor*)native_window_color);
+            native_window_color = NULL;
         }
 
-        // SDL_DestroyTexture(videoContext.texture); is not needed,
-        // the renderer destroys it
-        av_freep(&video_context.data[0]);
+        if (video_context.sws) {
+            av_freep(&video_context.data[0]);
+            sws_freeContext(video_context.sws);
+            video_context.sws = NULL;
+        }
+
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);
+        video_ring_buffer = NULL;
+
+        if (video_context.decoder) {
+            SDL_Thread* destroy_decoder_thread =
+                SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
+                                 video_context.decoder);
+            SDL_DetachThread(destroy_decoder_thread);
+            video_context.decoder = NULL;
+        }
+
+        SDL_DestroyMutex(render_mutex);
+        render_mutex = NULL;
     }
 
-    SDL_DestroyMutex(render_mutex);
-    render_mutex = NULL;
+    // Reset globals
+    server_width = -1;
+    server_height = -1;
+    CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
 
     has_video_rendered_yet = false;
 }
