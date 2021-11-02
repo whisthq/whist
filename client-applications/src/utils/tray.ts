@@ -94,12 +94,12 @@ const settingsMenu = new MenuItem({
       },
     },
     {
-      label: "Restore the last Chrome session",
+      label: "Restore the last browser session",
       type: "checkbox",
       checked:
-        (persistGet("restoreLastChromeSession", "data") ?? "true") === "true",
+        (persistGet("RestoreLastBrowserSession", "data") ?? "true") === "true",
       click: () => {
-        trayEvent.emit("restore-last-chrome-session")
+        trayEvent.emit("restore-last-browser-session")
       },
     },
     {

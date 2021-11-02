@@ -5,7 +5,7 @@ import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { isNumber } from "lodash"
-import { execCommand } from "./../../../../scripts/execCommand"
+import { execCommandByOS } from "./../../../../scripts/execCommand"
 import { persistGet } from "@app/utils/persist"
 
 export default flow(
@@ -24,15 +24,22 @@ export default flow(
       )
     )
 
-    // Retrieve macOS keyboard repeat rates to send them to the mandelbox
-    const initialKeyRepeat = execCommand(
+    // Retrieve keyboard repeat rates to send them to the mandelbox
+    const initialKeyRepeat = execCommandByOS(
       "defaults read NSGlobalDomain InitialKeyRepeat",
+      /* eslint-disable no-template-curly-in-string */
+      "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[3]}",
+      null,
       ".",
       {},
       "pipe"
     )
-    const keyRepeat = execCommand(
+
+    const keyRepeat = execCommandByOS(
       "defaults read NSGlobalDomain KeyRepeat",
+      /* eslint-disable no-template-curly-in-string */
+      "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[6]}",
+      null,
       ".",
       {},
       "pipe"
@@ -49,7 +56,7 @@ export default flow(
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
-              persistGet("restoreLastChromeSession", "data") ?? "true",
+              persistGet("RestoreLastBrowserSession", "data") ?? "true",
             initial_key_repeat: isNumber(initialKeyRepeat)
               ? initialKeyRepeat
               : 68, // this fails if the user hasn't modified the default value, which is 68

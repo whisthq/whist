@@ -17,5 +17,5 @@ createTrigger(TRIGGER.trayBugAction, fromEvent(trayEvent, "bug"))
 createTrigger(TRIGGER.trayAutolaunchAction, fromEvent(trayEvent, "auto-launch"))
 createTrigger(
   TRIGGER.trayRestoreSessionAction,
-  fromEvent(trayEvent, "restore-last-chrome-session")
+  fromEvent(trayEvent, "restore-last-browser-session")
 )
