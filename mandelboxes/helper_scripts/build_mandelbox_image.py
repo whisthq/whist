@@ -142,8 +142,10 @@ def build_image_path(img_path, running_processes=[]):
         proc.start()
         procs.append(proc)
     # Wait for all the threads to finish executing before returning
+    status = True
     for proc in procs:
-        proc.join()
+        status = status or proc.join()
+    return status
 
 
 # Get all image_path's with no dependencies
