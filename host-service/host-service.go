@@ -438,13 +438,13 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
 		err := mandelbox.DownloadUserConfigs()
 		if err != nil {
-			logger.Warningf("Error populating user configs: %v", err)
+			logger.Warningf("Error populating user configs for mandelbox %s: %v", mandelboxInfo.MandelboxID, err)
 			userConfigDownloadComplete <- true
 			return
 		}
 
 		userConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", mandelboxSubscription.ID)
+		logger.Infof("SpinUpMandelbox(): Successfully downloaded user configs for mandelbox %s", mandelboxSubscription.ID)
 	}()
 
 	// Do all startup tasks that can be done before Docker container creation in
@@ -701,7 +701,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Decrypt the previously downloaded user configs using the encryption token
 	err = mandelbox.DecryptUserConfigs()
 	if err != nil {
-		logger.Errorf("Error decrypting config token: %v", err)
+		logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxInfo.MandelboxID, err)
 	}
 
 	// Write the config.json file with the data received from JSON transport
