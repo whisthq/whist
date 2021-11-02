@@ -79,7 +79,7 @@ export default flow(
           mandelbox_id: c.mandelboxID,
           json_data: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
-            desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
             ...(initialKeyRepeat !== "" &&

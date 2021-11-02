@@ -24,8 +24,8 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
     # Remove potential quotation marks
     RESTORE_LAST_SESSION=$(echo $RESTORE_LAST_SESSION | tr -d '"')
   fi
-  if [ "$( jq 'has("desired_tz")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
-    DESIRED_TIMEZONE="$(jq '.desired_tz' < $FRACTAL_JSON_FILE)"
+  if [ "$( jq 'has("desired_timezone")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    DESIRED_TIMEZONE="$(jq '.desired_timezone' < $FRACTAL_JSON_FILE)"
     # Remove potential quotation marks
     DESIRED_TIMEZONE=$(echo $DESIRED_TIMEZONE | tr -d '"')
     # Set the system-wide timezone
