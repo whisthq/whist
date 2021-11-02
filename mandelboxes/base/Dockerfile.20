@@ -649,6 +649,7 @@ COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     dbus-x11 \
+    gir1.2-secret-1 \
     gnome-keyring \
     libsecret-1-0 \
     && pip install --no-cache-dir browser-cookie3==0.13.0 \
