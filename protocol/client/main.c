@@ -424,12 +424,13 @@ int main(int argc, char* argv[]) {
 
         connected = true;
 
-        // Initialize the SDL window
-        window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
-
+        // Initialize the SDL window (and only do this once!)
         if (!window) {
-            destroy_socket_library();
-            LOG_FATAL("Failed to initialize SDL");
+            window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+            if (!window) {
+                destroy_socket_library();
+                LOG_FATAL("Failed to initialize SDL");
+            }
         }
 
         // set the window minimum size
@@ -593,6 +594,9 @@ int main(int argc, char* argv[]) {
         SDL_WaitThread(sync_udp_packets_thread, NULL);
         destroy_audio();
         close_connections();
+        run_renderer_thread = false;
+        SDL_WaitThread(renderer_thread, NULL);
+        destroy_video();
         connected = false;
     }
 
@@ -609,9 +613,6 @@ int main(int argc, char* argv[]) {
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
-    run_renderer_thread = false;
-    SDL_WaitThread(renderer_thread, NULL);
-    destroy_video();
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
     free_parsed_args();

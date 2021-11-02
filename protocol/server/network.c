@@ -359,7 +359,7 @@ int multithreaded_manage_client(void *opaque) {
 
         // If there is an active client that is not actively deactivating that hasn't pinged
         //     in a while, we should reap it.
-        if (client.is_active && !client.is_deactivating && get_timer(last_ping_check) > 20.0) {
+        if (client.is_active && !client.is_deactivating) {
             if (reap_timed_out_client(CLIENT_PING_TIMEOUT_SEC) != 0) {
                 LOG_ERROR("Failed to reap timed out clients.");
             }

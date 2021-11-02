@@ -85,6 +85,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
                     LOG_WARNING("Unexpected Packet Error: %d", error);
                     break;
             }
+            fractal_sleep(5);
         } else {
             // Ignore packets of size 0
         }
