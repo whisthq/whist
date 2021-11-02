@@ -44,3 +44,10 @@ export const defaultAllowedRegions = [
   AWSRegion.US_WEST_2,
   AWSRegion.CA_CENTRAL_1,
 ]
+
+// How often to send heartbeat logs to Amplitude
+export const LOG_INTERVAL_IN_MINUTES = 5
+
+// Sentry DSN
+export const SENTRY_DSN =
+  "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323"

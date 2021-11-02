@@ -4,9 +4,10 @@
  * @brief This file contains utility functions for finding the closest AWS region.
  */
 
+import fetch from "node-fetch"
+
 import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/utils/logging"
-import fetch from "node-fetch"
 
 const fractalPingTime = async (host: string, numberPings: number) => {
   /*

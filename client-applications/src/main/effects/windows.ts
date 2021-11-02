@@ -7,6 +7,7 @@ import {
   filter,
 } from "rxjs/operators"
 import { interval, of } from "rxjs"
+import Sentry from "@sentry/electron"
 
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
@@ -31,7 +32,7 @@ let warningLastShown = 0
 let exitSurveyShown = false
 
 // Immediately initialize the protocol invisibly since it can take time to warm up
-createProtocolWindow().catch((err) => console.error(err))
+createProtocolWindow().catch((err) => Sentry.captureException(err))
 
 fromTrigger("appReady").subscribe(() => {
   internetNotification = internetWarning()
@@ -111,7 +112,7 @@ allWindowsClosed
               rebootNotification?.close()
             }, 6000)
           })
-          .catch((err) => console.error(err))
+          .catch((err) => Sentry.captureException(err))
         // If we've already tried several times to reconnect, just show the protocol error window
       } else {
         createTrigger(TRIGGER.protocolError, of(undefined))
