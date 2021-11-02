@@ -129,7 +129,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
 
     status = 0
 
-    with open(f"{img_path}/build.log", "w") as outfile:
+    with open(f"{img_path}/build.log", "w", encoding="utf-8") as outfile:
         with subprocess.Popen(
             command,
             env=envs,
@@ -204,11 +204,11 @@ if __name__ == "__main__":
 
     # Build all root level images
     for image_path in root_level_images:
-        err = build_image_path(
+        RET = build_image_path(
             image_path, running_processes=[], ret={"status": None}, root_image=True
         )
-        if err != 0:
+        if RET != 0:
             print("Failed to build some images")
-            sys.exit(err)
+            sys.exit(RET)
 
     print("All images built successfully!")
