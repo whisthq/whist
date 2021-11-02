@@ -17,6 +17,7 @@ const execCommand = (command, cwd, env = {}, stdio = "inherit") => {
 }
 
 module.exports = {
+  execCommand,
   execCommandByOS: (
     macCommand,
     linuxCommand,
