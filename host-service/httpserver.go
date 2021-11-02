@@ -81,6 +81,7 @@ func (r requestResult) send(w http.ResponseWriter) {
 // JSONTransportRequest defines the (unauthenticated) `json_transport`
 // endpoint.
 type JSONTransportRequest struct {
+	AppName               mandelboxtypes.AppName               `json:"app_name,omitempty"`      // The app name to spin up (used when running in localdev, but in deployment the app name is set to browsers/chrome).
 	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        string                               `json:"jwt_access_token"`        // User's JWT access token
 	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`            // MandelboxID, used for the json transport request map
