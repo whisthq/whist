@@ -6,7 +6,7 @@ import config from "@app/config/environment"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { LOG_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/utils/constants"
 
-// Initialize and report Sentry errors in all packaged environments
+// Initialize and report Sentry errors in prod
 if (appEnvironment === FractalEnvironments.PRODUCTION) {
   Sentry.init({
     dsn: SENTRY_DSN,
