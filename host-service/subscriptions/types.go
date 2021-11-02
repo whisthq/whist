@@ -40,9 +40,6 @@ type MandelboxInfoResult struct {
 }
 
 // SubscriptionEvent represents any event received from Hasura
-// subscriptions. It simply passes the result and any error message
-// via ReturnResult.
-type SubscriptionEvent interface {
-	ReturnResult(result interface{}, err error)
-	createResultChan()
-}
+// subscriptions. We define a custom (empty) interface to make the
+// main select on `host-service.go` cleaner.
+type SubscriptionEvent interface{}
