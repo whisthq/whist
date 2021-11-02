@@ -39,8 +39,6 @@ export default flow(
     } else {
       // Remove trailing '\n'
       initialKeyRepeat.replace(/\n$/, "")
-      // Convert to number
-      initialKeyRepeat = parseInt(initialKeyRepeat)
     }
 
     let keyRepeat = execCommandByOS(
@@ -58,8 +56,6 @@ export default flow(
     } else {
       // Remove trailing '\n'
       keyRepeat.replace(/\n$/, "")
-      // Convert to number
-      keyRepeat = parseInt(keyRepeat)
     }
 
     const host = hostSpinUpFlow(
@@ -74,10 +70,10 @@ export default flow(
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
-            ...(!isNaN(initialKeyRepeat) && {
+            ...(!isNaN(parseInt(initialKeyRepeat)) && {
               initial_key_repeat: initialKeyRepeat,
             }),
-            ...(!isNaN(keyRepeat) && { key_repeat: keyRepeat }),
+            ...(!isNaN(parseInt(keyRepeat)) && { key_repeat: keyRepeat }),
           }), // Data to send through the JSON transport
         }))
       )
