@@ -377,8 +377,20 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Error(err)
 		sub.ReturnResult("", err)
 	}
+
 	subscriptionInfo := sub.MandelboxInfo[0]
-	AppName := mandelboxtypes.AppName("browsers/chrome")
+
+	var AppName mandelboxtypes.AppName
+	var req *JSONTransportRequest
+	if metadata.IsLocalEnv() {
+		// Receive the json transport request immediately when running on local env
+		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+		req = <-jsonchan
+		AppName = req.AppName
+	} else {
+		// If not on a local environment, we default to using the `browsers/chrome` image.
+		AppName = mandelboxtypes.AppName("browsers/chrome")
+	}
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", subscriptionInfo.MandelboxID)
 
@@ -668,9 +680,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
-	// Receive the config encryption token from the client via the httpserver
-	jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
-	req := <-jsonchan
+	if !metadata.IsLocalEnv() {
+		// Receive the json transpor request from the client via the httpserver.
+		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+		req = <-jsonchan
+	}
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {

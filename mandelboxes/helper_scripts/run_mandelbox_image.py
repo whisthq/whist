@@ -169,6 +169,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     print("Sending SpinUpMandelbox request to host service!")
     url = HOST_SERVICE_URL + "json_transport"
     payload = {
+        "app_name": args.image,
         "config_encryption_token": args.user_config_encryption_token,
         "jwt_access_token": "bogus_jwt",
         "json_data": json_data,
