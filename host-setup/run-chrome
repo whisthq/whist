@@ -17,8 +17,9 @@ docker kill $(docker ps -q) || true
 # Remove all docker mandelboxs
 docker rm $(docker ps -a -q) || true
 
-# Kill host-service
-sudo kill $(ps -A | grep host-service | awk '{print $1}') || true
+# Kill all host-services, if any are running
+sudo killall -9 host-service
+sudo rm -rf /fractal
 
 # Create new host service
 cd "$REPO/host-service"
