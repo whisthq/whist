@@ -157,7 +157,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/mandelboxes/browsers/firefox" # looks for Dockerfile in this directory
+    directory: "/mandelboxes/development/benchmark" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
