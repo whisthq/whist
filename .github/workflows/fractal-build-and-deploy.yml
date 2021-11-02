@@ -314,6 +314,21 @@ jobs:
         shell: python3 {0}
         run: print(r"""${{ steps.config-win32.outputs.config }}""")
 
+      - name: Setup Python-based notifications
+        if: failure()
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `fractal-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
   #######################################################################################
   #######################################################################################
 

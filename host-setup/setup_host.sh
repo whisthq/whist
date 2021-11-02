@@ -114,8 +114,6 @@ EOF
 
   echo "================================================"
   echo "Installing nvidia-docker..."
-  echo "Note that (as of 10/5/20) the URLs may still say Ubuntu 18.04. This is because"
-  echo "NVIDIA has redirected the corresponding Ubuntu 20.04 URLs to the 18.04 versions."
   echo "================================================"
 
   # Source nvidia-docker apt package
