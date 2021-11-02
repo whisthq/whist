@@ -19,6 +19,8 @@ Includes
 
 #include "notifications.h"
 
+DBusConnection *connection;
+
 /**
  * @brief There is a BecomeMonitor method that the dbus allows which will
  * enable our bus connection to eavesdrop into any other server-client
@@ -188,18 +190,15 @@ static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMe
 }
 
 int inititialze_notification_dbus() {
-    DBusConnection *connection;
     DBusError error;
 
     /** ignore below up to line 210, I'm refactoring */
 
     int i = 1, j = 0;
 
-    numFilters = 0;
     char **filters = NULL;
 
     unsigned int filter_len;
-    numFilters++;
     /* Prepend a rule (and a comma) to enable the monitor to eavesdrop.
      * Prepending allows the user to add eavesdrop=false at command line
      * in order to disable eavesdropping when needed */
@@ -221,17 +220,19 @@ int inititialze_notification_dbus() {
 
     if (!dbus_connection_add_filter(connection, notification_handler,
                                     _DBUS_INT_TO_POINTER(BINARY_MODE_NOT), NULL)) {
-        fprintf(stderr, "Couldn't add filter!\n");
-        exit(1);
+        LOG_FATAL("Could not add filter to dbus connection\n");
+        return -1;
     }
 
-    if (become_monitor(connection, numFilters, (const char *const *)filters)) {
+    if (become_monitor(connection, 1, (const char *const *)filters)) {
         LOG_FATAL("BecomeMonitor method failed\n");
         return -1;
     }
 
-    while (1) {
-        dbus_connection_read_write_dispatch(connection, 10);
-    }
-    exit(0);
+    return 0;
+}
+
+
+void process_notification_queue() {
+    dbus_connection_read_write_dispatch(connection, 10);
 }

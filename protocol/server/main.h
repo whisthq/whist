@@ -50,6 +50,7 @@ Includes
 #include "network.h"
 #include "video.h"
 #include "audio.h"
+#include "notifications.h"
 
 #ifdef __linux__
 #include <fractal/utils/x11_window_info.h>

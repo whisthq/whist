@@ -22,7 +22,7 @@ Includes
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <dbus/dbus.h>
+#include </usr/include/dbus-1.0/dbus/dbus.h>
 #include <fractal/logging/logging.h>
 
 /** The bus name used to talk to the bus itself. */
@@ -67,8 +67,8 @@ int inititialze_notification_dbus();
  * are available, we will asynchronously parse them and send those packets over to 
  * the client
  * 
- * @return 0 on success, -1 on failure
+ * @return void
  */
-int process_notification_queue();
+void process_notification_queue();
 
 #endif // NOTIFICATIONS_H

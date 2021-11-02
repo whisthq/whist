@@ -30,4 +30,5 @@ sudo apt-get install --no-install-recommends -y \
   libasound2-dev \
   libxdamage-dev \
   libcurl4-openssl-dev \
-  zlib1g-dev
+  zlib1g-dev \
+  libdbus-1-dev

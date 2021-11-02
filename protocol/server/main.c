@@ -277,6 +277,7 @@ int main(int argc, char* argv[]) {
     error_monitor_initialize(false);
 
     init_networking();
+    inititialze_notification_dbus();
 
 #if defined(_WIN32)
     // set Windows DPI
