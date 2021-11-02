@@ -101,10 +101,6 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     # Build image path
     print("Building " + img_path + "...")
 
-    # Use docker buildkit for improved speed and a nicer UI
-    envs = os.environ.copy()
-    envs["DOCKER_BUILDKIT"] = "1"
-
     # Default is the build asset package without the protocol. By
     # choosing the correct build asset package and passing it as a
     # docker build argument, we can control which dockerfiles copy the
@@ -132,7 +128,6 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     with open(f"{img_path}/build.log", "w", encoding="utf-8") as outfile:
         with subprocess.Popen(
             command,
-            env=envs,
             stdout=None if show_output else outfile,
             stderr=None if show_output else subprocess.STDOUT,
         ) as build_process:
