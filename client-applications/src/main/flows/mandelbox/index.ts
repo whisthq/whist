@@ -4,8 +4,7 @@ import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
-import { isNumber } from "lodash"
-import { execCommandByOS } from "./../../../../scripts/execCommand"
+import { execCommandByOS } from "@app/utils/execCommand"
 import { persistGet } from "@app/utils/persist"
 
 export default flow(
@@ -25,7 +24,7 @@ export default flow(
     )
 
     // Retrieve keyboard repeat rates to send them to the mandelbox
-    const initialKeyRepeat = execCommandByOS(
+    let initialKeyRepeat = execCommandByOS(
       "defaults read NSGlobalDomain InitialKeyRepeat",
       /* eslint-disable no-template-curly-in-string */
       "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[3]}",
@@ -34,8 +33,11 @@ export default flow(
       {},
       "pipe"
     )
+    if (typeof initialKeyRepeat !== "number") {
+      initialKeyRepeat = -1
+    }
 
-    const keyRepeat = execCommandByOS(
+    let keyRepeat = execCommandByOS(
       "defaults read NSGlobalDomain KeyRepeat",
       /* eslint-disable no-template-curly-in-string */
       "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[6]}",
@@ -44,6 +46,9 @@ export default flow(
       {},
       "pipe"
     )
+    if (typeof keyRepeat !== "number") {
+      keyRepeat = -1
+    }
 
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
@@ -57,10 +62,10 @@ export default flow(
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
-            initial_key_repeat: isNumber(initialKeyRepeat)
-              ? initialKeyRepeat
-              : 68, // this fails if the user hasn't modified the default value, which is 68
-            key_repeat: isNumber(keyRepeat) ? keyRepeat : 6, // this fails if the user hasn't modified the default value, which is 6
+            ...(initialKeyRepeat >= 0 && {
+              initial_key_repeat: initialKeyRepeat,
+            }),
+            ...(keyRepeat >= 0 && { key_repeat: keyRepeat }),
           }), // Data to send through the JSON transport
         }))
       )
