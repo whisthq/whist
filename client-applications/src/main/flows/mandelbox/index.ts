@@ -71,9 +71,11 @@ export default flow(
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
             ...(!isNaN(parseInt(initialKeyRepeat)) && {
-              initial_key_repeat: initialKeyRepeat,
+              initial_key_repeat: parseInt(initialKeyRepeat),
             }),
-            ...(!isNaN(parseInt(keyRepeat)) && { key_repeat: keyRepeat }),
+            ...(!isNaN(parseInt(keyRepeat)) && {
+              key_repeat: parseInt(keyRepeat),
+            }),
           }), // Data to send through the JSON transport
         }))
       )
