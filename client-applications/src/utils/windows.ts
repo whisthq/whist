@@ -158,7 +158,7 @@ export const createWindow = (args: {
   if (app.isPackaged && args.customURL === undefined) {
     win
       .loadFile("build/index.html", { search: params })
-      .catch((err) => console.log(err))
+      .catch((err) => console.error(err))
   } else {
     win
       .loadURL(

@@ -39,6 +39,7 @@ const esbuildCommand = [
   "--platform=node",
   "--outdir=build/dist/main",
   "--external:electron",
+  "--external:@sentry/electron",
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {

@@ -12,6 +12,7 @@
   "main": "build/dist/main/index.js",
   "homepage": "https://whist.com",
   "scripts": {
+    "prestart": "electron-builder install-app-deps",
     "start": "node ./scripts/start.js",
     "start:lite": "node ./scripts/start-lite.js",
     "package:local": "node ./scripts/package-local.js",
@@ -26,6 +27,7 @@
   "dependencies": {
     "@amplitude/node": "^1.8.0",
     "@fractal/core-ts": "file:../core-ts",
+    "@sentry/electron": "^2.5.4",
     "@typeform/embed-react": "^1.1.0",
     "@types/auto-launch": "^5.0.2",
     "@types/lodash.get": "^4.4.6",
