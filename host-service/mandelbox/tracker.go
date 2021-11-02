@@ -16,18 +16,18 @@ import (
 var tracker = make(map[types.MandelboxID]Mandelbox)
 var trackerLock sync.RWMutex
 
-func trackMandelbox(fc Mandelbox) {
+func trackMandelbox(mandelbox Mandelbox) {
 	trackerLock.Lock()
 	defer trackerLock.Unlock()
 
-	tracker[fc.GetMandelboxID()] = fc
+	tracker[mandelbox.GetID()] = mandelbox
 }
 
-func untrackMandelbox(fc Mandelbox) {
+func untrackMandelbox(mandelbox Mandelbox) {
 	trackerLock.Lock()
 	defer trackerLock.Unlock()
 
-	delete(tracker, fc.GetMandelboxID())
+	delete(tracker, mandelbox.GetID())
 }
 
 // LookUpByDockerID finds a mandelbox by its Docker ID. Note that this function
