@@ -24,38 +24,50 @@ export default flow(
     )
 
     // Retrieve keyboard repeat rates to send them to the mandelbox
-    let initialKeyRepeat = execCommandByOS(
+    const initialKeyRepeatRaw = execCommandByOS(
       "defaults read NSGlobalDomain InitialKeyRepeat",
       /* eslint-disable no-template-curly-in-string */
-      "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[3]}",
+      "xset -q | grep 'auto repeat delay'",
       "",
       ".",
       {},
       "pipe"
     )
 
-    if (typeof initialKeyRepeat !== "string") {
-      initialKeyRepeat = null
-    } else {
-      // Remove trailing '\n'
-      initialKeyRepeat.replace(/\n$/, "")
+    let initialKeyRepeat =
+      initialKeyRepeatRaw !== null ? initialKeyRepeatRaw.toString() : ""
+    // Remove trailing '\n'
+    initialKeyRepeat.replace(/\n$/, "")
+    // Extract value from bash output
+    if (process.platform === "linux" && initialKeyRepeat !== "") {
+      const startIndex =
+        initialKeyRepeat.indexOf("auto repeat delay:") +
+        "auto repeat delay:".length +
+        2
+      const endIndex = initialKeyRepeat.indexOf("repeat rate:") - 4
+      initialKeyRepeat = initialKeyRepeat.substring(startIndex, endIndex)
     }
 
-    let keyRepeat = execCommandByOS(
+    const keyRepeatRaw = execCommandByOS(
       "defaults read NSGlobalDomain KeyRepeat",
       /* eslint-disable no-template-curly-in-string */
-      "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[6]}",
+      "xset -q | grep 'auto repeat delay'",
       "",
       ".",
       {},
       "pipe"
     )
 
-    if (typeof keyRepeat !== "string") {
-      keyRepeat = null
-    } else {
-      // Remove trailing '\n'
-      keyRepeat.replace(/\n$/, "")
+    let keyRepeat = keyRepeatRaw !== null ? keyRepeatRaw.toString() : ""
+
+    // Remove trailing '\n'
+    keyRepeat.replace(/\n$/, "")
+    // Extract value from bash output
+    if (process.platform === "linux" && keyRepeat !== "") {
+      const startIndex =
+        keyRepeat.indexOf("repeat rate:") + "repeat rate:".length + 2
+      const endIndex = keyRepeat.length
+      keyRepeat = keyRepeat.substring(startIndex, endIndex)
     }
 
     const host = hostSpinUpFlow(
@@ -70,11 +82,11 @@ export default flow(
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
-            ...(initialKeyRepeat !== null &&
+            ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
                 initial_key_repeat: parseInt(initialKeyRepeat),
               }),
-            ...(keyRepeat !== null &&
+            ...(keyRepeat !== "" &&
               !isNaN(parseInt(keyRepeat)) && {
                 key_repeat: parseInt(keyRepeat),
               }),
