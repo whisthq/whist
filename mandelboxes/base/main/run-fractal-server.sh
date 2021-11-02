@@ -112,7 +112,6 @@ kill $fractal_application_pid ||:
 kill $fractal_server_pid ||:
 
 # Wait for fractal-application to finish terminating, ignoring exit code (since
-# Firefox, for instance, exits with a nonzero code on SIGTERM).
 wait $fractal_application_runuser_pid ||:
 
 echo "Both fractal-application and FractalServer have exited."
