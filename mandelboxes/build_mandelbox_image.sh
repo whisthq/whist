@@ -20,6 +20,7 @@ if [[ "$mount" == "mount" ]]; then
   if [[ ! -d "base/build-temp/protocol" ]]; then
     ./helper_scripts/copy_protocol_build.sh
   fi
+  rm -rf "base/build-temp/nvidia-driver"
 else
   # Otherwise, we copy_protocol_build.sh directly into the docker file
   rm -rf "base/build-temp"
