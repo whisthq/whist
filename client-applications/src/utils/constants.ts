@@ -4,7 +4,6 @@
  * @brief This file contains constant values that are passed around to other parts of the application.
  */
 import { AWSRegion } from "@app/@types/aws"
-// import { appEnvironment, FractalEnvironments } from "../../config/configs"
 
 export const allowPayments = true
 
