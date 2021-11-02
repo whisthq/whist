@@ -7,7 +7,12 @@
 // Execute a command in a cross-platform manner.
 import { execSync } from "child_process"
 
-export const execCommand = (command, cwd, env = {}, stdio = "inherit") => {
+export const execCommand = (
+  command: string,
+  cwd: string,
+  env = {},
+  stdio = "inherit"
+) => {
   try {
     const output = execSync(command, {
       encoding: "utf-8",
@@ -22,28 +27,28 @@ export const execCommand = (command, cwd, env = {}, stdio = "inherit") => {
 }
 
 export const execCommandByOS = (
-  macCommand,
-  linuxCommand,
-  windowsCommand,
-  cwd,
+  macCommand: string,
+  linuxCommand: string,
+  windowsCommand: string,
+  cwd: string,
   env = {},
   stdio = "inherit"
 ) => {
   const currentPlatform = process.platform
   if (currentPlatform === "darwin") {
-    if (macCommand != null) {
+    if (macCommand !== "") {
       return execCommand(macCommand, cwd, env, stdio)
     } else {
       return null
     }
-  } else if (currentPlatform === "win32" || currentPlatform === "win64") {
-    if (windowsCommand != null) {
+  } else if (currentPlatform === "win32") {
+    if (windowsCommand !== "") {
       return execCommand(windowsCommand, cwd, env, stdio)
     } else {
       return null
     }
   } else if (currentPlatform === "linux") {
-    if (linuxCommand != null) {
+    if (linuxCommand !== "") {
       return execCommand(linuxCommand, cwd, env, stdio)
     } else {
       return null

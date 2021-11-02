@@ -28,26 +28,38 @@ export default flow(
       "defaults read NSGlobalDomain InitialKeyRepeat",
       /* eslint-disable no-template-curly-in-string */
       "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[3]}",
-      null,
+      "",
       ".",
       {},
       "pipe"
     )
-    if (typeof initialKeyRepeat !== "number") {
-      initialKeyRepeat = -1
+
+    if (typeof initialKeyRepeat !== "string") {
+      initialKeyRepeat = null
+    } else {
+      // Remove trailing '\n'
+      initialKeyRepeat.replace(/\n$/, "")
+      // Convert to number
+      initialKeyRepeat = parseInt(initialKeyRepeat)
     }
 
     let keyRepeat = execCommandByOS(
       "defaults read NSGlobalDomain KeyRepeat",
       /* eslint-disable no-template-curly-in-string */
       "key_repeat_str=($(xset -q | grep 'auto repeat delay')) && echo ${key_repeat_str[6]}",
-      null,
+      "",
       ".",
       {},
       "pipe"
     )
-    if (typeof keyRepeat !== "number") {
-      keyRepeat = -1
+
+    if (typeof keyRepeat !== "string") {
+      keyRepeat = null
+    } else {
+      // Remove trailing '\n'
+      keyRepeat.replace(/\n$/, "")
+      // Convert to number
+      keyRepeat = parseInt(keyRepeat)
     }
 
     const host = hostSpinUpFlow(
@@ -62,10 +74,10 @@ export default flow(
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
-            ...(initialKeyRepeat >= 0 && {
+            ...(!isNaN(initialKeyRepeat) && {
               initial_key_repeat: initialKeyRepeat,
             }),
-            ...(keyRepeat >= 0 && { key_repeat: keyRepeat }),
+            ...(!isNaN(keyRepeat) && { key_repeat: keyRepeat }),
           }), // Data to send through the JSON transport
         }))
       )
