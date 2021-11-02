@@ -388,6 +388,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		req = <-jsonchan
 		AppName = req.AppName
 	} else {
+		// If not on a local environment, we default to using the `browsers/chrome` image.
 		AppName = mandelboxtypes.AppName("browsers/chrome")
 	}
 
