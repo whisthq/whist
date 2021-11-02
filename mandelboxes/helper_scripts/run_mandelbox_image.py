@@ -63,18 +63,6 @@ parser.add_argument(
     ),
 )
 parser.add_argument(
-    "--update-protocol",
-    action="store_true",
-    help=(
-        "This flag causes the locally-built server protocol to be copied into "
-        "the running mandelbox. Not passing in this flag causes the mandelbox to use "
-        "the version of the server protocol already built into its image. By "
-        "default, run_local_mandelbox_image.sh enables this flag, but "
-        "run_remote_mandelbox_image.sh does not. This flag cannot be used in conjunction "
-        "with '--host-address', as the container does not run locally in that case."
-    ),
-)
-parser.add_argument(
     "--user-config-encryption-token",
     default="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd",
     help=(
@@ -89,7 +77,6 @@ args = parser.parse_args()
 HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
 HOST_SERVICE_CERT_PATH = "/fractalprivate/cert.pem"
 local_host_service = args.host_address == "127.0.0.1"
-protocol_build_path = os.path.abspath("../protocol/build-docker/server/build64")
 mandelbox_server_path = os.path.abspath("/usr/share/fractal/bin")
 PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
@@ -207,13 +194,6 @@ if __name__ == "__main__":
         # This is running locally on the same machine as the host service, so
         # we can safely use the Docker client and copy files to the mandelbox.
         docker_client = docker.from_env()
-
-        if args.update_protocol:
-            init_mandelbox = docker_client.containers.create(image=args.image, auto_remove=True)
-            copy_locally_built_protocol(init_mandelbox)
-            args.image = f"{args.image}-updated-protocol"
-            init_mandelbox.commit(args.image)
-            init_mandelbox.remove()
 
     host_ports, aeskey = send_spin_up_mandelbox_request(mandelboxid)
 

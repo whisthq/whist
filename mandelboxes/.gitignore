@@ -2,5 +2,5 @@
 tags
 
 # Build
-.build-output
-build-temp
+build.log
+base/build-assets/build-temp

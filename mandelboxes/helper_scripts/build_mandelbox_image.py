@@ -26,6 +26,17 @@ parser.add_argument(
     action="store_true",
     help="This flag will have docker build every Dockerfile in the current directory",
 )
+parser.add_argument(
+    "--mode",
+    choices=["dev", "prod"],
+    help=(
+        "This flag controls when the protocol gets copied into the mandelbox. "
+        "In dev mode, the protocol is copied at the end of each target mandelbox image. "
+        "In prod mode, the protocol is only copied at the end of the base image and inherited by child images. "
+        "If --all is passed in, this flag is ignored and prod mode is automatically set."
+    ),
+    required=True,
+)
 parser.add_argument("image_paths", nargs="*", help="List of image paths to build")
 args = parser.parse_args()
 
@@ -34,6 +45,9 @@ show_output = not args.quiet
 # Remove trailing slashes
 image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
+protocol_copy_mode = "prod" if build_all else args.mode
+# Keep track of the initial targets for protocol copying purposes
+target_image_paths = [path for path in image_paths]
 
 # If --all is passed, generate image_paths procedurally
 if build_all:
@@ -66,7 +80,7 @@ def get_dependency_from_image(img_path):  # returns dep_path
     return None
 
 
-# Map image_path's to dependencies
+# Map image paths to dependencies
 dependencies = {}
 
 # Get all dependencies for each requested image_path,
@@ -83,13 +97,23 @@ while i < len(image_paths):
     i += 1
 
 
-def build_image_path(img_path, running_processes=[]):
+def build_image_path(img_path, running_processes=[], ret={"status": None}, root_image=False):
     # Build image path
     print("Building " + img_path + "...")
 
     # Use docker buildkit for improved speed and a nicer UI
     envs = os.environ.copy()
     envs["DOCKER_BUILDKIT"] = "1"
+
+    # Default is the build asset package without the protocol. By
+    # choosing the correct build asset package and passing it as a
+    # docker build argument, we can control which dockerfiles copy the
+    # protcool!
+    build_asset_package = "default"
+    if protocol_copy_mode == "dev" and img_path in target_image_paths:
+        build_asset_package = "protocol"
+    if protocol_copy_mode == "prod" and root_image:
+        build_asset_package = "protocol"
 
     command = [
         "docker",
@@ -99,9 +123,13 @@ def build_image_path(img_path, running_processes=[]):
         img_path,
         "-t",
         f"fractal/{img_path}:current-build",
+        "--build-arg",
+        f"BuildAssetPackage={build_asset_package}",
     ]
 
-    with open(f"{img_path}/.build-output", "w") as outfile:
+    status = 0
+
+    with open(f"{img_path}/build.log", "w") as outfile:
         with subprocess.Popen(
             command,
             env=envs,
@@ -110,12 +138,21 @@ def build_image_path(img_path, running_processes=[]):
         ) as build_process:
             running_processes.append(build_process)
             build_process.wait()
-            if build_process.returncode != 0:
+            status = build_process.returncode
+            if status is None:
+                print(f"Error: Waited for {img_path} but got a return code of `None`")
+                status = 1
+            if status != 0:
                 print(f"Failed to build {img_path}")
                 print(f"Cancelling running builds...")
                 for process in running_processes:
                     process.terminate()
-                return False
+                # We have to do this to get the return code in the parent
+                # if this is running in a thread. We also return the same
+                # value properly for the root image invocations to get a
+                # returncode
+                ret["status"] = status
+                return ret["status"]
 
     # Notify successful build
     print(f"Built {img_path}")
@@ -133,19 +170,29 @@ def build_image_path(img_path, running_processes=[]):
 
     # Build all of those next-layer image_paths asynchronously
     procs = []
+    rets = []
     for next_image_path in next_layer:
+        next_ret = {"status": None, "path": next_image_path}
         proc = threading.Thread(
             name=f"docker build {next_image_path}",
             target=build_image_path,
-            args=[next_image_path, running_processes],
+            args=[next_image_path, running_processes, next_ret],
         )
         proc.start()
         procs.append(proc)
+        rets.append(next_ret)
     # Wait for all the threads to finish executing before returning
-    status = True
-    for proc in procs:
-        status = status or proc.join()
-    return status
+    for proc, new_ret in zip(procs, rets):
+        proc.join()
+        if status == 0:
+            if new_ret["status"] is not None:
+                status = new_ret["status"]
+            else:
+                print("Error: Child thread exited with unset ret status!", new_ret)
+                status = 1
+
+    ret["status"] = status
+    return ret["status"]
 
 
 # Get all image_path's with no dependencies
@@ -155,15 +202,15 @@ if __name__ == "__main__":
         if dependency_of_image is None:
             root_level_images.append(image_path)
 
-    # Build all root_level_images
-    success = True
+    # Build all root level images
+    status = 0
     for image_path in root_level_images:
-        success = build_image_path(image_path)
-        if not success:
+        status = build_image_path(image_path, root_image=True)
+        if status != 0:
             break
 
-    if success:
+    if status == 0:
         print("All images built successfully!")
     else:
         print("Failed to build some images")
-        exit(1)
+        exit(status)

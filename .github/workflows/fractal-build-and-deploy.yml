@@ -452,7 +452,7 @@ jobs:
 
       - name: Build Mandelboxes
         working-directory: mandelboxes
-        run: ./build_mandelbox_image.sh --all
+        run: ./build.sh --all --prod
 
       - name: Push mandelboxes
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
@@ -463,7 +463,7 @@ jobs:
         run: |
           for app in ${{ env.apps }}
           do
-            ./push_mandelbox_image.sh $app ${{ needs.fractal-publish-build-config.outputs.branch }}
+            ./push.sh $app ${{ needs.fractal-publish-build-config.outputs.branch }}
           done
 
       ##########################################################################################
