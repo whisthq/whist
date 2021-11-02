@@ -1,6 +1,7 @@
 import { autoUpdater } from "electron-updater"
 import { merge } from "rxjs"
 import { take, takeUntil } from "rxjs/operators"
+import Sentry from "@sentry/electron"
 
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
@@ -36,7 +37,9 @@ fromTrigger("appReady")
 
     // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
     // and fires an update if the current version is less than the version in latest.yml
-    autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
+    autoUpdater
+      .checkForUpdatesAndNotify()
+      .catch((err) => Sentry.captureException(err))
   })
 
 fromTrigger("updateAvailable").subscribe(() => {

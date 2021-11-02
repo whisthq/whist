@@ -9,6 +9,7 @@ import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
+import Sentry from "@sentry/electron"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
@@ -69,7 +70,7 @@ withAppReady(fromTrigger("configFlowSuccess")).subscribe(
 fromTrigger("updateAvailable")
   .pipe(take(1))
   .subscribe(() => {
-    autoUpdater.downloadUpdate().catch((err) => console.error(err))
+    autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
   })
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
@@ -88,7 +89,7 @@ fromTrigger("clearCacheAction").subscribe(
     session
       .fromPartition("auth0")
       .clearStorageData()
-      .catch((err) => console.error(err))
+      .catch((err) => Sentry.captureException(err))
     // Restart the app
     relaunch()
   }
@@ -131,7 +132,7 @@ withAppReady(fromTrigger("showPaymentWindow")).subscribe(() => {
   createPaymentWindow({
     accessToken,
     refreshToken,
-  }).catch((err) => console.error(err))
+  }).catch((err) => Sentry.captureException(err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -140,7 +141,7 @@ withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
     createPaymentWindow({
       accessToken,
       refreshToken,
-    }).catch((err) => console.error(err))
+    }).catch((err) => Sentry.captureException(err))
   }
 )
 

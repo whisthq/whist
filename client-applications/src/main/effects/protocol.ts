@@ -4,6 +4,8 @@
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
 
+import Sentry from "@sentry/electron"
+
 import { fromTrigger } from "@app/utils/flows"
 import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
 import { createProtocolWindow } from "@app/utils/windows"
@@ -30,7 +32,7 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
         .then(() => {
           protocolStreamInfo(info)
         })
-        .catch((err) => console.error(err))
+        .catch((err) => Sentry.captureException(err))
     } else {
       protocolStreamInfo(info)
     }

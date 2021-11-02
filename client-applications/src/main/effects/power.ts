@@ -1,6 +1,7 @@
 import AutoLaunch from "auto-launch"
 import path from "path"
 import { app } from "electron"
+import Sentry from "@sentry/electron"
 
 import { fromTrigger } from "@app/utils/flows"
 import config from "@app/config/environment"
@@ -25,7 +26,7 @@ fromTrigger("appReady").subscribe(() => {
         persist("autoLaunch", "true", "data")
       }
     })
-    .catch((err: any) => console.error(err))
+    .catch((err: any) => Sentry.captureException(err))
 })
 
 fromTrigger("trayAutolaunchAction").subscribe(() => {
