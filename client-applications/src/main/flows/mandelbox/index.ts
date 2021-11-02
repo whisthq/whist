@@ -70,12 +70,14 @@ export default flow(
             desired_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             restore_last_session:
               persistGet("RestoreLastBrowserSession", "data") ?? "true",
-            ...(!isNaN(parseInt(initialKeyRepeat)) && {
-              initial_key_repeat: parseInt(initialKeyRepeat),
-            }),
-            ...(!isNaN(parseInt(keyRepeat)) && {
-              key_repeat: parseInt(keyRepeat),
-            }),
+            ...(initialKeyRepeat !== null &&
+              !isNaN(parseInt(initialKeyRepeat)) && {
+                initial_key_repeat: parseInt(initialKeyRepeat),
+              }),
+            ...(keyRepeat !== null &&
+              !isNaN(parseInt(keyRepeat)) && {
+                key_repeat: parseInt(keyRepeat),
+              }),
           }), // Data to send through the JSON transport
         }))
       )
