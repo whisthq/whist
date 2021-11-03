@@ -20,7 +20,7 @@ flags=(
   --flag-switches-begin
   --enable-gpu-rasterization
   --enable-zero-copy
-  --enable-features=VaapiVideoDecoder,Vulkan
+  --enable-features=VaapiVideoDecoder,Vulkan,CanvasOopRasterization
   --disable-smooth-scrolling
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
