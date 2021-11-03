@@ -212,7 +212,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Check that all resource mapping files were written correctly
-	resourceMappingDir := path.Join(utils.FractalDir, "testMandelbox", "mandelboxResourceMappings")
+	resourceMappingDir := path.Join(utils.FractalDir, utils.NilUUID.String(), "mandelboxResourceMappings")
 
 	hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
 	hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
