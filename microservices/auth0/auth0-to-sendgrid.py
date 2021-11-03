@@ -29,7 +29,7 @@ def access_token_request(secret_key):
             "grant_type": "client_credentials",
             "client_id": AUTH0_ID,
             "client_secret": secret_key,
-            "audience": "https://fractal-prod.us.auth0.com/api/v2/",
+            "audience": "https://auth.whist.com/api/v2/",
         },
     )
 
