@@ -82,4 +82,4 @@ jobs:
 
       - name: Build Mandelboxes
         working-directory: mandelboxes
-        run: ./build.sh --quiet --all --prod
+        run: ./build.sh --all --prod
