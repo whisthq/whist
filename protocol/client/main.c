@@ -623,10 +623,12 @@ int main(int argc, char* argv[]) {
     // before we close the error monitor.
     error_monitor_shutdown();
 
-    if (try_amount >= 3) {
-        // We failed, so return a non-zero error code
-        terminate_protocol(FRACTAL_EXIT_FAILURE);
-    }
+    LOG_INFO("Protocol has shutdown gracefully");
 
-    terminate_protocol(exit_code);
+    if (try_amount >= 3) {
+        // We failed to connect, so return a failure error code
+        return FRACTAL_EXIT_FAILURE;
+    } else {
+        return exit_code;
+    }
 }
