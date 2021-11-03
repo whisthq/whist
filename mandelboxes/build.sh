@@ -38,6 +38,13 @@ for arg in "$@"; do
   esac
 done
 
+# If dev mode, delete dangling/untagged docker images more than a week old.
+# This will ensure that instances don't run out of space as fast!
+if [[ "$mode" == "dev" ]]; then
+  echo "Pruning stale dangling docker images..."
+  docker image prune --filter "until=168h" --force
+fi
+
 # Nuke the build-assets temp directory
 rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
 
@@ -55,12 +62,15 @@ echo "Building $cmake_build_type FractalServer..."
 ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
 
 # Copy the nvidia driver installer
+echo "Fetching nvidia driver installer..."
 mkdir base/build-assets/build-temp/nvidia-driver
-../host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
+../host-setup/get-nvidia-driver-installer.sh
+mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 
 # Bundle these build assets into a cached docker image
-docker build -t fractal/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q
-docker build -t fractal/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q
+echo "Bundling build assets..."
+docker build -t fractal/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
+docker build -t fractal/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
 
 # Now, our Dockerfiles can copy over these files using
 # COPY --from=fractal/build-assets:default most of the time,
