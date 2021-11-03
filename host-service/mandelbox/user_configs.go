@@ -62,7 +62,7 @@ func (mandelbox *mandelboxData) PopulateUserConfigs() error {
 		o.Region = "us-east-1"
 	})
 	downloader := manager.NewDownloader(s3Client)
-
+	logger.Infof("Fetching head object for bucket: %s, key: %s", userConfigS3Bucket, s3ConfigKey)
 	// Fetch the HeadObject first to see how much memory we need to allocate
 	headObject, err := s3Client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(userConfigS3Bucket),
