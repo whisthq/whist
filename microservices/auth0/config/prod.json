@@ -1,5 +1,5 @@
 {
-    "AUTH0_DOMAIN": "fractal-prod.us.auth0.whist.com",
+    "AUTH0_DOMAIN": "fractal-prod.us.auth0.com",
     "AUTH0_CLIENT_ID": "dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX",
     "AUTH0_BASE_PATH": "src",
     "AUTH0_ALLOW_DELETE": false,
