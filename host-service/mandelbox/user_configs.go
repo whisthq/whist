@@ -120,7 +120,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
 	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
 
-	data, err := c.decryptFileInMemory()
+	data, err := mandelbox.decryptFileInMemory()
 	if err != nil {
 		return err
 	} else if len(data) == 0 {
