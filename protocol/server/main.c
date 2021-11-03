@@ -467,6 +467,8 @@ int main(int argc, char* argv[]) {
     WSACleanup();
 #endif
 
+    LOG_INFO("Protocol has shutdown gracefully");
+
     destroy_logger();
     error_monitor_shutdown();
     destroy_clients();
