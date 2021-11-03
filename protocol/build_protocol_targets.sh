@@ -69,9 +69,18 @@ if [[ -d "$HOME/.aws" ]]; then
   MOUNT_AWS="--mount type=bind,source=$HOME/.aws,destination=/home/$DOCKER_USER/.aws,readonly"
 fi
 
+# If there is a TTY (yes if dev instance, no if CI),
+# run with -it so that Ctrl+C will cancel the command.
+if [ -t 0 ] && [ -t 1 ]; then
+  DOCKER_IT_FLAG="-it"
+else
+  DOCKER_IT_FLAG=""
+fi
+
 # We also mount entire ./fractal directory so that git works for git revision
 docker run \
   --rm \
+  $DOCKER_IT_FLAG \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
   $MOUNT_AWS \
