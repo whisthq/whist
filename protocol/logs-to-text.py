@@ -153,7 +153,7 @@ def get_logs_page(scroll_id):
 
 # This will sort the logs by date and time
 def sort_logs(parsed_logs):
-    return parsed_logs.sort(key=lambda log: datetime.strptime(log[1][:19], "%Y-%m-%d %H:%M:%S"))
+    return parsed_logs.sort(key=lambda log: datetime.strptime(log[1][:24], "%Y-%m-%d %H:%M:%S.%f"))
 
 
 # Parses all the logs from the log_page
@@ -182,13 +182,15 @@ def parse_logs(parsed_logs, logs_page):
         if not message_begins_with_time:
             # if we do not provide an hour-minute-second,
             # use the hour-minute-second from logz_io timestamp
-            hour_minute_second = logz_io_timestamp[11:19]
-            message = year_month_day + " " + hour_minute_second + " | " + message
+            hour_minute_second_ms = logz_io_timestamp[11:23] + '0'
+            message = year_month_day + " " + hour_minute_second_ms + " | " + message
         else:
             # otherwise, use our hour-minute-second
-            hour_minute_second = message[:8]
-            message = year_month_day + " " + hour_minute_second + message[15:]
-
+            
+            hour_minute_second_ms = message[:13]
+            message = year_month_day + " " + hour_minute_second_ms + message[15:]
+     
+    
         if component == "clientapp":
             # if it's client app, then we know these are logs from the client
             parsed_logs.append(("client", message))
