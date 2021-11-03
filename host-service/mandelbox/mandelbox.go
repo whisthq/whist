@@ -19,6 +19,7 @@ import (
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	"github.com/google/uuid"
 
 	"github.com/fractal/fractal/host-service/mandelbox/gpus"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
@@ -136,7 +137,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		<-ctx.Done()
 
 		// Mark mandelbox as dying in the database, but only if it's not a warmup
-		if fid != "host-service-warmup" {
+		if fid != types.MandelboxID(utils.NilUUID) {
 			if err := dbdriver.WriteMandelboxStatus(mandelbox.ID, dbdriver.MandelboxStatusDying); err != nil {
 				logger.Error(err)
 			}
@@ -187,7 +188,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.cleanUserConfigDir()
 
 		// Remove mandelbox from the database altogether, once again excluding warmups
-		if fid != "host-service-warmup" {
+		if fid != types.MandelboxID(utils.NilUUID) {
 			if err := dbdriver.RemoveMandelbox(mandelbox.ID); err != nil {
 				logger.Error(err)
 			}
@@ -427,9 +428,10 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 	go func() {
 		defer goroutineTracker.Done()
 
-		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+string(mandelbox.ID)+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.ID.String()+"/sockets/uinput.sock")
 		if err != nil {
-			if mandelbox.ID == "host-service-warmup" && strings.Contains(err.Error(), "use of closed network connection") {
+			dummyUUID := types.MandelboxID(uuid.MustParse("00000000-0000-0000-0000-000000000000"))
+			if mandelbox.ID == dummyUUID && strings.Contains(err.Error(), "use of closed network connection") {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)
 			} else {
 				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)

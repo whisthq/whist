@@ -174,7 +174,9 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		// At this point, we've found an image, so we just need to start the container.
 
-		containerName := "host-service-warmup"
+		// Use the nil uuid for the warmup containers
+		containerName := utils.NilUUID
+
 		mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxtypes.MandelboxID(containerName))
 		defer mandelbox.Close()
 
@@ -249,8 +251,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			Binds: []string{
 				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
-				utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
-				utils.Sprintf("%slogs/%s/host-service-warmup-%d:/var/log/fractal", utils.TempDir, mandelbox.GetID(), iter),
+				utils.Sprintf("%s%v/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
+				utils.Sprintf("%slogs/%v/host-service-warmup-%d:/var/log/fractal", utils.TempDir, mandelbox.GetID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
 				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
 			},
@@ -295,7 +297,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			},
 		}
 
-		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
+		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName.String())
 		if err != nil {
 			return utils.MakeError("Error running `create` for %s:\n%s", containerName, err)
 		}

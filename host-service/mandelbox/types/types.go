@@ -5,15 +5,14 @@
 //
 package types // import "github.com/fractal/fractal/host-service/mandelbox/types"
 
-// We define special types for the following string types for all the benefits
+import "github.com/google/uuid" // We define special types for the following string types for all the benefits
 // of type safety, including making sure we never switch Docker and Whist
 // IDs, for instance.
 
 // A MandelboxID is a random string that the webserver creates for each
 // mandelbox. We need some sort of identifier for each mandelbox, and we need
 // it _before_ Docker gives us back the runtime Docker ID for the mandelbox.
-// TODO: change this type to a UUID via github.com/google/uuid
-type MandelboxID string
+type MandelboxID uuid.UUID
 
 // A DockerID is provided by Docker at mandelbox creation time.
 type DockerID string
@@ -31,3 +30,8 @@ type ConfigEncryptionToken string
 
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
+
+// String is a utility function to return the string representation of a mandelboxID.
+func (mandelboxID MandelboxID) String() string {
+	return uuid.UUID(mandelboxID).String()
+}

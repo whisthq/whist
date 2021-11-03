@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 )
 
@@ -25,7 +26,7 @@ func TestUserConfigIntegration(t *testing.T) {
 	testMandelboxData := mandelboxData{
 		ctx:                   ctx,
 		cancel:                cancel,
-		ID:                    "userConfigTest",
+		ID:                    mandelboxtypes.MandelboxID(utils.NilUUID),
 		appName:               "testApp",
 		userID:                "user_config_test_user",
 		configEncryptionToken: "testEncryptionToken",
@@ -45,7 +46,7 @@ func TestUserConfigIntegration(t *testing.T) {
 		t.Fatalf("failed to create config dir %s: %v", unpackedConfigPath, err)
 	}
 
-	testBase := path.Join(utils.FractalDir, string(testMandelboxData.ID), "testBase")
+	testBase := path.Join(utils.FractalDir, testMandelboxData.ID.String(), "testBase")
 
 	// Copy test directory to unpacked config path
 	copyCommand := exec.Command("cp", "-R", testBase, unpackedConfigPath)
@@ -123,7 +124,7 @@ func TestUserConfigIntegration(t *testing.T) {
 // setupTestDirs creates a sample user config with some nested directories
 // and files inside.
 func setupTestDirs(mandelbox *mandelboxData) error {
-	configDir := path.Join(utils.FractalDir, string(mandelbox.ID))
+	configDir := path.Join(utils.FractalDir, mandelbox.ID.String())
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("failed to create config dir %s: %v", configDir, err)
 	}
