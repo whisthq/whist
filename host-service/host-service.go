@@ -375,7 +375,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
-		sub.ReturnResult("", err)
 	}
 
 	subscriptionInfo := sub.MandelboxInfo[0]
@@ -1150,7 +1149,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				if subscriptionEvent != nil {
 					err := utils.MakeError("Unimplemented handling of subscription event [type: %T]: %v", subscriptionEvent, subscriptionEvent)
 					logger.Error(err)
-					subscriptionEvent.ReturnResult("", err)
 				}
 			}
 		}
