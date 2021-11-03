@@ -222,7 +222,8 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
     */
 
     LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0, fcmsg->bitrate_data.fec_ratio);
+             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+             fcmsg->bitrate_data.fec_packet_ratio);
     // Clamp the bitrates, preferring to clamp at MAX
     fcmsg->bitrate_data.bitrate =
         min(max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
@@ -235,7 +236,7 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
 
     // Update the UDP Context's burst bitrate and fec ratio
     udp_update_bitrate_settings(&client.udp_context, fcmsg->bitrate_data.burst_bitrate,
-                                fcmsg->bitrate_data.fec_ratio);
+                                fcmsg->bitrate_data.fec_packet_ratio);
 
     // Update the encoder using the new bitrate
     update_encoder = true;

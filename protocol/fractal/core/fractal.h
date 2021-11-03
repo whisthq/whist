@@ -131,7 +131,7 @@ Defines
 
 // The FEC Ratio to use on all packets
 // (Only used for testing phase of FEC)
-#define FEC_RATIO 0.0
+#define FEC_PACKET_RATIO 0.0
 
 #define ACK_REFRESH_MS 50
 
@@ -635,7 +635,7 @@ typedef struct FractalClientMessage {
         struct {
             int bitrate;
             int burst_bitrate;
-            double fec_ratio;
+            double fec_packet_ratio;
         } bitrate_data;
 
         // MESSAGE_PING or MESSAGE_TCP_PING

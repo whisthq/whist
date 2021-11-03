@@ -57,9 +57,10 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
  *
  * @param context                  The SocketContext that we'll be adjusting the burst bitrate for
  * @param burst_bitrate            The new burst bitrate, in MBPS
- * @param fec_ratio                The percentage of packets that should be FEC
+ * @param fec_packet_ratio         The percentage of packets that should be FEC
  */
-void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate, double fec_ratio);
+void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate,
+                                 double fec_packet_ratio);
 
 /**
  * @brief                          Registers a nack buffer, so that future nacks can be handled.
