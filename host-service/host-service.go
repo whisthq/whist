@@ -377,13 +377,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Error(err)
 	}
 
-	subscriptionInfo := sub.MandelboxInfo[0]
+	// mandelboxSubscription is the pubsub event received from Hasura.
+	mandelboxSubscription := sub.MandelboxInfo[0]
 
 	var AppName mandelboxtypes.AppName
 	var req *JSONTransportRequest
 	if metadata.IsLocalEnv() {
 		// Receive the json transport request immediately when running on local env
-		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 		AppName = req.AppName
 	} else {
@@ -391,10 +392,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AppName = mandelboxtypes.AppName("browsers/chrome")
 	}
 
-	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", subscriptionInfo.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
 	// Then, verify that we are expecting this user to request a mandelbox.
-	err := dbdriver.VerifyAllocatedMandelbox(subscriptionInfo.UserID, subscriptionInfo.MandelboxID)
+	err := dbdriver.VerifyAllocatedMandelbox(mandelboxSubscription.UserID, mandelboxSubscription.ID)
 
 	if err != nil {
 		logAndReturnError("Unable to spin up mandelbox: %s", err)
@@ -402,7 +403,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// If so, create the mandelbox object.
-	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, subscriptionInfo.MandelboxID)
+	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxSubscription.ID)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", mandelbox.GetID())
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
@@ -416,9 +417,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}()
 
-	mandelbox.AssignToUser(subscriptionInfo.UserID)
+	mandelbox.AssignToUser(mandelboxSubscription.UserID)
 	mandelbox.SetAppName(AppName)
-	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", subscriptionInfo.MandelboxID, subscriptionInfo.UserID)
+	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
 	// Begin populating user configs at the same time as other setup is being done.
 	// This is done separately from the rest of the startup goroutines since the user
@@ -429,7 +430,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// User config errors aren't fatal --- we still want to spin up a mandelbox,
 		// and we will just use the provided encryption token to save configs when
 		// the mandelbox dies.
-		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", subscriptionInfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
 		err := mandelbox.PopulateUserConfigs()
 		if err != nil {
 			logger.Warningf("Error populating user configs: %v", err)
@@ -438,7 +439,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 
 		userConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", subscriptionInfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", mandelboxSubscription.ID)
 	}()
 
 	// Do all startup tasks that can be done before Docker container creation in
@@ -493,7 +494,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			}
 		}
 
-		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", mandelbox.GetTTY(), mandelbox.GetGPU(), subscriptionInfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): successfully allocated TTY %v and assigned GPU %v for mandelbox %s", mandelbox.GetTTY(), mandelbox.GetGPU(), mandelboxSubscription.ID)
 		return nil
 	})
 
@@ -558,7 +559,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", mandelbox.GetID()),
 			utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
-			utils.Sprintf("%slogs/%s/%d:/var/log/fractal", utils.TempDir, mandelbox.GetID(), subscriptionInfo.SessionID),
+			utils.Sprintf("%slogs/%s/%s:/var/log/fractal", utils.TempDir, mandelbox.GetID(), mandelboxSubscription.SessionID),
 			"/run/udev/data:/run/udev/data:ro",
 			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", mandelbox.GetID()),
 		},
@@ -606,7 +607,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"apparmor:mandelbox-apparmor-profile",
 		},
 	}
-	mandelboxName := utils.Sprintf("%s-%s", AppName, subscriptionInfo.MandelboxID)
+	mandelboxName := utils.Sprintf("%s-%s", AppName, mandelboxSubscription.ID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	mandelboxName = re.ReplaceAllString(mandelboxName, "-")
 
@@ -652,7 +653,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			return utils.MakeError("Error writing protocol timeout: %s", err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", subscriptionInfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully wrote parameters for mandelbox %s", mandelboxSubscription.ID)
 		return nil
 	})
 
@@ -660,10 +661,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	postCreateGroup.Go(func() error {
 		err = dockerClient.ContainerStart(mandelbox.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 		if err != nil {
-			return utils.MakeError("Error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, subscriptionInfo.MandelboxID, err)
+			return utils.MakeError("Error starting mandelbox with runtime ID %s and MandelboxID %s: %s", dockerID, mandelboxSubscription.ID, err)
 		}
 
-		logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, subscriptionInfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Successfully started mandelbox %s with ID %s", mandelboxName, mandelboxSubscription.ID)
 		return nil
 	})
 
@@ -680,7 +681,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	if !metadata.IsLocalEnv() {
 		// Receive the json transpor request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 	}
 
@@ -707,27 +708,27 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Unblocks fractal-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready: %s", subscriptionInfo.MandelboxID, err)
+		logAndReturnError("Error marking mandelbox %s as ready: %s", mandelboxSubscription.ID, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", subscriptionInfo.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxSubscription.ID)
 
 	// Don't wait for fractal application to start up in local environment
 	if !metadata.IsLocalEnv() {
-		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s fractal application to start up...", subscriptionInfo.MandelboxID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", subscriptionInfo.MandelboxID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s fractal application to start up...", mandelboxSubscription.ID)
+		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
 			logAndReturnError("Error warming up fractal application: %s", err)
 			return
 		}
-		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s fractal application to start up", subscriptionInfo.MandelboxID)
+		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s fractal application to start up", mandelboxSubscription.ID)
 	}
 
-	err = dbdriver.WriteMandelboxStatus(subscriptionInfo.MandelboxID, dbdriver.MandelboxStatusRunning)
+	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as running", subscriptionInfo.MandelboxID)
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as running", mandelboxSubscription.ID)
 
 	// Mark mandelbox creation as successful, preventing cleanup on function
 	// termination.
@@ -1113,8 +1114,8 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
 						InstanceName: string(instanceName),
-						MandelboxID:  jsonReq.MandelboxID,
-						SessionID:    1234,
+						ID:           jsonReq.MandelboxID,
+						SessionID:    "1234",
 						UserID:       userID,
 					}
 					subscriptionEvent := subscriptions.MandelboxInfoEvent{
