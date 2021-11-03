@@ -6,5 +6,6 @@
       "runtimeArgs": []
     }
   },
-  "seccomp-profile": "/etc/docker/seccomp.json"
+  "seccomp-profile": "/etc/docker/seccomp.json",
+  "features": { "buildkit": true }
 }

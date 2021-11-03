@@ -87,7 +87,7 @@ To build the server protocol for use in a mandelbox image (for example with the 
 To build a specific application's mandelbox image, run:
 
 ```bash
-./build_mandelbox_image.sh APP
+./build.sh APP
 ```
 
 This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
@@ -108,32 +108,12 @@ Before you can run mandelbox images (local or remote), make sure you have the ho
 Once an image with tag `current-build` has been built locally via `build_mandelbox_images.sh`, it may be run locally by calling:
 
 ```bash
-./run_local_mandelbox_image.sh APP [OPTIONS...]
+./run.sh APP [OPTIONS...]
 ```
 
 As usual, `APP` is the path to the app folder. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our mandelboxes and our protocol to function properly.
 
 There are some other options available to control properties of the resulting mandelbox, like whether the server protocol should be replaced with the locally-built version. Run `./run_local_mandelbox_image.sh --help` to see all the other configuration options.
-
-### Running Remote-Pushed Images
-
-Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../host-service && make run`.
-
-If an image has been pushed to GHCR and you wish to test it, you first need to authenticate Docker to allow you to pull the relevant image. To do this, run the following:
-
-```bash
-echo <PAT> | docker login --username <GH_USERNAME> --password-stdin ghcr.io
-```
-
-Replace `<PAT>` with a [GitHub Personal Access Token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) with at least the `package` scope. Also, replace `<GH_USERNAME>` with your GitHub username.
-
-Then, retrieve the tag you wish to run by grabbing the relevant (full) Git commit hash from this repository, and run:
-
-```bash
-./run_remote_mandelbox_image.sh APP_WITH_ENVIRONMENT TAG [OPTIONS...]
-```
-
-The argument `TAG` is the full Git commit hash to run. Note that `APP_WITH_ENVIRONMENT` is something like `dev/browsers/chrome`, for instance. All other configuration is the same as the local case, and the `--help` argument works with this script too.
 
 ### Connecting to Images
 
@@ -147,10 +127,10 @@ We store our production mandelbox images on GitHub mandelbox Registry (GHCR) and
 
 ### Manual Publishing
 
-Once an image has been built via `./build_mandelbox_image.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
+Once an image has been built via `./build.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
 
 ```bash
-GH_PAT=xxx GH_USERNAME=xxx ./push_mandelbox_image.sh APP ENVIRONMENT
+GH_PAT=xxx GH_USERNAME=xxx ./push.sh APP ENVIRONMENT
 ```
 
 Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. Environment is either `dev`, `staging`, `prod`, or nothing. The image is tagged with the full git commit hash of the current branch.
@@ -161,7 +141,7 @@ For every push to `dev`, `staging`, or `prod`, all applications that have a Dock
 
 ### Useful Debugging Practices
 
-If `./build_mandelbox_images.sh` is failing, try running with `./build-mandelbox_images.sh -o` for logging output.
+If `./build.sh` is failing, try running with `./build-mandelbox_images.sh -q` to redirect logging output to files. Then, go to the failing image and check `build.log`. For example, you might look in `browsers/chrome/build.log`.
 
 If the error messages seem to be related to fetching archives, try `docker system prune -af`. It's possible that Docker has cached out-of-date steps generated from an old mandelbox image, and needs to be cleaned and rebuilt.
 

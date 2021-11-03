@@ -1,3 +1,17 @@
+############### STAGE 0: build-assets ###############
+# EXPOSES the appropriate build-assets package to
+# handle copying files from outside the repo
+#####################################################
+
+# This argument controls whether to copy the protocol
+# in this image or in a child image. In dev mode, we
+# want to copy the protocol as late as possible to
+# make it easier to iterate, but in prod mode we want
+# to copy the protocol as early as possible to share
+# layers between images.
+ARG BuildAssetPackage "protocol"
+FROM fractal/build-assets:$BuildAssetPackage as build-assets
+
 ################ STAGE 1: libinput-build ################
 # - Install build dependencies as per the documentation
 #   at https://wayland.freedesktop.org/libinput/doc/latest/building.html#build-dependencies-per-distribution
@@ -170,6 +184,7 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
+
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
@@ -186,7 +201,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Retrieve nvidia driver installer
-COPY build-temp/nvidia-driver/nvidia-driver-installer.run nvidia-driver-installer.run
+COPY --from=build-assets nvidia-driver/nvidia-driver-installer.run nvidia-driver-installer.run
 
 # Unpack the installer
 RUN chmod +x nvidia-driver-installer.run && \
@@ -259,7 +274,7 @@ RUN cd /fractal-teleport-fuse/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/fractal-teleport-fuse
 
-################ STAGE 5: fractal-base ################
+################ STAGE 5: fractal-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
@@ -270,7 +285,7 @@ RUN cd /fractal-teleport-fuse/src \
 # - Install and configure all necessary components for
 #   our base mandelbox image
 # EXPOSES all of fractal-base as the final image
-#######################################################
+#############################################################
 FROM ubuntu:20.04 as fractal-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
@@ -711,7 +726,7 @@ RUN su - fractal -c 'xdg-desktop-menu install /opt/teleport/uri-handler.desktop'
 # Set up the Whist server protocol
 
 # Install protocol dependencies
-COPY build-temp/setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
+COPY --from=build-assets setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
 RUN /usr/share/fractal/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -738,8 +753,9 @@ RUN chgrp root /etc/systemd/system/fractal* \
     && chown root:root /etc/systemd/system/fractal* \
     && chmod 600 /etc/systemd/system/fractal*
 
+
 # Install Whist Protocol binaries and helper files
 # We do this last and symlink `/usr/share/fractal/bin` earlier
 # to make it easier to modify the protocol and rebuild the base
 # Dockerfile without needing to redo many steps
-COPY build-temp/protocol/* /usr/share/fractal/bin/
+COPY --from=build-assets protocol/* /usr/share/fractal/bin/

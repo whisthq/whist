@@ -72,9 +72,6 @@ common_steps () {
   sudo groupadd docker ||:
   sudo gpasswd -a "$USER" docker
 
-  # Always enable docker buildkit
-  echo 'export DOCKER_BUILDKIT=1' | sudo tee /etc/profile.d/03-docker-buildkit
-
   echo "================================================"
   echo "Installing AWS CLI..."
   echo "================================================"
