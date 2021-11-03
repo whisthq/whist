@@ -5,7 +5,7 @@
  */
 
 // Execute a command in a cross-platform manner.
-import { execSync } from "child_process"
+import { execSync, StdioOptions } from "child_process"
 
 export const execCommand = (
   command: string,
@@ -18,7 +18,7 @@ export const execCommand = (
       encoding: "utf-8",
       cwd: cwd,
       env: { ...process.env, ...env },
-      stdio: stdio,
+      stdio: <StdioOptions>stdio,
     })
     return output
   } catch (error) {
