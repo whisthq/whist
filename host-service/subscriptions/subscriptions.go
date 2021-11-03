@@ -26,21 +26,6 @@ var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 // instance status changes.
 type InstanceStatusEvent struct {
 	InstanceInfo []Instance `json:"cloud_instance_info"`
-	resultChan   chan InstanceInfoResult
-}
-
-// ReturnResult is called to pass the result of a subscription event back to the
-// subscription handler.
-func (s *InstanceStatusEvent) ReturnResult(result interface{}, err error) {
-	s.resultChan <- InstanceInfoResult{result}
-}
-
-// createResultChan is called to create the Go channel to pass the Hasura
-// result back to the subscription handler.
-func (s *InstanceStatusEvent) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan InstanceInfoResult)
-	}
 }
 
 // instanceStatusHandler handles events from the hasura subscription which
@@ -60,7 +45,6 @@ func instanceStatusHandler(instanceName string, status string, client *graphql.S
 
 		var result InstanceStatusEvent
 		json.Unmarshal(*data, &result)
-		result.createResultChan()
 
 		var instance Instance
 		// If the result array returned by Hasura is not empty, it means
@@ -90,21 +74,6 @@ func instanceStatusHandler(instanceName string, status string, client *graphql.S
 // instance status changes.
 type MandelboxInfoEvent struct {
 	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
-	resultChan    chan InstanceInfoResult
-}
-
-// ReturnResult is called to pass the result of a subscription event back to the
-// subscription handler.
-func (s *MandelboxInfoEvent) ReturnResult(result interface{}, err error) {
-	s.resultChan <- InstanceInfoResult{result}
-}
-
-// createResultChan is called to create the Go channel to pass the Hasura
-// result back to the subscription handler.
-func (s *MandelboxInfoEvent) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan InstanceInfoResult)
-	}
 }
 
 // mandelboxInfoHandler handles events from the hasura subscription which
@@ -124,7 +93,6 @@ func mandelboxInfoHandler(instanceName string, status string, client *graphql.Su
 
 		var result MandelboxInfoEvent
 		json.Unmarshal(*data, &result)
-		result.createResultChan()
 
 		var mandelbox Mandelbox
 		// If the result array returned by Hasura is not empty, it means

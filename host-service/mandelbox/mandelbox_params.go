@@ -28,7 +28,7 @@ func (mandelbox *mandelboxData) WriteMandelboxParams() error {
 		return err
 	}
 
-	// Write GPU Index. Note that we use `mandelbox.GetGPU()` instead of `mandelbox.tty` for
+	// Write GPU Index. Note that we use `mandelbox.GetGPU()` instead of `mandelbox.gpuIndex` for
 	// the locking.
 	if err := mandelbox.writeResourceMappingToFile("gpu_index", utils.Sprintf("%d", mandelbox.GetGPU())); err != nil {
 		// Don't need to wrap err here because it already contains the relevant info
