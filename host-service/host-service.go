@@ -514,7 +514,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	if metadata.IsLocalEnv() {
 
 		regexes := []string{
-			string(AppName) + ":current-build-updated-protocol",
 			string(AppName) + ":current-build",
 			string(AppName),
 		}

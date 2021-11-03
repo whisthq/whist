@@ -1,4 +1,8 @@
-FROM fractal/base:current-build
+# See stage 0 of the base dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM fractal/build-assets:$BuildAssetPackage as build-assets
+
+FROM fractal/base:current-build as fractal-browsers-chrome
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -71,3 +75,6 @@ RUN su - fractal -c "touch /home/fractal/.config/google-chrome/'First Run'"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome
 RUN ln -sf /usr/bin/start-chrome /usr/bin/fractal-application
+
+# Install Whist Protocol binaries and helper files (if necessary)
+COPY --from=build-assets protocol/* /usr/share/fractal/bin/
