@@ -20,8 +20,8 @@ type Instance struct {
 // in the database. These fields are defined in queries.go
 type Mandelbox struct {
 	InstanceName string                     `json:"instance_name"`
-	MandelboxID  mandelboxtypes.MandelboxID `json:"mandelbox_id"`
-	SessionID    uint64                     `json:"session_id"`
+	ID           mandelboxtypes.MandelboxID `json:"mandelbox_id"`
+	SessionID    string                     `json:"session_id"`
 	UserID       mandelboxtypes.UserID      `json:"user_id"`
 }
 
