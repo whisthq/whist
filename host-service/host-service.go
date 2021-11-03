@@ -438,7 +438,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
 		err := mandelbox.DownloadUserConfigs()
 		if err != nil {
-			logger.Warningf("Error downloading user configs for mandelbox %s: %v", mandelboxInfo.MandelboxID, err)
+			logger.Warningf("Error downloading user configs for mandelbox %s: %v", subscriptionInfo.MandelboxID, err)
 			userConfigDownloadComplete <- true
 			return
 		}
@@ -701,7 +701,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Decrypt the previously downloaded user configs using the encryption token
 	err = mandelbox.DecryptUserConfigs()
 	if err != nil {
-		logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxInfo.MandelboxID, err)
+		logger.Errorf("Error decrypting user configs for mandelbox %s: %v", subscriptionInfo.MandelboxID, err)
 	}
 
 	// Write the config.json file with the data received from JSON transport

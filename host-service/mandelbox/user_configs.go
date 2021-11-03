@@ -84,7 +84,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	}
 
 	// Log config version
-	logger.Infof("Using user config version %s for mandelbox %s", *headObject.VersionId, c.mandelboxID)
+	logger.Infof("Using user config version %s for mandelbox %s", *headObject.VersionId, mandelbox.ID)
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
