@@ -153,7 +153,7 @@ def get_logs_page(scroll_id):
 
 # This will sort the logs by date and time
 def sort_logs(parsed_logs):
-    return parsed_logs.sort(key=lambda log: datetime.strptime(log[1][:19], "%Y-%m-%d %H:%M:%S"))
+    return parsed_logs.sort(key=lambda log: datetime.strptime(log[1], "%Y-%m-%d %H:%M:%S.%f"))
 
 
 # Parses all the logs from the log_page
@@ -182,19 +182,18 @@ def parse_logs(parsed_logs, logs_page):
         if not message_begins_with_time:
             # if we do not provide an hour-minute-second,
             # use the hour-minute-second from logz_io timestamp
-            hour_minute_second = logz_io_timestamp[11:19]
-            message = year_month_day + " " + hour_minute_second + " | " + message
+            hour_minute_second_ms = logz_io_timestamp[11:23] + "000"
         else:
             # otherwise, use our hour-minute-second
-            hour_minute_second = message[:8]
-            message = year_month_day + " " + hour_minute_second + message[15:]
+            hour_minute_second_ms = message[:15]
 
+        timestamp = year_month_day + " " + hour_minute_second_ms
         if component == "clientapp":
             # if it's client app, then we know these are logs from the client
-            parsed_logs.append(("client", message))
+            parsed_logs.append(("client", timestamp, message))
         else:
             # otherwise, this is mandlebox, so these are logs from the server
-            parsed_logs.append(("server", message))
+            parsed_logs.append(("server", timestamp, message))
 
 
 # Writes the server and client logs to two separate files
@@ -207,10 +206,10 @@ def write_logs_to_files(parsed_logs, session_id):
     server_file = open(server_logs_file_name, "w")
     for log in parsed_logs:
         if log[0] == "client":
-            client_file.write(log[1])
+            client_file.write(log[2])
             client_file.write("\n")
         else:
-            server_file.write(log[1])
+            server_file.write(log[2])
             server_file.write("\n")
     server_file.close()
     client_file.close()
