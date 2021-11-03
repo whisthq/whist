@@ -31,16 +31,18 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
     # Set the system-wide timezone
     timedatectl set-timezone $DESIRED_TIMEZONE
   fi
-  if [ "$( jq 'has("initial_key_repeat")' < $FRACTAL_JSON_FILE )" == "true" && "$( jq 'has("initial_key_repeat")' < $FRACTAL_JSON_FILE )" == "true" ]; then
-    INITIAL_KEY_REPEAT=$( jq -r '.initial_key_repeat' < $FRACTAL_JSON_FILE )
-    KEY_REPEAT=$( jq -r '.key_repeat' < $FRACTAL_JSON_FILE )
+  if [ "$( jq 'has("initial_key_repeat")' < $FRACTAL_JSON_FILE )" == "true"  ]; then 
+    if [ "$( jq 'has("key_repeat")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+      INITIAL_KEY_REPEAT=$( jq -r '.initial_key_repeat' < $FRACTAL_JSON_FILE )
+      KEY_REPEAT=$( jq -r '.key_repeat' < $FRACTAL_JSON_FILE )
 
-    # Remove potential quotation marks
-    INITIAL_KEY_REPEAT=$(echo $INITIAL_KEY_REPEAT | tr -d '"')
-    KEY_REPEAT=$(echo $KEY_REPEAT | tr -d '"')
+      # Remove potential quotation marks
+      INITIAL_KEY_REPEAT=$(echo $INITIAL_KEY_REPEAT | tr -d '"')
+      KEY_REPEAT=$(echo $KEY_REPEAT | tr -d '"')
 
-    # Set the key repeat rates
-    xset r rate $INITIAL_KEY_REPEAT $KEY_REPEAT
+      # Set the key repeat rates
+      xset r rate $INITIAL_KEY_REPEAT $KEY_REPEAT
+    fi
   fi
 fi
 

@@ -23,15 +23,15 @@ fromTrigger("appReady").subscribe(() => {
     .then((enabled: boolean) => {
       if (!enabled && persistGet("autoLaunch", "data") === undefined) {
         fractalAutoLaunch.enable()
-        persist("autoLaunch", "true", "data")
+        persist("autoLaunch", true, "data")
       }
     })
     .catch((err: any) => Sentry.captureException(err))
 })
 
 fromTrigger("trayAutolaunchAction").subscribe(() => {
-  const autolaunch = (persistGet("autoLaunch", "data") ?? "true") === "true"
-  persist("autoLaunch", (!autolaunch).toString(), "data")
+  const autolaunch = <boolean>persistGet("autoLaunch", "data")
+  persist("autoLaunch", !autolaunch, "data")
 
   autolaunch ? fractalAutoLaunch.disable() : fractalAutoLaunch.enable()
 })
