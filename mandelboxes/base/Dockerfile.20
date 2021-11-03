@@ -718,10 +718,9 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 # Install fractal-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
 # See fractal-teleport-uri-handler.desktop for a list of currently-supported protocols.
 RUN mkdir -p /opt/teleport
-COPY teleport/uri-handler/fractal-teleport-uri-handler.desktop /opt/teleport/uri-handler.desktop
 COPY teleport/uri-handler/fractal-teleport-uri-handler.sh /opt/teleport/uri-handler
 RUN chmod +x /opt/teleport/uri-handler
-RUN su - fractal -c 'xdg-desktop-menu install /opt/teleport/uri-handler.desktop'
+RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
 # Set up the Whist server protocol
 
