@@ -88,7 +88,7 @@ const settingsMenu = new MenuItem({
     {
       label: "Automatically launch on computer start",
       type: "checkbox",
-      checked: (persistGet("autoLaunch", "data") ?? "true") === "true",
+      checked: <boolean>persistGet("autoLaunch", "data"),
       click: () => {
         trayEvent.emit("auto-launch")
       },
@@ -96,8 +96,7 @@ const settingsMenu = new MenuItem({
     {
       label: "Restore the last browser session",
       type: "checkbox",
-      checked:
-        (persistGet("RestoreLastBrowserSession", "data") ?? "true") === "true",
+      checked: <boolean>persistGet("RestoreLastBrowserSession", "data"),
       click: () => {
         trayEvent.emit("restore-last-browser-session")
       },

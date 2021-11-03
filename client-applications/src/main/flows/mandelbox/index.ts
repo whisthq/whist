@@ -80,8 +80,10 @@ export default flow(
           json_data: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            restore_last_session:
-              persistGet("RestoreLastBrowserSession", "data") ?? "true",
+            restore_last_session: persistGet(
+              "RestoreLastBrowserSession",
+              "data"
+            ),
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
                 initial_key_repeat: parseInt(initialKeyRepeat),

@@ -41,7 +41,6 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
 )
 
 fromTrigger("trayRestoreSessionAction").subscribe(() => {
-  const restore =
-    (persistGet("RestoreLastBrowserSession", "data") ?? "true") === "true"
+  const restore = <boolean>persistGet("RestoreLastBrowserSession", "data")
   persist("RestoreLastBrowserSession", !restore, "data")
 })

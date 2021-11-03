@@ -7,7 +7,7 @@
 // Execute a command in a cross-platform manner.
 import { execSync, StdioOptions } from "child_process"
 
-export const execCommand = (
+const execCommand = (
   command: string,
   cwd: string,
   env = {},
