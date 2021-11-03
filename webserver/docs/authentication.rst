@@ -40,7 +40,7 @@ Upon receipt of an HTTP request containing an access token in its
 ``Authorization`` header, the Webserver attempts to determine whether or not
 the token is valid. In order to be considered valid, a token's standard time-\
 based claims (``iat`` and ``exp``) must be valid, the issuer must be the
-deployment-specific Auth0 tenant (e.g. ``https://fractal-prod.us.auth0.com/``
+deployment-specific Auth0 tenant (e.g. ``https://auth.whist.com/``
 in production), ``https://api.fractal.co`` must be one of the token's
 audiences, and the signature must be verified.
 
@@ -50,7 +50,7 @@ algorithm, the authorization server's public key is required to verify their
 signatures. A JSON web key set containing public keys can be downloaded from
 each tenant's ``/.well-known/jwks.json`` endpoint. For example, our production
 tenant's public keys are available at
-https://fractal-prod.us.auth0.com/.well-known/jwks.json. Once the public keys
+https://auth.whist.com/.well-known/jwks.json. Once the public keys
 have been downloaded, signature verification can be done locally as well.
 
 
