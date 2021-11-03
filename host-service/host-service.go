@@ -426,7 +426,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelbox.SetAppName(AppName)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
-	// Begin populating user configs at the same time as other setup is being done.
+	// Begin downloading user configs at the same time as other setup is being done.
 	// This is done separately from the rest of the startup goroutines since the user
 	// config download is a potentially long-running process that other pieces do not
 	// depend on.
@@ -438,7 +438,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
 		err := mandelbox.DownloadUserConfigs()
 		if err != nil {
-			logger.Warningf("Error populating user configs for mandelbox %s: %v", mandelboxInfo.MandelboxID, err)
+			logger.Warningf("Error downloading user configs for mandelbox %s: %v", mandelboxInfo.MandelboxID, err)
 			userConfigDownloadComplete <- true
 			return
 		}
