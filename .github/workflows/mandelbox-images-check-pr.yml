@@ -83,3 +83,5 @@ jobs:
       - name: Build Mandelboxes
         working-directory: mandelboxes
         run: ./build.sh --all --prod
+        env:
+            DOCKER_BUILDKIT: 1

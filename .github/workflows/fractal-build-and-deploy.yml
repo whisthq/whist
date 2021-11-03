@@ -453,6 +453,8 @@ jobs:
       - name: Build Mandelboxes
         working-directory: mandelboxes
         run: ./build.sh --all --prod
+        env:
+            DOCKER_BUILDKIT: 1
 
       - name: Push mandelboxes
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
