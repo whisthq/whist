@@ -111,6 +111,49 @@ def get_all_aws_instances(region):
     return response["Reservations"]
 
 
+def get_all_nonterminated_aws_instances(region):
+    """
+    Gets all non-terminated instances (and their info) from a given region
+
+    Args:
+        region (str): current region
+
+    Returns:
+        arr: array containing all instances (and info) from the given region
+    """
+    client = boto3.client("ec2", region_name=region)
+    response = client.describe_instances(
+        Filters=[
+            {"Name": "instance-state-name", "Values": ["pending", "running", "stopping", "stopped", "shutting-down"]}
+        ]
+    )
+
+    return response["Reservations"]
+
+
+def get_nonterminated_instances_name(region):
+    """
+    Gets a list of all aws instances name that are not in the terminated state
+
+    Args:
+        region (str): current region
+
+    Returns:
+        arr: array of instance name
+    """
+    reservations = get_all_nonterminated_aws_instances(region)
+    instances = []
+
+    for res in reservations:
+        for instance in res["Instances"]:
+            if "Tags" in instance:
+                name, _ = read_tags(instance["Tags"], "EC2")
+
+            instances.append(name)
+
+    return instances
+
+
 def num_aws_instances(region):
     """
     Gets number of all instances in a given region
@@ -218,3 +261,5 @@ def get_non_personal_development_instances(region):
             instances.append((name, instance["InstanceId"]))
 
     return instances
+
+
