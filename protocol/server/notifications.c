@@ -18,6 +18,11 @@ Includes
 
 #include "notifications.h"
 
+//for debug
+#include <unistd.h>
+#include <limits.h>
+#include <dirent.h>
+
 /*
 ============================
 Private data
@@ -50,7 +55,7 @@ int inititialze_notification_watcher() {
             "notifications::initialize_notification_watcher: failed to initialize notification "
             "watcher");
         return -1;
-    }
+    }    
 
     // Initialize the watch descriptor to tell us whenever the log file has been written to
     notifications_watch_descriptor = inotify_add_watch(
@@ -73,7 +78,7 @@ int check_for_notifications() {
     // Since this is non-blocking, if there are no notifications, this
     // will return a len of 0, so we can use this instead of polling
     ssize_t len = read(notifications_log_fd, buf, sizeof(buf));
-    LOG_INFO("NOTIFICATIONS: read len: %d", len);
+
     // EAGAIN is set when we call read and there's no data. Since this is
     // non-blocking (as set in init_inotify1), this is fine behaviour
     if(len == -1 && errno != EAGAIN) {
@@ -85,6 +90,7 @@ int check_for_notifications() {
     if(len <= 0)
         return 0;
     
+    LOG_INFO("NOTIFICATIONS: Recieved!");
     // Case we have data
     return 1;
 }

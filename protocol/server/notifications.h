@@ -27,7 +27,7 @@ Includes
 
 // The server executable is in /usr/share/fractal
 #define CHROMIUM_NOTIFICATION_LOG \
-    "../../../fractal/userConfigs/google-chrome/Default/'Platform Notifications'/000003.log"
+    "/fractal/userConfigs/google-chrome/Default//Platform Notifications//000003.log"
 
 /**
  * @brief Initializes the connection the notificaiton watcher
