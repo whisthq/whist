@@ -699,12 +699,10 @@ jobs:
       # After we perform a database migration, we may need to reload the Hasura metadata (in case the schema has changed)
       - name: Update Hasura Metadata Following Database Migration (as needed)
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
+        working-directory: webserver/db_migration/hasura
         run: |
           # Install Hasura CLI
           curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | sudo bash
-
-
-
 
           # Reload Hasura Metadata per-environment
           BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
@@ -724,6 +722,7 @@ jobs:
           fi
 
           # Update Hasura metadata
+          hasura metadata export --endpoint $HASURA_APP_URL --admin-secret $HASURA_ACCESS_KEY
           hasura metadata reload --endpoint $HASURA_APP_URL --admin-secret $HASURA_ACCESS_KEY
 
       - name: Notify Slack on Database Migration Performed
