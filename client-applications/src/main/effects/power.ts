@@ -3,14 +3,16 @@ import { protocolStreamKill } from "@app/utils/protocol"
 import { createErrorWindow, relaunch } from "@app/utils/windows"
 import { WindowHashSleep } from "@app/constants/windows"
 import { fromSignal } from "@app/utils/observables"
+import { WhistTrigger } from "@app/constants/triggers"
 
-fromSignal(fromTrigger("powerSuspend"), fromTrigger("appReady")).subscribe(
-  () => {
-    createErrorWindow(WindowHashSleep)
-    protocolStreamKill()
-  }
-)
+fromSignal(
+  fromTrigger(WhistTrigger.powerSuspend),
+  fromTrigger(WhistTrigger.appReady)
+).subscribe(() => {
+  createErrorWindow(WindowHashSleep)
+  protocolStreamKill()
+})
 
-fromTrigger("powerResume").subscribe(() => {
+fromTrigger(WhistTrigger.powerResume).subscribe(() => {
   relaunch()
 })

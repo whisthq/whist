@@ -30,8 +30,9 @@ import {
   CACHED_REFRESH_TOKEN,
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
+import { WhistTrigger } from "@app/constants/triggers"
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   createTray(createMenu(false))
 })
 
@@ -40,7 +41,7 @@ fromTrigger("appReady").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-withAppReady(fromTrigger("configFlowSuccess")).subscribe(
+withAppReady(fromTrigger(WhistTrigger.configFlowSuccess)).subscribe(
   (x: { userEmail: string }) => {
     // Show notification
     startupNotification()?.show()
@@ -50,7 +51,7 @@ withAppReady(fromTrigger("configFlowSuccess")).subscribe(
 )
 
 // If an update is available, show the update window and download the update
-fromTrigger("updateAvailable")
+fromTrigger(WhistTrigger.updateAvailable)
   .pipe(take(1))
   .subscribe(() => {
     autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
@@ -58,7 +59,7 @@ fromTrigger("updateAvailable")
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
-fromTrigger("clearCacheAction").subscribe(
+fromTrigger(WhistTrigger.clearCacheAction).subscribe(
   (payload: { clearConfig: boolean }) => {
     persistClear([
       ...[CACHED_USER_EMAIL, CACHED_ACCESS_TOKEN, CACHED_REFRESH_TOKEN],
@@ -77,23 +78,23 @@ fromTrigger("clearCacheAction").subscribe(
 
 // If an admin selects a region, relaunch the app with the selected region passed
 // into argv so it can be read by flows/index.ts
-fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
+fromTrigger(WhistTrigger.trayRegionAction).subscribe((region: AWSRegion) => {
   relaunch({ args: process.argv.slice(1).concat([region]) })
 })
 
-fromTrigger("relaunchAction").subscribe(() => {
+fromTrigger(WhistTrigger.relaunchAction).subscribe(() => {
   relaunch()
 })
 
-withAppReady(fromTrigger("showSignoutWindow")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
   createSignoutWindow()
 })
 
-withAppReady(fromTrigger("trayBugAction")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.trayBugAction)).subscribe(() => {
   createBugTypeform()
 })
 
-withAppReady(fromTrigger("authFlowSuccess"))
+withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
   .pipe(take(1))
   .subscribe(() => {
     const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
@@ -101,7 +102,7 @@ withAppReady(fromTrigger("authFlowSuccess"))
   })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger("showPaymentWindow")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
   createPaymentWindow({
     accessToken,
@@ -109,7 +110,7 @@ withAppReady(fromTrigger("showPaymentWindow")).subscribe(() => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
+withAppReady(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
   ({ accessToken }: accessToken) => {
     createPaymentWindow({
       accessToken,
@@ -117,11 +118,11 @@ withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
   }
 )
 
-withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
   persistSet(ONBOARDED, true)
 })
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.requestSingleInstanceLock()
 
   app.on("second-instance", (e) => {

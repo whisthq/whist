@@ -11,6 +11,7 @@ import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
 import { createProtocolWindow } from "@app/utils/windows"
 import { persistGet, persistSet } from "@app/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -19,7 +20,7 @@ import { RESTORE_LAST_SESSION } from "@app/constants/store"
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful mandelbox status response.
 
-fromTrigger("mandelboxFlowSuccess").subscribe(
+fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(
   (info: {
     mandelboxIP: string
     mandelboxSecret: string

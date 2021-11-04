@@ -5,16 +5,16 @@ import { fromEvent, merge, of } from "rxjs"
 import { takeWhile } from "rxjs/operators"
 
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Fires if autoupdate is available
 createTrigger(
-  TRIGGER.updateAvailable,
+  WhistTrigger.updateAvailable,
   fromEvent(autoUpdater as EventEmitter, "update-available")
 )
 // Fires if autoupdate is not available, if app is not packaged, or if there's an updating error
 createTrigger(
-  TRIGGER.updateNotAvailable,
+  WhistTrigger.updateNotAvailable,
   merge(
     of(null).pipe(takeWhile(() => !app.isPackaged)),
     fromEvent(autoUpdater as EventEmitter, "update-not-available")
@@ -22,11 +22,11 @@ createTrigger(
 )
 // Fires if there is an autoupdate error
 createTrigger(
-  TRIGGER.updateError,
+  WhistTrigger.updateError,
   fromEvent(autoUpdater as EventEmitter, "error")
 )
 // Fires when checking for update
 createTrigger(
-  TRIGGER.updateChecking,
+  WhistTrigger.updateChecking,
   fromEvent(autoUpdater as EventEmitter, "checking-for-update")
 )

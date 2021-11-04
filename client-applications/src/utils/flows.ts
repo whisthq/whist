@@ -8,7 +8,7 @@ import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, take } from "rxjs/operators"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 import mapValues from "lodash.mapvalues"
 
@@ -128,7 +128,7 @@ export const fromTrigger = (name: string): Observable<any> => {
       Observable
   */
 
-  if (!Object.values(TRIGGER).includes(name))
+  if (!Object.values(WhistTrigger).includes(name))
     throw new Error(`Trigger ${name} does not exist`)
 
   return TriggerChannel.pipe(

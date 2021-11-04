@@ -4,7 +4,7 @@
  * @brief This file defines all the triggers recognized by the main thread.
  */
 
-export default {
+const WhistTrigger = {
   // App triggers
   appReady: "appReady",
   windowInfo: "windowInfo",
@@ -71,3 +71,5 @@ export default {
   // Protocol triggers
   protocolError: "protocolError",
 }
+
+export { WhistTrigger }

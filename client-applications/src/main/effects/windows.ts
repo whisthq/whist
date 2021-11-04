@@ -19,7 +19,7 @@ import { createProtocolWindow, createAuthWindow } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 import {
   CACHED_ACCESS_TOKEN,
   CACHED_CONFIG_TOKEN,
@@ -40,7 +40,7 @@ let warningLastShown = 0
 // Immediately initialize the protocol invisibly since it can take time to warm up
 createProtocolWindow().catch((err) => Sentry.captureException(err))
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   internetNotification = internetWarning()
   rebootNotification = rebootWarning()
 })
@@ -52,7 +52,7 @@ const quit = () => {
   app.quit()
 }
 
-const allWindowsClosed = fromTrigger("windowInfo").pipe(
+const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
   filter(
     (args: {
       crashed: boolean
@@ -63,15 +63,20 @@ const allWindowsClosed = fromTrigger("windowInfo").pipe(
   )
 )
 
-fromTrigger("windowsAllClosed").subscribe((evt: IpcMainEvent) => {
+fromTrigger(WhistTrigger.windowsAllClosed).subscribe((evt: IpcMainEvent) => {
   evt?.preventDefault()
 })
 
 allWindowsClosed
   .pipe(
-    withLatestFrom(fromTrigger("mandelboxFlowSuccess").pipe(startWith({}))),
     withLatestFrom(
-      fromTrigger("mandelboxFlowFailure").pipe(mapTo(true), startWith(false))
+      fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
+    ),
+    withLatestFrom(
+      fromTrigger(WhistTrigger.mandelboxFlowFailure).pipe(
+        mapTo(true),
+        startWith(false)
+      )
     )
   )
   .subscribe(
@@ -112,12 +117,12 @@ allWindowsClosed
           .catch((err) => Sentry.captureException(err))
         // If we've already tried several times to reconnect, just show the protocol error window
       } else {
-        createTrigger(TRIGGER.protocolError, of(undefined))
+        createTrigger(WhistTrigger.protocolError, of(undefined))
       }
     }
   )
 
-fromTrigger("networkUnstable")
+fromTrigger(WhistTrigger.networkUnstable)
   .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
     // Don't show the warning more than once per minute
@@ -136,7 +141,7 @@ fromTrigger("networkUnstable")
     }
   })
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   const authCache = {
     accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
     refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,

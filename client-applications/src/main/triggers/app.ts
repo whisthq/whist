@@ -10,19 +10,19 @@ import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
 import { windowMonitor } from "@app/utils/windows"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Fires when Electron starts; this is the first event to fire
-createTrigger(TRIGGER.appReady, fromEvent(app as EventEmitter, "ready"))
+createTrigger(WhistTrigger.appReady, fromEvent(app as EventEmitter, "ready"))
 // Fires whenever the number of windows changes, including the protocol window
-createTrigger(TRIGGER.windowInfo, fromEvent(windowMonitor, "window-info"))
+createTrigger(WhistTrigger.windowInfo, fromEvent(windowMonitor, "window-info"))
 // Fires whenever the network is unstable
 createTrigger(
-  TRIGGER.networkUnstable,
+  WhistTrigger.networkUnstable,
   fromEvent(windowMonitor, "network-is-unstable")
 )
 // Fires when all Electron windows have been closed
 createTrigger(
-  TRIGGER.windowsAllClosed,
+  WhistTrigger.windowsAllClosed,
   fromEvent(app as EventEmitter, "window-all-closed")
 )

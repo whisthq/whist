@@ -11,7 +11,7 @@ import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
 import { persistGet } from "@app/utils/persist"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 import {
   accessToken,
   refreshToken,
@@ -24,11 +24,11 @@ import {
 } from "@app/constants/store"
 
 // Autoupdate flow
-const update = autoUpdateFlow(fromTrigger("updateAvailable"))
+const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 
 const auth = authFlow(
   merge(
-    fromTrigger("authInfo"),
+    fromTrigger(WhistTrigger.authInfo),
     combineLatest({
       accessToken,
       refreshToken,
@@ -43,7 +43,7 @@ const auth = authFlow(
 
 const onboarded = fromSignal(
   merge(
-    fromTrigger("importerSubmitted"),
+    fromTrigger(WhistTrigger.importerSubmitted),
     zip(
       of(persistGet(ONBOARDING_TYPEFORM_SUBMITTED)).pipe(
         filter((onboarded) => onboarded as boolean)
@@ -53,7 +53,7 @@ const onboarded = fromSignal(
       )
     )
   ),
-  fromTrigger(TRIGGER.authFlowSuccess)
+  fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
@@ -64,7 +64,10 @@ const checkPayment = checkPaymentFlow(
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  fromSignal(combineLatest({ refreshToken }), fromTrigger("stripeAuthRefresh"))
+  fromSignal(
+    combineLatest({ refreshToken }),
+    fromTrigger(WhistTrigger.stripeAuthRefresh)
+  )
 )
 
 // Observable that fires when Fractal is ready to be launched
@@ -72,7 +75,7 @@ const launchTrigger = fromSignal(
   combineLatest({
     accessToken,
     configToken,
-    importCookiesFrom: fromTrigger("importerSubmitted").pipe(
+    importCookiesFrom: fromTrigger(WhistTrigger.importerSubmitted).pipe(
       startWith(undefined),
       map((payload) => payload?.browser)
     ),
@@ -83,14 +86,10 @@ const launchTrigger = fromSignal(
     }))
   ),
   merge(
-    fromTrigger(TRIGGER.checkPaymentFlowSuccess),
+    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
     refreshAfterPaying.success
   )
-).pipe(
-  take(1),
-  tap((x) => console.log("LAUNCH TRIGGEr")),
-  share()
-)
+).pipe(take(1), share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)
@@ -101,16 +100,16 @@ const refreshAtEnd = authRefreshFlow(
   fromSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
 
-createTrigger(TRIGGER.authFlowSuccess, auth.success)
-createTrigger(TRIGGER.authFlowFailure, auth.failure)
+createTrigger(WhistTrigger.authFlowSuccess, auth.success)
+createTrigger(WhistTrigger.authFlowFailure, auth.failure)
 
-createTrigger(TRIGGER.updateDownloaded, update.downloaded)
-createTrigger(TRIGGER.downloadProgress, update.progress)
+createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
+createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(TRIGGER.authRefreshSuccess, refreshAtEnd.success)
+createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
 
-createTrigger(TRIGGER.checkPaymentFlowSuccess, checkPayment.success)
-createTrigger(TRIGGER.checkPaymentFlowFailure, checkPayment.failure)
+createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
+createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
 
-createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
-createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
+createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
+createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)

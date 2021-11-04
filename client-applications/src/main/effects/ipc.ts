@@ -13,6 +13,7 @@ import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
 import { appEnvironment } from "../../../config/configs"
 import { getInstalledBrowsers } from "@app/utils/importer"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -32,15 +33,15 @@ const subscribed = combineLatest(
   mapValues(
     {
       userEmail: merge(
-        fromTrigger("authFlowSuccess"),
-        fromTrigger("authRefreshSuccess"),
-        fromTrigger("configFlowSuccess")
+        fromTrigger(WhistTrigger.authFlowSuccess),
+        fromTrigger(WhistTrigger.authRefreshSuccess),
+        fromTrigger(WhistTrigger.configFlowSuccess)
       ).pipe(
         filter((args: { userEmail?: string }) => args.userEmail !== undefined),
         map((args: { userEmail?: string }) => args.userEmail as string)
       ),
       appEnvironment: of(appEnvironment),
-      updateInfo: fromTrigger("downloadProgress").pipe(
+      updateInfo: fromTrigger(WhistTrigger.downloadProgress).pipe(
         map((obj) => JSON.stringify(obj))
       ),
       browsers: of(getInstalledBrowsers()),
@@ -51,7 +52,7 @@ const subscribed = combineLatest(
 
 const finalState = combineLatest([
   subscribed,
-  fromTrigger("eventIPC").pipe(startWith({})),
+  fromTrigger(WhistTrigger.eventIPC).pipe(startWith({})),
 ])
 
 finalState.subscribe(
@@ -63,7 +64,7 @@ finalState.subscribe(
   }
 )
 
-fromTrigger("emitIPC")
+fromTrigger(WhistTrigger.emitIPC)
   .pipe(withLatestFrom(finalState))
   .subscribe(
     ([, [subs, state]]: [any, [Partial<StateIPC>, Partial<StateIPC>]]) => {

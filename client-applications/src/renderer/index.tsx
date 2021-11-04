@@ -16,9 +16,9 @@ import Update from "@app/renderer/pages/update"
 import {
   WindowHashSignout,
   WindowHashBugTypeform,
-  WindowHashOnboardingTypeform,
   WindowHashUpdate,
   WindowHashImporter,
+  WindowHashOnboarding,
 } from "@app/constants/windows"
 import {
   fractalError,
@@ -28,7 +28,7 @@ import {
   NAVIGATION_ERROR,
 } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -44,36 +44,39 @@ const RootComponent = () => {
   const [mainState, setMainState] = useMainState()
   const relaunch = () =>
     setMainState({
-      trigger: { name: TRIGGER.relaunchAction, payload: undefined },
+      trigger: { name: WhistTrigger.relaunchAction, payload: undefined },
     })
 
   const showPaymentWindow = () =>
     setMainState({
-      trigger: { name: TRIGGER.showPaymentWindow, payload: undefined },
+      trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
     })
 
   const handleSignout = (clearConfig: boolean) =>
     setMainState({
-      trigger: { name: TRIGGER.clearCacheAction, payload: { clearConfig } },
+      trigger: {
+        name: WhistTrigger.clearCacheAction,
+        payload: { clearConfig },
+      },
     })
 
   const handleOnboardingTypeform = () =>
     setMainState({
       trigger: {
-        name: TRIGGER.onboardingTypeformSubmitted,
+        name: WhistTrigger.onboarded,
         payload: undefined,
       },
     })
 
   const showSignoutWindow = () =>
     setMainState({
-      trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
+      trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
     })
 
   const handleImporterSubmit = (browser: string | undefined) => {
-    setMainState({
-      trigger: { name: TRIGGER.importerSubmitted, payload: { browser } },
-    })
+    // setMainState({
+    //   trigger: { name: WhistTrigger.importerSubmitted, payload: { browser } },
+    // })
   }
 
   useEffect(() => {
@@ -81,7 +84,7 @@ const RootComponent = () => {
     // useMainState() only subscribes to state updates after the function is
     // called
     setMainState({
-      trigger: { name: TRIGGER.emitIPC, payload: undefined },
+      trigger: { name: WhistTrigger.emitIPC, payload: undefined },
     })
   }, [])
 
@@ -96,7 +99,7 @@ const RootComponent = () => {
         }
       />
     )
-  if (show === WindowHashOnboardingTypeform) {
+  if (show === WindowHashOnboarding) {
     return (
       <Typeform
         onSubmit={handleOnboardingTypeform}

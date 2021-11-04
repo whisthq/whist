@@ -10,7 +10,7 @@ import { map, share, startWith } from "rxjs/operators"
 import { StateChannel } from "@app/constants/ipc"
 import { StateIPC } from "@app/@types/state"
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent
@@ -33,7 +33,7 @@ import TRIGGER from "@app/utils/triggers"
 // observables can initialize.
 
 createTrigger(
-  TRIGGER.eventIPC,
+  WhistTrigger.eventIPC,
   fromEvent(ipcMain, StateChannel).pipe(
     map((args) => {
       if (!Array.isArray(args)) return {} as Partial<StateIPC>
