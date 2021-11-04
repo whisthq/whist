@@ -46,7 +46,7 @@ image_paths = [path.strip("/") for path in args.image_paths]
 build_all = args.all
 protocol_copy_mode = "prod" if build_all else args.mode
 # Keep track of the initial targets for protocol copying purposes
-target_image_paths = image_paths
+target_image_paths = image_paths.copy()
 
 # If --all is passed, generate image_paths procedurally
 if build_all:
