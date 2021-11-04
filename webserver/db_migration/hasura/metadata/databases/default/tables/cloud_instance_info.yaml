@@ -1,0 +1,11 @@
+table:
+  name: instance_info
+  schema: cloud
+array_relationships:
+- name: mandelbox_infos
+  using:
+    foreign_key_constraint_on:
+      column: instance_name
+      table:
+        name: mandelbox_info
+        schema: cloud

@@ -1,0 +1,3 @@
+table:
+  name: ami_status_changes
+  schema: cloud

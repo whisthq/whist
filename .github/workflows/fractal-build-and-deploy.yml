@@ -703,25 +703,28 @@ jobs:
           # Install Hasura CLI
           curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | sudo bash
 
+
+
+
           # Reload Hasura Metadata per-environment
           BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
 
           # Set Hasura app name and admin key based on branch
           if [[ "$BRANCH_NAME" == "prod" ]]; then
-            HASURA_APP_NAME=fractal-prod-hasura
+            HASURA_APP_URL=https://prod-database.whist.com
             HASURA_ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}'
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
-            HASURA_APP_NAME=fractal-staging-hasura
+            HASURA_APP_URL=https://staging-database.whist.com
             HASURA_ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}'
           elif [[ "$BRANCH_NAME" == "dev" ]]; then
-            HASURA_APP_NAME=fractal-dev-hasura
+            HASURA_APP_URL=https://dev-database.whist.com
             HASURA_ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}'
           else
             echo 'Error: Invalid branch' && false
           fi
 
           # Update Hasura metadata
-          hasura metadata reload --endpoint $HASURA_APP_NAME --admin-secret $HASURA_ACCESS_KEY
+          hasura metadata reload --endpoint $HASURA_APP_URL --admin-secret $HASURA_ACCESS_KEY
 
       - name: Notify Slack on Database Migration Performed
         shell: python3 {0}

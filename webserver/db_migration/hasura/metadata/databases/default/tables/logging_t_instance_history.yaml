@@ -1,0 +1,3 @@
+table:
+  name: t_instance_history
+  schema: logging

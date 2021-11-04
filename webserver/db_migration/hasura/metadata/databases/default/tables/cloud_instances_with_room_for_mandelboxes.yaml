@@ -1,0 +1,3 @@
+table:
+  name: instances_with_room_for_mandelboxes
+  schema: cloud

@@ -1,0 +1,3 @@
+table:
+  name: instance_status_change
+  schema: logging

@@ -1,0 +1,3 @@
+table:
+  name: t_region_history
+  schema: logging

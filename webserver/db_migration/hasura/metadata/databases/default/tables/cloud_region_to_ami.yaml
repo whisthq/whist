@@ -1,0 +1,3 @@
+table:
+  name: region_to_ami
+  schema: cloud

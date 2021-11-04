@@ -1,0 +1,7 @@
+table:
+  name: mandelbox_info
+  schema: cloud
+object_relationships:
+- name: instance_info
+  using:
+    foreign_key_constraint_on: instance_name
