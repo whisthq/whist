@@ -701,7 +701,7 @@ jobs:
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
         run: |
           # Install Hasura CLI
-          curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
+          npm install --global hasura-cli
 
           # Reload Hasura Metadata per-environment
           BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
