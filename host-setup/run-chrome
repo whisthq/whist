@@ -18,7 +18,7 @@ docker kill $(docker ps -q) || true
 docker rm $(docker ps -a -q) || true
 
 # Kill all host-services, if any are running
-sudo killall -9 host-service
+sudo killall -9 host-service || true
 sudo rm -rf /fractal
 
 # Create new host service
@@ -27,7 +27,7 @@ screen -mdS host-service bash -c 'make run &> ~/host-service.log'
 
 # Create docker mandelbox image
 cd "$REPO/mandelboxes"
-./build_local_mandelbox_image.sh browsers/chrome
+./build.sh browsers/chrome --dev
 
 # Wait for host service
 while ! sudo lsof -i :4678 &>/dev/null; do
@@ -46,7 +46,7 @@ done
 sleep 0.25
 expect <(cat <<'EOF'
 log_user 0
-spawn sudo ./run_local_mandelbox_image.sh browsers/chrome
+spawn sudo ./run.sh browsers/chrome
 send "tail -F /usr/share/fractal/server.log\r"
 interact
 EOF
