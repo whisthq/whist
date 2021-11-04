@@ -15,12 +15,12 @@ const SelectBrowser = (props: {
       <div className="mt-2 mb-4 text-gray-500">
         Which of your current browsers would you like to sync with?
       </div>
-      <div className="mt-6">
-        <div className="bg-gray-800 px-4 py-2 rounded w-72 m-auto">
+      <div className="mt-10">
+        <div className="bg-gray-900 px-4 py-2 rounded w-96 m-auto">
           <select
             id="browser"
             name="browser"
-            className="bg-gray-800 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
+            className="bg-gray-900 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
             defaultValue="Canada"
             onChange={(evt: any) => props.onSelect(evt.target.value)}
           >
@@ -54,7 +54,7 @@ const Importer = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-black bg-opacity-90",
+        "flex flex-col h-screen items-center bg-gray-800",
         "justify-center font-body text-center px-12"
       )}
     >
@@ -65,7 +65,7 @@ const Importer = (props: {
       <div>
         <FractalButton
           contents="Continue"
-          className="mt-4 px-12 w-72 mx-auto py-2 text-gray-300 hover:text-black"
+          className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 hover:text-black"
           state={
             processing
               ? FractalButtonState.PROCESSING

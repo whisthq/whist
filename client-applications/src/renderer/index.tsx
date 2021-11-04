@@ -97,7 +97,11 @@ const RootComponent = () => {
     return (
       <Typeform
         onSubmit={handleOnboardingTypeform}
-        id="Oi21wwbg"
+        id={
+          (mainState.appEnvironment ?? "prod") === "prod"
+            ? "Oi21wwbg"
+            : "cJcK0C8q"
+        }
         email={mainState.userEmail}
       />
     )
