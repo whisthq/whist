@@ -88,3 +88,43 @@ def get_lingering_instances(database_url, region):
     instances = execute_db_query(database_url, "cloud", query)
 
     return instances
+
+def get_instance_id(database_url, region, omit_instance_names):
+    """
+    Gets all instance id that do not have a matching instance name from omit_instance_names the using the database url and region
+
+    Args:
+        database_url (str): current database url
+        region (str): current region
+        omit_instance_names (arr): list of instances name to omit
+
+    Returns:
+        arr: array of instance cloud provider id
+    """
+
+    query = (
+        "SELECT cloud_provider_id FROM instance_info WHERE instance_name NOT IN %s AND location = '%s';"
+        % (omit_instance_names, region)
+    )
+    instances = execute_db_query(database_url, "cloud", query)
+
+    return instances
+
+def delete_instances_from_instance_info(database_url, region, instance_ids):
+    """
+    Delete all instances with a matching instance id to instance_ids 
+
+    Args:
+        database_url (str): current database url
+        region (str): current region
+        instance_ids (arr): list of instances ids to delete
+    """
+
+    query = (
+        "DELETE FROM instance_info WHERE instance_id IN %s AND location = '%s';"
+        % (instance_ids, region)
+    )
+
+    instances = execute_db_query(database_url, "cloud", query)
+
+    return
