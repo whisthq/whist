@@ -74,8 +74,6 @@ extern volatile char hex_aes_private_key[33];
 extern volatile SDL_Window* window;
 extern volatile char* window_title;
 extern volatile bool should_update_window_title;
-extern volatile bool run_sync_udp_packets;
-extern volatile bool run_sync_tcp_packets;
 volatile bool is_timing_latency;
 extern volatile double latency;
 
@@ -116,10 +114,7 @@ extern SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 extern clock window_resize_timer;
 extern volatile bool pending_resize_message;
 
-// Function Declarations
-
 extern SocketContext packet_udp_context;
-extern SocketContext packet_tcp_context;
 
 extern volatile bool connected;
 extern volatile bool client_exiting;
@@ -204,25 +199,8 @@ int32_t multithreaded_renderer(void* opaque) {
     }
 
     while (run_renderer_thread) {
-        // Timer used in CI mode to exit after 1 min
-        static clock ci_timer;
-        start_timer(&ci_timer);
-
-        static clock ack_timer;
-        start_timer(&ack_timer);
-
-        if (get_timer(ack_timer) > 5) {
-            ack(&packet_udp_context);
-            ack(&packet_tcp_context);
-            start_timer(&ack_timer);
-        }
-
-        // Render Audio
-        // is thread-safe regardless of what other function calls are being made to audio
         render_audio();
-        // Render video
         render_video();
-
         SDL_Delay(1);
     }
 
@@ -453,15 +431,12 @@ int main(int argc, char* argv[]) {
         is_timing_latency = false;
         init_audio();
 
-        // Create thread to receive all packets and handle them as needed
-        run_sync_udp_packets = true;
-        SDL_Thread* sync_udp_packets_thread =
-            SDL_CreateThread(multithreaded_sync_udp_packets, "SyncUDPPackets", &packet_udp_context);
-
-        // Create thread to send and receive TCP packets
-        run_sync_tcp_packets = true;
-        SDL_Thread* sync_tcp_packets_thread =
-            SDL_CreateThread(multithreaded_sync_tcp_packets, "SyncTCPPackets", NULL);
+        // Create threads to receive udp/tcp packets and handle them as needed
+        bool run_sync_packets = true;
+        SDL_Thread* sync_udp_packets_thread = SDL_CreateThread(
+            multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets", &run_sync_packets);
+        SDL_Thread* sync_tcp_packets_thread = SDL_CreateThread(
+            multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &run_sync_packets);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
@@ -588,9 +563,8 @@ int main(int argc, char* argv[]) {
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 
-        run_sync_tcp_packets = false;
+        run_sync_packets = false;
         SDL_WaitThread(sync_tcp_packets_thread, NULL);
-        run_sync_udp_packets = false;
         SDL_WaitThread(sync_udp_packets_thread, NULL);
         destroy_audio();
         close_connections();

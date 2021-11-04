@@ -41,6 +41,7 @@ SocketContext packet_udp_context = {0};
 SocketContext packet_tcp_context = {0};
 extern char *server_ip;
 int uid;
+extern bool using_stun;
 
 volatile double latency;
 extern clock last_ping_timer;
@@ -278,13 +279,10 @@ int connect_to_server(bool using_stun) {
     return 0;
 }
 
-int send_tcp_reconnect_message(bool using_stun) {
+int send_tcp_reconnect_message() {
     /*
         Send a TCP socket reset message to the server, regardless of the initiator of the lost
         connection.
-
-        Arguments:
-            using_stun (bool): whether we are using the STUN server
 
         Returns:
             0 on success, -1 on failure
