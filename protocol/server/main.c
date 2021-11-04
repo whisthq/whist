@@ -277,7 +277,6 @@ int main(int argc, char* argv[]) {
     error_monitor_initialize(false);
 
     init_networking();
-    inititialze_notification_dbus();
 
 #if defined(_WIN32)
     // set Windows DPI
@@ -339,6 +338,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef __linux__
     init_x11_window_info_getter();
+    if (!inititialze_notification_watcher()) LOG_FATAL("Notication watcher failed to initialize");
 #endif
 
     clock ack_timer;
@@ -363,6 +363,13 @@ int main(int argc, char* argv[]) {
         if (!assuming_client_active) {
             continue;
         }
+
+        // If we have notifications to process, let's process them
+        int notifications_available = check_for_notifications();
+        if (notifications_available == -1) {
+            LOG_FATAL("Notifications cannot be read");
+        } else if (notifications_available)
+            process_notifications();
 
         // Get UDP messages
         get_fractal_client_messages(&server_state, false, true);
