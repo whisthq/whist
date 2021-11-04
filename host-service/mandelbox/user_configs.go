@@ -25,7 +25,6 @@ import (
 	awsTypes "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	types "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/pierrec/lz4/v4"
