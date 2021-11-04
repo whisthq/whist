@@ -1,6 +1,5 @@
 export const ONBOARDING_TYPEFORM_SUBMITTED = "data.onboardingTypeformSubmitted"
 export const RESTORE_LAST_SESSION = "data.restoreLastSession"
-export const COOKIE_IMPORTER_SUBMITTED = "data.cookieImporterSubmitted"
 export const EXIT_TYPEFORM_SUBMITTED = "data.exitTypeformSubmitted"
 export const CACHED_ACCESS_TOKEN = "auth.accessToken"
 export const CACHED_REFRESH_TOKEN = "auth.refreshToken"

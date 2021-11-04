@@ -18,10 +18,7 @@ import {
   userEmail,
   configToken,
 } from "@app/utils/state"
-import {
-  COOKIE_IMPORTER_SUBMITTED,
-  ONBOARDING_TYPEFORM_SUBMITTED,
-} from "@app/constants/store"
+import { ONBOARDING_TYPEFORM_SUBMITTED } from "@app/constants/store"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -47,9 +44,6 @@ const onboarded = fromSignal(
     zip(
       of(persistGet(ONBOARDING_TYPEFORM_SUBMITTED)).pipe(
         filter((onboarded) => onboarded as boolean)
-      ),
-      of(persistGet(COOKIE_IMPORTER_SUBMITTED)).pipe(
-        filter((imported) => imported as boolean)
       )
     )
   ),
