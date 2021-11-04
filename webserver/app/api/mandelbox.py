@@ -122,7 +122,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     mandelbox_id = str(uuid.uuid4())
     obj = MandelboxInfo(
         mandelbox_id=mandelbox_id,
-        instance_or_error=instance.instance_or_error,
+        instance_name=instance.instance_name,
         user_id=username,
         session_id=str(body.session_id),
         status="ALLOCATED",

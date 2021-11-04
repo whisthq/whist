@@ -3,7 +3,7 @@ import time
 
 from collections import defaultdict
 from sys import maxsize
-from typing import Any, DefaultDict, List, Optional
+from typing import Any, DefaultDict, List, Optional, Union
 from flask import current_app
 from app.database.models.cloud import (
     db,
@@ -145,7 +145,7 @@ def find_enabled_regions() -> Any:
     return RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
 
 
-def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
+def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxAssignError]:
     """
     Given a list of regions, finds (if it can) an instance in that region
     or a neighboring region with space. If it succeeds, returns the instance name.
