@@ -700,6 +700,10 @@ jobs:
       - name: Update Hasura Metadata Following Database Migration (as needed)
         if: needs.fractal-publish-build-config.outputs.publish == 'true'
         run: |
+          # Install Hasura CLI
+          curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
+
+          # Reload Hasura Metadata per-environment
           BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
 
           # Set Hasura app name and admin key based on branch
