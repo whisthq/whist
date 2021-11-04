@@ -15,7 +15,6 @@ Includes
 */
 
 #include <stdio.h>
-#include <libgen.h>
 
 #include <fractal/core/fractal.h>
 #include "file_synchronizer.h"
@@ -319,8 +318,11 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
         return;
     }
 
-    // Set file metadata filename (just the basename, not the full path)
-    char* temp_file_name = basename(active_file->file_path);
+    // We could use `basename`, but it sadly is not cross-platform.
+    char* temp_file_name = active_file->file_path;
+    for (char* c = active_file->file_path; *c; ++c) {
+        if (*c == '/') temp_file_name = c + 1;
+    }
     int filename_len = strlen(temp_file_name);
 
     FileMetadata* file_metadata = allocate_region(sizeof(FileData) + filename_len + 1);
