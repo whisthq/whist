@@ -269,9 +269,13 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     start_timer(&last_ack);
 
     while (*run_sync_packets) {
-        // Ack the connection every 5 seconds
-        if (get_timer(last_ack) > 5.0) {
-            ack(socket_context);
+        // Ack the connection every 50 ms
+        if (get_timer(last_ack) > 0.05) {
+            int ret = ack(socket_context);
+            if (ret != 0) {
+                LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
+                send_tcp_reconnect_message();
+            }
             start_timer(&last_ack);
         }
 
@@ -305,8 +309,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         if (is_clipboard_synchronizing()) {
             // We want to continue pumping read_packet or get_next_clipboard_chunk
-            // until we're done synchronizing. Sleep 1 ms for safety.
-            fractal_sleep(1);
+            // until we're done synchronizing.
             continue;
         }
 
