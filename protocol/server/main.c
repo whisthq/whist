@@ -338,7 +338,9 @@ int main(int argc, char* argv[]) {
 
 #ifdef __linux__
     init_x11_window_info_getter();
-    if (!inititialze_notification_watcher()) LOG_FATAL("Notication watcher failed to initialize");
+    if (inititialze_notification_watcher() < 0) {
+        LOG_FATAL("Notication watcher failed to initialize");
+    }
 #endif
 
     clock ack_timer;
@@ -364,13 +366,6 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // If we have notifications to process, let's process them
-        int notifications_available = check_for_notifications();
-        if (notifications_available == -1) {
-            LOG_FATAL("Notifications cannot be read");
-        } else if (notifications_available)
-            process_notifications();
-
         // Get UDP messages
         get_fractal_client_messages(&server_state, false, true);
 
@@ -387,6 +382,13 @@ int main(int argc, char* argv[]) {
         // only poll for window name and if it's full-screen if
         // we're running on a Linux server, as Windows window title is not implemented
 #ifdef __linux__
+            // If we have notifications to process, let's process them
+        int notifications_available = check_for_notifications();
+        if (notifications_available == -1) {
+            LOG_FATAL("Notifications cannot be read");
+        } else if (notifications_available)
+            process_notifications();
+
         if (get_timer(window_fullscreen_timer) > 0.1) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.

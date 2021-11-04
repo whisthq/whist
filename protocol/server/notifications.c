@@ -56,6 +56,7 @@ int inititialze_notification_watcher() {
     notifications_watch_descriptor = inotify_add_watch(
         notifications_log_fd, CHROMIUM_NOTIFICATION_LOG, IN_CLOSE_WRITE);
     if (notifications_watch_descriptor < 0) {
+        LOG_INFO("NOTIFCATIONS: Errno: %s", strerror(errno));
         LOG_FATAL(
             "notifications::initialize_notification_watcher: failed to add watch to notification "
             "log");
@@ -71,7 +72,7 @@ int check_for_notifications() {
 
     // Since this is non-blocking, if there are no notifications, this
     // will return a len of 0, so we can use this instead of polling
-    size_t len = read(notifications_log_fd, buf, sizeof(buf));
+    ssize_t len = read(notifications_log_fd, buf, sizeof(buf));
     LOG_INFO("NOTIFICATIONS: read len: %d", len);
     // EAGAIN is set when we call read and there's no data. Since this is
     // non-blocking (as set in init_inotify1), this is fine behaviour
