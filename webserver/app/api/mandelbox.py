@@ -38,7 +38,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
         fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
-        return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
+        return jsonify({"ip": "None", "mandelbox_id": "None", "reason": "user_already_active"}),
+        HTTPStatus.SERVICE_UNAVAILABLE
 
     # Of the regions provided in the request, filter out the ones that are not active
     enabled_regions = find_enabled_regions()
@@ -50,7 +51,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"None of the request regions {body.regions} are enabled, enabled regions are {enabled_regions}"
         )
         return (
-            jsonify({"ip": "None", "mandelbox_id": "None", "region": "None"}),
+            jsonify({"ip": "None", "mandelbox_id": "None", "region": "None", "reason": "region_not_enabled"}),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
@@ -113,7 +114,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"Returning 503 to user {username} because we didn't find an instance for them."
         )
         return (
-            jsonify({"ip": "None", "mandelbox_id": "None", "region": region}),
+            jsonify({"ip": "None", "mandelbox_id": "None", "region": region, "reason": "no_instance_found"}),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
