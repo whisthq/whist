@@ -113,7 +113,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 
 	testMandelboxInfo := subscriptions.Mandelbox{
 		InstanceName: string(instanceName),
-		ID:           "testMandelbox",
+		ID:           mandelboxtypes.MandelboxID(utils.NilUUID),
 		SessionID:    "1234",
 		UserID:       userID,
 	}
