@@ -200,7 +200,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("Saved user config for mandelbox %s", mandelbox.mandelboxID)
+	logger.Infof("Saved user config for mandelbox %s", mandelbox.ID)
 
 	return nil
 }
