@@ -278,7 +278,7 @@ bool handshake_private_key(SocketContextData* context) {
 
     // Generate and send private key request data
     prepare_private_key_request(&our_priv_key_data);
-    if (send(context->socket, (const char *)&our_priv_key_data, sizeof(our_priv_key_data), 0) < 0) {
+    if (send(context->socket, (const char*)&our_priv_key_data, sizeof(our_priv_key_data), 0) < 0) {
         LOG_ERROR("send(3) failed! Could not send private key request data! %d",
                   get_last_network_error());
         return false;
@@ -300,7 +300,8 @@ bool handshake_private_key(SocketContextData* context) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
     }
-    if (send(context->socket, (const char *)&their_priv_key_data, sizeof(their_priv_key_data), 0) < 0) {
+    if (send(context->socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) <
+        0) {
         LOG_ERROR("send(3) failed! Could not send signed private key data! %d",
                   get_last_network_error());
         return false;

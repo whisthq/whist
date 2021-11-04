@@ -42,7 +42,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
 
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
-    int encrypted_len = 
+    int encrypted_len =
         recv(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
 
     // If the packet was successfully received, then decrypt it
