@@ -229,7 +229,6 @@ export const createAuthWindow = () => {
 
 export const createPaymentWindow = async (accessToken: accessToken) => {
   const response = await paymentPortalRequest(accessToken)
-  console.log(response)
   const { paymentPortalURL } = paymentPortalParse(response)
 
   const win = createWindow({
