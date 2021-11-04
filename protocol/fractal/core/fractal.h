@@ -129,6 +129,10 @@ Defines
 #define STARTING_BURST_BITRATE \
     (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
 
+// The FEC Ratio to use on all packets
+// (Only used for testing phase of FEC)
+#define FEC_PACKET_RATIO 0.0
+
 #define ACK_REFRESH_MS 50
 
 // 16:10 is the Mac aspect ratio, but we set the minimum screen to
@@ -631,6 +635,7 @@ typedef struct FractalClientMessage {
         struct {
             int bitrate;
             int burst_bitrate;
+            double fec_packet_ratio;
         } bitrate_data;
 
         // MESSAGE_PING or MESSAGE_TCP_PING

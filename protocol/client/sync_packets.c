@@ -198,8 +198,11 @@ void try_update_bitrate() {
         fcmsg.type = MESSAGE_MBPS;
         fcmsg.bitrate_data.bitrate = client_max_bitrate;
         fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
-        LOG_INFO("Asking for server MBPS to be %f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+        fcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
+        LOG_INFO("Asking for server MBPS to be %f/%f/%f",
+                 fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+                 fcmsg.bitrate_data.fec_packet_ratio);
         send_fcmsg(&fcmsg);
     }
 }

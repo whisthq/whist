@@ -221,8 +221,9 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+             fcmsg->bitrate_data.fec_packet_ratio);
     // Clamp the bitrates, preferring to clamp at MAX
     fcmsg->bitrate_data.bitrate =
         min(max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
@@ -233,10 +234,9 @@ static int handle_bitrate_message(FractalClientMessage *fcmsg) {
     // Set the new bitrate data (for the video encoder)
     max_bitrate = fcmsg->bitrate_data.bitrate;
 
-    // Use the burst bitrate to update the client's UDP packet throttle context
-    network_throttler_set_burst_bitrate(
-        ((SocketContextData *)client.udp_context.context)->network_throttler,
-        fcmsg->bitrate_data.burst_bitrate);
+    // Update the UDP Context's burst bitrate and fec ratio
+    udp_update_bitrate_settings(&client.udp_context, fcmsg->bitrate_data.burst_bitrate,
+                                fcmsg->bitrate_data.fec_packet_ratio);
 
     // Update the encoder using the new bitrate
     update_encoder = true;
