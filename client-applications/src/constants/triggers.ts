@@ -43,8 +43,6 @@ const WhistTrigger = {
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
-  onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
-  importerSubmitted: "importerSubmitted",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",

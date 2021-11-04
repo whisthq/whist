@@ -25,10 +25,10 @@ import {
   WindowHashSignout,
   WindowHashPayment,
   WindowHashProtocol,
+  WindowHashOnboarding,
   WindowHashBugTypeform,
   WindowHashSpeedtest,
   WindowHashUpdate,
-  WindowHashImporter,
 } from "@app/constants/windows"
 import {
   protocolLaunch,
@@ -296,7 +296,7 @@ export const createSignoutWindow = () => {
   })
 }
 
-export const createOnboardingTypeform = () =>
+export const createOnboardingWindow = () =>
   createWindow({
     options: {
       ...base,
@@ -308,7 +308,7 @@ export const createOnboardingTypeform = () =>
       frame: false,
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
-    hash: WindowHashOnboardingTypeform,
+    hash: WindowHashOnboarding,
     closeElectronWindows: true,
   })
 
@@ -399,18 +399,4 @@ export const createUpdateWindow = () =>
     hash: WindowHashUpdate,
     closeElectronWindows: true,
     closeProtocolWindow: true,
-  })
-
-export const createImporterWindow = () =>
-  createWindow({
-    options: {
-      ...base,
-      ...width.md,
-      ...height.xs,
-      frame: false,
-      titleBarStyle: "hidden",
-      transparent: true,
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashImporter,
-    closeElectronWindows: true,
   })

@@ -6,11 +6,7 @@ import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { execCommandByOS } from "@app/utils/execCommand"
 import { persistGet, persistSet } from "@app/utils/persist"
-import {
-  getDecryptedCookies,
-  InstalledBrowser,
-  Cookie,
-} from "@app/utils/importer"
+import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 
 export default flow(
@@ -126,7 +122,7 @@ export default flow(
           configToken: t.configToken,
           accessToken: t.accessToken,
           mandelboxID: c.mandelboxID,
-          cookies: d as Cookie[],
+          cookies: d,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

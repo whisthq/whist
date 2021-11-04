@@ -15,7 +15,7 @@ import {
   relaunch,
   createPaymentWindow,
   createBugTypeform,
-  createOnboardingTypeform,
+  createOnboardingWindow,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
@@ -98,7 +98,7 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
   .pipe(take(1))
   .subscribe(() => {
     const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-    if (!onboarded) createOnboardingTypeform()
+    if (!onboarded) createOnboardingWindow()
   })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises

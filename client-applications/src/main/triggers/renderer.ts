@@ -20,7 +20,6 @@ const filterByName = (
   WhistTrigger.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
   WhistTrigger.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
   WhistTrigger.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
-  WhistTrigger.exitTypeformSubmitted,
   WhistTrigger.onboarded,
   WhistTrigger.emitIPC,
 ].forEach((trigger: string) => {

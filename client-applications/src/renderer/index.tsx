@@ -4,7 +4,7 @@
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import ReactDOM from "react-dom"
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
@@ -36,11 +36,8 @@ import { WhistTrigger } from "@app/constants/triggers"
 // thread as a query parameter to determine which component
 // should be rendered.
 
-// If no query parameter match is found, we default to a
-// generic navigation error window.
-const show = window.location.search.split("show=")[1]
-
 const RootComponent = () => {
+  const [show, setShow] = useState(window.location.search.split("show=")[1])
   const [mainState, setMainState] = useMainState()
   const relaunch = () =>
     setMainState({
@@ -60,13 +57,7 @@ const RootComponent = () => {
       },
     })
 
-  const handleOnboardingTypeform = () =>
-    setMainState({
-      trigger: {
-        name: WhistTrigger.onboarded,
-        payload: undefined,
-      },
-    })
+  const handleOnboardingTypeform = () => setShow(WindowHashImporter)
 
   const showSignoutWindow = () =>
     setMainState({
@@ -74,9 +65,12 @@ const RootComponent = () => {
     })
 
   const handleImporterSubmit = (browser: string | undefined) => {
-    // setMainState({
-    //   trigger: { name: WhistTrigger.importerSubmitted, payload: { browser } },
-    // })
+    setMainState({
+      trigger: {
+        name: WhistTrigger.onboarded,
+        payload: { importCookiesFrom: browser },
+      },
+    })
   }
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-export const ONBOARDING_TYPEFORM_SUBMITTED = "data.onboardingTypeformSubmitted"
+export const ONBOARDED = "data.onboarded"
 export const RESTORE_LAST_SESSION = "data.restoreLastSession"
 export const EXIT_TYPEFORM_SUBMITTED = "data.exitTypeformSubmitted"
 export const CACHED_ACCESS_TOKEN = "auth.accessToken"

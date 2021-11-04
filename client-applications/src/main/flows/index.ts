@@ -1,5 +1,5 @@
 import { merge, of, combineLatest, zip } from "rxjs"
-import { map, take, filter, startWith, share, tap } from "rxjs/operators"
+import { map, take, filter, startWith, share } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -18,7 +18,7 @@ import {
   userEmail,
   configToken,
 } from "@app/utils/state"
-import { ONBOARDING_TYPEFORM_SUBMITTED } from "@app/constants/store"
+import { ONBOARDED } from "@app/constants/store"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -40,9 +40,9 @@ const auth = authFlow(
 
 const onboarded = fromSignal(
   merge(
-    fromTrigger(WhistTrigger.importerSubmitted),
+    fromTrigger(WhistTrigger.onboarded),
     zip(
-      of(persistGet(ONBOARDING_TYPEFORM_SUBMITTED)).pipe(
+      of(persistGet(ONBOARDED)).pipe(
         filter((onboarded) => onboarded as boolean)
       )
     )
@@ -69,9 +69,9 @@ const launchTrigger = fromSignal(
   combineLatest({
     accessToken,
     configToken,
-    importCookiesFrom: fromTrigger(WhistTrigger.importerSubmitted).pipe(
+    importCookiesFrom: fromTrigger(WhistTrigger.onboarded).pipe(
       startWith(undefined),
-      map((payload) => payload?.browser)
+      map((payload) => payload?.importCookiesFrom)
     ),
   }).pipe(
     map((x: object) => ({
