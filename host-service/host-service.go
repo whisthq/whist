@@ -386,7 +386,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// Receive the json transport request immediately when running on local env
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
-		if re.AppName == "" {
+		if req.AppName == "" {
 			AppName = mandelboxtypes.AppName("browsers/chrome")
 		} else {
 			AppName = req.AppName
