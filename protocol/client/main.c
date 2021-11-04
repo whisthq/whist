@@ -431,6 +431,10 @@ int main(int argc, char* argv[]) {
         is_timing_latency = false;
         init_audio();
 
+        // Initialize the clipboard synchronizer. This must happen before we start the udp/tcp
+        // threads
+        init_clipboard_synchronizer(true);
+
         // Create threads to receive udp/tcp packets and handle them as needed
         bool run_sync_packets = true;
         SDL_Thread* sync_udp_packets_thread = SDL_CreateThread(
@@ -566,6 +570,7 @@ int main(int argc, char* argv[]) {
         run_sync_packets = false;
         SDL_WaitThread(sync_tcp_packets_thread, NULL);
         SDL_WaitThread(sync_udp_packets_thread, NULL);
+        destroy_clipboard_synchronizer();
         destroy_audio();
         close_connections();
         run_renderer_thread = false;

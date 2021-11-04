@@ -262,7 +262,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     SocketContext* socket_context = &packet_tcp_context;
 
     last_tcp_ping_id = 0;
-    init_clipboard_synchronizer(true);
 
     clock last_ack;
     clock statistics_timer;
@@ -318,7 +317,5 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             fractal_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
         }
     }
-
-    destroy_clipboard_synchronizer();
     return 0;
 }
