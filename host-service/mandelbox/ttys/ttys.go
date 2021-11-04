@@ -18,6 +18,11 @@ type TTY uint8
 
 type ttyStatus byte
 
+// The AWS instances kernel only allows a maximum of 63 TTYs. To go beyond this
+// number we would need to recompile the kernel, as per this thread:
+// https://askubuntu.com/questions/1124397/how-do-i-increase-the-number-of-tty-consoles/1124510#1124510
+// Therefore, we set a max allowed TTY of 63, to avoid errors. This is currently
+// plenty of TTYs available for the number of mandelboxes we can put per instance.
 const (
 	// We need to allocate the first 10 for the system.
 	minAllowedTTY = 10 // inclusive
