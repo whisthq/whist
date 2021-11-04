@@ -5,7 +5,7 @@ import {
   HostSpinUpResponse,
 } from "@app/utils/host"
 import { zip, from } from "rxjs"
-import { map, switchMap, tap } from "rxjs/operators"
+import { map, switchMap } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 
 import { accessToken, configToken } from "@fractal/core-ts"
@@ -22,7 +22,6 @@ export default flow<
 >("hostSpinUpFlow", (trigger) => {
   const spin = fork(
     trigger.pipe(
-      tap((x) => console.log("host spinup flow starting", x.ip)),
       switchMap((args) =>
         from(
           hostSpinUp({
@@ -34,8 +33,7 @@ export default flow<
             cookies: args.cookies,
           })
         )
-      ),
-      tap((x) => console.log("host done!", x))
+      )
     ),
     {
       success: (result: HostSpinUpResponse) => hostSpinUpValid(result),
