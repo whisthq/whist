@@ -1,7 +1,7 @@
 #ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
-#else
+#endif
 
 #include "tcp.h"
 #include <fractal/utils/aes.h>
