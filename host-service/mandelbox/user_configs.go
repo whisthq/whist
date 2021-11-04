@@ -195,7 +195,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return err
 	}
 
-	err = mandelbox.uploadAndEncryptToS3(mandelbox.getS3ConfigKey(), encTarPath)
+	err = mandelbox.uploadEncryptedFileToS3(mandelbox.getS3ConfigKey(), encTarPath)
 
 	if err != nil {
 		return err
