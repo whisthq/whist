@@ -1,7 +1,10 @@
 #include "udp.h"
 #include <fractal/utils/aes.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, need to
+                                         // be at the very top
+#else
 #include <fcntl.h>
 #endif
 
@@ -37,7 +40,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
 
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
-    int encrypted_len = recv(context->socket, &encrypted_packet, sizeof(encrypted_packet), 0);
+    int encrypted_len = recv(context->socket, (char*) &encrypted_packet, sizeof(encrypted_packet), 0);
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
@@ -138,10 +141,10 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 #endif
         if (ENCRYPTING_PACKETS) {
             // Send encrypted during normal usage
-            ret = send(context->socket, &encrypted_packet, (int)encrypted_len, 0);
+            ret = send(context->socket, (const char*) &encrypted_packet, (int)encrypted_len, 0);
         } else {
             // Send unencrypted during dev mode
-            ret = send(context->socket, packet, (int)packet_size, 0);
+            ret = send(context->socket, (const char*) packet, (int)packet_size, 0);
         }
         fractal_unlock_mutex(context->mutex);
         if (ret < 0) {

@@ -5,7 +5,7 @@
  *        under-the-hood.
  */
 
-#if defined(_WIN32)
+#ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, need to
                                          // be at the very top
 #define _CRT_SECURE_NO_WARNINGS
