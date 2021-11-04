@@ -387,6 +387,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 		if req.AppName == "" {
+			// If no app name is set, we default to using the `browsers/chrome` image.
 			AppName = mandelboxtypes.AppName("browsers/chrome")
 		} else {
 			AppName = req.AppName
