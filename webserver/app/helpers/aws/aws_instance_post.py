@@ -19,6 +19,7 @@ from app.utils.general.name_generation import generate_name
 from app.utils.general.logs import fractal_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 from app.constants.ec2_instance_states import EC2InstanceState
+from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -152,7 +153,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
     Args:
         regions: a list of regions sorted by proximity
 
-    Returns: either an instance name or None
+    Returns: either an instance name or MandelboxAssignError
 
     """
     bundled_regions = bundled_region.get(region, [])
@@ -174,19 +175,30 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         # If we are unable to find the instance in the required region,
         # let's try to find an instance in nearby AZ
         # that doesn't impact the user experience too much.
-        instance_with_max_mandelboxes = (
+        active_instances_in_bundled_regions = (
             InstancesWithRoomForMandelboxes.query.filter(
                 InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
+            ).filter_by(
+                status=MandelboxHostState.ACTIVE
             )
-            .filter_by(
-                commit_hash=client_commit_hash,
-                status=MandelboxHostState.ACTIVE,
-            )
-            .limit(1)
-            .one_or_none()
         )
+
+        if not active_instances_in_bundled_regions:
+            return MandelboxAssignError.NO_INSTANCE_AVAILABLE
+
+        
+        instances_with_correct_commit_hash = active_instances_in_bundled_regions.filter_by(
+            commit_hash=client_commit_hash
+        )
+
+        if not active_instances_in_bundled_regions:
+            return MandelboxAssignError.COMMIT_HASH_MISMATCH
+
+        instance_with_max_mandelboxes = instances_with_correct_commit_hash.limit(1).one_or_none()
+
     if instance_with_max_mandelboxes is None:
-        return None
+        return MandelboxAssignError.UNDEFINED  
+        
     else:
         # 5sec arbitrarily decided as sufficient timeout when using with_for_update
         set_local_lock_timeout(5)
@@ -200,7 +212,7 @@ def find_instance(region: str, client_commit_hash: str) -> Optional[str]:
         )
         # The instance that was available earlier might be lost before we try to grab a lock.
         if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
-            return None
+            return MandelboxAssignError.COULD_NOT_LOCK_INSTANCE
         else:
             return str(avail_instance.instance_name)
 
