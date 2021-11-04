@@ -34,6 +34,13 @@ jobs:
         with:
           python-version: "3.10.0"
 
+      - name: Install Heroku CLI
+        run: |
+          curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | sudo bash
+
+
+
+
       - name: Install Dependencies
         working-directory: webserver
         run: pip install -r requirements.txt -r requirements-test.txt
