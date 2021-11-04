@@ -124,7 +124,10 @@ def get_all_nonterminated_aws_instances(region):
     client = boto3.client("ec2", region_name=region)
     response = client.describe_instances(
         Filters=[
-            {"Name": "instance-state-name", "Values": ["pending", "running", "stopping", "stopped", "shutting-down"]}
+            {
+                "Name": "instance-state-name",
+                "Values": ["pending", "running", "stopping", "stopped", "shutting-down"],
+            }
         ]
     )
 
@@ -261,5 +264,3 @@ def get_non_personal_development_instances(region):
             instances.append((name, instance["InstanceId"]))
 
     return instances
-
-
