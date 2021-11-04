@@ -90,11 +90,15 @@ def encrypt(browser_name, value, encrypt_prefix):
             osx_key_user = "Microsoft Edge"
         my_pass = keyring.get_password(osx_key_service, osx_key_user)
     else:  # will assume it's linux for now
-        os_crypt_name = "chromium"
-        if browser_name == "chrome":
-            os_crypt_name = browser_name
+        # We will hardcode the my_pass for now as GNOME-Keyring is not properly configured
+        # and will result in the default value `peanuts`
 
-        my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
+        # os_crypt_name = "chromium"
+        # if browser_name == "chrome":
+        #     os_crypt_name = browser_name
+        # my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
+
+        my_pass = b'peanuts'
 
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
 
@@ -141,8 +145,6 @@ def set_browser_cookies(to_browser_name, cookies):
         to_browser_name (str): the name of the browser we will import cookies to
         cookies (dict): the cookies being imported
     """
-    to_browser = get_browser(to_browser_name)
-
     cookie_file = get_cookie_file(to_browser_name)
 
     encrypted_cookies = []
