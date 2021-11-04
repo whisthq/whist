@@ -596,7 +596,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
 
     StunEntry entry = {0};
     int recv_size;
-    if ((recv_size = recv(context->socket, &entry, sizeof(entry), 0)) < 0) {
+    if ((recv_size = recv(context->socket, (char*)&entry, sizeof(entry), 0)) < 0) {
         LOG_WARNING("Could not receive message from STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
