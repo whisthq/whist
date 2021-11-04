@@ -114,8 +114,6 @@ extern SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 extern clock window_resize_timer;
 extern volatile bool pending_resize_message;
 
-extern SocketContext packet_udp_context;
-
 extern volatile bool connected;
 extern volatile bool client_exiting;
 volatile int try_amount;
