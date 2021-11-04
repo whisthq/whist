@@ -231,6 +231,23 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
     return 0;
 }
 
+void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrate,
+                                 double fec_packet_ratio) {
+    SocketContextData* context = socket_context->context;
+
+    if (context->network_throttler == NULL) {
+        LOG_ERROR("Tried to set the burst bitrate, but there's no network throttler!");
+        return;
+    }
+
+    if (fec_packet_ratio > 0.0) {
+        LOG_ERROR("Asked for a larger FEC ratio, but FEC isn't implemented yet!");
+    }
+    context->fec_packet_ratio = fec_packet_ratio;
+
+    network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
+}
+
 void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType type,
                               int max_payload_size, int num_buffers) {
     SocketContextData* context = socket_context->context;
@@ -700,6 +717,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     } else {
         context->network_throttler = NULL;
     }
+    context->burst_bitrate = -1;
+    context->fec_packet_ratio = 0.0;
 
     int ret;
     if (using_stun) {

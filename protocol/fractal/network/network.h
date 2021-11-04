@@ -236,6 +236,8 @@ typedef struct {
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
     NetworkThrottleContext* network_throttler;
+    int burst_bitrate;
+    double fec_packet_ratio;
     bool decrypted_packet_used;
     FractalPacket decrypted_packet;
     // Nack Buffer Data
