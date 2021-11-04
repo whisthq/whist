@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import browser_cookie3
 import sqlite3
@@ -22,6 +23,41 @@ def get_browser(browser_name):
     #     browser = browser_cookie3.Firefox()
     else:
         raise ("unknown browser name")
+
+def get_cookie_file(browser_name):
+    """
+    Gets file containing all cookies
+    Args:
+        browser_name (str): the name of the browser we got cookies from
+    Return:
+        str: the path to cookies
+    """
+
+    if sys.platform.startswith("linux"):
+        linux_cookies = []
+        if browser_name == "chrome":
+            linux_cookies = [
+                "~/.config/google-chrome/Default/Cookies",
+                "~/.config/google-chrome-beta/Default/Cookies",
+            ]
+        elif browser_name == "chromium":
+            linux_cookies = ["~/.config/chromium/Default/Cookies"]
+        elif browser_name == "opera":
+            linux_cookies = ["~/.config/opera/Cookies"]
+        elif browser_name == "edge":
+            linux_cookies = [
+                "~/.config/microsoft-edge/Default/Cookies",
+                "~/.config/microsoft-edge-dev/Default/Cookies",
+            ]
+        elif browser_name == "brave":
+            linux_cookies = [
+                '~/.config/BraveSoftware/Brave-Browser/Default/Cookies',
+                '~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies'
+            ]
+        return browser_cookie3.expand_paths(linux_cookies, "linux")
+
+    else:
+        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
 
 
 def encrypt(browser_name, value, encrypt_prefix):
@@ -68,7 +104,7 @@ def encrypt(browser_name, value, encrypt_prefix):
     encrypted_value = aes_cbc_encrypt.feed(encoded_value)
     encrypted_value += aes_cbc_encrypt.feed()
 
-    encrypted_value = encrypt_prefix + encrypted_value
+    encrypted_value = encrypt_prefix.encode('utf-8') + encrypted_value
 
     return encrypted_value
 
@@ -83,7 +119,7 @@ def format_chromium_based_cookie(cookie):
         cookie["encrypted_value"],
         cookie["path"],
         cookie["expires_utc"],
-        cookie["secure"] if not (cookie["secure"] is None) else cookie["is_secure"],
+        cookie.get("secure", cookie.get("is_secure", False)),
         cookie["is_httponly"],
         cookie["last_access_utc"],
         cookie["has_expires"],
@@ -107,7 +143,7 @@ def set_browser_cookies(to_browser_name, cookies):
     """
     to_browser = get_browser(to_browser_name)
 
-    cookie_file = to_browser.cookie_file
+    cookie_file = get_cookie_file(to_browser_name)
 
     encrypted_cookies = []
 
@@ -149,5 +185,6 @@ if __name__ == "__main__":
     browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
     cookies = os.getenv("WHIST_INITIAL_USER_COOKIES", None)
 
-    if not (cookies is None) and len(cookies) > 0:
-        set_browser_cookies(browser, cookies)
+    if not (cookies is None):
+        json_cookies = json.loads(cookies)
+        set_browser_cookies(browser, json_cookies)
