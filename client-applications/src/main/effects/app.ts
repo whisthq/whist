@@ -122,6 +122,10 @@ withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
   persistSet(ONBOARDED, true)
 })
 
+fromTrigger(WhistTrigger.onboarded).subscribe(() => {
+  persistSet(ONBOARDED, true)
+})
+
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.requestSingleInstanceLock()
 
