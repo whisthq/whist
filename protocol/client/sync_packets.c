@@ -287,8 +287,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         if (packet) {
             TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
-                                           (size_t)packet->payload_size);
-                     , "handle_server_message (tcp)", statistics_timer);
+                                           (size_t)packet->payload_size),
+                     "handle_server_message (tcp)", statistics_timer);
             free_packet(socket_context, packet);
         }
 
@@ -313,8 +313,10 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             continue;
         }
 
-        // Sleep at least 1 ms, targeting one loop every 25 ms.
-        fractal_sleep(max(1, 25 - (int)((double)get_timer(last_ack) * MS_IN_SECOND)));
+        // Sleep to target one loop every 25 ms.
+        if (get_timer(last_ack) * MS_IN_SECOND < 25.0) {
+            fractal_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
+        }
     }
 
     destroy_clipboard_synchronizer();
