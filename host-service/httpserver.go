@@ -194,6 +194,21 @@ func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
 	return transportRequestMap[mandelboxID]
 }
 
+func getAppName(mandelboxID mandelboxtypes.MandelboxID,
+	transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) mandelboxtypes.AppName {
+
+	var AppName mandelboxtypes.AppName
+	if metadata.IsLocalEnv() && metadata.GetAppEnvironment() != metadata.EnvLocalDevWithDB {
+		// Receive the json transport request immediately when running on local env
+		jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
+		req := <-jsonchan
+		AppName = req.AppName
+	} else {
+		AppName = "browsers/chrome"
+	}
+	return AppName
+}
+
 // Helper functions
 
 // Function to verify the type (method) of a request

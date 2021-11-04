@@ -380,6 +380,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Error(err)
 	}
 
+<<<<<<< HEAD
 	// mandelboxSubscription is the pubsub event received from Hasura.
 	mandelboxSubscription := sub.MandelboxInfo[0]
 
@@ -399,6 +400,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// If not on a local environment, we default to using the `browsers/chrome` image.
 		AppName = mandelboxtypes.AppName("browsers/chrome")
 	}
+=======
+	subscriptionInfo := sub.MandelboxInfo[0]
+	AppName := getAppName(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+>>>>>>> a79a8f3f5 (Move environment dependent json transport function to httpserver.go)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
@@ -696,9 +701,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
-	if !metadata.IsLocalEnv() {
-		// Receive the json transpor request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
+	var req *JSONTransportRequest
+	if !metadata.IsLocalEnv() || metadata.GetAppEnvironment() == metadata.EnvLocalDevWithDB {
+		// Receive the json transport request from the client via the httpserver.
+		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 	}
 
