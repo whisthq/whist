@@ -1255,6 +1255,11 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
+        // We must remove the resize event watch, as SDL is allowed to change fullscreen
+        // state on exit, which can potentially cause a resize event to be sent to the
+        // the watcher.
+        SDL_DelEventWatch(resizing_event_watcher, (SDL_Window*)window);
+
 #ifdef __APPLE__
         // On __APPLE__, video_context.renderer is maintained in init_sdl_renderer
         if (video_context.texture) {
