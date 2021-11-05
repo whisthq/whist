@@ -26,6 +26,7 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+#include "notifications.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -242,12 +243,13 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_NOTIFICATION:
-                LOG_INFO("Hey, look at that, we got a notification");
+                TIME_RUN(display_notification(packet), "display_notification", statistics_timer);
                 break;
             default:
                 LOG_ERROR("Unknown packet type: %d", packet->type);
                 break;
         }
+        
         free_packet(socket_context, packet);
     }
     return 0;
