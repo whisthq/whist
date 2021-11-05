@@ -3,5 +3,10 @@
     "source": "google-chrome",
     "destination": "/home/whist/.config/google-chrome",
     "type": "folder"
+  },
+  {
+    "source": "brave-BraveSoftware",
+    "destination": "/home/fractal/.config/BraveSoftware",
+    "type": "folder"
   }
 ]

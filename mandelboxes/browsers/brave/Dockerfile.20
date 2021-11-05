@@ -49,7 +49,7 @@ RUN chmod +x /usr/bin/install-extensions.sh && /usr/bin/install-extensions.sh
 RUN su - fractal -c "mkdir -p /home/fractal/.config/BraveSoftware"
 
 # Don't show first run popup
-RUN su - fractal -c "touch /home/fractal/.config/brave/'First Run'"
+RUN su - fractal -c "touch /home/fractal/.config/BraveSoftware/'First Run'"
 
 # Install Whist wrapper script to run Brave Browser into /usr/bin
 COPY start-brave.sh /usr/bin/start-brave
