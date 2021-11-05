@@ -20,7 +20,7 @@ jobs:
   dockerfiles-lint-dockerfiles:
     name: Linting
     runs-on: ubuntu-20.04
-    container: hadolint/hadolint:v2.6.1 # This version should be updated periodically to use latest Hadolint rules
+    container: hadolint/hadolint:v2.3.0 # This version should be updated periodically to use latest Hadolint rules
 
     steps:
       - name: Checkout Git Repository
