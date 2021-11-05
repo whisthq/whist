@@ -22,7 +22,8 @@ jobs:
     runs-on: ubuntu-20.04
     container: hadolint/hadolint
     defaults:
-      shell: sh -e {0}
+      run:
+        shell: sh -e {0}
 
     steps:
       - name: Checkout Git Repository
