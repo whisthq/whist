@@ -8,6 +8,7 @@ import pyaes
 from pbkdf2 import PBKDF2
 from ast import literal_eval
 
+
 def get_browser(browser_name):
     if browser_name == "chrome":
         return browser_cookie3.Chrome()
@@ -23,6 +24,7 @@ def get_browser(browser_name):
     #     browser = browser_cookie3.Firefox()
     else:
         raise ("unknown browser name")
+
 
 def get_cookie_file(browser_name):
     """
@@ -51,8 +53,8 @@ def get_cookie_file(browser_name):
             ]
         elif browser_name == "brave":
             linux_cookies = [
-                '~/.config/BraveSoftware/Brave-Browser/Default/Cookies',
-                '~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies'
+                "~/.config/BraveSoftware/Brave-Browser/Default/Cookies",
+                "~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies",
             ]
 
         print(linux_cookies)
@@ -106,7 +108,7 @@ def encrypt(browser_name, value, encrypt_prefix):
         #     os_crypt_name = browser_name
         # my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
 
-        my_pass = b'peanuts'
+        my_pass = b"peanuts"
 
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
 
@@ -116,7 +118,7 @@ def encrypt(browser_name, value, encrypt_prefix):
     encrypted_value = aes_cbc_encrypt.feed(encoded_value)
     encrypted_value += aes_cbc_encrypt.feed()
 
-    encrypted_value = encrypt_prefix.encode('utf-8') + encrypted_value
+    encrypted_value = encrypt_prefix.encode("utf-8") + encrypted_value
 
     return encrypted_value
 
