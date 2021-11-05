@@ -108,7 +108,6 @@ void init_logger() {
     run_multithreaded_printf = true;
     logger_queue_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
-    logger_queue_mutex = fractal_create_mutex();
     mprintf_thread = fractal_create_thread((FractalThreadFunction)multithreaded_printf,
                                            "MultiThreadedPrintf", NULL);
     LOG_INFO("Logging initialized!");
@@ -126,6 +125,9 @@ void destroy_logger() {
 
     logger_history[0] = '\0';
     logger_history_len = 0;
+
+    fractal_destroy_semaphore((FractalSemaphore)logger_semaphore);
+    fractal_destroy_mutex((FractalMutex)logger_queue_mutex);
 }
 
 int multithreaded_printf(void* opaque) {
