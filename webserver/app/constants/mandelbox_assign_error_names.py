@@ -12,7 +12,7 @@ class MandelboxAssignError(str, Enum):
     COULD_NOT_LOCK_INSTANCE = "COULD_NOT_LOCK_INSTANCE"
     # No instance was found e.g. a capacity issue
     NO_INSTANCE_AVAILABLE = "NO_INSTANCE_AVAILABLE"
-    # We reached an unexpected condition
+    # We should not have reached this point, there is a logic error
     UNDEFINED = "UNDEFINED"
 
     @classmethod

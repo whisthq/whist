@@ -183,22 +183,21 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
             )
         )
 
-        if not active_instances_in_bundled_regions:
+        if active_instances_in_bundled_regions.limit(1).one_or_none() is None:
             return MandelboxAssignError.NO_INSTANCE_AVAILABLE
 
         
         instances_with_correct_commit_hash = active_instances_in_bundled_regions.filter_by(
             commit_hash=client_commit_hash
-        )
+        ).limit(1).one_or_none()
 
-        if not active_instances_in_bundled_regions:
+        if instances_with_correct_commit_hash is None:
             return MandelboxAssignError.COMMIT_HASH_MISMATCH
 
-        instance_with_max_mandelboxes = instances_with_correct_commit_hash.limit(1).one_or_none()
+        instance_with_max_mandelboxes = instances_with_correct_commit_hash
 
     if instance_with_max_mandelboxes is None:
-        return MandelboxAssignError.UNDEFINED  
-        
+        return MandelboxAssignError.UNDEFINED
     else:
         # 5sec arbitrarily decided as sufficient timeout when using with_for_update
         set_local_lock_timeout(5)
