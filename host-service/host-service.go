@@ -518,7 +518,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	
 	if !metadata.IsLocalEnv() {
 		// Receive the json transpor request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(subscriptionInfo.MandelboxID, transportRequestMap, transportMapLock)
+		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
 	}
 
@@ -709,7 +709,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
-		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
+		logAndReturnError("Unable to spin up mandelbox: trivial config encryptions3ConfigKey token received.", err)
 		return
 	}
 	mandelbox.SetConfigEncryptionToken(req.ConfigEncryptionToken)
