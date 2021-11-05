@@ -2,12 +2,12 @@
 
 set -Eeuo pipefail
 
-# Set environment variable if nonexistent
-if [[ -z "${WHIST_INITIAL_USER_COOKIES}" ]]; then
+# Set environment variable if unset
+if [[ -z ${WHIST_INITIAL_USER_COOKIES+x} ]]; then
   WHIST_INITIAL_USER_COOKIES=""
 fi
 
-if [[ -z "${WHIST_COOKIE_UPLOAD_TARGET}" ]]; then
+if [[ -z ${WHIST_COOKIE_UPLOAD_TARGET+x} ]]; then
   WHIST_COOKIE_UPLOAD_TARGET=""
 fi
 
