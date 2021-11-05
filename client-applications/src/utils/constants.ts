@@ -35,7 +35,7 @@ export const ErrorIPC = [
   "'send' methods for them to be exposed.",
 ].join(" ")
 
-export const sessionID = Date.now().toString(16)
+export const sessionID = Date.now()
 
 export const defaultAllowedRegions = [
   AWSRegion.US_EAST_1,
