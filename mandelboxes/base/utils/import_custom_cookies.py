@@ -6,7 +6,7 @@ import sqlite3
 import keyring
 import pyaes
 from pbkdf2 import PBKDF2
-
+from ast import literal_eval
 
 def get_browser(browser_name):
     if browser_name == "chrome":
@@ -54,6 +54,14 @@ def get_cookie_file(browser_name):
                 '~/.config/BraveSoftware/Brave-Browser/Default/Cookies',
                 '~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies'
             ]
+
+        print(linux_cookies)
+        paths = linux_cookies
+        paths = map(os.path.expanduser, paths)
+
+        for path in paths:
+            print(path)
+
         return browser_cookie3.expand_paths(linux_cookies, "linux")
 
     else:
@@ -162,6 +170,7 @@ def set_browser_cookies(to_browser_name, cookies):
         formatted_cookie = format_chromium_based_cookie(cookie)
         encrypted_cookies.append(formatted_cookie)
 
+    print(f"I found the cookie file: {cookie_file}")
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
     cur = con.cursor()
@@ -188,5 +197,5 @@ if __name__ == "__main__":
     cookies = os.getenv("WHIST_INITIAL_USER_COOKIES", None)
 
     if not (cookies is None):
-        json_cookies = json.loads(cookies)
-        set_browser_cookies(browser, json_cookies)
+        parsed_cookies = literal_eval(cookies)
+        set_browser_cookies(browser, parsed_cookies)
