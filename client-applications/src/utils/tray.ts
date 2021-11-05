@@ -88,15 +88,23 @@ const settingsMenu = new MenuItem({
     {
       label: "Automatically launch on computer start",
       type: "checkbox",
-      checked: (persistGet("autoLaunch", "data") ?? "true") === "true",
+      checked: <boolean>persistGet("autoLaunch", "data") ?? false,
       click: () => {
-        trayEvent.emit("autoLaunch")
+        trayEvent.emit("auto-launch")
+      },
+    },
+    {
+      label: "Restore the last browser session",
+      type: "checkbox",
+      checked: <boolean>persistGet("RestoreLastBrowserSession", "data") ?? true,
+      click: () => {
+        trayEvent.emit("restore-last-browser-session")
       },
     },
     {
       label: "(Coming Soon) Make Whist my default browser",
       click: () => {
-        trayEvent.emit("defaultBrowser")
+        trayEvent.emit("default-browser")
       },
     },
   ],

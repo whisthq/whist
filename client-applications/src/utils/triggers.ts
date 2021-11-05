@@ -49,6 +49,7 @@ export default {
   trayFeedbackAction: "trayFeedbackAction",
   trayBugAction: "trayBugAction",
   trayAutolaunchAction: "trayAutolaunchAction",
+  trayRestoreSessionAction: "trayRestoreSessionAction",
   showPaymentWindow: "showPaymentWindow",
 
   // Flow triggers

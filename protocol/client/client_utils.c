@@ -644,11 +644,6 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fcmsg, char *email) {
         LOG_ERROR("User email is too long: %s.\n", email);
         return -1;
     }
-    // Copy time
-    if (get_time_data(&(fcmsg->time_data)) != 0) {
-        LOG_ERROR("Failed to get time data.");
-        return -1;
-    }
 
     // Let the server know what OS we are
 #ifdef _WIN32

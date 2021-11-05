@@ -9,6 +9,7 @@ import Sentry from "@sentry/electron"
 import { fromTrigger } from "@app/utils/flows"
 import { protocolStreamInfo, childProcess } from "@app/utils/protocol"
 import { createProtocolWindow } from "@app/utils/windows"
+import { persistGet, persist } from "@app/utils/persist"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -38,3 +39,12 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
     }
   }
 )
+
+fromTrigger("trayRestoreSessionAction").subscribe(() => {
+  const restore = <boolean>persistGet("RestoreLastBrowserSession", "data")
+  if (restore !== undefined) {
+    persist("RestoreLastBrowserSession", !restore, "data")
+  } else {
+    persist("RestoreLastBrowserSession", true, "data")
+  }
+})
