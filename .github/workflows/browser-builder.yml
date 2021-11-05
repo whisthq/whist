@@ -39,14 +39,14 @@ jobs:
             os: [self-hosted, macOS, ARM64] # MacStadium Apple Silicon M1 8GB RAM
             arch: macos-arm64
             shell: /usr/bin/arch -arch arm64e /bin/bash {0}
-          - name: macOS (GHA) # TODO: For testing in GHA, need to remove
-            os: macos-10.15
-            arch: macos-x64
-            shell: bash --noprofile --norc -eo pipefail {0}
-          - name: Linux Ubuntu (GHA)
-            os: ubuntu-20.04
-            arch: linux-x64
-            shell: bash --noprofile --norc -eo pipefail {0}
+          # - name: macOS (GHA) # TODO: For testing in GHA, need to remove
+          #   os: macos-10.15
+          #   arch: macos-x64
+          #   shell: bash --noprofile --norc -eo pipefail {0}
+          # - name: Linux Ubuntu (GHA)
+          #   os: ubuntu-20.04
+          #   arch: linux-x64
+          #   shell: bash --noprofile --norc -eo pipefail {0}
 
     steps:
       ##################################### CONFIG STEPS START ###################################
