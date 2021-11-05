@@ -17,11 +17,11 @@ Includes
 */
 
 #include "notifications.h"
-
-//for debug
-#include <unistd.h>
-#include <limits.h>
-#include <dirent.h>
+#ifndef _WIN32
+// for debug
+// #include <unistd.h>
+// #include <limits.h>
+// #include <dirent.h>
 
 /*
 ============================
@@ -39,7 +39,9 @@ int notifications_watch_descriptor;
               decrease performance. Hence, the buffer used for reading from
               the inotify file descriptor should have the same alignment as
               struct inotify_event. */
-char buf[4096] __attribute__((aligned(__alignof__(struct inotify_event))));
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
+char buf[EVENT_BUF_LEN];
 const struct inotify_event *event;
 
 /*
@@ -55,11 +57,11 @@ int inititialze_notification_watcher() {
             "notifications::initialize_notification_watcher: failed to initialize notification "
             "watcher");
         return -1;
-    }    
+    }
 
     // Initialize the watch descriptor to tell us whenever the log file has been written to
-    notifications_watch_descriptor = inotify_add_watch(
-        notifications_log_fd, CHROMIUM_NOTIFICATION_LOG, IN_MODIFY);
+    notifications_watch_descriptor =
+        inotify_add_watch(notifications_log_fd, CHROMIUM_NOTIFICATION_LOG, IN_MODIFY);
     if (notifications_watch_descriptor < 0) {
         LOG_INFO("NOTIFCATIONS: Errno: %s", strerror(errno));
         LOG_FATAL(
@@ -74,22 +76,20 @@ int inititialze_notification_watcher() {
 }
 
 int check_for_notifications() {
-
     // Since this is non-blocking, if there are no notifications, this
     // will return a len of 0, so we can use this instead of polling
     ssize_t len = read(notifications_log_fd, buf, sizeof(buf));
 
     // EAGAIN is set when we call read and there's no data. Since this is
     // non-blocking (as set in init_inotify1), this is fine behaviour
-    if(len == -1 && errno != EAGAIN) {
+    if (len == -1 && errno != EAGAIN) {
         LOG_FATAL("notifications::notifications_available: read failed!");
         return -1;
     }
 
     // Case where there is no new data
-    if(len <= 0)
-        return 0;
-    
+    if (len <= 0) return 0;
+
     LOG_INFO("NOTIFICATIONS: Recieved!");
     // Case we have data
     return 1;
@@ -97,12 +97,12 @@ int check_for_notifications() {
 
 int process_notifications() {
     LOG_INFO("NOTIFICATIONS: sending notification");
-    FractalNotification notification = {
-        .title = "Test title",
-        .message = "Test message"
-    };
+    FractalNotification notification = {.title = "Test title", .message = "Test message"};
     if (client.is_active) {
-        send_packet(&client.udp_context, PACKET_NOTIFICATION, &notification, sizeof(FractalNotification), 0);
+        send_packet(&client.udp_context, PACKET_NOTIFICATION, &notification,
+                    sizeof(FractalNotification), 0);
     }
     return 0;
 }
+
+#endif

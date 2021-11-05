@@ -22,7 +22,9 @@ Includes
 #include <string.h>
 #include <stdint.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <sys/inotify.h>
+#endif
 #include <fractal/logging/logging.h>
 #include <fractal/core/fractal.h>
 #include <fractal/core/fractal_notification.h>

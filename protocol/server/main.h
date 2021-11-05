@@ -37,6 +37,7 @@ Includes
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "notifications.h"
 #endif
 #include <time.h>
 
@@ -50,7 +51,6 @@ Includes
 #include "network.h"
 #include "video.h"
 #include "audio.h"
-#include "notifications.h"
 
 #ifdef __linux__
 #include <fractal/utils/x11_window_info.h>
