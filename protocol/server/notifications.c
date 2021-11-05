@@ -59,7 +59,7 @@ int inititialze_notification_watcher() {
 
     // Initialize the watch descriptor to tell us whenever the log file has been written to
     notifications_watch_descriptor = inotify_add_watch(
-        notifications_log_fd, CHROMIUM_NOTIFICATION_LOG, IN_MODIFY);
+        notifications_log_fd, CHROMIUM_NOTIFICATION_LOG, IN_CLOSE_WRITE);
     if (notifications_watch_descriptor < 0) {
         LOG_INFO("NOTIFCATIONS: Errno: %s", strerror(errno));
         LOG_FATAL(
