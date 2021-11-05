@@ -65,30 +65,6 @@ void send_captured_key(SDL_Keycode key, int type, int time) {
     SDL_PushEvent(&e);
 }
 
-int resizing_event_watcher(void* data, SDL_Event* event) {
-    /*
-        Event watcher to be used in SDL_AddEventWatch to capture
-        and handle window resize events
-
-        Arguments:
-            data (void*): SDL Window data
-            event (SDL_Event*): SDL event to be analyzed
-
-        Return:
-            (int): 0 on success
-    */
-
-    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
-        // If the resize event if for the current window
-        SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
-        if (win == (SDL_Window*)data) {
-            // Notify video.c about the active resizing
-            set_video_active_resizing(true);
-        }
-    }
-    return 0;
-}
-
 void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
     /*
         Set the icon for a SDL window from a PNG file
