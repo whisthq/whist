@@ -2,6 +2,16 @@
 
 set -Eeuo pipefail
 
+# Set environment variable if nonexistent
+if [[ -z "${WHIST_INITIAL_USER_COOKIES}" ]]; then
+  WHIST_INITIAL_USER_COOKIES=""
+fi
+
+if [[ -z "${WHIST_COOKIE_UPLOAD_TARGET}" ]]; then
+  WHIST_COOKIE_UPLOAD_TARGET=""
+fi
+
+
 # Things running outside run_as_fractal are run as root.
 # Running with login means that we lose all environment variables, so we need to pass them in manually.
 
