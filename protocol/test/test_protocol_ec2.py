@@ -74,10 +74,10 @@ def wait_for_instances(instance_ids: List[str], stopping: bool = False) -> None:
     print(f"Instances are {'not' if stopping else ''} running: {instance_ids}")
 
 
-def start_instances(key_name: str) -> List[str]:
+def start_instance(instance_type: str, instance_AMI: str, ey_name: str) -> List[str]:
     kwargs = {
-        "ImageId": AMI,
-        "InstanceType": "g4dn.xlarge",
+        "ImageId": instance_AMI,
+        "InstanceType": instance_type, # should be g4dn.xlarge for server, t2.large for client
         "MaxCount": 2,
         "MinCount": 2,
         "TagSpecifications": [
@@ -96,9 +96,9 @@ def start_instances(key_name: str) -> List[str]:
         "KeyName": key_name,
     }
     resp = client.run_instances(**kwargs)
-    instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
-    print(f"Created ec2 instances with ids: {instance_ids}")
-    return instance_ids
+    instance_id = [instance["InstanceId"] for instance in resp["Instances"]]
+    print(f"Created EC2 instances with ids: {instance_id}")
+    return instance_id
 
 
 def wait_for_ssh(instance_ips: List[Dict[str, str]], key: paramiko.RSAKey) -> None:
@@ -138,7 +138,7 @@ def transfer_protocol(instance_ips: List[Dict[str, str]], key_path: str) -> None
         thread.join()
 
 
-def setup_host_serive(instance_ips: List[Dict[str, str]], key: paramiko.RSAKey) -> Tuple[threading.Thread]:
+def setup_host_service(instance_ips: List[Dict[str, str]], key: paramiko.RSAKey) -> Tuple[threading.Thread]:
     print("Setting up the host services on both instances")
     command = 'cd ~/fractal/host-service; while true; do make run; sleep 2; done'
     
@@ -185,9 +185,12 @@ if __name__ == "__main__":
         # Get the AWS key so that we can connect to the hosts.
         key_name, key_path = args.key_name, args.key_path
         key = paramiko.RSAKey.from_private_key_file(key_path)
+        server_ami = # 
+        client_ami = # baseline Ubuntu 20.04 AMI
 
         # Start two instances in ec2
-        instance_ids = start_instances(key_name)
+        server_instance_id = start_instance("g4dn.xlarge", server_ami, key_name) # server instance
+        client_instance_id = start_instance("t2.large", client_ami, key_name) # client instance
 
         # Give a little time for those instances to be recognized
         time.sleep(5)
@@ -205,7 +208,7 @@ if __name__ == "__main__":
         time.sleep(1)
 
         # # Perform setup steps that are the same for both instances
-        t1, t2 = setup_host_serive(instance_ips, key)
+        t1, t2 = setup_host_service(instance_ips, key)
 
         # Perform the actual task that we want
         transfer_protocol(instance_ips, key_path)
