@@ -664,7 +664,7 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-              HEROKU_APP_NAME=fractal-dev-server
+              HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
               HEROKU_APP_NAME=fractal-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
@@ -793,7 +793,7 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-              HEROKU_APP_NAME=fractal-dev-server
+              HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
               HEROKU_APP_NAME=fractal-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
@@ -1385,7 +1385,7 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-              HEROKU_APP_NAME=fractal-dev-server
+              HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
               HEROKU_APP_NAME=fractal-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then

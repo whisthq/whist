@@ -64,7 +64,7 @@ def _ensure_postgresql(conn_string: str) -> str:
     PostgreSQL connection strings that start with "postgres://" have long been deprecated and are
     no longer supported since SQLAlchemy 1.4.0b1. Unfortunately, the PostgreSQL connection strings
     with which Heroku automatically populates environment variables all begin with "postgres://"
-    (see for yourself by running heroku config:get DATABASE_URL --app=fractal-dev-server).
+    (see for yourself by running heroku config:get DATABASE_URL --app=whist-dev-server).
 
     https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html#change-3687655465c25a39b968b4f5f6e9170b
 
