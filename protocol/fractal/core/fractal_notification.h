@@ -2,8 +2,8 @@
 #define FRACTAL_NOTIFICATION_H
 
 // Randomly chosen, 
-#define MAX_TITLE_LEN 1000
-#define MAX_MESSAGE_LEN 10000
+#define MAX_TITLE_LEN 500 
+#define MAX_MESSAGE_LEN 500
 
 typedef struct FractalNotification {
     char title[MAX_TITLE_LEN];
