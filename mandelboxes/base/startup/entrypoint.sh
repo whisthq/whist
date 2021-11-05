@@ -24,6 +24,15 @@ fi
 # leak in any way (probably redundant, but still good practice)
 unset FRACTAL_AES_KEY
 
+# Override cookies
+RUN_AS_FRACTAL=/usr/share/fractal/run-as-fractal-user.sh
+$RUN_AS_FRACTAL "export $(dbus-launch)"
+$RUN_AS_FRACTAL "echo passowrd | gnome-keyring-daemon --unlock"
+$RUN_AS_FRACTAL "python3 /usr/bin/import_custom_cookies.py"
+
+unset WHIST_INITIAL_USER_COOKIES
+
+
 # Remove a vestigal file that we do not use.
 # This is how LXC used to read environment variables: see that deprecated code in
 # https://github.com/moby/moby/blob/v1.9.1/daemon/execdriver/lxc/init.go#L107-L134
