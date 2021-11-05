@@ -32,7 +32,7 @@ export const hostSpinUp = async ({
   jwt_access_token: string
   mandelbox_id: string
   json_data: string
-  cookies: Cookie[]
+  cookies: string
 }) =>
   hostPut(`https://${ip}:${HostServicePort}`)({
     endpoint: "/json_transport",

@@ -15,7 +15,7 @@ export default flow<
   {
     ip: string
     jsonData: string
-    cookies: Cookie[]
+    cookies: string
     mandelboxID: string
   } & accessToken &
     configToken

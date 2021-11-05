@@ -6,7 +6,7 @@ import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { execCommandByOS } from "@app/utils/execCommand"
 import { persistGet, persistSet } from "@app/utils/persist"
-import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
+import { getJSONDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 
 export default flow(
@@ -110,7 +110,7 @@ export default flow(
 
     const decrypted = trigger.pipe(
       switchMap((t) =>
-        from(getDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
+        from(getJSONDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
       ),
       share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
     )
@@ -122,7 +122,7 @@ export default flow(
           configToken: t.configToken,
           accessToken: t.accessToken,
           mandelboxID: c.mandelboxID,
-          cookies: d,
+          cookies: d as string,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
