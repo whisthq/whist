@@ -1007,7 +1007,7 @@ int init_video_renderer() {
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
 
-    // Initialize resize event handling
+    // Initialize resize event handling, must call SDL_DelEventWatch later
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
     // Init loading animation variables
@@ -1279,7 +1279,7 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
-        // Deinitialize resize event handling 
+        // Deinitialize resize event handling
         SDL_DelEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
 #ifdef __APPLE__
