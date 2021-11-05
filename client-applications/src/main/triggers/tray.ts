@@ -14,4 +14,8 @@ createTrigger(TRIGGER.showSignoutWindow, fromEvent(trayEvent, "signout"))
 createTrigger(TRIGGER.trayFeedbackAction, fromEvent(trayEvent, "feedback"))
 createTrigger(TRIGGER.trayRegionAction, fromEvent(trayEvent, "region"))
 createTrigger(TRIGGER.trayBugAction, fromEvent(trayEvent, "bug"))
-createTrigger(TRIGGER.trayAutolaunchAction, fromEvent(trayEvent, "autoLaunch"))
+createTrigger(TRIGGER.trayAutolaunchAction, fromEvent(trayEvent, "auto-launch"))
+createTrigger(
+  TRIGGER.trayRestoreSessionAction,
+  fromEvent(trayEvent, "restore-last-browser-session")
+)

@@ -532,7 +532,6 @@ typedef struct FractalMultigestureMessage {
  */
 typedef struct FractalDiscoveryRequestMessage {
     int user_id;
-    FractalTimeData time_data;
     char user_email[FRACTAL_ARGS_MAXLEN + 1];
     FractalOSType os;
 } FractalDiscoveryRequestMessage;
