@@ -48,13 +48,6 @@ done
 # Delete broken symlinks from config
 find $USER_CONFIGS_DIR -xtype l -delete
 
-# Override cookies
-RUN_AS_FRACTAL=/usr/share/fractal/run-as-fractal-user.sh
-$RUN_AS_FRACTAL "export $(dbus-launch)"
-$RUN_AS_FRACTAL "echo passowrd | gnome-keyring-daemon --unlock"
-$RUN_AS_FRACTAL "python3 /usr/bin/import_custom_cookies.py"
-
-
 # Register TTY once it was assigned via writing to a file by Whist Host Service
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 
