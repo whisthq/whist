@@ -122,7 +122,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata JSONTransportRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -235,7 +235,7 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 // advantages:
 // 1. We factor out duplicated functionality among all the endpoints that need
 // authentication.
-// 2. Doing so allows us not to unmarshal the `auth_secret` field, and
+// 2. Doing so allows us not to unmarshal the `jwt_access_token` field, and
 // therefore prevents needing to pass it to client code in other packages that
 // don't need to understand our authentication mechanism or read the secret
 // key. We could alternatively do this by creating two separate types of
@@ -255,9 +255,7 @@ var authenticateAndParseRequest = func(w http.ResponseWriter, r *http.Request, s
 		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
 	}
 
-	// TODO: rename these auth_secrets to something more accurate, like `jwt`s or something.
-
-	// Extract only the auth_secret field from a raw JSON unmarshalling that
+	// Extract only the jwt_access_token field from a raw JSON unmarshalling that
 	// delays as much decoding as possible
 	var rawmap map[string]*json.RawMessage
 	err = json.Unmarshal(body, &rawmap)
@@ -270,28 +268,24 @@ var authenticateAndParseRequest = func(w http.ResponseWriter, r *http.Request, s
 		var requestAuthSecret string
 
 		err = func() error {
-			if value, ok := rawmap["auth_secret"]; ok {
+			if value, ok := rawmap["jwt_access_token"]; ok {
 				return json.Unmarshal(*value, &requestAuthSecret)
 			}
-			return utils.MakeError("Request body had no \"auth_secret\" field.")
+			return utils.MakeError("Request body had no \"jwt_access_token\" field.")
 		}()
 
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Error getting auth_secret from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
+			return utils.MakeError("Error getting jwt_access_token from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 		}
 
 		// Actually verify authentication. We check that the access token sent is
-		// a valid JWT signed by Auth0 and that it has the "backend" scope.
-		claims, err := auth.Verify(requestAuthSecret)
+		// a valid JWT signed by Auth0.
+		_, err := auth.Verify(requestAuthSecret)
 
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
-		}
-		if !claims.VerifyScope("backend") {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Expected \"backend\" scope, but got: %s", r.Host, r.URL, claims.Scopes)
 		}
 	}
 
