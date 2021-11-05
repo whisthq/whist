@@ -23,7 +23,7 @@ jobs:
   mandelboxes-lint-dockerfiles:
     name: Linting
     runs-on: ubuntu-20.04
-    container: hadolint/hadolint:v2.7.0 # This version should be updated periodically to use latest Hadolint rules
+    container: hadolint/hadolint
 
     steps:
       - name: Checkout Git Repository
