@@ -21,7 +21,7 @@ Before making a pull request, ensure that the following steps are taken:
 
 1. Make sure the application is fully working via `yarn start`.
 
-2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
+2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/whisthq/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
 
 3. Lint your code by running `yarn lint:fix`. If this does not pass, your code will fail Github CI.
 
@@ -45,7 +45,7 @@ Basic continuous integration is set up for this project. For every PR, basic Nod
 
 ## Google Analytics, A/B Testing, and Tracking
 
-To view our Google Analytics dashboard, follow the tutorial on the [Notion Engineering Wiki](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
+To view our Google Analytics dashboard, follow the tutorial on the [Notion Engineering Wiki](https://www.notion.so/whisthq/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
 
 ## Styling
 

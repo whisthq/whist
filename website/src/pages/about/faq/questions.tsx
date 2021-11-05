@@ -69,7 +69,7 @@ const faqs = [
       <div>
         Yes! You can see our job postings{" "}
         <a
-          href="https://tryfractal.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
+          href="https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
           className="text-gray-300 hover:text-mint"
           target="_blank"
           rel="noreferrer"

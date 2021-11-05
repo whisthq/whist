@@ -12,7 +12,7 @@ Several other minor responsibilities of the Whist Webserver are documented in th
 
 ## Contributing
 
-All Webserver patches must adhere to our [code standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597#a119aceede764be08b8990c0605e8d39) and pass continuous integration checks. When submitting a patch, you should be able to answer "yes" to each of the following questions:
+All Webserver patches must adhere to our [code standards](https://www.notion.so/whisthq/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597#a119aceede764be08b8990c0605e8d39) and pass continuous integration checks. When submitting a patch, you should be able to answer "yes" to each of the following questions:
 
 - [ ] Is my code free of errors that would be uncovered by static analysis tools (Black, mypy, Pylint)?
 - [ ] Do all existing test cases pass?

@@ -115,4 +115,4 @@ This project is not published to any **npm** registry, but is rather built and i
 
 ## Style
 
-This project follows the [Whist TypeScript Coding Philosophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289). Any contributions to this project should be in the form of PRs following the usual Whist TypeScript standards.
+This project follows the [Whist TypeScript Coding Philosophy](https://www.notion.so/whisthq/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289). Any contributions to this project should be in the form of PRs following the usual Whist TypeScript standards.

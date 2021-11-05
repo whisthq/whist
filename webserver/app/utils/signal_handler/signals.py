@@ -1,7 +1,7 @@
 """
 This modules contains handlers for the following signals:
 1. SIGTERM. Sent by Heroku before dyno restart. See
-https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6
+https://www.notion.so/whisthq/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6
 for more details on when this happens and how we are solving it.
 """
 import signal
@@ -28,7 +28,7 @@ class WebSignalHandler:
     ) -> None:
         """
         Handles SIGTERM, which is sent by Heroku on various conditions outlined here:
-        https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6
+        https://www.notion.so/whisthq/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6
 
         SIGKILL follows 30 seconds from now, so this is our chance to clean-up resources cleanly.
         Specifically, we do the following:
