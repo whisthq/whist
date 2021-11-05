@@ -24,13 +24,13 @@ import (
 
 	"context"
 	_ "embed"
-	"encoding/hex"
 	"io"
 	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -560,12 +560,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	tmpfs["/run"] = "size=52428800"
 	tmpfs["/run/lock"] = "size=52428800"
 
-	// Sanitize the received session ID. First, verify that the sessionID is a valid hex string.
-	// If not, encode the sessionID to hex.
-	_, err = hex.DecodeString(mandelboxSubscription.SessionID)
+	// Sanitize the received session ID. First, verify that the sessionID is a valid timestamp string.
+	// If not, use a new timestamp.
+	_, err = strconv.ParseInt(mandelboxSubscription.SessionID, 10, 64)
 	if err != nil {
 		logger.Warningf("Malformed session ID. Sanitizing received session ID.")
-		mandelboxSubscription.SessionID = hex.EncodeToString([]byte(mandelboxSubscription.SessionID))
+		mandelboxSubscription.SessionID = strconv.FormatInt(time.Now().UnixMilli(), 10)
 	}
 
 	hostConfig := dockercontainer.HostConfig{
