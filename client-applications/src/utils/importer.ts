@@ -409,7 +409,6 @@ const getInstalledBrowsers = () => {
 const getJSONDecryptedCookies = async (
   browser: InstalledBrowser | undefined
 ): Promise<Cookie[]> => {
-  console.log("getting decrypted cookies", browser)
   if (browser === undefined) return []
 
   const encryptedCookies = await getCookiesFromFile(browser)
@@ -419,8 +418,6 @@ const getJSONDecryptedCookies = async (
   const encryptKey = await getCookieEncryptionKey(browser)
 
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
-
-  console.log(`There are ${cookies.length} cookies`)
 
   return cookies
 
