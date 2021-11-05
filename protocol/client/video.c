@@ -911,6 +911,30 @@ int32_t receive_video(FractalPacket* packet) {
     return 0;
 }
 
+int resizing_event_watcher(void* data, SDL_Event* event) {
+    /*
+        Event watcher to be used in SDL_AddEventWatch to capture
+        and handle window resize events
+
+        Arguments:
+            data (void*): SDL Window data
+            event (SDL_Event*): SDL event to be analyzed
+
+        Return:
+            (int): 0 on success
+    */
+
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
+        // If the resize event if for the current window
+        SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
+        if (win == (SDL_Window*)data) {
+            // Notify video.c about the active resizing
+            set_video_active_resizing(true);
+        }
+    }
+    return 0;
+}
+
 int init_video_renderer() {
     /*
         Initialize the video renderer. Used as a thread function.
@@ -983,7 +1007,7 @@ int init_video_renderer() {
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
 
-    // Resize event handling
+    // Initialize resize event handling, must call SDL_DelEventWatch later
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
     // Init loading animation variables
@@ -1255,6 +1279,9 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
+        // Deinitialize resize event handling
+        SDL_DelEventWatch(resizing_event_watcher, (SDL_Window*)window);
+
 #ifdef __APPLE__
         // On __APPLE__, video_context.renderer is maintained in init_sdl_renderer
         if (video_context.texture) {
