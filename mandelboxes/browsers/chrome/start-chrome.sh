@@ -15,26 +15,28 @@ if [[ ! -f $FRACTAL_CHROME_SINGLETON_LOCK ]]; then
     rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
+features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization"
 flags=(
   --use-gl=desktop
   --flag-switches-begin
   --enable-gpu-rasterization
   --enable-zero-copy
-  --enable-features=VaapiVideoDecoder,Vulkan,CanvasOopRasterization
   --disable-smooth-scrolling
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
-  --flag-switches-end
 )
 
 if [[ $DARK_MODE == true ]]; then
-    flags+=(--enable-features=WebUIDarkMode)
+    features="$features,WebUIDarkMode"
     flags+=(--force-dark-mode)
 fi
 
 if [[ $RESTORE_LAST_SESSION == true ]]; then
     flags+=(--restore-last-session)
 fi
+
+flags+=(--enable-features=$features)
+flags+=(--flag-switches-end)
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
