@@ -8,7 +8,7 @@
 # Heroku CLI
 
 # Arguments
-# ${1}: HEROKU_APP_NAME: name of webserver Heroku app. Ex: fractal-dev-server.
+# ${1}: HEROKU_APP_NAME: name of webserver Heroku app. Ex: whist-dev-server.
 
 set -Eeuo pipefail
 

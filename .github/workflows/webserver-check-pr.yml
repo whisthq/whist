@@ -131,7 +131,7 @@ jobs:
       - name: Determine heroku app name
         run: |
           if [[ ${GITHUB_BASE_REF} == dev ]]; then
-              HEROKU_APP_NAME=fractal-dev-server
+              HEROKU_APP_NAME=whist-dev-server
           elif [[ ${GITHUB_BASE_REF} == staging ]]; then
               HEROKU_APP_NAME=fractal-staging-server
           elif [[ ${GITHUB_BASE_REF} == prod ]]; then

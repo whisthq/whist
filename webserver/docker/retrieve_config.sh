@@ -20,9 +20,9 @@ outfile="$DIR/.env"
 
 function fetch {
   heroku config:get AUTH0_DOMAIN CONFIG_DB_URL --shell \
-    --app=fractal-dev-server \
+    --app=whist-dev-server \
     | tr -d \'
-  heroku config:get DATABASE_URL --app=fractal-dev-server \
+  heroku config:get DATABASE_URL --app=whist-dev-server \
     | python3 "$DIR"/pgparse.py
 }
 

@@ -139,7 +139,7 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
-          DATABASE_DEV_URL=$(heroku config:get DATABASE_URL --app=fractal-dev-server)
+          DATABASE_DEV_URL=$(heroku config:get DATABASE_URL --app=whist-dev-server)
           echo "DATABASE_DEV_URL=$DATABASE_DEV_URL" >> $GITHUB_ENV
 
           DATABASE_STAGING_URL=$(heroku config:get DATABASE_URL --app=fractal-staging-server)
