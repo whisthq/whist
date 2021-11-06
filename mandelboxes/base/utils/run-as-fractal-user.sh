@@ -63,7 +63,7 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 export TZ=$DESIRED_TIMEZONE 
 
 exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION -c \
-  'DISPLAY=:10 \
+  "DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
     LC_ALL=C \
