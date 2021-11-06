@@ -73,6 +73,7 @@ Private Functions
 */
 
 int update_clipboard(void* opaque);
+void clipboard_synchronizer_abort_active_clipboard_action();
 
 /*
 ============================
@@ -134,25 +135,35 @@ void destroy_clipboard_synchronizer() {
         Clean up and destroy the clipboard synchronizer
     */
 
-    LOG_INFO("Destroying clipboard");
+    LOG_INFO("Trying to destroy clipboard synchronizer...");
 
+    // If the clipboard is not initialized, then there is nothing to destroy
     if (!is_initialized) {
-        LOG_ERROR("Tried to destroy_clipboard, but the clipboard is already destroyed");
+        LOG_ERROR("Clipboard synchronizer is not initialized!");
         return;
-    }
-
-    if (updating_clipboard) {
-        LOG_FATAL("Trying to destroy clipboard while the clipboard is being updated");
     }
 
     is_initialized = false;
 
-    // NOTE: Bad things could happen if initialize_clipboard is run
-    // While destroy_clipboard is running
+    fractal_post_semaphore(clipboard_semaphore);
+    fractal_wait_thread(clipboard_synchronizer_thread, NULL);
 
+    // If the clipboard is currently being updated, then cancel that action
+    fractal_lock_mutex(clipboard_update_mutex);
+    if (is_clipboard_synchronizing()) {
+        clipboard_synchronizer_abort_active_clipboard_action();
+    }
+    fractal_unlock_mutex(clipboard_update_mutex);
+
+    // Destroy mutexes
+    fractal_destroy_mutex(clipboard_update_mutex);
+    fractal_destroy_semaphore(clipboard_semaphore);
+
+    // NOTE: Bad things could happen if initialize_clipboard is run
+    // while destroy_clipboard() is running
     destroy_clipboard();
 
-    fractal_post_semaphore(clipboard_semaphore);
+    LOG_INFO("Finished destroying clipboard synchronizer");
 }
 
 void clipboard_synchronizer_abort_active_clipboard_action() {
