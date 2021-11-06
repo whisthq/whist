@@ -49,7 +49,7 @@ Before making a pull request, ensure that the following steps are taken:
 
 1. Make sure the application is fully working both in `dev` (via `yarn start`) and packaged (see **Packaging for Production**). This is important because the Electron app can behave differently when packaged. For example, file paths will change.
 
-2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
+2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/whisthq/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
 
 3. Lint your code by running `yarn lint:fix`. If this does not pass, your code will fail Github CI.
 

@@ -47,7 +47,7 @@ const navigation = {
     },
     {
       name: "Twitter",
-      href: "https://twitter.com/tryfractal",
+      href: "https://twitter.com/whisthq",
       icon: FaTwitter,
     },
     {
@@ -57,7 +57,7 @@ const navigation = {
     },
     {
       name: "Instagram",
-      href: "https://www.instagram.com/tryfractal/",
+      href: "https://www.instagram.com/whisthq/",
       icon: FaInstagram,
     },
   ],

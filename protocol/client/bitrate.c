@@ -16,7 +16,7 @@ The function assigned to `calculate_new_bitrate` should have signature such that
 one argument of type `BitrateStatistics` and returns type `Bitrates`.
 
 For more details about the individual algorithms, please visit
-https://www.notion.so/tryfractal/Adaptive-Bitrate-Algorithms-a6ea0987adc04e8d84792fc9dcbc7fc7
+https://www.notion.so/whisthq/Adaptive-Bitrate-Algorithms-a6ea0987adc04e8d84792fc9dcbc7fc7
 */
 
 /*
