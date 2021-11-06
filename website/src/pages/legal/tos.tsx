@@ -334,8 +334,8 @@ const TermsOfService = () => {
             and/or during a single Session. We will have sole discretion in
             deciding which hardware and service providers we will use in
             connection with our Services; the User acknowledges and agrees that
-            they may not make any complaints or demands regarding Whist’s
-            choice in hardware and service providers.
+            they may not make any complaints or demands regarding Whist’s choice
+            in hardware and service providers.
           </p>
           <p>
             The Cloud Applications serviced by Whist are collectively hosted on
