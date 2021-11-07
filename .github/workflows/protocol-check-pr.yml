@@ -342,6 +342,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # This is necessary so that the runner can connect to the AWS EC2 server instance for
+      # configuration and running remote commands
+      - name: Load SSH Key onto GitHub Actions Runner
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: id_rsa
+          key: ${{ secrets.PROTOCOL_PERFORMANCE_TESTING_SSHKEY }}
+          known_hosts: unnecessary # THIS IS UNSECURE -- WE NEED A BETTER WAY TO DO THIS
+
       - name: Set up Python-based AWS helper functions folder
         working-directory: .github/workflows/helpers
         run: ./aws/setup_aws.sh
@@ -360,12 +369,13 @@ jobs:
           import paramiko
 
           # Retrieve SSH key from AWS Configure
-          ssh_key = paramiko.Ed25519Key.from_private_key_file("/Users/runner/.ssh/id_ed25519") # Default path on macOS
+          ssh_key_name = "protocol_performance_testing_sshkey" # This is configured in AWS EC2 "Key Pairs" section
+          ssh_key_path = paramiko.RSAKey.from_private_key_file("/Users/runner/.ssh/id_rsa")
           AMI = "ami-0885b1f6bd170450c" # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
           instance_type = "g4dn.2xlarge" # The type of instance we want to create
 
           # Create a new EC2 instance
-          server_instance_id = create_ec2_instance(instance_type=instance_type, instance_AMI=AMI, key_name=ssh_key)
+          server_instance_id = create_ec2_instance(instance_type=instance_type, instance_AMI=AMI, key_name=ssh_key_name)
           print(f"Created server instance {server_instance_id}")
 
           # Give a little time for the instance to be recognized in AWS
