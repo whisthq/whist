@@ -36,7 +36,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: webserver
-        run: pip install -r requirements.txt -r requirements-test.txt
+        run: pip3 install -r requirements.txt -r requirements-test.txt
 
       - name: Add pylint-wrapper to the PATH
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
@@ -151,7 +151,7 @@ jobs:
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
         working-directory: webserver
-        run: pip install PyGithub
+        run: pip3 install PyGithub
 
       # Using the workflow notifcation helpers, we'll send out
       # formatted alerts based on the error code response from the

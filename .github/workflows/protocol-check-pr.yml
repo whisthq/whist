@@ -237,7 +237,7 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: protocol
         run: |
-          pip install cmakelint
+          pip3 install cmakelint
           sudo apt-get install fd-find
           # Ubuntu-specific PATH fix for `fd`
           ln -s $(which fdfind) ~/.local/bin/fd
@@ -358,9 +358,9 @@ jobs:
         run: |
           from aws.testing_helpers import create_ec2_instance, wait_for_instance_to_start_or_stop, get_instance_ip, wait_for_ssh
           import paramiko
-          
+
           # Retrieve SSH key from AWS Configure
-          ssh_key = paramiko.Ed25519Key.from_private_key_file("~/.ssh/id_ed25519") # Default path on macOS
+          ssh_key = paramiko.Ed25519Key.from_private_key_file("/Users/runner/.ssh/id_ed25519") # Default path on macOS
           AMI = "ami-0885b1f6bd170450c" # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
           instance_type = "g4dn.2xlarge" # The type of instance we want to create
 

@@ -24,7 +24,7 @@ cd "$DIR/.."
 # install/import any other dependency, which minimizes the chance of
 # things going wrong in GHA
 if [[ $INSTALL_DEPS == "true" ]]; then
-    pip install -r notifications/requirements.txt
+    pip3 install -r notifications/requirements.txt
 fi
 
 # Create a temporary folder, and copy the notifications module to that folder.

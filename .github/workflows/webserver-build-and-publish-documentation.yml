@@ -49,8 +49,8 @@ jobs:
       # Install the version of Sphinx specified in webserver/requirements-test.txt
       - name: Install requirements
         run: |
-          pip install $(cat fractal/webserver/requirements.txt)
-          pip install $(cat fractal/webserver/requirements-test.txt)
+          pip3 install $(cat fractal/webserver/requirements.txt)
+          pip3 install $(cat fractal/webserver/requirements-test.txt)
 
       - name: Build the Latest Documentation
         working-directory: fractal/webserver/docs
