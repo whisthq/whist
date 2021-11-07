@@ -347,7 +347,7 @@ jobs:
         run: ./aws/setup_aws.sh
 
       - name: Install Dependencies
-        run: pip install boto3 paramiko # paramiko is our SSH client
+        run: pip3 install boto3 paramiko # paramiko is our SSH client
 
       ######################################################################################
       ################################## SERVER SETUP START ################################
