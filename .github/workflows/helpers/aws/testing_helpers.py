@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from typing import List
 import sys
 import os
 import time
@@ -50,7 +51,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     return instance_id
 
 
-def wait_for_instance_to_start_or_stop(instance_ids: list, stopping: bool = False) -> None:
+def wait_for_instance_to_start_or_stop(instance_ids: List(str), stopping: bool = False) -> None:
     """
     Hangs until an EC2 instance is reported as running or as stopped. Could be nice to make
     it timeout after some time.
