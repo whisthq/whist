@@ -85,7 +85,7 @@ def get_instance_ip(instance_id: str) -> str:
 
     # retrieve instance
     resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
-    instance = resp["Reservations"]
+    instance = resp["Reservations"][0]
 
     # iterate over tags
     if instance:
