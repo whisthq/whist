@@ -20,7 +20,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
         key_name (str): The name of the AWS key to use for connecting to the instance
 
     Returns:
-        str: The ID of the created instance
+        instance_id (str): The ID of the created instance
     """
     kwargs = {
         "ImageId": instance_AMI,
@@ -31,7 +31,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
             {
                 "ResourceType": "instance",
                 "Tags": [
-                    {"Key": "Name", "Value": "protocol-testing"},
+                    {"Key": "Name", "Value": "protocol-streaming-performance-testing-server"},
                 ],
             },
         ],
@@ -40,7 +40,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
-        "KeyName": key_name,
+        "KeyName": key_name, # the SSH key to associate this instance with
     }
 
     # Create the EC2 instance
