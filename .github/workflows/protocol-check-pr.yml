@@ -366,7 +366,7 @@ jobs:
         shell: python3 {0}
         run: |
           from aws.testing_helpers import create_ec2_instance, wait_for_instance_to_start_or_stop, get_instance_ip, wait_for_ssh
-          import paramiko
+          import time, paramiko
 
           # Retrieve SSH key from AWS Configure
           ssh_key_name = "protocol_performance_testing_sshkey" # This is configured in AWS EC2 "Key Pairs" section
