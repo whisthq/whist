@@ -98,14 +98,14 @@ def get_instance_ip(instance_id: str) -> str:
     return retval
 
 
-def wait_for_ssh(instance_ip: str, ssh_key: paramiko.RSAKey) -> None:
+def wait_for_ssh(instance_ip: str) -> None:
     """
     Hangs until an EC2 instance has SSH initialized. Could be nice to make
     it timeout after some time.
 
     Args:
         instance_id (str): The ID of the instance to wait for
-        ssh_key (paramiko.Ed25519Key): The SSH key used to connected to the instance
+        ssh_key (paramiko.RSAKey): The SSH key used to connected to the instance
 
     Returns:
         None
@@ -113,13 +113,14 @@ def wait_for_ssh(instance_ip: str, ssh_key: paramiko.RSAKey) -> None:
     print(f"Waiting for SSH to be available on the EC2 instance")
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_client.load_system_host_keys() # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
 
     # Hang until the connection is established
     available = False
     while not available:
         available = True
         try:
-            ssh_client.connect(hostname=instance_ip["public"], username="ubuntu", pkey=ssh_key)
+            ssh_client.connect(hostname=instance_ip["public"], username="ubuntu")
         except:
             available = False
         finally:
