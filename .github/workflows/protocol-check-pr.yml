@@ -346,11 +346,11 @@ jobs:
         working-directory: .github/workflows/helpers
         run: ./aws/setup_aws.sh
 
-      ######################################################################################
-      ################################## SERVER SETUP START ################################
-
       - name: Install Dependencies
         run: pip install boto3 paramiko # paramiko is our SSH client
+
+      ######################################################################################
+      ################################## SERVER SETUP START ################################
 
       # 1- Create a new EC2 instance
       - name: Create EC2 Test Server Instance

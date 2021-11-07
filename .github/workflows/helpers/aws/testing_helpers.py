@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
+import sys
+import os
 import time
 import boto3
 import paramiko
+
+# add the current directory to the path no matter where this is called from
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) -> str:
