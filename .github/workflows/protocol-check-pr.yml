@@ -370,7 +370,6 @@ jobs:
 
           # Retrieve SSH key from AWS Configure
           ssh_key_name = "protocol_performance_testing_sshkey" # This is configured in AWS EC2 "Key Pairs" section
-          ssh_key_path = paramiko.RSAKey.from_private_key_file("/Users/runner/.ssh/id_rsa")
           AMI = "ami-0885b1f6bd170450c" # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
           instance_type = "g4dn.2xlarge" # The type of instance we want to create
 
@@ -386,9 +385,8 @@ jobs:
           # Get the IP address of the instance
           server_instance_ip = get_instance_ip(server_instance_id)
 
-
           # Initiate SSH connection with the instance
-          wait_for_ssh(server_instance_ip, ssh_key_path)
+          wait_for_ssh(server_instance_ip)
           print(f"SSH connection to server instance {server_instance_id} established")
 
           # Sleep so that the SSH connections resets
