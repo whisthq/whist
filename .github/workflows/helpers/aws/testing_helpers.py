@@ -24,7 +24,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     """
     kwargs = {
         "ImageId": instance_AMI,
-        "InstanceType": instance_type,  # should be g4dn.2xlarge for testing the server protocol
+        "InstanceType": instance_type, # should be g4dn.2xlarge for testing the server protocol
         "MaxCount": 2,
         "MinCount": 2,
         "TagSpecifications": [
@@ -40,12 +40,12 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
-        "KeyName": key_name,  # the SSH key to associate this instance with
+        "KeyName": key_name, # the pre-created SSH key to associate this instance with, needs to be the same that's loaded on the client calling this function
     }
 
     # Create the EC2 instance
     resp = boto3.client("ec2").run_instances(**kwargs)
-    instance_id = resp["Instances"]["InstanceId"]
+    instance_id = resp["Instances"][0]["InstanceId"]
     print(f"Created EC2 instance with id: {instance_id}")
     return instance_id
 
