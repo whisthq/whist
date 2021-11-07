@@ -349,7 +349,7 @@ jobs:
         with:
           name: id_rsa
           key: ${{ secrets.PROTOCOL_PERFORMANCE_TESTING_SSHKEY }}
-          known_hosts: unnecessary # THIS IS UNSECURE -- WE NEED A BETTER WAY TO DO THIS
+          known_hosts: unnecessary # TODO: THIS IS UNSECURE -- WE NEED A BETTER WAY TO DO THIS
 
       - name: Set up Python-based AWS helper functions folder
         working-directory: .github/workflows/helpers
