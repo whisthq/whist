@@ -38,7 +38,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install boto3
-        run: pip install boto3
+        run: pip3 install boto3
 
       - name: List Number of AWS EC2 Instances in Slack
         shell: python3 {0}
@@ -119,7 +119,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Install boto3, python-dateutil and psycopg2
-        run: pip install boto3 python-dateutil psycopg2-binary
+        run: pip3 install boto3 python-dateutil psycopg2-binary
 
       - name: Flag Old EC2 Instances and Notify in Slack if They Exist
         shell: python3 {0}
