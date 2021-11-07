@@ -91,7 +91,7 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 
 // We only allow 1 nack in each update_audio call because we had too many false nacks in the past.
 // Increase this as our nacking becomes more accurate.
-#define MAX_NACKED 1
+#define MAX_NACKED 25
 
 /*
 ============================
@@ -828,8 +828,8 @@ void update_video() {
                 }
                 rendering = true;
             } else {
-                if (get_timer(ctx->last_packet_timer) > latency &&
-                    get_timer(ctx->last_nacked_timer) > latency + latency * ctx->num_times_nacked) {
+                if (get_timer(ctx->last_packet_timer) > (0.7 * latency) &&
+                    get_timer(ctx->last_nacked_timer) > (0.7 * latency) + latency * ctx->num_times_nacked) {
                     if (ctx->num_times_nacked == -1) {
                         ctx->num_times_nacked = 0;
                         ctx->last_nacked_index = -1;
