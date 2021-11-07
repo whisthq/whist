@@ -193,9 +193,10 @@ typedef struct {
     int id;                  // Unique identifier (Two packets with the same type and id, from
                              // the same IP, will be the same)
     short index;             // Handle separation of large datagrams
-    short num_indices;       // The total datagram consists of data packets with
-                             // indices from 0 to payload_size - 1
-    int payload_size;        // size of data[] that is of interest
+    short num_indices;       // The total number of packets that the datagram
+                             // was broken down into, including FEC packets.
+    short num_fec_indices;   // The indices that are only for FEC data
+    int payload_size;        // size of this packet's data[], in bytes
     bool is_a_nack;          // True if this is a replay'ed packet
 
     // Data

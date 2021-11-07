@@ -5,6 +5,7 @@
 
 #include "udp.h"
 #include <fractal/utils/aes.h>
+#include <fractal/utils/fec.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -186,6 +187,9 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         return -1;
     }
     if (context->nack_buffers[type_index] != NULL) {
+        // Sending payloads that must be split into multiple packets,
+        // is only allowed for FractalPacketType's that have a nack buffer
+        // This includes allowing the application of fec_ratio at all
         nack_buffer =
             context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]];
     }
@@ -195,19 +199,64 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
                                         : (int)(payload_size / MAX_PAYLOAD_SIZE +
                                                 (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
 
-    // If nack buffer can't hold a packet that large,
-    // Or there's no nack buffer but it's a packet that must be split,
-    // Then there's a problem and we LOG_ERROR
-    if (nack_buffer && num_indices > context->nack_buffer_max_indices[type_index] ||
+    int num_fec_packets = 0;
+    if (nack_buffer && context->fec_packet_ratio > 0.0) {
+        // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
+        // a / (a + b) = c
+        // a = ac + bc
+        // a(1-c) = bc
+        // a = bc/(1-c)
+        num_fec_packets = num_indices * context->fec_packet_ratio / (1.0 - context->fec_packet_ratio);
+    }
+
+    int num_total_packets = num_indices + num_fec_packets;
+
+// Should be something much larger than it needs to be
+#define MAX_TOTAL_PACKETS 4096
+    char* buffers[MAX_TOTAL_PACKETS];
+    char* buffer_sizes[MAX_TOTAL_PACKETS];
+    if (num_total_packets > MAX_TOTAL_PACKETS) {
+        LOG_FATAL("MAX_TOTAL_PACKETS is too small! Double it!");
+    }
+
+    // If nack buffer can't hold a packet with that many indices,
+    // OR the original buffer is illegally large
+    // OR there's no nack buffer but it's a packet that needed to be split up,
+    // THEN there's a problem and we LOG_ERROR
+    if (nack_buffer && num_total_packets > context->nack_buffer_max_indices[type_index] ||
         nack_buffer && payload_size > context->nack_buffer_max_payload_size[type_index] ||
-        !nack_buffer && num_indices > 1) {
-        LOG_ERROR("Packet is too large to send the payload! %d", num_indices);
+        !nack_buffer && num_total_packets > 1) {
+        LOG_ERROR("Packet is too large to send the payload! %d/%d", num_indices, num_total_packets);
         return -1;
+    }
+
+    FECEncoder* fec_encoder = NULL;
+    if (num_fec_packets > 0) {
+        fec_encoder = create_fec_encoder(num_indices, num_fec_packets, MAX_PAYLOAD_SIZE);
+    }
+
+    size_t current_position = 0;
+    for (int packet_index = 0; packet_index < num_indices; packet_index++) {
+        int packet_payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
+        if (fec_encoder) {
+            // Pass the buffers into the FEC encoder, when using FEC
+            encoder_register_buffer(fec_encoder, (char*)payload + current_position, packet_payload_size);
+        } else {
+            // Populate the buffers directly when not using FEC
+            buffers[i] = (char*)payload + current_position;
+            buffer_sizes[i] = packet_payload_size;
+        }
+        current_position += packet_payload_size;
+    }
+
+    if (fec_encoder) {
+        // If using FEC, populate the buffers with FEC's buffers
+        get_encoded_buffers(fec_encoder, buffers, buffer_sizes);
     }
 
     // Write all the packets into the packet buffer and send them all
     size_t current_position = 0;
-    for (int packet_index = 0; packet_index < num_indices; packet_index++) {
+    for (int packet_index = 0; packet_index < num_total_packets; packet_index++) {
         if (nack_buffer) {
             // Lock on a per-loop basis to not starve nack() calls
             fractal_lock_mutex(context->nack_mutex[type_index]);
@@ -216,12 +265,13 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         // Construct the packet, potentially into the nack buffer
         FractalPacket* packet = nack_buffer ? &nack_buffer[packet_index] : &local_packet;
         packet->type = packet_type;
-        packet->payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
+        packet->payload_size = buffer_sizes[packet_index];
         packet->index = (short)packet_index;
         packet->id = packet_id;
-        packet->num_indices = (short)num_indices;
+        packet->num_indices = (short)num_total_packets;
+        packet->num_fec_indices = (short)num_fec_packets;
         packet->is_a_nack = false;
-        memcpy(packet->data, (char*)payload + current_position, packet->payload_size);
+        memcpy(packet->data, buffers[packet_index], packet->payload_size);
         current_position += packet->payload_size;
         // Send the packet,
         // ignoring the return code since maybe a subset of the packets were sent
@@ -231,6 +281,10 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         }
     }
 
+    if (fec_encoder) {
+        free_fec_encoder(fec_encoder);
+    }
+
     return 0;
 }
 
@@ -238,17 +292,23 @@ void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrat
                                  double fec_packet_ratio) {
     SocketContextData* context = socket_context->context;
 
+    // Set burst bitrate, if possible
     if (context->network_throttler == NULL) {
         LOG_ERROR("Tried to set the burst bitrate, but there's no network throttler!");
-        return;
+    } else {
+        network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
     }
 
-    if (fec_packet_ratio > 0.0) {
-        LOG_ERROR("Asked for a larger FEC ratio, but FEC isn't implemented yet!");
+    // Set fec packet ratio
+    if (fec_packet_ratio > MAX_FEC_RATIO) {
+        LOG_ERROR("%f is larger than the maximum FEC ratio!", fec_packet_ratio);
+        fec_packet_ratio = MAX_FEC_RATIO;
+    }
+    if (fec_packet_ratio < 0.0) {
+        LOG_ERROR("FEC ratio of %f, is negative!???", fec_packet_ratio);
+        fec_packet_ratio = 0.0;
     }
     context->fec_packet_ratio = fec_packet_ratio;
-
-    network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
 }
 
 void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType type,
@@ -265,11 +325,20 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
         return;
     }
 
-    int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 2;
+    int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 1;
+    // get max FEC ids possible, based on MAX_FEC_RATIO
+    int max_fec_ids = get_num_fec_packets(max_num_ids, MAX_FEC_RATIO);
 
+    // Adjust max ids for the maximum number of fec ids
+    max_num_ids += max_fec_ids;
+
+    // Allocate buffers than can handle the above maximum sizes
+    // Memory isn't an issue here, because we'll use our region allocator,
+    // so unused memory never gets allocated by the kernel
     context->nack_buffers[type_index] = malloc(sizeof(FractalPacket*) * num_buffers);
     context->nack_mutex[type_index] = fractal_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
+    // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
     context->nack_buffer_max_payload_size[type_index] = max_payload_size;
     context->nack_buffer_max_indices[type_index] = max_num_ids;
 
