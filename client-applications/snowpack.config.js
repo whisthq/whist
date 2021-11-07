@@ -146,6 +146,7 @@ module.exports = {
       "logzio-nodejs",
       "@amplitude/node",
       "ping",
+      "https",
       "crypto",
       "path",
       "child_process",
