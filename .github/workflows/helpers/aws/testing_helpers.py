@@ -24,7 +24,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     """
     kwargs = {
         "ImageId": instance_AMI,
-        "InstanceType": instance_type, # should be g4dn.2xlarge for testing the server protocol
+        "InstanceType": instance_type,  # should be g4dn.2xlarge for testing the server protocol
         "MaxCount": 2,
         "MinCount": 2,
         "TagSpecifications": [
@@ -40,7 +40,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
-        "KeyName": key_name, # the pre-created SSH key to associate this instance with, needs to be the same that's loaded on the client calling this function
+        "KeyName": key_name,  # the pre-created SSH key to associate this instance with, needs to be the same that's loaded on the client calling this function
     }
 
     # Create the EC2 instance
@@ -50,7 +50,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     return instance_id
 
 
-def wait_for_instance_to_start_or_stop(instance_id: list, stopping: bool = False) -> None:
+def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False) -> None:
     """
     Hangs until an EC2 instance is reported as running or as stopped. Could be nice to make
     it timeout after some time.
@@ -66,7 +66,10 @@ def wait_for_instance_to_start_or_stop(instance_id: list, stopping: bool = False
     should_wait = True
 
     while should_wait:
-        resp = boto3.client("ec2").describe_instances(InstanceIds=instance_id)
+
+        print(f"id is: {instance_id}")
+
+        resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
         should_wait = False
