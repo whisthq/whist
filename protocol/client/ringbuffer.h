@@ -19,7 +19,7 @@ packet, call nack_single_packet.
 
 // The max number of times we can nack a packet: limited to 2 times right now so that we don't get
 // stuck on a packet that never arrives
-#define MAX_PACKET_NACKS 25
+#define MAX_PACKET_NACKS 2
 
 /**
  * @brief 	Audio/video types for ring buffers and frames
