@@ -40,7 +40,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
-        "KeyName": key_name, # the SSH key to associate this instance with
+        "KeyName": key_name,  # the SSH key to associate this instance with
     }
 
     # Create the EC2 instance
