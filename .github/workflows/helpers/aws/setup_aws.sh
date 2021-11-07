@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Adds the AWS folder to python's path.
+# Adds the AWS folder to Python's path.
 
 set -Eeuo pipefail
 
