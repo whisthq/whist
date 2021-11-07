@@ -43,7 +43,7 @@ Module documentation for every module in the `webserver` directory is available 
 
 3. **Install Python dependencies**
 
-   Once your Python environment is ready, you'll need to run `pip install -r requirements.txt -r requirements-test.txt` or an equivalent command to install all of the dependencies listed in `requirements.txt` and `requirements-test.txt`.
+   Once your Python environment is ready, you'll need to run `pip3 install -r requirements.txt -r requirements-test.txt` or an equivalent command to install all of the dependencies listed in `requirements.txt` and `requirements-test.txt`.
 
 4. **Download environment variables**
 

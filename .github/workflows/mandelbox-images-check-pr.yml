@@ -55,7 +55,7 @@ jobs:
 
       - name: Install requirements
         working-directory: mandelboxes
-        run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
+        run: pip3 install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
 
       - name: Add pylint-wrapper to the PATH
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"

@@ -287,7 +287,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install Utilities to Delete Lingering Packer Builders & AMI Resources
-        run: pip install aws-hashicorp-packer-reaper aws-amicleaner
+        run: pip3 install aws-hashicorp-packer-reaper aws-amicleaner
 
       # Packer takes about 25-30 minutes to build new AMIs across all of our enabled regions,
       # so any Packer instance over 45 minutes old has failed to delete and should be force-deleted

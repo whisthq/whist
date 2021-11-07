@@ -104,7 +104,7 @@ Let's add the remaining files for our `monorepo-config` Action. It's a Python pr
 │   │   │   └── requirements.txt
 ```
 
-In this example, `main.py` is a basic Python program that does the actual work for our Action. It has a couple dependencies in `requirements.txt` that you need to `pip install` before running. The important thing to recogize here is that `main.py` is an entirely standard Python file. It reads its arguments from the command line, and prints its results to stdout. It has no knowledge of GitHub Action implementation details, it doesn't need any environment variables, and you can run it locally with `python main.py`. These are all characteristics of a general-purpose command line program, and this is what we want to be able to write.
+In this example, `main.py` is a basic Python program that does the actual work for our Action. It has a couple dependencies in `requirements.txt` that you need to `pip3 install` before running. The important thing to recogize here is that `main.py` is an entirely standard Python file. It reads its arguments from the command line, and prints its results to stdout. It has no knowledge of GitHub Action implementation details, it doesn't need any environment variables, and you can run it locally with `python main.py`. These are all characteristics of a general-purpose command line program, and this is what we want to be able to write.
 
 An important part of this job is managing how arguments get passed to our Python program. Here, `main.py` takes two arguments:
 
@@ -124,7 +124,7 @@ Let's look at the contents of our `Dockerfile`, the "wrapper" that helps GitHub-
 
 ```Dockerfile
 COPY       ./requirements.txt /root/monorepo-config/requirements.txt
-RUN        pip install -r     /root/monorepo-config/requirements.txt
+RUN        pip3 install -r     /root/monorepo-config/requirements.txt
 COPY       .                  /root/monorepo-config
 ENTRYPOINT python             /root/monorepo-config/main.py config \
                               --secrets $INPUT_SECRETS
@@ -133,7 +133,7 @@ ENTRYPOINT python             /root/monorepo-config/main.py config \
 Each line in detail:
 
 1. First we `COPY` our `requirements.txt` over to the container. Because Docker caches image layers, it's good practice to seperately copy dependency files like `requirements.txt` or `package.json` over on their own.
-2. Next we `pip install -r` our `requirements.txt`. This layer will be cached between Docker builds, and we'll only invalidate the cache if `requirements.txt` changes. This saves us from having to re-download all our dependencies every time we change a file in `monorepo-config`.
+2. Next we `pip3 install -r` our `requirements.txt`. This layer will be cached between Docker builds, and we'll only invalidate the cache if `requirements.txt` changes. This saves us from having to re-download all our dependencies every time we change a file in `monorepo-config`.
 3. We `COPY` the entire contents of our working directory, `monorepo-config`, over to the container.
 4. `ENTRYPOINT` is the command that will run in the container when we`docker run` this image. In this case, we're running the `main.py` file that we copied over in the previous step. We're passing the path of the `config` folder as its first argument, and passing the environment variable `$INPUT_SECRETS` to its `--secrets` flag.
 
