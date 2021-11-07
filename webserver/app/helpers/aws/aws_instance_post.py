@@ -184,6 +184,8 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
         )
 
         if active_instances_in_bundled_regions.limit(1).one_or_none() is None:
+            print("NO INSTANCE FOUND")
+            print(active_instances_in_bundled_regions.limit(1).one_or_none())
             return MandelboxAssignError.NO_INSTANCE_AVAILABLE
 
         
