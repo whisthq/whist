@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List, Tuple
-import os
 import time
-import argparse
-import subprocess
-import threading
 import boto3
 import paramiko
 
@@ -130,7 +125,7 @@ def wait_for_ssh(instance_ip: str, ssh_key: paramiko.Ed25519Key) -> None:
 
 
 def run_ssh_command(
-    ip: Dict[str, str],
+    ip: str,
     cmd: str,
     key: paramiko.RSAKey,
     display_res: bool,
