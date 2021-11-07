@@ -406,31 +406,50 @@ jobs:
           1- Authenticate to Git
 
 
-          2- Fetch the monorepo
+          # Authenticate Git as Phil with GitHub
+          git config credential.helper store
+          git credential approve <<EOF
+          protocol=https
+          host=github.com
+          username=phil@whist.com
+          password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          EOF
 
+
+
+
+          run_ssh_command(ip=${{ env.server_instance_ip }}, cmd="git config --global user.name \"Protocol Testing\"", display_res=False)
+
+
+
+
+
+          2- Fetch the monorepo
+          command = "cd ~ && git clone https://github.com/fractal/fractal"
+          run_ssh_command=(ip=${{ env.server_instance_ip }}, cmd=command, display_res=False)
 
           3- Run the host-setup
-
+          command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment && sudo reboot"
+          run_ssh_command=(ip=${{ env.server_instance_ip }}, cmd=command, display_res=False)
 
           4- Build the host-service (we won't rebuild the mandelbox, since we're only testing protocol here)
-
-
+          wait_for_ssh(server_instance_ip)
+          command = "cd ~/fractal/host-service && make run"
+          run_ssh_command=(ip=${{ env.server_instance_ip }}, cmd=command, display_res=False)
 
           5- Run the protocol server, and retrieve the value
+          command = "cd ~/fractal/protocol && ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer && ./fserver"
+          unparsed_fclient_string = run_ssh_command=(ip=${{ env.server_instance_ip }}, cmd=command, display_res=True) # True here, we want to receive the ./fclient string
 
-          t3 = threading.Thread(target=run_ssh_command, args=(instance_ips[0], cmd, key, False))
-
-          # potential code for parsing the client command
-          temp = result.split(b'\n')
+          6- Parse the client protocol connection string, and set it as output to GitHub env
+          temp = unparsed_fclient_string.split(b'\n')
           client_command = temp[6][temp[6].index(b'.')+2:].decode("utf-8")
           print(client_command)
 
-      # 3- Retrieve this monorepo
-      # 2- Configure it for local development
-      # 3- Reboot it
-      # 4- Build and run
+          print(f"::set-output name=fclient_connection_string::{client_command}")
 
-      # 4- Retrieve the monorepo
+
+
 
       ######################################################################################
       ################################## CLIENT SETUP START ################################
@@ -449,7 +468,7 @@ jobs:
         working-directory: protocol/build
         run: |
           # Run the protocol client timing out after 240 seconds (4 minutes)
-          timeout 240 ./fclient [need to swap for args here] -l
+          timeout 240 ./fclient ${{ env.fclient_connection_string }} -l
 
           # TODO
           # Here we will want to read the .log file and retrieve all of the info we want. We could display it as 
