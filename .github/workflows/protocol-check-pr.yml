@@ -383,14 +383,12 @@ jobs:
           # Wait for the instance to be running
           wait_for_instance_to_start_or_stop(server_instance_id, stopping=False)
 
-
-
           # Get the IP address of the instance
           server_instance_ip = get_instance_ip(server_instance_id)
-          print(f"Server instance {server_instance_id} has IP address {server_instance_ip}")
+
 
           # Initiate SSH connection with the instance
-          wait_for_ssh(server_instance_ip, ssh_key)
+          wait_for_ssh(server_instance_ip, ssh_key_path)
           print(f"SSH connection to server instance {server_instance_id} established")
 
           # Sleep so that the SSH connections resets

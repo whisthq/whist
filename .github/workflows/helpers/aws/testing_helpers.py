@@ -98,7 +98,7 @@ def get_instance_ip(instance_id: str) -> str:
     return retval
 
 
-def wait_for_ssh(instance_ip: str, ssh_key: paramiko.Ed25519Key) -> None:
+def wait_for_ssh(instance_ip: str, ssh_key: paramiko.RSAKey) -> None:
     """
     Hangs until an EC2 instance has SSH initialized. Could be nice to make
     it timeout after some time.
