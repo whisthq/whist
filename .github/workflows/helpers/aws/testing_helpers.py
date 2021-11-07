@@ -50,13 +50,13 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     return instance_id
 
 
-def wait_for_instance_to_start_or_stop(instance_ids: list(str), stopping: bool = False) -> None:
+def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False) -> None:
     """
     Hangs until an EC2 instance is reported as running or as stopped. Could be nice to make
     it timeout after some time.
 
     Args:
-        instance_ids (str): The ID of the instance to wait for
+        instance_id (str): The ID of the instance to wait for
         stopping (bool): Whether or not the instance is being stopped, if not provided
             it will wait for the instance to start
 
@@ -67,9 +67,9 @@ def wait_for_instance_to_start_or_stop(instance_ids: list(str), stopping: bool =
 
     while should_wait:
 
-        print(f"id is: {instance_ids}")
+        print(f"id is: {instance_id}")
 
-        resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_ids])
+        resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
         should_wait = False
@@ -77,7 +77,7 @@ def wait_for_instance_to_start_or_stop(instance_ids: list(str), stopping: bool =
             if (state != "running" and not stopping) or (state == "running" and stopping):
                 should_wait = True
 
-    print(f"Instance(s) is {'not' if stopping else ''} running: {instance_ids}")
+    print(f"Instance(s) is {'not' if stopping else ''} running: {instance_id}")
 
 
 def get_instance_ip(instance_id: str) -> str:

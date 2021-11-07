@@ -386,7 +386,7 @@ jobs:
 
 
           # Wait for the instance to be running
-          wait_for_instance_to_start_or_stop([server_instance_id], stopping=False)
+          wait_for_instance_to_start_or_stop(server_instance_id, stopping=False)
           print(f"Server instance {server_instance_id} is running")
 
           # Get the IP address of the instance
