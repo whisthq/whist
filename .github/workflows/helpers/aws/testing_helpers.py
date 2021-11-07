@@ -66,9 +66,6 @@ def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False)
     should_wait = True
 
     while should_wait:
-
-        print(f"id is: {instance_id}")
-
         resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
@@ -77,7 +74,7 @@ def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False)
             if (state != "running" and not stopping) or (state == "running" and stopping):
                 should_wait = True
 
-    print(f"Instance(s) is {'not' if stopping else ''} running: {instance_id}")
+    print(f"Instance is{' not' if stopping else ''} running: {instance_id}")
 
 
 def get_instance_ip(instance_id: str) -> str:
@@ -87,7 +84,7 @@ def get_instance_ip(instance_id: str) -> str:
     retval = []
 
     # retrieve instance
-    resp = boto3.client("ec2").describe_instances(InstanceIds=instance_id)
+    resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
     instance = resp["Reservations"]
 
     # iterate over tags
