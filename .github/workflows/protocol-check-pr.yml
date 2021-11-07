@@ -435,7 +435,7 @@ jobs:
           make -j FractalClient
 
       - name: Test Performance for 4 Minutes
-        working_directory: protocol/build
+        working-directory: protocol/build
         run: |
           # Run the protocol client timing out after 240 seconds (4 minutes)
           timeout 240 ./fclient [need to swap for args here] -l
