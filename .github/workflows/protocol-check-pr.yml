@@ -364,26 +364,30 @@ jobs:
           instance_type = "g4dn.2xlarge" # The type of instance we want to create
 
           # Create a new EC2 instance
-          server_instance_id = create_ec2_instance(instance_type, AMI, ssh_key)
+          server_instance_id = create_ec2_instance(instance_type=instance_type, instance_AMI=AMI, key_name=ssh_key)
+          print(f"Created server instance {server_instance_id}")
 
           # Give a little time for the instance to be recognized in AWS
           time.sleep(5)
 
           # Wait for the instance to be running
           wait_for_instance_to_start_or_stop(server_instance_id, stopping=False)
+          print(f"Server instance {server_instance_id} is running")
 
           # Get the IP address of the instance
-          instance_ip = get_instance_ip(instance_id)
+          server_instance_ip = get_instance_ip(server_instance_id)
+          print(f"Server instance {server_instance_id} has IP address {server_instance_ip}")
 
           # Initiate SSH connection with the instance
-          wait_for_ssh(instance_ip, ssh_key)
+          wait_for_ssh(server_instance_ip, ssh_key)
+          print(f"SSH connection to server instance {server_instance_id} established")
 
           # Sleep so that the SSH connections resets
           time.sleep(1)
 
           # Server initialized, echo-ing IP address so that we can continue in a new 
           # YAML step, for better readability
-          echo "SERVER_IP=server_instance_id" >> $GITHUB_ENV
+          print(f"::set-output name=server_instance_ip::{server_instance_ip}")
 
       # 2- Configure it for local development
       - name: Configure Test Server Instance for Running Whist
