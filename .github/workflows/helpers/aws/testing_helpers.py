@@ -133,18 +133,18 @@ def wait_for_ssh(instance_ip: str) -> None:
 def run_ssh_command(
     ip: str,
     cmd: str,
-    key: paramiko.RSAKey,
     display_res: bool,
 ) -> str:
     """
-    TODO modify this to make it return the client command
+    TODO 
 
 
     """
     global client_command
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.connect(hostname=ip["public"], username="ubuntu", pkey=key)
+    ssh_client.load_system_host_keys() # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
+    ssh_client.connect(hostname=ip["public"], username="ubuntu")
     try:
         _, stdout, _ = ssh_client.exec_command(cmd)
         if display_res:
