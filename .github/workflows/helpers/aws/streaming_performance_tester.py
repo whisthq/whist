@@ -7,12 +7,11 @@ import argparse
 import boto3
 import paramiko
 
-from aws.testing_helpers import (
+from testing_helpers import (
     create_ec2_instance,
     wait_for_instance_to_start_or_stop,
     get_instance_ip,
     wait_for_ssh,
-    run_ssh_command,
 )
 
 # add the current directory to the path no matter where this is called from
@@ -74,26 +73,30 @@ if __name__ == "__main__":
     client_instance_ip = get_instance_ip(client_instance_id)
     server_instance_ip = get_instance_ip(server_instance_id)
 
-    # Initiate two SSH connections with the two instances
-    wait_for_ssh(server_instance_ip)
-    print("It works up to here, so far")
-    print(f"SSH connection to server instance {server_instance_id} established")
+    # # Initiate two SSH connections with the two instances
+    # wait_for_ssh(client_instance_ip, ssh_key)
+    # wait_for_ssh(server_instance_ip, ssh_key)
+
+    # print("It works up to here, so far")
+    # print(f"SSH connection to server instance {server_instance_id} established")
 
     # Sleep so that the SSH connections resets
     time.sleep(1)
 
     # Set up the SSH client for both instnaces
     client_ssh_client = paramiko.SSHClient()
-    client_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # client_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client_ssh_client.connect(
         hostname=client_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
     )
+    print(f"made it here")
 
     server_ssh_client = paramiko.SSHClient()
     server_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     server_ssh_client.connect(
         hostname=server_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
     )
+    print(f"SSH connections established")
 
     # At this point, we have both a server and a client running properly.
     # Retrieve fractal/fractal monorepo on each instance
@@ -142,7 +145,7 @@ if __name__ == "__main__":
     server_ssh_client.exec_command(cmd=command)
 
     # Wait 4 minutes to generate enough data
-    time.sleep(240) # 240 seconds = 4 minutes
+    time.sleep(240)  # 240 seconds = 4 minutes
 
     # Close SSH connections
     client_ssh_client.close()
