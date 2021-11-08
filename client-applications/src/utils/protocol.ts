@@ -48,6 +48,7 @@ export const protocolLaunch = async () => {
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
     environment: config.sentryEnv,
+    codec: "h265",
   }
 
   const protocolArguments = [
