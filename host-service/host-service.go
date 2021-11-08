@@ -30,6 +30,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -558,6 +559,15 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	tmpfs := make(map[string]string)
 	tmpfs["/run"] = "size=52428800"
 	tmpfs["/run/lock"] = "size=52428800"
+
+	// Sanitize the received session ID. First, verify that the sessionID is a valid timestamp string.
+	// If not, use a new timestamp.
+	_, err = strconv.ParseInt(mandelboxSubscription.SessionID, 10, 64)
+	if err != nil {
+		sessionID := strconv.FormatInt(time.Now().UnixMilli(), 10)
+		logger.Warningf("Malformed session ID: %v Using new session ID: %v", mandelboxSubscription.SessionID, sessionID)
+		mandelboxSubscription.SessionID = sessionID
+	}
 
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
