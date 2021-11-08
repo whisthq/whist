@@ -26,9 +26,9 @@ def get_browser(browser_name):
         raise ("unknown browser name")
 
 
-def get_cookie_file(browser_name):
+def get_or_create_cookie_file(browser_name):
     """
-    Gets file containing all cookies
+    Gets or create file containing all cookies
     Args:
         browser_name (str): the name of the browser we got cookies from
     Return:
@@ -59,12 +59,26 @@ def get_cookie_file(browser_name):
 
         print(linux_cookies)
         paths = linux_cookies
-        paths = map(os.path.expanduser, paths)
+        paths = list(map(os.path.expanduser, paths))
 
-        for path in paths:
-            print(path)
+        path = browser_cookie3.expand_paths(linux_cookies, "linux")
 
-        return browser_cookie3.expand_paths(linux_cookies, "linux")
+        # If not defined then create file
+        if not path:
+            connection = sqlite3.connect(paths[0])
+            cursor = connection.cursor()
+
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS cookies
+                    (
+                        creation_utc INTEGER NOT NULL,top_frame_site_key TEXT NOT NULL,host_key TEXT NOT NULL,name TEXT NOT NULL,value TEXT NOT NULL,encrypted_value BLOB DEFAULT '',path TEXT NOT NULL,expires_utc INTEGER NOT NULL,is_secure INTEGER NOT NULL,is_httponly INTEGER NOT NULL,last_access_utc INTEGER NOT NULL,has_expires INTEGER NOT NULL DEFAULT 1,is_persistent INTEGER NOT NULL DEFAULT 1,priority INTEGER NOT NULL DEFAULT 1,samesite INTEGER NOT NULL DEFAULT -1,source_scheme INTEGER NOT NULL DEFAULT 0,source_port INTEGER NOT NULL DEFAULT -1,is_same_party INTEGER NOT NULL DEFAULT 0,UNIQUE (top_frame_site_key, host_key, name, path)
+                    )"""
+            )
+            connection.commit()
+            connection.close()
+            path = paths[0]
+
+        return path
 
     else:
         raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
@@ -119,7 +133,7 @@ def encrypt(browser_name, value, encrypt_prefix):
     encrypted_value += aes_cbc_encrypt.feed()
 
     # Defaulting encryption to v10
-    encrypted_value = b'v10' + encrypted_value
+    encrypted_value = b"v10" + encrypted_value
     # encrypted_value = encrypt_prefix.encode("utf-8") + encrypted_value
 
     return encrypted_value
@@ -157,7 +171,7 @@ def set_browser_cookies(to_browser_name, cookies):
         to_browser_name (str): the name of the browser we will import cookies to
         cookies (dict): the cookies being imported
     """
-    cookie_file = get_cookie_file(to_browser_name)
+    cookie_file = get_or_create_cookie_file(to_browser_name)
 
     encrypted_cookies = []
 
