@@ -364,4 +364,4 @@ jobs:
 
       - name: Run Protocol Performance Test
         working-directory: .github/workflows/helpers/aws
-        run: python3 streaming_performance_test.py
+        run: python3 streaming_performance_tester.py
