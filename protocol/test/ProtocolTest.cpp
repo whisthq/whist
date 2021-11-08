@@ -54,13 +54,24 @@ typedef struct CaptureOutputContext {
 
 #define TEST_OUTPUT_DIRNAME "test_output"
 CaptureOutputContext capture_test_output() {
+    /*
+        This function captures the output of stdout and stderr to a file for
+        the current test. The file is named after the test name, and is located
+        in the test/test_output directory. The file is overwritten if it already
+        exists. If this function is called in a test, then the test output must
+        subsequently be released with `release_test_output`.
+
+        Returns:
+            (CaptureOutputContext): The context for the captured output to be
+                released with `release_test_output`.
+    */
     CaptureOutputContext ctx;
     ctx.old_stdout = dup(STDOUT_FILENO);
     ctx.old_stderr = dup(STDERR_FILENO);
     mkdir(TEST_OUTPUT_DIRNAME, 0777);
     std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
                            ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
-    ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0666);
     EXPECT_GE(ctx.fd, 0);
     dup2(ctx.fd, STDOUT_FILENO);
     dup2(ctx.fd, STDERR_FILENO);
@@ -68,6 +79,17 @@ CaptureOutputContext capture_test_output() {
 }
 
 std::ifstream release_test_output(CaptureOutputContext ctx) {
+    /*
+        This function releases the output of stdout and stderr captured by
+        `capture_test_output`, and returns a C++ file handle for validating
+        the captured output.
+
+        Arguments:
+            ctx (CaptureOutputContext): The context returned by `capture_test_output`.
+
+        Returns:
+            (std::ifstream): The file containing the captured output.
+    */
     dup2(ctx.old_stdout, STDOUT_FILENO);
     dup2(ctx.old_stderr, STDERR_FILENO);
     close(ctx.fd);
@@ -76,17 +98,26 @@ std::ifstream release_test_output(CaptureOutputContext ctx) {
     return file;
 }
 
-void expect_out_line_contains(std::ifstream& file, std::string level) {
+std::string next_line(std::ifstream& file) {
+    /*
+        This function reads the next line from the given file.
+
+        Args:
+            file (std::ifstream&): The file to read from.
+
+        Returns:
+            (std::string): The next line in the file.
+    */
     std::string line;
     std::getline(file, line);
-    EXPECT_THAT(line, ::testing::HasSubstr(level));
+    return line;
 }
 
-#define EXPECT_LOG_FATAL(file) expect_out_line_contains(file, "FATAL")
-#define EXPECT_LOG_ERROR(file) expect_out_line_contains(file, "ERROR")
-#define EXPECT_LOG_WARNING(file) expect_out_line_contains(file, "WARNING")
-#define EXPECT_LOG_INFO(file) expect_out_line_contains(file, "INFO")
-#define EXPECT_LOG_DEBUG(file) expect_out_line_contains(file, "DEBUG")
+#define EXPECT_LOG_DEBUG(line) EXPECT_THAT(line, ::testing::HasSubstr("DEBUG"))
+#define EXPECT_LOG_INFO(line) EXPECT_THAT(line, ::testing::HasSubstr("INFO"))
+#define EXPECT_LOG_WARNING(line) EXPECT_THAT(line, ::testing::HasSubstr("WARNING"))
+#define EXPECT_LOG_ERROR(line) EXPECT_THAT(line, ::testing::HasSubstr("ERROR"))
+#define EXPECT_LOG_FATAL(line) EXPECT_THAT(line, ::testing::HasSubstr("FATAL"))
 
 /*
 ============================
@@ -106,8 +137,8 @@ TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
     EXPECT_EQ(ret_val, -1);
     auto output = release_test_output(ctx);
     // Check that the output is valid, line-by-line
-    expect_out_line_contains(output, "Usage:");
-    expect_out_line_contains(output, "--help");
+    EXPECT_THAT(next_line(output), ::testing::StartsWith("Usage:"));
+    EXPECT_THAT(next_line(output), ::testing::HasSubstr("--help"));
     output.close();
 }
 
@@ -143,7 +174,7 @@ TEST(ProtocolTest, InitRingBufferBadSize) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
     EXPECT_TRUE(rb == NULL);
     auto output = release_test_output(ctx);
-    EXPECT_LOG_ERROR(output);
+    EXPECT_LOG_ERROR(next_line(output));
     output.close();
 }
 
@@ -216,11 +247,11 @@ TEST(ProtocolTest, LoggerTest) {
     flush_logs();
     auto output = release_test_output(ctx);
     // Validate stdout, line-by-line
-    expect_out_line_contains(output, "Logging initialized!");
-    EXPECT_LOG_DEBUG(output);
-    EXPECT_LOG_INFO(output);
-    EXPECT_LOG_WARNING(output);
-    EXPECT_LOG_ERROR(output);
+    EXPECT_THAT(next_line(output), ::testing::HasSubstr("Logging initialized!"));
+    EXPECT_LOG_DEBUG(next_line(output));
+    EXPECT_LOG_INFO(next_line(output));
+    EXPECT_LOG_WARNING(next_line(output));
+    EXPECT_LOG_ERROR(next_line(output));
     output.close();
     destroy_logger();
 }
@@ -252,6 +283,7 @@ Server Tests
 
 // Testing that good values passed into server_parse_args returns success
 TEST(ProtocolTest, ArgParsingUsageArgTest) {
+    CaptureOutputContext ctx = capture_test_output();
     int argc = 2;
 
     char argv0[] = "./server/build64/FractalServer";
@@ -260,6 +292,9 @@ TEST(ProtocolTest, ArgParsingUsageArgTest) {
 
     int ret_val = server_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 1);
+    auto output = release_test_output(ctx);
+    // Validate stdout, line-by-line
+    EXPECT_THAT(next_line(output), ::testing::StartsWith("Usage:"));
 }
 
 #endif
@@ -411,7 +446,7 @@ TEST(ProtocolTest, BadDecrypt) {
     EXPECT_EQ(decrypted_len, -1);
 
     auto output = release_test_output(ctx);
-    EXPECT_LOG_WARNING(output);
+    EXPECT_LOG_WARNING(next_line(output));
     output.close();
 }
 
