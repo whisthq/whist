@@ -4,11 +4,11 @@ set -Eeuo pipefail
 
 # Set environment variable if unset
 if [[ -z ${WHIST_INITIAL_USER_COOKIES+x} ]]; then
-  WHIST_INITIAL_USER_COOKIES=""
+  export WHIST_INITIAL_USER_COOKIES=""
 fi
 
 if [[ -z ${WHIST_COOKIE_UPLOAD_TARGET+x} ]]; then
-  WHIST_COOKIE_UPLOAD_TARGET=""
+  export WHIST_COOKIE_UPLOAD_TARGET=""
 fi
 
 
@@ -62,12 +62,10 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE 
 
-exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION -c \
-  "DISPLAY=:10 \
+exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,WHIST_INITIAL_USER_COOKIES,WHIST_COOKIE_UPLOAD_TARGET -c \
+  'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
     LC_ALL=C \
-    WHIST_INITIAL_USER_COOKIES='${WHIST_INITIAL_USER_COOKIES}' \
-    WHIST_COOKIE_UPLOAD_TARGET='${WHIST_COOKIE_UPLOAD_TARGET}' \
     PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-  DEBIAN_FRONTEND=noninteractive ""$1"
+  DEBIAN_FRONTEND=noninteractive '"$1"
