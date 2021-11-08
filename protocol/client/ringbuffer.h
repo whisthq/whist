@@ -17,10 +17,6 @@ packet, call nack_single_packet.
 #include "network.h"
 #include <fractal/core/fractal_frame.h>
 
-// The max number of times we can nack a packet: limited to 2 times right now so that we don't get
-// stuck on a packet that never arrives
-#define MAX_PACKET_NACKS 2
-
 /**
  * @brief 	Audio/video types for ring buffers and frames
  */
@@ -42,9 +38,13 @@ typedef struct FrameData {
     int packets_received;
     int frame_size;
     bool* received_indices;
-    int* nacked_indices;
     char* frame_buffer;
 
+    // Nack logic
+
+    // Whether or not we're in "recovery mode"
+    bool recovery_mode;
+    int* nacked_indices;
     int num_times_nacked;
     int last_nacked_index;
     clock last_nacked_timer;
@@ -65,10 +65,11 @@ typedef struct RingBuffer {
     int largest_frame_size;
     int largest_num_packets;
 
+    BlockAllocator* frame_buffer_allocator;  // unused if audio
+
     int currently_rendering_id;
     FrameData currently_rendering_frame;
-    // The ID of the last received normal packet (Ignoring nacks)
-    int last_received_nonnack_id;
+
     // *** START FOR BITRATE STAT CALCULATIONS ***
     int num_packets_nacked;
     int num_packets_received;
@@ -77,9 +78,13 @@ typedef struct RingBuffer {
     // *** DONE FOR BITRATE STAT CALCULATIONS ***
     int frames_received;
     int max_id;
-    clock missing_frame_nack_timer;
 
-    BlockAllocator* frame_buffer_allocator;  // unused if audio
+    // Nack variables
+
+    // The next ID that should be rendered, marks
+    // the lowest packet ID we're interested in nacking about
+    int next_render_id;
+    int last_missing_frame_nack;
 } RingBuffer;
 
 /**
@@ -125,26 +130,15 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet);
 void destroy_ring_buffer(RingBuffer* ring_buffer);
 
 /**
- * @brief Send a nack for the packet at index index of frame with ID id.
+ * @brief If any packets are still missing, and it's been too long, try nacking for them.
+ *        Ideally, this gets called quite rapidly, it has internal timers to throttle nacks.
+ *        The more rapidly the better, just need to balance CPU usage, 5-10ms should be fine.
  *
- * @param ring_buffer Ring buffer that should have the packet
+ * @param ring_buffer The ring buffer to try nacking with
  *
- * @param id ID of the frame that should have the packet
- *
- * @param index Packet index
+ * @param latency The round-trip latency of the connection. Helpful with nacking logic
  */
-void nack_single_packet(RingBuffer* ring_buffer, int id, int index);
-
-/**
- * @brief Nack 1 missing packet of frame_data up to index.
- *
- * @param ring_buffer Ring buffer containing the frame
- *
- * @param frame_data Frame that might be missing packets
- *
- * @param index Packet index to nack up to
- */
-void nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int index);
+void try_nacking(RingBuffer* ring_buffer, double latency);
 
 /**
  * @brief Reset the frame, both metadata and frame buffer.
