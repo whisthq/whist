@@ -10,6 +10,8 @@ FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
+COOKIE_ENV_FILENAME=/usr/share/fractal/private/user_cookies_env
+USER_UPLOAD_TARGET_ENV_FILENAME=/usr/share/fractal/private/user_target_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
@@ -40,6 +42,17 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
+# Set cookies, if file exists
+if [ -f "$COOKIE_ENV_FILENAME" ]; then
+  export WHIST_INITIAL_USER_COOKIES=$(cat $COOKIE_ENV_FILENAME)
+fi
+
+# Set user upload target, if file exists
+if [ -f "$USER_UPLOAD_TARGET_ENV_FILENAME" ]; then
+  export WHIST_COOKIE_UPLOAD_TARGET=$(cat $USER_UPLOAD_TARGET_ENV_FILENAME)
+fi
+
+
 # We use named pipe redirection for consistency with our FractalServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
@@ -59,6 +72,9 @@ if [ "$ENV_NAME" != "LOCALDEV" ]; then
   # Make sure `cleanup` gets called on script exit in all environments except localdev.
   trap cleanup EXIT ERR
 fi
+
+# Imports user cookies
+/usr/share/fractal/run-as-fractal-user.sh "python3 /usr/bin/import_custom_cookies.py"
 
 # Start the application that this mandelbox runs.
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
