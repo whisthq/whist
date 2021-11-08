@@ -102,6 +102,8 @@ endif()
 ]]
 target_link_libraries(FractalClient ${PLATFORM_INDEPENDENT_LIBS})
 
+find_library(DISPLAY_NOTIFICATIONS DisplayNotifications .)
+
 #[[
 ################## LINUX ##################
 ]]

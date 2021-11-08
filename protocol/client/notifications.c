@@ -19,6 +19,6 @@ int display_notification(FractalPacket* packet) {
     FractalNotification c;
     memcpy(c.title, packet->data, MAX_TITLE_LEN);
     memcpy(c.message, (packet->data)+MAX_TITLE_LEN, MAX_MESSAGE_LEN);
-    LOG_INFO("NOTIFICATION RECIEVED: Title: %s, Message: %s", c.title, c.message);
+    DisplayNotification(c.title, c.message);
     return 0;
 }

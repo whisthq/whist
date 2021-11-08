@@ -216,4 +216,49 @@ if has_updated "$FFMPEG_LIB"; then
 fi
 
 ###############################
+# Download Notifier headers
+###############################
+
+# If the include/notifications directory doesn't exist, make it and fill it
+# Or, if the lib has updated, refill the directory
+echo -n "---- "
+LIB="fractal-notifier-headers.tar.gz"
+NOTIFIER_DIR="$DEST_DIR/include/notifier"
+if has_updated "$LIB" || [[ ! -d "$NOTIFIER_DIR" ]]; then
+  rm -rf "$NOTIFIER_DIR"
+  mkdir -p "$NOTIFIER_DIR"
+  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$NOTIFIER_DIR"
+
+  # Pull all NOTIFIER include files up a level and delete encapsulating folder
+  mv "$NOTIFIER_DIR/include"/* "$NOTIFIER_DIR"
+  rmdir "$NOTIFIER_DIR/include"
+fi
+
+###############################
+# Download Notifier libaries
+###############################
+
+# Select Notifier lib dir and Notifier lib targz name based on OS and hardware architecture (macOS)
+echo -n "---- "
+NOTIFIER_LIB_DIR="$DEST_DIR/lib/64/notifier/$OS"
+if [[ "$OS" =~ "Windows" ]]; then
+  NOTIFIER_LIB="fractal-windows-notifier-static-lib.tar.gz"
+elif [[ "$OS" == "Darwin" ]]; then
+  if [[ "$MACOS_ARCH" == "arm64" ]]; then
+    NOTIFIER_LIB="fractal-macos-arm64-notifier-static-lib.tar.gz"
+  else
+    NOTIFIER_LIB="fractal-macos-x64-notifier-static-lib.tar.gz"
+  fi
+elif [[ "$OS" == "Linux" ]]; then
+  NOTIFIER_LIB="fractal-linux-notifier-static-lib.tar.gz"
+fi
+
+# Check if OPENSSL_LIB has updated, and if so, create the dir and copy the libs into the source dir
+if has_updated "$NOTIFIER_LIB"; then
+  rm -rf "$NOTIFIER_LIB_DIR"
+  mkdir -p "$NOTIFIER_LIB_DIR"
+  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$NOTIFIER_LIB" - | tar -xz -C "$NOTIFIER_LIB_DIR"
+fi
+
+###############################
 echo "-- Downloading Whist Protocol binaries from AWS S3 - Completed"

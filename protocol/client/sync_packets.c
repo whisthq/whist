@@ -20,6 +20,7 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/logging/log_statistic.h>
 #include <fractal/logging/logging.h>
+#include <fractal/core/fractal_notification.h>
 #include "handle_server_message.h"
 #include "network.h"
 #include "audio.h"
@@ -243,7 +244,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_NOTIFICATION:
-                TIME_RUN(display_notification(packet), "display_notification", statistics_timer);
+                TIME_RUN(display_notification(packet), "DisplayNotifiation", statistics_timer);
                 break;
             default:
                 LOG_ERROR("Unknown packet type: %d", packet->type);

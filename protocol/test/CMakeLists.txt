@@ -145,6 +145,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     include_directories(${DBUS_INCLUDE_DIRS})
     message(STATUS "DBUS_INCLUDE_DIRS: ${DBUS_INCLUDE_DIRS}")
     
+    find_library(DISPLAY_NOTIFICATIONS DisplayNotifications .)
+
     if(NOT DBUS_FOUND)
         message(FATAL_ERROR "Library dbus-1 was not found!")
     endif()

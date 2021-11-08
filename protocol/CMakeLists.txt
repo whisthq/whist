@@ -303,6 +303,21 @@ if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
+<<<<<<< HEAD
+=======
+find_library(LIB_NOTIFICATIONS_DISPLAYER NAMES notifications_displayer PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/notifier/${CMAKE_SYSTEM_NAME}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT LIB_NOTIFICATIONS_DISPLAYER)
+    message(FATAL_ERROR "Library LIB_NOTIFICATIONS_DISPLAYER was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/notifier/${CMAKE_SYSTEM_NAME}")
+endif()
+
+# GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
+>>>>>>> 147217c08... testing out go method
 fetchcontent_declare(
     googletest
     GIT_REPOSITORY "https://github.com/google/googletest.git"
@@ -346,6 +361,7 @@ set(PLATFORM_INDEPENDENT_LIBS   fractalCore
     fractalUtils
     ${STATIC_SDL2}
     ${LIB_SENTRY}
+    ${LIB_NOTIFICATIONS_DISPLAYER}
 )
 set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
     "-framework VideoToolbox"
