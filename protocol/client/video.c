@@ -822,7 +822,8 @@ void update_video() {
                     next_frame_ctx->id == next_frame_render_id &&
                     next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
-                    LOG_INFO("Skipping render because we already received frame %d", next_frame_ctx->id);
+                    LOG_INFO("Skipping render because we already received frame %d",
+                             next_frame_ctx->id);
                     video_ring_buffer->num_frames_skipped++;
                 } else {
                     skip_render = false;
