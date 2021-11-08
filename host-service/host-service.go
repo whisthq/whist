@@ -564,8 +564,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// If not, use a new timestamp.
 	_, err = strconv.ParseInt(mandelboxSubscription.SessionID, 10, 64)
 	if err != nil {
-		logger.Warningf("Malformed session ID. Sanitizing received session ID.")
-		mandelboxSubscription.SessionID = strconv.FormatInt(time.Now().UnixMilli(), 10)
+		sessionID := strconv.FormatInt(time.Now().UnixMilli(), 10)
+		logger.Warningf("Malformed session ID: %v Using new session ID: %v", mandelboxSubscription.SessionID, sessionID)
+		mandelboxSubscription.SessionID = sessionID
 	}
 
 	hostConfig := dockercontainer.HostConfig{
