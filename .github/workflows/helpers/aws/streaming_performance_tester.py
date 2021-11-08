@@ -142,6 +142,13 @@ if __name__ == "__main__":
         command = "cd ~/fractal/protocol && ./fclient " + client_command
         server_ssh_client.exec_command(cmd=command)
 
+        # Wait 4 minutes to generate enough data
+        time.sleep(240) # 240 seconds = 4 minutes
+
+        # Close SSH connections
+        client_ssh_client.close()
+        server_ssh_client.close()
+
         # TODO
         # Here we will want to read the .log file and retrieve all of the info we want. We could display it as
         # a comment on the PR using Neil's Slack bot automator (see webserver DB migration, which does this) or
@@ -150,10 +157,6 @@ if __name__ == "__main__":
     except:  # Don't throw error for keyboard interrupt or timeout
         pass
     finally:
-        # Close SSH connections
-        client_ssh_client.close()
-        server_ssh_client.close()
-
         # Terminating the instances and waiting for them to shutdown
         print(f"Testing complete, terminating client and server instances")
         boto3.client("ec2").terminate_instances(InstanceIds=[client_instance_id])
