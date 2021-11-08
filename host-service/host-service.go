@@ -438,7 +438,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
 		err := mandelbox.DownloadUserConfigs()
 		if err != nil {
-			logger.Warningf("Error downloading user configs for mandelbox %s: %v", subscriptionInfo.MandelboxID, err)
+			logger.Warningf("Error downloading user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
 			userConfigDownloadComplete <- true
 			return
 		}
