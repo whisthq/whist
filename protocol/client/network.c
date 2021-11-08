@@ -262,7 +262,7 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, 10,
+    if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, 1,
                                    UDP_CONNECTION_WAIT, using_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed establish UDP connection from server");
