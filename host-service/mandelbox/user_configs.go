@@ -435,7 +435,7 @@ func decryptAES256CBC(key, iv, data []byte) error {
 // See: https://en.wikipedia.org/wiki/Padding_(cryptography)#PKCS#5_and_PKCS#7
 func unpadPKCS7(data []byte) ([]byte, error) {
 	if len(data) < 1 {
-		return nil, utils.MakeError("no data to unpad")
+		return nil, utils.MakeError("PKCS7: no data to unpad")
 	}
 
 	// The last byte of the data will always be the number of bytes to unpad
@@ -443,13 +443,13 @@ func unpadPKCS7(data []byte) ([]byte, error) {
 
 	// Validate the padding length is valid
 	if padLength > len(data) || padLength > aes.BlockSize || padLength < 1 {
-		return nil, utils.MakeError("invalid padding length")
+		return nil, utils.MakeError("PKCS7: invalid padding length of %d is longer than data size (%d), AES block length (256), or less than one", padLength, len(data))
 	}
 
 	// Validate each byte of the padding to check correctness
-	for i := 0; i < padLength; i++ {
-		if int(data[len(data)-1-i]) != padLength {
-			return nil, utils.MakeError("invalid padding")
+	for _, v := range data[len(data)-padLength:] {
+		if int(v) != padLength {
+			return nil, utils.MakeError("PKCS7: invalid padding byte %d, expected %d", v, padLength)
 		}
 	}
 
