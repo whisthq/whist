@@ -46,7 +46,7 @@ if __name__ == "__main__":
         args.ssh_key_path
     )  # This is likely /Users/[username]/.ssh/id_rsa if you're on macOS and installed to the system location
 
-    # Load the SSH key into the GHA runner
+    # Load the SSH key
     ssh_key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
 
     # Define client and server server machine variables
@@ -84,45 +84,50 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # Set up the SSH client for both instnaces
-    client_ssh_client = paramiko.SSHClient()
-    # client_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client_ssh_client = paramiko.client.SSHClient()
+    client_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+
+    print(f"ip is: {client_instance_ip[0]['public']}")
+
     client_ssh_client.connect(
         hostname=client_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
     )
     print(f"made it here")
 
-    server_ssh_client = paramiko.SSHClient()
+    server_ssh_client = paramiko.client.SSHClient()
     server_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     server_ssh_client.connect(
         hostname=server_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
     )
+    
     print(f"SSH connections established")
 
     # At this point, we have both a server and a client running properly.
     # Retrieve fractal/fractal monorepo on each instance
     server_ssh_client.exec_command(
-        cmd='git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal.git" ~/fractal',
+        command='git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal.git" ~/fractal',
     )
     server_ssh_client.exec_command(
-        cmd='git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal.git" ~/fractal',
+        command='git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal.git" ~/fractal',
     )
 
     # Set up the server first
     # 1- run host-setup
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment"
-    server_ssh_client.exec_command(cmd=command)
+    server_ssh_client.exec_command(command=command)
 
     # 2- reboot and wait for it to come back up
-    server_ssh_client.exec_command(cmd="sudo reboot")
+    server_ssh_client.exec_command(command="sudo reboot")
     wait_for_ssh(server_instance_ip)
 
     # 3- build and run host-service
     command = "cd ~/fractal/host-service && make run"
-    server_ssh_client.exec_command(cmd=command)
+    server_ssh_client.exec_command(command=command)
 
     # 4- Run the protocol server, and retrieve the connection string
     command = "cd ~/fractal/protocol && ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer && ./fserver"
-    _, stdout, _ = server_ssh_client.exec_command(cmd=command)
+    _, stdout, _ = server_ssh_client.exec_command(command=command)
     unparsed_fclient_string = ""
     for line in iter(stdout.readline, ""):
         print(line, end="")
@@ -138,11 +143,11 @@ if __name__ == "__main__":
     # Set up the client
     # 1- Build the protocol client
     command = "cd ~/fractal/protocol && ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient"
-    client_ssh_client.exec_command(cmd=command)
+    client_ssh_client.exec_command(command=command)
 
     # 2- Run the protocol client with the connection string
     command = "cd ~/fractal/protocol && ./fclient " + client_command
-    server_ssh_client.exec_command(cmd=command)
+    server_ssh_client.exec_command(command=command)
 
     # Wait 4 minutes to generate enough data
     time.sleep(240)  # 240 seconds = 4 minutes
