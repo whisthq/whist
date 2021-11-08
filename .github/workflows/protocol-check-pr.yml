@@ -364,4 +364,4 @@ jobs:
 
       - name: Run Protocol Performance Test
         working-directory: .github/workflows/helpers/aws
-        run: python3 streaming_performance_tester.py
+        run: python3 streaming_performance_tester.py --ssh-key-name "protocol_performance_testing_sshkey" --ssh-key-path "~/.ssh/id_rsa"
