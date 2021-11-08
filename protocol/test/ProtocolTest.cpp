@@ -25,13 +25,15 @@ Includes
 #include <fstream>
 #include <algorithm>
 #include <iterator>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 extern "C" {
 #include "client/client_utils.h"
 #include "client/ringbuffer.h"
 #include "fractal/utils/color.h"
 #include <fractal/core/fractal.h>
+#include <fcntl.h>
 
 #ifndef __APPLE__
 #include "server/main.h"
@@ -44,6 +46,48 @@ extern "C" {
 #include <fractal/utils/avpacket_buffer.h>
 }
 
+typedef struct CaptureOutputContext {
+    int old_stdout;
+    int old_stderr;
+    int fd;
+} CaptureOutputContext;
+
+#define TEST_OUTPUT_DIRNAME "test_output"
+CaptureOutputContext capture_test_output() {
+    CaptureOutputContext ctx;
+    ctx.old_stdout = dup(STDOUT_FILENO);
+    ctx.old_stderr = dup(STDERR_FILENO);
+    mkdir(TEST_OUTPUT_DIRNAME, 0777);
+    std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                           ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
+    ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    EXPECT_GE(ctx.fd, 0);
+    dup2(ctx.fd, STDOUT_FILENO);
+    dup2(ctx.fd, STDERR_FILENO);
+    return ctx;
+}
+
+std::ifstream release_test_output(CaptureOutputContext ctx) {
+    dup2(ctx.old_stdout, STDOUT_FILENO);
+    dup2(ctx.old_stderr, STDERR_FILENO);
+    close(ctx.fd);
+    std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                       ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log");
+    return file;
+}
+
+void expect_out_line_contains(std::ifstream& file, std::string level) {
+    std::string line;
+    std::getline(file, line);
+    EXPECT_THAT(line, ::testing::HasSubstr(level));
+}
+
+#define EXPECT_LOG_FATAL(file) expect_out_line_contains(file, "FATAL")
+#define EXPECT_LOG_ERROR(file) expect_out_line_contains(file, "ERROR")
+#define EXPECT_LOG_WARNING(file) expect_out_line_contains(file, "WARNING")
+#define EXPECT_LOG_INFO(file) expect_out_line_contains(file, "INFO")
+#define EXPECT_LOG_DEBUG(file) expect_out_line_contains(file, "DEBUG")
+
 /*
 ============================
 Example Test
@@ -52,6 +96,7 @@ Example Test
 
 // Example of a test using a function from the client module
 TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
+    CaptureOutputContext ctx = capture_test_output();
     int argc = 1;
 
     char argv0[] = "./client/build64/FractalClient";
@@ -59,6 +104,11 @@ TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
 
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, -1);
+    auto output = release_test_output(ctx);
+    // Check that the output is valid, line-by-line
+    expect_out_line_contains(output, "Usage:");
+    expect_out_line_contains(output, "--help");
+    output.close();
 }
 
 /*
@@ -89,12 +139,18 @@ TEST(ProtocolTest, InitRingBuffer) {
 
 // Tests that an initialized ring buffer with a bad size returns NULL
 TEST(ProtocolTest, InitRingBufferBadSize) {
+    CaptureOutputContext ctx = capture_test_output();
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
     EXPECT_TRUE(rb == NULL);
+    auto output = release_test_output(ctx);
+    EXPECT_LOG_ERROR(output);
+    output.close();
 }
 
 // Tests adding packets into ringbuffer
 TEST(ProtocolTest, AddingPacketsToRingBuffer) {
+    CaptureOutputContext ctx = capture_test_output();
+
     // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
@@ -124,6 +180,10 @@ TEST(ProtocolTest, AddingPacketsToRingBuffer) {
     EXPECT_EQ(receive_packet(rb, &pkt2), -1);
 
     destroy_ring_buffer(rb);
+
+    auto output = release_test_output(ctx);
+    // For now we simply suppress stdout, but don't validate the output for this test
+    output.close();
 }
 
 // Test that resetting the ringbuffer resets the values
@@ -144,6 +204,25 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     reset_frame(rb, get_frame_at_id(rb, pkt1.id));
 
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+}
+
+TEST(ProtocolTest, LoggerTest) {
+    CaptureOutputContext ctx = capture_test_output();
+    init_logger();
+    LOG_DEBUG("This is a debug log!");
+    LOG_INFO("This is an info log!");
+    LOG_WARNING("This is a warning log!");
+    LOG_ERROR("This is an error log!");
+    flush_logs();
+    auto output = release_test_output(ctx);
+    // Validate stdout, line-by-line
+    expect_out_line_contains(output, "Logging initialized!");
+    EXPECT_LOG_DEBUG(output);
+    EXPECT_LOG_INFO(output);
+    EXPECT_LOG_WARNING(output);
+    EXPECT_LOG_ERROR(output);
+    output.close();
+    destroy_logger();
 }
 
 // Test that set_rendering works
@@ -298,6 +377,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
 // key, confirms that it returns -1
 TEST(ProtocolTest, BadDecrypt) {
+    CaptureOutputContext ctx = capture_test_output();
     const char* data = "testing...testing";
     size_t len = strlen(data);
 
@@ -329,6 +409,10 @@ TEST(ProtocolTest, BadDecrypt) {
                                        (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
 
     EXPECT_EQ(decrypted_len, -1);
+
+    auto output = release_test_output(ctx);
+    EXPECT_LOG_WARNING(output);
+    output.close();
 }
 
 /**
