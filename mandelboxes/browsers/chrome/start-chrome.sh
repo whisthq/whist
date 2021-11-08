@@ -41,6 +41,10 @@ fi
 flags+=(--enable-features=$features)
 flags+=(--flag-switches-end)
 
+flags+=($INITIAL_URL)
+
+
+
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
 exec google-chrome "${flags[@]}"

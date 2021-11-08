@@ -30,6 +30,23 @@ export default flow(
     const initialKeyRepeat = getInitialKeyRepeat()
     const keyRepeat = getKeyRepeat()
 
+    // https://stackoverflow.com/questions/5717093/check-if-a-javascript-string-is-a-url
+    const validateURL = (maybeUrl: string) => {
+      let url
+      try {
+        url = new URL(maybeUrl)
+      } catch (_) {
+        return false
+      }
+      return url.protocol === "http:" || url.protocol === "https:"
+    }
+
+    // Get URL from command line
+    let initialUrl = ""
+    if (process.argv.length >= 2) {
+      initialUrl = app.process.argv[1]
+    }
+
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
         map(([t, c]) => ({
@@ -50,6 +67,10 @@ export default flow(
             ...(keyRepeat !== "" &&
               !isNaN(parseInt(keyRepeat)) && {
                 key_repeat: parseInt(keyRepeat),
+              }),
+            ...(initialUrl !== "" &&
+              validateURL(initialUrl) && {
+                initial_url: initialUrl,
               }),
           }), // Data to send through the JSON transport
         }))
