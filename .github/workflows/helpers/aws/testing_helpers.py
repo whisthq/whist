@@ -10,6 +10,10 @@ import paramiko
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
+# Define boto3 client with a specific region
+boto3client = boto3.client("ec2", region_name="us-east-1")
+
+
 def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) -> str:
     """
     Creates an AWS EC2 instance of a specific instance type and AMI
@@ -31,7 +35,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
             {
                 "ResourceType": "instance",
                 "Tags": [
-                    {"Key": "Name", "Value": "protocol-streaming-performance-testing-server"},
+                    {"Key": "Name", "Value": "protocol-streaming-performance-testing-machine"},
                 ],
             },
         ],
@@ -44,7 +48,7 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     }
 
     # Create the EC2 instance
-    resp = boto3.client("ec2").run_instances(**kwargs)
+    resp = boto3client.run_instances(**kwargs)
     instance_id = resp["Instances"][0]["InstanceId"]
     print(f"Created EC2 instance with id: {instance_id}")
     return instance_id
@@ -66,7 +70,7 @@ def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False)
     should_wait = True
 
     while should_wait:
-        resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
+        resp = boto3client.describe_instances(InstanceIds=[instance_id])
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
         should_wait = False
@@ -84,7 +88,7 @@ def get_instance_ip(instance_id: str) -> str:
     retval = []
 
     # retrieve instance
-    resp = boto3.client("ec2").describe_instances(InstanceIds=[instance_id])
+    resp = boto3client.describe_instances(InstanceIds=[instance_id])
     instance = resp["Reservations"][0]
 
     # iterate over tags
@@ -98,7 +102,7 @@ def get_instance_ip(instance_id: str) -> str:
     return retval
 
 
-def wait_for_ssh(instance_ip: str) -> None:
+def wait_for_ssh(instance_ip: str, ssh_key: paramiko.RSAKey) -> None:
     """
     Hangs until an EC2 instance has SSH initialized. Could be nice to make
     it timeout after some time.
@@ -113,14 +117,13 @@ def wait_for_ssh(instance_ip: str) -> None:
     print(f"Waiting for SSH to be available on the EC2 instance")
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.load_system_host_keys()  # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
 
     # Hang until the connection is established
     available = False
     while not available:
         available = True
         try:
-            ssh_client.connect(hostname=instance_ip["public"], username="ubuntu")
+            ssh_client.connect(hostname=instance_ip["public"], username="ubuntu", pkey=ssh_key)
         except:
             available = False
         finally:
@@ -128,38 +131,3 @@ def wait_for_ssh(instance_ip: str) -> None:
         time.sleep(2)
 
     print(f"SSH is available on the EC2 instance: {instance_ip['public']}")
-
-
-def run_ssh_command(
-    ip: str,
-    cmd: str,
-    display_res: bool,
-) -> str:
-    """
-    TODO
-
-
-    """
-    global client_command
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.load_system_host_keys()  # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
-    ssh_client.connect(hostname=ip["public"], username="ubuntu")
-    try:
-        _, stdout, _ = ssh_client.exec_command(cmd)
-        if display_res:
-            for line in iter(stdout.readline, ""):
-                print(line, end="")
-                if "linux/macos" in line:
-                    client_command = line[line.find(".") + 2 :].strip()
-                    print(f"Client command: {client_command}")
-        else:
-            for line in iter(stdout.readline, ""):
-                if "linux/macos" in line:
-                    client_command = line[line.find(".") + 2 :].strip()
-                    print(f"Client command: {client_command}")
-    except:
-        pass
-    finally:
-        ssh_client.close()
-        return client_command if client_command else ""
