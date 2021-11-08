@@ -427,7 +427,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelbox.SetAppName(AppName)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
-	// Begin populating user configs at the same time as other setup is being done.
+	// Begin downloading user configs at the same time as other setup is being done.
 	// This is done separately from the rest of the startup goroutines since the user
 	// config download is a potentially long-running process that other pieces do not
 	// depend on.
@@ -437,15 +437,15 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// and we will just use the provided encryption token to save configs when
 		// the mandelbox dies.
 		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
-		err := mandelbox.PopulateUserConfigs()
+		err := mandelbox.DownloadUserConfigs()
 		if err != nil {
-			logger.Warningf("Error populating user configs: %v", err)
+			logger.Warningf("Error downloading user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
 			userConfigDownloadComplete <- true
 			return
 		}
 
 		userConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully populated user configs for mandelbox %s", mandelboxSubscription.ID)
+		logger.Infof("SpinUpMandelbox(): Successfully downloaded user configs for mandelbox %s", mandelboxSubscription.ID)
 	}()
 
 	// Do all startup tasks that can be done before Docker container creation in
@@ -711,7 +711,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Decrypt the previously downloaded user configs using the encryption token
 	err = mandelbox.DecryptUserConfigs()
 	if err != nil {
-		logger.Errorf("Error decrypting config token: %v", err)
+		logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
 	}
 
 	// Write the config.json file with the data received from JSON transport

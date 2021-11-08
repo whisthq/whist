@@ -91,9 +91,8 @@ type Mandelbox interface {
 	// start and accept connections.
 	MarkReady() error
 
-	// Populate the config folder under the mandelbox's MandelboxID for the
-	// mandelbox's assigned user and running application.
-	PopulateUserConfigs() error
+	// Download the user configs from S3 and writes them to buffer
+	DownloadUserConfigs() error
 
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context

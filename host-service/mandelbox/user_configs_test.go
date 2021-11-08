@@ -61,7 +61,7 @@ func TestUserConfigIntegration(t *testing.T) {
 	// Delete the user config directory so it can be recreated
 	os.RemoveAll(unpackedConfigPath)
 
-	if err := testMandelboxData.PopulateUserConfigs(); err != nil {
+	if err := testMandelboxData.DownloadUserConfigs(); err != nil {
 		t.Fatalf("error populating configs: %v", err)
 	}
 
@@ -132,7 +132,7 @@ func setupTestDirs(mandelbox *mandelboxData) error {
 	}
 
 	// Write some directories with text files
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 300; i++ {
 		tempDir := path.Join(testDir, utils.Sprintf("dir%d", i))
 		if err := os.Mkdir(tempDir, 0777); err != nil {
 			return utils.MakeError("failed to create temp dir %s: %v", tempDir, err)
