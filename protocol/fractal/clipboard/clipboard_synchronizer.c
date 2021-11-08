@@ -55,7 +55,6 @@ Defines
 
 volatile bool updating_set_clipboard;  // set to true when SetClipboard() needs to be called
 volatile bool updating_get_clipboard;  // set to true when GetClipboard() needs to be called
-volatile bool updating_clipboard;  // acts as a mutex to prevent clipboard activity from overlapping
 clock last_clipboard_update;
 FractalSemaphore clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
 FractalMutex clipboard_update_mutex;   // used to protect the global clipboard and update toggles
@@ -91,11 +90,7 @@ bool is_clipboard_synchronizing() {
                 updateSetClipboard.
     */
 
-    if (!is_initialized) {
-        LOG_ERROR("Tried to is_clipboard_synchronizing, but the clipboard is not initialized");
-        return true;
-    }
-    return updating_clipboard || pending_clipboard_push;
+    return updating_get_clipboard || updating_set_clipboard || pending_clipboard_push;
 }
 
 void init_clipboard_synchronizer(bool is_client) {
@@ -116,7 +111,8 @@ void init_clipboard_synchronizer(bool is_client) {
     init_clipboard(is_client);
 
     pending_clipboard_push = false;
-    updating_clipboard = false;
+    updating_get_clipboard = false;
+    updating_set_clipboard = false;
     start_timer((clock*)&last_clipboard_update);
     clipboard_semaphore = fractal_create_semaphore(0);
     clipboard_update_mutex = fractal_create_mutex();
@@ -185,7 +181,6 @@ void clipboard_synchronizer_abort_active_clipboard_action() {
         }
         clipboard = NULL;
     }
-    updating_clipboard = false;
     updating_set_clipboard = false;
     updating_get_clipboard = false;
     pending_clipboard_push = false;
@@ -212,11 +207,10 @@ bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk) {
 
     // If the clipboard is currently being updated and the received chunk is a
     //     START chunk, then abort the active action
-    if ((updating_clipboard || pending_clipboard_push) && cb_chunk->chunk_type == CLIPBOARD_START) {
+    if (is_clipboard_synchronizing() && cb_chunk->chunk_type == CLIPBOARD_START) {
         clipboard_synchronizer_abort_active_clipboard_action();
     }
 
-    updating_clipboard = true;
     updating_set_clipboard = true;
     updating_get_clipboard = false;
 
@@ -268,7 +262,6 @@ ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
             clipboard_synchronizer_abort_active_clipboard_action();
         }
         LOG_INFO("Pushing update to clipboard");
-        updating_clipboard = true;
         updating_set_clipboard = false;
         updating_get_clipboard = true;
 
@@ -343,21 +336,9 @@ int update_clipboard(void* opaque) {
             clipboard = get_clipboard();
             pending_clipboard_push = true;
             updating_get_clipboard = false;
-        } else {
-            clock clipboard_time;
-            start_timer(&clipboard_time);
-
-            // If it hasn't been 500ms yet, then wait 500ms to prevent too much
-            // spam
-            const int spam_time_ms = 500;
-            if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-                fractal_sleep(
-                    max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
-            }
         }
 
         LOG_INFO("Updated clipboard!");
-        updating_clipboard = false;
 
         fractal_unlock_mutex(clipboard_update_mutex);
     }
