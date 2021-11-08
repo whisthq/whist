@@ -9,6 +9,13 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 )
 
+func init() {
+	// Verify that the host service is running on a valid environment. Panic if not.
+	if err := verifyEnvironment(); err != nil {
+		panic(err)
+	}
+}
+
 // An AppEnvironment represents either localdev or localdevwithdb (i.e. a personal
 // instance), dev (i.e. talking to the dev webserver), staging, or prod
 type AppEnvironment string
@@ -103,9 +110,9 @@ func GetUserID() (mandelboxtypes.UserID, error) {
 	return UserID, nil
 }
 
-// VerifyEnvironment is used to enforce that the host service is running on a valid
+// verifyEnvironment is used to enforce that the host service is running on a valid
 // environment.
-func VerifyEnvironment() error {
+func verifyEnvironment() error {
 	if IsRunningInCI() && !IsLocalEnv() {
 		// Running on a non-local environment with CI enabled is an invalid configuration.
 		return utils.MakeError("Running on non-local environment with CI enabled.")

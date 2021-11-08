@@ -946,14 +946,6 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	// Verify that we are running on a valid environment.
-	err = metadata.VerifyEnvironment()
-
-	if err != nil {
-		logger.Panicf(globalCancel, "Invalid environment: %s", err)
-		return
-	}
-
 	if !metadata.IsLocalEnv() {
 		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
 			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
