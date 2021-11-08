@@ -56,6 +56,11 @@ extern volatile int last_tcp_pong_id;
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
+// Controls the timeouts of read_packet on UDP
+// 0ms hurts laptop batteries, but 1ms keeps update_video/update_audio live
+#define UDP_CONNECTION_TIMEOUT 1  // ms
+// Controls the timeout of read_packet on TCP
+#define TCP_CONNECTION_TIMEOUT 1  // ms
 
 /*
 ============================
@@ -262,15 +267,16 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, 10,
+    if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, UDP_CONNECTION_TIMEOUT,
                                    UDP_CONNECTION_WAIT, using_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
     }
 
-    if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
-                                   using_stun, (char *)client_binary_aes_private_key)) {
+    if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, TCP_CONNECTION_TIMEOUT,
+                                   TCP_CONNECTION_WAIT, using_stun,
+                                   (char *)client_binary_aes_private_key)) {
         LOG_ERROR("Failed to establish TCP connection with server.");
         destroy_socket_context(&packet_udp_context);
         return -1;

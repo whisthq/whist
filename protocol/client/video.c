@@ -817,10 +817,13 @@ void update_video() {
                 // the next frame faster. We do this because rendering is synced with screen
                 // refresh, so rendering the backlogged frames requires the client to wait until the
                 // screen refreshes N more times, causing it to fall behind the server.
-                if (next_frame_ctx->id == next_frame_render_id &&
+                // However, we set a min FPS of 25, so that the display is still smoothly rendering.
+                if (get_timer(video_data.last_loading_frame_timer) < 1.0 / 25.0 &&
+                    next_frame_ctx->id == next_frame_render_id &&
                     next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
-                    LOG_INFO("Skip this render");
+                    LOG_INFO("Skipping render because we already received frame %d",
+                             next_frame_ctx->id);
                     video_ring_buffer->num_frames_skipped++;
                 } else {
                     skip_render = false;
@@ -1209,6 +1212,8 @@ int render_video() {
                 if (ret == -1) {
                     LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
                 }
+
+                start_timer(&video_data.last_loading_frame_timer);
 
                 /*
                 if (!video_context.sws) {
