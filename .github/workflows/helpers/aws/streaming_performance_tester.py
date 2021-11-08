@@ -11,7 +11,6 @@ from testing_helpers import (
     create_ec2_instance,
     wait_for_instance_to_start_or_stop,
     get_instance_ip,
-    wait_for_ssh,
 )
 
 # add the current directory to the path no matter where this is called from
@@ -34,6 +33,13 @@ parser.add_argument(
     help="The full path to your RSA SSH key corresponding to the --ssh-key-name you provided. Required.",
     required=True,
 )
+parser.add_argument(
+    "--github-token",
+    help="The GitHub Personal Access Token with permission to fetch the fractal/fractal repository. Required.",
+    required=True,
+)
+
+
 args = parser.parse_args()
 
 
@@ -45,6 +51,7 @@ if __name__ == "__main__":
     ssh_key_path = (
         args.ssh_key_path
     )  # This is likely /Users/[username]/.ssh/id_rsa if you're on macOS and installed to the system location
+    github_token = args.github_token # The PAT allowing us to fetch code from GitHub
 
     # Load the SSH key
     ssh_key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
@@ -74,43 +81,52 @@ if __name__ == "__main__":
     server_instance_ip = get_instance_ip(server_instance_id)
 
     # # Initiate two SSH connections with the two instances
-    # wait_for_ssh(client_instance_ip, ssh_key)
-    # wait_for_ssh(server_instance_ip, ssh_key)
-
-    # print("It works up to here, so far")
-    # print(f"SSH connection to server instance {server_instance_id} established")
-
-    # Sleep so that the SSH connections resets
-    time.sleep(1)
-
-    # Set up the SSH client for both instnaces
+    # First, the client machine
     client_ssh_client = paramiko.client.SSHClient()
     client_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # Hang until the connection is established
+    available = False
+    while not available:
+        available = True
+        try:
+            client_ssh_client.connect(
+                hostname=client_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
+            )
+        except:
+            available = False
+        finally:
+            continue
+    print(f"SSH is available on the client EC2 instance: {client_instance_ip[0]['public']}")
 
-
-    print(f"ip is: {client_instance_ip[0]['public']}")
-
-    client_ssh_client.connect(
-        hostname=client_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
-    )
-    print(f"made it here")
-
+    # Now, the server machine
     server_ssh_client = paramiko.client.SSHClient()
     server_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    server_ssh_client.connect(
-        hostname=server_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
-    )
-    
+    # Hang until the connection is established
+    available = False
+    while not available:
+        available = True
+        try:
+            server_ssh_client.connect(
+                hostname=server_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
+            )
+        except:
+            available = False
+        finally:
+            continue
+    print(f"SSH is available on the client EC2 instance: {server_instance_ip[0]['public']}")
     print(f"SSH connections established")
 
     # At this point, we have both a server and a client running properly.
     # Retrieve fractal/fractal monorepo on each instance
-    server_ssh_client.exec_command(
-        command='git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal.git" ~/fractal',
-    )
-    server_ssh_client.exec_command(
-        command='git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/fractal/fractal.git" ~/fractal',
-    )
+    command="git clone https://" + github_token + "@github.com/fractal/fractal.git ~/fractal"
+    client_ssh_client.exec_command(command=command)
+    stdin, stdout, stderr = server_ssh_client.exec_command(command=command)
+
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Finished downloading fractal/fractal on server instance")
+    else:
+        print("Error", exit_status)
 
     # Set up the server first
     # 1- run host-setup
@@ -119,7 +135,7 @@ if __name__ == "__main__":
 
     # 2- reboot and wait for it to come back up
     server_ssh_client.exec_command(command="sudo reboot")
-    wait_for_ssh(server_instance_ip)
+    # wait for SSH here maybe
 
     # 3- build and run host-service
     command = "cd ~/fractal/host-service && make run"
