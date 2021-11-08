@@ -118,7 +118,9 @@ def encrypt(browser_name, value, encrypt_prefix):
     encrypted_value = aes_cbc_encrypt.feed(encoded_value)
     encrypted_value += aes_cbc_encrypt.feed()
 
-    encrypted_value = encrypt_prefix.encode("utf-8") + encrypted_value
+    # Defaulting encryption to v10
+    encrypted_value = b'v10' + encrypted_value
+    # encrypted_value = encrypt_prefix.encode("utf-8") + encrypted_value
 
     return encrypted_value
 
@@ -172,7 +174,6 @@ def set_browser_cookies(to_browser_name, cookies):
         formatted_cookie = format_chromium_based_cookie(cookie)
         encrypted_cookies.append(formatted_cookie)
 
-    print(f"I found the cookie file: {cookie_file}")
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
     cur = con.cursor()
@@ -198,6 +199,6 @@ if __name__ == "__main__":
     browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
     cookies = os.getenv("WHIST_INITIAL_USER_COOKIES", None)
 
-    if len(cookies) > 0 and cookies:
+    if cookies and len(cookies) > 0:
         parsed_cookies = literal_eval(cookies)
         set_browser_cookies(browser, parsed_cookies)
