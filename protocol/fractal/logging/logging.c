@@ -55,6 +55,7 @@ format strings.
 void init_backtrace_handler();
 
 // TAG Strings
+const char* perf_tag = "PERF";
 const char* debug_tag = "DEBUG";
 const char* info_tag = "INFO";
 const char* warning_tag = "WARNING";
