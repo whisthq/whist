@@ -5,7 +5,12 @@
 //
 package types // import "github.com/fractal/fractal/host-service/mandelbox/types"
 
-import "github.com/google/uuid" // We define special types for the following string types for all the benefits
+import (
+	"strings"
+
+	"github.com/fractal/fractal/host-service/utils"
+	"github.com/google/uuid"
+) // We define special types for the following string types for all the benefits
 // of type safety, including making sure we never switch Docker and Whist
 // IDs, for instance.
 
@@ -31,7 +36,20 @@ type ConfigEncryptionToken string
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
 
-// String is a utility function to return the string representation of a mandelboxID.
+// String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()
+}
+
+// UnmarshalJSON is a utility function to properly unmarshal into a type MandelboxID
+func (mandelboxID MandelboxID) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	UUID, err := uuid.Parse(s)
+
+	if err == nil {
+		return utils.MakeError("Error parsing UUID")
+	}
+
+	mandelboxID = MandelboxID(UUID)
+	return nil
 }

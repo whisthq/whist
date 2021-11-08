@@ -382,7 +382,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// mandelboxSubscription is the pubsub event received from Hasura.
 	mandelboxSubscription := sub.MandelboxInfo[0]
-	AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
+	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
@@ -680,8 +680,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
-	var req *JSONTransportRequest
-	if !metadata.IsLocalEnv() || metadata.GetAppEnvironment() == metadata.EnvLocalDevWithDB {
+	if req == nil {
 		// Receive the json transport request from the client via the httpserver.
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan

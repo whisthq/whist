@@ -194,14 +194,16 @@ func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
 	return transportRequestMap[mandelboxID]
 }
 
-func getAppName(mandelboxID mandelboxtypes.MandelboxID,
-	transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) mandelboxtypes.AppName {
+func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest,
+	transportMapLock *sync.Mutex) (*JSONTransportRequest, mandelboxtypes.AppName) {
 
 	var AppName mandelboxtypes.AppName
+	var req *JSONTransportRequest
+
 	if metadata.IsLocalEnv() {
 		// Receive the json transport request immediately when running on local env
 		jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
-		req := <-jsonchan
+		req = <-jsonchan
 		if req.AppName == "" {
 			// If no app name is set, we default to using the `browsers/chrome` image.
 			AppName = mandelboxtypes.AppName("browsers/chrome")
@@ -212,7 +214,7 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID,
 		// If not on a local environment, we default to using the `browsers/chrome` image.
 		AppName = mandelboxtypes.AppName("browsers/chrome")
 	}
-	return AppName
+	return req, AppName
 }
 
 // Helper functions
