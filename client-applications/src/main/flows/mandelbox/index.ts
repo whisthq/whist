@@ -121,8 +121,8 @@ export default flow(
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
-          mandelboxID: c.mandelboxID,
           cookies: d as string,
+          mandelboxID: c.mandelboxID,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

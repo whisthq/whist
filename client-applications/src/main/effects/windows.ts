@@ -70,9 +70,6 @@ fromTrigger(WhistTrigger.windowsAllClosed).subscribe((evt: IpcMainEvent) => {
 allWindowsClosed
   .pipe(
     withLatestFrom(
-      fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
-    ),
-    withLatestFrom(
       fromTrigger(WhistTrigger.mandelboxFlowFailure).pipe(
         mapTo(true),
         startWith(false)
@@ -80,16 +77,13 @@ allWindowsClosed
     )
   )
   .subscribe(
-    ([[args, info], mandelboxFailure]: [
-      [
-        {
-          crashed: boolean
-          numberWindowsRemaining: number
-          hash: string
-          event: string
-        },
-        any
-      ],
+    ([args, mandelboxFailure]: [
+      {
+        crashed: boolean
+        numberWindowsRemaining: number
+        hash: string
+        event: string
+      },
       boolean
     ]) => {
       // If they didn't crash out and didn't fill out the exit survey, show it to them
@@ -98,13 +92,23 @@ allWindowsClosed
         (args.hash === WindowHashProtocol && !args.crashed)
       ) {
         quit()
-        // If the protocol crashed out, try to reconnect
-      } else if (
-        args.hash === WindowHashProtocol &&
-        args.crashed &&
-        args.event === "close" &&
-        protocolLaunchRetries < MAX_RETRIES
-      ) {
+      }
+    }
+  )
+
+fromTrigger(WhistTrigger.windowInfo)
+  .pipe(
+    withLatestFrom(
+      fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
+    )
+  )
+  .subscribe(([args, info]) => {
+    if (
+      args.hash === WindowHashProtocol &&
+      args.crashed &&
+      args.event === "close"
+    ) {
+      if (protocolLaunchRetries < MAX_RETRIES) {
         protocolLaunchRetries = protocolLaunchRetries + 1
         createProtocolWindow()
           .then(() => {
@@ -115,12 +119,12 @@ allWindowsClosed
             }, 6000)
           })
           .catch((err) => Sentry.captureException(err))
-        // If we've already tried several times to reconnect, just show the protocol error window
       } else {
+        // If we've already tried several times to reconnect, just show the protocol error window
         createTrigger(WhistTrigger.protocolError, of(undefined))
       }
     }
-  )
+  })
 
 fromTrigger(WhistTrigger.networkUnstable)
   .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
