@@ -113,7 +113,7 @@ def wait_for_ssh(instance_ip: str) -> None:
     print(f"Waiting for SSH to be available on the EC2 instance")
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.load_system_host_keys() # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
+    ssh_client.load_system_host_keys()  # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
 
     # Hang until the connection is established
     available = False
@@ -136,14 +136,14 @@ def run_ssh_command(
     display_res: bool,
 ) -> str:
     """
-    TODO 
+    TODO
 
 
     """
     global client_command
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.load_system_host_keys() # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
+    ssh_client.load_system_host_keys()  # Automatically loads SSH key in /.ssh/id_rsa (needs to be already placed there before calling this function)
     ssh_client.connect(hostname=ip["public"], username="ubuntu")
     try:
         _, stdout, _ = ssh_client.exec_command(cmd)
