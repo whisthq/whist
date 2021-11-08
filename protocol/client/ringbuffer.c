@@ -248,21 +248,28 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     start_timer(&frame_data->last_packet_timer);
     // check if we have nacked for the packet
     // TODO: log video vs audio
+    bool already_logged_about_it = false;
     if (packet->is_a_nack) {
         if (!frame_data->received_indices[packet->index]) {
             LOG_INFO("NACK for ID %d, Index %d received!", packet->id, packet->index);
+            already_logged_about_it = true;
         } else {
             LOG_INFO("NACK for ID %d, Index %d received, but didn't need it.", packet->id,
                      packet->index);
+            already_logged_about_it = true;
         }
     } else if (frame_data->nacked_indices[packet->index] > 0) {
         LOG_INFO("Received original ID %d, Index %d, but we had NACK'ed for it.", packet->id,
                  packet->index);
+        already_logged_about_it = true;
     }
 
     // If we have already received the packet, there is nothing to do
     if (frame_data->received_indices[packet->index]) {
-        LOG_INFO("Duplicate of ID %d, Index %d received", packet->id, packet->index);
+        if (!already_logged_about_it) {
+            // It shouldn't be possible to receive the frame twice, without nacking for it
+            LOG_ERROR("Duplicate of ID %d, Index %d received", packet->id, packet->index);
+        }
         return -1;
     }
 
