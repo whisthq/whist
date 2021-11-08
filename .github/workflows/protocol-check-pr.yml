@@ -319,17 +319,17 @@ jobs:
 
   # Check Protocol PR streaming performance between two AWS EC2 instances
   # The system is defined as follows:
-  # 
+  #
   # The client is a weak AWS EC2 Linux machine. The server is our regular g4dn.2xlarge
   # AWS instance. Since both machines are within AWS, this ensures the data will stay
   # within a datacenter, on a near-perfect Ethernet connection. We can then introduce
-  # our own networking artifacts to test performance in an isolated environment. 
+  # our own networking artifacts to test performance in an isolated environment.
   #
-  # Eventually, we could make it spin up different instances between AWS regions, or 
-  # between AWS and Azure, the test performance across the wider Internet. 
+  # Eventually, we could make it spin up different instances between AWS regions, or
+  # between AWS and Azure, the test performance across the wider Internet.
   protocol-check-pr-streaming-performance:
     name: Test Protocol Streaming Performance
-    runs-on: ubuntu-20.04 # This runner is simply there to orchestrate the client-server test
+    runs-on: ubuntu-20.04 # This runner is simply there to orchestrate the client-server streaming test
     steps:
       ################################## CONFIG STEPS START ##############################
 
