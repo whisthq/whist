@@ -24,11 +24,17 @@ fi
 # leak in any way (probably redundant, but still good practice)
 unset FRACTAL_AES_KEY
 
-# Override cookies
-RUN_AS_FRACTAL=/usr/share/fractal/run-as-fractal-user.sh
-$RUN_AS_FRACTAL "export $(dbus-launch)"
-$RUN_AS_FRACTAL "echo passowrd | gnome-keyring-daemon --unlock"
-$RUN_AS_FRACTAL "python3 /usr/bin/import_custom_cookies.py"
+# If WHIST_INITIAL_USER_COOKIES is set, then create file
+if [ -n "${WHIST_INITIAL_USER_COOKIES+1}" ]
+then
+  echo $WHIST_INITIAL_USER_COOKIES > /usr/share/fractal/private/user_cookies_env
+fi
+
+# If WHIST_COOKIE_UPLOAD_TARGET is set, then create file
+if [ -n "${WHIST_COOKIE_UPLOAD_TARGET+1}" ]
+then
+  echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/fractal/private/user_target_env
+fi
 
 unset WHIST_INITIAL_USER_COOKIES
 
