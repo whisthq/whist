@@ -16,17 +16,17 @@ The base mandelbox, specified by Dockerfile.20, is oriented around **systemd**, 
 
 ### Services
 
-The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-audio.service` and `fractal-protocol.service` must run successfully for the mandelbox to be functional. These services run in the order written above and are run by systemd on mandelbox start.
+The services `startup/fractal-startup.service`, `display/fractal-display.service`, `audio/fractal-audio.service` and `main/fractal-main.service` must run successfully for the mandelbox to be functional. These services run in the order written above and are run by systemd on mandelbox start.
 
-1. `docker-entrypoint.sh` starts up and calls `exec` to become systemd (with pid 1)
+1. `startup/entrypoint.sh` starts up and calls `exec` to become systemd (with pid 1)
 
-2. systemd runs `fractal-entrypoint.service`, which waits until a `.ready` file is written -- this is configured as a oneshot, meaning that `fractal-display.service` only starts after `fractal-entrypoint.service` finishes. This means that everything waits for `.ready` file to be written. The directory with the `.ready` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.).
+2. systemd runs `startup/fractal-startup.service`, which waits until a `.ready` file is written -- this is configured as a oneshot, meaning that `display/fractal-display.service` only starts after `startup/fractal-startup.service` finishes. This means that everything waits for `.ready` file to be written. The directory with the `.ready` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.).
 
-3. Once `fractal-entrypoint.service` finishes, `fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our mandelboxes can only be run on GPU-powered hosts.
+3. Once `startup/fractal-startup.service` finishes, `display/fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our mandelboxes can only be run on GPU-powered hosts.
 
-4. `fractal-audio.service`, meanwhile, can start as soon as `fractal-display.service` _begins_ running (which is important because the lifecycle of fractal-display is the lifecycle of our mandelboxized applications). It starts a virtual Pulse Audio soundcard in the mandelbox, enabling sound.
+4. `audio/fractal-audio.service`, meanwhile, can start as soon as `display/fractal-display.service` _begins_ running (which is important because the lifecycle of fractal-display is the lifecycle of our mandelboxized applications). It starts a virtual Pulse Audio soundcard in the mandelbox, enabling sound.
 
-5. `fractal-protocol.service` can start as soon as `fractal-display.service` and `fractal-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server.
+5. `main/fractal-main.service` can start as soon as `display/fractal-display.service` and `audio/fractal-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server.
 
 ### Useful Debugging Practices
 
