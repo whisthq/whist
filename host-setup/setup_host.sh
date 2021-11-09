@@ -255,10 +255,6 @@ local_development_steps () {
   echo "================================================"
   sudo ln -sf /home/ubuntu/.aws /root/.aws
 
-  echo "================================================"
-  echo "Linking run-chrome script into /usr/local/bin..."
-  echo "================================================"
-  sudo ln -s "$PWD/run-chrome" /usr/local/bin
 }
 
 # `deployment_setup_steps` contains the commands that are specific to setting

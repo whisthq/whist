@@ -21,7 +21,7 @@ To set up your Whist development instance:
 
 - Create a new keypair and save the `.pem` file as it is required to SSH into the instance, unless you use AWS Session Manager (AWS' version of SSH, accessible from the AWS console). Then, launch the instance.
 
-- Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem` and connect to your `ssh -i "your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com`.
+- Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem` and connect to your `ssh -i "your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4-with-hyphens].compute-1.amazonaws.com`.
 
   - If you want to make connecting to your AWS instance easier, you can export an alias for the command in your `.zshrc`/`.bashrc`, depending on which shell you use, by adding `alias [your-alias]="ssh -i "[path-to-your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com".
 
@@ -58,8 +58,6 @@ make run # keep this open in a separate terminal
 cd ~/fractal/mandelboxes
 ./run_local_mandelbox_image.sh base
 ```
-
-Additionally, you may optionally execute the command `run-chrome` on your instance, which will run all of the above commands for you, using the `browsers/chrome` image.
 
 ⚠️ If `./setup_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
