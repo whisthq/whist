@@ -181,8 +181,8 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
     """
     cookie_file = get_or_create_cookie_file(to_browser_name)
 
-    with open(cookie_full_path, "r") as cookie_file:
-        for cookie_line in cookie_file:
+    with open(cookie_full_path, "r") as f:
+        for cookie_line in f:
             cookie_json = cookie_line.rstrip("\n")
             cookie = json.loads(cookie_json)
 
@@ -222,5 +222,5 @@ if __name__ == "__main__":
     browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
     cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
 
-    if os.path.exist(cookie_full_path):
+    if os.path.exists(cookie_full_path):
         set_browser_cookies(browser, cookie_full_path)
