@@ -840,7 +840,7 @@ void update_video() {
     try_request_iframe_to_catch_up();
     // Don't nack on startup, since the first frame will have an ID > 0 and we don't want
     // frames with lower
-    if (video_ring_buffer->last_missing_frame_nack != -1 && video_ring_buffer->max_id != -1) {
+    if (video_ring_buffer->max_id != -1) {
         try_nacking(video_ring_buffer, latency);
     }
 }
