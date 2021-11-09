@@ -3,8 +3,8 @@
 set -Eeuo pipefail
 
 # Set environment variable if unset
-if [[ -z ${WHIST_INITIAL_USER_COOKIES+x} ]]; then
-  export WHIST_INITIAL_USER_COOKIES=""
+if [[ -z ${WHIST_INITIAL_USER_COOKIES_FILE+x} ]]; then
+  export WHIST_INITIAL_USER_COOKIES_FILE=""
 fi
 
 if [[ -z ${WHIST_COOKIE_UPLOAD_TARGET+x} ]]; then
@@ -62,7 +62,7 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE 
 
-exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,WHIST_INITIAL_USER_COOKIES,WHIST_COOKIE_UPLOAD_TARGET -c \
+exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,WHIST_INITIAL_USER_COOKIES_FILE,WHIST_COOKIE_UPLOAD_TARGET -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
