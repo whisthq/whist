@@ -98,7 +98,7 @@ class CaptureStdoutTest : public ::testing::Test {
         /*
             This function releases the output of stdout captured by the `SetUp()`
             function. We then open the file and read it line by line, comparing
-            the output to matchers we have registerd with `CheckStdoutLine()`.
+            the output to matchers we have registerd with `check_stdout_line()`.
         */
         fflush(stdout);
         safe_dup2(old_stdout, STDOUT_FILENO);
@@ -116,14 +116,14 @@ class CaptureStdoutTest : public ::testing::Test {
         file.close();
     }
 
-    void CheckStdoutLine(::testing::Matcher<std::string> matcher) {
+    void check_stdout_line(::testing::Matcher<std::string> matcher) {
         /*
             This function registers a matcher to be used to compare the output
             of the current test to the expected output. For example, if we want
             to check that the output contains the string "hello", we can do so
-            by calling `CheckStdoutLine(::testing::HasSubstr("hello"))`. If we
+            by calling `check_stdout_line(::testing::HasSubstr("hello"))`. If we
             then want to verify that the next line of output contains the string
-            "world", we then call `CheckStdoutLine(::testing::HasSubstr("world"))`.
+            "world", we then call `check_stdout_line(::testing::HasSubstr("world"))`.
 
             The matcher is added to a vector of matchers, which is used to
             compare the output line-by-line. To add multiple matchers for a
@@ -173,8 +173,8 @@ TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, -1);
 
-    CheckStdoutLine(::testing::StartsWith("Usage:"));
-    CheckStdoutLine(::testing::HasSubstr("--help"));
+    check_stdout_line(::testing::StartsWith("Usage:"));
+    check_stdout_line(::testing::HasSubstr("--help"));
 }
 
 /*
@@ -207,7 +207,7 @@ TEST(ProtocolTest, InitRingBuffer) {
 TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
     EXPECT_TRUE(rb == NULL);
-    CheckStdoutLine(LOG_ERROR_MATCHER);
+    check_stdout_line(LOG_ERROR_MATCHER);
 }
 
 // Tests adding packets into ringbuffer
@@ -282,16 +282,16 @@ TEST_F(CaptureStdoutTest, LoggerTest) {
     destroy_logger();
 
     // Validate stdout, line-by-line
-    CheckStdoutLine(::testing::HasSubstr("Logging initialized!"));
-    CheckStdoutLine(LOG_DEBUG_MATCHER);
-    CheckStdoutLine(LOG_INFO_MATCHER);
-    CheckStdoutLine(LOG_WARNING_MATCHER);
-    CheckStdoutLine(LOG_ERROR_MATCHER);
-    CheckStdoutLine(::testing::EndsWith("AAA"));
-    CheckStdoutLine(::testing::EndsWith("BBB"));
-    CheckStdoutLine(::testing::EndsWith("CCC"));
-    CheckStdoutLine(::testing::EndsWith("DDD"));
-    CheckStdoutLine(::testing::EndsWith("EEE"));
+    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+    check_stdout_line(LOG_DEBUG_MATCHER);
+    check_stdout_line(LOG_INFO_MATCHER);
+    check_stdout_line(LOG_WARNING_MATCHER);
+    check_stdout_line(LOG_ERROR_MATCHER);
+    check_stdout_line(::testing::EndsWith("AAA"));
+    check_stdout_line(::testing::EndsWith("BBB"));
+    check_stdout_line(::testing::EndsWith("CCC"));
+    check_stdout_line(::testing::EndsWith("DDD"));
+    check_stdout_line(::testing::EndsWith("EEE"));
 }
 
 // Test that set_rendering works
@@ -330,7 +330,7 @@ TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
     int ret_val = server_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 1);
 
-    CheckStdoutLine(::testing::HasSubstr("Usage:"));
+    check_stdout_line(::testing::HasSubstr("Usage:"));
 }
 
 #endif
@@ -480,7 +480,7 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
 
     EXPECT_EQ(decrypted_len, -1);
 
-    CheckStdoutLine(LOG_WARNING_MATCHER);
+    check_stdout_line(LOG_WARNING_MATCHER);
 }
 
 /**
