@@ -65,7 +65,7 @@ def get_or_create_cookie_file(browser_name):
 
         # If not defined then create file
         if not path:
-            
+
             # Create directories if it does not exist
             directory = os.path.dirname(paths[0])
             if not os.path.exists(directory):
@@ -89,7 +89,9 @@ def get_or_create_cookie_file(browser_name):
     else:
         raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
 
+
 get_or_create_cookie_file("chrome")
+
 
 def encrypt(browser_name, value, encrypt_prefix):
     """
