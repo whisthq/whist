@@ -181,46 +181,46 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
     """
     cookie_file = get_or_create_cookie_file(to_browser_name)
 
-    with (cookie_full_path, "r") as cookie_file:
-        cookie = json.parse(cookies_file.readline().rstrip("\n"))
+    with open(cookie_full_path, "r") as cookie_file:
+        for cookie_line in cookie_file:
+            cookie_json = cookie_line.rstrip("\n")
+            cookie = json.loads(cookie_json)
 
-        if cookie["value"] == "":
-            value = cookie["decrypted_value"]
-            encrypted_prefix = cookie["encrypted_prefix"]
-            cookie["encrypted_value"] = encrypt(to_browser_name, value, encrypted_prefix)
+            if cookie["value"] == "":
+                value = cookie["decrypted_value"]
+                encrypted_prefix = cookie["encrypted_prefix"]
+                cookie["encrypted_value"] = encrypt(to_browser_name, value, encrypted_prefix)
 
-        cookie.pop("decrypted_value", None)
-        cookie.pop("encryption_prefix", None)
+            cookie.pop("decrypted_value", None)
+            cookie.pop("encryption_prefix", None)
 
-        # We only want the values in a list form
-        encrypted_cookie = format_chromium_based_cookie(cookie)
+            # We only want the values in a list form
+            encrypted_cookie = format_chromium_based_cookie(cookie)
 
-        con = sqlite3.connect(cookie_file)
-        con.text_factory = browser_cookie3.text_factory
-        cur = con.cursor()
+            con = sqlite3.connect(cookie_file)
+            con.text_factory = browser_cookie3.text_factory
+            cur = con.cursor()
 
-        try:
-            # chrome <=55
-            cur.execute(
-                "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                encrypted_cookie,
-            )
-        except sqlite3.OperationalError:
-            # chrome >=56
-            cur.execute(
-                "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                encrypted_cookie,
-            )
+            try:
+                # chrome <=55
+                cur.execute(
+                    "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    encrypted_cookie,
+                )
+            except sqlite3.OperationalError:
+                # chrome >=56
+                cur.execute(
+                    "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    encrypted_cookie,
+                )
 
-        con.commit()
-        con.close()
+            con.commit()
+            con.close()
 
 
 if __name__ == "__main__":
     browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
-    cookies_file = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
+    cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
 
-    cookie_full_path = os.path.expanduser(cookie_file)
-
-    if cookies and os.path.exist(cookie_full_path):
+    if os.path.exist(cookie_full_path):
         set_browser_cookies(browser, cookie_full_path)
