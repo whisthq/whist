@@ -82,16 +82,13 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
             int error = get_last_network_error();
             switch (error) {
                 case FRACTAL_ETIMEDOUT:
-                    // LOG_ERROR("Read UDP Packet error: Timeout");
                 case FRACTAL_EWOULDBLOCK:
-                    // LOG_ERROR("Read UDP Packet error: Blocked");
                     // Break on expected network errors
                     break;
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
                     break;
             }
-            fractal_sleep(5);
         } else {
             // Ignore packets of size 0
         }
