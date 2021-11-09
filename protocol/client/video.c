@@ -89,10 +89,6 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
-// We only allow 1 nack in each update_audio call because we had too many false nacks in the past.
-// Increase this as our nacking becomes more accurate.
-#define MAX_NACKED 1
-
 /*
 ============================
 Custom Types
@@ -112,7 +108,6 @@ struct VideoData {
     bool is_waiting_for_iframe;
 
     double target_mbps;
-    clock missing_frame_nack_timer;
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
@@ -179,7 +174,9 @@ void clear_sdl(SDL_Renderer* renderer);
 void calculate_statistics();
 void skip_to_next_iframe();
 void sync_decoder_parameters(VideoFrame* frame);
-void request_iframe_to_catch_up();
+// Try to request an iframe, if we need to catch up,
+// returns true if we're trying to get an iframe
+bool try_request_iframe_to_catch_up();
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 void update_window_titlebar_color(FractalRGBColor color);
 #endif
@@ -258,7 +255,7 @@ SDL_Rect get_true_render_rect() {
     return new_sdl_rect(0, 0, render_width, render_height);
 }
 
-void request_iframe_to_catch_up() {
+bool try_request_iframe_to_catch_up() {
     /*
         Check if we are too behind on rendering frames, measured as:
             - MAX_UNSYNCED_FRAMES behind the latest frame received if not currently rendering
@@ -284,6 +281,7 @@ void request_iframe_to_catch_up() {
                     video_ring_buffer->max_id - video_data.last_rendered_id,
                     get_timer(ctx->frame_creation_timer) * 1000);
             }
+            return true;
         } else {
 #if REQUEST_IFRAME_ON_MISSING_PACKETS
 #define MAX_MISSING_PACKETS 50
@@ -311,6 +309,7 @@ void request_iframe_to_catch_up() {
                         "to catch-up.",
                         MAX_MISSING_PACKETS, MAX_UNSYNCED_FRAMES);
                 }
+                return true;
             }
 #endif
         }
@@ -324,8 +323,11 @@ void request_iframe_to_catch_up() {
                     "I-Frame is now being requested to catch-up.",
                     MAX_UNSYNCED_FRAMES_RENDER);
             }
+            return true;
         }
     }
+    // No I-Frame is being requested
+    return false;
 }
 
 void update_cursor(VideoFrame* frame) {
@@ -802,67 +804,40 @@ void update_video() {
 
         // When we receive a packet that is a part of the next_render_id, and we have received every
         // packet for that frame, we set rendering=true
-        if (ctx->id == next_render_id) {
-            if (ctx->packets_received == ctx->num_packets) {
-                // Now render_context will own the frame_buffer memory block
-                render_context = *ctx;
-                // Tell the ring buffer we're rendering this frame
-                set_rendering(video_ring_buffer, ctx->id);
-                // Get the FrameData for the next frame
-                int next_frame_render_id = next_render_id + 1;
-                FrameData* next_frame_ctx =
-                    get_frame_at_id(video_ring_buffer, next_frame_render_id);
+        if (ctx->id == next_render_id && ctx->packets_received == ctx->num_packets) {
+            // Now render_context will own the frame_buffer memory block
+            render_context = *ctx;
+            // Tell the ring buffer we're rendering this frame
+            set_rendering(video_ring_buffer, ctx->id);
+            // Get the FrameData for the next frame
+            int next_frame_render_id = next_render_id + 1;
+            FrameData* next_frame_ctx = get_frame_at_id(video_ring_buffer, next_frame_render_id);
 
-                // If the next frame has been received, let's skip the rendering so we can render
-                // the next frame faster. We do this because rendering is synced with screen
-                // refresh, so rendering the backlogged frames requires the client to wait until the
-                // screen refreshes N more times, causing it to fall behind the server.
-                // However, we set a min FPS of 25, so that the display is still smoothly rendering.
-                if (get_timer(video_data.last_loading_frame_timer) < 1.0 / 25.0 &&
-                    next_frame_ctx->id == next_frame_render_id &&
-                    next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
-                    skip_render = true;
-                    LOG_INFO("Skipping render because we already received frame %d",
-                             next_frame_ctx->id);
-                    video_ring_buffer->num_frames_skipped++;
-                } else {
-                    skip_render = false;
-                    video_ring_buffer->num_frames_rendered++;
-                }
-                rendering = true;
+            // If the next frame has been received, let's skip the rendering so we can render
+            // the next frame faster. We do this because rendering is synced with screen
+            // refresh, so rendering the backlogged frames requires the client to wait until the
+            // screen refreshes N more times, causing it to fall behind the server.
+            // However, we set a min FPS of 25, so that the display is still smoothly rendering.
+            if (get_timer(video_data.last_loading_frame_timer) < 1.0 / 25.0 &&
+                next_frame_ctx->id == next_frame_render_id &&
+                next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
+                skip_render = true;
+                LOG_INFO("Skip this render");
+                video_ring_buffer->num_frames_skipped++;
             } else {
-                if (get_timer(ctx->last_packet_timer) > latency &&
-                    get_timer(ctx->last_nacked_timer) > latency + latency * ctx->num_times_nacked) {
-                    if (ctx->num_times_nacked == -1) {
-                        ctx->num_times_nacked = 0;
-                        ctx->last_nacked_index = -1;
-                    }
-                    int num_nacked = 0;
-                    for (int i = ctx->last_nacked_index + 1;
-                         i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
-                        if (!ctx->received_indices[i] &&
-                            ctx->nacked_indices[i] < MAX_PACKET_NACKS) {
-                            num_nacked++;
-                            LOG_INFO(
-                                "************NACKING VIDEO PACKET %d %d (/%d), "
-                                "alive for %f MS",
-                                ctx->id, i, ctx->num_packets,
-                                get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
-                            ctx->nacked_indices[i]++;
-                            nack_single_packet(video_ring_buffer, ctx->id, i);
-                        }
-                        ctx->last_nacked_index = i;
-                    }
-                    if (ctx->last_nacked_index == ctx->num_packets - 1) {
-                        ctx->last_nacked_index = -1;
-                        ctx->num_times_nacked++;
-                    }
-                    start_timer(&ctx->last_nacked_timer);
-                }
+                skip_render = false;
+                video_ring_buffer->num_frames_rendered++;
             }
+            rendering = true;
         }
     }
-    request_iframe_to_catch_up();
+
+    // Try requesting an iframe
+    bool iframe_requested = try_request_iframe_to_catch_up();
+    // Try to nack, but don't nack if we're trying to get an iframe anyway
+    if (!iframe_requested) {
+        try_nacking(video_ring_buffer, latency);
+    }
 }
 
 // NOTE that this function is in the hotpath.
