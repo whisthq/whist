@@ -192,4 +192,4 @@ Each subfolder in this monorepository is its own project with its dedicated styl
 
 - Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
 - Making sure you don't accidentally introduce merge commits from a `git pull`: `git config pull.ff only`
-- We disallow merge commits into feature branches to avoid clogging our git history with `Merge branch 'dev' into feature_branch ...`, please do not introduce merge commits!
+- We disallow merge commits into feature branches to avoid clogging our git history with `Merge branch 'dev' into feature_branch ...`. Please do not introduce merge commits!
