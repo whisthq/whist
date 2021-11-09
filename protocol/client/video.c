@@ -836,13 +836,10 @@ void update_video() {
         }
     }
 
-    // Try requesting an iframe
+    // Try requesting an iframe, if we're too far behind
     try_request_iframe_to_catch_up();
-    // Since the first frame could have an ID like 1000, we don't want to nack IDs 1-999,
-    // so this prevents nacking until we've actually received a packet
-    if (video_ring_buffer->max_id != -1) {
-        try_nacking(video_ring_buffer, latency);
-    }
+    // Try to nack
+    try_nacking(video_ring_buffer, latency);
 }
 
 // NOTE that this function is in the hotpath.

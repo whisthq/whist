@@ -360,6 +360,12 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
 // The max number of times we can nack a packet: limited to 2 times right now so that we don't get
 // stuck on a packet that never arrives
 #define MAX_PACKET_NACKS 2
+// Maximum amount of mbps that can be used by nacking
+// This is calculated per 100ms interval
+#define MAX_NACK_AVG_MBPS 2200000
+// Maximum burst mbps that can be used by nacking
+// This is calculated per 5ms interval
+#define MAX_NACK_BURST_MBPS 4800000
 
 int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
                                      int max_packets_to_nack) {
@@ -392,11 +398,40 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
 }
 
 void try_nacking(RingBuffer* ring_buffer, double latency) {
-    // Sets the maximum NACKS per call to try_nacking
-    // This is to prevent NACKing for 1500 packets in a single call,
-    // Or anything ridiculous like that
-#define MAX_NACKS_PER_CALL 25
-    // Count for how many nacks we've made
+    static bool first_call = true;
+    static clock burst_timer;
+    static clock avg_timer;
+    static int burst_counter;
+    static int avg_counter;
+
+    double burst_interval = 5.0 / MS_IN_SECOND;
+    double avg_interval = 100.0 / MS_IN_SECOND;
+
+    if (first_call || get_timer(burst_timer) > burst_interval) {
+        burst_counter = 0;
+        start_timer(&burst_timer);
+    }
+    if (first_call || get_timer(avg_timer) > avg_interval) {
+        avg_counter = 0;
+        start_timer(&avg_timer);
+        first_call = false;
+    }
+
+    // MAX_MBPS * interval / MAX_PAYLOAD_SIZE is the amount of nack payloads allowed in each
+    // interval The XYZ_counter is the amount of packets we've already sent in that interval We
+    // subtract the two, to get the max nacks that we're allowed to send at this point in time We
+    // min to take the stricter restriction of either burst or average
+    int max_nacks =
+        (int)min(MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - burst_counter,
+                 MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - avg_counter);
+    // Note how the order-of-ops ensures arithmetic is done with double's for higher accuracy
+
+    if (max_nacks <= 0) {
+        // We can't nack, so just exit. Also takes care of negative case from above calculation.
+        return;
+    }
+
+    // Track how many nacks we've made this call, to keep it under max_nacks
     int num_packets_nacked = 0;
 
     // last_missing_frame_nack is strictly increasing so it doesn't need to be throttled
@@ -404,10 +439,10 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
     // Recovery mode cycles through trying to nack, and we throttle to LATENCY_MULTIPLIER*latency,
     // longer during consecutive cycles
 
-    // Nack all the packets we might want to nack about, from oldest to newest, up to
-    // MAX_NACKS_PER_CALL times
+    // Nack all the packets we might want to nack about, from oldest to newest,
+    // up to max_nacks times
     for (int id = ring_buffer->next_render_id;
-         id <= ring_buffer->max_id && num_packets_nacked < MAX_NACKS_PER_CALL; id++) {
+         id <= ring_buffer->max_id && num_packets_nacked < max_nacks; id++) {
         FrameData* frame_data = get_frame_at_id(ring_buffer, id);
         // If this frame doesn't exist, skip it
         if (frame_data->id != id) {
@@ -439,31 +474,33 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             }
         }
 
-        // If too much time has passed since the last packet received, we swap into recovery mode
-        if (get_timer(frame_data->last_packet_timer) > LATENCY_MULTIPLIER * latency &&
+        // If too much time has passed since the last packet received,
+        // we swap into *recovery mode*, since something is probably wrong with this packet
+        if (get_timer(frame_data->last_packet_timer) > 0.3 * latency &&
             !frame_data->recovery_mode) {
-            frame_data->last_nacked_index = 0;
             frame_data->recovery_mode = true;
         }
 
         if (!frame_data->recovery_mode) {
-            // During normal nacking mode,
+            // During *normal nacking mode*,
             // we nack for packets that are more than MAX_UNORDERED_PACKETS "out of order"
             // E.g., if we get 1 2 3 4 5 9, and MAX_UNORDERED_PACKETS = 3, then
             // 5 is considered to be too far from 9 to still be unreceived simply due to UDP
-            // reordering
+            // reordering.
             num_packets_nacked += nack_missing_packets_up_to_index(
                 ring_buffer, frame_data, last_packet_received - MAX_UNORDERED_PACKETS,
-                MAX_NACKS_PER_CALL - num_packets_nacked);
+                max_nacks - num_packets_nacked);
         } else {
-            // During recovery mode,
-            // we keep nacking MAX_NACKED packets per try_nacking call
+            // *Recovery mode* means something is wrong with the network,
+            // and we should keep trying to nack for those missing packets
+            // At 0.3 * latency, we finish up the work that the *normal nacking mode* did,
+            // i.e. we nack for everything after last_packet_received - MAX_UNORDERED_PACKETS.
+            // After an additional 1.2 * latency, we send another round of nacks
             if (get_timer(frame_data->last_nacked_timer) >
-                LATENCY_MULTIPLIER * latency +
-                    LATENCY_MULTIPLIER * latency * frame_data->num_times_nacked) {
+                0.3 * latency + 0.9 * latency * frame_data->num_times_nacked) {
                 num_packets_nacked += nack_missing_packets_up_to_index(
                     ring_buffer, frame_data, frame_data->num_packets - 1,
-                    MAX_NACKS_PER_CALL - num_packets_nacked);
+                    max_nacks - num_packets_nacked);
                 if (frame_data->last_nacked_index == frame_data->num_packets - 1) {
                     frame_data->last_nacked_index = 0;
                     frame_data->num_times_nacked++;
@@ -472,6 +509,10 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             }
         }
     }
+
+    // Update the counters to track max nack bitrate
+    burst_counter += num_packets_nacked;
+    avg_counter += num_packets_nacked;
 }
 
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
