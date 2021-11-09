@@ -52,8 +52,6 @@ format strings.
 #include "logging.h"
 #include "error_monitor.h"
 
-char* get_logger_history();
-int get_logger_history_len();
 void init_backtrace_handler();
 
 // TAG Strings
@@ -64,8 +62,9 @@ const char* error_tag = "ERROR";
 const char* fatal_error_tag = "FATAL_ERROR";
 
 // logger Semaphores and Mutexes
-static volatile FractalSemaphore logger_semaphore;
-static volatile FractalMutex logger_queue_mutex;
+static FractalSemaphore logger_semaphore;
+static FractalMutex logger_queue_mutex;
+static FractalMutex logger_cache_mutex;
 
 // logger queue
 typedef struct LoggerQueueItem {
@@ -85,11 +84,6 @@ void mprintf(const char* tag, const char* fmt_str, va_list args);
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
-char logger_history[LOG_CACHE_SIZE];
-int logger_history_len;
-
-char* get_logger_history() { return logger_history; }
-int get_logger_history_len() { return logger_history_len; }
 
 void init_logger() {
     /*
@@ -103,10 +97,10 @@ void init_logger() {
     */
 
     init_backtrace_handler();
-    logger_history_len = 0;
 
     run_multithreaded_printf = true;
     logger_queue_mutex = fractal_create_mutex();
+    logger_cache_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
     mprintf_thread = fractal_create_thread((FractalThreadFunction)multithreaded_printf,
                                            "MultiThreadedPrintf", NULL);
@@ -118,16 +112,14 @@ void destroy_logger() {
     flush_logs();
 
     run_multithreaded_printf = false;
-    fractal_post_semaphore((FractalSemaphore)logger_semaphore);
+    fractal_post_semaphore(logger_semaphore);
 
     fractal_wait_thread(mprintf_thread, NULL);
     mprintf_thread = NULL;
 
-    logger_history[0] = '\0';
-    logger_history_len = 0;
-
-    fractal_destroy_semaphore((FractalSemaphore)logger_semaphore);
-    fractal_destroy_mutex((FractalMutex)logger_queue_mutex);
+    fractal_destroy_semaphore(logger_semaphore);
+    fractal_destroy_mutex(logger_queue_mutex);
+    fractal_destroy_mutex(logger_cache_mutex);
 }
 
 int multithreaded_printf(void* opaque) {
@@ -135,7 +127,7 @@ int multithreaded_printf(void* opaque) {
 
     while (true) {
         // Wait until signaled by printf to begin running
-        fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
+        fractal_wait_semaphore(logger_semaphore);
 
         if (!run_multithreaded_printf) {
             break;
@@ -149,9 +141,14 @@ int multithreaded_printf(void* opaque) {
 
 void flush_logs() {
     if (run_multithreaded_printf) {
-        // Clear the queue into the cache,
-        // And then let go of the mutex so that printf can continue accumulating
-        fractal_lock_mutex((FractalMutex)logger_queue_mutex);
+        // Clear the queue into the cache, and then let go of `logger_queue_mutex` as soon as possible
+        // so that mprintf can continue to accumulate.
+
+        // We must protect the cache using its own `logger_cache_mutex`, as it is a global cache and
+        // needs to be protected from concurrent `flush_logs` calls that may happen during debugging
+        // or shutdown.
+        fractal_lock_mutex(logger_cache_mutex);
+        fractal_lock_mutex(logger_queue_mutex);
         int cache_size = 0;
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
@@ -162,11 +159,11 @@ void flush_logs() {
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
-                fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
+                fractal_wait_semaphore(logger_semaphore);
             }
         }
         logger_queue_size = 0;
-        fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
+        fractal_unlock_mutex(logger_queue_mutex);
 
         // Print all of the data into the cache
         for (int i = 0; i < cache_size; i++) {
@@ -186,22 +183,8 @@ void flush_logs() {
             } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
                 error_monitor_log_error((const char*)logger_queue_cache[i].buf);
             }
-
-            // Log to the logger history buffer
-            int chars_written =
-                sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
-            logger_history_len += chars_written;
-
-            // Shift buffer over if too large;
-            if ((unsigned long)logger_history_len >
-                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
-                int new_len = sizeof(logger_history) / 3;
-                for (i = 0; i < new_len; i++) {
-                    logger_history[i] = logger_history[logger_history_len - new_len + i];
-                }
-                logger_history_len = new_len;
-            }
         }
+        fractal_unlock_mutex(logger_cache_mutex);
     }
 
     // Flush the logs
@@ -347,12 +330,12 @@ void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line)
     free(sanitized_line);
 
     ++logger_queue_size;
-    fractal_post_semaphore((FractalSemaphore)logger_semaphore);
+    fractal_post_semaphore(logger_semaphore);
 }
 
 // Core multithreaded printf function, that accepts va_list and log boolean
 void mprintf(const char* tag, const char* fmt_str, va_list args) {
-    fractal_lock_mutex((FractalMutex)logger_queue_mutex);
+    fractal_lock_mutex(logger_queue_mutex);
 
     // After calls to function which invoke VA args, the args are
     // undefined so we copy
@@ -388,7 +371,7 @@ void mprintf(const char* tag, const char* fmt_str, va_list args) {
     // Free the temp buf, making sure to do it after we're done with `strtok_r`
     free(full_message);
 
-    fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
+    fractal_unlock_mutex(logger_queue_mutex);
 }
 
 FractalMutex crash_handler_mutex;

@@ -48,16 +48,15 @@ extern "C" {
 
 typedef struct CaptureOutputContext {
     int old_stdout;
-    int old_stderr;
     int fd;
 } CaptureOutputContext;
 
 #define TEST_OUTPUT_DIRNAME "test_output"
 CaptureOutputContext capture_test_output() {
     /*
-        This function captures the output of stdout and stderr to a file for
-        the current test. The file is named after the test name, and is located
-        in the test/test_output directory. The file is overwritten if it already
+        This function captures the output of stdout to a file for the current
+        test. The file is named after the test name, and is located in the
+        test/test_output directory. The file is overwritten if it already
         exists. If this function is called in a test, then the test output must
         subsequently be released with `release_test_output`.
 
@@ -67,22 +66,24 @@ CaptureOutputContext capture_test_output() {
     */
     CaptureOutputContext ctx;
     ctx.old_stdout = dup(STDOUT_FILENO);
-    ctx.old_stderr = dup(STDERR_FILENO);
-    mkdir(TEST_OUTPUT_DIRNAME, 0777);
+    int ret = mkdir(TEST_OUTPUT_DIRNAME, 0777);
+    if (ret != 0 && errno != EEXIST) {
+        std::cerr << "Failed to create test output directory: " << strerror(errno) << std::endl;
+        exit(1);
+    }
     std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
                            ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
     ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0666);
     EXPECT_GE(ctx.fd, 0);
     dup2(ctx.fd, STDOUT_FILENO);
-    dup2(ctx.fd, STDERR_FILENO);
     return ctx;
 }
 
 std::ifstream release_test_output(CaptureOutputContext ctx) {
     /*
-        This function releases the output of stdout and stderr captured by
-        `capture_test_output`, and returns a C++ file handle for validating
-        the captured output.
+        This function releases the output of stdout captured by
+        `capture_test_output`, and returns a C++ file handle for
+        validating the captured output.
 
         Arguments:
             ctx (CaptureOutputContext): The context returned by `capture_test_output`.
@@ -91,7 +92,6 @@ std::ifstream release_test_output(CaptureOutputContext ctx) {
             (std::ifstream): The file containing the captured output.
     */
     dup2(ctx.old_stdout, STDOUT_FILENO);
-    dup2(ctx.old_stderr, STDERR_FILENO);
     close(ctx.fd);
     std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
                        ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log");
