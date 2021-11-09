@@ -303,7 +303,6 @@ if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     message(FATAL_ERROR "Library LIBMFX was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}")
 endif()
 
-# GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
 fetchcontent_declare(
     googletest
     GIT_REPOSITORY "https://github.com/google/googletest.git"
@@ -311,17 +310,20 @@ fetchcontent_declare(
 )
 # From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-fetchcontent_makeavailable(googletest)
 
 #Set OSX compiler and SDK globally
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_C_COMPILER clang)
     if(DEFINED ENV{WHIST_OSXSYSROOT})
         set(CMAKE_OSX_SYSROOT $ENV{WHIST_OSXSYSROOT})
     else()
         set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
     endif()
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15) # deployment target must be <= than compiler SDK above
+    # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
+    fetchcontent_makeavailable(googletest)
+    set(CMAKE_C_COMPILER clang)
+else()
+    fetchcontent_makeavailable(googletest)
 endif()
 
 # Tell CMake where to look for includes
