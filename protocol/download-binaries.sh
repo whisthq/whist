@@ -228,10 +228,6 @@ if has_updated "$LIB" || [[ ! -d "$NOTIFIER_DIR" ]]; then
   rm -rf "$NOTIFIER_DIR"
   mkdir -p "$NOTIFIER_DIR"
   aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$NOTIFIER_DIR"
-
-  # Pull all NOTIFIER include files up a level and delete encapsulating folder
-  mv "$NOTIFIER_DIR/include"/* "$NOTIFIER_DIR"
-  rmdir "$NOTIFIER_DIR/include"
 fi
 
 ###############################
