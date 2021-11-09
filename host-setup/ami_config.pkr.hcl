@@ -73,6 +73,11 @@ variable "source_region" {
   default = ""
 }
 
+variable "source_availability_zone" {
+  type    = string
+  default = ""
+}
+
 variable "subnet_id" {
   type    = string
   default = ""
@@ -97,12 +102,13 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
     volume_size           = 64
     volume_type           = "gp2"
   }
-  region       = "${var.source_region}"
-  secret_key   = "${var.secret_key}"
-  source_ami   = "${var.source_ami}"
-  ssh_username = "ubuntu"
-  subnet_id    = "${var.subnet_id}"
-  vpc_id       = "${var.vpc_id}"
+  region                = "${var.source_region}"
+  availability_zone     = "${var.source_availability_zone}"
+  secret_key            = "${var.secret_key}"
+  source_ami            = "${var.source_ami}"
+  ssh_username          = "ubuntu"
+  subnet_id             = "${var.subnet_id}"
+  vpc_id                = "${var.vpc_id}"
   force_deregister      = true
   force_delete_snapshot = true
   run_tag {
