@@ -46,85 +46,116 @@ extern "C" {
 #include <fractal/utils/avpacket_buffer.h>
 }
 
-typedef struct CaptureOutputContext {
-    int old_stdout;
-    int fd;
-} CaptureOutputContext;
+/*
+============================
+Test Fixtures
+============================
+*/
 
 #define TEST_OUTPUT_DIRNAME "test_output"
 
 #if defined(_WIN32)
 #define STDOUT_FILENO _fileno(stdout)
-#endif
-
-CaptureOutputContext capture_test_output() {
-    /*
-        This function captures the output of stdout to a file for the current
-        test. The file is named after the test name, and is located in the
-        test/test_output directory. The file is overwritten if it already
-        exists. If this function is called in a test, then the test output must
-        subsequently be released with `release_test_output`.
-
-        Returns:
-            (CaptureOutputContext): The context for the captured output to be
-                released with `release_test_output`.
-    */
-    CaptureOutputContext ctx;
-    ctx.old_stdout = dup(STDOUT_FILENO);
-#if defined(_WIN32)
-    _mkdir(TEST_OUTPUT_DIRNAME);
+#define safe_mkdir(dir) _mkdir(dir)
+#define safe_dup(fd) _dup(fd)
+#define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
+#define safe_open(path, flags) _open(path, flags)
+#define safe_close(fd) _close(fd)
 #else
-    mkdir(TEST_OUTPUT_DIRNAME, 0777);
+#define safe_mkdir(dir) mkdir(dir, 0777)
+#define safe_dup(fd) dup(fd)
+#define safe_dup2(fd1, fd2) dup2(fd1, fd2)
+#define safe_open(path, flags) open(path, flags, 0666)
+#define safe_close(fd) close(fd)
 #endif
-    std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                           ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
-    ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0666);
-    EXPECT_GE(ctx.fd, 0);
-    fflush(stdout);
-    dup2(ctx.fd, STDOUT_FILENO);
-    return ctx;
-}
 
-std::ifstream release_test_output(CaptureOutputContext ctx) {
+class CaptureStdoutTest : public ::testing::Test {
     /*
-        This function releases the output of stdout captured by
-        `capture_test_output`, and returns a C++ file handle for
-        validating the captured output.
-
-        Arguments:
-            ctx (CaptureOutputContext): The context returned by `capture_test_output`.
-
-        Returns:
-            (std::ifstream): The file containing the captured output.
+        This class is a test fixture which redirects stdout to a file
+        for the duration of the test. The file is then read and compared
+        to registered expected output matchers on a line-by-line basis.
     */
-    fflush(stdout);
-    dup2(ctx.old_stdout, STDOUT_FILENO);
-    close(ctx.fd);
-    std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                       ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log");
-    return file;
-}
+   protected:
+    void SetUp() override {
+        /*
+            This function captures the output of stdout to a file for the current
+            test. The file is named after the test name, and is located in the
+            test/test_output directory. The file is overwritten if it already
+            exists.
+        */
+        old_stdout = safe_dup(STDOUT_FILENO);
+        safe_mkdir(TEST_OUTPUT_DIRNAME);
+        std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                               ::testing::UnitTest::GetInstance()->current_test_info()->name() +
+                               ".log";
+        fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
+        EXPECT_GE(fd, 0);
+        fflush(stdout);
+        safe_dup2(fd, STDOUT_FILENO);
+    }
 
-std::string next_line(std::ifstream& file) {
-    /*
-        This function reads the next line from the given file.
+    void TearDown() override {
+        /*
+            This function releases the output of stdout captured by the `SetUp()`
+            function. We then open the file and read it line by line, comparing
+            the output to matchers we have registerd with `CheckStdoutLine()`.
+        */
+        fflush(stdout);
+        safe_dup2(old_stdout, STDOUT_FILENO);
+        safe_close(fd);
+        std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                           ::testing::UnitTest::GetInstance()->current_test_info()->name() +
+                           ".log");
 
-        Args:
-            file (std::ifstream&): The file to read from.
+        for (::testing::Matcher<std::string> matcher : line_matchers) {
+            std::string line;
+            std::getline(file, line);
+            EXPECT_THAT(line, matcher);
+        }
 
-        Returns:
-            (std::string): The next line in the file.
-    */
-    std::string line;
-    std::getline(file, line);
-    return line;
-}
+        file.close();
+    }
 
-#define EXPECT_LOG_DEBUG(line) EXPECT_THAT(line, ::testing::HasSubstr("DEBUG"))
-#define EXPECT_LOG_INFO(line) EXPECT_THAT(line, ::testing::HasSubstr("INFO"))
-#define EXPECT_LOG_WARNING(line) EXPECT_THAT(line, ::testing::HasSubstr("WARNING"))
-#define EXPECT_LOG_ERROR(line) EXPECT_THAT(line, ::testing::HasSubstr("ERROR"))
-#define EXPECT_LOG_FATAL(line) EXPECT_THAT(line, ::testing::HasSubstr("FATAL"))
+    void CheckStdoutLine(::testing::Matcher<std::string> matcher) {
+        /*
+            This function registers a matcher to be used to compare the output
+            of the current test to the expected output. For example, if we want
+            to check that the output contains the string "hello", we can do so
+            by calling `CheckStdoutLine(::testing::HasSubstr("hello"))`. If we
+            then want to verify that the next line of output contains the string
+            "world", we then call `CheckStdoutLine(::testing::HasSubstr("world"))`.
+
+            The matcher is added to a vector of matchers, which is used to
+            compare the output line-by-line. To add multiple matchers for a
+            single line, we can use `::testing::AllOf()` or `::testing::AnyOf()`
+            to combine multiple matchers into a single matcher.
+
+            Note that the matchers are not checked until the `TearDown()` function
+            is called.
+
+            Arguments:
+                matcher (::testing::Matcher<std::string>): The matcher to use
+                    to compare the output line.
+        */
+        line_matchers.push_back(matcher);
+    }
+
+    int old_stdout;
+    int fd;
+    std::vector<::testing::Matcher<std::string>> line_matchers;
+};
+
+/*
+============================
+Matchers
+============================
+*/
+
+#define LOG_DEBUG_MATCHER ::testing::HasSubstr("DEBUG")
+#define LOG_INFO_MATCHER ::testing::HasSubstr("INFO")
+#define LOG_WARNING_MATCHER ::testing::HasSubstr("WARNING")
+#define LOG_ERROR_MATCHER ::testing::HasSubstr("ERROR")
+#define LOG_FATAL_MATCHER ::testing::HasSubstr("FATAL")
 
 /*
 ============================
@@ -133,8 +164,7 @@ Example Test
 */
 
 // Example of a test using a function from the client module
-TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
-    CaptureOutputContext ctx = capture_test_output();
+TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
     int argc = 1;
 
     char argv0[] = "./client/build64/FractalClient";
@@ -142,11 +172,9 @@ TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
 
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, -1);
-    auto output = release_test_output(ctx);
-    // Check that the output is valid, line-by-line
-    EXPECT_THAT(next_line(output), ::testing::StartsWith("Usage:"));
-    EXPECT_THAT(next_line(output), ::testing::HasSubstr("--help"));
-    output.close();
+
+    CheckStdoutLine(::testing::StartsWith("Usage:"));
+    CheckStdoutLine(::testing::HasSubstr("--help"));
 }
 
 /*
@@ -176,19 +204,14 @@ TEST(ProtocolTest, InitRingBuffer) {
 }
 
 // Tests that an initialized ring buffer with a bad size returns NULL
-TEST(ProtocolTest, InitRingBufferBadSize) {
-    CaptureOutputContext ctx = capture_test_output();
+TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
     EXPECT_TRUE(rb == NULL);
-    auto output = release_test_output(ctx);
-    EXPECT_LOG_ERROR(next_line(output));
-    output.close();
+    CheckStdoutLine(LOG_ERROR_MATCHER);
 }
 
 // Tests adding packets into ringbuffer
-TEST(ProtocolTest, AddingPacketsToRingBuffer) {
-    CaptureOutputContext ctx = capture_test_output();
-
+TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
@@ -219,9 +242,8 @@ TEST(ProtocolTest, AddingPacketsToRingBuffer) {
 
     destroy_ring_buffer(rb);
 
-    auto output = release_test_output(ctx);
-    // For now we simply suppress stdout, but don't validate the output for this test
-    output.close();
+    // For now we use the CaptureStdoutTest fixture to simply suppress stdout;
+    // eventually we should validate output.
 }
 
 // Test that resetting the ringbuffer resets the values
@@ -244,23 +266,32 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
 }
 
-TEST(ProtocolTest, LoggerTest) {
-    CaptureOutputContext ctx = capture_test_output();
+TEST_F(CaptureStdoutTest, LoggerTest) {
     init_logger();
     LOG_DEBUG("This is a debug log!");
     LOG_INFO("This is an info log!");
+    flush_logs();
     LOG_WARNING("This is a warning log!");
     LOG_ERROR("This is an error log!");
     flush_logs();
-    auto output = release_test_output(ctx);
-    // Validate stdout, line-by-line
-    EXPECT_THAT(next_line(output), ::testing::HasSubstr("Logging initialized!"));
-    EXPECT_LOG_DEBUG(next_line(output));
-    EXPECT_LOG_INFO(next_line(output));
-    EXPECT_LOG_WARNING(next_line(output));
-    EXPECT_LOG_ERROR(next_line(output));
-    output.close();
+    LOG_INFO("AAA");
+    LOG_INFO("BBB");
+    LOG_INFO("CCC");
+    LOG_INFO("DDD");
+    LOG_INFO("EEE");
     destroy_logger();
+
+    // Validate stdout, line-by-line
+    CheckStdoutLine(::testing::HasSubstr("Logging initialized!"));
+    CheckStdoutLine(LOG_DEBUG_MATCHER);
+    CheckStdoutLine(LOG_INFO_MATCHER);
+    CheckStdoutLine(LOG_WARNING_MATCHER);
+    CheckStdoutLine(LOG_ERROR_MATCHER);
+    CheckStdoutLine(::testing::EndsWith("AAA"));
+    CheckStdoutLine(::testing::EndsWith("BBB"));
+    CheckStdoutLine(::testing::EndsWith("CCC"));
+    CheckStdoutLine(::testing::EndsWith("DDD"));
+    CheckStdoutLine(::testing::EndsWith("EEE"));
 }
 
 // Test that set_rendering works
@@ -289,8 +320,7 @@ Server Tests
  **/
 
 // Testing that good values passed into server_parse_args returns success
-TEST(ProtocolTest, ArgParsingUsageArgTest) {
-    CaptureOutputContext ctx = capture_test_output();
+TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
     int argc = 2;
 
     char argv0[] = "./server/build64/FractalServer";
@@ -299,9 +329,8 @@ TEST(ProtocolTest, ArgParsingUsageArgTest) {
 
     int ret_val = server_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 1);
-    auto output = release_test_output(ctx);
-    // Validate stdout, line-by-line
-    EXPECT_THAT(next_line(output), ::testing::StartsWith("Usage:"));
+
+    CheckStdoutLine(::testing::HasSubstr("Usage:"));
 }
 
 #endif
@@ -418,8 +447,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
 
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
 // key, confirms that it returns -1
-TEST(ProtocolTest, BadDecrypt) {
-    CaptureOutputContext ctx = capture_test_output();
+TEST_F(CaptureStdoutTest, BadDecrypt) {
     const char* data = "testing...testing";
     size_t len = strlen(data);
 
@@ -452,9 +480,7 @@ TEST(ProtocolTest, BadDecrypt) {
 
     EXPECT_EQ(decrypted_len, -1);
 
-    auto output = release_test_output(ctx);
-    EXPECT_LOG_WARNING(next_line(output));
-    output.close();
+    CheckStdoutLine(LOG_WARNING_MATCHER);
 }
 
 /**
