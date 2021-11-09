@@ -9,6 +9,7 @@ const (
 	FractalDir        		string = "/fractal/"
 	TempDir           		string = FractalDir + "temp/"
 	FractalPrivateDir 		string = "/fractalprivate/"
+	UserInitialCookiesDir 	string = "/fractal/userConfigs/"
 	UserInitialCookiesFile 	string = "user-initial-cookies"
 )
 
