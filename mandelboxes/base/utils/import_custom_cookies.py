@@ -181,8 +181,8 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
     """
     cookie_file = get_or_create_cookie_file(to_browser_name)
 
-    with(cookie_full_path, 'r') as cookie_file:
-        cookie = json.parse(cookies_file.readline().rstrip('\n'))
+    with (cookie_full_path, "r") as cookie_file:
+        cookie = json.parse(cookies_file.readline().rstrip("\n"))
 
         if cookie["value"] == "":
             value = cookie["decrypted_value"]
