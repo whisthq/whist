@@ -9,6 +9,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -27,7 +28,6 @@ import (
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/pierrec/lz4/v4"
-	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -371,14 +371,10 @@ func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs/"
 }
 
-// getConfigTokenHash returns a bcrypt hash of the config token.
+// getConfigTokenHash returns a hash of the config token.
 func (mandelbox *mandelboxData) getConfigTokenHash() string {
-	hash, err := bcrypt.GenerateFromPassword([]byte(mandelbox.GetConfigEncryptionToken()), bcrypt.DefaultCost)
-	if err != nil {
-		logger.Warningf("failed to generate config token hash: %v", err)
-		return ""
-	}
-	return string(hash)
+	hash := sha256.Sum256([]byte(mandelbox.GetConfigEncryptionToken()))
+	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
 // getSaltAndDataFromOpenSSLEncryptedFile takes OpenSSL encrypted data
