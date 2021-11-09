@@ -6,9 +6,10 @@ import "github.com/google/uuid"
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 const (
-	FractalDir        string = "/fractal/"
-	TempDir           string = FractalDir + "temp/"
-	FractalPrivateDir string = "/fractalprivate/"
+	FractalDir        		string = "/fractal/"
+	TempDir           		string = FractalDir + "temp/"
+	FractalPrivateDir 		string = "/fractalprivate/"
+	UserInitialCookiesFile 	string = "user-initial-cookies"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate
