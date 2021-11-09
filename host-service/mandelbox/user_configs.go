@@ -9,6 +9,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -123,6 +124,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	}
 
 	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
+	logger.Infof("Using decryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := mandelbox.configBuffer.Bytes()
@@ -261,6 +263,7 @@ func (mandelbox *mandelboxData) backupUserConfigs() error {
 	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	// At this point, config archive must exist: encrypt app config
+	logger.Infof("Using encryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
 	encryptConfigCmd := exec.Command(
 		"/usr/bin/openssl", "aes-256-cbc", "-e",
 		"-in", decTarPath,
@@ -368,6 +371,12 @@ func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs/"
 }
 
+// getConfigTokenHash returns a hash of the config token.
+func (mandelbox *mandelboxData) getConfigTokenHash() string {
+	hash := sha256.Sum256([]byte(mandelbox.GetConfigEncryptionToken()))
+	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
 // getSaltAndDataFromOpenSSLEncryptedFile takes OpenSSL encrypted data
 // and returns the salt used to encrypt and the encrypted data itself.
 func getSaltAndDataFromOpenSSLEncryptedFile(file []byte) (salt, data []byte, err error) {
@@ -435,7 +444,7 @@ func decryptAES256CBC(key, iv, data []byte) error {
 // See: https://en.wikipedia.org/wiki/Padding_(cryptography)#PKCS#5_and_PKCS#7
 func unpadPKCS7(data []byte) ([]byte, error) {
 	if len(data) < 1 {
-		return nil, utils.MakeError("PKCS7: no data to unpad")
+		return nil, utils.MakeError("no data to unpad")
 	}
 
 	// The last byte of the data will always be the number of bytes to unpad
@@ -443,13 +452,13 @@ func unpadPKCS7(data []byte) ([]byte, error) {
 
 	// Validate the padding length is valid
 	if padLength > len(data) || padLength > aes.BlockSize || padLength < 1 {
-		return nil, utils.MakeError("PKCS7: invalid padding length of %d is longer than data size (%d), AES block length (256), or less than one", padLength, len(data))
+		return nil, utils.MakeError("invalid padding length of %d is longer than data size (%d), AES block length (%d), or less than one", padLength, len(data), aes.BlockSize)
 	}
 
 	// Validate each byte of the padding to check correctness
 	for _, v := range data[len(data)-padLength:] {
 		if int(v) != padLength {
-			return nil, utils.MakeError("PKCS7: invalid padding byte %d, expected %d", v, padLength)
+			return nil, utils.MakeError("invalid padding byte %d, expected %d", v, padLength)
 		}
 	}
 
