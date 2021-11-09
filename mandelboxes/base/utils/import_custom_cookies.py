@@ -224,3 +224,4 @@ if __name__ == "__main__":
 
     if os.path.exists(cookie_full_path):
         set_browser_cookies(browser, cookie_full_path)
+        os.remove(cookie_full_path)
