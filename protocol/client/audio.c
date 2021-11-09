@@ -38,10 +38,6 @@ RingBuffer* audio_ring_buffer;
 
 #define MAX_FREQ 128000  // in Hertz
 
-// We only allow 1 nack in each update_audio call because we had too many false nacks in the past.
-// Increase this as our nacking becomes more accurate.
-#define MAX_NACKED 1
-
 /*
 ============================
 Custom Types
@@ -84,8 +80,6 @@ Private Functions
 
 void client_destroy_audio_device();
 void reinit_audio_device();
-void audio_nack(int id, int index);
-void nack_missing_packets();
 void catchup_audio();
 void flush_next_audio_frame();
 void update_render_context();
