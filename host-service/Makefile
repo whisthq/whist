@@ -16,9 +16,9 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 # Continuous Integration parameters
 CI ?= false
 ifeq ($(CI),true)
-HEROKU_USER = $(shell heroku auth:whoami)
-HEROKU_APIKEY = $(shell heroku auth:token | tail -1)
-HEROKU_APP_NAME_OVERRIDE =
+HEROKU_USER ?= $(shell heroku auth:whoami)
+HEROKU_APIKEY ?= $(shell heroku auth:token | tail -1)
+HEROKU_APP_NAME_OVERRIDE ?=
 endif
 
 all: build
