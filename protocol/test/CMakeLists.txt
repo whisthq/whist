@@ -59,6 +59,7 @@ endif()
 
 # Link the GoogleTest library
 target_link_libraries(${PROTOCOL_TEST_BINARY} gtest)
+target_link_libraries(${PROTOCOL_TEST_BINARY} gmock)
 
 # Copy the Sentry library to the build folder
 add_custom_command(

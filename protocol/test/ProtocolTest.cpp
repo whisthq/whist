@@ -25,13 +25,15 @@ Includes
 #include <fstream>
 #include <algorithm>
 #include <iterator>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 extern "C" {
 #include "client/client_utils.h"
 #include "client/ringbuffer.h"
 #include "fractal/utils/color.h"
 #include <fractal/core/fractal.h>
+#include <fcntl.h>
 
 #ifndef __APPLE__
 #include "server/main.h"
@@ -46,12 +48,123 @@ extern "C" {
 
 /*
 ============================
+Test Fixtures
+============================
+*/
+
+#define TEST_OUTPUT_DIRNAME "test_output"
+
+#if defined(_WIN32)
+#define STDOUT_FILENO _fileno(stdout)
+#define safe_mkdir(dir) _mkdir(dir)
+#define safe_dup(fd) _dup(fd)
+#define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
+#define safe_open(path, flags) _open(path, flags)
+#define safe_close(fd) _close(fd)
+#else
+#define safe_mkdir(dir) mkdir(dir, 0777)
+#define safe_dup(fd) dup(fd)
+#define safe_dup2(fd1, fd2) dup2(fd1, fd2)
+#define safe_open(path, flags) open(path, flags, 0666)
+#define safe_close(fd) close(fd)
+#endif
+
+class CaptureStdoutTest : public ::testing::Test {
+    /*
+        This class is a test fixture which redirects stdout to a file
+        for the duration of the test. The file is then read and compared
+        to registered expected output matchers on a line-by-line basis.
+    */
+   protected:
+    void SetUp() override {
+        /*
+            This function captures the output of stdout to a file for the current
+            test. The file is named after the test name, and is located in the
+            test/test_output directory. The file is overwritten if it already
+            exists.
+        */
+        old_stdout = safe_dup(STDOUT_FILENO);
+        safe_mkdir(TEST_OUTPUT_DIRNAME);
+        std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                               ::testing::UnitTest::GetInstance()->current_test_info()->name() +
+                               ".log";
+        fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
+        EXPECT_GE(fd, 0);
+        fflush(stdout);
+        safe_dup2(fd, STDOUT_FILENO);
+    }
+
+    void TearDown() override {
+        /*
+            This function releases the output of stdout captured by the `SetUp()`
+            function. We then open the file and read it line by line, comparing
+            the output to matchers we have registerd with `check_stdout_line()`.
+        */
+        fflush(stdout);
+        safe_dup2(old_stdout, STDOUT_FILENO);
+        safe_close(fd);
+        std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                           ::testing::UnitTest::GetInstance()->current_test_info()->name() +
+                           ".log");
+
+        for (::testing::Matcher<std::string> matcher : line_matchers) {
+            std::string line;
+            std::getline(file, line);
+            EXPECT_THAT(line, matcher);
+        }
+
+        file.close();
+    }
+
+    void check_stdout_line(::testing::Matcher<std::string> matcher) {
+        /*
+            This function registers a matcher to be used to compare the output
+            of the current test to the expected output. For example, if we want
+            to check that the output contains the string "hello", we can do so
+            by calling `check_stdout_line(::testing::HasSubstr("hello"))`. If we
+            then want to verify that the next line of output contains the string
+            "world", we then call `check_stdout_line(::testing::HasSubstr("world"))`.
+
+            The matcher is added to a vector of matchers, which is used to
+            compare the output line-by-line. To add multiple matchers for a
+            single line, we can use `::testing::AllOf()` or `::testing::AnyOf()`
+            to combine multiple matchers into a single matcher.
+
+            Note that the matchers are not checked until the `TearDown()` function
+            is called.
+
+            Arguments:
+                matcher (::testing::Matcher<std::string>): The matcher to use
+                    to compare the output line.
+        */
+        line_matchers.push_back(matcher);
+    }
+
+    int old_stdout;
+    int fd;
+    std::vector<::testing::Matcher<std::string>> line_matchers;
+};
+
+/*
+============================
+Matchers
+============================
+*/
+
+#define LOG_DEBUG_MATCHER ::testing::HasSubstr("DEBUG")
+#define LOG_INFO_MATCHER ::testing::HasSubstr("INFO")
+#define LOG_WARNING_MATCHER ::testing::HasSubstr("WARNING")
+#define LOG_ERROR_MATCHER ::testing::HasSubstr("ERROR")
+#define LOG_FATAL_MATCHER ::testing::HasSubstr("FATAL")
+
+/*
+============================
 Example Test
 ============================
 */
 
 // Example of a test using a function from the client module
-TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
+TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
     int argc = 1;
 
     char argv0[] = "./client/build64/FractalClient";
@@ -59,6 +172,9 @@ TEST(ProtocolTest, ArgParsingEmptyArgsTest) {
 
     int ret_val = client_parse_args(argc, argv);
     EXPECT_EQ(ret_val, -1);
+
+    check_stdout_line(::testing::StartsWith("Usage:"));
+    check_stdout_line(::testing::HasSubstr("--help"));
 }
 
 /*
@@ -88,13 +204,14 @@ TEST(ProtocolTest, InitRingBuffer) {
 }
 
 // Tests that an initialized ring buffer with a bad size returns NULL
-TEST(ProtocolTest, InitRingBufferBadSize) {
+TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
     EXPECT_TRUE(rb == NULL);
+    check_stdout_line(LOG_ERROR_MATCHER);
 }
 
 // Tests adding packets into ringbuffer
-TEST(ProtocolTest, AddingPacketsToRingBuffer) {
+TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
@@ -124,6 +241,9 @@ TEST(ProtocolTest, AddingPacketsToRingBuffer) {
     EXPECT_EQ(receive_packet(rb, &pkt2), -1);
 
     destroy_ring_buffer(rb);
+
+    // For now we use the CaptureStdoutTest fixture to simply suppress stdout;
+    // eventually we should validate output.
 }
 
 // Test that resetting the ringbuffer resets the values
@@ -144,6 +264,34 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     reset_frame(rb, get_frame_at_id(rb, pkt1.id));
 
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+}
+
+TEST_F(CaptureStdoutTest, LoggerTest) {
+    init_logger();
+    LOG_DEBUG("This is a debug log!");
+    LOG_INFO("This is an info log!");
+    flush_logs();
+    LOG_WARNING("This is a warning log!");
+    LOG_ERROR("This is an error log!");
+    flush_logs();
+    LOG_INFO("AAA");
+    LOG_INFO("BBB");
+    LOG_INFO("CCC");
+    LOG_INFO("DDD");
+    LOG_INFO("EEE");
+    destroy_logger();
+
+    // Validate stdout, line-by-line
+    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+    check_stdout_line(LOG_DEBUG_MATCHER);
+    check_stdout_line(LOG_INFO_MATCHER);
+    check_stdout_line(LOG_WARNING_MATCHER);
+    check_stdout_line(LOG_ERROR_MATCHER);
+    check_stdout_line(::testing::EndsWith("AAA"));
+    check_stdout_line(::testing::EndsWith("BBB"));
+    check_stdout_line(::testing::EndsWith("CCC"));
+    check_stdout_line(::testing::EndsWith("DDD"));
+    check_stdout_line(::testing::EndsWith("EEE"));
 }
 
 // Test that set_rendering works
@@ -172,7 +320,7 @@ Server Tests
  **/
 
 // Testing that good values passed into server_parse_args returns success
-TEST(ProtocolTest, ArgParsingUsageArgTest) {
+TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
     int argc = 2;
 
     char argv0[] = "./server/build64/FractalServer";
@@ -181,6 +329,8 @@ TEST(ProtocolTest, ArgParsingUsageArgTest) {
 
     int ret_val = server_parse_args(argc, argv);
     EXPECT_EQ(ret_val, 1);
+
+    check_stdout_line(::testing::HasSubstr("Usage:"));
 }
 
 #endif
@@ -297,7 +447,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
 
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
 // key, confirms that it returns -1
-TEST(ProtocolTest, BadDecrypt) {
+TEST_F(CaptureStdoutTest, BadDecrypt) {
     const char* data = "testing...testing";
     size_t len = strlen(data);
 
@@ -329,6 +479,8 @@ TEST(ProtocolTest, BadDecrypt) {
                                        (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
 
     EXPECT_EQ(decrypted_len, -1);
+
+    check_stdout_line(LOG_WARNING_MATCHER);
 }
 
 /**
