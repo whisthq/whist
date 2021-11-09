@@ -1306,7 +1306,7 @@ void destroy_video() {
     // Reset globals
     server_width = -1;
     server_height = -1;
-    CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
+    server_codec_type = CODEC_TYPE_UNKNOWN;
 
     has_video_rendered_yet = false;
 }
