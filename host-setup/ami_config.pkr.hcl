@@ -101,7 +101,7 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
       "tag:Purpose": "packer"
     }
     most_free = true
-    random    = false
+    random    = true
   }
   vpc_id       = "${var.vpc_id}"
   force_deregister      = true
