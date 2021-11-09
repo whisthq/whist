@@ -73,11 +73,6 @@ variable "source_region" {
   default = ""
 }
 
-variable "subnet_id" {
-  type    = string
-  default = ""
-}
-
 variable "vpc_id" {
   type    = string
   default = ""
@@ -101,7 +96,13 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
   secret_key   = "${var.secret_key}"
   source_ami   = "${var.source_ami}"
   ssh_username = "ubuntu"
-  subnet_id    = "${var.subnet_id}"
+  subnet_filter {
+    filters = {
+      "tag:Purpose": "packer"
+    }
+    most_free = true
+    random    = false
+  }
   vpc_id       = "${var.vpc_id}"
   force_deregister      = true
   force_delete_snapshot = true
