@@ -12,6 +12,7 @@ import (
 
 	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/fractal/host-service/utils"
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 
@@ -40,11 +41,15 @@ func instanceStatusHandler(instanceName string, status string, client *graphql.S
 	id, err := client.Subscribe(InstanceStatusSubscription, variables, func(data *json.RawMessage, err error) error {
 
 		if err != nil {
-			return err
+			return utils.MakeError("Error receiving subscription event from Hasura: %v", err)
 		}
 
 		var result InstanceStatusEvent
-		json.Unmarshal(*data, &result)
+		err = json.Unmarshal(*data, &result)
+
+		if err != nil {
+			return utils.MakeError("Failed to unmarshal subscription event: %v", err)
+		}
 
 		var instance Instance
 		// If the result array returned by Hasura is not empty, it means
@@ -88,11 +93,15 @@ func mandelboxInfoHandler(instanceName string, status string, client *graphql.Su
 	id, err := client.Subscribe(MandelboxInfoSubscription, variables, func(data *json.RawMessage, err error) error {
 
 		if err != nil {
-			return nil
+			return utils.MakeError("Error receiving subscription event from Hasura: %v", err)
 		}
 
 		var result MandelboxInfoEvent
-		json.Unmarshal(*data, &result)
+		err = json.Unmarshal(*data, &result)
+
+		if err != nil {
+			return utils.MakeError("Failed to unmarshal subscription event: %v", err)
+		}
 
 		var mandelbox Mandelbox
 		// If the result array returned by Hasura is not empty, it means

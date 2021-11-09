@@ -41,7 +41,7 @@ func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()
 }
 
-// UnmarshalJSON is a utility function to properly unmarshal into a type MandelboxID
+// UnmarshalJSON is a utility function to properly unmarshal JSON into a type MandelboxID
 func (mandelboxID MandelboxID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	UUID, err := uuid.Parse(s)
