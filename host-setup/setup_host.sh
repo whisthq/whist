@@ -245,6 +245,18 @@ local_development_steps () {
     sudo snap install go --classic
   fi
 
+  if [[ ":$PATH:" == *":$HOME/go/bin:"* ]]; then
+    echo "================================================"
+    echo "Go Binaries Directory: Found in \$PATH"
+    echo "================================================"
+  else
+    echo "================================================"
+    echo "Go Binaries Directory: Not Found in \$PATH"
+    echo "Installing \$HOME/go/bin to \$PATH"
+    echo "================================================"
+    echo "export PATH=\"\$PATH:\$HOME/go/bin\"" >> $HOME/.bashrc
+  fi
+
   echo "================================================"
   echo "Installing Heroku CLI..."
   echo "================================================"
