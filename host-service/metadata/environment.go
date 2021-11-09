@@ -10,9 +10,14 @@ import (
 )
 
 func init() {
-	// Verify that the host service is running on a valid environment. Panic if not.
-	if err := verifyEnvironment(); err != nil {
-		panic(err)
+	// Note: we use panic here to exit from the `metadata` package, since it is one of the rare
+	// packages that does not have access to the global context, or the `logger.Panicf` function.
+	// Additionally, we need to verify that the host service is running on a valid environment early
+	// in the process, before doing any setup/logging. Due to the special conditions needed, the use of
+	// `panic` is acceptable here, but it should not be used anywhere else in the code.
+	if IsRunningInCI() && !IsLocalEnv() {
+		// Running on a non-local environment with CI enabled is an invalid configuration.
+		panic("Running on non-local environment with CI enabled.")
 	}
 }
 
@@ -108,15 +113,4 @@ func GetUserID() (mandelboxtypes.UserID, error) {
 	}
 
 	return UserID, nil
-}
-
-// verifyEnvironment is used to enforce that the host service is running on a valid
-// environment.
-func verifyEnvironment() error {
-	if IsRunningInCI() && !IsLocalEnv() {
-		// Running on a non-local environment with CI enabled is an invalid configuration.
-		return utils.MakeError("Running on non-local environment with CI enabled.")
-	}
-
-	return nil
 }
