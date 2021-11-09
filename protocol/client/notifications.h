@@ -15,7 +15,7 @@ Includes
 #include <fractal/core/fractal.h>
 #include <fractal/core/fractal_notification.h>
 #include <fractal/network/network.h>
-#include "notifications_displayer.h"
+#include <notifier/notifications_displayer.h>
 
 /**
  * @brief                          Recieves a notification packet from the server
