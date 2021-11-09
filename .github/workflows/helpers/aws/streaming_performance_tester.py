@@ -135,13 +135,22 @@ if __name__ == "__main__":
 
     # 2- reboot and wait for it to come back up
     server_ssh_client.exec_command(command="sudo reboot")
-    # wait for SSH here maybe
+    
+    # TODO wait for SSH here 
 
-    # 3- build and run host-service
+    # 3- Start the X server
+    sftp = paramiko.SFTPClient.from_transport(server_ssh_client)
+    sftp.put("./dummy-1920x1080.conf", "dummy-1920x1080.conf")
+    sftp.close()
+    command = "sudo apt install xserver-xorg-video-dummy && sudo X -config dummy-1920x1080.conf"
+    server_ssh_client.exec_command(command=command)
+
+
+    # 4- build and run host-service
     command = "cd ~/fractal/host-service && make run"
     server_ssh_client.exec_command(command=command)
 
-    # 4- Run the protocol server, and retrieve the connection string
+    # 5- Run the protocol server, and retrieve the connection string
     command = "cd ~/fractal/protocol && ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer && ./fserver"
     _, stdout, _ = server_ssh_client.exec_command(command=command)
     unparsed_fclient_string = ""
@@ -151,7 +160,7 @@ if __name__ == "__main__":
             unparsed_fclient_string = line[line.find(".") + 2 :].strip()
             print(f"Unparsed ./fclient connection string is: {unparsed_fclient_string}")
 
-    # 5- parse the connection string into something readable
+    # 6- parse the connection string into something readable
     temp = unparsed_fclient_string.split(b"\n")
     client_command = temp[6][temp[6].index(b".") + 2 :].decode("utf-8")
     print(f"Parsed ./fclient connection string is: {client_command}")
@@ -162,7 +171,7 @@ if __name__ == "__main__":
     client_ssh_client.exec_command(command=command)
 
     # 2- Run the protocol client with the connection string
-    command = "cd ~/fractal/protocol && ./fclient " + client_command
+    command = "cd ~/fractal/protocol && DISPLAY=:0 ./fclient " + client_command
     server_ssh_client.exec_command(command=command)
 
     # Wait 4 minutes to generate enough data
