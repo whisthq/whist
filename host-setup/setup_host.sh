@@ -254,7 +254,6 @@ local_development_steps () {
   echo "Creating symlink for root user to get AWS credentials..."
   echo "================================================"
   sudo ln -sf /home/ubuntu/.aws /root/.aws
-
 }
 
 # `deployment_setup_steps` contains the commands that are specific to setting
