@@ -154,7 +154,7 @@ def format_chromium_based_cookie(cookie):
         cookie["host_key"],
         cookie["name"],
         cookie["value"],
-        cookie["encrypted_value"],
+        cookie.get("encrypted_value", ""),
         cookie["path"],
         cookie["expires_utc"],
         cookie.get("secure", cookie.get("is_secure", False)),
@@ -187,9 +187,12 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
             cookie = json.loads(cookie_json)
 
             if cookie["value"] == "":
-                value = cookie["decrypted_value"]
-                encrypted_prefix = cookie["encrypted_prefix"]
-                cookie["encrypted_value"] = encrypt(to_browser_name, value, encrypted_prefix)
+                decrypted_value = cookie.get("decrypted_value", None)
+
+                # Skip encryption if decrypted value does not exist
+                if decrypted_value:
+                   encrypted_prefix = cookie["encrypted_prefix"]
+                   cookie["encrypted_value"] = encrypt(to_browser_name, decrypted_value, encrypted_prefix)
 
             cookie.pop("decrypted_value", None)
             cookie.pop("encryption_prefix", None)
@@ -201,18 +204,10 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
             con.text_factory = browser_cookie3.text_factory
             cur = con.cursor()
 
-            try:
-                # chrome <=55
-                cur.execute(
-                    "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    encrypted_cookie,
-                )
-            except sqlite3.OperationalError:
-                # chrome >=56
-                cur.execute(
-                    "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    encrypted_cookie,
-                )
+            cur.execute(
+                "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                encrypted_cookie,
+            )
 
             con.commit()
             con.close()
