@@ -254,7 +254,7 @@ local_development_steps () {
     echo "Go Binaries Directory: Not Found in \$PATH"
     echo "Installing \$HOME/go/bin to \$PATH"
     echo "================================================"
-    echo "export \$PATH=\"\$PATH:\$HOME/go/bin\"" >> $HOME/.bashrc
+    echo "export PATH=\"\$PATH:\$HOME/go/bin\"" >> $HOME/.bashrc
   fi
 
   echo "================================================"
