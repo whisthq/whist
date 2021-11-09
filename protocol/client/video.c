@@ -818,11 +818,13 @@ void update_video() {
             // refresh, so rendering the backlogged frames requires the client to wait until the
             // screen refreshes N more times, causing it to fall behind the server.
             // However, we set a min FPS of 25, so that the display is still smoothly rendering.
-            if (get_timer(video_data.last_loading_frame_timer) < 1.0 / 25.0 &&
+            double time_since_last_render = get_timer(video_data.last_loading_frame_timer);
+
+            if (time_since_last_render < 1.0 / 45.0 &&
                 next_frame_ctx->id == next_frame_render_id &&
                 next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                 skip_render = true;
-                LOG_INFO("Skip this render");
+                LOG_INFO("Skipping render because frame ID %d has been received and it has only been %fs since the last render", next_frame_ctx->id, time_since_last_render);
                 video_ring_buffer->num_frames_skipped++;
             } else {
                 skip_render = false;
@@ -834,7 +836,11 @@ void update_video() {
 
     // Try requesting an iframe
     try_request_iframe_to_catch_up();
-    try_nacking(video_ring_buffer, latency);
+    // Don't nack on startup, since the first frame will have an ID > 0 and we don't want
+    // frames with lower 
+    if(ctx->last_nacked_index != -1) {
+        try_nacking(video_ring_buffer, latency);
+    }
 }
 
 // NOTE that this function is in the hotpath.
