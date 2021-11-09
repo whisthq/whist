@@ -833,11 +833,8 @@ void update_video() {
     }
 
     // Try requesting an iframe
-    bool iframe_requested = try_request_iframe_to_catch_up();
-    // Try to nack, but don't nack if we're trying to get an iframe anyway
-    if (!iframe_requested) {
-        try_nacking(video_ring_buffer, latency);
-    }
+    try_request_iframe_to_catch_up();
+    try_nacking(video_ring_buffer, latency);
 }
 
 // NOTE that this function is in the hotpath.
