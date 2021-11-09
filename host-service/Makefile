@@ -15,9 +15,11 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 # Continuous Integration parameters
 CI ?= false
+ifeq ($(CI),true)
 HEROKU_USER ?= $(shell heroku auth:whoami)
 HEROKU_APIKEY ?= $(shell heroku auth:token | tail -1)
 HEROKU_APP_NAME_OVERRIDE ?=
+endif
 
 all: build
 
@@ -26,7 +28,7 @@ all: build
 checkCI:
 	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
 ifeq ($(CI),true)
-	# We're building on GitHub Actions, so we need to require non-trivial secrets
+# We're building on GitHub Actions, so we need to require non-trivial secrets
 	$(info CI is true)
 ifeq ($(origin HEROKU_USER),file)
 	$(error "HEROKU_USER is not set, but CI is true")
@@ -46,12 +48,12 @@ endif
 
 build: checkCI
 	$(GOCMD) mod tidy -v
-	$(GOCMD) get github.com/jschaf/pggen/cmd/pggen
+	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
 
-	# GOFLAGS fixes go.sum issue with lz4 package
-	# Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
+# GOFLAGS fixes go.sum issue with lz4 package
+# Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
 	GOFLAGS=-mod=mod $(GOCMD) generate ./...
 
 	$(GOCMD) build -ldflags "\
@@ -65,11 +67,11 @@ upload: build
 	aws s3api put-object --bucket fractal-host-service --key $(GIT_BRANCH) --body build/host-service
 
 format:
-	(cd ~ && $(GOCMD) get -u golang.org/x/tools/cmd/goimports)
+	(cd ~ && $(GOCMD) install golang.org/x/tools/cmd/goimports@latest)
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | grep --invert-match ".sql.go" | xargs)
 
 lint: build
-	(cd ~ && $(GOCMD) get -u golang.org/x/lint/golint)
+	(cd ~ && $(GOCMD) install golang.org/x/lint/golint@latest)
 	$(GOCMD) list ./... | grep -v /agent/ | xargs golint -set_exit_status
 
 vet: build
@@ -78,20 +80,20 @@ vet: build
 test: build
 	echo "Running go tests..."
 
-	# We need to run some tests as root since the host service init() checks for root perms.
-	#
-	# Set CI flag in test environment so we can properly skip metrics collection in CI
-	#
-	# -p 1 flag ensures that tests run in series instead of parallel
-	# This ensures that tests that use the file system do not conflict or race with each other
-	#
-	# Set AWS credentials to allow user config integration tests to run
+# We need to run some tests as root since the host service init() checks for root perms.
+#
+# Set CI flag in test environment so we can properly skip metrics collection in CI
+#
+# -p 1 flag ensures that tests run in series instead of parallel
+# This ensures that tests that use the file system do not conflict or race with each other
+#
+# Set AWS credentials to allow user config integration tests to run
 	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
 
-	# Download the Codecov uploader
+# Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
-	# Upload coverage report to Codecov
+# Upload coverage report to Codecov
 	./codecov -t ${CODECOV_TOKEN} -c -F host-service
 
 docs:
@@ -109,10 +111,10 @@ clean:
 
 run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with local dev (debug) configuration...)
-	# we run the built binary instead of using `go run` because otherwise signal
-	# handling for Ctrl+C does not work. We also create the symlink below so that
-	# the host service can use the `ubuntu` account's aws credentials to run,
-	# even though it runs as root.
+# we run the built binary instead of using `go run` because otherwise signal
+# handling for Ctrl+C does not work. We also create the symlink below so that
+# the host service can use the `ubuntu` account's aws credentials to run,
+# even though it runs as root.
 ifeq ("$(wildcard /root/.aws/*)","")
 	sudo ln -sf /home/ubuntu/.aws /root/.aws
 endif
