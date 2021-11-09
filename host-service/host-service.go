@@ -516,12 +516,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Getting JSON transport requests...")
 	
-	if !metadata.IsLocalEnv() {
-		// Receive the json transpor request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
-		req = <-jsonchan
-	}
-
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
@@ -534,7 +528,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_COOKIES=%v", req.Cookies),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=~/.config/%v", mandelbox.getUserInitialCookieFilename()),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -730,11 +724,31 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
+	// Begin writing user initial browser data at the same time as writeJSONData.
+	// This is done separately from since there is no dependencies between the two
+	// functions and will help save time.
+	userInitialBrowserDataDownloadComplete := make(chan bool)
+	go func() {
+		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+
+		err := mandelbox.WriteUserInitialBrowserData(req.Cookies)
+		if err != nil {
+			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
+			userInitialBrowserDataDownloadComplete <- true
+			return
+		}
+
+		userInitialBrowserDataDownloadComplete <- true
+		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+	}()
+
 	// Write the config.json file with the data received from JSON transport
 	err = mandelbox.WriteJSONData()
 	if err != nil {
 		logger.Errorf("Error writing config.json file for protocol: %v", err)
 	}
+
+	<- userInitialBrowserDataDownloadComplete
 
 	// Unblocks fractal-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()
