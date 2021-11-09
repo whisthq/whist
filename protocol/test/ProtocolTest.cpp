@@ -52,6 +52,11 @@ typedef struct CaptureOutputContext {
 } CaptureOutputContext;
 
 #define TEST_OUTPUT_DIRNAME "test_output"
+
+#if defined(_WIN32)
+#define STDOUT_FILENO _fileno(stdout)
+#endif
+
 CaptureOutputContext capture_test_output() {
     /*
         This function captures the output of stdout to a file for the current
@@ -66,11 +71,11 @@ CaptureOutputContext capture_test_output() {
     */
     CaptureOutputContext ctx;
     ctx.old_stdout = dup(STDOUT_FILENO);
-    int ret = mkdir(TEST_OUTPUT_DIRNAME, 0777);
-    if (ret != 0 && errno != EEXIST) {
-        std::cerr << "Failed to create test output directory: " << strerror(errno) << std::endl;
-        exit(1);
-    }
+#if defined(_WIN32)
+    _mkdir(TEST_OUTPUT_DIRNAME);
+#else
+    mkdir(TEST_OUTPUT_DIRNAME, 0777);
+#endif
     std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
                            ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
     ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0666);
