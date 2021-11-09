@@ -76,6 +76,8 @@ fi
 # Imports user cookies
 /usr/share/fractal/run-as-fractal-user.sh "python3 /usr/bin/import_custom_cookies.py"
 
+unset WHIST_INITIAL_USER_COOKIES_FILE
+
 # Start the application that this mandelbox runs.
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
 fractal_application_runuser_pid=$!
