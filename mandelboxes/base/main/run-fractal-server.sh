@@ -10,8 +10,8 @@ FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
-COOKIE_ENV_FILENAME=/usr/share/fractal/private/user_cookies_env
-USER_UPLOAD_TARGET_ENV_FILENAME=/usr/share/fractal/private/user_target_env
+COOKIE_FILE_FILENAME=/usr/share/fractal/private/user_cookies_file
+USER_UPLOAD_TARGET_FILENAME=/usr/share/fractal/private/user_target
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
@@ -42,14 +42,14 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Set cookies, if file exists
-if [ -f "$COOKIE_ENV_FILENAME" ]; then
-  export WHIST_INITIAL_USER_COOKIES=$(cat $COOKIE_ENV_FILENAME)
+# Set cookies file, if file exists
+if [ -f "$COOKIE_FILE_FILENAME" ]; then
+  export WHIST_INITIAL_USER_COOKIES_FILE=$(cat $COOKIE_FILE_FILENAME)
 fi
 
 # Set user upload target, if file exists
-if [ -f "$USER_UPLOAD_TARGET_ENV_FILENAME" ]; then
-  export WHIST_COOKIE_UPLOAD_TARGET=$(cat $USER_UPLOAD_TARGET_ENV_FILENAME)
+if [ -f "$USER_UPLOAD_TARGET_FILENAME" ]; then
+  export WHIST_COOKIE_UPLOAD_TARGET=$(cat $USER_UPLOAD_TARGET_FILENAME)
 fi
 
 

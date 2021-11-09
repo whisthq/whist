@@ -24,19 +24,19 @@ fi
 # leak in any way (probably redundant, but still good practice)
 unset FRACTAL_AES_KEY
 
-# If WHIST_INITIAL_USER_COOKIES is set, then create file
-if [ -n "${WHIST_INITIAL_USER_COOKIES+1}" ]
+# If WHIST_INITIAL_USER_COOKIES_FILE is set, then create file
+if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ]
 then
-  echo $WHIST_INITIAL_USER_COOKIES > /usr/share/fractal/private/user_cookies_env
+  echo $WHIST_INITIAL_USER_COOKIES_FILE > /usr/share/fractal/private/user_cookies_file
 fi
 
 # If WHIST_COOKIE_UPLOAD_TARGET is set, then create file
 if [ -n "${WHIST_COOKIE_UPLOAD_TARGET+1}" ]
 then
-  echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/fractal/private/user_target_env
+  echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/fractal/private/user_target
 fi
 
-unset WHIST_INITIAL_USER_COOKIES
+unset WHIST_INITIAL_USER_COOKIES_FILE
 
 
 # Remove a vestigal file that we do not use.
