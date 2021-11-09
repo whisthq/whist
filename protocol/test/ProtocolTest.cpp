@@ -75,6 +75,7 @@ CaptureOutputContext capture_test_output() {
                            ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
     ctx.fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0666);
     EXPECT_GE(ctx.fd, 0);
+    fflush(stdout);
     dup2(ctx.fd, STDOUT_FILENO);
     return ctx;
 }
@@ -91,6 +92,7 @@ std::ifstream release_test_output(CaptureOutputContext ctx) {
         Returns:
             (std::ifstream): The file containing the captured output.
     */
+    fflush(stdout);
     dup2(ctx.old_stdout, STDOUT_FILENO);
     close(ctx.fd);
     std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +

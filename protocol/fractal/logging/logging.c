@@ -141,8 +141,8 @@ int multithreaded_printf(void* opaque) {
 
 void flush_logs() {
     if (run_multithreaded_printf) {
-        // Clear the queue into the cache, and then let go of `logger_queue_mutex` as soon as possible
-        // so that mprintf can continue to accumulate.
+        // Clear the queue into the cache, and then let go of `logger_queue_mutex` as soon as
+        // possible so that mprintf can continue to accumulate.
 
         // We must protect the cache using its own `logger_cache_mutex`, as it is a global cache and
         // needs to be protected from concurrent `flush_logs` calls that may happen during debugging
