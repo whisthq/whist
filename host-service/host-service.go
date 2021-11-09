@@ -528,7 +528,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=~/.config/%v", mandelbox.getUserInitialCookieFilename()),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", utils.UserInitialCookiesDir, utils.UserInitialCookiesFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
