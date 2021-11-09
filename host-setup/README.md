@@ -35,8 +35,8 @@ To set up your Whist development instance:
 
 ```bash
 # clones `dev` by default
-git clone git@github.com:fractal/fractal.git # via SSH
-git clone https://github.com/fractal/fractal.git # via HTTPS
+git clone git@github.com:fractal/fractal.git # via SSH, highly preferable
+git clone https://github.com/fractal/fractal.git # via HTTPS, type password on every push
 
 # set up the EC2 host for development
 cd ~/fractal/host-setup
@@ -44,11 +44,11 @@ cd ~/fractal/host-setup
 
 # build the Whist protocol server
 cd ~/fractal/protocol/
-./build_protocol_targets.sh FractalServer
+./build.sh FractalServer
 
 # build the Whist base container image
 cd ~/fractal/mandelboxes
-./build_mandelbox_image.sh base
+./build.sh base
 
 # build the Whist Host Service
 cd ~/fractal/host-service
@@ -56,18 +56,20 @@ make run # keep this open in a separate terminal
 
 # run the Whist base container image (swap base to browsers/chrome to run the Whist Chrome container)
 cd ~/fractal/mandelboxes
-./run_local_mandelbox_image.sh base
+./run.sh base
 ```
 
 ⚠️ If `./setup_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
-⚠️ If the `./build_mandelbox_image.sh base` command fails due to apt being unable to fetch some archives (e.g. error: `E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?`), call `docker system prune -af` first, then run `./build_mandelbox_image.sh base` again.
+⚠️ If the `./build.sh base` command fails due to apt being unable to fetch some archives (e.g. error: `E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?`), call `docker system prune -af` first, then run `./build.sh base` again.
 
 - Start a Whist protocol client to connect to the Whist protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Whist base application, which is currently **xeyes**, then you are all set!
 
 - Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://whisthq.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
 
-- If you want to build a specific browser along with base run `./build_mandelbox_image.sh browsers/<name>` (ie chrome) instead of `./build_mandelbox_image.sh base`
+- If you want to build a specific browser along with base run `./build.sh browsers/<name>` (ie chrome) instead of `./build.sh base`
+
+- Once the docker container opens, if you would like to view Whist's server logs, run `tail -F /usr/share/fractal/server.log`
 
 ## Setting Up an AMI
 
