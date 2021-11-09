@@ -27,6 +27,7 @@ import (
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/pierrec/lz4/v4"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -123,6 +124,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	}
 
 	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
+	logger.Infof("Using decryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := mandelbox.configBuffer.Bytes()
@@ -261,6 +263,7 @@ func (mandelbox *mandelboxData) backupUserConfigs() error {
 	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	// At this point, config archive must exist: encrypt app config
+	logger.Infof("Using encryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
 	encryptConfigCmd := exec.Command(
 		"/usr/bin/openssl", "aes-256-cbc", "-e",
 		"-in", decTarPath,
@@ -366,6 +369,16 @@ func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
 // directory that stores unpacked user configs.
 func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs/"
+}
+
+// getConfigTokenHash returns a bcrypt hash of the config token.
+func (mandelbox *mandelboxData) getConfigTokenHash() string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(mandelbox.GetConfigEncryptionToken()), bcrypt.DefaultCost)
+	if err != nil {
+		logger.Warningf("failed to generate config token hash: %v", err)
+		return ""
+	}
+	return string(hash)
 }
 
 // getSaltAndDataFromOpenSSLEncryptedFile takes OpenSSL encrypted data
