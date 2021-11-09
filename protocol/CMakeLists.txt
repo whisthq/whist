@@ -304,8 +304,12 @@ if((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 find_library(LIB_NOTIFICATIONS_DISPLAYER NAMES notifications_displayer PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/notifier/${CMAKE_SYSTEM_NAME}"
+=======
+find_library(LIB_NOTIFICATIONS_DISPLAYER NAMES libnotifications_displayer notifications_displayer PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/notifier/${CMAKE_SYSTEM_NAME}"
+>>>>>>> 8cd45727b... Adding extra name to detect library on Windows
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
         NO_CMAKE_PATH
