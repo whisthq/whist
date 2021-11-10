@@ -12,6 +12,7 @@ import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz } from "@app/utils/logging"
+import { appEnvironment, FractalEnvironments } from "../../config/configs"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -47,9 +48,10 @@ export const protocolLaunch = async () => {
   // Protocol arguments
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
-    ...(app.isPackaged && {
-      environment: config.sentryEnv,
-    }),
+    ...(app.isPackaged &&
+      appEnvironment !== FractalEnvironments.LOCAL && {
+        environment: config.sentryEnv,
+      }),
   }
 
   const protocolArguments = [
