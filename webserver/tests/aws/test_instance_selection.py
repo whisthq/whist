@@ -8,6 +8,7 @@ from app.helpers.aws.aws_instance_post import find_instance, bundled_region
 from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, INCORRECT_COMMIT_HASH_FOR_TESTING
 
+
 def test_empty_instances(region_name: str) -> None:
     """
     Confirms that we don't find any instances on a fresh db
