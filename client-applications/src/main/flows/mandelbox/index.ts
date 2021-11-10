@@ -1,4 +1,4 @@
-import { merge, Observable, zip, from } from "rxjs"
+import { merge, Observable, zip, from, race } from "rxjs"
 import {
   map,
   switchMap,
@@ -79,8 +79,14 @@ export default flow(
       map(([h]) => h)
     )
 
+    const hostWithoutDelay = host.success.pipe(
+      withLatestFrom(trigger),
+      filter(([, t]) => t.importCookiesFrom === undefined),
+      map(([h]) => h)
+    )
+
     return {
-      success: hostWithDelay,
+      success: race(hostWithDelay, hostWithoutDelay),
       failure: merge(create.failure, host.failure),
     }
   }
