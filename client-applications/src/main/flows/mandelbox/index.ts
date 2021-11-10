@@ -1,11 +1,17 @@
 import { merge, Observable, zip, from } from "rxjs"
-import { map, switchMap, share } from "rxjs/operators"
+import {
+  map,
+  switchMap,
+  share,
+  withLatestFrom,
+  delay,
+  filter,
+} from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
-import { execCommandByOS } from "@app/utils/execCommand"
-import { persistGet, persistSet } from "@app/utils/persist"
+import { persistGet } from "@app/utils/persist"
 import { getJSONDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
@@ -64,8 +70,15 @@ export default flow(
       )
     )
 
+    const hostWithDelay = host.success.pipe(
+      withLatestFrom(decrypted),
+      filter(([, d]) => d !== "[]"),
+      delay(5000),
+      map(([h]) => h)
+    )
+
     return {
-      success: host.success,
+      success: hostWithDelay,
       failure: merge(create.failure, host.failure),
     }
   }
