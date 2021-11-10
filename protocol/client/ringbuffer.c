@@ -441,9 +441,19 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
                  MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - avg_counter);
     // Note how the order-of-ops ensures arithmetic is done with double's for higher accuracy
 
+    static bool last_nack_possibility = true;
     if (max_nacks <= 0) {
         // We can't nack, so just exit. Also takes care of negative case from above calculation.
+        if (last_nack_possibility) {
+            LOG_INFO("Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
+            last_nack_possibility = false;
+        }
         return;
+    } else {
+        if (!last_nack_possibility) {
+            LOG_INFO("NACKing is possible again.");
+            last_nack_possibility = true;
+        }
     }
 
     // Track how many nacks we've made this call, to keep it under max_nacks
