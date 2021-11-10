@@ -363,6 +363,8 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
 // Maximum burst mbps that can be used by nacking
 // This is calculated per 5ms interval
 #define MAX_NACK_BURST_MBPS 4800000
+// Toggle verbose nacking logs
+#define LOG_NACKING false
 
 int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
                                      int max_packets_to_nack) {
@@ -382,11 +384,11 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
     // Note that an invalid last_nacked_index is set to -1, correctly starting us at 0
     int start_index = frame_data->last_nacked_index + 1;
 
-    // Something really large
-    char nack_log_buffer[1024 * 16];
+    // Something really large, static because this only gets called from one thread
+    static char nack_log_buffer[1024 * 32];
     int log_len = 0;
     log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
-                        "NACKing for Packet ID %d, Indices ", id);
+                        "NACKing for Packet ID %d, Indices ", frame_data->id);
 
     int num_packets_nacked = 0;
     for (int i = start_index; i <= end_index && num_packets_nacked < max_packets_to_nack; i++) {
@@ -394,14 +396,14 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
             num_packets_nacked++;
             nack_single_packet(ring_buffer, frame_data->id, i);
             log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
-                                "%s%d", num_packets_nacked == 0 ? "" : ", ", id);
+                                "%s%d", num_packets_nacked == 0 ? "" : ", ", frame_data->id);
             frame_data->nacked_indices[i]++;
             frame_data->last_nacked_index = i;
         }
     }
 
     if (num_packets_nacked > 0) {
-        LOG_INFO(nack_log_buffer);
+        LOG_INFO("%s", nack_log_buffer);
     }
 
     return num_packets_nacked;
@@ -473,7 +475,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
         if (frame_data->id != id) {
             // If we've received nothing from a frame before max_id,
             // let's try nacking for index 0 of it
-            if (ring_buffer->last_missing_frame_nack < id && id < ring_buffer->max_id) {
+            if (ring_buffer->last_missing_frame_nack < id) {
                 // Nack index 0 of the missing frame
                 num_packets_nacked++;
                 nack_single_packet(ring_buffer, id, 0);
@@ -504,9 +506,15 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
         // we swap into *recovery mode*, since something is probably wrong with this packet
         if (get_timer(frame_data->last_packet_timer) > 0.8 * latency &&
             !frame_data->recovery_mode) {
+#if LOG_NACKING
+            LOG_INFO("Too long since last packet from ID %d. Entering recovery mode...", id);
+#endif
             frame_data->last_nacked_index = -1;
             frame_data->recovery_mode = true;
         }
+
+        // Track packets nacked this frame
+        int packets_nacked_this_frame = 0;
 
         if (!frame_data->recovery_mode) {
             // During *normal nacking mode*,
@@ -514,9 +522,15 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             // E.g., if we get 1 2 3 4 5 9, and MAX_UNORDERED_PACKETS = 3, then
             // 5 is considered to be too far from 9 to still be unreceived simply due to UDP
             // reordering.
-            num_packets_nacked += nack_missing_packets_up_to_index(
+            packets_nacked_this_frame += nack_missing_packets_up_to_index(
                 ring_buffer, frame_data, last_packet_received - MAX_UNORDERED_PACKETS,
                 max_nacks - num_packets_nacked);
+#if LOG_NACKING
+            if (packets_nacked_this_frame > 0) {
+                LOG_INFO("~~ Frame ID %d Nacked for %d out-of-order packets", id,
+                         packets_nacked_this_frame);
+            }
+#endif
         } else {
             // *Recovery mode* means something is wrong with the network,
             // and we should keep trying to nack for those missing packets
@@ -525,17 +539,39 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             // After an additional 1.2 * latency, we send another round of nacks
             if (get_timer(frame_data->last_nacked_timer) >
                 0.8 * latency + 0.8 * latency * frame_data->num_times_nacked) {
-                num_packets_nacked += nack_missing_packets_up_to_index(
+#if LOG_NACKING
+                LOG_INFO("Attempting to recover Frame ID %d, %d/%d indices received.", id,
+                         frame_data->packets_received, frame_data->num_packets);
+#endif
+                packets_nacked_this_frame = nack_missing_packets_up_to_index(
                     ring_buffer, frame_data, frame_data->num_packets - 1,
                     max_nacks - num_packets_nacked);
                 if (frame_data->last_nacked_index == frame_data->num_packets - 1) {
                     frame_data->last_nacked_index = -1;
-                    frame_data->num_times_nacked++;
                     start_timer(&frame_data->last_nacked_timer);
+
+                    frame_data->num_times_nacked++;
+#if LOG_NACKING
+                    LOG_INFO("- Done with Nacking cycle #%d, restarting cycle",
+                             frame_data->num_times_nacked);
+#endif
                 }
+#if LOG_NACKING
+                LOG_INFO("~~ Frame ID %d Nacked for %d packets in recovery mode", id,
+                         packets_nacked_this_frame);
+#endif
             }
         }
+
+        // Add to total
+        num_packets_nacked += packets_nacked_this_frame;
     }
+
+#if LOG_NACKING
+    if (num_packets_nacked > 0) {
+        LOG_INFO("Nacked %d/%d packets this Nacking round", num_packets_nacked, max_nacks);
+    }
+#endif
 
     // Update the counters to track max nack bitrate
     burst_counter += num_packets_nacked;
