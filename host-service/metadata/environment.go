@@ -9,6 +9,18 @@ import (
 	"github.com/fractal/fractal/host-service/utils"
 )
 
+func init() {
+	// Note: we use panic here to exit from the `metadata` package, since it is one of the rare
+	// packages that does not have access to the global context, or the `logger.Panicf` function.
+	// Additionally, we need to verify that the host service is running on a valid environment early
+	// in the process, before doing any setup/logging. Due to the special conditions needed, the use of
+	// `panic` is acceptable here, but it should not be used anywhere else in the code.
+	if IsRunningInCI() && !IsLocalEnv() {
+		// Running on a non-local environment with CI enabled is an invalid configuration.
+		panic("Running on non-local environment with CI enabled.")
+	}
+}
+
 // An AppEnvironment represents either localdev or localdevwithdb (i.e. a personal
 // instance), dev (i.e. talking to the dev webserver), staging, or prod
 type AppEnvironment string

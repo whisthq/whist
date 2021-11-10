@@ -92,7 +92,7 @@ Before starting the host service export your heroku api token `export HEROKU_API
 
 This service will not restart on crash/panic, since that could lead to an inconsistency between the actually running mandelboxes and the data left on the filesystem. Instead, we note that if the service crashes, no new mandelboxes will be able to report themselves to the Whist webserver(s), meaning there will be no new connections to the EC2 host and once all running mandelboxes are disconnected, the instance will be spun down.
 
-We never use `os.exit()` or any of the `log.fatal()` variants, or even plain `panic()`s, since we want to send out a message to our Whist webserver(s) and/or Sentry upon the death of this service (this is done with a `defer` function call, which runs after `logger.Panic()` but not after `exit`).
+We don't use `os.exit()` or any of the `log.fatal()` variants, or even plain `panic()`s unless strictly necessary, for use cases with very specific requirements. This is because we want to send out a message to our Whist webserver(s) and/or Sentry upon the death of this service (this is done with a `defer` function call, which runs after `logger.Panic()` but not after `exit`).
 
 For more details, see the comments and deferred cleanup function at the beginning of `main()`.
 
