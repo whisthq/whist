@@ -379,7 +379,8 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
             The number of packets Nacked
     */
 
-    int start_index = max(0, frame_data->last_nacked_index + 1);
+    // Note that an invalid last_nacked_index is set to -1, correctly starting us at 0
+    int start_index = frame_data->last_nacked_index + 1;
 
     // Something really large
     char nack_log_buffer[1024 * 16];
@@ -493,7 +494,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
         // we swap into *recovery mode*, since something is probably wrong with this packet
         if (get_timer(frame_data->last_packet_timer) > 0.8 * latency &&
             !frame_data->recovery_mode) {
-            frame_data->last_nacked_index = 0;
+            frame_data->last_nacked_index = -1;
             frame_data->recovery_mode = true;
         }
 
@@ -518,7 +519,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
                     ring_buffer, frame_data, frame_data->num_packets - 1,
                     max_nacks - num_packets_nacked);
                 if (frame_data->last_nacked_index == frame_data->num_packets - 1) {
-                    frame_data->last_nacked_index = 0;
+                    frame_data->last_nacked_index = -1;
                     frame_data->num_times_nacked++;
                     start_timer(&frame_data->last_nacked_timer);
                 }
