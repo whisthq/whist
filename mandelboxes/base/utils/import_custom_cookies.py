@@ -6,6 +6,7 @@ import sqlite3
 import keyring
 import pyaes
 from pbkdf2 import PBKDF2
+import subprocess
 
 
 def get_browser(browser_name):
@@ -56,7 +57,6 @@ def get_or_create_cookie_file(browser_name):
                 "~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies",
             ]
 
-        print(linux_cookies)
         paths = linux_cookies
         paths = list(map(os.path.expanduser, paths))
 
@@ -183,6 +183,7 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
 
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
+    cur = con.cursor()
 
     with open(cookie_full_path, "r") as f:
         for cookie_line in f:
@@ -208,14 +209,16 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
             # We only want the values in a list form
             formatted_cookie = format_chromium_based_cookie(cookie)
 
-            cur = con.cursor()
-
-            cur.execute(
-                "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                formatted_cookie,
-            )
-
-            con.commit()
+            try:
+                cur.execute(
+                    "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    formatted_cookie,
+                )
+                con.commit()
+            except sqlite3.InterfaceError as err:
+                subprocess.run(["echo", f"Cookie failed to import with the interface error: {err}"])
+            except sqlite3.IntegrityError as err:
+                subprocess.run(["echo", f"Cookie failed to import with the integrity error: {err}"])
 
     con.close()
 
