@@ -10,6 +10,7 @@ import (
 	"crypto/cipher"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -269,12 +270,6 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		"-pass", "pass:"+string(mandelbox.configEncryptionToken), "-pbkdf2")
 	encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 	if err != nil {
-		return err
-	}
-
-	err = mandelbox.uploadEncryptedFileToS3(mandelbox.getS3ConfigKey(), encTarPath)
-
-	if err != nil {
 		// If the config could not be encrypted, don't upload
 		return utils.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
 	}
@@ -311,7 +306,7 @@ func (mandelbox *mandelboxData) cleanUserConfigDir() {
 
 // getUserConfigDir returns the absolute path to the user config directory.
 func (mandelbox *mandelboxData) getUserConfigDir() string {
-	return utils.Sprintf("%s%v/%s", utils.FractalDir, mandelbox.GetID(), "userConfigs")
+	return path.Join(utils.FractalDir, string(mandelbox.GetID()), "userConfigs")
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
