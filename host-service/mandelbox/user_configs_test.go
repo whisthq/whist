@@ -198,7 +198,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	
 	whistCookie := "{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}"
 	fractalCookie := "{'creation_utc': 4228086198342934, 'host_key': 'fractal.co'}"
-	cookieJSON = "[" + whistCookie + "," + fractalCookie + "]"
+	cookieJSON := "[" + whistCookie + "," + fractalCookie + "]"
 
 	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
