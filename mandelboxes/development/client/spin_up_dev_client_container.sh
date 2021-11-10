@@ -10,6 +10,9 @@
 # (5) AES key
 # linux/macos:    ./fclient 35.170.79.124 -p32262:40618.32263:31680.32273:5923 -k 70512c062ff1101f253be70e4cac81bc
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # TODO: 0. Find tag of matching Docker image
 ## App name will be fractal/development/client:current-build; We need to look for images with a tag that matches either
 ## one of the following regexes [fractal/development/client:current-build:current-build fractal/development/client:current-build]
