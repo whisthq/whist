@@ -182,3 +182,56 @@ func setupTestDirs(mandelbox *mandelboxData) error {
 func cleanupTestDirs(c *mandelboxData) error {
 	return os.RemoveAll(utils.FractalDir)
 }
+
+// TestUserInitialBrowserWrite checks if the browser data is properly created by
+// calling the write function and comparing results with a manually generated cookie file
+func TestUserInitialBrowserWrite(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	testMandelboxData := mandelboxData{
+		ctx:                   ctx,
+		cancel:                cancel,
+		ID:                    "userConfigTest",
+		appName:               "testApp",
+		userID:                "user_config_test_user",
+		configEncryptionToken: "testEncryptionToken",
+	}
+	
+	whistCookie := "{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}"
+	fractalCookie := "{'creation_utc': 4228086198342934, 'host_key': 'fractal.co'}"
+	cookieJSON = "[" + whistCookie + "," + fractalCookie + "]"
+
+	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON); err != nil {
+		t.Fatalf("error writing user initial browser data: %v", err)
+	}
+
+	// store the cookies in a temporary file
+	filePath := path.join(utils.UserInitialCookiesDir, "tempt-cookies")
+
+	fileContents := whistCookie+"\n"+fractalCookie+"\n"
+
+	err = os.WriteFile(filePath, []byte(fileContents), 0777)
+	
+	testFileContents, err := ioutil.ReadFile(filePath)
+	
+	if err != nil {
+		t.Fatalf("error reading test file %s: %v", filePath, err)
+	}
+
+	matchingFileBuf := bytes.NewBuffer(nil)
+
+	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
+
+	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
+
+	_, err = matchingFileBuf.ReadFrom(cookieFilePath)
+	if err != nil {
+		t.Fatalf("error reading matching file %s: %v", unpackedPath, err)
+	}
+
+	// Check contents match
+	if string(testFileContents) != string(matchingFileBuf.Bytes()) {
+		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
+	}
+
+	os.RemoveAll(utils.UserInitialCookiesDir)
+}
