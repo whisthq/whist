@@ -16,8 +16,8 @@ mkdir -p "$destdir/protocol"
 SOURCE_DIR="../protocol"
 BUILD_DIR="../protocol/build-docker/server/build64"
 
-# Verify that the FractalServer is there
-cp "$BUILD_DIR"/FractalServer "$destdir/protocol"
+# Verify that the FractalServer/FractalClient is there
+cp "$BUILD_DIR"/${2} "$destdir/protocol"
 
 # Copy all of the accompanying files
 cp "$BUILD_DIR"/* "$destdir/protocol"
