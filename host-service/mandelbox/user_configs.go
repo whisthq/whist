@@ -21,7 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
-	"github.com/fractal/fractal/host-service/mandelbox/configs"
+	"github.com/fractal/fractal/host-service/mandelbox/configutils"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/pierrec/lz4/v4"
@@ -52,14 +52,14 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 
 	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.ID)
 
-	s3Client, err := configs.NewS3Client("us-east-1")
+	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
 		return utils.MakeError("failed to create s3 client: %v", err)
 	}
 
 	// Fetch the HeadObject first to see how much memory we need to allocate
 	logger.Infof("Fetching head object for bucket: %s, key: %s", userConfigS3Bucket, s3ConfigKey)
-	headObject, err := configs.GetHeadObject(s3Client, userConfigS3Bucket, s3ConfigKey)
+	headObject, err := configutils.GetHeadObject(s3Client, userConfigS3Bucket, s3ConfigKey)
 
 	var apiErr smithy.APIError
 	if err != nil {
@@ -80,7 +80,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
 	mandelbox.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := configs.DownloadObjectToBuffer(s3Client, userConfigS3Bucket, s3ConfigKey, mandelbox.configBuffer)
+	numBytes, err := configutils.DownloadObjectToBuffer(s3Client, userConfigS3Bucket, s3ConfigKey, mandelbox.configBuffer)
 
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
@@ -277,12 +277,12 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 
 	// Upload encrypted config to S3
-	s3Client, err := configs.NewS3Client("us-east-1")
+	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
 		return utils.MakeError("error creating s3 client: %v", err)
 	}
 
-	uploadResult, err := configs.UploadFile(s3Client, userConfigS3Bucket, mandelbox.getS3ConfigKeyWithoutLocking(), encryptedConfig)
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, userConfigS3Bucket, mandelbox.getS3ConfigKeyWithoutLocking(), encryptedConfig)
 	if err != nil {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
