@@ -54,7 +54,7 @@ OPTIONS="$OPTIONS.32273:$SERVER_PORT_32273"
 #   export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
 #   OPTIONS="$OPTIONS -k=$FRACTAL_AES_KEY"
 # fi
-OPTIONS="$OPTIONS -k=$FRACTAL_AES_KEY"
+OPTIONS="$OPTIONS -k $FRACTAL_AES_KEY"
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either FractalServer or the Whist
