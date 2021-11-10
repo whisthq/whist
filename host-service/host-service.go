@@ -698,6 +698,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// Receive the json transpor request from the client via the httpserver.
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
+
+		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
+		select {
+		case transportRequest := <-jsonchan:
+			req = transportRequest
+		case <-time.After(1 * time.Minute):
+			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock)
+		}
 	}
 
 	// Verify that this user sent in a (nontrivial) config encryption token
