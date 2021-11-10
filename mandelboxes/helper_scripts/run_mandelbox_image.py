@@ -5,7 +5,6 @@
 import argparse
 from collections import namedtuple
 import os
-import secrets
 import sys
 import uuid
 
