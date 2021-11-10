@@ -85,6 +85,7 @@ type JSONTransportRequest struct {
 	ConfigEncryptionToken mandelboxtypes.ConfigEncryptionToken `json:"config_encryption_token"` // User-specific private encryption token
 	JwtAccessToken        string                               `json:"jwt_access_token"`        // User's JWT access token
 	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`            // MandelboxID, used for the json transport request map
+	FirstRun              bool                                 `json:"first_run"`               // Flag indicating whether we should treat this as a first run in terms of the user's config
 	JSONData              string                               `json:"json_data"`               // Arbitrary stringified JSON data to pass to mandelbox
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
