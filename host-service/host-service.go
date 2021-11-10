@@ -174,8 +174,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		// At this point, we've found an image, so we just need to start the container.
 
-		// Use the nil uuid for the warmup containers
-		containerName := utils.PlaceholderUUID()
+		containerName := utils.PlaceholderWarmupUUID()
 
 		mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxtypes.MandelboxID(containerName))
 		defer mandelbox.Close()

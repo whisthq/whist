@@ -11,8 +11,14 @@ const (
 	FractalPrivateDir string = "/fractalprivate/"
 )
 
-// PlaceholderUUID returns the special uuid to use as a placholder during warmup/tests.
-func PlaceholderUUID() uuid.UUID {
+// PlaceholderWarmupUUID returns the special uuid to use as a placholder during warmup.
+func PlaceholderWarmupUUID() uuid.UUID {
 	uuid, _ := uuid.Parse("11111111-1111-1111-1111-111111111111")
+	return uuid
+}
+
+// PlaceholderTestUUID returns the special uuid to use as a placholder during tests.
+func PlaceholderTestUUID() uuid.UUID {
+	uuid, _ := uuid.Parse("22222222-2222-2222-2222-222222222222")
 	return uuid
 }

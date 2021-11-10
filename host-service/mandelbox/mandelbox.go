@@ -136,7 +136,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		<-ctx.Done()
 
 		// Mark mandelbox as dying in the database, but only if it's not a warmup
-		if fid != types.MandelboxID(utils.PlaceholderUUID()) {
+		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
 			if err := dbdriver.WriteMandelboxStatus(mandelbox.ID, dbdriver.MandelboxStatusDying); err != nil {
 				logger.Error(err)
 			}
@@ -187,7 +187,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		mandelbox.cleanUserConfigDir()
 
 		// Remove mandelbox from the database altogether, once again excluding warmups
-		if fid != types.MandelboxID(utils.PlaceholderUUID()) {
+		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
 			if err := dbdriver.RemoveMandelbox(mandelbox.ID); err != nil {
 				logger.Error(err)
 			}
@@ -429,7 +429,7 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 
 		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.ID.String()+"/sockets/uinput.sock")
 		if err != nil {
-			placeholderUUID := types.MandelboxID(utils.PlaceholderUUID())
+			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
 			if mandelbox.ID == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
 				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)
 			} else {
