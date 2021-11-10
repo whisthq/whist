@@ -175,22 +175,22 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
         # If we are unable to find the instance in the required region,
         # let's try to find an instance in nearby AZ
         # that doesn't impact the user experience too much.
-        active_instances_in_bundled_regions = (
-            InstancesWithRoomForMandelboxes.query.filter(
-                InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
-            ).filter_by(
-                status=MandelboxHostState.ACTIVE
-            )
-        )
+        active_instances_in_bundled_regions = InstancesWithRoomForMandelboxes.query.filter(
+            InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
+        ).filter_by(status=MandelboxHostState.ACTIVE)
 
-        # If there are no active instances in nearby regions, return NO_INSTANCE_AVAILABLE
+        # If there are no active instances in nearby regions,
+        # return NO_INSTANCE_AVAILABLE
         if active_instances_in_bundled_regions.limit(1).one_or_none() is None:
             return MandelboxAssignError.NO_INSTANCE_AVAILABLE
 
-        # If there was an active instance but none with the right commit hash, return COMMIT_HASH_MISMATCH
-        instances_with_correct_commit_hash = active_instances_in_bundled_regions.filter_by(
-            commit_hash=client_commit_hash
-        ).limit(1).one_or_none()
+        # If there was an active instance but none with the right commit hash,
+        # return COMMIT_HASH_MISMATCH
+        instances_with_correct_commit_hash = (
+            active_instances_in_bundled_regions.filter_by(commit_hash=client_commit_hash)
+            .limit(1)
+            .one_or_none()
+        )
 
         if instances_with_correct_commit_hash is None:
             return MandelboxAssignError.COMMIT_HASH_MISMATCH

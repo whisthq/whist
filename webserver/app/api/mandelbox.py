@@ -114,7 +114,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"Returning 503 to user {username} because we didn't find an instance for them."
         )
         return (
-            jsonify({"ip": "None", "mandelbox_id": "None", "region": region, "error": instance_or_error}),
+            jsonify(
+                {"ip": "None", "mandelbox_id": "None", "region": region, "error": instance_or_error}
+            ),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 

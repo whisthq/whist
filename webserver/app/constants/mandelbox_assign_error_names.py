@@ -16,5 +16,5 @@ class MandelboxAssignError(str, Enum):
     UNDEFINED = "UNDEFINED"
 
     @classmethod
-    def contains(cls, value):
-        return value in [v.value for v in cls.__members__.values()] 
+    def contains(cls, value: str) -> bool:
+        return value in [v.value for v in cls.__members__.values()]
