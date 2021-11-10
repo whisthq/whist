@@ -181,6 +181,9 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
     """
     cookie_file = get_or_create_cookie_file(to_browser_name)
 
+    con = sqlite3.connect(cookie_file)
+    con.text_factory = browser_cookie3.text_factory
+
     with open(cookie_full_path, "r") as f:
         for cookie_line in f:
             cookie_json = cookie_line.rstrip("\n")
@@ -189,28 +192,32 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
             if cookie["value"] == "":
                 decrypted_value = cookie.get("decrypted_value", None)
 
+                # Encrypted_value should not be included with cookiess
+                cookie.pop("encrypted_value", None)
+
                 # Skip encryption if decrypted value does not exist
                 if decrypted_value:
-                   encrypted_prefix = cookie["encrypted_prefix"]
-                   cookie["encrypted_value"] = encrypt(to_browser_name, decrypted_value, encrypted_prefix)
+                    encrypted_prefix = cookie["encrypted_prefix"]
+                    cookie["encrypted_value"] = encrypt(
+                        to_browser_name, decrypted_value, encrypted_prefix
+                    )
 
             cookie.pop("decrypted_value", None)
             cookie.pop("encryption_prefix", None)
 
             # We only want the values in a list form
-            encrypted_cookie = format_chromium_based_cookie(cookie)
+            formatted_cookie = format_chromium_based_cookie(cookie)
 
-            con = sqlite3.connect(cookie_file)
-            con.text_factory = browser_cookie3.text_factory
             cur = con.cursor()
 
             cur.execute(
                 "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                encrypted_cookie,
+                formatted_cookie,
             )
 
             con.commit()
-            con.close()
+
+    con.close()
 
 
 if __name__ == "__main__":
@@ -219,4 +226,3 @@ if __name__ == "__main__":
 
     if os.path.exists(cookie_full_path):
         set_browser_cookies(browser, cookie_full_path)
-        os.remove(cookie_full_path)
