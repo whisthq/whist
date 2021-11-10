@@ -132,6 +132,13 @@ EOF
   sudo apt-get install -y lsof jq tar lz4
 
   echo "================================================"
+  echo "Disabling Automatic Package Upgrades..."
+  echo "================================================"
+
+  sudo systemctl disable --now apt-daily{{,-upgrade}.service,{,-upgrade}.timer}
+  sudo systemctl disable --now unattended-upgrades
+
+  echo "================================================"
   echo "Configuring Docker daemon..."
   echo "================================================"
 
