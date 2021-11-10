@@ -209,7 +209,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	fileContents := whistCookie+"\n"+fractalCookie+"\n"
 
-	err = os.WriteFile(filePath, []byte(fileContents), 0777)
+	err := os.WriteFile(filePath, []byte(fileContents), 0777)
 	
 	testFileContents, err := ioutil.ReadFile(filePath)
 	
