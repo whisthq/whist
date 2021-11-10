@@ -19,12 +19,14 @@ import { HostServicePort } from "@app/utils/constants"
 export const hostSpinUp = async ({
   ip,
   config_encryption_token,
+  is_new_config_encryption_token,
   jwt_access_token,
   mandelbox_id,
   json_data,
 }: {
   ip: string
   config_encryption_token: string
+  is_new_config_encryption_token: boolean
   jwt_access_token: string
   mandelbox_id: string
   json_data: string
@@ -33,6 +35,7 @@ export const hostSpinUp = async ({
     endpoint: "/json_transport",
     body: {
       config_encryption_token,
+      is_new_config_encryption_token,
       jwt_access_token,
       mandelbox_id,
       json_data,
