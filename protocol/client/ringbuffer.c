@@ -306,7 +306,6 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
             index (int): index of the packet
             */
     ring_buffer->num_packets_nacked++;
-    LOG_INFO("NACKing for Packet ID %d, Index %d", id, index);
     FractalClientMessage fcmsg = {0};
     fcmsg.type = ring_buffer->type == FRAME_AUDIO ? MESSAGE_AUDIO_NACK : MESSAGE_VIDEO_NACK;
 
@@ -382,14 +381,26 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
 
     int start_index = max(0, frame_data->last_nacked_index + 1);
 
+    // Something really large
+    char nack_log_buffer[1024 * 16];
+    int log_len = 0;
+    log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
+                        "NACKing for Packet ID %d, Indices ", id);
+
     int num_packets_nacked = 0;
     for (int i = start_index; i <= end_index && num_packets_nacked < max_packets_to_nack; i++) {
         if (!frame_data->received_indices[i] && frame_data->nacked_indices[i] < MAX_PACKET_NACKS) {
             num_packets_nacked++;
             nack_single_packet(ring_buffer, frame_data->id, i);
+            log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
+                                "%s%d", num_packets_nacked == 0 ? "" : ", ", id);
             frame_data->nacked_indices[i]++;
             frame_data->last_nacked_index = i;
         }
+    }
+
+    if (num_packets_nacked > 0) {
+        LOG_INFO(nack_log_buffer);
     }
 
     return num_packets_nacked;
@@ -455,6 +466,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
                 // Nack index 0 of the missing frame
                 num_packets_nacked++;
                 nack_single_packet(ring_buffer, id, 0);
+                LOG_INFO("NACKing for missing Frame ID %d", id);
                 ring_buffer->last_missing_frame_nack = id;
             }
             continue;
