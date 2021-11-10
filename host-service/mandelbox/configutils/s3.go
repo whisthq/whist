@@ -1,4 +1,4 @@
-package configutils
+package configutils // import "github.com/fractal/fractal/host-service/mandelbox/configutils"
 
 import (
 	"context"
