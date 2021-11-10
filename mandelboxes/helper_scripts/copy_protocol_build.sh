@@ -14,7 +14,13 @@ mkdir -p "$destdir/protocol"
 
 # Copy protocol build into build-temp
 SOURCE_DIR="../protocol"
-BUILD_DIR="../protocol/build-docker/server/build64"
+BUILD_DIR=""
+
+if [[ "${2}" == "FractalServer" ]]; then
+	BUILD_DIR="../protocol/build-docker/server/build64"
+else
+	BUILD_DIR="../protocol/build-docker/client/build64"
+fi
 
 # Verify that the FractalServer/FractalClient is there
 cp "$BUILD_DIR"/${2} "$destdir/protocol"
