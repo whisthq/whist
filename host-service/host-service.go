@@ -973,6 +973,7 @@ func main() {
 	if err != nil {
 		logger.Panic(globalCancel, err)
 	}
+
 	if !metadata.IsLocalEnv() {
 		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
 			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
@@ -1051,6 +1052,9 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 
 	// We use this lock to protect the transportRequestMap
 	transportMapLock := &sync.Mutex{}
+
+	// Note: If a mandelbox suffers a bug, or fails to start correctly
+	// these channels will become a memory leak.
 	transportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
 	// In the following loop, this var determines whether to re-initialize the
