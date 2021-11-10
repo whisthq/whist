@@ -24,10 +24,10 @@ const SelectBrowser = (props: {
             defaultValue="Canada"
             onChange={(evt: any) => props.onSelect(evt.target.value)}
           >
+            <option value={undefined}>None, start from a clean slate</option>
             {props.browsers.map((browser: string, index: number) => (
               <option key={index}>{browser}</option>
             ))}
-            <option value={undefined}>None, start from a clean slate</option>
           </select>
         </div>
       </div>
