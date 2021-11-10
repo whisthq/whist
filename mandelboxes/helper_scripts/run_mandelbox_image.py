@@ -7,11 +7,11 @@ from collections import namedtuple
 import os
 import secrets
 import sys
+import uuid
 
 import docker
 import psutil
 import requests
-import uuid
 
 
 DESCRIPTION = """
@@ -144,7 +144,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
         "config_encryption_token": args.user_config_encryption_token,
         "jwt_access_token": "bogus_jwt",
         "json_data": json_data,
-        "mandelbox_id": mandelbox_id,
+        "mandelbox_id": str(mandelbox_id),
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
     respobj = requests.put(url=url, json=payload, verify=tls_verification)
