@@ -22,6 +22,7 @@
     "lint:check": "node ./scripts/lint.js",
     "lint:fix": "node ./scripts/lint.js --fix",
     "cache:clear": "electron ./scripts/clearAppData.js",
+    "pretest:manual": "electron-builder install-app-deps",
     "test:manual": "node ./scripts/testManual.js"
   },
   "dependencies": {

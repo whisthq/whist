@@ -121,8 +121,7 @@ export const logBase = (
   */
 
   // Don't log the config token to Amplitude to protect user privacy
-  data = omitDeep(data, "configToken", { onMatch: { skipChildren: true } })
-  data = omitDeep(data, "config_encryption_token", {
+  data = omitDeep(data, ["configToken", "config_encryption_token", "cookies"], {
     onMatch: { skipChildren: true },
   })
 
