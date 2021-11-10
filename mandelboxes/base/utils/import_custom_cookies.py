@@ -107,30 +107,16 @@ def encrypt(browser_name, value, encrypt_prefix):
     length = 16
     iterations = 1
 
-    if sys.platform == "darwin":
-        if browser_name == "chrome":
-            osx_key_service = ("Chrome Safe Storage",)
-            osx_key_user = "Chrome"
-        elif browser_name == "chromium":
-            osx_key_service = ("Chromium Safe Storage",)
-            osx_key_user = "Chromium"
-        elif browser_name == "opera":
-            osx_key_service = ("Opera Safe Storage",)
-            osx_key_user = "Opera"
-        elif browser_name == "edge":
-            osx_key_service = ("Microsoft Edge Safe Storage",)
-            osx_key_user = "Microsoft Edge"
-        my_pass = keyring.get_password(osx_key_service, osx_key_user)
-    else:  # will assume it's linux for now
-        # We will hardcode the my_pass for now as GNOME-Keyring is not properly configured
-        # and will result in the default value `peanuts`
+    # will assume it's linux for now
+    # We will hardcode the my_pass for now as GNOME-Keyring is not properly configured
+    # and will result in the default value `peanuts`
 
-        # os_crypt_name = "chromium"
-        # if browser_name == "chrome":
-        #     os_crypt_name = browser_name
-        # my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
+    my_pass = b"peanuts"
 
-        my_pass = b"peanuts"
+    # os_crypt_name = "chromium"
+    # if browser_name == "chrome":
+    #     os_crypt_name = browser_name
+    # my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
 
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
 
@@ -172,15 +158,16 @@ def format_chromium_based_cookie(cookie):
     return formatted_cookie
 
 
-def set_browser_cookies(to_browser_name, cookie_full_path):
+def set_browser_cookies(target_browser_name, cookie_full_path):
     """
-    Sets cookies from one browser to another
+    Set cookies from file to target browser
     Args:
-        to_browser_name (str): the name of the browser we will import cookies to
+        target_browser_name (str): the name of the browser we will import cookies to
         cookie_full_path (str): path to cookie file
     """
-    cookie_file = get_or_create_cookie_file(to_browser_name)
+    cookie_file = get_or_create_cookie_file(target_browser_name)
 
+    # Set up database
     con = sqlite3.connect(cookie_file)
     con.text_factory = browser_cookie3.text_factory
     cur = con.cursor()
@@ -190,18 +177,16 @@ def set_browser_cookies(to_browser_name, cookie_full_path):
             cookie_json = cookie_line.rstrip("\n")
             cookie = json.loads(cookie_json)
 
-            if cookie["value"] == "":
-                decrypted_value = cookie.get("decrypted_value", None)
 
-                # Encrypted_value should not be included with cookiess
-                cookie.pop("encrypted_value", None)
+            # Encrypted_value should not be included with cookiess
+            cookie.pop("encrypted_value", None)
 
-                # Skip encryption if decrypted value does not exist
-                if decrypted_value:
-                    encrypted_prefix = cookie["encrypted_prefix"]
-                    cookie["encrypted_value"] = encrypt(
-                        to_browser_name, decrypted_value, encrypted_prefix
-                    )
+            decrypted_value = cookie.get("decrypted_value", None)
+            if decrypted_value:
+                encrypted_prefix = cookie.get("encrypted_prefix", None)
+                cookie["encrypted_value"] = encrypt(
+                    target_browser_name, decrypted_value, encrypted_prefix
+                )
 
             cookie.pop("decrypted_value", None)
             cookie.pop("encryption_prefix", None)
