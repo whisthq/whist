@@ -4,7 +4,7 @@ FROM fractal/base:current-build as fractal-development-client
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 # Remove FractalServer symbolic link, add the FractalClient
-RUN rm /usr/share/fractal/bin/FractalServer
+RUN unlink /usr/share/fractal/bin/FractalServer
 RUN ln -sf /usr/share/fractal/bin/FractalClient /usr/share/fractal/FractalClient
 
 
