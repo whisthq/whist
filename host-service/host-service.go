@@ -703,10 +703,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelbox.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 	mandelbox.SetJSONData(req.JSONData)
 
-	// Decrypt the previously downloaded user configs using the encryption token
-	err = mandelbox.DecryptUserConfigs()
-	if err != nil {
-		logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
+	// If this isn't a first run, decrypt the previously downloaded user configs
+	if !req.FirstRun {
+		err = mandelbox.DecryptUserConfigs()
+		if err != nil {
+			logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
+		}
+	} else {
+		logger.Infof("SpinUpMandelbox(): Got first run flag for mandelbox %s, skipping config decryption", mandelboxSubscription.ID)
 	}
 
 	// Write the config.json file with the data received from JSON transport
