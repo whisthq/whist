@@ -13,6 +13,7 @@ import { AWSRegion } from "@app/@types/aws"
 import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { MenuItem } from "electron/main"
 import { createSpeedtestWindow } from "@app/utils/windows"
+import { persistGet } from "@app/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 
 // We create the tray here so that it persists throughout the application
