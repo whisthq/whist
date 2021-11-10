@@ -37,19 +37,19 @@ type ConfigEncryptionToken string
 type ClientAppAccessToken string
 
 // String is a utility function to return the string representation of a MandelboxID.
-func (mandelboxID MandelboxID) String() string {
-	return uuid.UUID(mandelboxID).String()
+func (mandelboxID *MandelboxID) String() string {
+	return uuid.UUID(*mandelboxID).String()
 }
 
 // UnmarshalJSON is a utility function to properly unmarshal JSON into a type MandelboxID
-func (mandelboxID MandelboxID) UnmarshalJSON(b []byte) error {
+func (mandelboxID *MandelboxID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	UUID, err := uuid.Parse(s)
 
-	if err == nil {
+	if err != nil {
 		return utils.MakeError("Error parsing UUID")
 	}
 
-	mandelboxID = MandelboxID(UUID)
+	*mandelboxID = MandelboxID(UUID)
 	return nil
 }

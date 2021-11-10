@@ -11,6 +11,7 @@ import sys
 import docker
 import psutil
 import requests
+import uuid
 
 
 DESCRIPTION = """
@@ -165,7 +166,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
 if __name__ == "__main__":
     # pylint: disable=line-too-long
 
-    mandelboxid = secrets.token_hex(30)
+    mandelboxid = uuid.uuid4()
 
     if local_host_service:
         # This is running locally on the same machine as the host service, so
