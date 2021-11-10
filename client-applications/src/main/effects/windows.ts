@@ -102,29 +102,38 @@ fromTrigger(WhistTrigger.windowInfo)
       fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
     )
   )
-  .subscribe(([args, info]) => {
-    if (
-      args.hash === WindowHashProtocol &&
-      args.crashed &&
-      args.event === "close"
-    ) {
-      if (protocolLaunchRetries < MAX_RETRIES) {
-        protocolLaunchRetries = protocolLaunchRetries + 1
-        createProtocolWindow()
-          .then(() => {
-            protocolStreamInfo(info)
-            rebootNotification?.show()
-            setTimeout(() => {
-              rebootNotification?.close()
-            }, 6000)
-          })
-          .catch((err) => Sentry.captureException(err))
-      } else {
-        // If we've already tried several times to reconnect, just show the protocol error window
-        createTrigger(WhistTrigger.protocolError, of(undefined))
+  .subscribe(
+    ([args, info]: [
+      {
+        hash: string
+        crashed: boolean
+        event: string
+      },
+      any
+    ]) => {
+      if (
+        args.hash === WindowHashProtocol &&
+        args.crashed &&
+        args.event === "close"
+      ) {
+        if (protocolLaunchRetries < MAX_RETRIES) {
+          protocolLaunchRetries = protocolLaunchRetries + 1
+          createProtocolWindow()
+            .then(() => {
+              protocolStreamInfo(info)
+              rebootNotification?.show()
+              setTimeout(() => {
+                rebootNotification?.close()
+              }, 6000)
+            })
+            .catch((err) => Sentry.captureException(err))
+        } else {
+          // If we've already tried several times to reconnect, just show the protocol error window
+          createTrigger(WhistTrigger.protocolError, of(undefined))
+        }
       }
     }
-  })
+  )
 
 fromTrigger(WhistTrigger.networkUnstable)
   .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
