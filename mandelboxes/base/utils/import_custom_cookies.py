@@ -177,7 +177,6 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
             cookie_json = cookie_line.rstrip("\n")
             cookie = json.loads(cookie_json)
 
-
             # Encrypted_value should not be included with cookiess
             cookie.pop("encrypted_value", None)
 
