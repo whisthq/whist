@@ -514,7 +514,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
-	logger.Infof("SpinUpMandelbox(): Getting JSON transport requests...")
 	
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
@@ -703,7 +702,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
-		logAndReturnError("Unable to spin up mandelbox: trivial config encryptions3ConfigKey token received.", err)
+		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
 		return
 	}
 	mandelbox.SetConfigEncryptionToken(req.ConfigEncryptionToken)
@@ -724,21 +723,19 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
-	// Begin writing user initial browser data at the same time as writeJSONData.
-	// This is done separately from since there is no dependencies between the two
-	// functions and will help save time.
+	// Write user initial browser data at the same time as writeJSONData.
+	// This is done separately since both functions are independent of each other and we can save time.
 	userInitialBrowserDataDownloadComplete := make(chan bool)
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		err := mandelbox.WriteUserInitialBrowserData(req.Cookies)
+		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			userInitialBrowserDataDownloadComplete <- true
 			return
 		}
 
-		userInitialBrowserDataDownloadComplete <- true
 		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 	}()
 
