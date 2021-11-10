@@ -20,8 +20,6 @@ def get_browser(browser_name):
         return browser_cookie3.Edge()
     elif browser_name == "brave":
         return browser_cookie3.Brave()
-    # elif browser_name == "firefox":
-    #     browser = browser_cookie3.Firefox()
     else:
         raise ("unknown browser name")
 
@@ -128,7 +126,6 @@ def encrypt(browser_name, value, encrypt_prefix):
 
     # Defaulting encryption to v10
     encrypted_value = b"v10" + encrypted_value
-    # encrypted_value = encrypt_prefix.encode("utf-8") + encrypted_value
 
     return encrypted_value
 
@@ -165,6 +162,11 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
         target_browser_name (str): the name of the browser we will import cookies to
         cookie_full_path (str): path to cookie file
     """
+    # This function only supports the targets Brave, Opera, Chrome, and any browser with
+    # the same db columns. Otherwise it will not work and error out.
+    if browser_name != "chrome" and browser_name != "brave" and browser_name != "opera":
+        raise("Unrecognized browser type. Only works for brave, chrome, and opera.")
+
     cookie_file = get_or_create_cookie_file(target_browser_name)
 
     # Set up database
@@ -194,6 +196,8 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
             formatted_cookie = format_chromium_based_cookie(cookie)
 
             try:
+                # This is very specific to Chrome/Brave/Opera
+                # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns
                 cur.execute(
                     "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     formatted_cookie,
