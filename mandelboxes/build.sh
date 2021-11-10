@@ -57,9 +57,17 @@ fi
 if [[ ! -z "$cmake_build_type_opt" ]]; then
   cmake_build_type=$cmake_build_type_opt
 fi
-echo "Building $cmake_build_type FractalServer..."
-../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type FractalServer
-./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
+
+# Build the FractalClient app if we are building the development/client mandelbox. Otherwise, build the FractalServer
+if [["${python_args[0]}" == "development/client"]]; then
+  echo "Building $cmake_build_type FractalClient..."
+  ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type FractalClient
+  ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
+else
+  echo "Building $cmake_build_type FractalServer..."
+  ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type FractalServer
+  ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
+fi
 
 # Copy the nvidia driver installer
 echo "Fetching nvidia driver installer..."
