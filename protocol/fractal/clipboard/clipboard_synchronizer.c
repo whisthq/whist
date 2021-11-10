@@ -218,7 +218,7 @@ bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk) {
     if (cb_chunk->chunk_type == CLIPBOARD_START) {
         clipboard = allocate_region(sizeof(ClipboardData) + cb_chunk->size);
         memcpy(clipboard, cb_chunk, sizeof(ClipboardData) + cb_chunk->size);
-    } else {
+    } else if (clipboard) {
         // if not the first clipboard chunk, then add onto the end of the buffer
         //     and update clipboard size
         clipboard =
