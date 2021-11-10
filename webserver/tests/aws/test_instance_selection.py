@@ -60,8 +60,8 @@ def test_no_find_instance_with_incorrect_commit_hash(
     """
     Confirms that we find an empty instance
     """
-    instance = bulk_instance(location=region_name)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is MandelboxAssignError.COMMIT_HASH_MISMATCH
+    bulk_instance(location=region_name)
+    assert find_instance(region_name, INCORRECT_COMMIT_HASH_FOR_TESTING) is MandelboxAssignError.COMMIT_HASH_MISMATCH
 
 
 def test_no_find_full_instance(

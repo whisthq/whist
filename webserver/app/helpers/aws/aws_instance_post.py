@@ -156,7 +156,7 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
     Returns: either an instance name or MandelboxAssignError
 
     """
-    bundled_regions = bundled_region.get(region, [])
+    bundled_regions = bundled_region.get(region, []) + [region]
     # InstancesWithRoomForMandelboxes is sorted in DESC
     # with number of mandelboxes running, So doing a
     # query with limit of 1 returns the instance with max
@@ -183,12 +183,11 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
             )
         )
 
+        # If there are no active instances in nearby regions, return NO_INSTANCE_AVAILABLE
         if active_instances_in_bundled_regions.limit(1).one_or_none() is None:
-            print("NO INSTANCE FOUND")
-            print(active_instances_in_bundled_regions.limit(1).one_or_none())
             return MandelboxAssignError.NO_INSTANCE_AVAILABLE
 
-        
+        # If there was an active instance but none with the right commit hash, return COMMIT_HASH_MISMATCH
         instances_with_correct_commit_hash = active_instances_in_bundled_regions.filter_by(
             commit_hash=client_commit_hash
         ).limit(1).one_or_none()
@@ -199,6 +198,7 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
         instance_with_max_mandelboxes = instances_with_correct_commit_hash
 
     if instance_with_max_mandelboxes is None:
+        # We should never reach this line, if so return UNDEFINED
         return MandelboxAssignError.UNDEFINED
     else:
         # 5sec arbitrarily decided as sufficient timeout when using with_for_update
