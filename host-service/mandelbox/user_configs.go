@@ -5,7 +5,6 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 import (
 	"archive/tar"
 	"bytes"
-	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -18,13 +17,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/mandelbox/configs"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/pierrec/lz4/v4"
@@ -55,21 +52,14 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 
 	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.ID)
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	s3Client, err := configs.NewS3Client("us-east-1")
 	if err != nil {
-		return utils.MakeError("failed to load aws config: %v", err)
+		return utils.MakeError("failed to create s3 client: %v", err)
 	}
 
-	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = "us-east-1"
-	})
-	downloader := manager.NewDownloader(s3Client)
-	logger.Infof("Fetching head object for bucket: %s, key: %s", userConfigS3Bucket, s3ConfigKey)
 	// Fetch the HeadObject first to see how much memory we need to allocate
-	headObject, err := s3Client.HeadObject(context.Background(), &s3.HeadObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(s3ConfigKey),
-	})
+	logger.Infof("Fetching head object for bucket: %s, key: %s", userConfigS3Bucket, s3ConfigKey)
+	headObject, err := configs.GetHeadObject(s3Client, userConfigS3Bucket, s3ConfigKey)
 
 	var apiErr smithy.APIError
 	if err != nil {
@@ -90,10 +80,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
 	mandelbox.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(context.Background(), mandelbox.configBuffer, &s3.GetObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(s3ConfigKey),
-	})
+	numBytes, err := configs.DownloadObjectToBuffer(s3Client, userConfigS3Bucket, s3ConfigKey, mandelbox.configBuffer)
 
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
@@ -273,16 +260,6 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 	logger.Infof("Encrypted config to %s", encTarPath)
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
-	if err != nil {
-		return utils.MakeError("failed to load aws config: %v", err)
-	}
-
-	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = "us-east-1"
-	})
-	uploader := manager.NewUploader(s3Client)
-
 	encryptedConfig, err := os.Open(encTarPath)
 	if err != nil {
 		return utils.MakeError("failed to open encrypted config: %v", err)
@@ -299,11 +276,13 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		logger.Infof("%s is %d bytes", encTarPath, fileInfo.Size())
 	}
 
-	uploadResult, err := uploader.Upload(context.Background(), &s3.PutObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(mandelbox.getS3ConfigKeyWithoutLocking()),
-		Body:   encryptedConfig,
-	})
+	// Upload encrypted config to S3
+	s3Client, err := configs.NewS3Client("us-east-1")
+	if err != nil {
+		return utils.MakeError("error creating s3 client: %v", err)
+	}
+
+	uploadResult, err := configs.UploadFile(s3Client, userConfigS3Bucket, mandelbox.getS3ConfigKeyWithoutLocking(), encryptedConfig)
 	if err != nil {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
