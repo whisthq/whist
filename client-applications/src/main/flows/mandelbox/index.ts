@@ -8,6 +8,7 @@ import { execCommandByOS } from "@app/utils/execCommand"
 import { persistGet, persistSet } from "@app/utils/persist"
 import { getJSONDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
+import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 
 export default flow(
   "mandelboxFlow",
@@ -28,85 +29,8 @@ export default flow(
     )
 
     // Retrieve keyboard repeat rates to send them to the mandelbox
-    const initialKeyRepeatRaw = execCommandByOS(
-      "defaults read NSGlobalDomain InitialKeyRepeat",
-      /* eslint-disable no-template-curly-in-string */
-      "xset -q | grep 'auto repeat delay'",
-      "",
-      ".",
-      {},
-      "pipe"
-    )
-
-    let initialKeyRepeat =
-      initialKeyRepeatRaw !== null ? initialKeyRepeatRaw.toString() : ""
-    // Remove trailing '\n'
-    initialKeyRepeat.replace(/\n$/, "")
-    // Extract value from bash output
-    if (process.platform === "linux" && initialKeyRepeat !== "") {
-      const startIndex =
-        initialKeyRepeat.indexOf("auto repeat delay:") +
-        "auto repeat delay:".length +
-        2
-      const endIndex = initialKeyRepeat.indexOf("repeat rate:") - 4
-      initialKeyRepeat = initialKeyRepeat.substring(startIndex, endIndex)
-    } else if (process.platform === "darwin" && initialKeyRepeat !== "") {
-      // Convert the key repetition delay from Mac scale (shortest=15, longest=120) to Linux scale (shortest=115, longest=2000)
-      const initialKeyRepeatMinValMac: number = 15.0
-      const initialKeyRepeatMaxValMac: number = 120.0
-      const initialKeyRepeatRangeMac: number =
-        initialKeyRepeatMaxValMac - initialKeyRepeatMinValMac
-      const initialKeyRepeatMinValLinux: number = 115.0
-      const initialKeyRepeatMaxValLinux: number = 2000.0
-      const initialKeyRepeatRangeLinux: number =
-        initialKeyRepeatMaxValLinux - initialKeyRepeatMinValLinux
-      const initialKeyRepeatFloat: number =
-        ((parseInt(initialKeyRepeat) - initialKeyRepeatMinValMac) /
-          initialKeyRepeatRangeMac) *
-          initialKeyRepeatRangeLinux +
-        initialKeyRepeatMinValLinux
-      initialKeyRepeat = initialKeyRepeatFloat.toFixed()
-    }
-
-    const keyRepeatRaw = execCommandByOS(
-      "defaults read NSGlobalDomain KeyRepeat",
-      /* eslint-disable no-template-curly-in-string */
-      "xset -q | grep 'auto repeat delay'",
-      "",
-      ".",
-      {},
-      "pipe"
-    )
-
-    let keyRepeat = keyRepeatRaw !== null ? keyRepeatRaw.toString() : ""
-
-    // Remove trailing '\n'
-    keyRepeat.replace(/\n$/, "")
-    // Extract value from bash output
-    if (process.platform === "linux" && keyRepeat !== "") {
-      const startIndex =
-        keyRepeat.indexOf("repeat rate:") + "repeat rate:".length + 2
-      const endIndex = keyRepeat.length
-      keyRepeat = keyRepeat.substring(startIndex, endIndex)
-    } else if (process.platform === "darwin" && keyRepeat !== "") {
-      // Convert the key repetition delay from Mac scale (slowest=120, fastest=2) to Linux scale (slowest=9, fastest=1000). NB: the units on Mac and Linux are multiplicative inverse.
-      const keyRepeatMinValMac: number = 2.0
-      const keyRepeatMaxValMac: number = 120.0
-      const keyRepeatRangeMac: number = keyRepeatMaxValMac - keyRepeatMinValMac
-      const keyRepeatMinValLinux: number = 9.0
-      const keyRepeatMaxValLinux: number = 1000.0
-      const keyRepeatRangeLinux: number =
-        keyRepeatMaxValLinux - keyRepeatMinValLinux
-      const keyRepeatFloat: number =
-        (1.0 - (parseInt(keyRepeat) - keyRepeatMinValMac) / keyRepeatRangeMac) *
-          keyRepeatRangeLinux +
-        keyRepeatMinValLinux
-      keyRepeat = keyRepeatFloat.toFixed()
-    }
-
-    if (persistGet(RESTORE_LAST_SESSION) === undefined) {
-      persistSet(RESTORE_LAST_SESSION, true)
-    }
+    const initialKeyRepeat = getInitialKeyRepeat()
+    const keyRepeat = getKeyRepeat()
 
     const decrypted = trigger.pipe(
       switchMap((t) =>
@@ -126,7 +50,7 @@ export default flow(
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            restore_last_session: persistGet(RESTORE_LAST_SESSION),
+            restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
                 initial_key_repeat: parseInt(initialKeyRepeat),
