@@ -819,14 +819,13 @@ void update_video() {
             // screen refreshes N more times, causing it to fall behind the server.
             // However, we set a min FPS of 25, so that the display is still smoothly rendering.
             double time_since_last_render = get_timer(video_data.last_loading_frame_timer);
-
             if (time_since_last_render < 1.0 / 45.0 && next_frame_ctx->id == next_frame_render_id &&
                 next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                 skip_render = true;
                 LOG_INFO(
-                    "Skipping render because frame ID %d has been received and it has only been "
-                    "%fs since the last render",
-                    next_frame_ctx->id, time_since_last_render);
+                    "Skipping render because frame ID %d has been received and it has been only "
+                    "%fms since the last render",
+                    next_frame_render_id, time_since_last_render * 1000);
                 video_ring_buffer->num_frames_skipped++;
             } else {
                 skip_render = false;
@@ -838,6 +837,7 @@ void update_video() {
 
     // Try requesting an iframe, if we're too far behind
     try_request_iframe_to_catch_up();
+
     // Try to nack
     try_nacking(video_ring_buffer, latency);
 }

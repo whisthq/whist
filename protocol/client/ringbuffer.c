@@ -5,8 +5,6 @@
 #define MAX_VIDEO_PACKETS 500
 #define MAX_AUDIO_PACKETS 3
 #define MAX_UNORDERED_PACKETS 10
-// We wait LATENCY_MULTIPLIER * latency without receiving a nack back to start nacking again
-#define LATENCY_MULTIPLIER 0.8
 
 void reset_ring_buffer(RingBuffer* ring_buffer);
 void init_frame(RingBuffer* ring_buffer, int id, int num_indices);
@@ -398,6 +396,11 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
 }
 
 void try_nacking(RingBuffer* ring_buffer, double latency) {
+    if (ring_buffer->max_id == -1) {
+        // Don't nack if we haven't received anything yet
+        return;
+    }
+
     static bool first_call = true;
     static clock burst_timer;
     static clock avg_timer;
@@ -436,7 +439,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
 
     // last_missing_frame_nack is strictly increasing so it doesn't need to be throttled
     // Non recovery mode last_packet index is strictly increasing so it doesn't need to be throttled
-    // Recovery mode cycles through trying to nack, and we throttle to LATENCY_MULTIPLIER*latency,
+    // Recovery mode cycles through trying to nack, and we throttle to ~latency,
     // longer during consecutive cycles
 
     // Nack all the packets we might want to nack about, from oldest to newest,
@@ -476,8 +479,9 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
 
         // If too much time has passed since the last packet received,
         // we swap into *recovery mode*, since something is probably wrong with this packet
-        if (get_timer(frame_data->last_packet_timer) > 0.3 * latency &&
+        if (get_timer(frame_data->last_packet_timer) > 0.8 * latency &&
             !frame_data->recovery_mode) {
+            frame_data->last_nacked_index = 0;
             frame_data->recovery_mode = true;
         }
 
@@ -497,7 +501,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             // i.e. we nack for everything after last_packet_received - MAX_UNORDERED_PACKETS.
             // After an additional 1.2 * latency, we send another round of nacks
             if (get_timer(frame_data->last_nacked_timer) >
-                0.3 * latency + 0.9 * latency * frame_data->num_times_nacked) {
+                0.8 * latency + 0.8 * latency * frame_data->num_times_nacked) {
                 num_packets_nacked += nack_missing_packets_up_to_index(
                     ring_buffer, frame_data, frame_data->num_packets - 1,
                     max_nacks - num_packets_nacked);
