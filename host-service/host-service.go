@@ -1097,7 +1097,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *JSONTransportRequest:
-				if !metadata.IsLocalEnvWithouthDB() {
+				if !metadata.IsLocalEnvWithoutDB() {
 					// Handle JSON transport validation on a separate go routine
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 				} else {
