@@ -54,9 +54,11 @@ func TestUserConfigIntegration(t *testing.T) {
 		t.Fatalf("error copying test directories: %v, output: %s", err, output)
 	}
 
+	testMandelboxData.rwlock.Lock()
 	if err := testMandelboxData.backupUserConfigs(); err != nil {
 		t.Fatalf("error backing up configs: %v", err)
 	}
+	testMandelboxData.rwlock.Unlock()
 
 	// Delete the user config directory so it can be recreated
 	os.RemoveAll(unpackedConfigPath)
