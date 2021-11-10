@@ -73,10 +73,9 @@ if [ "$ENV_NAME" != "LOCALDEV" ]; then
   trap cleanup EXIT ERR
 fi
 
-# Imports user cookies
-/usr/share/fractal/run-as-fractal-user.sh "python3 /usr/bin/import_custom_cookies.py"
-
 if [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
+  # Imports user cookies if file exists
+  /usr/share/fractal/run-as-fractal-user.sh "python3 /usr/bin/import_custom_cookies.py"
   rm $WHIST_INITIAL_USER_COOKIES_FILE
 fi
 
