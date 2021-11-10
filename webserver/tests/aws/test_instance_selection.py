@@ -1,7 +1,7 @@
-import pytest
-
 from random import randint
 from typing import Callable
+
+import pytest
 
 from app.database.models.cloud import InstanceInfo
 from app.helpers.aws.aws_instance_post import find_instance, bundled_region
