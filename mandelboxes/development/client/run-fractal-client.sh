@@ -79,4 +79,6 @@ echo "FractalClient exited with code $?"
 echo "FractalClient PID: $fractal_client_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
-# We now pass control over to `cleanup`, since we've reached the end of the script.
+while true; do sleep 1000; done
+
+# TODO: We now pass control over to `cleanup`, since we've reached the end of the script.
