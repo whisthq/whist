@@ -200,7 +200,7 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 	var AppName mandelboxtypes.AppName
 	var req *JSONTransportRequest
 
-	if metadata.IsLocalEnv() {
+	if metadata.IsLocalEnvWithouthDB() {
 		// Receive the json transport request immediately when running on local env
 		jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
 		req = <-jsonchan
