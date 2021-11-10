@@ -165,7 +165,7 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
     # This function only supports the targets Brave, Opera, Chrome, and any browser with
     # the same db columns. Otherwise it will not work and error out.
     if browser_name != "chrome" and browser_name != "brave" and browser_name != "opera":
-        raise("Unrecognized browser type. Only works for brave, chrome, and opera.")
+        raise ("Unrecognized browser type. Only works for brave, chrome, and opera.")
 
     cookie_file = get_or_create_cookie_file(target_browser_name)
 
