@@ -71,8 +71,8 @@ export default flow(
     )
 
     const hostWithDelay = host.success.pipe(
-      withLatestFrom(decrypted),
-      filter(([, d]) => d !== "[]"),
+      withLatestFrom(trigger),
+      filter(([, t]) => t.importCookiesFrom !== undefined),
       delay(5000),
       map(([h]) => h)
     )
