@@ -23,10 +23,10 @@ else
 fi
 
 # Verify that the FractalServer/FractalClient is there
-cp "$BUILD_DIR"/${2} "$destdir/protocol"
+cp -r "$BUILD_DIR"/${2} "$destdir/protocol"
 
 # Copy all of the accompanying files
-cp "$BUILD_DIR"/* "$destdir/protocol"
+cp -r "$BUILD_DIR"/* "$destdir/protocol"
 
 # Copy dependencies script
 cp "$SOURCE_DIR/setup-linux-build-environment.sh" "$destdir"
