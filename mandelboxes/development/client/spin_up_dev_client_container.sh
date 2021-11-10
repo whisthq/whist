@@ -36,7 +36,7 @@ fi
 # TODO: 3. Pass config variables such as FRACTAL_AES_KEY, which will be saved to file by the startup/entrypoint.sh script, in order for the container to be able to access them later and exported them as environment variables by the `run-fractal-client.sh` script. These config variables will have to be passed as parameters to the FractalClient executable, which will run in non-root mode in the container (username = fractal).
 # TODO: 4. Create the Docker container, and start it
 docker create -e SERVER_IP_ADDRESS=${1} -e SERVER_PORT_32262=${2} -e SERVER_PORT_32263=${3} -e SERVER_PORT_32273=${4} -e FRACTAL_AES_KEY=${5} $DOCKER_IMAGE_NAME 
-docker run $DOCKER_IMAGE_NAME
+docker run -i -a stdin -a stdout -a stderr $DOCKER_IMAGE_NAME
 # TODO: 5. Decrypt user configs within the docker container, if needed
 # TODO: 6. Write the config.json file if we want to test JSON transport related features
 docker exec $DOCKER_IMAGE_NAME bash -c "touch config.json"
