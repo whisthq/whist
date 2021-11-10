@@ -54,8 +54,8 @@ Defines
 #define ERROR_LEVEL 0x01
 #define WARNING_LEVEL 0x02
 #define INFO_LEVEL 0x04
-#define DEBUG_LEVEL 0x05
-#define PERF_LEVEL 0x06
+#define PERF_LEVEL 0x05
+#define DEBUG_LEVEL 0x06
 
 // Cut-off for which log level is required
 #ifndef LOG_LEVEL
@@ -75,18 +75,18 @@ extern const char *perf_tag, *debug_tag, *info_tag, *warning_tag, *error_tag, *f
 #define ERROR_TAG error_tag
 #define FATAL_ERROR_TAG fatal_error_tag
 
-#if LOG_LEVEL >= PERF_LEVEL
-#define LOG_PERF(message, ...) \
-    internal_logging_printf(PERF_TAG, LOG_FMT message NEWLINE, LOG_ARGS(PERF_TAG), ##__VA_ARGS__)
-#else
-#define LOG_PERF(message, ...)
-#endif
-
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...) \
     internal_logging_printf(DEBUG_TAG, LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(message, ...)
+#endif
+
+#if LOG_LEVEL >= PERF_LEVEL
+#define LOG_PERF(message, ...) \
+    internal_logging_printf(PERF_TAG, LOG_FMT message NEWLINE, LOG_ARGS(PERF_TAG), ##__VA_ARGS__)
+#else
+#define LOG_PERF(message, ...)
 #endif
 
 // LOG_INFO refers to something that can happen, and does not imply that anything went wrong
