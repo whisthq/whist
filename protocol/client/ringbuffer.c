@@ -5,6 +5,8 @@
 #define MAX_VIDEO_PACKETS 500
 #define MAX_AUDIO_PACKETS 3
 #define MAX_UNORDERED_PACKETS 10
+// We wait LATENCY_MULTIPLIER * latency without receiving a nack back to start nacking again
+#define LATENCY_MULTIPLIER 0.8
 
 void reset_ring_buffer(RingBuffer* ring_buffer);
 void init_frame(RingBuffer* ring_buffer, int id, int num_indices);
@@ -399,8 +401,8 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
 
     // last_missing_frame_nack is strictly increasing so it doesn't need to be throttled
     // Non recovery mode last_packet index is strictly increasing so it doesn't need to be throttled
-    // Recovery mode cycles through trying to nack, and we throttle to 0.7*latency, longer
-    // during consecutive cycles
+    // Recovery mode cycles through trying to nack, and we throttle to LATENCY_MULTIPLIER*latency,
+    // longer during consecutive cycles
 
     // Nack all the packets we might want to nack about, from oldest to newest, up to
     // MAX_NACKS_PER_CALL times
@@ -438,7 +440,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
         }
 
         // If too much time has passed since the last packet received, we swap into recovery mode
-        if (get_timer(frame_data->last_packet_timer) > 0.7 * latency &&
+        if (get_timer(frame_data->last_packet_timer) > LATENCY_MULTIPLIER * latency &&
             !frame_data->recovery_mode) {
             frame_data->last_nacked_index = 0;
             frame_data->recovery_mode = true;
@@ -457,7 +459,8 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             // During recovery mode,
             // we keep nacking MAX_NACKED packets per try_nacking call
             if (get_timer(frame_data->last_nacked_timer) >
-                0.7 * latency + 0.7 * latency * frame_data->num_times_nacked) {
+                LATENCY_MULTIPLIER * latency +
+                    LATENCY_MULTIPLIER * latency * frame_data->num_times_nacked) {
                 num_packets_nacked += nack_missing_packets_up_to_index(
                     ring_buffer, frame_data, frame_data->num_packets - 1,
                     MAX_NACKS_PER_CALL - num_packets_nacked);
