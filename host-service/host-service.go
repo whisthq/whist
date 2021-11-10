@@ -703,8 +703,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelbox.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 	mandelbox.SetJSONData(req.JSONData)
 
-	// If this isn't a first run, decrypt the previously downloaded user configs
-	if !req.FirstRun {
+	// If the config token wasn't reset, decrypt the previously downloaded user configs
+	if !req.IsNewConfigToken {
 		err = mandelbox.DecryptUserConfigs()
 		if err != nil {
 			logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
