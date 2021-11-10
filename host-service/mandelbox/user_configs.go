@@ -263,7 +263,7 @@ func (mandelbox *mandelboxData) backupUserConfigs() error {
 	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	// At this point, config archive must exist: encrypt app config
-	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
+	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", mandelbox.getConfigTokenHashWithoutLocking(), mandelbox.ID)
 	encryptConfigCmd := exec.Command(
 		"/usr/bin/openssl", "aes-256-cbc", "-e",
 		"-in", decTarPath,
@@ -374,6 +374,12 @@ func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
 // getConfigTokenHash returns a hash of the config token.
 func (mandelbox *mandelboxData) getConfigTokenHash() string {
 	hash := sha256.Sum256([]byte(mandelbox.GetConfigEncryptionToken()))
+	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
+// getConfigTokenHashWithoutLocking returns a hash of the config token.
+func (mandelbox *mandelboxData) getConfigTokenHashWithoutLocking() string {
+	hash := sha256.Sum256([]byte(mandelbox.configEncryptionToken))
 	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
