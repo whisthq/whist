@@ -2,6 +2,7 @@
 
 # This script spins up the Whist protocol dev client container
 # Arguments to this script will be 
+# (0) name of this script
 # (1) ip address
 # (2) port 32262 on the mandelbox
 # (3) port 32263 on the mandelbox
@@ -12,21 +13,30 @@
 # TODO: 0. Find tag of matching Docker image
 ## App name will be fractal/development/client:current-build; We need to look for images with a tag that matches either
 ## one of the following regexes [fractal/development/client:current-build:current-build fractal/development/client:current-build]
+DOCKER_IMAGE_NAME="fractal/development/client:current-build"
+img_lookup_cmd="docker image inspect ${DOCKER_IMAGE_NAME} >/dev/null 2>&1 && echo yes || echo no"
+
+if [[ $(img_lookup_cmd) == "no" ]]; then
+	DOCKER_IMAGE_NAME="fractal/development/client:current-build:current-build"
+	img_lookup_cmd="docker image inspect ${DOCKER_IMAGE_NAME} >/dev/null 2>&1 && echo yes || echo no"
+
+	if [[ $(img_lookup_cmd) == "no" ]]; then
+		echo "Error, development/client image not found!"
+		exit
+	fi
+fi
 
 # TODO: 1. Download any necessary user configs onto the container
-
 # TODO: 2. Apply port bindings/forwarding if needed
-
 # TODO: 3. Pass config variables such as FRACTAL_AES_KEY, which will be saved to file by the startup/entrypoint.sh script, in order for the container to be able to access them later and exported them as environment variables by the `run-fractal-client.sh` script. These config variables will have to be passed as parameters to the FractalClient executable, which will run in non-root mode in the container (username = fractal).
-
 # TODO: 4. Create the Docker container, and start it
-
+docker create -e SERVER_IP_ADDRESS=${1} -e SERVER_PORT_32262=${2} -e SERVER_PORT_32263=${3} -e SERVER_PORT_32273=${4} -e FRACTAL_AES_KEY=${5} $DOCKER_IMAGE_NAME 
+docker run $DOCKER_IMAGE_NAME
 # TODO: 5. Decrypt user configs within the docker container, if needed
-
 # TODO: 6. Write the config.json file if we want to test JSON transport related features
-
+docker exec $DOCKER_IMAGE_NAME bash -c "touch config.json"
 # TODO: 7. Write the .ready file to trigger `base/startup/fractal-startup.sh`
-
+docker exec $DOCKER_IMAGE_NAME bash -c "echo .ready >> .ready"
 
 
 
@@ -47,6 +57,7 @@
 #2021/11/10 14:57:57.646674 SpinUpMandelbox(): successfully initialized uinput devices.
 #2021/11/10 14:57:57.646704 SpinUpMandelbox(): About to look up image for APP NAME fractal/browsers/chrome:current-build using regex [fractal/browsers/chrome:current-build:current-build fractal/browsers/chrome:current-build]
 #2021/11/10 14:57:57.646852 Successfully created unix socket at: /fractal/temp/932ab22511cd989e2ab72e65c11bb3e1d5514f3ca4613f3a545b52618912/sockets/uinput.sock
+#2021/11/10 16:08:51.550341 SpinUpMandelbox(): found image: fractal/browsers/chrome:current-build
 #2021/11/10 14:57:57.834851 dockerevent: create for container d85dabe170137fbb7cf6ac9c1da2493276c4ae2de4aa5cd230da8243bbe18e2f
 #2021/11/10 14:57:57.834966 SpinUpMandelbox(): Value returned from ContainerCreate: container.ContainerCreateCreatedBody{ID:"d85dabe170137fbb7cf6ac9c1da2493276c4ae2de4aa5cd230da8243bbe18e2f", Warnings:[]string{}}
 #2021/11/10 14:57:57.834979 SpinUpMandelbox(): Successfully ran `create` command and got back runtime ID d85dabe170137fbb7cf6ac9c1da2493276c4ae2de4aa5cd230da8243bbe18e2f
