@@ -648,10 +648,6 @@ COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
 # Install Cookies dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
-    dbus-x11 \
-    gir1.2-secret-1 \
-    gnome-keyring \
-    libsecret-1-0 \
     && pip install --no-cache-dir browser-cookie3==0.13.0 \
     && pip install --no-cache-dir keyring==23.2.1 \
     && pip install --no-cache-dir pyaes==1.6.1  \
