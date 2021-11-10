@@ -124,7 +124,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	}
 
 	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
-	logger.Infof("Using decryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
+	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := mandelbox.configBuffer.Bytes()
@@ -263,7 +263,7 @@ func (mandelbox *mandelboxData) backupUserConfigs() error {
 	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	// At this point, config archive must exist: encrypt app config
-	logger.Infof("Using encryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
+	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", mandelbox.getConfigTokenHash(), mandelbox.ID)
 	encryptConfigCmd := exec.Command(
 		"/usr/bin/openssl", "aes-256-cbc", "-e",
 		"-in", decTarPath,
