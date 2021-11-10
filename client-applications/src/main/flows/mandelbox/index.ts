@@ -70,6 +70,8 @@ export default flow(
       )
     )
 
+    // The server protocol takes time to start up when we upload cookies, so this is a temporary
+    // workaround to delay trying to connect if we send over cookies
     const hostWithDelay = host.success.pipe(
       withLatestFrom(trigger),
       filter(([, t]) => t.importCookiesFrom !== undefined),
