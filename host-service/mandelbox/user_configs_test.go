@@ -205,7 +205,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 
 	// store the cookies in a temporary file
-	filePath := path.join(utils.UserInitialCookiesDir, "tempt-cookies")
+	filePath := path.Join(utils.UserInitialCookiesDir, "tempt-cookies")
 
 	fileContents := whistCookie+"\n"+fractalCookie+"\n"
 
