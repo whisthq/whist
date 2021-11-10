@@ -6,55 +6,55 @@
 set -Eeuo pipefail
 
 # FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
-PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
-SERVER_IP_ADDRESS_FILENAME=/usr/share/fractal/private/server_ip
-SERVER_PORT_32262_FILENAME=/usr/share/fractal/private/port32262_filename
-SERVER_PORT_32263_FILENAME=/usr/share/fractal/private/port32263_filename
-SERVER_PORT_32273_FILENAME=/usr/share/fractal/private/port32273_filename
+#PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
+#SERVER_IP_ADDRESS_FILENAME=/usr/share/fractal/private/server_ip
+#SERVER_PORT_32262_FILENAME=/usr/share/fractal/private/port32262_filename
+#SERVER_PORT_32263_FILENAME=/usr/share/fractal/private/port32263_filename
+#SERVER_PORT_32273_FILENAME=/usr/share/fractal/private/port32273_filename
 
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/client.log
 
 # Create list of command-line arguments to pass to the Whist protocol client
 OPTIONS=""
 
-# Parse the server IP address, and add it to the options
-if [ -f "$SERVER_IP_ADDRESS_FILENAME" ]; then
-  export SERVER_IP_ADDRESS=$(cat $SERVER_IP_ADDRESS_FILENAME)
-else
-  export SERVER_IP_ADDRESS="127.0.0.1"
-fi
+# # Parse the server IP address, and add it to the options
+# if [ -f "$SERVER_IP_ADDRESS_FILENAME" ]; then
+#   export SERVER_IP_ADDRESS=$(cat $SERVER_IP_ADDRESS_FILENAME)
+# else
+#   export SERVER_IP_ADDRESS="127.0.0.1"
+# fi
 OPTIONS="$OPTIONS $SERVER_IP_ADDRESS"
 
 # Parse the port 32262 on the server mandelbox
-if [ -f "$SERVER_PORT_32262_FILENAME" ]; then
-  export SERVER_PORT_32262=$(cat $SERVER_PORT_32262_FILENAME)
-else
-  export SERVER_PORT_32262="32262"
-fi
+# if [ -f "$SERVER_PORT_32262_FILENAME" ]; then
+#   export SERVER_PORT_32262=$(cat $SERVER_PORT_32262_FILENAME)
+# else
+#   export SERVER_PORT_32262="32262"
+# fi
 OPTIONS="$OPTIONS -p32262:$SERVER_PORT_32262"
 
 # Parse the port 32263 on the server mandelbox
-if [ -f "$SERVER_PORT_32263_FILENAME" ]; then
-  export SERVER_PORT_32263=$(cat $SERVER_PORT_32263_FILENAME)
-else
-  export SERVER_PORT_32263="32263"
-fi
+# if [ -f "$SERVER_PORT_32263_FILENAME" ]; then
+#   export SERVER_PORT_32263=$(cat $SERVER_PORT_32263_FILENAME)
+# else
+#   export SERVER_PORT_32263="32263"
+# fi
 OPTIONS="$OPTIONS.32263:$SERVER_PORT_32263"
 
 # Parse the port 32273 on the server mandelbox
-if [ -f "$SERVER_PORT_32273_FILENAME" ]; then
-  export SERVER_PORT_32273=$(cat $SERVER_PORT_32273_FILENAME)
-else
-  export SERVER_PORT_32273="32273"
-fi
+# if [ -f "$SERVER_PORT_32273_FILENAME" ]; then
+#   export SERVER_PORT_32273=$(cat $SERVER_PORT_32273_FILENAME)
+# else
+#   export SERVER_PORT_32273="32273"
+# fi
 OPTIONS="$OPTIONS.32273:$SERVER_PORT_32273"
 
 # Send in AES private key, if set
-if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
-  OPTIONS="$OPTIONS -k=$FRACTAL_AES_KEY"
-fi
-
+# if [ -f "$PRIVATE_KEY_FILENAME" ]; then
+#   export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
+#   OPTIONS="$OPTIONS -k=$FRACTAL_AES_KEY"
+# fi
+OPTIONS="$OPTIONS -k=$FRACTAL_AES_KEY"
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either FractalServer or the Whist
