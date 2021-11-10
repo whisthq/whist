@@ -68,14 +68,14 @@ const config = configFlow(
 // Observable that fires when Whist is ready to be launched
 const launchTrigger = fromTrigger(TRIGGER.configFlowSuccess).pipe(
   map((x: object) => ({
-    ...x, // { accessToken, configToken, newConfigToken }
+    ...x, // { accessToken, configToken, isNewConfigToken }
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
   })),
   take(1)
 ) as Observable<{
   accessToken: string
   configToken: string
-  newConfigToken: boolean
+  isNewConfigToken: boolean
   region?: AWSRegion
 }>
 

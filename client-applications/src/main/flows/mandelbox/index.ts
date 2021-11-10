@@ -13,7 +13,7 @@ export default flow(
     trigger: Observable<{
       accessToken: string
       configToken: string
-      newConfigToken: boolean
+      isNewConfigToken: boolean
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -60,7 +60,7 @@ export default flow(
       const initialKeyRepeatFloat: number =
         ((parseInt(initialKeyRepeat) - initialKeyRepeatMinValMac) /
           initialKeyRepeatRangeMac) *
-          initialKeyRepeatRangeLinux +
+        initialKeyRepeatRangeLinux +
         initialKeyRepeatMinValLinux
       initialKeyRepeat = initialKeyRepeatFloat.toFixed()
     }
@@ -96,7 +96,7 @@ export default flow(
         keyRepeatMaxValLinux - keyRepeatMinValLinux
       const keyRepeatFloat: number =
         (1.0 - (parseInt(keyRepeat) - keyRepeatMinValMac) / keyRepeatRangeMac) *
-          keyRepeatRangeLinux +
+        keyRepeatRangeLinux +
         keyRepeatMinValLinux
       keyRepeat = keyRepeatFloat.toFixed()
     }
@@ -110,7 +110,7 @@ export default flow(
         map(([t, c]) => ({
           ip: c.ip,
           config_encryption_token: t.configToken,
-          is_new_config_encryption_token: t.newConfigToken,
+          is_new_config_encryption_token: t.isNewConfigToken,
           jwt_access_token: t.accessToken,
           mandelbox_id: c.mandelboxID,
           json_data: JSON.stringify({
@@ -122,12 +122,12 @@ export default flow(
             ),
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
-                initial_key_repeat: parseInt(initialKeyRepeat),
-              }),
+              initial_key_repeat: parseInt(initialKeyRepeat),
+            }),
             ...(keyRepeat !== "" &&
               !isNaN(parseInt(keyRepeat)) && {
-                key_repeat: parseInt(keyRepeat),
-              }),
+              key_repeat: parseInt(keyRepeat),
+            }),
           }), // Data to send through the JSON transport
         }))
       )
