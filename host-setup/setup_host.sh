@@ -132,6 +132,15 @@ EOF
   sudo apt-get install -y lsof jq tar lz4
 
   echo "================================================"
+  echo "Disabling Automatic Package Upgrades..."
+  echo "================================================"
+  # Disable automatic upgrades in our host setup! When we do
+  # it in packer, it doesn't seem to persist, and we specifically
+  # want this behavior for our development instances.
+  sudo systemctl disable --now apt-daily{{,-upgrade}.service,{,-upgrade}.timer}
+  sudo systemctl disable --now unattended-upgrades
+
+  echo "================================================"
   echo "Configuring Docker daemon..."
   echo "================================================"
 
