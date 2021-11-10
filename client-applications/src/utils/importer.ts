@@ -233,7 +233,7 @@ const decryptCookies = async (
   const numOfCookise = encryptedCookies.length
   for (let i = 0; i < numOfCookise; i++) {
     const cookie = await decryptCookie(encryptedCookies[i], encryptKey)
-    cookie !== undefined && cookies.push(cookie)
+    cookie !== undefined && delete cookie.encrypted_value && cookies.push(cookie)
   }
 
   return cookies
@@ -284,8 +284,6 @@ const decryptCookie = async (
 
     const originalText = decodedBuffer
     cookie.decrypted_value = originalText
-
-    delete cookie.encrypted_value
 
     return cookie
   } catch (err) {
