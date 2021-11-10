@@ -10,7 +10,9 @@ import (
 
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/google/uuid"
-) // We define special types for the following string types for all the benefits
+)
+
+// We define special types for the following string types for all the benefits
 // of type safety, including making sure we never switch Docker and Whist
 // IDs, for instance.
 
