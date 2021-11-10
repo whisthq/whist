@@ -697,14 +697,16 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	if !metadata.IsLocalEnv() {
 		// Receive the json transpor request from the client via the httpserver.
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
-		req = <-jsonchan
 
 		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
 		select {
 		case transportRequest := <-jsonchan:
 			req = transportRequest
 		case <-time.After(1 * time.Minute):
-			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock)
+			// Clean up the mandelbox if the time out limit is reached.
+			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
+			logAndReturnError("Timed out waiting for config encryption token.")
+			return
 		}
 	}
 
@@ -768,7 +770,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 }
 
 // Handle tasks to be completed when a mandelbox dies
-func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex, dockerClient dockerclient.CommonAPIClient) {
 	// Exit if we are not dealing with a Whist mandelbox, or if it has already
 	// been closed (via a call to Close() or a context cancellation).
 	mandelbox, err := mandelboxData.LookUpByDockerID(mandelboxtypes.DockerID(id))
@@ -782,6 +784,14 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 	transportMapLock.Lock()
 	transportRequestMap[mandelboxID] = nil
 	transportMapLock.Unlock()
+
+	// Gracefully shut down the mandelbox docker container
+	stopTimeout := 30 * time.Second
+	err = dockerClient.ContainerStop(mandelbox.GetContext(), id, &stopTimeout)
+
+	if err != nil {
+		logger.Errorf("Failed to gracefully stop mandelbox docker container.")
+	}
 
 	mandelbox.Close()
 }
@@ -1109,7 +1119,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case dockerevent := <-dockerevents:
 			logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			if dockerevent.Action == "die" {
-				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock)
+				mandelboxDieHandler(dockerevent.ID, transportRequestMap, transportMapLock, dockerClient)
 			}
 
 		// It may seem silly to just launch goroutines to handle these
