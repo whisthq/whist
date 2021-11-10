@@ -78,7 +78,7 @@ func IsLocalEnv() bool {
 
 // IsLocalEnvWithoutDB returns true if this host service is running locally for
 // development but without the database enabled.
-func IsLocalEnvWithouthDB() bool {
+func IsLocalEnvWithoutDB() bool {
 	env := GetAppEnvironment()
 	return env == EnvLocalDev
 }
