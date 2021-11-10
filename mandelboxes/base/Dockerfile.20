@@ -645,7 +645,7 @@ RUN systemctl enable fractal-audio
 # Set up user config map for mandelbox startup
 COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
 
-# Install Cookies dependencies
+# Install Dependencies for Cookie Import
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     && pip install --no-cache-dir browser-cookie3==0.13.0 \
