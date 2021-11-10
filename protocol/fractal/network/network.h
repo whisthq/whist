@@ -220,6 +220,20 @@ typedef struct {
 
 typedef enum { ASK_INFO, POST_INFO } StunRequestType;
 
+/**
+ * @brief                    This enum represents a TOS header which is used
+ *                           to set the type of service of a socket. Routers
+ *                           may handle packets differently based on the choice
+ *                           of TOS. See https://en.wikipedia.org/wiki/Differentiated_services
+ *                           for DiffServ (DSCP) values, and https://www.tucny.com/Home/dscp-tos
+ *                           for their corresponding TOS values.
+ */
+typedef enum FractalTOSValue {
+    TOS_DSCP_STANDARD_FORWARDING = 0x00,  //<<< Standard Forwarding (Default)
+    TOS_DSCP_EXPEDITED_FORWARDING =
+        0xb8  //<<< Expedited Forwarding (High Priority, for Video/Audio)
+} FractalTOSValue;
+
 typedef struct {
     StunRequestType type;
     StunEntry entry;
@@ -379,6 +393,19 @@ int get_packet_size(FractalPacket* packet);
  *                                 blocking socket.
  */
 void set_timeout(SOCKET socket, int timeout_ms);
+
+/**
+ *
+ * @brief                          This will set `socket` to have the specified TOS
+ *                                 value. This is used to set the type of service
+ *                                 header in the packet, which is used by routers
+ *                                 to determine routing/queueing/dropping behavior.
+ *
+ * @param socket                   The SOCKET to be configured
+ * @param tos                      The TOS value to set. This should correspond to a
+ *                                 DSCP value (see https://www.tucny.com/Home/dscp-tos)
+ */
+void set_tos(SOCKET socket, FractalTOSValue tos);
 
 /**
  * @brief                          Perform a UDP socket() syscall and set fds to

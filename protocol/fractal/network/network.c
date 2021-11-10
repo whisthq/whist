@@ -212,6 +212,24 @@ void set_timeout(SOCKET socket, int timeout_ms) {
     }
 }
 
+void set_tos(SOCKET socket, FractalTOSValue tos) {
+    /*
+        Sets the TOS value for `socket` to be `tos`. This is used to set the type of
+        service header in the packet, which is used by routers to determine routing/
+        queueing/dropping behavior.
+
+        Arguments:
+            socket (SOCKET): the socket to set TOS for
+            tos (FractalTOSValue): the TOS value to set. This should correspond
+                 to a DSCP value (see https://www.tucny.com/Home/dscp-tos)
+    */
+    int opt = tos;
+    if (setsockopt(socket, IPPROTO_IP, IP_TOS, (const char*)&opt, sizeof(opt)) < 0) {
+        int err = get_last_network_error();
+        LOG_WARNING("Failed to set TOS to %d: %d. Msg: %s\n", opt, err, strerror(err));
+    }
+}
+
 void init_networking() {
     /*
         Initialize default port mappings (i.e. the identity)
