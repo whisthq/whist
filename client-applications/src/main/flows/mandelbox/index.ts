@@ -60,7 +60,7 @@ export default flow(
       const initialKeyRepeatFloat: number =
         ((parseInt(initialKeyRepeat) - initialKeyRepeatMinValMac) /
           initialKeyRepeatRangeMac) *
-        initialKeyRepeatRangeLinux +
+          initialKeyRepeatRangeLinux +
         initialKeyRepeatMinValLinux
       initialKeyRepeat = initialKeyRepeatFloat.toFixed()
     }
@@ -96,7 +96,7 @@ export default flow(
         keyRepeatMaxValLinux - keyRepeatMinValLinux
       const keyRepeatFloat: number =
         (1.0 - (parseInt(keyRepeat) - keyRepeatMinValMac) / keyRepeatRangeMac) *
-        keyRepeatRangeLinux +
+          keyRepeatRangeLinux +
         keyRepeatMinValLinux
       keyRepeat = keyRepeatFloat.toFixed()
     }
@@ -122,12 +122,12 @@ export default flow(
             ),
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
-              initial_key_repeat: parseInt(initialKeyRepeat),
-            }),
+                initial_key_repeat: parseInt(initialKeyRepeat),
+              }),
             ...(keyRepeat !== "" &&
               !isNaN(parseInt(keyRepeat)) && {
-              key_repeat: parseInt(keyRepeat),
-            }),
+                key_repeat: parseInt(keyRepeat),
+              }),
           }), // Data to send through the JSON transport
         }))
       )

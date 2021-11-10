@@ -141,8 +141,8 @@ def send_spin_up_mandelbox_request(mandelbox_id):
     payload = {
         "app_name": args.image,
         "config_encryption_token": args.user_config_encryption_token,
-        # We hardcode this to false because the host service should panice if
-        # decryption doesn't work.
+        # We hardcode this to false because the host service should report an
+        # error if decryption doesn't work.
         "is_new_config_encryption_token": False,
         "jwt_access_token": "bogus_jwt",
         "json_data": json_data,

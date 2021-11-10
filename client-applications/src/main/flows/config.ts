@@ -12,7 +12,10 @@ export default flow<{
     map((x) => ({
       ...x,
       ...(store.has("auth.configToken")
-        ? { configToken: store.get("auth.configToken"), isNewConfigToken: false }
+        ? {
+            configToken: store.get("auth.configToken"),
+            isNewConfigToken: false,
+          }
         : { configToken: generateRandomConfigToken(), isNewConfigToken: true }),
     }))
   )

@@ -710,7 +710,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
 		}
 	} else {
-		logger.Infof("SpinUpMandelbox(): Got first run flag for mandelbox %s, skipping config decryption", mandelboxSubscription.ID)
+		logger.Infof("SpinUpMandelbox(): This is a new config encryption token for mandelbox %s, skipping config decryption", mandelboxSubscription.ID)
 	}
 
 	// Write the config.json file with the data received from JSON transport
