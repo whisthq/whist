@@ -164,7 +164,7 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
     """
     # This function only supports the targets Brave, Opera, Chrome, and any browser with
     # the same db columns. Otherwise it will not work and error out.
-    if browser_name != "chrome" and browser_name != "brave" and browser_name != "opera":
+    if target_browser_name != "chrome" and target_browser_name != "brave" and target_browser_name != "opera":
         raise ("Unrecognized browser type. Only works for brave, chrome, and opera.")
 
     cookie_file = get_or_create_cookie_file(target_browser_name)
@@ -175,9 +175,10 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
     cur = con.cursor()
 
     with open(cookie_full_path, "r") as f:
-        for cookie_line in f:
-            cookie_json = cookie_line.rstrip("\n")
-            cookie = json.loads(cookie_json)
+        cookies_json = f.read()
+        cookies = json.loads(cookie_json)
+
+        for cookie in cookies:
 
             # Encrypted_value should not be included with cookiess
             cookie.pop("encrypted_value", None)
@@ -193,20 +194,20 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
             cookie.pop("encryption_prefix", None)
 
             # We only want the values in a list form
-            formatted_cookie = format_chromium_based_cookie(cookie)
+            formatted_cookies.append(format_chromium_based_cookie(cookie))
 
-            try:
-                # This is very specific to Chrome/Brave/Opera
-                # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns
-                cur.execute(
-                    "INSERT INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    formatted_cookie,
-                )
-                con.commit()
-            except sqlite3.InterfaceError as err:
-                subprocess.run(["echo", f"Cookie failed to import with the interface error: {err}"])
-            except sqlite3.IntegrityError as err:
-                subprocess.run(["echo", f"Cookie failed to import with the integrity error: {err}"])
+        try:
+            # This is very specific to Chrome/Brave/Opera
+            # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns
+            cur.executemany(
+                "INSERT REPLACE INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                formatted_cookies,
+            )
+            con.commit()
+        except sqlite3.InterfaceError as err:
+            subprocess.run(["echo", f"Cookie failed to import with the interface error: {err}"])
+        except sqlite3.IntegrityError as err:
+            subprocess.run(["echo", f"Cookie failed to import with the integrity error: {err}"])
 
     con.close()
 
