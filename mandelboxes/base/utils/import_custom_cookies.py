@@ -75,13 +75,11 @@ def get_or_create_cookie_file(browser_name):
         raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
 
 
-def encrypt(browser_name, value, encrypt_prefix):
+def encrypt(value):
     """
-    Encrypt value based on the prefix
+    Encrypts plain cookie value
     Args:
-        browser_name (str): the name of the browser we got cookies from
         value (str): the value that will be encrypted
-        encrypt_prefix (str): prefix that is v10 or v11
     Returns:
         str: encrypted string
     """
@@ -95,11 +93,6 @@ def encrypt(browser_name, value, encrypt_prefix):
     # and will result in the default value `peanuts`
 
     my_pass = b"peanuts"
-
-    # os_crypt_name = "chromium"
-    # if browser_name == "chrome":
-    #     os_crypt_name = browser_name
-    # my_pass = browser_cookie3.get_linux_pass(os_crypt_name)
 
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
 
@@ -206,5 +199,5 @@ if __name__ == "__main__":
     browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
     cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
 
-    if os.path.exists(cookie_full_path):
+    if cookie_full_path and os.path.exists(cookie_full_path):
         set_browser_cookies(browser, cookie_full_path)
