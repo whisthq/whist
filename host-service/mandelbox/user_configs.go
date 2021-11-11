@@ -10,7 +10,6 @@ import (
 	"crypto/cipher"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -274,6 +273,101 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 	logger.Infof("Encrypted config to %s", encTarPath)
 
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		return utils.MakeError("failed to load aws config: %v", err)
+	}
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.Region = "us-east-1"
+	})
+	uploader := manager.NewUploader(s3Client)
+
+	encryptedConfig, err := os.Open(encTarPath)
+	if err != nil {
+		return utils.MakeError("failed to open encrypted config: %v", err)
+	}
+	defer encryptedConfig.Close()
+
+	// Find size of config we are uploading to S3
+	fileInfo, err := encryptedConfig.Stat()
+	if err != nil {
+		// We don't want to stop uploading configs because we can't get file stats
+		logger.Warningf("error opening file stats for encrypted user config: %s", encTarPath)
+	} else {
+		// Log encrypted user config size before S3 upload
+		logger.Infof("%s is %d bytes", encTarPath, fileInfo.Size())
+	}
+
+	uploadResult, err := uploader.Upload(context.Background(), &s3.PutObjectInput{
+		Bucket: aws.String(userConfigS3Bucket),
+		Key:    aws.String(mandelbox.getS3ConfigKeyWithoutLocking()),
+		Body:   encryptedConfig,
+	})
+	if err != nil {
+		return utils.MakeError("error uploading encrypted config to s3: %v", err)
+	}
+
+	logger.Infof("Saved user config for mandelbox %s, version %s", mandelbox.ID, *uploadResult.VersionID)
+
+	return nil
+}
+
+// WriteUserInitialBrowserData writes the user's initial browser data to file(s)
+// received through JSON transport for later use in the mandelbox
+func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string) error {
+    // Avoid doing work for empty string/array string
+    if len(cookieJSON) <= 2 {
+        return utils.MakeError("Not writing to file as user initial browser data is empty.")
+    }
+
+    // The initial browser cookies will use the same directory as the user config
+    // Make directories for user configs if not exists
+    configDir := mandelbox.getUserConfigDir()
+    if _, err := os.Stat(configDir); os.IsNotExist(err) {
+        if err := os.MkdirAll(configDir, 0777); err != nil {
+            return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
+        }
+        defer func() {
+            cmd := exec.Command("chown", "-R", "ubuntu", configDir)
+            cmd.Run()
+            cmd = exec.Command("chmod", "-R", "777", configDir)
+            cmd.Run()
+        }()
+    }
+
+	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
+    if _, err := os.Stat(unpackedConfigDir); os.IsNotExist(err) {
+        if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+            return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+        }
+    }
+
+	// Begin writing user initial browser data
+    cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
+
+	cookieFile, err := os.OpenFile(cookieFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+    if err != nil {
+        return utils.MakeError("Could not make file %s. Error: %s", cookieFilePath, err)
+    }
+
+	// We want to pass the entire JSON string into the file
+    cookieFile.WriteString(cookieJSON)
+
+	logger.Infof("Finished storing user initial browser data.")
+
+	return nil
+}
+
+// WriteJSONData writes the data received through JSON transport
+// to the config.json file located on the resourceMappingDir.
+func (mandelbox *mandelboxData) WriteJSONData() error {
+	logger.Infof("Writing JSON transport data to config.json file...")
+
+	if err := mandelbox.writeResourceMappingToFile("config.json", mandelbox.GetJSONData()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -305,7 +399,7 @@ func (mandelbox *mandelboxData) cleanUserConfigDir() {
 
 // getUserConfigDir returns the absolute path to the user config directory.
 func (mandelbox *mandelboxData) getUserConfigDir() string {
-	return path.Join(utils.FractalDir, string(mandelbox.GetID()), "userConfigs")
+	return utils.Sprintf("%s%v/%s", utils.FractalDir, mandelbox.GetID(), "userConfigs")
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
@@ -325,22 +419,11 @@ func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4.enc"
 }
 
-// getDecryptedArchiveConfigFilename returns the name of the
+// getDecryptedArchiveFilename returns the name of the
 // decrypted (but still compressed) user config file.
 func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4"
 }
-
-// getEncryptedArchiveCustomConfigFilename returns the name of the encrypted user custom config file(s).
-func getEncryptedArchiveCustomConfigFilename() string {
-	return "fractal-app-custom-config.tar.lz4.enc"
-}
-
-// getCookieFilename returns the name of the cookie file
-func getCookieFilename() string {
-	return "fractal-app-config-cookies"
-}
-
 
 // getUnpackedConfigsDirectoryName returns the name of the
 // directory that stores unpacked user configs.
