@@ -1,4 +1,10 @@
 import { execCommandByOS } from "@app/utils/execCommand"
+import {
+  INITIAL_KEY_REPEAT_MIN_LINUX,
+  INITIAL_KEY_REPEAT_MIN_MAC,
+  INITIAL_KEY_REPEAT_RANGE_LINUX,
+  INITIAL_KEY_REPEAT_RANGE_MAC,
+} from "@app/constants/keyRepeat"
 
 const getInitialKeyRepeat = () => {
   const initialKeyRepeatRaw = execCommandByOS(
@@ -12,9 +18,8 @@ const getInitialKeyRepeat = () => {
   )
 
   let initialKeyRepeat =
-    initialKeyRepeatRaw !== null ? initialKeyRepeatRaw.toString() : ""
-  // Remove trailing '\n'
-  initialKeyRepeat.replace(/\n$/, "")
+    initialKeyRepeatRaw?.toString()?.replace(/\n$/, "") ?? ""
+
   // Extract value from bash output
   if (process.platform === "linux" && initialKeyRepeat !== "") {
     const startIndex =
@@ -25,19 +30,11 @@ const getInitialKeyRepeat = () => {
     initialKeyRepeat = initialKeyRepeat.substring(startIndex, endIndex)
   } else if (process.platform === "darwin" && initialKeyRepeat !== "") {
     // Convert the key repetition delay from Mac scale (shortest=15, longest=120) to Linux scale (shortest=115, longest=2000)
-    const initialKeyRepeatMinValMac: number = 15.0
-    const initialKeyRepeatMaxValMac: number = 120.0
-    const initialKeyRepeatRangeMac: number =
-      initialKeyRepeatMaxValMac - initialKeyRepeatMinValMac
-    const initialKeyRepeatMinValLinux: number = 115.0
-    const initialKeyRepeatMaxValLinux: number = 2000.0
-    const initialKeyRepeatRangeLinux: number =
-      initialKeyRepeatMaxValLinux - initialKeyRepeatMinValLinux
-    const initialKeyRepeatFloat: number =
-      ((parseInt(initialKeyRepeat) - initialKeyRepeatMinValMac) /
-        initialKeyRepeatRangeMac) *
-        initialKeyRepeatRangeLinux +
-      initialKeyRepeatMinValLinux
+    const initialKeyRepeatFloat =
+      ((parseInt(initialKeyRepeat) - INITIAL_KEY_REPEAT_MIN_MAC) /
+        INITIAL_KEY_REPEAT_RANGE_MAC) *
+        INITIAL_KEY_REPEAT_RANGE_LINUX +
+      INITIAL_KEY_REPEAT_MIN_LINUX
     initialKeyRepeat = initialKeyRepeatFloat.toFixed()
   }
 
