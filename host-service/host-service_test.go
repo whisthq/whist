@@ -265,8 +265,8 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	defer uninitializeFilesystem()
 
 	testUser := "testSpinUpWithNewTokenUser"
-	testID := "newTokenMandelbox"
-	oldID := "oldTokenMandelbox"
+	testID := utils.PlaceholderTestUUID()
+	oldID := utils.PlaceholderWarmupUUID()
 
 	// Upload a test config to S3 with an old token
 	oldMandelboxData := mandelbox.New(ctx, &goroutineTracker, mandelboxtypes.MandelboxID(oldID))
@@ -274,7 +274,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	oldMandelboxData.SetConfigEncryptionToken("oldToken1234")
 
 	// Manually create user config files
-	configDir := path.Join(utils.FractalDir, string(oldID), "userConfigs")
+	configDir := utils.Sprintf("%s%v/%s", utils.FractalDir, oldID, "userConfigs")
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		t.Fatalf("Could not make dir %s. Error: %s", configDir, err)
 	}
@@ -299,7 +299,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "newToken1234",
 		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           "testMandelbox",
+		MandelboxID:           mandelboxtypes.MandelboxID(testID),
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
@@ -314,7 +314,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	goroutineTracker.Wait()
 
 	// If decryption was skipped as it should, the user configs directory should not exist
-	newConfigDir := path.Join(utils.FractalDir, string(testID), "userConfigs")
+	newConfigDir := utils.Sprintf("%s%v/%s", utils.FractalDir, testID, "userConfigs")
 	_, err = os.Stat(newConfigDir)
 	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("User config directory %s exists, but should not.", newConfigDir)
