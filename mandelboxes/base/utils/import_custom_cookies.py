@@ -176,8 +176,9 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
 
     with open(cookie_full_path, "r") as f:
         cookies_json = f.read()
-        cookies = json.loads(cookie_json)
+        cookies = json.loads(cookies_json)
 
+        formatted_cookies = []
         for cookie in cookies:
 
             # Encrypted_value should not be included with cookiess
