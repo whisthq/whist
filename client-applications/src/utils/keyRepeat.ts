@@ -4,6 +4,10 @@ import {
   INITIAL_KEY_REPEAT_MIN_MAC,
   INITIAL_KEY_REPEAT_RANGE_LINUX,
   INITIAL_KEY_REPEAT_RANGE_MAC,
+  KEY_REPEAT_MIN_MAC,
+  KEY_REPEAT_RANGE_LINUX,
+  KEY_REPEAT_RANGE_MAC,
+  KEY_REPEAT_MIN_LINUX,
 } from "@app/constants/keyRepeat"
 
 const getInitialKeyRepeat = () => {
@@ -64,17 +68,11 @@ const getKeyRepeat = () => {
     keyRepeat = keyRepeat.substring(startIndex, endIndex)
   } else if (process.platform === "darwin" && keyRepeat !== "") {
     // Convert the key repetition delay from Mac scale (slowest=120, fastest=2) to Linux scale (slowest=9, fastest=1000). NB: the units on Mac and Linux are multiplicative inverse.
-    const keyRepeatMinValMac: number = 2.0
-    const keyRepeatMaxValMac: number = 120.0
-    const keyRepeatRangeMac: number = keyRepeatMaxValMac - keyRepeatMinValMac
-    const keyRepeatMinValLinux: number = 9.0
-    const keyRepeatMaxValLinux: number = 1000.0
-    const keyRepeatRangeLinux: number =
-      keyRepeatMaxValLinux - keyRepeatMinValLinux
     const keyRepeatFloat: number =
-      (1.0 - (parseInt(keyRepeat) - keyRepeatMinValMac) / keyRepeatRangeMac) *
-        keyRepeatRangeLinux +
-      keyRepeatMinValLinux
+      (1.0 -
+        (parseInt(keyRepeat) - KEY_REPEAT_MIN_MAC) / KEY_REPEAT_RANGE_MAC) *
+        KEY_REPEAT_RANGE_LINUX +
+      KEY_REPEAT_MIN_LINUX
     keyRepeat = keyRepeatFloat.toFixed()
   }
 
