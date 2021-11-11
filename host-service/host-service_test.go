@@ -256,12 +256,12 @@ func TestSpinUpMandelbox(t *testing.T) {
 // TestSpinUpWithNewToken tests a mandelbox spinup with the new token flag set
 // and ensures that the old user config is overwritten.
 func TestSpinUpWithNewToken(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	goroutineTracker := sync.WaitGroup{}
+	oldCtx, oldCancel := context.WithCancel(context.Background())
+	oldGoroutineTracker := sync.WaitGroup{}
 
 	// We always want to start with a clean slate
 	uninitializeFilesystem()
-	initializeFilesystem(cancel)
+	initializeFilesystem(oldCancel)
 	defer uninitializeFilesystem()
 
 	testUser := "testSpinUpWithNewTokenUser"
@@ -269,7 +269,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	oldID := utils.PlaceholderWarmupUUID()
 
 	// Upload a test config to S3 with an old token
-	oldMandelboxData := mandelbox.New(ctx, &goroutineTracker, mandelboxtypes.MandelboxID(oldID))
+	oldMandelboxData := mandelbox.New(oldCtx, &oldGoroutineTracker, mandelboxtypes.MandelboxID(oldID))
 	oldMandelboxData.AssignToUser(mandelboxtypes.UserID(testUser))
 	oldMandelboxData.SetConfigEncryptionToken("oldToken1234")
 
@@ -286,6 +286,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	oldMandelboxData.BackupUserConfigs()
 	os.RemoveAll(configDir)
+	oldMandelboxData.Close()
 
 	// Set up a new mandelbox
 	testMandelboxInfo := subscriptions.Mandelbox{
@@ -303,6 +304,9 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	goroutineTracker := sync.WaitGroup{}
 
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
