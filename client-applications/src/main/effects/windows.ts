@@ -16,7 +16,7 @@ import { WindowHashProtocol } from "@app/utils/constants"
 import { createProtocolWindow, createExitTypeform } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
-import { protocolStreamInfo } from "@app/utils/protocol"
+import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import TRIGGER from "@app/utils/triggers"
 
 // Keeps track of how many times we've tried to relaunch the protocol
@@ -42,6 +42,7 @@ fromTrigger("appReady").subscribe(() => {
 const quit = () => {
   logBase("Application exited", {})
   destroyTray()
+  protocolStreamKill()
   app.quit()
 }
 
