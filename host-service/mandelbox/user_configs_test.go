@@ -222,13 +222,13 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	matchingFile, err := os.Open(cookieFilePath)
 	if err != nil {
-		t.Fatalf("error opening matching file %s: %v", unpackedPath, err)
+		t.Fatalf("error opening matching file %s: %v", cookieFilePath, err)
 	}
 
 	matchingFileBuf := bytes.NewBuffer(nil)
 	_, err = matchingFileBuf.ReadFrom(matchingFile)
 	if err != nil {
-		t.Fatalf("error reading matching file %s: %v", unpackedPath, err)
+		t.Fatalf("error reading matching file %s: %v", cookieFilePath, err)
 	}
 
 	// Check contents match
