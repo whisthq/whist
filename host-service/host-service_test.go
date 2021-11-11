@@ -279,7 +279,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		t.Fatalf("failed to setup user config directories: %v", err)
 	}
 
-	configDir := utils.Sprintf("%s%v/%s", utils.FractalDir, oldID, "userConfigs", "unpacked_configs")
+	configDir := utils.Sprintf("%s%v/%s/%s", utils.FractalDir, oldID, "userConfigs", "unpacked_configs")
 	fileContents := "This file should never be seen."
 	err = os.WriteFile(path.Join(configDir, "testFile.txt"), []byte(fileContents), 0777)
 	if err != nil {
@@ -323,7 +323,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	// If decryption was skipped as it should, the unpacked_configs directory should exist
 	// but the test file should not be there.
-	newConfigDir := utils.Sprintf("%s%v/%s", utils.FractalDir, testID, "userConfigs", "unpacked_configs")
+	newConfigDir := utils.Sprintf("%s%v/%s/%s", utils.FractalDir, testID, "userConfigs", "unpacked_configs")
 	_, err = os.Stat(newConfigDir)
 	if err != nil {
 		t.Errorf("unpacked_configs directory does not exist but it should")
