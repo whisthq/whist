@@ -205,11 +205,11 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 
 	// store the cookies in a temporary file
-	filePath := path.Join(utils.UserInitialCookiesDir, "tempt-cookies")
+	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
 
-	fileContents := whistCookie+"\n"+fractalCookie+"\n"
+	filePath := path.Join(unpackedConfigDir, "tempt-cookies")
 
-	err := os.WriteFile(filePath, []byte(fileContents), 0777)
+	err := os.WriteFile(filePath, []byte(cookieJSON), 0777)
 	
 	testFileContents, err := ioutil.ReadFile(filePath)
 	
@@ -217,13 +217,13 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		t.Fatalf("error reading test file %s: %v", filePath, err)
 	}
 
-	matchingFileBuf := bytes.NewBuffer(nil)
-
-	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
-
+	// Get cookie file path
 	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
 
-	_, err = matchingFileBuf.ReadFrom(cookieFilePath)
+	matchingFile := os.Open(cookieFilePath)
+
+	matchingFileBuf := bytes.NewBuffer(nil)
+	_, err = matchingFileBuf.ReadFrom(matchingFile)
 	if err != nil {
 		t.Fatalf("error reading matching file %s: %v", unpackedPath, err)
 	}
@@ -233,5 +233,5 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
 	}
 
-	os.RemoveAll(utils.UserInitialCookiesDir)
+	os.RemoveAll(unpackedConfigDir)
 }
