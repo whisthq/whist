@@ -10,14 +10,13 @@ const SelectBrowser = (props: {
   return (
     <div className="w-full">
       <div className="font-semibold text-2xl text-gray-300">
-        Sync your cookies and passwords
+        Import your cookies and passwords
       </div>
-      <div className="mt-2 mb-4 text-gray-500">
-        Which of your current browsers would you like to sync with? (You will be
-        asked for your computer password twice in order for Fractal to copy over
-        your cookies.)
+      <div className="m-auto mt-2 mb-4 text-gray-400 max-w-xl">
+        You will be asked for your computer password twice when we copy your
+        cookies.
       </div>
-      <div className="mt-10">
+      <div className="mt-8">
         <div className="bg-gray-900 px-4 py-2 rounded w-96 m-auto">
           <select
             id="browser"
