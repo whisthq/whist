@@ -78,8 +78,6 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #define MAX_UNSYNCED_FRAMES_RENDER 6
 // If we want an iframe, this is how often we keep asking for it
 #define IFRAME_REQUEST_INTERVAL_MS (50)
-// control whether we ask for iframes on missing too many packets - turned off for now
-#define REQUEST_IFRAME_ON_MISSING_PACKETS false
 
 #define BITRATE_BUCKET_SIZE 500000
 #define NUMBER_LOADING_FRAMES 50
@@ -275,46 +273,16 @@ bool try_request_iframe_to_catch_up() {
             // cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
             if (request_iframe()) {
                 LOG_INFO(
-                    "The most recent ID is %d frames ahead of the most recent rendered frame, "
-                    "and the next frame to render has been alive for %f MS. I-Frame is now being "
+                    "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
+                    "and the next frame to render has been alive for %fms. I-Frame is now being "
                     "requested to catch-up.",
-                    video_ring_buffer->max_id - video_data.last_rendered_id,
+                    video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
                     get_timer(ctx->frame_creation_timer) * 1000);
             }
             return true;
-        } else {
-#if REQUEST_IFRAME_ON_MISSING_PACKETS
-#define MAX_MISSING_PACKETS 50
-            // We should also request an iframe if we are missing a lot of packets in case
-            // frames are large.
-            int missing_packets = 0;
-            for (int i = video_data.last_rendered_id + 1;
-                 i < video_data.last_rendered_id + MAX_UNSYNCED_FRAMES; i++) {
-                FrameData* ctx = get_frame_at_id(video_ring_buffer, i);
-                if (ctx->id == i) {
-                    for (int j = 0; j < ctx->num_packets; j++) {
-                        if (!ctx->received_indices[j]) {
-                            missing_packets++;
-                        }
-                    }
-                }
-            }
-            if (missing_packets > MAX_MISSING_PACKETS) {
-                if (request_iframe()) {
-                    LOG_INFO(
-                        "Missing %d packets in the %d frames ahead of the most recently "
-                        "rendered frame,"
-                        "and there is no available frame to render. I-Frame is now being "
-                        "requested "
-                        "to catch-up.",
-                        MAX_MISSING_PACKETS, MAX_UNSYNCED_FRAMES);
-                }
-                return true;
-            }
-#endif
         }
     } else {
-        // If we're rendering, we might catch up in a bit, so we can be more lenient
+        // If we're currently rendering, we might catch up in a bit, so we can be more lenient
         // and will only i-frame if we're MAX_UNSYNCED_FRAMES_RENDER frames behind.
         if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
             if (request_iframe()) {
@@ -808,10 +776,11 @@ void update_video() {
             // Now render_context will own the frame_buffer memory block
             render_context = *ctx;
             // Tell the ring buffer we're rendering this frame
-            set_rendering(video_ring_buffer, ctx->id);
+            int current_render_id = next_render_id;
+            set_rendering(video_ring_buffer, current_render_id);
             // Get the FrameData for the next frame
-            int next_frame_render_id = next_render_id + 1;
-            FrameData* next_frame_ctx = get_frame_at_id(video_ring_buffer, next_frame_render_id);
+            next_render_id = current_render_id + 1;
+            FrameData* next_frame_ctx = get_frame_at_id(video_ring_buffer, next_render_id);
 
             // If the next frame has been received, let's skip the rendering so we can render
             // the next frame faster. We do this because rendering is synced with screen
@@ -821,18 +790,19 @@ void update_video() {
             // Additionally, we only skip renders with vsync on, since that's the only time
             // we save time by not rendering
             double time_since_last_render = get_timer(video_data.last_loading_frame_timer);
-            if (time_since_last_render < 1.0 / 45.0 && next_frame_ctx->id == next_frame_render_id &&
+            if (time_since_last_render < 1.0 / 45.0 && next_frame_ctx->id == next_render_id &&
                 next_frame_ctx->packets_received == next_frame_ctx->num_packets && VSYNC_ON) {
-                skip_render = true;
                 LOG_INFO(
-                    "Skipping render because frame ID %d has been received and it has been only "
+                    "Skipping ID %d, because %d has been received and it has been only "
                     "%fms since the last render",
-                    next_frame_render_id, time_since_last_render * 1000);
+                    current_render_id, next_render_id, time_since_last_render * 1000);
                 video_ring_buffer->num_frames_skipped++;
+                skip_render = true;
             } else {
-                skip_render = false;
                 video_ring_buffer->num_frames_rendered++;
+                skip_render = false;
             }
+            // Render out current_render_id
             rendering = true;
         }
     }
