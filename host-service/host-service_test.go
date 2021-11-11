@@ -320,6 +320,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
 	goroutineTracker.Wait()
+	<-testJSONTransportRequest.resultChan
 
 	// If decryption was skipped as it should, the unpacked_configs directory should exist
 	// but the test file should not be there.
