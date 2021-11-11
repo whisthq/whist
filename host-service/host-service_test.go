@@ -306,6 +306,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(testID),
 		JSONData:              "test_json_data",
+		IsNewConfigToken:      true,
 		resultChan:            make(chan requestResult),
 	}
 
