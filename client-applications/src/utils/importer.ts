@@ -424,20 +424,4 @@ const getDecryptedCookies = async (
   // return new Promise((resolve) => resolve([]))
 }
 
-const getJSONDecryptedCookies = async (
-  browser: InstalledBrowser | undefined
-): Promise<string> => {
-  const cookies = await getDecryptedCookies(browser)
-
-  return JSON.stringify(cookies)
-
-  // return new Promise((resolve) => resolve([]))
-}
-
-export {
-  InstalledBrowser,
-  Cookie,
-  getInstalledBrowsers,
-  getDecryptedCookies,
-  getJSONDecryptedCookies,
-}
+export { InstalledBrowser, Cookie, getInstalledBrowsers, getDecryptedCookies }

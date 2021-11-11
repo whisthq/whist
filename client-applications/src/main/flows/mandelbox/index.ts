@@ -5,7 +5,7 @@ import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { persistGet } from "@app/utils/persist"
-import { getJSONDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
+import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 
@@ -33,7 +33,7 @@ export default flow(
 
     const decrypted = trigger.pipe(
       switchMap((t) =>
-        from(getJSONDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
+        from(getDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
       ),
       share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
     )
@@ -44,7 +44,7 @@ export default flow(
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
-          cookies: d,
+          cookies: JSON.stringify(d),
           mandelboxID: c.mandelboxID,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
