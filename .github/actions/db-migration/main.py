@@ -32,8 +32,8 @@ GITHUB_REPO = "fractal/fractal"
 GITHUB_PR_URL = "https://github.com/fractal/fractal/pull/"
 HEROKU_API_TOKEN = os.environ.get("HEROKU_DEVELOPER_API_KEY")
 SERVER_DEV = "whist-dev-server"
-SERVER_STAGING = "fractal-staging-server"
-SERVER_PROD = "fractal-prod-server"
+SERVER_STAGING = "whist-staging-server"
+SERVER_PROD = "whist-prod-server"
 PATH_BRANCH_SCHEMA = "webserver/db_migration/schema.sql"
 COMMENT_IDENTIFIER = "AUTOMATED_DB_MIGRATION_MESSAGE"
 
