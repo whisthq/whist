@@ -31,6 +31,7 @@ function has_updated {
   if grep "$TIMESTAMP_LINE" "$CACHE_FILE" &>/dev/null; then
     return 1 # Return false since the lib hasn't updated
   else
+    echo -n "---- "
     # Delete old timestamp line for that lib, if it exists
     NEW_LIBCACHE=$(sed "/^$1 /d" "$CACHE_FILE")
     echo "$NEW_LIBCACHE" > "$CACHE_FILE"
@@ -49,7 +50,6 @@ function has_updated {
 
 # If the include/SDL2 directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-echo -n "---- "
 LIB="fractal-sdl2-headers.tar.gz"
 SDL_DIR="$DEST_DIR/include/SDL2"
 if has_updated "$LIB" || [[ ! -d "$SDL_DIR" ]]; then
@@ -67,7 +67,6 @@ fi
 ###############################
 
 # Select SDL lib dir and SDL lib targz name based on OS and hardware architecture (macOS)
-echo -n "---- "
 SDL_LIB_DIR="$DEST_DIR/lib/64/SDL2/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
@@ -94,7 +93,6 @@ fi
 
 # If the include/sentry directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-echo -n "---- "
 LIB="fractal-sentry-headers.tar.gz"
 SENTRY_DIR="$DEST_DIR/include/sentry"
 if has_updated "$LIB" || [[ ! -d "$SENTRY_DIR" ]]; then
@@ -112,7 +110,6 @@ fi
 ###############################
 
 # Select Sentry lib dir and Sentry lib targz name based on OS and hardware architecture (macOS)
-echo -n "---- "
 SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
@@ -139,7 +136,6 @@ fi
 
 # If the include/openssl directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-echo -n "---- "
 LIB="fractal-libcrypto-headers.tar.gz"
 OPENSSL_DIR="$DEST_DIR/include/openssl"
 if has_updated "$LIB" || [[ ! -d "$OPENSSL_DIR" ]]; then
@@ -157,7 +153,6 @@ fi
 ###############################
 
 # Select OpenSSL lib dir and OpenSSL lib targz name based on OS and hardware architecture (macOS)
-echo -n "---- "
 OPENSSL_LIB_DIR="$DEST_DIR/lib/64/openssl/$OS"
 if [[ "$OS" =~ "Windows" ]]; then
   OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
@@ -184,7 +179,6 @@ fi
 
 # If the include/ffmpeg directory doesn't exist, make it and fill it
 # Or, if the lib has updated, refill the directory
-echo -n "---- "
 LIB="fractal-ffmpeg-headers.tar.gz"
 FFMPEG_DIR="$DEST_DIR/include/ffmpeg"
 if has_updated "$LIB" || [[ ! -d "$FFMPEG_DIR" ]]; then
@@ -201,7 +195,6 @@ fi
 ###############################
 
 # Select FFmpeg lib dir and FFmpeg lib targz name based on OS and hardware architecture (macOS)
-echo -n "---- "
 FFMPEG_LIB_DIR="$DEST_DIR/lib/64/ffmpeg"
 if [[ "$OS" =~ "Windows" ]]; then
   FFMPEG_LIB="fractal-windows-ffmpeg-shared-lib.tar.gz"
