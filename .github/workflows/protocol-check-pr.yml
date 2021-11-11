@@ -359,6 +359,7 @@ jobs:
       - name: Install Dependencies
         run: pip3 install boto3 paramiko # paramiko is our SSH client
 
-      - name: Run Protocol Performance Test
-        working-directory: .github/workflows/helpers/aws
-        run: python3 streaming_performance_tester.py --ssh-key-name "protocol_performance_testing_sshkey" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN }}"
+      # NOTE: RUNNING THIS FOR NOW WILL SPIN UP INSTANCES THAT DON'T SPIN DOWN
+      # - name: Run Protocol Performance Test
+      #   working-directory: .github/workflows/helpers/aws
+      #   run: python3 streaming_performance_tester.py --ssh-key-name "protocol_performance_testing_sshkey" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN }}"
