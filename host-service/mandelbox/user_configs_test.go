@@ -220,7 +220,10 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Get cookie file path
 	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
 
-	matchingFile := os.Open(cookieFilePath)
+	matchingFile, err := os.Open(cookieFilePath)
+	if err != nil {
+		t.Fatalf("error opening matching file %s: %v", unpackedPath, err)
+	}
 
 	matchingFileBuf := bytes.NewBuffer(nil)
 	_, err = matchingFileBuf.ReadFrom(matchingFile)
