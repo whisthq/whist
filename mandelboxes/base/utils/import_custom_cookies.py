@@ -118,7 +118,7 @@ def format_chromium_based_cookie(cookie):
         cookie.get("encrypted_value", ""),
         cookie["path"],
         cookie["expires_utc"],
-        cookie.get("secure", cookie.get("is_secure", False)),
+        cookie.get("secure", cookie.get("is_secure", 0)),
         cookie["is_httponly"],
         cookie["last_access_utc"],
         cookie["has_expires"],
