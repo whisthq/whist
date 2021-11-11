@@ -181,6 +181,11 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
             id (int): ID of the frame we are currently rendering.
     */
 
+    if (id <= ring_buffer->last_rendered_id) {
+        LOG_FATAL("Tried to call set_rendering on an ID %d <= the last rendered ID %d", id,
+                  ring_buffer->last_rendered_id);
+    }
+
     // Set first, so that last_rendered_id is updated
     ring_buffer->last_rendered_id = id;
 
@@ -191,6 +196,12 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
     // set the currently rendering ID and frame
     ring_buffer->currently_rendering_id = id;
     FrameData* current_frame = get_frame_at_id(ring_buffer, id);
+    if (current_frame->id != id) {
+        LOG_FATAL("The Frame ID %d does not exist, got %d instead", id, current_frame->id);
+    }
+    if (current_frame->packets_received != current_frame->num_packets) {
+        LOG_FATAL("Tried to call set_rendering on an incomplete packet %d!", id);
+    }
     ring_buffer->currently_rendering_frame = *current_frame;
     // clear the current frame's data
     current_frame->frame_buffer = NULL;
