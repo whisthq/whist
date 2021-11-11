@@ -286,7 +286,6 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	oldMandelboxData.BackupUserConfigs()
 	os.RemoveAll(configDir)
-	oldMandelboxData.Close()
 
 	// Set up a new mandelbox
 	testMandelboxInfo := subscriptions.Mandelbox{
