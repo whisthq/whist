@@ -6,6 +6,7 @@
 package types // import "github.com/fractal/fractal/host-service/mandelbox/types"
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/fractal/fractal/host-service/utils"
@@ -41,6 +42,24 @@ type ClientAppAccessToken string
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()
+}
+
+// MarshalJSON is a utility function to properly marshal a mandelboxID into a proper JSON representation
+func (mandelboxID MandelboxID) MarshalJSON() ([]byte, error) {
+	u := uuid.UUID(mandelboxID)
+	UUID, err := uuid.Parse(u.String())
+
+	if err != nil {
+		return nil, utils.MakeError("Received invalid UUID when marshaling")
+	}
+
+	bytes, err := json.Marshal(UUID.String())
+
+	if err != nil {
+		return nil, utils.MakeError("Error marshaling UUID")
+	}
+
+	return bytes, nil
 }
 
 // UnmarshalJSON is a utility function to properly unmarshal JSON into a type MandelboxID
