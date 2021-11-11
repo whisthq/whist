@@ -44,18 +44,18 @@ def get_or_create_cookie_file(browser_name):
                 "Browser not recognized. Works on chrome, chromium, opera, edge, and brave."
             )
 
-        paths = linux_cookies
-
         path = browser_cookie3.expand_paths(linux_cookies, "linux")
 
         # If not defined then create file
         if not path:
+            path = os.path.expanduser(linux_cookies[0])
+
             # Create directories if it does not exist
-            directory = os.path.dirname(paths[0])
+            directory = os.path.dirname(path)
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
-            connection = sqlite3.connect(paths[0])
+            connection = sqlite3.connect(path)
             cursor = connection.cursor()
 
             cursor.execute(
@@ -66,8 +66,6 @@ def get_or_create_cookie_file(browser_name):
             )
             connection.commit()
             connection.close()
-
-            path = os.path.expanduser(paths[0])
 
         return path
 
@@ -169,9 +167,7 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
             decrypted_value = cookie.get("decrypted_value", None)
             if decrypted_value:
                 encrypted_prefix = cookie.get("encrypted_prefix", None)
-                cookie["encrypted_value"] = encrypt(
-                    target_browser_name, decrypted_value, encrypted_prefix
-                )
+                cookie["encrypted_value"] = encrypt(decrypted_value)
 
             cookie.pop("decrypted_value", None)
             cookie.pop("encryption_prefix", None)
