@@ -11,7 +11,12 @@ export default flow<{
   const withConfig = trigger.pipe(
     map((x) => ({
       ...x,
-      configToken: store.get("auth.configToken") ?? generateRandomConfigToken(),
+      ...(store.has("auth.configToken")
+        ? {
+            configToken: store.get("auth.configToken"),
+            isNewConfigToken: false,
+          }
+        : { configToken: generateRandomConfigToken(), isNewConfigToken: true }),
     }))
   )
 

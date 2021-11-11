@@ -11,6 +11,7 @@ import { flow, fork } from "@app/utils/flows"
 export default flow<{
   ip: string
   config_encryption_token: string
+  is_new_config_encryption_token: boolean
   jwt_access_token: string
   mandelbox_id: string
   json_data: string

@@ -13,6 +13,7 @@ export default flow(
     trigger: Observable<{
       accessToken: string
       configToken: string
+      isNewConfigToken: boolean
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -109,6 +110,7 @@ export default flow(
         map(([t, c]) => ({
           ip: c.ip,
           config_encryption_token: t.configToken,
+          is_new_config_encryption_token: t.isNewConfigToken,
           jwt_access_token: t.accessToken,
           mandelbox_id: c.mandelboxID,
           json_data: JSON.stringify({
