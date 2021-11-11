@@ -133,9 +133,9 @@ jobs:
           if [[ ${GITHUB_BASE_REF} == dev ]]; then
               HEROKU_APP_NAME=whist-dev-server
           elif [[ ${GITHUB_BASE_REF} == staging ]]; then
-              HEROKU_APP_NAME=fractal-staging-server
+              HEROKU_APP_NAME=whist-staging-server
           elif [[ ${GITHUB_BASE_REF} == prod ]]; then
-              HEROKU_APP_NAME=fractal-prod-server
+              HEROKU_APP_NAME=whist-prod-server
           else
               echo 'Error: Invalid branch' && false
           fi

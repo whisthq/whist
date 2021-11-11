@@ -52,7 +52,7 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
 
   echo "Redeploying webserver..."
   # this should redeploy the webserver with code that corresponds to the new schema
-  git push -f heroku-fractal-server workflows-private/webserver:master
+  git push -f heroku-whist-server workflows-private/webserver:master
 
   # bring webserver back online
   heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
@@ -64,7 +64,7 @@ elif [ $MIGRA_EXIT_CODE == "0" ]; then
 
   echo "Redeploying webserver..."
   # this should redeploy the webserver with code that corresponds to the new schema
-  git push -f heroku-fractal-server workflows-private/webserver:master
+  git push -f heroku-whist-server workflows-private/webserver:master
 
 else
   echo "Diff script exited poorly. We are not redeploying the webserver because"

@@ -21,7 +21,7 @@ env:
 jobs:
   # Create a job strategy matrix for the webserver-clean-up-instances job that
   # will cause the following commands to run against each Heroku app in the
-  # fractal-server pipeline in a one-off dyno:
+  # whist-server pipeline in a one-off dyno:
   #  * flask compute scale-down-instances
   #  * flask compute prune-lingering-instances
   webserver-clean-up-instances-matrix:
@@ -40,7 +40,7 @@ jobs:
         # arguments to the echo command. The echo command prints a space
         # between each of its arguments. Effectively, omitting the quotation
         # marks converts newlines into spaces.
-        run: echo ::set-output name=info::$(heroku pipelines:info fractal-server --json)
+        run: echo ::set-output name=info::$(heroku pipelines:info whist-server --json)
 
         # The dictionary called lookup maps the names of Heroku apps to the
         # names of deployment environments (e.g. prod, staging). The deployment
@@ -59,13 +59,13 @@ jobs:
 
           apps = filter(lambda app: "-ci-" not in app, os.environ["APPS"].split(","))
           commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances"]
-          lookup = {"fractal-prod-server": "prod", "fractal-staging-server": "staging"}
+          lookup = {"whist-prod-server": "prod", "whist-staging-server": "staging"}
           include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
           matrix = {"include": include}
 
           print(f"::set-output name=matrix::{json.dumps(matrix)}")
 
-  # Run the following commands against each Heroku app in the fractal-server
+  # Run the following commands against each Heroku app in the whist-server
   # pipeline in a one-off dyno:
   #  * flask compute scale-down-instances
   #  * flask compute prune-lingering-instances

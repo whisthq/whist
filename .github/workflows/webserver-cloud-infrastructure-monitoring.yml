@@ -142,10 +142,10 @@ jobs:
           DATABASE_DEV_URL=$(heroku config:get DATABASE_URL --app=whist-dev-server)
           echo "DATABASE_DEV_URL=$DATABASE_DEV_URL" >> $GITHUB_ENV
 
-          DATABASE_STAGING_URL=$(heroku config:get DATABASE_URL --app=fractal-staging-server)
+          DATABASE_STAGING_URL=$(heroku config:get DATABASE_URL --app=whist-staging-server)
           echo "DATABASE_STAGING_URL=$DATABASE_STAGING_URL" >> $GITHUB_ENV
 
-          DATABASE_PROD_URL=$(heroku config:get DATABASE_URL --app=fractal-prod-server)
+          DATABASE_PROD_URL=$(heroku config:get DATABASE_URL --app=whist-prod-server)
           echo "DATABASE_PROD_URL=$DATABASE_PROD_URL" >> $GITHUB_ENV
 
       - name: Identifies Hanging EC2 Instances and Notify in Slack if They Exist

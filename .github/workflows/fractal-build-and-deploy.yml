@@ -666,15 +666,15 @@ jobs:
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
               HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-              HEROKU_APP_NAME=fractal-staging-server
+              HEROKU_APP_NAME=whist-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-              HEROKU_APP_NAME=fractal-prod-server
+              HEROKU_APP_NAME=whist-prod-server
           else
               echo 'Error: Invalid branch' && false
           fi
           echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
-          heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
+          heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-server
 
       - name: Install splitsh-lite for Subtree Split
         run: >
@@ -795,9 +795,9 @@ jobs:
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
               HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-              HEROKU_APP_NAME=fractal-staging-server
+              HEROKU_APP_NAME=whist-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-              HEROKU_APP_NAME=fractal-prod-server
+              HEROKU_APP_NAME=whist-prod-server
           else
               echo 'Error: Invalid branch' && false
           fi
@@ -1387,9 +1387,9 @@ jobs:
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
               HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-              HEROKU_APP_NAME=fractal-staging-server
+              HEROKU_APP_NAME=whist-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-              HEROKU_APP_NAME=fractal-prod-server
+              HEROKU_APP_NAME=whist-prod-server
           else
               echo 'Error: Invalid branch' && false
           fi
