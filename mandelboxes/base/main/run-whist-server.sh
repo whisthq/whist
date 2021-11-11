@@ -128,7 +128,7 @@ sync # Necessary so that even if the container exits very soon the host service 
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
-/usr/share/whist/WhistServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
+/usr/share/whist/WhistServer $OPTIONS &> >(tee $PROTOCOL_LOG_FILENAME) &
 whist_server_pid=$!
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).
