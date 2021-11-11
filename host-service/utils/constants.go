@@ -11,6 +11,10 @@ const (
 	FractalPrivateDir string = "/fractalprivate/"
 )
 
+// Note: We use these values as placeholder UUIDs because they are obvious and immediate
+// when parsing/searching through logs, and by using a non nil placeholder UUID we are
+// able to detect the error when a UUID is nil.
+
 // PlaceholderWarmupUUID returns the special uuid to use as a placholder during warmup.
 func PlaceholderWarmupUUID() uuid.UUID {
 	uuid, _ := uuid.Parse("11111111-1111-1111-1111-111111111111")

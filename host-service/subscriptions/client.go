@@ -51,7 +51,10 @@ func Close(client *graphql.SubscriptionClient, subscriptionIDs []string) error {
 	logger.Infof("Closing connection to Hasura server...")
 	err := client.Close()
 	if err != nil {
-		logger.Errorf("Error closing connection with Hasura server: %v", err)
+		// Only use a warning instead of an error because failure to close the
+		// Hasura server is not fatal, as we have already started the host service
+		// shut down process and the client will get cleaned up.
+		logger.Warningf("Error closing connection with Hasura server: %v", err)
 		return err
 	}
 
