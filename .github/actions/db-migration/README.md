@@ -49,7 +49,7 @@ pg_dump --no-owner --no-privileges --schema-only $DB_URL > webserver/db_migratio
 
 The Whist migration strategy revolves around treating our database schema as code. Like anything else in the codebase, this involves checking a schema "source of truth" into version control. This takes the form of a file in `fractal/webserver/db-migration` called `schema.sql`.
 
-`schema.sql` represents the shape of the database schema for the branch that it resides in. So the `schema.sql` in the `dev` branch represents the database at `whist-dev-server`, and the `schema.sql` in the `staging` branch represents the database at `fractal-staging-server`.
+`schema.sql` represents the shape of the database schema for the branch that it resides in. So the `schema.sql` in the `dev` branch represents the database at `whist-dev-server`, and the `schema.sql` in the `staging` branch represents the database at `whist-staging-server`.
 
 This means that standard `git` discipline applies to how we manage our database schema. Making a change to the database schema involves these steps:
 
@@ -84,6 +84,6 @@ When the GitHub Actions migration workflow is triggered by a pull request, a con
 6. If the `PERFORM_DATABASE_MIGRATION` environment variable is `True` (e.g. during merge with `origin/dev`), then run the SQL commands in **DIFF** on the live database (e.g. `whist-dev-server`).
 7. Print output to GitHub pull request conversation.
 
-This workflow applies to every branch, including "promoting" `dev` to `staging` etc. When you're developing a feature, the **DB_B** schema is `schema.sql` in your feature branch, and the **DB_A** schema is the schema of `whist-dev-server`. When you're promoting `dev` to `staging`, the **DB_B** schema is the `schema.sql` in the `dev` branch, and the **DB_A** schema is the schema of `fractal-staging-server`.
+This workflow applies to every branch, including "promoting" `dev` to `staging` etc. When you're developing a feature, the **DB_B** schema is `schema.sql` in your feature branch, and the **DB_A** schema is the schema of `whist-dev-server`. When you're promoting `dev` to `staging`, the **DB_B** schema is the `schema.sql` in the `dev` branch, and the **DB_A** schema is the schema of `whist-staging-server`.
 
 Actual execution of the SQL commands to perform a database migration is always handled by GitHub Actions, with the commands available inside of pull requests for our team to review.

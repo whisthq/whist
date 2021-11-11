@@ -32,9 +32,9 @@ func GetAppName() string {
 	case metadata.EnvDev:
 		return "whist-dev-server"
 	case metadata.EnvStaging:
-		return "fractal-staging-server"
+		return "whist-staging-server"
 	case metadata.EnvProd:
-		return "fractal-prod-server"
+		return "whist-prod-server"
 	default:
 		// In the default case we use the dev server, like the webserver.
 		return "whist-dev-server"
@@ -61,9 +61,9 @@ func GetHasuraName() string {
 	case metadata.EnvDev:
 		return "whist-dev-hasura"
 	case metadata.EnvStaging:
-		return "fractal-staging-hasura"
+		return "whist-staging-hasura"
 	case metadata.EnvProd:
-		return "fractal-prod-hasura"
+		return "whist-prod-hasura"
 	default:
 		// In the default case we use the dev hasura server.
 		return "whist-dev-hasura"

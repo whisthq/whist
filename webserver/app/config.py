@@ -272,9 +272,9 @@ class DeploymentConfig:
             return env_names.TESTING
 
         heroku_app_name = os.environ["HEROKU_APP_NAME"]
-        if heroku_app_name == "fractal-prod-server":
+        if heroku_app_name == "whist-prod-server":
             return env_names.PRODUCTION
-        elif heroku_app_name == "fractal-staging-server":
+        elif heroku_app_name == "whist-staging-server":
             return env_names.STAGING
 
         return env_names.DEVELOPMENT
