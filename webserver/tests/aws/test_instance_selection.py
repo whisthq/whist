@@ -5,14 +5,18 @@ import pytest
 
 from app.database.models.cloud import InstanceInfo
 from app.helpers.aws.aws_instance_post import find_instance, bundled_region
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
+from app.constants.mandelbox_assign_error_names import MandelboxAssignError
+from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, INCORRECT_COMMIT_HASH_FOR_TESTING
 
 
 def test_empty_instances(region_name: str) -> None:
     """
     Confirms that we don't find any instances on a fresh db
     """
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert (
+        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.NO_INSTANCE_AVAILABLE
+    )
 
 
 def test_find_initial_instance(
@@ -54,6 +58,19 @@ def test_find_part_full_instance_order(
     )
 
 
+def test_no_find_instance_with_incorrect_commit_hash(
+    bulk_instance: Callable[..., InstanceInfo], region_name: str
+) -> None:
+    """
+    Confirms that we find an empty instance
+    """
+    bulk_instance(location=region_name)
+    assert (
+        find_instance(region_name, INCORRECT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.COMMIT_HASH_MISMATCH
+    )
+
+
 def test_no_find_full_instance(
     bulk_instance: Callable[..., InstanceInfo], region_name: str
 ) -> None:
@@ -61,7 +78,10 @@ def test_no_find_full_instance(
     Confirms that we don't find a full instance
     """
     _ = bulk_instance(location=region_name, associated_mandelboxes=10)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert (
+        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.NO_INSTANCE_AVAILABLE
+    )
 
 
 def test_no_find_pre_connected_instance(
@@ -71,7 +91,10 @@ def test_no_find_pre_connected_instance(
     Confirms that we don't find a pre-connection instance
     """
     _ = bulk_instance(location=region_name, associated_mandelboxes=0, status="PRE_CONNECTION")
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert (
+        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.NO_INSTANCE_AVAILABLE
+    )
 
 
 def test_no_find_full_small_instance(
@@ -81,7 +104,10 @@ def test_no_find_full_small_instance(
     Confirms that we don't find a full instance with <10 max
     """
     _ = bulk_instance(location=region_name, mandelbox_capacity=5, associated_mandelboxes=5)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+    assert (
+        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.NO_INSTANCE_AVAILABLE
+    )
 
 
 @pytest.mark.parametrize(
@@ -101,11 +127,13 @@ def test_assignment_logic(bulk_instance: Callable[..., InstanceInfo], location: 
     replacement_region = bundled_region[location][0]
     bulk_instance(associated_mandelboxes=10, location=location)
     assert (
-        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.NO_INSTANCE_AVAILABLE
     ), f"we assigned an already full instance in the main region, {location}"
     bulk_instance(associated_mandelboxes=10, location=replacement_region)
     assert (
-        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is None
+        find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)
+        is MandelboxAssignError.NO_INSTANCE_AVAILABLE
     ), f"we assigned an already full instance in the secondary region, {replacement_region}"
     bulk_instance(location=replacement_region, instance_name="replacement-mandelbox")
     assert find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is not None, (

@@ -20,6 +20,7 @@ from app.utils.metrics.flask_app import app_record_metrics
 from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
 from app.utils.stripe.payments import payment_required
+from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 
 aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
@@ -77,17 +78,17 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         f"Trying to find instance for user {username} in region {region},\
         with commit hash {client_commit_hash}."
     )
-    instance_name = find_instance(region, client_commit_hash)
+    instance_or_error = find_instance(region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
 
     # How long did it take to find an instance?
     time_to_find_instance = time_when_instance_found - start_time
     fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
 
-    if instance_name is None:
+    if MandelboxAssignError.contains(instance_or_error):
         fractal_logger.info(
-            f"No instance found in region {region},\
-              with client_commit_hash: {client_commit_hash}"
+            f"No instance found in region {region}\
+              with client_commit_hash: {client_commit_hash} because {instance_or_error}"
         )
 
         if not current_app.testing:
@@ -113,11 +114,13 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"Returning 503 to user {username} because we didn't find an instance for them."
         )
         return (
-            jsonify({"ip": "None", "mandelbox_id": "None", "region": region}),
+            jsonify(
+                {"ip": "None", "mandelbox_id": "None", "region": region, "error": instance_or_error}
+            ),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
-    instance = InstanceInfo.query.get(instance_name)
+    instance = InstanceInfo.query.get(instance_or_error)
     mandelbox_id = str(uuid.uuid4())
     obj = MandelboxInfo(
         mandelbox_id=mandelbox_id,
