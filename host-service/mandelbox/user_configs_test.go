@@ -56,7 +56,7 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 
 	testMandelboxData.rwlock.Lock()
-	if err := testMandelboxData.backupUserConfigs(); err != nil {
+	if err := testMandelboxData.BackupUserConfigs(); err != nil {
 		t.Fatalf("error backing up configs: %v", err)
 	}
 	testMandelboxData.rwlock.Unlock()
