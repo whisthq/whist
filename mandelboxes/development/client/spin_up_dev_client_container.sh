@@ -59,6 +59,7 @@ DOCKER_CREATE_CMD=`docker create -it \
     -v "/fractal/temp/$fake_mandelboxID/sockets:/tmp/sockets" \
     -v "/run/udev/data:/run/udev/data:ro" \
     -v "/fractal/$fake_mandelboxID/userConfigs/unpacked_configs:/fractal/userConfigs:rshared" \
+    -v "fractal/temp/logs/$fake_mandelboxID/$RANDOM:/var/log/fractal" \
     --tmpfs /run \
     --tmpfs /run/lock \
     --gpus all \
