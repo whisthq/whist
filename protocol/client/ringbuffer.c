@@ -374,8 +374,6 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
 // Maximum burst mbps that can be used by nacking
 // This is calculated per 5ms interval
 #define MAX_NACK_BURST_MBPS 4800000
-// Toggle verbose nacking logs
-#define LOG_NACKING false
 
 int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
                                      int max_packets_to_nack) {

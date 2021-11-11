@@ -85,11 +85,14 @@ Defines
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT 32273
 
+// Various control flags
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
-#define LOG_VIDEO false
-#define LOG_NETWORKING false
 #define ENCRYPTING_PACKETS true
+// Toggle verbose logs
+#define LOG_VIDEO false
+#define LOG_NACKING false
+#define LOG_NETWORKING false
 
 #define WINAPI_INPUT_DRIVER 1
 #define XTEST_INPUT_DRIVER 2
@@ -111,6 +114,8 @@ Defines
 #define USING_SHM true
 
 #endif
+
+#define VSYNC_ON false
 
 // Milliseconds between sending resize events from client to server
 // Used to throttle resize event spam.
@@ -170,10 +175,6 @@ Defines
 // this maxlen is the determined Whist environment max length (the upper bound on all flags passed
 // into the protocol)
 #define FRACTAL_ARGS_MAXLEN 255
-// Maximum number of packets that can fit in a frame. These values mirror the ones defined at the
-// top of client/ringbuffer.c
-#define MAX_FRAME_VIDEO_PACKETS 500
-#define MAX_FRAME_AUDIO_PACKETS 3
 
 /*
 ============================

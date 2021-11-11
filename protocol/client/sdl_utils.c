@@ -162,8 +162,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     renderer creation
 */
 #ifdef __APPLE__
-    init_sdl_renderer =
-        SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    init_sdl_renderer = init_renderer(sdl_window);
 #endif
 
     // Set icon
@@ -189,6 +188,14 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     output_height = get_window_pixel_height((SDL_Window*)sdl_window);
 
     return sdl_window;
+}
+
+SDL_Renderer* init_renderer(SDL_Window* sdl_window) {
+    Uint32 flags = SDL_RENDERER_ACCELERATED;
+#if VSYNC_ON
+    flags |= SDL_RENDERER_PRESENTVSYNC;
+#endif
+    return SDL_CreateRenderer(sdl_window, -1, flags);
 }
 
 void destroy_sdl(SDL_Window* window_param) {

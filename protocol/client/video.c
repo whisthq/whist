@@ -817,10 +817,12 @@ void update_video() {
             // the next frame faster. We do this because rendering is synced with screen
             // refresh, so rendering the backlogged frames requires the client to wait until the
             // screen refreshes N more times, causing it to fall behind the server.
-            // However, we set a min FPS of 25, so that the display is still smoothly rendering.
+            // However, we set a min FPS of 45, so that the display is still smoothly rendering.
+            // Additionally, we only skip renders with vsync on, since that's the only time
+            // we save time by not rendering
             double time_since_last_render = get_timer(video_data.last_loading_frame_timer);
             if (time_since_last_render < 1.0 / 45.0 && next_frame_ctx->id == next_frame_render_id &&
-                next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
+                next_frame_ctx->packets_received == next_frame_ctx->num_packets && VSYNC_ON) {
                 skip_render = true;
                 LOG_INFO(
                     "Skipping render because frame ID %d has been received and it has been only "
@@ -941,8 +943,7 @@ int init_video_renderer() {
 #ifdef __APPLE__
     SDL_Renderer* renderer = (SDL_Renderer*)init_sdl_renderer;
 #else
-    SDL_Renderer* renderer = SDL_CreateRenderer(
-        (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = init_renderer((SDL_Window*)window);
 #endif
 
     // Show a black screen initially before anything else
