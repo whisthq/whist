@@ -315,7 +315,8 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	// If decryption was skipped as it should, the user configs directory should not exist
 	newConfigDir := path.Join(utils.FractalDir, string(testID), "userConfigs")
-	if _, err := os.Stat(newConfigDir); !os.IsNotExist(err) {
+	_, err = os.Stat(newConfigDir)
+	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("User config directory %s exists, but should not.", newConfigDir)
 	}
 }
