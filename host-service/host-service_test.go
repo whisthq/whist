@@ -284,7 +284,10 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		t.Fatalf("failed to write to test file: %v", err)
 	}
 
-	oldMandelboxData.BackupUserConfigs()
+	err = oldMandelboxData.BackupUserConfigs()
+	if err != nil {
+		t.Fatalf("failed to backup user configs: %v", err)
+	}
 	os.RemoveAll(configDir)
 
 	// Set up a new mandelbox
