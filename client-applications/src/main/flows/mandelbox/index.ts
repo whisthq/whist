@@ -1,12 +1,5 @@
 import { merge, Observable, zip, from, race } from "rxjs"
-import {
-  map,
-  switchMap,
-  share,
-  withLatestFrom,
-  delay,
-  filter,
-} from "rxjs/operators"
+import { map, switchMap, share } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
@@ -70,23 +63,8 @@ export default flow(
       )
     )
 
-    // The server protocol takes time to start up when we upload cookies, so this is a temporary
-    // workaround to delay trying to connect if we send over cookies
-    const hostWithDelay = host.success.pipe(
-      withLatestFrom(trigger),
-      filter(([, t]) => t.importCookiesFrom !== undefined),
-      delay(5000),
-      map(([h]) => h)
-    )
-
-    const hostWithoutDelay = host.success.pipe(
-      withLatestFrom(trigger),
-      filter(([, t]) => t.importCookiesFrom === undefined),
-      map(([h]) => h)
-    )
-
     return {
-      success: race(hostWithDelay, hostWithoutDelay),
+      success: host.success,
       failure: merge(create.failure, host.failure),
     }
   }

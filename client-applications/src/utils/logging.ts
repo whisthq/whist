@@ -9,7 +9,7 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
-import omitDeep from "deepdash/omitDeep"
+import mapValuesDeep from "deepdash/mapValuesDeep"
 
 import config, {
   loggingBaseFilePath,
@@ -121,8 +121,12 @@ export const logBase = (
   */
 
   // Don't log the config token to Amplitude to protect user privacy
-  data = omitDeep(data, ["configToken", "config_encryption_token", "cookies"], {
-    onMatch: { skipChildren: true },
+  data = mapValuesDeep(data, (v: object | Array<any>, k: string) => {
+    if (["configToken", "config_encryption_token"].includes(k))
+      return "***********"
+    if (["cookies"].includes(k))
+      return `Array of length ${(v as Array<any>).length}`
+    return v
   })
 
   const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
