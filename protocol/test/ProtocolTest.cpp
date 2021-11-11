@@ -294,19 +294,6 @@ TEST_F(CaptureStdoutTest, LoggerTest) {
     check_stdout_line(::testing::EndsWith("EEE"));
 }
 
-// Test that set_rendering works
-TEST(ProtocolTest, SetRenderingTest) {
-    // initialize ringbuffer
-    const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
-
-    set_rendering(rb, 5);
-    EXPECT_EQ(rb->currently_rendering_id, 5);
-
-    set_rendering(rb, -5);
-    EXPECT_EQ(rb->currently_rendering_id, -5);
-}
-
 /*
 ============================
 Server Tests

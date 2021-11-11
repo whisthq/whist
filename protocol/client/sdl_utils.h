@@ -48,6 +48,14 @@ Public Functions
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
 
 /**
+ * @brief                          Creates the SDL Renderer,
+ *                                 using the current SDL `window`.
+ *
+ * @param sdl_window               The SDL Window to use
+ */
+SDL_Renderer* init_renderer(SDL_Window* sdl_window);
+
+/**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
  *

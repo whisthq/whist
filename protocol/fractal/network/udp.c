@@ -150,9 +150,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
         if (ret < 0) {
             int error = get_last_network_error();
             if (error == ENOBUFS) {
-                LOG_WARNING("Unexpected UDP Packet Error: %d, retrying to send packet in 5ms!",
-                            error);
-                fractal_sleep(5);
+                LOG_WARNING("Unexpected UDP Packet Error: %d, retrying to send packet!", error);
                 continue;
             } else {
                 LOG_WARNING("Unexpected UDP Packet Error: %d", error);
