@@ -94,6 +94,9 @@ type Mandelbox interface {
 	// Download the user configs from S3 and writes them to buffer
 	DownloadUserConfigs() error
 
+	// Backup the user configs to S3
+	BackupUserConfigs() error
+
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
 	// Close cancels the mandelbox-specific context, triggering the cleanup of
@@ -178,7 +181,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.ID)
 
 		// Backup and clean user config directory.
-		err := mandelbox.backupUserConfigs()
+		err := mandelbox.BackupUserConfigs()
 		if err != nil {
 			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.ID, err)
 		} else {

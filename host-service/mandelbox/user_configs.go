@@ -235,7 +235,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
 // backupUserConfigs compresses, encrypts, and then uploads user config files to S3.
 // Requires `mandelbox.rwlock` to be locked.
-func (mandelbox *mandelboxData) backupUserConfigs() error {
+func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	if len(mandelbox.userID) == 0 {
 		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", mandelbox.ID)
 		return nil

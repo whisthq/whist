@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"io/ioutil"
+	"os"
 	"path"
 	"strconv"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
@@ -248,5 +250,72 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 	if string(readyFileContents) != ".ready" {
 		t.Errorf("Ready file contains invalid contents: %s", string(readyFileContents))
+	}
+}
+
+// TestSpinUpWithNewToken tests a mandelbox spinup with the new token flag set
+// and ensures that the old user config is overwritten.
+func TestSpinUpWithNewToken(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	goroutineTracker := sync.WaitGroup{}
+
+	// We always want to start with a clean slate
+	uninitializeFilesystem()
+	initializeFilesystem(cancel)
+	defer uninitializeFilesystem()
+
+	testUser := "testSpinUpWithNewTokenUser"
+	testID := "newTokenMandelbox"
+	oldID := "oldTokenMandelbox"
+
+	// Upload a test config to S3 with an old token
+	oldMandelboxData := mandelbox.New(ctx, &goroutineTracker, mandelboxtypes.MandelboxID(oldID))
+	oldMandelboxData.AssignToUser(mandelboxtypes.UserID(testUser))
+	oldMandelboxData.SetConfigEncryptionToken("oldToken1234")
+
+	// Manually create user config files
+	configDir := path.Join(utils.FractalDir, string(oldID), "userConfigs")
+	if err := os.MkdirAll(configDir, 0777); err != nil {
+		t.Fatalf("Could not make dir %s. Error: %s", configDir, err)
+	}
+	fileContents := "This file should never be seen."
+	err := os.WriteFile(path.Join(configDir, "testFile.txt"), []byte(fileContents), 0777)
+	if err != nil {
+		t.Fatalf("failed to write to test file: %v", err)
+	}
+
+	oldMandelboxData.BackupUserConfigs()
+	os.RemoveAll(configDir)
+
+	// Set up a new mandelbox
+	testMandelboxInfo := subscriptions.Mandelbox{
+		ID:        mandelboxtypes.MandelboxID(testID),
+		SessionID: "1234",
+		UserID:    mandelboxtypes.UserID(testUser),
+	}
+	testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
+		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
+	}
+	testJSONTransportRequest := JSONTransportRequest{
+		ConfigEncryptionToken: "newToken1234",
+		JwtAccessToken:        "test_jwt_token",
+		MandelboxID:           "testMandelbox",
+		JSONData:              "test_json_data",
+		resultChan:            make(chan requestResult),
+	}
+
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+	dockerClient := mockClient{}
+	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+
+	goroutineTracker.Wait()
+
+	// If decryption was skipped as it should, the user configs directory should not exist
+	newConfigDir := path.Join(utils.FractalDir, string(testID), "userConfigs")
+	if _, err := os.Stat(newConfigDir); !os.IsNotExist(err) {
+		t.Errorf("User config directory %s exists, but should not.", newConfigDir)
 	}
 }
