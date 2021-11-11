@@ -9,21 +9,6 @@ from pbkdf2 import PBKDF2
 import subprocess
 
 
-def get_browser(browser_name):
-    if browser_name == "chrome":
-        return browser_cookie3.Chrome()
-    elif browser_name == "chromium":
-        return browser_cookie3.Chromium()
-    elif browser_name == "opera":
-        return browser_cookie3.Opera()
-    elif browser_name == "edge":
-        return browser_cookie3.Edge()
-    elif browser_name == "brave":
-        return browser_cookie3.Brave()
-    else:
-        raise ("unknown browser name")
-
-
 def get_or_create_cookie_file(browser_name):
     """
     Gets or create file containing all cookies
@@ -54,15 +39,17 @@ def get_or_create_cookie_file(browser_name):
                 "~/.config/BraveSoftware/Brave-Browser/Default/Cookies",
                 "~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies",
             ]
+        else:
+            raise browser_cookie3.BrowserCookieError(
+                "Browser not recognized. Works on chrome, chromium, opera, edge, and brave."
+            )
 
         paths = linux_cookies
-        paths = list(map(os.path.expanduser, paths))
 
         path = browser_cookie3.expand_paths(linux_cookies, "linux")
 
         # If not defined then create file
         if not path:
-
             # Create directories if it does not exist
             directory = os.path.dirname(paths[0])
             if not os.path.exists(directory):
@@ -79,15 +66,13 @@ def get_or_create_cookie_file(browser_name):
             )
             connection.commit()
             connection.close()
-            path = paths[0]
+
+            path = os.path.expanduser(paths[0])
 
         return path
 
     else:
         raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
-
-
-get_or_create_cookie_file("chrome")
 
 
 def encrypt(browser_name, value, encrypt_prefix):
