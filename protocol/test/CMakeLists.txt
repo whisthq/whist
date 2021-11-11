@@ -172,7 +172,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 # Copy over test-related assets from s3
+
+message(STATUS "Downloading test assets from AWS S3")
 execute_process(COMMAND aws s3 cp --recursive s3://fractal-test-assets/protocol-test-assets ${CMAKE_BINARY_DIR}/test/assets)
+message(STATUS "Downloading test assets from AWS S3 - Completed")
 
 # Run the tests
 add_custom_command(
