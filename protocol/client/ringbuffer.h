@@ -48,7 +48,7 @@ typedef struct FrameData {
     int num_times_nacked;
     int last_nacked_index;
     clock last_nacked_timer;
-    clock last_packet_timer;
+    clock last_nonnack_packet_timer;
     clock frame_creation_timer;
 } FrameData;
 
@@ -83,7 +83,7 @@ typedef struct RingBuffer {
 
     // The next ID that should be rendered, marks
     // the lowest packet ID we're interested in nacking about
-    int next_render_id;
+    int last_rendered_id;
     int last_missing_frame_nack;
 } RingBuffer;
 
