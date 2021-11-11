@@ -276,7 +276,8 @@ bool try_request_iframe_to_catch_up() {
                     "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                     "and the next frame to render has been alive for %fms. I-Frame is now being "
                     "requested to catch-up.",
-                    video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
+                    video_ring_buffer->max_id,
+                    video_ring_buffer->max_id - video_data.last_rendered_id,
                     get_timer(ctx->frame_creation_timer) * 1000);
             }
             return true;

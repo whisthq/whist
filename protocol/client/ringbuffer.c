@@ -256,7 +256,6 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         init_frame(ring_buffer, packet->id, packet->num_indices);
     }
 
-    start_timer(&frame_data->last_packet_timer);
     // check if we have nacked for the packet
     // TODO: log video vs audio
     bool already_logged_about_it = false;
@@ -269,10 +268,14 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
                      packet->index);
             already_logged_about_it = true;
         }
-    } else if (frame_data->nacked_indices[packet->index] > 0) {
-        LOG_INFO("Received original ID %d, Index %d, but we had NACK'ed for it.", packet->id,
-                 packet->index);
-        already_logged_about_it = true;
+    } else {
+        // Reset timer since the last time we received a real non-nack packet
+        start_timer(&frame_data->last_nonnack_packet_timer);
+        if (frame_data->nacked_indices[packet->index] > 0) {
+            LOG_INFO("Received original ID %d, Index %d, but we had NACK'ed for it.", packet->id,
+                     packet->index);
+            already_logged_about_it = true;
+        }
     }
 
     // If we have already received the packet, there is nothing to do
@@ -516,10 +519,12 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
 
         // If too much time has passed since the last packet received,
         // we swap into *recovery mode*, since something is probably wrong with this packet
-        if (get_timer(frame_data->last_packet_timer) > 0.3 * latency &&
+        if ((id < ring_buffer->max_id ||
+             get_timer(frame_data->last_nonnack_packet_timer) > 0.2 * latency) &&
             !frame_data->recovery_mode) {
 #if LOG_NACKING
-            LOG_INFO("Too long since last packet from ID %d. Entering recovery mode...", id);
+            LOG_INFO("Too long since last non-nack packet from ID %d. Entering recovery mode...",
+                     id);
 #endif
             frame_data->recovery_mode = true;
         }
@@ -544,12 +549,12 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
 #endif
         } else {
             // *Recovery mode* means something is wrong with the network,
-            // and we should keep trying to nack for those missing packets
-            // At 0.3 * latency, we finish up the work that the *normal nacking mode* did,
+            // and we should keep trying to nack for those missing packets.
+            // On the first round, we finish up the work that the *normal nacking mode* did,
             // i.e. we nack for everything after last_packet_received - MAX_UNORDERED_PACKETS.
             // After an additional 1.2 * latency, we send another round of nacks
             if (get_timer(frame_data->last_nacked_timer) >
-                0.3 * latency + 0.9 * latency * frame_data->num_times_nacked) {
+                1.2 * latency * frame_data->num_times_nacked) {
 #if LOG_NACKING
                 LOG_INFO("Attempting to recover Frame ID %d, %d/%d indices received.", id,
                          frame_data->packets_received, frame_data->num_packets);
