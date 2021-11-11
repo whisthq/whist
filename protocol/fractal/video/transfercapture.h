@@ -1,5 +1,5 @@
-#ifndef CPU_CAPTURE_TRANSFER_H
-#define CPU_CAPTURE_TRANSFER_H
+#ifndef TRANSFER_CAPTURE_H
+#define TRANSFER_CAPTURE_H
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file transfercapture.h
@@ -16,44 +16,15 @@ Includes
 ============================
 */
 
-#include "videoencode.h"
-#if defined(_WIN32)
-#include "dxgicapture.h"
-#else
-#include "linuxcapture.h"
-#endif
+#include "codec/encode.h"
+#include "capture/capture.h"
+#include <fractal/utils/color.h>
 
 /*
 ============================
 Public Functions
 ============================
 */
-
-/**
- * @brief                         Initialize the transfer context between (device) and (encoder).
- *                                Call this when we have changed resolution or recreated one of the
- *                                device or encoder.
- *
- * @param device                  The capture device being used
- *
- * @param encoder                 The encoder being used
- *
- * @returns                       0 on success, -1 on failure
- */
-int start_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
-
-/**
- * @brief                         Close the transfer context between (device) and (encoder). Call
- *                                this when we have changed resolution or recreated one of the
- *                                device or encoder.
- *
- * @param device                  The capture device being used
- *
- * @param encoder                 The encoder being used
- *
- * @returns                       0 on success, -1 on failure
- */
-int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
 
 /**
  * @brief                         Transfer the texture stored in the capture
@@ -67,4 +38,4 @@ int close_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
  */
 int transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
 
-#endif  // CPU_CAPTURE_TRANSFER_H
+#endif  // TRANSFER_CAPTURE_H

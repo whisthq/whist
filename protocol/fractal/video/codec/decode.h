@@ -1,8 +1,8 @@
-#ifndef VIDEO_DECODE_H
-#define VIDEO_DECODE_H
+#ifndef VIDEO_CODEC_DECODE_H
+#define VIDEO_CODEC_DECODE_H
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
- * @file videodecode.h
+ * @file decode.h
  * @brief This file contains the code to create a video decoder and use that
  *        decoder to decode frames.
 ============================
@@ -133,4 +133,4 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_s
  */
 int video_decoder_get_frame(VideoDecoder* decoder);
 
-#endif  // VIDEO_DECODE_H
+#endif  // VIDEO_CODEC_DECODE_H

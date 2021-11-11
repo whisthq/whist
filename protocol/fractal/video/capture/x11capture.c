@@ -17,7 +17,7 @@ capturing frames.
 Includes
 ============================
 */
-#include "screencapture.h"
+#include "capture.h"
 
 #include <X11/extensions/Xdamage.h>
 #include <stdio.h>
@@ -105,7 +105,6 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
     }
     device->width = width;
     device->height = height;
-#if USING_SHM
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
         LOG_ERROR("Error while getting window attributes");
@@ -139,7 +138,6 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
     }
     device->frame_data = device->image->data;
     device->pitch = device->image->bytes_per_line;
-#endif
     return true;
 }
 
@@ -191,27 +189,12 @@ int x11_capture_screen(X11CaptureDevice* device) {
             accumulated_frames = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);
-#if USING_SHM
             if (!XShmGetImage(device->display, device->root, device->image, 0, 0, AllPlanes)) {
                 LOG_ERROR("Error while capturing the screen");
                 accumulated_frames = -1;
             } else {
                 device->pitch = device->image->bytes_per_line;
             }
-#else
-            if (device->image) {
-                XFree(device->image);
-            }
-            device->image = XGetImage(device->display, device->root, 0, 0, device->width,
-                                      device->height, AllPlanes, ZPixmap);
-            if (!device->image) {
-                LOG_ERROR("Error while capturing the screen");
-                accumulated_frames = -1;
-            } else {
-                device->frame_data = device->image->data;
-                device->pitch = device->image->bytes_per_line;
-            }
-#endif
             if (accumulated_frames != -1) {
                 // get the color
                 XColor c;

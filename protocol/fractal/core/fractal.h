@@ -111,7 +111,6 @@ Defines
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
 #define USING_NVIDIA_CAPTURE false
 #define USING_NVIDIA_ENCODE true
-#define USING_SHM true
 
 #endif
 

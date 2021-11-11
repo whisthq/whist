@@ -18,10 +18,10 @@ capture the screen with said device, and destroy_nvidia_capture_device when done
 Includes
 ============================
 */
-#include "nvidia-linux/NvFBCUtils.h"
-#include "nvidia-linux/nvEncodeAPI.h"
+#include "../nvidia-linux/NvFBCUtils.h"
+#include "../nvidia-linux/nvEncodeAPI.h"
 #include <fractal/core/fractal.h>
-#include "cudacontext.h"
+#include "../cudacontext.h"
 
 /*
 ============================

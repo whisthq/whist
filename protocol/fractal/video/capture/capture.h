@@ -1,8 +1,8 @@
-#ifndef SCREENCAPTURE_H
-#define SCREENCAPTURE_H
+#ifndef VIDEO_CAPTURE_H
+#define VIDEO_CAPTURE_H
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
- * @file screencapture.h
+ * @file capture.h
  * @brief This file defines the proper header for capturing the screen depending
  *        on the local OS.
 ============================
@@ -18,12 +18,44 @@ Includes
 ============================
 */
 
-// Defines the CaptureDevice type
-#if defined(_WIN32)
-#include "dxgicapture.h"
-#else
-#include "linuxcapture.h"
+#include <fractal/core/fractal.h>
+#include <fractal/utils/color.h>
+#ifdef __linux__
+#include <X11/Xlib.h>
+#include "nvidiacapture.h"
+#include "x11capture.h"
 #endif
+
+/*
+============================
+Custom Types
+============================
+*/
+
+typedef struct CaptureDevice {
+    int width;
+    int height;
+    int pitch;
+    void* frame_data;
+    FractalRGBColor corner_color;
+    void* internal;
+
+#ifdef __linux__
+    CaptureDeviceType active_capture_device;  // the device currently used for capturing
+    CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
+                                            // the right encoder
+    bool pending_destruction;
+    FractalThread nvidia_manager;
+    FractalSemaphore nvidia_device_semaphore;
+    bool nvidia_context_is_stale;
+    // Shared X11 state
+    Display* display;
+    Window root;
+    // Underlying X11/Nvidia capture devices
+    NvidiaCaptureDevice* nvidia_capture_device;
+    X11CaptureDevice* x11_capture_device;
+#endif
+} CaptureDevice;
 
 /*
 ============================
@@ -58,8 +90,6 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
 bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
                                 uint32_t dpi);
 
-int update_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
-
 /**
  * @brief                          Capture a bitmap snapshot of the screen
  *                                 The width/height of the image is guaranteed to be
@@ -84,18 +114,10 @@ int capture_screen(CaptureDevice* device);
 int transfer_screen(CaptureDevice* device);
 
 /**
- * @brief                          Release a captured screen bitmap snapshot
- *
- * @param device                   The capture device holding the
- *                                 screen object captured
- */
-void release_screen(CaptureDevice* device);
-
-/**
  * @brief                          Destroys and frees the memory of a capture device
  *
  * @param device                   The capture device to free
  */
 void destroy_capture_device(CaptureDevice* device);
 
-#endif  // SCREENCAPTURE_H
+#endif  // VIDEO_CAPTURE_H

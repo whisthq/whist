@@ -1,6 +1,6 @@
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
- * @file videodecode.c
+ * @file decode.c
  * @brief This file contains the code to create a video decoder and use that
  *        decoder to decode frames.
 ============================
@@ -21,7 +21,7 @@ packets. To destroy the decoder when finished, destroy the encoder using video_d
 Includes
 ============================
 */
-#include "videodecode.h"
+#include "decode.h"
 #include <fractal/logging/log_statistic.h>
 
 #include <stdio.h>

@@ -22,7 +22,7 @@ Includes
 #include <dlfcn.h>
 #include <string.h>
 
-#include "cudacontext.h"
+#include "../cudacontext.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
 

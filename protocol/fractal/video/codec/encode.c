@@ -1,6 +1,6 @@
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
- * @file videoencode.c
+ * @file encode.c
  * @brief This file contains the code to create and destroy Encoders and use
  *        them to encode captured screens.
 ============================
@@ -19,7 +19,7 @@ video_encoder_write_buffer, and when finished, destroy the encoder using destroy
 Includes
 ============================
 */
-#include "videoencode.h"
+#include "encode.h"
 
 #include <libavfilter/avfilter.h>
 #include <stdio.h>
