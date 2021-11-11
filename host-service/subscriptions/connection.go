@@ -10,9 +10,9 @@ import (
 
 const localHasuraURL = "http://localhost:8080/v1/graphql"
 
-// getFractalHasuraParams obtains and returns the heroku parameters
+// getWhistHasuraParams obtains and returns the heroku parameters
 // from the metadata package that are necessary to initialize the client.
-func getFractalHasuraParams() (HasuraParams, error) {
+func getWhistHasuraParams() (HasuraParams, error) {
 	if metadata.IsLocalEnv() {
 		return HasuraParams{
 			URL:       localHasuraURL,

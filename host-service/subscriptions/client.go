@@ -7,7 +7,7 @@ import (
 
 // SetUpHasuraClient does all the necessary work to set up the Hasura client
 func SetUpHasuraClient() (*graphql.SubscriptionClient, error) {
-	params, err := getFractalHasuraParams()
+	params, err := getWhistHasuraParams()
 
 	if err != nil {
 		// Error obtaining the connection parameters, we stop and don't setup the client
