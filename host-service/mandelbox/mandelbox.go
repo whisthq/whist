@@ -91,6 +91,9 @@ type Mandelbox interface {
 	// start and accept connections.
 	MarkReady() error
 
+	// Set up the directories for user configs
+	SetupUserConfigDirs() error
+
 	// Download the user configs from S3 and writes them to buffer
 	DownloadUserConfigs() error
 

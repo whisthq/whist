@@ -274,12 +274,14 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	oldMandelboxData.SetConfigEncryptionToken("oldToken1234")
 
 	// Manually create user config files
-	configDir := utils.Sprintf("%s%v/%s", utils.FractalDir, oldID, "userConfigs")
-	if err := os.MkdirAll(configDir, 0777); err != nil {
-		t.Fatalf("Could not make dir %s. Error: %s", configDir, err)
+	err := oldMandelboxData.SetupUserConfigDirs()
+	if err != nil {
+		t.Fatalf("failed to setup user config directories: %v", err)
 	}
+
+	configDir := utils.Sprintf("%s%v/%s", utils.FractalDir, oldID, "userConfigs", "unpacked_configs")
 	fileContents := "This file should never be seen."
-	err := os.WriteFile(path.Join(configDir, "testFile.txt"), []byte(fileContents), 0777)
+	err = os.WriteFile(path.Join(configDir, "testFile.txt"), []byte(fileContents), 0777)
 	if err != nil {
 		t.Fatalf("failed to write to test file: %v", err)
 	}
@@ -319,10 +321,15 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	goroutineTracker.Wait()
 
-	// If decryption was skipped as it should, the user configs directory should not exist
-	newConfigDir := utils.Sprintf("%s%v/%s", utils.FractalDir, testID, "userConfigs")
+	// If decryption was skipped as it should, the unpacked_configs directory should exist
+	// but the test file should not be there.
+	newConfigDir := utils.Sprintf("%s%v/%s", utils.FractalDir, testID, "userConfigs", "unpacked_configs")
 	_, err = os.Stat(newConfigDir)
+	if err != nil {
+		t.Errorf("unpacked_configs directory does not exist but it should")
+	}
+	_, err = os.Stat(path.Join(newConfigDir, "testFile.txt"))
 	if err == nil || !os.IsNotExist(err) {
-		t.Errorf("User config directory %s exists, but should not.", newConfigDir)
+		t.Errorf("testFile.txt should not exist but it does")
 	}
 }

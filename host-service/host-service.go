@@ -710,7 +710,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
 		}
 	} else {
+		// We still want to setup the directories so the new configs can be populated.
 		logger.Infof("SpinUpMandelbox(): This is a new config encryption token for mandelbox %s, skipping config decryption", mandelboxSubscription.ID)
+		err = mandelbox.SetupUserConfigDirs()
+		if err != nil {
+			logger.Errorf("Error setting up user config directories for mandelbox %s: %v", mandelboxSubscription.ID, err)
+		}
 	}
 
 	// Write the config.json file with the data received from JSON transport

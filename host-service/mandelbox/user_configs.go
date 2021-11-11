@@ -148,13 +148,10 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
 	// Make directory for user configs
 	configDir := mandelbox.getUserConfigDir()
-	if err := os.MkdirAll(configDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
-	}
-
 	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
-	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
-		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+	err = mandelbox.SetupUserConfigDirs()
+	if err != nil {
+		return utils.MakeError("failed to setup user config directories: %v", err)
 	}
 
 	// Once we've extracted everything, we open up permissions for the user
@@ -323,6 +320,23 @@ func (mandelbox *mandelboxData) WriteJSONData() error {
 
 	if err := mandelbox.writeResourceMappingToFile("config.json", mandelbox.GetJSONData()); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// SetupUserConfigDirs creates the user config directories on the host.
+func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
+	logger.Infof("Creating user config directories...")
+
+	configDir := mandelbox.getUserConfigDir()
+	if err := os.MkdirAll(configDir, 0777); err != nil {
+		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
+	}
+
+	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
+	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
 
 	return nil
