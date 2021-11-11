@@ -76,6 +76,13 @@ func IsLocalEnv() bool {
 	return env == EnvLocalDev || env == EnvLocalDevWithDB
 }
 
+// IsLocalEnvWithoutDB returns true if this host service is running locally for
+// development but without the database enabled.
+func IsLocalEnvWithoutDB() bool {
+	env := GetAppEnvironment()
+	return env == EnvLocalDev
+}
+
 // GetAppEnvironmentLowercase returns the app environment string, but just
 // converted to lowercase. This is helpful to construct larger strings (i.e.
 // Docker image names) that depend on the current environment.

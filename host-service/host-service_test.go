@@ -113,7 +113,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 
 	testMandelboxInfo := subscriptions.Mandelbox{
 		InstanceName: string(instanceName),
-		ID:           "testMandelbox",
+		ID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		SessionID:    "1234",
 		UserID:       userID,
 	}
@@ -123,7 +123,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "testToken1234",
 		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           "testMandelbox",
+		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
@@ -212,7 +212,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Check that all resource mapping files were written correctly
-	resourceMappingDir := path.Join(utils.FractalDir, "testMandelbox", "mandelboxResourceMappings")
+	resourceMappingDir := path.Join(utils.FractalDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
 
 	hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
 	hostPortFileContents, err := ioutil.ReadFile(hostPortFile)

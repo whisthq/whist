@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/fractal/fractal/host-service/auth"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -28,6 +29,7 @@ func TestSpinUpHandler(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
+		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}
@@ -121,6 +123,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		ConfigEncryptionToken: "test_token",
 		JwtAccessToken:        "test_jwt_token",
+		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		resultChan:            make(chan requestResult),
 	}

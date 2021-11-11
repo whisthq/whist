@@ -5,8 +5,8 @@
 import argparse
 from collections import namedtuple
 import os
-import secrets
 import sys
+import uuid
 
 import docker
 import psutil
@@ -143,7 +143,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
         "config_encryption_token": args.user_config_encryption_token,
         "jwt_access_token": "bogus_jwt",
         "json_data": json_data,
-        "mandelbox_id": mandelbox_id,
+        "mandelbox_id": str(mandelbox_id),
     }
     tls_verification = False if args.no_verify_tls else HOST_SERVICE_CERT_PATH
     respobj = requests.put(url=url, json=payload, verify=tls_verification)
@@ -165,7 +165,7 @@ def send_spin_up_mandelbox_request(mandelbox_id):
 if __name__ == "__main__":
     # pylint: disable=line-too-long
 
-    mandelboxid = secrets.token_hex(30)
+    mandelboxid = uuid.uuid4()
 
     if local_host_service:
         # This is running locally on the same machine as the host service, so
