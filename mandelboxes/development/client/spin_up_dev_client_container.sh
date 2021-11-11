@@ -15,9 +15,7 @@
 set -Eeuo pipefail
 
 # Ensure that the /fractal folder exists
-if [ -d "/fractal" ]; then
-  echo "/fractal folder exists!"
-else
+if [ ! -d "/fractal" ]; then
   echo "/fractal folder does not exist"
   exit 1
 fi
@@ -82,9 +80,10 @@ DOCKER_CREATE_CMD=`docker create -it \
     --cap-add CAP_SYS_CHROOT \
     --cap-add CAP_SETFCAP \
     --cap-add SYS_NICE \
-    $DOCKER_IMAGE_NAME`
+    $DOCKER_IMAGE_NAME | tail -1`
+CONTAINER_ID="$DOCKER_CREATE_CMD"
 
-CONTAINER_ID="$DOCKER_CREATE_CMD | tail -1"
+echo "Created dev client with docker container ID= ${CONTAINER_ID}"
 
 docker start $CONTAINER_ID
 # TODO: 6. Write the config.json file if we want to test JSON transport related features
