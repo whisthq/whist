@@ -271,6 +271,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	// Upload a test config to S3 with an old token
 	oldMandelboxData := mandelbox.New(oldCtx, &oldGoroutineTracker, mandelboxtypes.MandelboxID(oldID))
 	oldMandelboxData.AssignToUser(mandelboxtypes.UserID(testUser))
+	oldMandelboxData.SetAppName("browsers/chrome")
 	oldMandelboxData.SetConfigEncryptionToken("oldToken1234")
 
 	// Manually create user config files
