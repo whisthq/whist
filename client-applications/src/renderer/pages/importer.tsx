@@ -23,7 +23,7 @@ const SelectBrowser = (props: {
             id="browser"
             name="browser"
             className="bg-gray-900 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
-            defaultValue="Canada"
+            defaultValue={undefined}
             onChange={(evt: any) => props.onSelect(evt.target.value)}
           >
             <option value={undefined}>None, start from a clean slate</option>
