@@ -174,7 +174,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		// At this point, we've found an image, so we just need to start the container.
 
-		containerName := "host-service-warmup"
+		containerName := utils.PlaceholderWarmupUUID()
+
 		mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxtypes.MandelboxID(containerName))
 		defer mandelbox.Close()
 
@@ -249,8 +250,8 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			Binds: []string{
 				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
 				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
-				utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
-				utils.Sprintf("%slogs/%s/host-service-warmup-%d:/var/log/fractal", utils.TempDir, mandelbox.GetID(), iter),
+				utils.Sprintf("%s%v/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
+				utils.Sprintf("%slogs/%v/host-service-warmup-%d:/var/log/fractal", utils.TempDir, mandelbox.GetID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
 				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
 			},
@@ -295,7 +296,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			},
 		}
 
-		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
+		createBody, err := client.ContainerCreate(globalCtx, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName.String())
 		if err != nil {
 			return utils.MakeError("Error running `create` for %s:\n%s", containerName, err)
 		}
@@ -380,23 +381,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// mandelboxSubscription is the pubsub event received from Hasura.
 	mandelboxSubscription := sub.MandelboxInfo[0]
-
-	var AppName mandelboxtypes.AppName
-	var req *JSONTransportRequest
-	if metadata.IsLocalEnv() {
-		// Receive the json transport request immediately when running on local env
-		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
-		req = <-jsonchan
-		if req.AppName == "" {
-			// If no app name is set, we default to using the `browsers/chrome` image.
-			AppName = mandelboxtypes.AppName("browsers/chrome")
-		} else {
-			AppName = req.AppName
-		}
-	} else {
-		// If not on a local environment, we default to using the `browsers/chrome` image.
-		AppName = mandelboxtypes.AppName("browsers/chrome")
-	}
+	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
@@ -694,8 +679,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
-	if !metadata.IsLocalEnv() {
-		// Receive the json transpor request from the client via the httpserver.
+	if req == nil {
+		// Receive the json transport request from the client via the httpserver.
 		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
@@ -1130,7 +1115,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *JSONTransportRequest:
-				if !metadata.IsLocalEnv() {
+				if !metadata.IsLocalEnvWithoutDB() {
 					// Handle JSON transport validation on a separate go routine
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 				} else {

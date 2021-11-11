@@ -58,7 +58,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	}
 
 	q := queries.NewQuerier(tx)
-	rows, err := q.FindMandelboxByID(context.Background(), string(mandelboxID))
+	rows, err := q.FindMandelboxByID(context.Background(), mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't verify mandelbox %s for user %s: error running query: %s", mandelboxID, userID, err)
 	}
@@ -79,7 +79,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
 		String: string(MandelboxStatusConnecting),
 		Status: pgtype.Present,
-	}, string(mandelboxID))
+	}, mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -106,7 +106,7 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus)
 	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
 		String: string(status),
 		Status: pgtype.Present,
-	}, string(mandelboxID))
+	}, mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -127,7 +127,7 @@ func RemoveMandelbox(mandelboxID types.MandelboxID) error {
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.RemoveMandelbox(context.Background(), string(mandelboxID))
+	result, err := q.RemoveMandelbox(context.Background(), mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't remove mandelbox %s from database: %s", mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
