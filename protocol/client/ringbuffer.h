@@ -83,7 +83,7 @@ typedef struct RingBuffer {
 
     // The next ID that should be rendered, marks
     // the lowest packet ID we're interested in nacking about
-    int next_render_id;
+    int last_rendered_id;
     int last_missing_frame_nack;
 } RingBuffer;
 

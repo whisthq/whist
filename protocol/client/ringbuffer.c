@@ -87,7 +87,7 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
 
     ring_buffer->frame_buffer_allocator = create_block_allocator(ring_buffer->largest_frame_size);
     ring_buffer->currently_rendering_id = -1;
-    ring_buffer->next_render_id = 0;
+    ring_buffer->last_rendered_id = -1;
     ring_buffer->last_missing_frame_nack = -1;
 
     // set all additional metadata for frames and ring buffer
@@ -181,8 +181,8 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
             id (int): ID of the frame we are currently rendering.
     */
 
-    // Set first, so that next_render_id is never currently_rendering_id
-    ring_buffer->next_render_id = id + 1;
+    // Set first, so that last_rendered_id is updated
+    ring_buffer->last_rendered_id = id;
 
     if (ring_buffer->currently_rendering_id != -1) {
         // destroy the frame buffer of the currently rendering frame
@@ -414,6 +414,9 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
         // Don't nack if we haven't received anything yet
         return;
     }
+    if (ring_buffer->last_rendered_id == -1) {
+        ring_buffer->last_rendered_id = ring_buffer->max_id - 1;
+    }
 
     static bool first_call = true;
     static clock burst_timer;
@@ -468,7 +471,7 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
 
     // Nack all the packets we might want to nack about, from oldest to newest,
     // up to max_nacks times
-    for (int id = ring_buffer->next_render_id;
+    for (int id = ring_buffer->last_rendered_id + 1;
          id <= ring_buffer->max_id && num_packets_nacked < max_nacks; id++) {
         FrameData* frame_data = get_frame_at_id(ring_buffer, id);
         // If this frame doesn't exist, skip it
