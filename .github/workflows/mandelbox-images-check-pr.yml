@@ -63,6 +63,28 @@ jobs:
       - name: Check if Code Matches Pylint Standards
         run: pylint-wrapper mandelboxes/helper_scripts mandelboxes/testing_scripts
 
+  # Running pytest for Python Scripts in mandelboxes
+  mandelboxes-python-scripts-pytest:
+    name: Run Pytest on mandelboxes Python Scripts
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.10.0
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: "3.10.0"
+
+      - name: Install requirements
+        working-directory: mandelboxes
+        run: pip install pytest pyaes pbkdf2
+
+      - name: Run tests
+        working-directory: mandelboxes/base
+        run: pytest
+
   # Docker images building
   # Checks that the Docker images build successfully.
   mandelboxes-build-images:
