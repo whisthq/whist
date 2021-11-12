@@ -116,7 +116,17 @@ if __name__ == "__main__":
     ssh_client.exec_command(command="sudo reboot")
     print("Rebooting the EC2 instance (required after running the host setup)")
     
-    # TODO wait for SSH here
+    reboot_complete = False
+    while not reboot_complete:
+        reboot_complete = True
+        try:
+            ssh_client.connect(
+                hostname=instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
+            )
+        except:
+            reboot_complete = False
+        finally:
+            continue
     print("EC2 instance reboot complete!")
 
     # 3- build and run host-service
