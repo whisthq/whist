@@ -28,7 +28,7 @@ const localdevHost: MockSchema = {
         }
       }),
       mapTo({
-        mandelboxID: crypto.randomBytes(8).toString("hex"),
+        mandelboxID: crypto.randomUUID(),
         ip: process.env.TESTING_LOCALDEV_HOST_IP,
       }),
       tap(() => console.log("HARDCODED HOST SERVICE IP"))
