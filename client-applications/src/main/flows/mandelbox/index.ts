@@ -44,7 +44,7 @@ export default flow(
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
-          cookies: JSON.stringify(d),
+          cookies: d,
           mandelboxID: c.mandelboxID,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,

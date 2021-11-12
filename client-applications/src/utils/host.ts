@@ -37,7 +37,7 @@ export const hostSpinUp = async ({
     endpoint: "/json_transport",
     body: {
       config_encryption_token,
-      is_new_config_encryption_token,
+      is_new_config_encryption_token: is_new_config_encryption_token ?? false,
       jwt_access_token,
       mandelbox_id,
       json_data,
