@@ -71,18 +71,14 @@ fi
 
 
 # The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
-/usr/share/fractal/FractalClient $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
+# Timeout will turn off the client once we are done gathering perf data. This value here should match the one in the .github/workflows/helpers/aws/streaming_performance_tester.py file
+timeout 240s /usr/share/fractal/FractalClient $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
 fractal_client_pid=$!
 
-# # Wait for either fractal-application or FractalServer to exit (both backgrounded processes).
-
-# # TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_
-# # application exited with the `-p` flag to `wait`.
+# TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_
+# application exited with the `-p` flag to `wait`.
 wait -n
 echo "FractalClient exited with code $?"
 echo "FractalClient PID: $fractal_client_pid"
-echo "Remaining job PIDs: $(jobs -p)"
 
-# TODO: remove this after done with debugging
-while true; do sleep 1000; done
-# TODO: We now pass control over to `cleanup`, since we've reached the end of the script.
+
