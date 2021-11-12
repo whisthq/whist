@@ -55,9 +55,9 @@ browsers = ["firefox"]
 
 
 @pytest.mark.parametrize("browser", browsers)
-@pytest.mark.xfail(raises=browser_cookie3.BrowserCookieError)
 def test_invalid_browser(browser):
-    get_or_create_cookie_file(browser)
+    with pytest.raises(browser_cookie3.BrowserCookieError):
+        get_or_create_cookie_file(browser)
 
 
 values_to_encrypt = [
@@ -72,7 +72,7 @@ def test_encrypt_value(value_to_encrypt, expected_encrypted_value):
     assert resulting_encrypted_value == expected_encrypted_value
 
 
-expected_cookie_format = [
+expected_cookie_format_with_secure = [
     12415323,
     "",
     ".whist.com",
@@ -112,11 +112,33 @@ cookie_with_secure = {
     "is_same_party": 0,
 }
 
+
+expected_cookie_format_with_is_secure = [
+    12415323,
+    "",
+    ".whist2.com",
+    "FRACTAL2",
+    "",
+    "",
+    "/",
+    1241532300,
+    1,
+    0,
+    12415323,
+    1,
+    1,
+    1,
+    -1,
+    2,
+    443,
+    0,
+]
+
 cookie_with_is_secure = {
     "creation_utc": 12415323,
     "top_frame_site_key": "",
-    "host_key": ".whist.com",
-    "name": "FRACTAL",
+    "host_key": ".whist2.com",
+    "name": "FRACTAL2",
     "value": "",
     "path": "/",
     "expires_utc": 1241532300,
@@ -134,8 +156,8 @@ cookie_with_is_secure = {
 
 
 cookies = [
-    [cookie_with_secure, expected_cookie_format],
-    [cookie_with_is_secure, expected_cookie_format],
+    [cookie_with_secure, expected_cookie_format_with_secure],
+    [cookie_with_is_secure, expected_cookie_format_with_is_secure],
 ]
 
 
@@ -146,13 +168,23 @@ def test_formatting_chromium_based_cookie(cookie, expected_format):
         assert field == expected_format[index]
 
 
+cookie_missing_all_fields = {}
+
 browser_cookies = [
-    ["chrome", [cookie_with_is_secure], "~/.config/temp/google-chrome/Default/Cookies"]
+    ["chrome", [cookie_with_is_secure], "~/.config/temp/google-chrome/Default/Cookies", 1],
+    [
+        "chrome",
+        [cookie_with_is_secure, cookie_missing_all_fields, cookie_with_secure],
+        "~/.config/temp/google-chrome/Default/Cookies",
+        2,
+    ],
 ]
 
 
-@pytest.mark.parametrize("browser,cookies,browser_cookie_path", browser_cookies)
-def test_setting_browser_cookies(browser, cookies, browser_cookie_path, tmp_path):
+@pytest.mark.parametrize("browser,cookies,browser_cookie_path,num_valid_cookies", browser_cookies)
+def test_setting_browser_cookies(
+    browser, cookies, browser_cookie_path, num_valid_cookies, tmp_path
+):
     # Create file to store cookies
     temp_dir = tmp_path / "sub"
     temp_dir.mkdir()
@@ -170,7 +202,7 @@ def test_setting_browser_cookies(browser, cookies, browser_cookie_path, tmp_path
     cur.execute("SELECT COUNT(*) FROM cookies")
     numOfRows = cur.fetchone()[0]
 
-    assert numOfRows == len(cookies)
+    assert numOfRows == num_valid_cookies
     os.remove(cookie_file)
 
 
