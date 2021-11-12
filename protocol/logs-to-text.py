@@ -75,7 +75,7 @@ RETENTION_PERIOD_DAYS = 5
 # of those errors occuring
 def validate_args(argv):
     if len(argv) != 2:
-        raise Exception("Usage: python3 logs-to-text.py <<session_id>>")
+        raise Exception("Usage: python3 logs-to-text.py SESSION_ID")
 
 
 # Gets a time 'days' days from current time in ElasticSearch timestamp format
@@ -197,10 +197,10 @@ def parse_logs(parsed_logs, logs_page):
 
 
 # Writes the server and client logs to two separate files
-# File names are <<SESSIONID>>-client.txt and <<SESSIONID>>-server.txt
+# File names are SESSION_ID-client.log and SESSION_ID-server.log
 def write_logs_to_files(parsed_logs, session_id):
-    client_logs_file_name = "{}-client.txt".format(session_id)
-    server_logs_file_name = "{}-server.txt".format(session_id)
+    client_logs_file_name = "{}-client.log".format(session_id)
+    server_logs_file_name = "{}-server.log".format(session_id)
 
     client_file = open(client_logs_file_name, "w")
     server_file = open(server_logs_file_name, "w")
@@ -243,5 +243,5 @@ if __name__ == "__main__":
     sort_logs(parsed_logs)
 
     # Write results- separated by a new line- to  a text file
-    # named "<<session_id>>_logs.txt"
+    # named "SESSION_ID_logs.txt"
     write_logs_to_files(parsed_logs, session_id)
