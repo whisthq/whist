@@ -15,15 +15,18 @@ if [[ ! -f $FRACTAL_CHROME_SINGLETON_LOCK ]]; then
     rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
-features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization"
+features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
   --use-gl=desktop
   --flag-switches-begin
   --enable-gpu-rasterization
   --enable-zero-copy
+  --double-buffer-compositing
   --disable-smooth-scrolling
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
+  --disable-gpu-process-crash-limit
+  --no-default-browser-check
 )
 
 if [[ $DARK_MODE == true ]]; then
