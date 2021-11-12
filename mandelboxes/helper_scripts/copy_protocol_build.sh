@@ -16,7 +16,7 @@ mkdir -p "$destdir/protocol"
 SOURCE_DIR="../protocol"
 BUILD_DIR=""
 
-if [[ "${2}" == "FractalServer" ]]; then
+if [[ "${2:-FractalServer}" == "FractalServer" ]]; then
 	BUILD_DIR="../protocol/build-docker/server/build64"
 else
 	BUILD_DIR="../protocol/build-docker/client/build64"
