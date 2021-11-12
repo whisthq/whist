@@ -124,7 +124,7 @@ export const logBase = (
   data = mapValuesDeep(data, (v: object | Array<any>, k: string) => {
     if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
       if ((k ?? "") === "") return "[Empty String]"
-      return "*************"
+      return `${k.slice(0, Math.min(5, k.length))} **********`
     }
     return v
   })
