@@ -62,7 +62,7 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
     # Remove potential quotation marks
     SERVER_AES_KEY=$(echo $SERVER_AES_KEY | tr -d '"')
     # Add server AES key address to options
-    OPTIONS="$OPTIONS -k $FRACTAL_AES_KEY"
+    OPTIONS="$OPTIONS -k $SERVER_AES_KEY"
   else
     echo "Server AES key not found in JSON data!"
     exit 1
