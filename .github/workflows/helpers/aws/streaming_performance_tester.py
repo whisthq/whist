@@ -87,8 +87,6 @@ if __name__ == "__main__":
             )
         except:
             available = False
-        finally:
-            continue
     print(f"SSH is available on the EC2 instance: {instance_ip[0]['public']}")
 
     # Retrieve fractal/fractal monorepo on the instance
@@ -125,8 +123,6 @@ if __name__ == "__main__":
             )
         except:
             reboot_complete = False
-        finally:
-            continue
     print("EC2 instance reboot complete!")
 
     # 3- build and run host-service
