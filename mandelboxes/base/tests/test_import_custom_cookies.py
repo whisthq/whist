@@ -1,7 +1,6 @@
 import os
 import sqlite3
 import json
-import tempfile
 import pytest
 import browser_cookie3
 from ..utils.import_custom_cookies import *
@@ -22,7 +21,9 @@ browserFiles = [
 @pytest.mark.parametrize("browser,file_path", browserFiles)
 def test_get_existing_cookie_file(browser, file_path):
     file_path = os.path.expanduser(file_path)
-    os.makedirs(file_path[: len("/Cookies")])
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
     with open(file_path, "x") as f:
         f.write("Create a Cookie file!")
@@ -149,16 +150,15 @@ browser_cookies = [["chrome", [cookie_with_is_secure]]]
 
 
 @pytest.mark.parametrize("browser,cookies", browser_cookies)
-def test_setting_browser_cookies(browser, cookies):
+def test_setting_browser_cookies(browser, cookies, tmp_path):
     # Create file to store cookies
-    temp_cookie_file = tempfile.TemporaryFile()
-    print(cookies)
-    print(type(json.dumps(cookies)))
-    print(json.dumps(cookies).encode())
-    temp_cookie_file.write(json.dumps(cookies).encode())
+    temp_dir = tmp_path / "sub"
+    temp_dir.mkdir()
+    path = temp_dir / "hello.txt"
+    path.write_text(json.dumps(cookies))
 
     # Upload cookies
-    set_browser_cookies(browser, temp_cookie_file.name)
+    set_browser_cookies(browser, path)
 
     # Get cookie file to test
     cookie_file = get_or_create_cookie_file(browser)
@@ -169,6 +169,7 @@ def test_setting_browser_cookies(browser, cookies):
     numOfRows = cur.fetchone()[0]
 
     assert numOfRows == len(cookies)
+    os.remove(cookie_file)
 
 
 invalid_target_mandelbox_browsers = ["firefox", "safari"]
