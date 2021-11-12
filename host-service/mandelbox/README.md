@@ -12,7 +12,7 @@ First way is to use the `writeResourceMappingToFile` function defined in [mandel
 
 The file with data will be written in the `WHIST_MAPPINGS_DIR` directory and can be accessed by the mandelbox. Scripts where the mandelbox accesses these files include [fractal-startup.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/fractal-startup.sh) and [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L13).
 
-### Passing environment variable
+### Passing environment variables
 
 Environment variables can be passed to the docker container via [env configs](https://github.com/fractal/fractal/blob/dev/host-service/host-service.go#L233). These environment variables can be accessed by [entrypoint.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/entrypoint.sh), [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L13) and on the mandelbox.
 
