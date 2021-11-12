@@ -76,8 +76,8 @@ int32_t multithreaded_send_audio(void* opaque) {
     start_audio_device(audio_device);
     AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
     if (!audio_encoder) {
-      LOG_ERROR("Failed to create audio encoder...");
-      return -1;
+        LOG_ERROR("Failed to create audio encoder...");
+        return -1;
     }
 
     int res;
