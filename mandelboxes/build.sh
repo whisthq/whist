@@ -33,6 +33,10 @@ for arg in "$@"; do
       cmake_build_type_opt=Debug
       ;;
     *)
+    --perf|-P)
+      cmake_build_type_opt=Perf
+      ;;
+    *)
       python_args+=("$arg")
       ;;
   esac

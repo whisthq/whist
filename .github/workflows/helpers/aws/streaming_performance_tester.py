@@ -115,7 +115,7 @@ if __name__ == "__main__":
     # 2- reboot and wait for it to come back up
     ssh_client.exec_command(command="sudo reboot")
     print("Rebooting the EC2 instance (required after running the host setup)")
-    
+
     reboot_complete = False
     while not reboot_complete:
         reboot_complete = True
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     time.sleep(5)
 
     # 4- Build the protocol server
-    command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome"
+    command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf"
 
     stdin, stdout, stderr = ssh_client.exec_command(command=command)
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
@@ -149,9 +149,11 @@ if __name__ == "__main__":
     # 5- Run the protocol server, and retrieve the connection configs
     command = "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome"
     _, stdout, _ = ssh_client.exec_command(command=command)
-    print("Fractal Server started on EC2 instance!")
-    
     time.sleep(5)
+    server_docker_id=stdout.readlines()[-1].strip()
+    print("Fractal Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
+    
+    
 
     # Retrieve connection configs from server
     json_data = {}
@@ -174,7 +176,7 @@ if __name__ == "__main__":
             json_data["perf_client_server_aes_key"] = aes_key
 
     # 6- Build the dev client
-    command="cd ~/fractal/mandelboxes && ./build.sh development/client"
+    command="cd ~/fractal/mandelboxes && ./build.sh development/client --perf"
     stdin, stdout, stderr = ssh_client.exec_command(command=command)
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
     if exit_status == 0:
@@ -186,22 +188,26 @@ if __name__ == "__main__":
     command="cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{}'".format(json.dumps(json_data))
     ssh_client.exec_command(command=command)
     stdin, stdout, stderr = ssh_client.exec_command(command=command)
+    time.sleep(5)
+    client_docker_id=stdout.readlines()[-1].strip()
+    print("Fractal client started on EC2 instance, on Docker container {}!".format(client_docker_id))
     
     # Wait 4 minutes to generate enough data
     time.sleep(240)  # 240 seconds = 4 minutes
-
-    # TODO: Exit the client and server, without destroying the Docker containers
-
-    # Extract the client/server perf logs from the two docker containers
-
-
-    # Close SSH connection. No need to clean up the instance (e.g. stopping the host service, stopping/removing the docker containers) because we will terminate the instance.
-    ssh_client.close()
+    
+    # 8- Extract the client/server perf logs from the two docker containers
+    command="mkdir ~/perf_logs && docker cp {}:/usr/share/fractal/client.log ~/perf_logs".format(client_docker_id)
+    ssh_client.exec_command(command=command)
+    command="docker cp {}:/usr/share/fractal/*.log ~/perf_logs".format(server_docker_id)
+    ssh_client.exec_command(command=command)
 
     # TODO
     # Here we will want to read the .logd file and retrieve all of the info we want. We could display it as
     # a comment on the PR using Neil's Slack bot automator (see webserver DB migration, which does this) or
     # eventually, run this nightly and put it up on Logz.io
+    
+    # Close SSH connection. No need to clean up the instance (e.g. stopping the host service, stopping/removing the docker containers) because we will terminate the instance.
+    ssh_client.close()
 
     # Terminating the instance and waiting for them to shutdown
     print(f"Testing complete, terminating EC2 instance")
