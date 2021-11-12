@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -12,28 +13,32 @@ import (
 )
 
 func TestInstanceStatusHandler(t *testing.T) {
-	message := `{
-		"data": {
-		  "cloud_instance_info": [
-			{
-			  "instance_name": "test-instance-name",
-			  "status": "DRAINING"
-			},
-		  ]
-		}
-	  }`
+	message := `{"cloud_instance_info": [{"instance_name": "test-instance-name","status": "DRAINING"}]}`
 
 	// Start the mock server to communicate with the hasura client
 	mockServer(t, message)
-	client := graphql.NewSubscriptionClient("localhost:8080/graphql")
 
+	t.Log("Starting Hasura client...")
+	client := graphql.NewSubscriptionClient("http://localhost:8082").WithLog(t.Log).
+		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
+		OnError(func(sc *graphql.SubscriptionClient, err error) error {
+			t.Errorf("Error received from Hasura client: %v", err)
+			return err
+		})
+
+	t.Log("Subscribing to instance status event...")
 	subscriptionEvents := make(chan SubscriptionEvent, 100)
-	_, err := instanceStatusHandler("test-instance-name", "DRAINING", client, subscriptionEvents)
 
+	id, err := instanceStatusHandler("test-instance-name", "DRAINING", client, subscriptionEvents)
+
+	t.Logf("Testing subscription with id: %v", id)
 	if err != nil {
 		t.Errorf("Error running instanceStatusHandler: %v", err)
 	}
 
+	t.Log("Starting Hasura client...")
+	go client.Run()
+	t.Log("Verifying subscription result channel...")
 	// Verify that the subscription result is sent to the appropiate channel
 	subscriptionEvent := <-subscriptionEvents
 	instanceStatusEvent := subscriptionEvent.(InstanceStatusEvent)
@@ -56,23 +61,12 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 
 func TestMandelboxInfoHandler(t *testing.T) {
-	message := `{
-		"data": {
-		  "cloud_mandelbox_info": [
-			{
-			  "instance_name": "test-instance-id",
-			  "mandelbox_id": "22222222-2222-2222-2222-222222222222",
-			  "session_id": "1636666188732",
-			  "user_id": "test-user-id",
-			  "status": "RUNNING"
-			},
-		  ]
-		}
-	  }`
+	message := `{"data": {"cloud_mandelbox_info": [{"instance_name": "test-instance-id","mandelbox_id":` +
+		`22222222-2222-2222-2222-222222222222","session_id": "1636666188732","user_id": "test-user-id","status": "RUNNING"},]}}`
 
 	// Start the mock server to communicate with the hasura client
 	mockServer(t, message)
-	client := graphql.NewSubscriptionClient("localhost:8080/graphql")
+	client := graphql.NewSubscriptionClient("http://localhost:8082")
 
 	subscriptionEvents := make(chan SubscriptionEvent, 100)
 	_, err := instanceStatusHandler("test-instance-name", "DRAINING", client, subscriptionEvents)
@@ -121,20 +115,40 @@ func mockServer(t *testing.T, message string) {
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 		defer cancel()
 
-		// var v interface{}
-		// err = wsjson.Read(ctx, c, &v)
-		// if err != nil {
-		// 	t.Errorf("Error reading json message on server")
-		// }
+		var v interface{}
+		err = wsjson.Read(ctx, c, &v)
+		if err != nil {
+			t.Errorf("Error reading json message on server")
+		}
 
-		// t.Logf("received: %v", v)
-		wsjson.Write(ctx, c, message)
-		c.Close(websocket.StatusNormalClosure, "")
+		t.Logf("received: %v", v)
+
+		operationType := v.(map[string]interface{})["type"]
+
+		if operationType == "start" {
+			t.Log("Client successfully subscribed")
+
+			jsonMessage := json.RawMessage(message)
+
+			operation := graphql.OperationMessage{
+				ID:      "test-operation",
+				Type:    graphql.GQL_DATA,
+				Payload: jsonMessage,
+			}
+
+			t.Log("Sending message to client...")
+			wsjson.Write(ctx, c, operation)
+			// c.Close(websocket.StatusNormalClosure, "")
+		}
 	})
 
-	err := http.ListenAndServe("localhost:8080/graphql", mockserver)
+	t.Log("Starting mock socket server...")
+	go func() {
+		err := http.ListenAndServe("localhost:8082", mockserver)
 
-	if err != nil {
-		t.Errorf("Error starting mock server: %v", err)
-	}
+		if err != nil {
+			t.Errorf("Error starting mock server: %v", err)
+		}
+	}()
+
 }
