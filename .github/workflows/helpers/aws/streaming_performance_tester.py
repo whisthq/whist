@@ -56,143 +56,148 @@ if __name__ == "__main__":
     # Load the SSH key
     ssh_key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
 
-    # Define client and server server machine variables
+    # Define the AWS machine variables
     instance_AMI = "ami-0885b1f6bd170450c"  # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
-    server_instance_type = "g4dn.2xlarge"  # The type of instance we want to create
-    client_instance_type = "t3.large"  # A smaller instance type to run the client on
+    instance_type = "g4dn.2xlarge"  # The type of instance we want to create
 
-    # Create our two EC2 instances
-    client_instance_id = create_ec2_instance(
-        instance_type=client_instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name
-    )
-    server_instance_id = create_ec2_instance(
-        instance_type=server_instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name
+    # Create our EC2 instance
+    instance_id = create_ec2_instance(
+        instance_type=instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name
     )
 
     # Give a little time for the instance to be recognized in AWS
     time.sleep(5)
 
-    # Wait for the two instances to be running
-    wait_for_instance_to_start_or_stop(client_instance_id, stopping=False)
-    wait_for_instance_to_start_or_stop(server_instance_id, stopping=False)
+    # Wait for the instance to be running
+    wait_for_instance_to_start_or_stop(instance_id, stopping=False)
 
-    # Get the IP address of the two instances
-    client_instance_ip = get_instance_ip(client_instance_id)
-    server_instance_ip = get_instance_ip(server_instance_id)
+    # Get the IP address of the instance
+    instance_ip = get_instance_ip(instance_id)
 
-    # # Initiate two SSH connections with the two instances
-    # First, the client machine
-    client_ssh_client = paramiko.client.SSHClient()
-    client_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # # Initiate the SSH connections with the instance
+    ssh_client = paramiko.client.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # Hang until the connection is established
     available = False
     while not available:
         available = True
         try:
-            client_ssh_client.connect(
-                hostname=client_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
+            ssh_client.connect(
+                hostname=instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
             )
         except:
             available = False
         finally:
             continue
-    print(f"SSH is available on the client EC2 instance: {client_instance_ip[0]['public']}")
+    print(f"SSH is available on the EC2 instance: {instance_ip[0]['public']}")
 
-    # Now, the server machine
-    server_ssh_client = paramiko.client.SSHClient()
-    server_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # Hang until the connection is established
-    available = False
-    while not available:
-        available = True
-        try:
-            server_ssh_client.connect(
-                hostname=server_instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
-            )
-        except:
-            available = False
-        finally:
-            continue
-    print(f"SSH is available on the client EC2 instance: {server_instance_ip[0]['public']}")
-    print(f"SSH connections established")
-
-    # At this point, we have both a server and a client running properly.
-    # Retrieve fractal/fractal monorepo on each instance
+    # Retrieve fractal/fractal monorepo on the instance
     command="git clone https://" + github_token + "@github.com/fractal/fractal.git ~/fractal"
-    client_ssh_client.exec_command(command=command)
-    stdin, stdout, stderr = server_ssh_client.exec_command(command=command)
+    stdin, stdout, stderr = ssh_client.exec_command(command=command)
 
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
     if exit_status == 0:
-        print ("Finished downloading fractal/fractal on server instance")
+        print ("Finished downloading fractal/fractal on EC2 instance")
     else:
         print("Error", exit_status)
 
-    # Set up the server first
+    # Set up the server/client
     # 1- run host-setup
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment"
-    server_ssh_client.exec_command(command=command)
+    stdin, stdout, stderr = ssh_client.exec_command(command=command)
+
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Finished running the host setup script on the EC2 instance")
+    else:
+        print("Error", exit_status)
 
     # 2- reboot and wait for it to come back up
-    server_ssh_client.exec_command(command="sudo reboot")
+    ssh_client.exec_command(command="sudo reboot")
+    print("Rebooting the EC2 instance (required after running the host setup)")
     
-    # TODO wait for SSH here 
+    # TODO wait for SSH here
+    print("EC2 instance reboot complete!")
 
-    # 3- Start the X server
-    sftp = paramiko.SFTPClient.from_transport(server_ssh_client)
-    sftp.put("./dummy-1920x1080.conf", "dummy-1920x1080.conf")
-    sftp.close()
-    command = "sudo apt install xserver-xorg-video-dummy && sudo X -config dummy-1920x1080.conf"
-    server_ssh_client.exec_command(command=command)
-
-
-    # 4- build and run host-service
+    # 3- build and run host-service
     command = "cd ~/fractal/host-service && make run"
-    server_ssh_client.exec_command(command=command)
+    ssh_client.exec_command(command=command)
+    print ("Starting the host service on the EC2 instance")
 
-    # 5- Run the protocol server, and retrieve the connection string
-    command = "cd ~/fractal/protocol && ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalServer && ./fserver"
-    _, stdout, _ = server_ssh_client.exec_command(command=command)
-    unparsed_fclient_string = ""
+    time.sleep(5)
+
+    # 4- Build the protocol server
+    command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome"
+
+    stdin, stdout, stderr = ssh_client.exec_command(command=command)
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
+    else:
+        print("Error", exit_status)
+
+    # 5- Run the protocol server, and retrieve the connection configs
+    command = "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome"
+    _, stdout, _ = ssh_client.exec_command(command=command)
+    print("Fractal Server started on EC2 instance!")
+    
+    time.sleep(5)
+
+    # Retrieve connection configs from server
+    json_data = {}
     for line in iter(stdout.readline, ""):
         print(line, end="")
         if "linux/macos" in line:
-            unparsed_fclient_string = line[line.find(".") + 2 :].strip()
-            print(f"Unparsed ./fclient connection string is: {unparsed_fclient_string}")
+            config_vals = line.strip().split()
+            server_addr = config_vals[2]
+            port_mappings = config_vals[3]
+            #Remove leading '-p' chars
+            port_mappings = port_mappings[2:].split(".")
+            port_32262 = port_mappings[0].split(":")[1]
+            port_32263 = port_mappings[1].split(":")[1]
+            port_32273 = port_mappings[2].split(":")[1]
+            aes_key = config_vals[5]
+            json_data["perf_client_server_ip"] = server_addr
+            json_data["perf_client_server_port_32262"] = port_32262
+            json_data["perf_client_server_port_32263"] = port_32263
+            json_data["perf_client_server_port_32273"] = port_32273
+            json_data["perf_client_server_aes_key"] = aes_key
 
-    # 6- parse the connection string into something readable
-    temp = unparsed_fclient_string.split(b"\n")
-    client_command = temp[6][temp[6].index(b".") + 2 :].decode("utf-8")
-    print(f"Parsed ./fclient connection string is: {client_command}")
+    # 6- Build the dev client
+    command="cd ~/fractal/mandelboxes && ./build.sh development/client"
+    stdin, stdout, stderr = ssh_client.exec_command(command=command)
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Finished building the fractal dev client container")
+    else:
+        print("Error", exit_status)
 
-    # Set up the client
-    # 1- Build the protocol client
-    command = "cd ~/fractal/protocol && ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI FractalClient"
-    client_ssh_client.exec_command(command=command)
-
-    # 2- Run the protocol client with the connection string
-    command = "cd ~/fractal/protocol && DISPLAY=:0 ./fclient " + client_command
-    server_ssh_client.exec_command(command=command)
-
+    # 7- Run the protocol client
+    command="cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{}'".format(json.dumps(json_data))
+    ssh_client.exec_command(command=command)
+    stdin, stdout, stderr = ssh_client.exec_command(command=command)
+    
     # Wait 4 minutes to generate enough data
     time.sleep(240)  # 240 seconds = 4 minutes
 
-    # Close SSH connections
-    client_ssh_client.close()
-    server_ssh_client.close()
+    # TODO: Exit the client and server, without destroying the Docker containers
+
+    # Extract the client/server perf logs from the two docker containers
+
+
+    # Close SSH connection. No need to clean up the instance (e.g. stopping the host service, stopping/removing the docker containers) because we will terminate the instance.
+    ssh_client.close()
 
     # TODO
-    # Here we will want to read the .log file and retrieve all of the info we want. We could display it as
+    # Here we will want to read the .logd file and retrieve all of the info we want. We could display it as
     # a comment on the PR using Neil's Slack bot automator (see webserver DB migration, which does this) or
     # eventually, run this nightly and put it up on Logz.io
 
-    # Terminating the instances and waiting for them to shutdown
-    print(f"Testing complete, terminating client and server instances")
-    boto3.client("ec2").terminate_instances(InstanceIds=[client_instance_id])
-    boto3.client("ec2").terminate_instances(InstanceIds=[server_instance_id])
+    # Terminating the instance and waiting for them to shutdown
+    print(f"Testing complete, terminating EC2 instance")
+    boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
 
-    # Wait for the two instances to be terminated
-    wait_for_instance_to_start_or_stop(client_instance_id, stopping=True)
-    wait_for_instance_to_start_or_stop(server_instance_id, stopping=True)
-    print("Instances successfully terminated, goodbye")
+    # Wait for the instance to be terminated
+    wait_for_instance_to_start_or_stop(instance_id, stopping=True)
+    print("Instance successfully terminated, goodbye")
     print("Done")
