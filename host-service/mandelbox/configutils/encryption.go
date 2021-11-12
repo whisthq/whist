@@ -69,6 +69,9 @@ func EncryptAES256GCM(password string, data []byte) ([]byte, error) {
 func DecryptAES256GCM(password string, data []byte) ([]byte, error) {
 	// Extract the salt and nonce from the encrypted data
 	salt, nonce, encryptedData, err := getSaltNonceAndDataFromEncryptedFile(data, defaultSaltLength, aes256GCMNonceLength)
+	if err != nil {
+		return nil, utils.MakeError("could not extract salt and nonce from encrypted data: %v", err)
+	}
 
 	// Generate the encryption key used from the password and salt
 	key := generateKeyFromPasswordAndSalt(password, salt, aes256KeyLength)

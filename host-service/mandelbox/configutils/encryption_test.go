@@ -2,8 +2,6 @@ package configutils
 
 import (
 	"testing"
-
-	"github.com/fractal/fractal/host-service/utils"
 )
 
 // TestHeaderExtraction tests the helper function that extracts
@@ -11,28 +9,25 @@ import (
 func TestHeaderExtraction(t *testing.T) {
 	t.Run("File too short", func(t *testing.T) {
 		file := []byte("short")
-		expected := utils.MakeError("encrypted file is too short")
 		_, _, _, err := getSaltNonceAndDataFromEncryptedFile(file, defaultSaltLength, aes256GCMNonceLength)
-		if err != expected {
-			t.Errorf("did not get expected error: got %v, want %v", err, expected)
+		if err == nil {
+			t.Errorf("expected error, got nil")
 		}
 	})
 
 	t.Run("No salt header provided", func(t *testing.T) {
 		file := []byte("somesalt12345678Nonce_validnonce12filecontents")
-		expected := utils.MakeError("encrypted file does not have a valid salt header")
 		_, _, _, err := getSaltNonceAndDataFromEncryptedFile(file, defaultSaltLength, aes256GCMNonceLength)
-		if err != expected {
-			t.Errorf("did not get expected error: got %v, want %v", err, expected)
+		if err == nil {
+			t.Errorf("expected error, got nil")
 		}
 	})
 
 	t.Run("No nonce header provided", func(t *testing.T) {
 		file := []byte("Salt_somesalt12345678filecontentsasdfasdfasdfas")
-		expected := utils.MakeError("encrypted file does not have a valid nonce header")
 		_, _, _, err := getSaltNonceAndDataFromEncryptedFile(file, defaultSaltLength, aes256GCMNonceLength)
-		if err != expected {
-			t.Errorf("did not get expected error: got %v, want %v", err, expected)
+		if err == nil {
+			t.Errorf("expected error, got nil")
 		}
 	})
 
@@ -69,19 +64,15 @@ func TestEncryptionFormat(t *testing.T) {
 		t.Errorf("unexpected error encrypting data: %v", err)
 	}
 
-	_, _, data, err := getSaltNonceAndDataFromEncryptedFile(encryptedData, defaultSaltLength, aes256GCMNonceLength)
+	_, _, _, err = getSaltNonceAndDataFromEncryptedFile(encryptedData, defaultSaltLength, aes256GCMNonceLength)
 	if err != nil {
 		t.Errorf("unexpected error parsing headers: %v", err)
-	}
-
-	if len(data) != len(plaintext) {
-		t.Errorf("data length is incorrect: got %d, want %d", len(data), len(plaintext))
 	}
 }
 
 // TestEncryptionDecryptionIntegration tests that we can successfully encrypt and decrypt a file.
 func TestEncryptionDecryptionIntegration(t *testing.T) {
-	t.Run("Valid encryption/decryption", func(t *testing.T) {
+	t.Run("Valid file", func(t *testing.T) {
 		plaintext := []byte("hello world")
 		encryptedData, err := EncryptAES256GCM("password", plaintext)
 		if err != nil {
