@@ -6,7 +6,6 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
-import Sentry from "@sentry/electron"
 // import Database from "better-sqlite3"
 import knex from "knex"
 import crypto from "crypto"
@@ -309,11 +308,11 @@ const getCookiesFromFile = async (
       },
     })
 
-    let rows: Cookie[] = await db.select().from<Cookie>("cookies")
+    const rows: Cookie[] = await db.select().from<Cookie>("cookies")
 
     return rows
   } catch (err) {
-    Sentry.captureException(err)
+    console.error(err)
     return []
   }
 }
