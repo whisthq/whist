@@ -92,7 +92,7 @@ func ExtractTarLz4(file []byte, dir string) error {
 	return nil
 }
 
-// CompressTarLz4 takes a directory and compresses it into a tar.lz4 file.
+// CompressTarLz4 takes a directory and compresses it into a tar.lz4 file in memory.
 func CompressTarLz4(dir string) ([]byte, error) {
 	// Check that the directory exists and is a directory
 	info, err := os.Stat(dir)

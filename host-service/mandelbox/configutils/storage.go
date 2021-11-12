@@ -2,7 +2,7 @@ package configutils // import "github.com/fractal/fractal/host-service/mandelbox
 
 import (
 	"context"
-	"os"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -41,7 +41,7 @@ func DownloadObjectToBuffer(client *s3.Client, bucket, key string, buffer *manag
 }
 
 // UploadFileToBucket uploads the given file to the given bucket and key.
-func UploadFileToBucket(client *s3.Client, bucket, key string, file *os.File) (*manager.UploadOutput, error) {
+func UploadFileToBucket(client *s3.Client, bucket, key string, file io.Reader) (*manager.UploadOutput, error) {
 	uploader := manager.NewUploader(client)
 	return uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
