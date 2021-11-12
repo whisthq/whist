@@ -9,18 +9,21 @@ from pbkdf2 import PBKDF2
 import subprocess
 
 
-def get_or_create_cookie_file(browser_name):
+def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     """
     Gets or create file containing all cookies
     Args:
         browser_name (str): the name of the browser we got cookies from
+        custom_cookie_file_path (str): [optional] the path to the cookie file
     Return:
         str: the path to cookies
     """
 
     if sys.platform.startswith("linux"):
         linux_cookies = []
-        if browser_name == "chrome":
+        if custom_cookie_file_path:
+            linux_cookies.append(custom_cookie_file_path)
+        elif browser_name == "chrome":
             linux_cookies = [
                 "~/.config/google-chrome/Default/Cookies",
                 "~/.config/google-chrome-beta/Default/Cookies",
@@ -131,12 +134,13 @@ def format_chromium_based_cookie(cookie):
     return formatted_cookie
 
 
-def set_browser_cookies(target_browser_name, cookie_full_path):
+def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_file=None):
     """
     Set cookies from file to target browser
     Args:
         target_browser_name (str): the name of the browser we will import cookies to
-        cookie_full_path (str): path to cookie file
+        cookie_full_path (str): path to file containing cookie json
+        target_cookie_file (str): [optional] path to target browser cookie file
     """
     # This function only supports the targets Brave, Opera, Chrome, and any browser with
     # the same db columns. Otherwise it will not work and error out.
@@ -147,7 +151,7 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
     ):
         raise ("Unrecognized browser type. Only works for brave, chrome, and opera.")
 
-    cookie_file = get_or_create_cookie_file(target_browser_name)
+    cookie_file = get_or_create_cookie_file(target_browser_name, target_cookie_file)
 
     # Set up database
     con = sqlite3.connect(cookie_file)
@@ -173,8 +177,11 @@ def set_browser_cookies(target_browser_name, cookie_full_path):
             cookie.pop("encryption_prefix", None)
 
             # We only want the values in a list form
-            formatted_cookies.append(format_chromium_based_cookie(cookie))
-
+            try:
+                formatted_cookies.append(format_chromium_based_cookie(cookie))
+            except:
+                subprocess.run(["echo", f"Cookie failed to format {cookie}"])
+            
         try:
             # This is very specific to Chrome/Brave/Opera
             # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns
