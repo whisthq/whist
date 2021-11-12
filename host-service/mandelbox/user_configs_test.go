@@ -190,7 +190,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	testMandelboxData := mandelboxData{
 		ctx:                   ctx,
 		cancel:                cancel,
-		ID:                    "userConfigTest",
+		ID:                    mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		appName:               "testApp",
 		userID:                "user_config_test_user",
 		configEncryptionToken: "testEncryptionToken",
