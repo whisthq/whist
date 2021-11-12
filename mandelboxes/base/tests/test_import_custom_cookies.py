@@ -7,14 +7,14 @@ from ..utils.import_custom_cookies import *
 
 
 browserFiles = [
-    ["chrome", "~/.config/google-chrome/Default/Cookies"],
-    ["chrome", "~/.config/google-chrome-beta/Default/Cookies"],
-    ["chromium", "~/.config/chromium/Default/Cookies"],
-    ["opera", "~/.config/opera/Cookies"],
-    ["edge", "~/.config/microsoft-edge/Default/Cookies"],
-    ["edge", "~/.config/microsoft-edge-dev/Default/Cookies"],
-    ["brave", "~/.config/BraveSoftware/Brave-Browser/Default/Cookies"],
-    ["brave", "~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies"],
+    ["chrome", "~/.config/temp/google-chrome/Default/Cookies"],
+    ["chrome", "~/.config/temp/google-chrome-beta/Default/Cookies"],
+    ["chromium", "~/.config/temp/chromium/Default/Cookies"],
+    ["opera", "~/.config/temp/opera/Cookies"],
+    ["edge", "~/.config/temp/microsoft-edge/Default/Cookies"],
+    ["edge", "~/.config/temp/microsoft-edge-dev/Default/Cookies"],
+    ["brave", "~/.config/temp/BraveSoftware/Brave-Browser/Default/Cookies"],
+    ["brave", "~/.config/temp/BraveSoftware/Brave-Browser-Beta/Default/Cookies"],
 ]
 
 
@@ -28,7 +28,7 @@ def test_get_existing_cookie_file(browser, file_path):
     with open(file_path, "x") as f:
         f.write("Create a Cookie file!")
 
-    file_location = get_or_create_cookie_file(browser)
+    file_location = get_or_create_cookie_file(browser, file_path)
 
     assert file_location == file_path
 
@@ -36,24 +36,22 @@ def test_get_existing_cookie_file(browser, file_path):
 
 
 browserFilesCreate = [
-    ["chrome", "~/.config/google-chrome/Default/Cookies"],
-    ["chromium", "~/.config/chromium/Default/Cookies"],
-    ["opera", "~/.config/opera/Cookies"],
-    ["edge", "~/.config/microsoft-edge/Default/Cookies"],
-    ["brave", "~/.config/BraveSoftware/Brave-Browser/Default/Cookies"],
+    ["chrome", "~/.config/temp/google-chrome/Default/Cookies"],
+    ["chromium", "~/.config/temp/chromium/Default/Cookies"],
+    ["opera", "~/.config/temp/opera/Cookies"],
+    ["edge", "~/.config/temp/microsoft-edge/Default/Cookies"],
+    ["brave", "~/.config/temp/BraveSoftware/Brave-Browser/Default/Cookies"],
 ]
 
 
 @pytest.mark.parametrize("browser,created_file_path", browserFilesCreate)
 def test_create_cookie_file(browser, created_file_path):
-    file_location = get_or_create_cookie_file(browser)
+    file_location = get_or_create_cookie_file(browser, created_file_path)
     assert file_location == os.path.expanduser(created_file_path)
     os.remove(file_location)
 
 
 browsers = ["firefox"]
-
-
 @pytest.mark.parametrize("browser", browsers)
 @pytest.mark.xfail(raises=browser_cookie3.BrowserCookieError)
 def test_invalid_browser(browser):
@@ -137,8 +135,6 @@ cookies = [
     [cookie_with_secure, expected_cookie_format],
     [cookie_with_is_secure, expected_cookie_format],
 ]
-
-
 @pytest.mark.parametrize("cookie,expected_format", cookies)
 def test_formatting_chromium_based_cookie(cookie, expected_format):
     formatted_cookie = format_chromium_based_cookie(cookie)
@@ -146,22 +142,22 @@ def test_formatting_chromium_based_cookie(cookie, expected_format):
         assert field == expected_format[index]
 
 
-browser_cookies = [["chrome", [cookie_with_is_secure]]]
+browser_cookies = [["chrome", [cookie_with_is_secure], "~/.config/temp/google-chrome/Default/Cookies"]]
 
 
-@pytest.mark.parametrize("browser,cookies", browser_cookies)
-def test_setting_browser_cookies(browser, cookies, tmp_path):
+@pytest.mark.parametrize("browser,cookies,browser_cookie_path", browser_cookies)
+def test_setting_browser_cookies(browser, cookies, browser_cookie_path, tmp_path):
     # Create file to store cookies
     temp_dir = tmp_path / "sub"
     temp_dir.mkdir()
-    path = temp_dir / "hello.txt"
-    path.write_text(json.dumps(cookies))
+    cookie_json_path = temp_dir / "cookies.txt"
+    cookie_json_path.write_text(json.dumps(cookies))
 
     # Upload cookies
-    set_browser_cookies(browser, path)
+    set_browser_cookies(browser, cookie_json_path, browser_cookie_path)
 
     # Get cookie file to test
-    cookie_file = get_or_create_cookie_file(browser)
+    cookie_file = get_or_create_cookie_file(browser, browser_cookie_path)
 
     con = sqlite3.connect(cookie_file)
     cur = con.cursor()
