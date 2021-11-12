@@ -180,7 +180,7 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
                 formatted_cookies.append(format_chromium_based_cookie(cookie))
             except:
                 subprocess.run(["echo", f"Cookie failed to format {cookie}"])
-            
+
         try:
             # This is very specific to Chrome/Brave/Opera
             # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns

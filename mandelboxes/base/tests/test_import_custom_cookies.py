@@ -52,6 +52,8 @@ def test_create_cookie_file(browser, created_file_path):
 
 
 browsers = ["firefox"]
+
+
 @pytest.mark.parametrize("browser", browsers)
 @pytest.mark.xfail(raises=browser_cookie3.BrowserCookieError)
 def test_invalid_browser(browser):
@@ -135,6 +137,8 @@ cookies = [
     [cookie_with_secure, expected_cookie_format],
     [cookie_with_is_secure, expected_cookie_format],
 ]
+
+
 @pytest.mark.parametrize("cookie,expected_format", cookies)
 def test_formatting_chromium_based_cookie(cookie, expected_format):
     formatted_cookie = format_chromium_based_cookie(cookie)
@@ -142,7 +146,9 @@ def test_formatting_chromium_based_cookie(cookie, expected_format):
         assert field == expected_format[index]
 
 
-browser_cookies = [["chrome", [cookie_with_is_secure], "~/.config/temp/google-chrome/Default/Cookies"]]
+browser_cookies = [
+    ["chrome", [cookie_with_is_secure], "~/.config/temp/google-chrome/Default/Cookies"]
+]
 
 
 @pytest.mark.parametrize("browser,cookies,browser_cookie_path", browser_cookies)
