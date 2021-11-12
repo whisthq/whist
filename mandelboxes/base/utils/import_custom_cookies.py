@@ -178,8 +178,8 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             # We only want the values in a list form
             try:
                 formatted_cookies.append(format_chromium_based_cookie(cookie))
-            except:
-                subprocess.run(["echo", f"Cookie failed to format {cookie}"])
+            except KeyError as err:
+                subprocess.run(["echo", f"Cookie failed to format with key err: {err}"])
 
         try:
             # This is very specific to Chrome/Brave/Opera
