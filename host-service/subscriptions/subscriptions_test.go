@@ -91,7 +91,7 @@ func TestMandelboxInfoHandler(t *testing.T) {
 		want, got string
 	}{
 		{"InstanceName", "test-instance-name", gotInstance.InstanceName},
-		{"MandelboxID", "22222222-2222-2222-2222-222222222222", string(gotInstance.ID)},
+		{"MandelboxID", "22222222-2222-2222-2222-222222222222", gotInstance.ID.String()},
 		{"SessionID", "1636666188732", string(gotInstance.UserID)},
 		{"UserID", "test-user-id", string(gotInstance.SessionID)},
 	}
