@@ -98,6 +98,9 @@ ClipboardData* get_clipboard() {
         Returns:
             (ClipboardData*): Pointer to the current clipboard data as a
                 ClipboardData struct
+
+        NOTE: `free_clipboard` is the function to use to free the space
+            allocated for the pulled clipboard in this function
     */
 
     if (!clipboard_mutex) {

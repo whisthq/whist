@@ -42,6 +42,24 @@ Includes
 
 #include "clipboard.h"
 
+typedef enum FractalClipboardActionType {
+    CLIPBOARD_ACTION_NONE = 0,
+    CLIPBOARD_ACTION_PUSH = 1, // push onto local clipboard
+    CLIPBOARD_ACTION_PULL = 2, // pull from local clipboard
+} FractalClipboardActionType;
+
+typedef struct ClipboardActivity {
+    bool is_initialized;
+    // active_clipboard_action_thread is valid as long as
+    //    clipboard_action_type is not CLIPBOARD_ACTION_NONE
+    // (FractalThread can also evaluate to NULL)
+    FractalThread active_clipboard_action_thread;
+    FractalClipboardActionType clipboard_action_type;
+    FractalMutex clipboard_action_mutex;
+    FractalSemaphore next_update_semaphore;
+    bool action_completed; // whether the push to clipboard or pull of all chunks is completed
+} ClipboardActivity;
+
 /*
 ============================
 Public Functions
@@ -49,7 +67,15 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize the Update Clipboard Helper
+ * @brief                          Initialize the clipboard synchronizer
+ *
+ * @returns                        True if clipboard is synchronizing, false otherwise
+ *
+ */
+bool is_clipboard_synchronizing();
+
+/**
+ * @brief                          Initialize the clipboard synchronizer
  *
  * @param is_client                Whether the caller is the client or the server
  *
@@ -57,36 +83,24 @@ Public Functions
 void init_clipboard_synchronizer(bool is_client);
 
 /**
- * @brief                          Set the clipboard to a given clipboard data
+ * @brief                          When called, return the current clipboard chunk
+ *                                 if a new clipboard activity has registered, or
+ *                                 if the recently updated clipboard is being read.
  *
- * @param cb_chunk                 The clipboard data chunk to update the
- *                                 clipboard with
+ * @returns                        Pointer to the latest clipboard chunk
  *
- * @returns                        true on success, false on failure
  */
-bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk);
+ClipboardData* pull_clipboard_chunk();
 
 /**
- * @brief                          Check if the clipboard is in the midst of
- *                                 being updated
+ * @brief                          When called, return the current clipboard chunk
+ *                                 if a new clipboard activity has registered, or
+ *                                 if the recently updated clipboard is being read.
  *
- * @returns                        True if the clipboard is currently
- *                                 busy being updated. This will be true
- *                                 for a some period of time after
- *                                 updateSetClipboard
- */
-bool is_clipboard_synchronizing();
-
-/**
- * @brief                          Get a new clipboard, if any
+ * @param cb_chunk                 Pointer to the clipboard chunk to push
  *
- * @returns                        A pointer to new clipboard data chunk
- *                                 that should be sent to the server.
- *                                 NULL if the clipboard has not been
- *                                 updated since the last call to the
- *                                 clipboard
  */
-ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk();
+void push_clipboard_chunk(ClipboardData* cb_chunk);
 
 /**
  * @brief                          Cleanup the clipboard synchronizer

@@ -51,19 +51,11 @@ Defines
 ============================
 */
 
-#define MS_IN_SECOND 1000
+// #define MS_IN_SECOND 1000
 
-volatile bool updating_set_clipboard;  // set to true when SetClipboard() needs to be called
-volatile bool updating_get_clipboard;  // set to true when GetClipboard() needs to be called
-clock last_clipboard_update;
-FractalSemaphore clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
-FractalMutex clipboard_update_mutex;   // used to protect the global clipboard and update toggles
-ClipboardData* clipboard;
-int clipboard_written_bytes = 0;  // number of bytes of clipboard already transmitted
-FractalThread clipboard_synchronizer_thread;
-static bool is_initialized = false;
-
-bool pending_clipboard_push;
+ClipboardActivity current_clipboard_activity;
+ClipboardData* active_clipboard_buffer = NULL;
+int clipboard_written_bytes = 0;
 
 /*
 ============================
@@ -71,8 +63,197 @@ Private Functions
 ============================
 */
 
-int update_clipboard(void* opaque);
-void clipboard_synchronizer_abort_active_clipboard_action();
+bool start_clipboard_transfer(FractalClipboardActionType new_clipboard_action_type);
+void finish_clipboard_transfer();
+void reset_active_clipboard_activity();
+
+/*** Thread Functions ***/
+void transfer_clipboard_wait_loop(FractalClipboardActionType transfer_action_type);
+int push_clipboard_thread_function(void* opaque);
+int pull_clipboard_thread_function(void* opaque);
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+bool start_clipboard_transfer(FractalClipboardActionType new_clipboard_action_type) {
+    /*
+        Create the thread for the active clipboard transfer (push or pull).
+
+        Arguments:
+            new_clipboard_action_type (FractalClipboardActionType):
+                the new transfer type (PUSH or PULL)
+
+        Returns:
+            (bool): whether an activity thread has been created for the transfer
+
+        NOTE: must be called with `current_clipboard_activity.clipboard_action_mutex` held
+    */
+
+    reset_active_clipboard_activity();
+
+    LOG_INFO("Creating thread for clipboard transfer of type: %d", new_clipboard_action_type);
+
+    // Create new thread
+    if (new_clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
+        current_clipboard_activity.active_clipboard_action_thread =
+        fractal_create_thread(push_clipboard_thread_function, "push_clipboard_thread", NULL);
+    } else if (new_clipboard_action_type == CLIPBOARD_ACTION_PULL) {
+        current_clipboard_activity.active_clipboard_action_thread =
+        fractal_create_thread(pull_clipboard_thread_function, "pull_clipboard_thread", NULL);
+    }
+
+    return current_clipboard_activity.active_clipboard_action_thread != NULL;
+}
+
+void finish_clipboard_transfer() {
+    /*
+        Indicate that the active clipboard activity is complete and the
+        thread can take care of the final clipboard push and/or clear.
+    */
+
+    LOG_INFO("Completing current clipboard action");
+
+    current_clipboard_activity.action_completed = true;
+}
+
+void reset_active_clipboard_activity() {
+    /*
+        When an active clipboard action has been interrupted by a new one,
+        cancel the active action by exiting the thread and resetting all
+        the action tracking variables. If there is no active action, it will
+        just reset the active clipboard activity values without preforming
+        any thread functions.
+
+        NOTE: must be called with `current_clipboard_activity.clipboard_action_mutex` held
+    */
+
+    LOG_INFO("Resetting active clipboard action");
+
+    current_clipboard_activity.clipboard_action_type = CLIPBOARD_ACTION_NONE;
+    current_clipboard_activity.action_completed = true;
+    // If active thread, post semaphore and wait for thread to exit loop and finish
+    if (current_clipboard_activity.active_clipboard_action_thread) {
+        LOG_INFO("Cancelling current clipboard action");
+        fractal_post_semaphore(current_clipboard_activity.next_update_semaphore);
+        fractal_wait_thread(current_clipboard_activity.active_clipboard_action_thread, NULL);
+    }
+    current_clipboard_activity.active_clipboard_action_thread = NULL;
+    current_clipboard_activity.action_completed = false;
+    clipboard_written_bytes = 0;
+}
+
+void transfer_clipboard_wait_loop(FractalClipboardActionType transfer_action_type) {
+    /*
+        Loop to wait for the clipboard transfer to complete or abort. This
+        function is called by both the push and pull clipboard threads.
+
+        NOTE: `current_clipboard_activity.clipboard_action_mutex` must NOT be held
+        when calling this function. This function will return with this mutex HELD.
+    */
+
+    LOG_INFO("Waiting for clipboard action to complete");
+
+    fractal_post_semaphore(current_clipboard_activity.next_update_semaphore);
+
+    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
+    // semaphore is signaled each time a chunk is pushed to the clipboard
+    while (current_clipboard_activity.clipboard_action_type == transfer_action_type &&
+            !current_clipboard_activity.action_completed) {
+        fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+        fractal_wait_semaphore(current_clipboard_activity.next_update_semaphore);
+        fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
+    }
+}
+
+int push_clipboard_thread_function(void* opaque) {
+    /*
+        Ephemeral update thread function for a clipboard push. This thread
+        runs as long as an active clipboard push action is occurring. Once
+        all chunks have been received, or the action has been aborted, the
+        loop exits and the thread finishes by pushing the clipboard buffer
+        onto the OS clipboard (or doing nothing if aborting) and cleaning
+        up resources.
+
+        Arguments:
+            opaque (void*): thread argument (unused)
+
+        Return:
+            (int): 0 on success
+    */
+
+    UNUSED(opaque);
+
+    LOG_INFO("Begun pushing clipboard");
+
+    active_clipboard_buffer = allocate_region(sizeof(ClipboardData));
+    active_clipboard_buffer->size = 0;
+
+    current_clipboard_activity.action_completed = false;
+    current_clipboard_activity.clipboard_action_type = CLIPBOARD_ACTION_PUSH;
+
+    // Wait for all chunks to be pushed onto clipboard buffer
+    transfer_clipboard_wait_loop(CLIPBOARD_ACTION_PUSH);
+
+    // If the action is no longer CLIPBOARD_ACTION_PUSH, that means the current action
+    //     has been cancelled and we don't want to set the clipboard
+    if (current_clipboard_activity.clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
+        if (active_clipboard_buffer) {
+            set_clipboard(active_clipboard_buffer);
+        }
+    }
+
+    if (active_clipboard_buffer) {
+        deallocate_region(active_clipboard_buffer);
+    }
+    active_clipboard_buffer = NULL;
+
+    fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    return 0;
+}
+
+int pull_clipboard_thread_function(void* opaque) {
+    /*
+        Ephemeral update thread function for a clipboard pull. This thread
+        runs as long as an active clipboard pull action is occurring. Once
+        all chunks have been sent, or the action has been aborted, the
+        loop exits and the thread finishes by cleaning up resources.
+
+        Arguments:
+            opaque (void*): thread argument (unused)
+
+        Return:
+            (int): 0 on success
+
+        NOTE: this thread should only be created when `has_clipboard_updated`
+            evaluates to true
+    */
+
+    LOG_INFO("Begun pulling clipboard");
+
+    current_clipboard_activity.action_completed = false;
+    current_clipboard_activity.clipboard_action_type = CLIPBOARD_ACTION_PULL;
+
+    // When thread is created, pull the clipboard
+    active_clipboard_buffer = get_clipboard();
+
+    // Wait for all chunks to be pulled from clipboard buffer
+    transfer_clipboard_wait_loop(CLIPBOARD_ACTION_PULL);
+
+    // After calling `get_clipboard()`, we call `free_clipboard()`
+    if (active_clipboard_buffer) {
+        free_clipboard(active_clipboard_buffer);
+    }
+    active_clipboard_buffer = NULL;
+
+    fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    return 0;
+}
+
 
 /*
 ============================
@@ -82,20 +263,18 @@ Public Function Implementations
 
 bool is_clipboard_synchronizing() {
     /*
-        Check if the clipboard is in the midst of being updated
+        Whether an active clipboard push or pull action is in effect
 
         Returns:
-            (bool): True if the clipboard is currently busy being updated.
-                This will be true for a some period of time after
-                updateSetClipboard.
+            (bool): true if clipboard is synchronizing, false otherwise
     */
 
-    return updating_get_clipboard || updating_set_clipboard || pending_clipboard_push;
+    return current_clipboard_activity.active_clipboard_action_thread != NULL;
 }
 
 void init_clipboard_synchronizer(bool is_client) {
     /*
-        Initialize the clipboard and the synchronizer thread
+        Initialize the clipboard synchronizer
 
         Arguments:
             is_client (bool): whether the caller is the client (true) or the server (false)
@@ -103,141 +282,23 @@ void init_clipboard_synchronizer(bool is_client) {
 
     LOG_INFO("Initializing clipboard");
 
-    if (is_initialized) {
+    if (current_clipboard_activity.is_initialized) {
         LOG_ERROR("Tried to init_clipboard, but the clipboard is already initialized");
         return;
     }
 
     init_clipboard(is_client);
 
-    pending_clipboard_push = false;
-    updating_get_clipboard = false;
-    updating_set_clipboard = false;
-    start_timer((clock*)&last_clipboard_update);
-    clipboard_semaphore = fractal_create_semaphore(0);
-    clipboard_update_mutex = fractal_create_mutex();
-
-    // is_initialized = true must be at the bottom,
-    // so that if (!is_initialized) checks work
-    is_initialized = true;
-    // The update loop will happen after is_initialized is set true,
-    // This update loop will exit if is_initialized is false
-    clipboard_synchronizer_thread =
-        fractal_create_thread(update_clipboard, "update_clipboard", NULL);
-}
-
-void destroy_clipboard_synchronizer() {
-    /*
-        Clean up and destroy the clipboard synchronizer
-    */
-
-    LOG_INFO("Trying to destroy clipboard synchronizer...");
-
-    // If the clipboard is not initialized, then there is nothing to destroy
-    if (!is_initialized) {
-        LOG_ERROR("Clipboard synchronizer is not initialized!");
-        return;
-    }
-
-    is_initialized = false;
-
-    fractal_post_semaphore(clipboard_semaphore);
-    fractal_wait_thread(clipboard_synchronizer_thread, NULL);
-
-    // If the clipboard is currently being updated, then cancel that action
-    fractal_lock_mutex(clipboard_update_mutex);
-    if (is_clipboard_synchronizing()) {
-        clipboard_synchronizer_abort_active_clipboard_action();
-    }
-    fractal_unlock_mutex(clipboard_update_mutex);
-
-    // Destroy mutexes
-    fractal_destroy_mutex(clipboard_update_mutex);
-    fractal_destroy_semaphore(clipboard_semaphore);
-
-    // NOTE: Bad things could happen if initialize_clipboard is run
-    // while destroy_clipboard() is running
-    destroy_clipboard();
-
-    LOG_INFO("Finished destroying clipboard synchronizer");
-}
-
-void clipboard_synchronizer_abort_active_clipboard_action() {
-    /*
-        Abort an active synchronizer get or set by deallocating the active clipboard
-        and resetting all update booleans to false.
-
-        NOTE: this must be called with `clipboard_update_mutex` held
-    */
-
-    // Release the clipboard global
-    if (clipboard) {
-        if (pending_clipboard_push) {
-            // This means that we are actively "getting" the clipboard,
-            //     which is the only case in which we should call `free_clipboard`
-            free_clipboard(clipboard);
-        } else {
-            deallocate_region(clipboard);
-        }
-        clipboard = NULL;
-    }
-    updating_set_clipboard = false;
-    updating_get_clipboard = false;
-    pending_clipboard_push = false;
+    current_clipboard_activity.is_initialized = true;
+    current_clipboard_activity.active_clipboard_action_thread = NULL;
+    current_clipboard_activity.clipboard_action_type = CLIPBOARD_ACTION_NONE;
+    current_clipboard_activity.clipboard_action_mutex = fractal_create_mutex();
+    current_clipboard_activity.next_update_semaphore = fractal_create_semaphore(0);
+    current_clipboard_activity.action_completed = false;
     clipboard_written_bytes = 0;
 }
 
-bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk) {
-    /*
-        When called, signal that the clipboard can be set to the given contents
-
-        Arguments:
-            cb (ClipboardData*): pointer to the clipboard chunk to load
-
-        Returns:
-            updatable (bool): whether the clipboard can be set right now
-    */
-
-    if (!is_initialized) {
-        LOG_ERROR("Tried to set_clipboard, but the clipboard is not initialized");
-        return false;
-    }
-
-    fractal_lock_mutex(clipboard_update_mutex);
-
-    // If the clipboard is currently being updated and the received chunk is a
-    //     START chunk, then abort the active action
-    if (is_clipboard_synchronizing() && cb_chunk->chunk_type == CLIPBOARD_START) {
-        clipboard_synchronizer_abort_active_clipboard_action();
-    }
-
-    updating_set_clipboard = true;
-    updating_get_clipboard = false;
-
-    // clipboard->chunk_type is unused, but cb_chunk->chunk_type is important
-    if (cb_chunk->chunk_type == CLIPBOARD_START) {
-        clipboard = allocate_region(sizeof(ClipboardData) + cb_chunk->size);
-        memcpy(clipboard, cb_chunk, sizeof(ClipboardData) + cb_chunk->size);
-    } else {
-        // if not the first clipboard chunk, then add onto the end of the buffer
-        //     and update clipboard size
-        clipboard =
-            realloc_region(clipboard, sizeof(ClipboardData) + clipboard->size + cb_chunk->size);
-        memcpy(clipboard->data + clipboard->size, cb_chunk->data, cb_chunk->size);
-        clipboard->size += cb_chunk->size;
-
-        if (cb_chunk->chunk_type == CLIPBOARD_FINAL) {
-            // ready to set OS clipboard
-            fractal_post_semaphore(clipboard_semaphore);
-        }
-    }
-
-    fractal_unlock_mutex(clipboard_update_mutex);
-
-    return true;
-}
-
-ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
+ClipboardData* pull_clipboard_chunk() {
     /*
         When called, return the current clipboard chunk if a new clipboard activity
         has registered, or if the recently updated clipboard is being read.
@@ -247,101 +308,137 @@ ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk() {
 
         Returns:
             cb_chunk (ClipboardData*): pointer to the latest clipboard chunk
+                NOTE: cb_chunk must be freed by caller if not NULL
     */
 
-    if (!is_initialized) {
-        LOG_WARNING("Tried to get_new_clipboard, but the clipboard is not initialized");
+    if (!current_clipboard_activity.is_initialized) {
+        LOG_WARNING("Tried to pull_clipboard_chunk, but the clipboard is not initialized");
         return NULL;
     }
 
-    fractal_lock_mutex(clipboard_update_mutex);
+    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
-    // If clipboard has updated - if is currently being updated, abort that action
+    // If clipboard has updated, start new transfer
     if (has_clipboard_updated()) {
-        if (is_clipboard_synchronizing()) {
-            clipboard_synchronizer_abort_active_clipboard_action();
-        }
-        LOG_INFO("Pushing update to clipboard");
-        updating_set_clipboard = false;
-        updating_get_clipboard = true;
-
-        fractal_unlock_mutex(clipboard_update_mutex);
-        fractal_post_semaphore(clipboard_semaphore);
-
+        start_clipboard_transfer(CLIPBOARD_ACTION_PULL);
+        fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
         return NULL;
     }
 
-    if (pending_clipboard_push) {
-        int chunk_size = min(CHUNK_SIZE, clipboard->size - clipboard_written_bytes);
+    if (active_clipboard_buffer) {
+        int chunk_size = min(CHUNK_SIZE, active_clipboard_buffer->size - clipboard_written_bytes);
         ClipboardData* cb_chunk = allocate_region(sizeof(ClipboardData) + chunk_size);
         cb_chunk->size = chunk_size;
-        cb_chunk->type = clipboard->type;
+        cb_chunk->type = active_clipboard_buffer->type;
         if (clipboard_written_bytes == 0) {
             cb_chunk->chunk_type = CLIPBOARD_START;
-        } else if (clipboard_written_bytes == clipboard->size) {
+        } else if (clipboard_written_bytes == active_clipboard_buffer->size) {
             cb_chunk->chunk_type = CLIPBOARD_FINAL;
         } else {
             cb_chunk->chunk_type = CLIPBOARD_MIDDLE;
         }
 
         // for FINAL, this will just "copy" 0 bytes
-        memcpy(cb_chunk->data, clipboard->data + clipboard_written_bytes, chunk_size);
-        if (clipboard_written_bytes == clipboard->size) {
-            pending_clipboard_push = false;
-            // Free clipboard
-            free_clipboard(clipboard);
-            clipboard = NULL;
-            clipboard_written_bytes = 0;
+        memcpy(cb_chunk->data, active_clipboard_buffer->data + clipboard_written_bytes, chunk_size);
+        if (clipboard_written_bytes == active_clipboard_buffer->size) {
+            finish_clipboard_transfer();
         }
 
         // update written bytes
         clipboard_written_bytes += chunk_size;
 
-        fractal_unlock_mutex(clipboard_update_mutex);
+        fractal_post_semaphore(current_clipboard_activity.next_update_semaphore);
+
+        fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
         return cb_chunk;
     }
 
-    fractal_unlock_mutex(clipboard_update_mutex);
+    fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
     return NULL;
 }
 
-int update_clipboard(void* opaque) {
+void push_clipboard_chunk(ClipboardData* cb_chunk) {
     /*
-        Thread to get and set clipboard as signals are received.
+        When called, push the given chunk onto the active clipboard buffer
+
+        Arguments:
+            cb (ClipboardData*): pointer to the clipboard chunk to push
     */
 
-    UNUSED(opaque);
-
-    while (is_initialized) {
-        fractal_wait_semaphore(clipboard_semaphore);
-
-        if (!is_initialized) {
-            break;
-        }
-
-        fractal_lock_mutex(clipboard_update_mutex);
-
-        if (updating_set_clipboard) {
-            LOG_INFO("Trying to set clipboard!");
-
-            set_clipboard(clipboard);
-            updating_set_clipboard = false;
-            deallocate_region(clipboard);
-            clipboard = NULL;
-        } else if (updating_get_clipboard) {
-            LOG_INFO("Trying to get clipboard!");
-
-            clipboard = get_clipboard();
-            pending_clipboard_push = true;
-            updating_get_clipboard = false;
-        }
-
-        LOG_INFO("Updated clipboard!");
-
-        fractal_unlock_mutex(clipboard_update_mutex);
+    if (!current_clipboard_activity.is_initialized) {
+        LOG_ERROR("Tried to push_clipboard_chunk, but the clipboard is not initialized");
+        return;
     }
 
-    return 0;
+    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    // If received start chunk, then start new transfer
+    if (cb_chunk->chunk_type == CLIPBOARD_START) {
+        if (start_clipboard_transfer(CLIPBOARD_ACTION_PUSH)) {
+            // Wait for thread to be set up before continuing to push chunk onto buffer
+            fractal_wait_semaphore(current_clipboard_activity.next_update_semaphore);
+        } else {
+            LOG_ERROR("Failed to start a new clipboard push action");
+            fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+            return;
+        }
+    }
+
+    // Add chunk contents onto clipboard buffer and update clipboard size
+    active_clipboard_buffer =
+        realloc_region(active_clipboard_buffer, sizeof(ClipboardData) + active_clipboard_buffer->size + cb_chunk->size);
+
+    if (cb_chunk->chunk_type == CLIPBOARD_START) {
+        // First chunk needs to memcpy full contents into clipboard buffer because it contains
+        //     clipboard detail fields that need to be copied (e.g. size, type)
+        memcpy(active_clipboard_buffer, cb_chunk, sizeof(ClipboardData) + cb_chunk->size);
+    } else {
+        // Remaining chunks need to memcpy just the data buffer into clipboard buffer and also
+        //     need to manually increment clipboard size
+        memcpy(active_clipboard_buffer->data + active_clipboard_buffer->size, cb_chunk->data, cb_chunk->size);
+        active_clipboard_buffer->size += cb_chunk->size;
+    }
+
+    if (cb_chunk->chunk_type == CLIPBOARD_FINAL) {
+        // ready to set OS clipboard
+        finish_clipboard_transfer();
+    }
+
+    fractal_post_semaphore(current_clipboard_activity.next_update_semaphore);
+
+    fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+}
+
+void destroy_clipboard_synchronizer() {
+    /*
+        Cleanup the clipboard synchronizer and all resources
+    */
+
+    LOG_INFO("Trying to destroy clipboard synchronizer...");
+
+    // If the clipboard is not initialized, then there is nothing to destroy
+    if (!current_clipboard_activity.is_initialized) {
+        LOG_ERROR("Clipboard synchronizer is not initialized!");
+        return;
+    }
+
+    current_clipboard_activity.is_initialized = false;
+
+    // If the clipboard is currently being updated, then cancel that action
+    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
+    if (current_clipboard_activity.clipboard_action_type != CLIPBOARD_ACTION_NONE) {
+        reset_active_clipboard_activity();
+    }
+    fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    fractal_destroy_mutex(current_clipboard_activity.clipboard_action_mutex);
+    fractal_destroy_semaphore(current_clipboard_activity.next_update_semaphore);
+
+    // NOTE: Bad things could happen if initialize_clipboard is run
+    // while destroy_clipboard() is running
+    destroy_clipboard();
+
+    LOG_INFO("Finished destroying clipboard synchronizer");
 }

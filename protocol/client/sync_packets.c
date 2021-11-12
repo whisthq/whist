@@ -294,7 +294,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             free_packet(socket_context, packet);
         }
 
-        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
+        ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
             FractalClientMessage* fcmsg = allocate_region(
                 sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);

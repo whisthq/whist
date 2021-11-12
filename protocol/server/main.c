@@ -197,7 +197,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // GET CLIPBOARD HANDLER
         // If the clipboard has a new available chunk, we should send it over to the
         // client
-        ClipboardData* clipboard_chunk = clipboard_synchronizer_get_next_clipboard_chunk();
+        ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
             if (assuming_client_active) {
                 LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
