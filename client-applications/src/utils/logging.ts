@@ -122,8 +122,10 @@ export const logBase = (
 
   // Don't log the config token to Amplitude to protect user privacy
   data = mapValuesDeep(data, (v: object | Array<any>, k: string) => {
-    if (["configToken", "config_encryption_token", "cookies"].includes(k))
-      return "***********"
+    if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
+      if ((k ?? "") === "") return "[Empty String]"
+      return "*************"
+    }
     return v
   })
 
