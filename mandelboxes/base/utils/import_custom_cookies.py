@@ -3,7 +3,6 @@ import json
 import sys
 import browser_cookie3
 import sqlite3
-import keyring
 import pyaes
 from pbkdf2 import PBKDF2
 import subprocess
