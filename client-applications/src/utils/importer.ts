@@ -6,6 +6,7 @@ import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
 import { dirname } from "path"
+import Sentry from "@sentry/electron"
 // import Database from "better-sqlite3"
 import knex from "knex"
 import crypto from "crypto"
@@ -298,18 +299,23 @@ const getCookiesFromFile = async (
 ): Promise<Cookie[]> => {
   const cookieFile = getExpandedCookieFilePath(browser)
 
-  const tempFile = createLocalCopy(cookieFile)
+  try {
+    const tempFile = createLocalCopy(cookieFile)
 
-  const db = knex({
-    client: "sqlite3",
-    connection: {
-      filename: tempFile,
-    },
-  })
+    const db = knex({
+      client: "sqlite3",
+      connection: {
+        filename: tempFile,
+      },
+    })
 
-  let rows: Cookie[] = await db.select().from<Cookie>("cookies")
+    let rows: Cookie[] = await db.select().from<Cookie>("cookies")
 
-  return rows
+    return rows
+  } catch (err) {
+    Sentry.captureException(err)
+    return []
+  }
 }
 
 const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {

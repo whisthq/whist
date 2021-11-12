@@ -9,7 +9,6 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
-import mapValuesDeep from "deepdash/mapValuesDeep"
 
 import config, {
   loggingBaseFilePath,
@@ -119,16 +118,6 @@ export const logBase = (
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
-
-  // Don't log the config token to Amplitude to protect user privacy
-  data = mapValuesDeep(data, (v: object | Array<any>, k: string) => {
-    if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
-      if ((k ?? "") === "") return "[Empty String]"
-      return `${k.slice(0, Math.min(5, k.length))} **********`
-    }
-    return v
-  })
-
   const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
   localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
 

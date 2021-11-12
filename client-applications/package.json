@@ -45,7 +45,6 @@
     "@types/react-router-dom": "^5.1.7",
     "@types/tmp": "^0.2.1",
     "classnames": "^2.3.1",
-    "deepdash": "^5.3.9",
     "crypto-js": "^4.1.1",
     "dbus-next": "^0.10.2",
     "electron-store": "^8.0.0",
